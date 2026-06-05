@@ -21,14 +21,18 @@ package postgres
 // the caller exactly once at generation time and never stored.
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"time"
 
 	"github.com/aarondl/opt/null"
+	"github.com/go-webauthn/webauthn/protocol"
+	gowebauthn "github.com/go-webauthn/webauthn/webauthn"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -62,10 +66,19 @@ var _ api.MFAAccounts = (*pgMFAAccounts)(nil)
 
 // mfaChallengeData is the jsonb payload carried in iam_challenges.data. It holds
 // the flow material the verify step needs but that has no dedicated column.
+//
+// Session carries the opaque marshalled go-webauthn SessionData (challenge bytes,
+// RP id, user verification) minted by BeginRegistration during a WebAuthn-factor
+// enrollment; EnrollWebAuthnVerify replays it via w.CreateCredential to verify
+// the attestation. It is the MFA-flow counterpart of domain.WebAuthnCeremonyData
+// (we keep the session alongside the existing mfa flow fields rather than swap to
+// a second envelope so the shared mfaInsertChallenge/mfaConsumeChallenge helpers
+// still apply).
 type mfaChallengeData struct {
 	FactorID      string         `json:"factor_id,omitempty"`
 	FlowTokenHash string         `json:"flow_token_hash,omitempty"`
 	PublicKey     map[string]any `json:"public_key,omitempty"`
+	Session       []byte         `json:"session,omitempty"`
 }
 
 // ===== helpers (mfa-prefixed) =====
@@ -154,6 +167,54 @@ func (a *pgMFAAccounts) mfaFindFactor(ctx context.Context, accountID, factorID s
 		return nil, domain.ErrNotFound
 	}
 	return row, nil
+}
+
+// ===== WebAuthn-factor ceremony helpers (mfa-prefixed) =====
+//
+// A WebAuthn MFA factor is enrolled through the same attestation ceremony the
+// passkey adapter uses (webauthn_pg.go): BeginRegistration mints the publicKey
+// creation options + a SessionData snapshot we persist in the challenge; the
+// verify step replays that SessionData via go-webauthn's CreateCredential to
+// validate the attestation (challenge, origin, RP id, attestation statement)
+// before the factor is activated. We never hand-roll the COSE/CBOR crypto.
+
+// mfaRPConfigFor builds the per-project go-webauthn Relying Party instance for a
+// WebAuthn-factor ceremony. It reuses webauthnRPFromProject (the shared per-project
+// RP derivation in webauthn_pg.go) so the RP id + permitted origins match the
+// passkey adapter exactly.
+func (a *pgMFAAccounts) mfaRPConfigFor(ctx context.Context, projectID string) (*gowebauthn.WebAuthn, error) {
+	row, err := models.FindIamProject(ctx, a.db.Bobx(), projectID)
+	if err != nil {
+		return nil, translatePgErr("project", err)
+	}
+	rpID, displayName, origins := webauthnRPFromProject(row)
+	w, err := gowebauthn.New(&gowebauthn.Config{
+		RPID:          rpID,
+		RPDisplayName: displayName,
+		RPOrigins:     origins,
+	})
+	if err != nil {
+		return nil, domain.ErrProviderError
+	}
+	return w, nil
+}
+
+// mfaLoadWebauthnUser reads the account aggregate and adapts it onto the
+// go-webauthn User interface. A WebAuthn MFA factor is independent of the passkey
+// credentials, so the ceremony starts the user with no existing credentials (the
+// library only needs the user handle, name and display name for registration).
+func (a *pgMFAAccounts) mfaLoadWebauthnUser(ctx context.Context, accountID string) (*webauthnUser, error) {
+	userRow, err := models.FindIamUser(ctx, a.db.Bobx(), accountID)
+	if err != nil {
+		return nil, translatePgErr("user", err)
+	}
+	var acct domain.Account
+	if err := unmarshal(userRow.Data, &acct); err != nil {
+		return nil, err
+	}
+	acct.ID = userRow.ID
+	acct.ProjectID = userRow.ProjectID
+	return &webauthnUser{account: &acct, creds: nil}, nil
 }
 
 // ===== api.MFAAccounts =====
@@ -440,28 +501,53 @@ func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARe
 }
 
 // EnrollWebAuthnOptions issues a WebAuthn enrollment challenge carrying the
-// publicKey creation options the authenticator needs.
+// publicKey creation options the authenticator needs. It runs a real go-webauthn
+// attestation ceremony: BeginRegistration mints the publicKey options + the
+// SessionData snapshot (challenge, RP id, user verification) we persist in the
+// challenge row so EnrollWebAuthnVerify can verify the matching attestation.
 func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MFAWebAuthnEnrollOptionsCmd) (*domain.Challenge, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Challenge, error) {
 		projectID, err := a.mfaResolveProject(ctx, cmd.AccountID)
 		if err != nil {
 			return nil, err
 		}
-		challenge, err := mfaNewOpaqueToken(32)
+
+		// Build the per-project Relying Party + the user handle the library binds
+		// the ceremony to.
+		w, err := a.mfaRPConfigFor(ctx, projectID)
 		if err != nil {
 			return nil, err
 		}
-		publicKey := map[string]any{
-			"challenge": challenge,
-			"name":      cmd.Name,
+		user, err := a.mfaLoadWebauthnUser(ctx, cmd.AccountID)
+		if err != nil {
+			return nil, err
 		}
+
+		// BeginRegistration mints the publicKey creation options surfaced to the
+		// authenticator + the opaque SessionData replayed on verify.
+		creation, session, err := w.BeginRegistration(user)
+		if err != nil {
+			return nil, domain.ErrProviderError
+		}
+		publicKey, err := webauthnOptionsMap(creation.Response)
+		if err != nil {
+			return nil, err
+		}
+		sessionRaw, err := json.Marshal(session)
+		if err != nil {
+			return nil, err
+		}
+
 		ch := domain.Challenge{
 			ID:        newUUID(),
 			Type:      "webauthn",
 			ExpiresAt: nowUTC().Add(mfaChallengeTTL),
 			PublicKey: publicKey,
 		}
-		if err := a.mfaInsertChallenge(ctx, projectID, cmd.AccountID, &ch, mfaChallengeData{PublicKey: publicKey}); err != nil {
+		if err := a.mfaInsertChallenge(ctx, projectID, cmd.AccountID, &ch, mfaChallengeData{
+			PublicKey: publicKey,
+			Session:   sessionRaw,
+		}); err != nil {
 			return nil, err
 		}
 		// TODO outbox event: mfa.webauthn.options_issued
@@ -470,6 +556,11 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 }
 
 // EnrollWebAuthnVerify validates the attestation and activates the WebAuthn factor.
+// It replays the SessionData persisted by EnrollWebAuthnOptions through go-webauthn's
+// CreateCredential, which verifies the attestation object + clientDataJSON against
+// the ceremony (challenge, RP id, origin, attestation statement). On success the
+// challenge is consumed and the factor activated, persisting the verified library
+// credential in the factor secret column so subsequent assertions can be checked.
 func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFAWebAuthnEnrollVerifyCmd) (*domain.Factor, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Factor, error) {
 		row, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
@@ -485,19 +576,74 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 		if nowUTC().After(row.ExpiresAt) {
 			return nil, domain.ErrChallengeExpired
 		}
-		// TODO: verify cmd.Credential attestation against the issued options
-		// (webauthn attestation/signature verification with the relying-party key)
+
+		// Rehydrate the ceremony SessionData persisted at options time.
+		var data mfaChallengeData
+		if len(row.Data) > 0 {
+			if err := unmarshal(row.Data, &data); err != nil {
+				return nil, err
+			}
+		}
+		if len(data.Session) == 0 {
+			return nil, domain.ErrChallengeInvalid
+		}
+		var session gowebauthn.SessionData
+		if err := json.Unmarshal(data.Session, &session); err != nil {
+			return nil, domain.ErrChallengeInvalid
+		}
+
+		// Rebuild the per-project Relying Party + the bound user handle.
+		w, err := a.mfaRPConfigFor(ctx, row.ProjectID)
+		if err != nil {
+			return nil, err
+		}
+		user, err := a.mfaLoadWebauthnUser(ctx, cmd.AccountID)
+		if err != nil {
+			return nil, err
+		}
+
+		// verify with WebAuthn signing/attestation — marshal the browser credential
+		// map, parse it, then validate the attestation (challenge, origin, RP id,
+		// attestation statement) against the stored SessionData via go-webauthn.
+		credRaw, err := json.Marshal(cmd.Credential)
+		if err != nil {
+			return nil, err
+		}
+		parsed, err := protocol.ParseCredentialCreationResponseBody(bytes.NewReader(credRaw))
+		if err != nil {
+			return nil, domain.ErrMFAInvalid
+		}
+		libCred, err := w.CreateCredential(user, session, parsed)
+		if err != nil {
+			return nil, domain.ErrMFAInvalid
+		}
 
 		if err := a.mfaConsumeChallenge(ctx, row); err != nil {
 			return nil, err
+		}
+
+		// Persist the verified library credential in the factor secret column so the
+		// authenticator material (id, COSE public key, sign count) is retained for
+		// subsequent assertions; the credential id is the base64url raw id.
+		libJSON, err := json.Marshal(libCred)
+		if err != nil {
+			return nil, err
+		}
+		// Label the factor with the supplied name, falling back to the base64url
+		// credential id, then a generic hint.
+		hint := "security key"
+		if name, _ := cmd.Credential["name"].(string); name != "" {
+			hint = name
+		} else if id := base64.RawURLEncoding.EncodeToString(libCred.ID); id != "" {
+			hint = id
 		}
 		f := domain.Factor{
 			ID:     newUUID(),
 			Type:   "webauthn",
 			Status: "active",
-			Hint:   "security key",
+			Hint:   hint,
 		}
-		if err := a.mfaInsertFactorFor(ctx, row.ProjectID, cmd.AccountID, &f, ""); err != nil {
+		if err := a.mfaInsertFactorFor(ctx, row.ProjectID, cmd.AccountID, &f, string(libJSON)); err != nil {
 			return nil, err
 		}
 		// TODO outbox event: mfa.factor.enrolled
