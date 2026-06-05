@@ -653,25 +653,8 @@ func (a *pgOIDCGrants) deviceDecision(ctx context.Context, cmd domain.OIDCDevice
 // the active keys and emit their metadata, leaving the public-key encoding to
 // the signing subsystem.
 func (a *pgOIDCGrants) JWKS(ctx context.Context, projectID, env string) (map[string]any, error) {
-	rows, err := models.IamSigningKeys.Query(
-		sm.Where(models.IamSigningKeys.Columns.ProjectID.EQ(psql.Arg(projectID))),
-		sm.Where(models.IamSigningKeys.Columns.Environment.EQ(psql.Arg(env))),
-		sm.Where(models.IamSigningKeys.Columns.Status.EQ(psql.Arg("active"))),
-	).All(ctx, a.db.Bobx())
-	if err != nil {
-		return nil, err
-	}
-	keys := make([]map[string]any, 0, len(rows))
-	for _, row := range rows {
-		// TODO: sign/verify with signing key — derive the public JWK (n/e or
-		// x/y/crv) from the stored private_pem via the signing subsystem.
-		keys = append(keys, map[string]any{
-			"kid": row.Kid,
-			"alg": row.Alg,
-			"use": row.Use,
-		})
-	}
-	return map[string]any{"keys": keys}, nil
+	// Public JWK set derived (n/e) from the project/env signing keys via jwx.
+	return a.db.Signer().JWKS(ctx, projectID, env)
 }
 
 // OpenIDConfiguration returns the discovery document for a project environment.

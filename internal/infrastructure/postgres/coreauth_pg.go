@@ -14,12 +14,12 @@ package postgres
 // Tenant boundary: every query filters by project_id; a row whose project_id
 // does not match the requested one is treated as not-found.
 //
-// Crypto: passwords are bcrypt-hashed; opaque tokens / codes / secrets are
+// Crypto: passwords are bcrypt-hashed; refresh tokens / codes / secrets are
 // drawn from crypto/rand and only their sha256 hash is persisted (hash /
-// code_hash / secret columns), never the plaintext. Access / id / SAML / OIDC
-// token MINTING and signature VERIFICATION are NOT implemented here: the access
-// token is a generated opaque string and the minting / verification line is
-// marked `// TODO: sign/verify with signing key`.
+// code_hash / secret columns), never the plaintext. The ACCESS TOKEN is a
+// signed RS256 JWT minted and verified via the Signer (jwx, db.Signer()); the
+// session's sid is carried as a claim, so introspect/verify/revoke resolve the
+// session from the token rather than scanning.
 
 import (
 	"context"
@@ -56,10 +56,38 @@ var (
 	_ api.CoreAuthTokens   = (*pgCoreAuth)(nil)
 )
 
-var (
-	_ api.CoreAuthAccounts = (*pgCoreAuth)(nil)
-	_ api.CoreAuthTokens   = (*pgCoreAuth)(nil)
+const (
+	// coreAuthDefaultEnv is the environment whose signing key mints access
+	// tokens until per-environment resolution is wired from the client.
+	coreAuthDefaultEnv = "live"
+	coreAuthAccessTTL  = 30 * time.Minute
 )
+
+// coreAuthVerifyAccess validates a signed access-token JWT (jwx) against the
+// project's signing keys and resolves the still-live session it names. A
+// missing/revoked session yields (claims, nil, nil) so callers report inactive.
+func (a *pgCoreAuth) coreAuthVerifyAccess(ctx context.Context, projectID, token string) (map[string]any, *domain.Session, error) {
+	claims, err := a.db.Signer().Verify(ctx, projectID, coreAuthDefaultEnv, token)
+	if err != nil {
+		return nil, nil, err
+	}
+	sid, _ := claims["sid"].(string)
+	if sid == "" {
+		return claims, nil, nil
+	}
+	row, err := models.FindIamSession(ctx, a.db.Bobx(), sid)
+	if err != nil {
+		return claims, nil, nil // session gone == revoked
+	}
+	if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
+		return claims, nil, nil
+	}
+	sess, err := coreAuthLoadSession(row, row.ProjectID)
+	if err != nil {
+		return claims, nil, nil
+	}
+	return claims, sess, nil
+}
 
 // ----- core-auth local constants -----
 
@@ -280,9 +308,21 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	now := nowUTC()
 	sessionID := newUUID()
 
-	// TODO: sign/verify with signing key — mint a real JWT access token here.
-	// Until the signing key plumbing exists we hand back an opaque random token.
-	accessToken, err := coreAuthRandomToken()
+	if aal <= 0 {
+		aal = 1
+	}
+	// Access token is a signed RS256 JWT (jwx); the project's active signing key
+	// is generated on first use.
+	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, coreAuthDefaultEnv, map[string]any{
+		"iss": acc.ProjectID,
+		"sub": acc.ID,
+		"sid": sessionID,
+		"pid": acc.ProjectID,
+		"aud": clientID,
+		"aal": aal,
+		"amr": amr,
+		"typ": "access",
+	}, coreAuthAccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -291,10 +331,6 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		return nil, err
 	}
 	refreshHash := coreAuthSHA256(refreshPlain)
-
-	if aal <= 0 {
-		aal = 1
-	}
 	sess := &domain.Session{
 		ID:           sessionID,
 		AccountID:    acc.ID,
@@ -1814,25 +1850,14 @@ func (a *pgCoreAuth) Introspect(ctx context.Context, projectID, token string) (*
 		return nil, err
 	}
 
-	// Access token: scan the project's sessions and match the envelope token.
-	// TODO: sign/verify with signing key — a real JWT would be verified by
-	// signature/claims rather than scanned from the session envelope.
-	sess, _, err := a.coreAuthFindSessionByAccessToken(ctx, projectID, token)
-	if err != nil {
-		if errors.Is(err, domain.ErrSessionNotFound) {
-			return &domain.CoreAuthTokenIntrospection{Active: false}, nil
-		}
-		return nil, err
+	// Access token: verify the JWT signature/claims (jwx) and confirm the named
+	// session is still live.
+	claims, sess, err := a.coreAuthVerifyAccess(ctx, projectID, token)
+	if err != nil || sess == nil {
+		return &domain.CoreAuthTokenIntrospection{Active: false}, nil
 	}
-	return &domain.CoreAuthTokenIntrospection{
-		Active: true,
-		Claims: map[string]any{
-			"token_type": "access_token",
-			"sub":        sess.AccountID,
-			"sid":        sess.ID,
-			"aud":        sess.ClientID,
-		},
-	}, nil
+	claims["token_type"] = "access_token"
+	return &domain.CoreAuthTokenIntrospection{Active: true, Claims: claims}, nil
 }
 
 // coreAuthFindSessionByAccessToken scans a project's sessions and returns the
@@ -1867,29 +1892,15 @@ func (a *pgCoreAuth) Verify(ctx context.Context, projectID, token, audience stri
 	if strings.TrimSpace(token) == "" {
 		return &domain.CoreAuthTokenVerification{Valid: false, Error: "missing_token"}, nil
 	}
-	// TODO: sign/verify with signing key — verify the JWT signature against the
-	// project's signing key here; for now liveness is checked via the session
-	// envelope.
-	sess, _, err := a.coreAuthFindSessionByAccessToken(ctx, projectID, token)
-	if err != nil {
-		if errors.Is(err, domain.ErrSessionNotFound) {
-			return &domain.CoreAuthTokenVerification{Valid: false, Error: "invalid_token"}, nil
-		}
-		return nil, err
+	// Verify the JWT signature + claims (jwx), then confirm the session is live.
+	claims, sess, err := a.coreAuthVerifyAccess(ctx, projectID, token)
+	if err != nil || sess == nil {
+		return &domain.CoreAuthTokenVerification{Valid: false, Error: "invalid_token"}, nil
 	}
 	if audience != "" && sess.ClientID != "" && sess.ClientID != audience {
 		return &domain.CoreAuthTokenVerification{Valid: false, Error: "audience_mismatch"}, nil
 	}
-	return &domain.CoreAuthTokenVerification{
-		Valid: true,
-		Claims: map[string]any{
-			"sub": sess.AccountID,
-			"sid": sess.ID,
-			"aud": sess.ClientID,
-			"aal": sess.AAL,
-			"amr": sess.AMR,
-		},
-	}, nil
+	return &domain.CoreAuthTokenVerification{Valid: true, Claims: claims}, nil
 }
 
 // Revoke revokes a token or a whole session. A SessionID revokes the session;
@@ -1920,26 +1931,17 @@ func (a *pgCoreAuth) Revoke(ctx context.Context, cmd domain.CoreAuthRevokeCmd) e
 		} else if !errors.Is(translatePgErr("refresh_token", err), ErrNotFound) {
 			return err
 		}
-		// Access token: revoke the owning session if found. Without a project we
-		// scan all sessions; a real signed token would carry its sid claim.
-		// TODO: sign/verify with signing key — resolve the session from the token
-		// claims instead of scanning.
-		rows, err := models.IamSessions.Query().All(ctx, a.db.Bobx())
-		if err != nil {
-			return err
-		}
-		for _, row := range rows {
-			var sess domain.Session
-			if err := unmarshal(row.Data, &sess); err != nil {
-				continue
-			}
-			if sess.AccessToken == cmd.Token {
-				if err := a.coreAuthRevokeSession(ctx, row.ProjectID, row.ID); err != nil &&
+		// Access token (JWT): route by its sid claim. Revocation is idempotent,
+		// so the claims are read unverified purely to find the session.
+		if claims := a.db.Signer().UnverifiedClaims(cmd.Token); claims != nil {
+			sid, _ := claims["sid"].(string)
+			pid, _ := claims["pid"].(string)
+			if sid != "" {
+				if err := a.coreAuthRevokeSession(ctx, pid, sid); err != nil &&
 					!errors.Is(err, domain.ErrSessionNotFound) {
 					return err
 				}
 				// TODO outbox event: token.revoked
-				return nil
 			}
 		}
 		// Unknown token: revocation is idempotent, treat as success.
@@ -1976,7 +1978,5 @@ func (a *pgCoreAuth) CurrentClaims(ctx context.Context, sessionID string) (map[s
 	if v, ok := row.ExpiresAt.Get(); ok {
 		claims["exp"] = v.Unix()
 	}
-	// TODO: sign/verify with signing key — these are the claims a minted JWT
-	// would carry; the access token itself is currently opaque.
 	return claims, nil
 }
