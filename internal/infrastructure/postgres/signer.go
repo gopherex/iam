@@ -226,3 +226,13 @@ func encodePrivatePEM(k *rsa.PrivateKey) string {
 	der := x509.MarshalPKCS1PrivateKey(k)
 	return string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: der}))
 }
+
+// newRSAKeyPEM generates a fresh RSA-2048 private key and returns its PEM. Used
+// by the admin signing-key create/rotate path.
+func newRSAKeyPEM() (string, error) {
+	k, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", err
+	}
+	return encodePrivatePEM(k), nil
+}

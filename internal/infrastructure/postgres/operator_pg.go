@@ -17,6 +17,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"time"
 
 	"github.com/aarondl/opt/null"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -345,21 +346,25 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, projectID string) (stri
 			}
 			return "", err
 		}
-		// Opaque token: random bytes returned to the caller once; only its
-		// sha256 hash is persisted.
-		opaque, err := randomToken(32)
-		if err != nil {
-			return "", err
-		}
-		hash := sha256Hex(opaque)
-		// TODO: sign/verify with signing key — admin tokens are opaque here, not
-		// JWTs; minting/verification of signed admin JWTs is out of scope.
+		// Admin token is a signed RS256 JWT (jwx Signer) carrying its jti; only
+		// the jti's sha256 hash is persisted, keeping the token revocable.
 		tok := domain.OperatorAdminToken{
 			ID:        newUUID(),
 			ProjectID: projectID,
 			CreatedAt: nowUTC(),
 			Revoked:   false,
 		}
+		signed, err := a.db.Signer().Sign(ctx, projectID, "live", map[string]any{
+			"iss": projectID,
+			"sub": projectID,
+			"pid": projectID,
+			"jti": tok.ID,
+			"typ": "admin",
+		}, 90*24*time.Hour)
+		if err != nil {
+			return "", err
+		}
+		hash := sha256Hex(signed)
 		raw, err := marshal(&tok)
 		if err != nil {
 			return "", err
@@ -379,7 +384,7 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, projectID string) (stri
 			return "", err
 		}
 		// TODO outbox event: admin_token.minted
-		return opaque, nil
+		return signed, nil
 	})
 }
 

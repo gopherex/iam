@@ -17,11 +17,10 @@ package postgres
 // db.withTx / withTxRet (serializable + mandatory retry).
 //
 // Secrets/codes are minted with crypto/rand and persisted only as a sha256
-// hash; passwords are bcrypt-hashed. JWT / SAML / OIDC token MINTING and
-// signature VERIFICATION are out of scope for this layer: those lines persist
-// what they can and return a generated opaque token, marked with a
-// `// TODO: sign/verify with signing key` comment. Every domain-event emission
-// point carries a `// TODO outbox event: <name>` comment (no outbox logic).
+// hash; passwords are bcrypt-hashed. Signing keys are generated here (RSA-2048
+// PEM) and the impersonation link / token-profile preview are signed via the
+// jwx Signer. Every domain-event emission point carries a
+// `// TODO outbox event: <name>` comment (no outbox logic).
 
 import (
 	"context"
@@ -1451,9 +1450,13 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 			return nil, err
 		}
 		rm := json.RawMessage(raw)
-		// TODO: sign/verify with signing key — the RSA/EC private key material is
-		// generated and persisted by the signing subsystem; here we record only
-		// the key metadata envelope, leaving private_pem unset.
+		// Generate the RSA-2048 private key material and persist it (PEM) so the
+		// Signer can mint/verify project tokens with this kid.
+		pemStr, err := newRSAKeyPEM()
+		if err != nil {
+			return nil, err
+		}
+		pv := null.From(pemStr)
 		if _, err := models.IamSigningKeys.Insert(&models.IamSigningKeySetter{
 			Kid:         &kid,
 			ProjectID:   &cmd.ProjectID,
@@ -1461,6 +1464,7 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 			Alg:         ptr(key.Alg),
 			Use:         ptr(key.Use),
 			Status:      ptr(key.Status),
+			PrivatePem:  &pv,
 			Data:        &rm,
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err

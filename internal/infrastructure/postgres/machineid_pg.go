@@ -23,7 +23,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/stephenafamo/bob"
@@ -316,9 +315,8 @@ func (a *PgMachineIdentities) RevokeServiceAccountSecret(ctx context.Context, pr
 	})
 }
 
-// MintToken issues an access token for a service account. The crypto signing of
-// a JWT access token is not implemented here: an opaque bearer token is minted
-// from crypto/rand and returned to the caller.
+// MintToken issues a signed RS256 JWT access token (jwx Signer) for a service
+// account, carrying the SA subject + its scopes.
 func (a *PgMachineIdentities) MintToken(ctx context.Context, projectID, serviceAccountID string) (string, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
 		_, env, err := a.loadServiceAccount(ctx, projectID, serviceAccountID)
@@ -328,13 +326,16 @@ func (a *PgMachineIdentities) MintToken(ctx context.Context, projectID, serviceA
 		if env.Disabled {
 			return "", domain.ErrForbidden
 		}
-		opaque, err := machineIDRandomToken(32)
+		token, err := a.db.Signer().Sign(ctx, projectID, "live", map[string]any{
+			"iss":   projectID,
+			"sub":   serviceAccountID,
+			"pid":   projectID,
+			"typ":   "service",
+			"scope": env.Scopes,
+		}, time.Hour)
 		if err != nil {
 			return "", err
 		}
-		// TODO: sign/verify with signing key — replace the opaque token with a
-		// signed JWT access token once the project signing key is wired in.
-		token := fmt.Sprintf("sat_%s", opaque)
 		// TODO outbox event: service_account.token.minted
 		return token, nil
 	})

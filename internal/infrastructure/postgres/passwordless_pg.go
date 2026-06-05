@@ -380,10 +380,21 @@ func (a *pgPasswordlessAccounts) persistAccount(ctx context.Context, acc *domain
 	return nil
 }
 
-// createSession mints an authenticated session for acct. The access/refresh
-// tokens are opaque random material; JWT minting happens in the signing layer.
+// createSession mints an authenticated session for acct. The access token is a
+// signed RS256 JWT (jwx Signer); the refresh token stays opaque (revocable).
 func (a *pgPasswordlessAccounts) createSession(ctx context.Context, acct *domain.Account) (*domain.Session, error) {
-	access, err := randomOpaqueToken(32)
+	now := nowUTC()
+	const expiresIn = 3600
+	sessionID := newUUID()
+	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, "live", map[string]any{
+		"iss": acct.ProjectID,
+		"sub": acct.ID,
+		"sid": sessionID,
+		"pid": acct.ProjectID,
+		"aal": 1,
+		"amr": []string{"otp"},
+		"typ": "access",
+	}, time.Duration(expiresIn)*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -391,15 +402,12 @@ func (a *pgPasswordlessAccounts) createSession(ctx context.Context, acct *domain
 	if err != nil {
 		return nil, err
 	}
-	now := nowUTC()
-	const expiresIn = 3600
 	sess := &domain.Session{
-		ID:        newUUID(),
-		AccountID: acct.ID,
-		ProjectID: acct.ProjectID,
-		AMR:       []string{"otp"},
-		AAL:       1,
-		// TODO: sign/verify with signing key — return opaque tokens for now.
+		ID:           sessionID,
+		AccountID:    acct.ID,
+		ProjectID:    acct.ProjectID,
+		AMR:          []string{"otp"},
+		AAL:          1,
 		AccessToken:  access,
 		RefreshToken: refresh,
 		ExpiresIn:    expiresIn,
