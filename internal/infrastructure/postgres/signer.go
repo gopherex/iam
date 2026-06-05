@@ -3,7 +3,7 @@ package postgres
 // Signer mints and verifies the project/environment JWTs (access tokens, id
 // tokens, service/admin tokens) and publishes the JWKS. Keys live in
 // iam_signing_keys (RSA private PEM); a key is generated on first use. Backed by
-// github.com/lestrrat-go/jwx.
+// github.com/lestrrat-go/jwx/v3.
 
 import (
 	"context"
@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/aarondl/opt/null"
-	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jwk"
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 
@@ -94,7 +94,7 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 }
 
 // Sign mints a signed RS256 JWT for project/env with the given claims and TTL.
-// `iss`/`aud`/`sub` should be passed as claims by the caller.
+// iss/aud/sub should be passed as claims by the caller.
 func (s *Signer) Sign(ctx context.Context, projectID, env string, claims map[string]any, ttl time.Duration) (string, error) {
 	kid, priv, err := s.activeKey(ctx, projectID, env)
 	if err != nil {
@@ -109,13 +109,13 @@ func (s *Signer) Sign(ctx context.Context, projectID, env string, claims map[str
 	if err != nil {
 		return "", err
 	}
-	key, err := jwk.FromRaw(priv)
+	key, err := jwk.Import(priv)
 	if err != nil {
 		return "", err
 	}
 	_ = key.Set(jwk.KeyIDKey, kid)
-	_ = key.Set(jwk.AlgorithmKey, jwa.RS256)
-	signed, err := jwt.Sign(tok, jwt.WithKey(jwa.RS256, key))
+	_ = key.Set(jwk.AlgorithmKey, jwa.RS256())
+	signed, err := jwt.Sign(tok, jwt.WithKey(jwa.RS256(), key))
 	if err != nil {
 		return "", err
 	}
@@ -133,11 +133,7 @@ func (s *Signer) Verify(ctx context.Context, projectID, env, token string) (map[
 	if err != nil {
 		return nil, domain.ErrInvalidToken
 	}
-	m, err := tok.AsMap(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
+	return tokenClaims(tok)
 }
 
 // UnverifiedClaims decodes a JWT's claims WITHOUT verifying the signature. Use
@@ -148,7 +144,7 @@ func (s *Signer) UnverifiedClaims(token string) map[string]any {
 	if err != nil {
 		return nil
 	}
-	m, err := tok.AsMap(context.Background())
+	m, err := tokenClaims(tok)
 	if err != nil {
 		return nil
 	}
@@ -198,11 +194,24 @@ func (s *Signer) publicSet(ctx context.Context, projectID, env string) (jwk.Set,
 			continue
 		}
 		_ = pub.Set(jwk.KeyIDKey, r.Kid)
-		_ = pub.Set(jwk.AlgorithmKey, jwa.RS256)
+		_ = pub.Set(jwk.AlgorithmKey, jwa.RS256())
 		_ = pub.Set(jwk.KeyUsageKey, "sig")
 		_ = set.AddKey(pub)
 	}
 	return set, nil
+}
+
+// tokenClaims renders a token's full claim set as a generic map.
+func tokenClaims(tok jwt.Token) (map[string]any, error) {
+	buf, err := json.Marshal(tok)
+	if err != nil {
+		return nil, err
+	}
+	var m map[string]any
+	if err := json.Unmarshal(buf, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func parsePrivatePEM(s string) (*rsa.PrivateKey, error) {
