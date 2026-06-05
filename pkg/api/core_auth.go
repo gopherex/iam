@@ -49,8 +49,19 @@ func (s *CoreAuthService) GetV1AuthEmailVerificationCallback(ctx context.Context
 	panic("implement me")
 }
 
-func (s *CoreAuthService) GetV1AuthSession(ctx context.Context) (r *oas.GetV1AuthSessionOK, _ error) {
-	panic("implement me")
+func (s *CoreAuthService) GetV1AuthSession(ctx context.Context) (*oas.GetV1AuthSessionOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	acct, sess, err := s.deps.Accounts.GetSession(ctx, p.SessionID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1AuthSessionOK{
+		User:    oas.NewOptUser(oasUser(acct)),
+		Session: oas.NewOptSession(oasSession(sess)),
+	}, nil
 }
 
 func (s *CoreAuthService) GetV1TokensCurrent(ctx context.Context) (r *oas.GetV1TokensCurrentOK, _ error) {
@@ -137,8 +148,19 @@ func (s *CoreAuthService) PostV1AuthSignInPassword(ctx context.Context, req *oas
 	return oas.NewAuthResultAuthResultOrNextStep(*authResult(acct, sess)), nil
 }
 
-func (s *CoreAuthService) PostV1AuthSignOut(ctx context.Context, req oas.OptPostV1AuthSignOutReq) (r *oas.Ok, _ error) {
-	panic("implement me")
+func (s *CoreAuthService) PostV1AuthSignOut(ctx context.Context, req oas.OptPostV1AuthSignOutReq) (*oas.Ok, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	everywhere := false
+	if v, ok := req.Get(); ok {
+		everywhere = v.Everywhere.Or(false)
+	}
+	if err := s.deps.Accounts.SignOut(ctx, p.SessionID, everywhere); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *CoreAuthService) PostV1AuthSignOutAll(ctx context.Context, req oas.OptPostV1AuthSignOutAllReq) (r *oas.PostV1AuthSignOutAllOK, _ error) {

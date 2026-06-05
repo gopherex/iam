@@ -32,6 +32,27 @@ Two layers, both rendering the shared `ErrorEnvelope` (`{ error: { code, message
 Add constraints to the OpenAPI schemas to get more validation for free — no
 handler code.
 
+## Authentication (security layer)
+
+ogen calls a `SecurityHandler` to authenticate before the handler runs.
+`api.NewSecurityHandler(auth)` adapts an **`Authenticator`** port (one method per
+scheme: `User`/`Admin`/`Master`/`Service`/`SCIM`/`Client`/`OAuth2`) — the adapter
+verifies the credential and returns a `*domain.Principal`, which the handler
+stores in the request context. Authenticated handlers read it via
+`requirePrincipal(ctx)` (→ `domain.ErrUnauthorized` if absent) instead of
+re-parsing tokens. A failed `Authenticator` call surfaces as a 401 through the
+`ErrorHandler`.
+
+Wire it all together:
+
+```go
+srv, _ := oas.NewServer(
+    api.New(api.WithCoreAuth(coreAuth), /* … */),
+    api.NewSecurityHandler(auth),
+    oas.WithErrorHandler(api.ErrorHandler),
+)
+```
+
 ## Dependencies & transaction boundary
 
 Each `XxxService` is **pure orchestration**: it holds aggregate-port interfaces
