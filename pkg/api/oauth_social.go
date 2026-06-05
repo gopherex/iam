@@ -36,3 +36,55 @@ func NewOAuthSocialService(deps OAuthSocialDeps) *OAuthSocialService {
 }
 
 var _ oas.Handler = (*OAuthSocialService)(nil)
+
+func (s *OAuthSocialService) GetV1AuthOauthByProviderCallback(ctx context.Context, params oas.GetV1AuthOauthByProviderCallbackParams) (r *oas.GetV1AuthOauthByProviderCallbackFound, _ error) {
+	panic("implement me")
+}
+
+func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkCallback(ctx context.Context, params oas.GetV1AuthOauthByProviderLinkCallbackParams) (r *oas.GetV1AuthOauthByProviderLinkCallbackFound, _ error) {
+	panic("implement me")
+}
+
+func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkStart(ctx context.Context, params oas.GetV1AuthOauthByProviderLinkStartParams) (r *oas.GetV1AuthOauthByProviderLinkStartFound, _ error) {
+	panic("implement me")
+}
+
+func (s *OAuthSocialService) GetV1AuthOauthByProviderStart(ctx context.Context, params oas.GetV1AuthOauthByProviderStartParams) (r *oas.GetV1AuthOauthByProviderStartFound, _ error) {
+	panic("implement me")
+}
+
+func (s *OAuthSocialService) GetV1AuthOauthProviders(ctx context.Context, params oas.GetV1AuthOauthProvidersParams) (*oas.GetV1AuthOauthProvidersOK, error) {
+	providers, err := s.deps.Accounts.EnabledProviders(ctx, params.XClientID)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]oas.GetV1AuthOauthProvidersOKProvidersItem, 0, len(providers))
+	for _, p := range providers {
+		items = append(items, oasOAuthProvider(p))
+	}
+	return &oas.GetV1AuthOauthProvidersOK{Providers: items}, nil
+}
+
+func (s *OAuthSocialService) PostV1AuthOauthByProviderUnlink(ctx context.Context, req *oas.PostV1AuthOauthByProviderUnlinkReq, params oas.PostV1AuthOauthByProviderUnlinkParams) (*oas.Ok, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.deps.Accounts.Unlink(ctx, p.AccountID, req.IdentityID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
+}
+
+func (s *OAuthSocialService) PostV1AuthOauthExchange(ctx context.Context, req *oas.PostV1AuthOauthExchangeReq, params oas.PostV1AuthOauthExchangeParams) (r *oas.AuthResult, _ error) {
+	panic("implement me")
+}
+
+// oasOAuthProvider maps a domain OAuth provider to its OAS list item shape.
+func oasOAuthProvider(p domain.OAuthProvider) oas.GetV1AuthOauthProvidersOKProvidersItem {
+	return oas.GetV1AuthOauthProvidersOKProvidersItem{
+		ID:     oas.NewOptString(p.ID),
+		Name:   oas.NewOptString(p.Name),
+		Scopes: p.Scopes,
+	}
+}

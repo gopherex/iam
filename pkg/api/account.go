@@ -45,32 +45,78 @@ func (s *AccountService) DeleteV1Sessions(ctx context.Context, req oas.OptDelete
 	panic("implement me")
 }
 
-func (s *AccountService) DeleteV1SessionsBySessionId(ctx context.Context, params oas.DeleteV1SessionsBySessionIdParams) (r *oas.Ok, _ error) {
-	panic("implement me")
+func (s *AccountService) DeleteV1SessionsBySessionId(ctx context.Context, params oas.DeleteV1SessionsBySessionIdParams) (*oas.Ok, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.deps.Accounts.RevokeSession(ctx, p.AccountID, params.SessionID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AccountService) DeleteV1UsersMe(ctx context.Context, req oas.OptDeleteV1UsersMeReq) (r *oas.Ok, _ error) {
-	panic("implement me")
+func (s *AccountService) DeleteV1UsersMe(ctx context.Context, req oas.OptDeleteV1UsersMeReq) (*oas.Ok, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.deps.Accounts.Delete(ctx, p.ProjectID, p.AccountID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *AccountService) GetV1AccountCapabilities(ctx context.Context) (r *oas.GetV1AccountCapabilitiesOK, _ error) {
 	panic("implement me")
 }
 
-func (s *AccountService) GetV1AuthIdentities(ctx context.Context) (r *oas.GetV1AuthIdentitiesOK, _ error) {
-	panic("implement me")
+func (s *AccountService) GetV1AuthIdentities(ctx context.Context) (*oas.GetV1AuthIdentitiesOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ids, err := s.deps.Accounts.ListIdentities(ctx, p.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.Identity, 0, len(ids))
+	for i := range ids {
+		data = append(data, oasIdentity(&ids[i]))
+	}
+	return &oas.GetV1AuthIdentitiesOK{Data: data}, nil
 }
 
-func (s *AccountService) GetV1Sessions(ctx context.Context) (r *oas.GetV1SessionsOK, _ error) {
-	panic("implement me")
+func (s *AccountService) GetV1Sessions(ctx context.Context) (*oas.GetV1SessionsOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	sessions, err := s.deps.Accounts.ListSessions(ctx, p.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.Session, 0, len(sessions))
+	for i := range sessions {
+		data = append(data, oasSession(&sessions[i]))
+	}
+	return &oas.GetV1SessionsOK{Data: data}, nil
 }
 
 func (s *AccountService) GetV1SessionsCurrent(ctx context.Context) (r *oas.GetV1SessionsCurrentOK, _ error) {
 	panic("implement me")
 }
 
-func (s *AccountService) GetV1UsersMe(ctx context.Context) (r *oas.GetV1UsersMeOK, _ error) {
-	panic("implement me")
+func (s *AccountService) GetV1UsersMe(ctx context.Context) (*oas.GetV1UsersMeOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	acct, err := s.deps.Accounts.Get(ctx, p.ProjectID, p.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1UsersMeOK{User: oas.NewOptUser(oasUser(acct))}, nil
 }
 
 func (s *AccountService) GetV1UsersMeActivity(ctx context.Context, params oas.GetV1UsersMeActivityParams) (r *oas.GetV1UsersMeActivityOK, _ error) {
@@ -89,8 +135,22 @@ func (s *AccountService) PatchV1SessionsBySessionId(ctx context.Context, req *oa
 	panic("implement me")
 }
 
-func (s *AccountService) PatchV1UsersMe(ctx context.Context, req *oas.PatchV1UsersMeReq) (r *oas.PatchV1UsersMeOK, _ error) {
-	panic("implement me")
+func (s *AccountService) PatchV1UsersMe(ctx context.Context, req *oas.PatchV1UsersMeReq) (*oas.PatchV1UsersMeOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	acct, err := s.deps.Accounts.UpdateProfile(ctx, domain.ProfileUpdateCmd{
+		ProjectID: p.ProjectID,
+		AccountID: p.AccountID,
+		Name:      req.Name.Or(""),
+		AvatarURL: req.AvatarURL.Or(""),
+		Locale:    req.Locale.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PatchV1UsersMeOK{User: oas.NewOptUser(oasUser(acct))}, nil
 }
 
 func (s *AccountService) PostV1AuthIdentitiesMergeConfirm(ctx context.Context, req *oas.PostV1AuthIdentitiesMergeConfirmReq) (r *oas.PostV1AuthIdentitiesMergeConfirmOK, _ error) {
@@ -111,4 +171,22 @@ func (s *AccountService) PostV1UsersMeConsents(ctx context.Context, req *oas.Pos
 
 func (s *AccountService) PostV1UsersMeExport(ctx context.Context) (r *oas.PostV1UsersMeExportOK, _ error) {
 	panic("implement me")
+}
+
+// oasIdentity maps a domain Identity to its wire representation.
+func oasIdentity(i *domain.Identity) oas.Identity {
+	id := oas.Identity{
+		ID:   i.ID,
+		Type: oas.IdentityType(i.Type),
+	}
+	if i.Provider != "" {
+		id.Provider = oas.NewOptNilString(i.Provider)
+	}
+	if i.ProviderAccountID != "" {
+		id.ProviderAccountID = oas.NewOptNilString(i.ProviderAccountID)
+	}
+	if i.Email != "" {
+		id.Email = oas.NewOptNilString(i.Email)
+	}
+	return id
 }

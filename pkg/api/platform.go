@@ -34,22 +34,43 @@ func NewPlatformService(deps PlatformDeps) *PlatformService { return &PlatformSe
 
 var _ oas.Handler = (*PlatformService)(nil)
 
-func (s *PlatformService) GetV1ConfigPublic(ctx context.Context, params oas.GetV1ConfigPublicParams) (r *oas.PublicConfig, _ error) {
-	panic("implement me")
+func (s *PlatformService) GetV1ConfigPublic(ctx context.Context, params oas.GetV1ConfigPublicParams) (*oas.PublicConfig, error) {
+	cfg, err := s.deps.Config.PublicConfig(ctx, params.XClientID, params.XClientID)
+	if err != nil {
+		return nil, err
+	}
+	return oasPublicConfig(cfg), nil
 }
 
 func (s *PlatformService) GetV1Csrf(ctx context.Context, params oas.GetV1CsrfParams) (r *oas.GetV1CsrfOK, _ error) {
 	panic("implement me")
 }
 
-func (s *PlatformService) GetV1Health(ctx context.Context) (r *oas.GetV1HealthOK, _ error) {
-	panic("implement me")
+func (s *PlatformService) GetV1Health(ctx context.Context) (*oas.GetV1HealthOK, error) {
+	return &oas.GetV1HealthOK{Status: oas.NewOptString("ok")}, nil
 }
 
-func (s *PlatformService) GetV1HealthLive(ctx context.Context) (r *oas.GetV1HealthLiveOK, _ error) {
-	panic("implement me")
+func (s *PlatformService) GetV1HealthLive(ctx context.Context) (*oas.GetV1HealthLiveOK, error) {
+	return &oas.GetV1HealthLiveOK{Status: oas.NewOptString("ok")}, nil
 }
 
-func (s *PlatformService) GetV1HealthReady(ctx context.Context) (r *oas.GetV1HealthReadyOK, _ error) {
-	panic("implement me")
+func (s *PlatformService) GetV1HealthReady(ctx context.Context) (*oas.GetV1HealthReadyOK, error) {
+	return &oas.GetV1HealthReadyOK{Status: oas.NewOptString("ok")}, nil
+}
+
+// oasPublicConfig maps the domain bootstrap config to the oas wire type.
+func oasPublicConfig(c *domain.PublicConfig) *oas.PublicConfig {
+	r := &oas.PublicConfig{
+		Project:       oas.NewOptPublicConfigProject(oas.PublicConfigProject{Name: oas.NewOptString(c.ProjectName)}),
+		Methods:       c.Methods,
+		Locales:       c.Locales,
+		DefaultLocale: oas.NewOptString(c.DefaultLocale),
+	}
+	for _, p := range c.Providers {
+		r.Providers = append(r.Providers, oas.PublicConfigProvidersItem{
+			ID:   oas.NewOptString(p.ID),
+			Name: oas.NewOptString(p.Name),
+		})
+	}
+	return r
 }

@@ -48,8 +48,14 @@ func NewAdminService(deps AdminDeps) *AdminService { return &AdminService{deps: 
 
 var _ oas.Handler = (*AdminService)(nil)
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams) (r *oas.Ok, _ error) {
-	panic("implement me")
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams) (*oas.Ok, error) {
+	if _, err := requirePrincipal(ctx); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Apps.Delete(ctx, params.ProjectID, params.AppID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams) (r *oas.Ok, _ error) {
@@ -72,8 +78,14 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx con
 	panic("implement me")
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams) (r *oas.Ok, _ error) {
-	panic("implement me")
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams) (*oas.Ok, error) {
+	if _, err := requirePrincipal(ctx); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Users.Delete(ctx, params.ProjectID, params.UserID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams) (r *oas.Ok, _ error) {
@@ -88,12 +100,32 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.C
 	panic("implement me")
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminApps(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAppsParams) (r *oas.GetV1ProjectsByProjectIdAdminAppsOK, _ error) {
-	panic("implement me")
+func (s *AdminService) GetV1ProjectsByProjectIdAdminApps(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAppsParams) (*oas.GetV1ProjectsByProjectIdAdminAppsOK, error) {
+	if _, err := requirePrincipal(ctx); err != nil {
+		return nil, err
+	}
+	apps, err := s.deps.Apps.List(ctx, params.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.AppClient, 0, len(apps))
+	for i := range apps {
+		data = append(data, oasAppClient(&apps[i]))
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminAppsOK{Data: data}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAppsByAppIdParams) (r *oas.GetV1ProjectsByProjectIdAdminAppsByAppIdOK, _ error) {
-	panic("implement me")
+func (s *AdminService) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAppsByAppIdParams) (*oas.GetV1ProjectsByProjectIdAdminAppsByAppIdOK, error) {
+	if _, err := requirePrincipal(ctx); err != nil {
+		return nil, err
+	}
+	app, err := s.deps.Apps.Get(ctx, params.ProjectID, params.AppID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminAppsByAppIdOK{
+		App: oas.NewOptAppClient(oasAppClient(app)),
+	}, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigAuthParams) (r *oas.AuthConfig, _ error) {
@@ -140,12 +172,32 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Co
 	panic("implement me")
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersParams) (r *oas.GetV1ProjectsByProjectIdAdminUsersOK, _ error) {
-	panic("implement me")
+func (s *AdminService) GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersParams) (*oas.GetV1ProjectsByProjectIdAdminUsersOK, error) {
+	if _, err := requirePrincipal(ctx); err != nil {
+		return nil, err
+	}
+	accts, err := s.deps.Users.List(ctx, params.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.User, 0, len(accts))
+	for i := range accts {
+		data = append(data, oasUser(&accts[i]))
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminUsersOK{Data: data}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdParams) (r *oas.GetV1ProjectsByProjectIdAdminUsersByUserIdOK, _ error) {
-	panic("implement me")
+func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdParams) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdOK, error) {
+	if _, err := requirePrincipal(ctx); err != nil {
+		return nil, err
+	}
+	acct, err := s.deps.Users.Get(ctx, params.ProjectID, params.UserID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminUsersByUserIdOK{
+		User: oas.NewOptUser(oasUser(acct)),
+	}, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams) (r *oas.GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK, _ error) {
@@ -200,8 +252,23 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx 
 	panic("implement me")
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminAppsReq, params oas.PostV1ProjectsByProjectIdAdminAppsParams) (r *oas.PostV1ProjectsByProjectIdAdminAppsCreated, _ error) {
-	panic("implement me")
+func (s *AdminService) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminAppsReq, params oas.PostV1ProjectsByProjectIdAdminAppsParams) (*oas.PostV1ProjectsByProjectIdAdminAppsCreated, error) {
+	if _, err := requirePrincipal(ctx); err != nil {
+		return nil, err
+	}
+	cmd := domain.AppClientCmd{
+		ProjectID:    params.ProjectID,
+		Name:         req.Name,
+		Type:         string(req.Type),
+		RedirectURIs: req.RedirectUris,
+	}
+	app, err := s.deps.Apps.Create(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminAppsCreated{
+		App: oas.NewOptAppClient(oasAppClient(app)),
+	}, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params oas.PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams) (r *oas.PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated, _ error) {
@@ -240,16 +307,43 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ct
 	panic("implement me")
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminUsersReq, params oas.PostV1ProjectsByProjectIdAdminUsersParams) (r *oas.PostV1ProjectsByProjectIdAdminUsersCreated, _ error) {
-	panic("implement me")
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminUsersReq, params oas.PostV1ProjectsByProjectIdAdminUsersParams) (*oas.PostV1ProjectsByProjectIdAdminUsersCreated, error) {
+	if _, err := requirePrincipal(ctx); err != nil {
+		return nil, err
+	}
+	cmd := domain.RegisterCmd{
+		ProjectID: params.ProjectID,
+		Email:     req.Email.Or(""),
+		Phone:     req.Phone.Or(""),
+		Password:  req.Password.Or(""),
+	}
+	acct, err := s.deps.Users.Create(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminUsersCreated{
+		User: oas.NewOptUser(oasUser(acct)),
+	}, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams) (r *oas.Ok, _ error) {
 	panic("implement me")
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams) (r *oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK, _ error) {
-	panic("implement me")
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK, error) {
+	if _, err := requirePrincipal(ctx); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Users.Ban(ctx, params.ProjectID, params.UserID); err != nil {
+		return nil, err
+	}
+	acct, err := s.deps.Users.Get(ctx, params.ProjectID, params.UserID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK{
+		User: oas.NewOptUser(oasUser(acct)),
+	}, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams) (r *oas.PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK, _ error) {
@@ -290,4 +384,18 @@ func (s *AdminService) PutV1ProjectsByProjectIdAdminFeatures(ctx context.Context
 
 func (s *AdminService) PutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, req oas.PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params oas.PutV1ProjectsByProjectIdAdminI18nByLocaleParams) (r oas.PutV1ProjectsByProjectIdAdminI18nByLocaleOK, _ error) {
 	panic("implement me")
+}
+
+// oasAppClient maps a domain AppClient onto the generated oas.AppClient.
+func oasAppClient(a *domain.AppClient) oas.AppClient {
+	out := oas.AppClient{
+		ID:           oas.NewOptString(a.ID),
+		Name:         oas.NewOptString(a.Name),
+		Environment:  oas.NewOptString(a.Environment),
+		RedirectUris: a.RedirectURIs,
+	}
+	if a.Type != "" {
+		out.Type = oas.NewOptAppClientType(oas.AppClientType(a.Type))
+	}
+	return out
 }
