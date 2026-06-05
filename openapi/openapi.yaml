@@ -1725,6 +1725,7 @@ paths:
                     type: string
       x-audience: runtime
       x-scopes: []
+      x-ogen-operation-group: Platform
   /v1/health/live:
     get:
       operationId: getV1HealthLive
@@ -1746,6 +1747,7 @@ paths:
                     example: ok
       x-audience: runtime
       x-scopes: []
+      x-ogen-operation-group: Platform
   /v1/health/ready:
     get:
       operationId: getV1HealthReady
@@ -1773,6 +1775,7 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
       x-audience: runtime
       x-scopes: []
+      x-ogen-operation-group: Platform
   /v1/config/public:
     get:
       operationId: getV1ConfigPublic
@@ -1795,6 +1798,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Platform
   /v1/csrf:
     get:
       operationId: getV1Csrf
@@ -1820,6 +1824,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Platform
   /v1/auth/sign-up:
     post:
       operationId: postV1AuthSignUp
@@ -1855,6 +1860,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/sign-in/password:
     post:
       operationId: postV1AuthSignInPassword
@@ -1886,6 +1892,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/token/refresh:
     post:
       operationId: postV1AuthTokenRefresh
@@ -1914,6 +1921,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/token/exchange:
     post:
       operationId: postV1AuthTokenExchange
@@ -1943,6 +1951,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/sign-out:
     post:
       operationId: postV1AuthSignOut
@@ -1972,6 +1981,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/sign-out-all:
     post:
       operationId: postV1AuthSignOutAll
@@ -2004,6 +2014,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/session:
     get:
       operationId: getV1AuthSession
@@ -2029,6 +2040,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/session/switch-group:
     post:
       operationId: postV1AuthSessionSwitchGroup
@@ -2063,6 +2075,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/session/step-up:
     post:
       operationId: postV1AuthSessionStepUp
@@ -2104,6 +2117,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/guest:
     post:
       operationId: postV1AuthGuest
@@ -2132,6 +2146,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/email/verification/start:
     post:
       operationId: postV1AuthEmailVerificationStart
@@ -2172,6 +2187,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/email/verification/verify:
     post:
       operationId: postV1AuthEmailVerificationVerify
@@ -2216,6 +2232,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/email/verification/callback:
     get:
       operationId: getV1AuthEmailVerificationCallback
@@ -2252,6 +2269,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/email/change/start:
     post:
       operationId: postV1AuthEmailChangeStart
@@ -2291,6 +2309,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/email/change/verify:
     post:
       operationId: postV1AuthEmailChangeVerify
@@ -2333,6 +2352,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/email/change/cancel:
     get:
       operationId: getV1AuthEmailChangeCancel
@@ -2358,6 +2378,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/phone/verification/start:
     post:
       operationId: postV1AuthPhoneVerificationStart
@@ -2403,6 +2424,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/phone/verification/verify:
     post:
       operationId: postV1AuthPhoneVerificationVerify
@@ -2440,6 +2462,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/phone/change/start:
     post:
       operationId: postV1AuthPhoneChangeStart
@@ -2477,6 +2500,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/phone/change/verify:
     post:
       operationId: postV1AuthPhoneChangeVerify
@@ -2514,6 +2538,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/otp/start:
     post:
       operationId: postV1AuthOtpStart
@@ -2545,6 +2570,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Passwordless
   /v1/auth/otp/verify:
     post:
       operationId: postV1AuthOtpVerify
@@ -2576,6 +2602,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Passwordless
   /v1/auth/magic-link/start:
     post:
       operationId: postV1AuthMagicLinkStart
@@ -2605,6 +2632,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Passwordless
   /v1/auth/magic-link/verify:
     post:
       operationId: postV1AuthMagicLinkVerify
@@ -2636,6 +2664,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Passwordless
   /v1/auth/magic-link/callback:
     get:
       operationId: getV1AuthMagicLinkCallback
@@ -2672,6 +2701,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Passwordless
   /v1/auth/oauth/providers:
     get:
       operationId: getV1AuthOauthProviders
@@ -2707,6 +2737,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OAuthSocial
   /v1/auth/oauth/{provider}/start:
     get:
       operationId: getV1AuthOauthByProviderStart
@@ -2759,6 +2790,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OAuthSocial
   /v1/auth/oauth/{provider}/callback:
     get:
       operationId: getV1AuthOauthByProviderCallback
@@ -2805,6 +2837,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OAuthSocial
   /v1/auth/oauth/exchange:
     post:
       operationId: postV1AuthOauthExchange
@@ -2841,6 +2874,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OAuthSocial
   /v1/auth/oauth/{provider}/link/start:
     get:
       operationId: getV1AuthOauthByProviderLinkStart
@@ -2877,6 +2911,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OAuthSocial
   /v1/auth/oauth/{provider}/link/callback:
     get:
       operationId: getV1AuthOauthByProviderLinkCallback
@@ -2904,6 +2939,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OAuthSocial
   /v1/auth/oauth/{provider}/unlink:
     post:
       operationId: postV1AuthOauthByProviderUnlink
@@ -2943,6 +2979,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OAuthSocial
   /v1/auth/webauthn/login/options:
     post:
       operationId: postV1AuthWebauthnLoginOptions
@@ -2992,6 +3029,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: WebAuthn
   /v1/auth/webauthn/login/verify:
     post:
       operationId: postV1AuthWebauthnLoginVerify
@@ -3030,6 +3068,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: WebAuthn
   /v1/auth/webauthn/register/options:
     post:
       operationId: postV1AuthWebauthnRegisterOptions
@@ -3074,6 +3113,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: WebAuthn
   /v1/auth/webauthn/register/verify:
     post:
       operationId: postV1AuthWebauthnRegisterVerify
@@ -3116,6 +3156,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: WebAuthn
   /v1/auth/webauthn/credentials:
     get:
       operationId: getV1AuthWebauthnCredentials
@@ -3141,6 +3182,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: WebAuthn
   /v1/auth/webauthn/credentials/{credential_id}:
     patch:
       operationId: patchV1AuthWebauthnCredentialsByCredentialId
@@ -3183,6 +3225,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: WebAuthn
     delete:
       operationId: deleteV1AuthWebauthnCredentialsByCredentialId
       x-since: 1.2.0
@@ -3212,6 +3255,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: WebAuthn
   /v1/auth/mfa/factors:
     get:
       operationId: getV1AuthMfaFactors
@@ -3237,6 +3281,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/challenge:
     post:
       operationId: postV1AuthMfaChallenge
@@ -3276,6 +3321,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/verify:
     post:
       operationId: postV1AuthMfaVerify
@@ -3331,6 +3377,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/totp/enroll:
     post:
       operationId: postV1AuthMfaTotpEnroll
@@ -3372,6 +3419,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/totp/verify:
     post:
       operationId: postV1AuthMfaTotpVerify
@@ -3409,6 +3457,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/sms/enroll:
     post:
       operationId: postV1AuthMfaSmsEnroll
@@ -3445,6 +3494,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/email/enroll:
     post:
       operationId: postV1AuthMfaEmailEnroll
@@ -3481,6 +3531,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/webauthn/enroll/options:
     post:
       operationId: postV1AuthMfaWebauthnEnrollOptions
@@ -3517,6 +3568,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/webauthn/enroll/verify:
     post:
       operationId: postV1AuthMfaWebauthnEnrollVerify
@@ -3555,6 +3607,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/recovery-codes/generate:
     post:
       operationId: postV1AuthMfaRecoveryCodesGenerate
@@ -3589,6 +3642,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/recovery-codes/verify:
     post:
       operationId: postV1AuthMfaRecoveryCodesVerify
@@ -3623,6 +3677,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/mfa/factors/{factor_id}:
     delete:
       operationId: deleteV1AuthMfaFactorsByFactorId
@@ -3651,6 +3706,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MFA
   /v1/auth/password/forgot:
     post:
       operationId: postV1AuthPasswordForgot
@@ -3680,6 +3736,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/password/reset:
     post:
       operationId: postV1AuthPasswordReset
@@ -3713,6 +3770,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/password/change:
     post:
       operationId: postV1AuthPasswordChange
@@ -3739,6 +3797,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/password/verify:
     post:
       operationId: postV1AuthPasswordVerify
@@ -3783,6 +3842,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/password/check:
     post:
       operationId: postV1AuthPasswordCheck
@@ -3824,6 +3884,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/users/me:
     get:
       operationId: getV1UsersMe
@@ -3847,6 +3908,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
     patch:
       operationId: patchV1UsersMe
       x-since: 1.0.0
@@ -3889,6 +3951,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
     delete:
       operationId: deleteV1UsersMe
       x-since: 1.0.0
@@ -3920,6 +3983,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/account/capabilities:
     get:
       operationId: getV1AccountCapabilities
@@ -3944,6 +4008,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/users/me/activity:
     get:
       operationId: getV1UsersMeActivity
@@ -3979,6 +4044,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/users/me/export:
     post:
       operationId: postV1UsersMeExport
@@ -4002,6 +4068,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/users/me/export/{job_id}:
     get:
       operationId: getV1UsersMeExportByJobId
@@ -4037,6 +4104,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/users/me/consents:
     get:
       operationId: getV1UsersMeConsents
@@ -4069,6 +4137,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
     post:
       operationId: postV1UsersMeConsents
       x-since: 1.0.0
@@ -4107,6 +4176,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/auth/identities:
     get:
       operationId: getV1AuthIdentities
@@ -4132,6 +4202,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/auth/identities/{identity_id}:
     delete:
       operationId: deleteV1AuthIdentitiesByIdentityId
@@ -4162,6 +4233,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/auth/identities/merge/start:
     post:
       operationId: postV1AuthIdentitiesMergeStart
@@ -4196,6 +4268,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/auth/identities/merge/confirm:
     post:
       operationId: postV1AuthIdentitiesMergeConfirm
@@ -4237,6 +4310,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/sessions:
     get:
       operationId: getV1Sessions
@@ -4262,6 +4336,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
     delete:
       operationId: deleteV1Sessions
       x-since: 1.0.0
@@ -4293,6 +4368,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/sessions/current:
     get:
       operationId: getV1SessionsCurrent
@@ -4316,6 +4392,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/sessions/{session_id}:
     patch:
       operationId: patchV1SessionsBySessionId
@@ -4358,6 +4435,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
     delete:
       operationId: deleteV1SessionsBySessionId
       x-since: 1.0.0
@@ -4385,6 +4463,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/sessions/{session_id}/trust:
     post:
       operationId: postV1SessionsBySessionIdTrust
@@ -4425,6 +4504,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Account
   /v1/service-accounts/tokens:
     post:
       operationId: postV1ServiceAccountsTokens
@@ -4470,6 +4550,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MachineIdentity
   /v1/projects/{project_id}/admin/service-accounts:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -4508,6 +4589,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MachineIdentity
     post:
       operationId: postV1ProjectsByProjectIdAdminServiceAccounts
       x-since: 1.3.0
@@ -4552,6 +4634,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MachineIdentity
   /v1/projects/{project_id}/admin/service-accounts/{sa_id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -4590,6 +4673,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: MachineIdentity
     patch:
       operationId: patchV1ProjectsByProjectIdAdminServiceAccountsBySaId
       x-since: 1.3.0
@@ -4633,6 +4717,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: MachineIdentity
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminServiceAccountsBySaId
       x-since: 1.3.0
@@ -4660,6 +4745,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: MachineIdentity
   /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -4715,6 +4801,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MachineIdentity
   /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets/{secret_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId
@@ -4754,6 +4841,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MachineIdentity
   /v1/projects/{project_id}/admin/api-keys:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -4788,6 +4876,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: MachineIdentity
     post:
       operationId: postV1ProjectsByProjectIdAdminApiKeys
       x-since: 1.3.0
@@ -4838,6 +4927,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MachineIdentity
   /v1/projects/{project_id}/admin/api-keys/{key_id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -4891,6 +4981,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: MachineIdentity
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminApiKeysByKeyId
       x-since: 1.3.0
@@ -4918,6 +5009,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: MachineIdentity
   /v1/projects/{project_id}/admin/api-keys/{key_id}/rotate:
     post:
       operationId: postV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate
@@ -4955,6 +5047,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: MachineIdentity
   /v1/projects/{project_id}/admin/sso/connections:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -4993,6 +5086,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
     post:
       operationId: postV1ProjectsByProjectIdAdminSsoConnections
       x-since: 3.0.0
@@ -5051,6 +5145,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/projects/{project_id}/admin/sso/connections/{id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -5089,6 +5184,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Federation
     patch:
       operationId: patchV1ProjectsByProjectIdAdminSsoConnectionsById
       x-since: 3.0.0
@@ -5126,6 +5222,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Federation
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminSsoConnectionsById
       x-since: 3.0.0
@@ -5153,6 +5250,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Federation
   /v1/projects/{project_id}/admin/sso/connections/{id}/test:
     post:
       operationId: postV1ProjectsByProjectIdAdminSsoConnectionsByIdTest
@@ -5188,6 +5286,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/projects/{project_id}/admin/sso/connections/{id}/rotate-certificate:
     post:
       operationId: postV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate
@@ -5223,6 +5322,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/sso/connections/resolve:
     get:
       operationId: getV1SsoConnectionsResolve
@@ -5254,6 +5354,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/sso/saml/{connection_id}/metadata:
     get:
       operationId: getV1SsoSamlByConnectionIdMetadata
@@ -5279,6 +5380,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/sso/saml/{connection_id}/login:
     get:
       operationId: getV1SsoSamlByConnectionIdLogin
@@ -5316,6 +5418,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/sso/saml/{connection_id}/acs:
     post:
       operationId: postV1SsoSamlByConnectionIdAcs
@@ -5357,6 +5460,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/sso/saml/{connection_id}/slo:
     post:
       operationId: postV1SsoSamlByConnectionIdSlo
@@ -5384,6 +5488,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/sso/oidc/{connection_id}/start:
     get:
       operationId: getV1SsoOidcByConnectionIdStart
@@ -5426,6 +5531,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/sso/oidc/{connection_id}/callback:
     get:
       operationId: getV1SsoOidcByConnectionIdCallback
@@ -5467,6 +5573,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/sso/exchange:
     post:
       operationId: postV1SsoExchange
@@ -5499,6 +5606,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -5538,6 +5646,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Federation
     post:
       operationId: postV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens
       x-since: 3.0.0
@@ -5588,6 +5697,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens/{token_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId
@@ -5627,6 +5737,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/scim/v2/{connection_id}/Users:
     parameters:
     - name: connection_id
@@ -5674,6 +5785,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
     post:
       operationId: postV1ScimV2ByConnectionIdUsers
       x-since: 3.0.0
@@ -5704,6 +5816,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/scim/v2/{connection_id}/Users/{scim_user_id}:
     parameters:
     - name: connection_id
@@ -5742,6 +5855,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
     put:
       operationId: putV1ScimV2ByConnectionIdUsersByScimUserId
       x-since: 3.0.0
@@ -5772,6 +5886,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
     patch:
       operationId: patchV1ScimV2ByConnectionIdUsersByScimUserId
       x-since: 3.0.0
@@ -5804,6 +5919,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
     delete:
       operationId: deleteV1ScimV2ByConnectionIdUsersByScimUserId
       x-since: 3.0.0
@@ -5825,6 +5941,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/scim/v2/{connection_id}/Groups:
     parameters:
     - name: connection_id
@@ -5856,6 +5973,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
     post:
       operationId: postV1ScimV2ByConnectionIdGroups
       x-since: 3.0.0
@@ -5887,6 +6005,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/scim/v2/{connection_id}/Groups/{group_id}:
     parameters:
     - name: connection_id
@@ -5925,6 +6044,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
     put:
       operationId: putV1ScimV2ByConnectionIdGroupsByGroupId
       x-since: 3.0.0
@@ -5956,6 +6076,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
     patch:
       operationId: patchV1ScimV2ByConnectionIdGroupsByGroupId
       x-since: 3.0.0
@@ -5989,6 +6110,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
     delete:
       operationId: deleteV1ScimV2ByConnectionIdGroupsByGroupId
       x-since: 3.0.0
@@ -6010,6 +6132,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/projects/{project_id}/admin/domains:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -6048,6 +6171,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
     post:
       operationId: postV1ProjectsByProjectIdAdminDomains
       x-since: 3.0.0
@@ -6101,6 +6225,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/projects/{project_id}/admin/domains/{domain_id}/verify:
     post:
       operationId: postV1ProjectsByProjectIdAdminDomainsByDomainIdVerify
@@ -6136,6 +6261,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /v1/projects/{project_id}/admin/domains/{domain_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminDomainsByDomainId
@@ -6170,6 +6296,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Federation
   /p/{project_id}/e/{env}/.well-known/openid-configuration:
     get:
       operationId: getPByProjectIdEByEnvWellKnownOpenidConfiguration
@@ -6197,6 +6324,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /p/{project_id}/e/{env}/.well-known/jwks.json:
     get:
       operationId: getPByProjectIdEByEnvWellKnownJwksJson
@@ -6224,6 +6352,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /oauth2/authorize:
     get:
       operationId: getOauth2Authorize
@@ -6293,6 +6422,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /oauth2/token:
     post:
       operationId: postOauth2Token
@@ -6341,6 +6471,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /oauth2/revoke:
     post:
       operationId: postOauth2Revoke
@@ -6370,6 +6501,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /oauth2/introspect:
     post:
       operationId: postOauth2Introspect
@@ -6405,6 +6537,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /oauth2/userinfo:
     get:
       operationId: getOauth2Userinfo
@@ -6430,6 +6563,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /oauth2/logout:
     get:
       operationId: getOauth2Logout
@@ -6467,6 +6601,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /oauth2/backchannel-logout:
     post:
       operationId: postOauth2BackchannelLogout
@@ -6491,6 +6626,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /oauth2/par:
     post:
       operationId: postOauth2Par
@@ -6524,6 +6660,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /oauth2/device_authorization:
     post:
       operationId: postOauth2DeviceAuthorization
@@ -6570,6 +6707,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /v1/device:
     get:
       operationId: getV1Device
@@ -6606,6 +6744,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /v1/device/approve:
     post:
       operationId: postV1DeviceApprove
@@ -6637,6 +6776,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /v1/device/deny:
     post:
       operationId: postV1DeviceDeny
@@ -6668,6 +6808,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /v1/oauth/interaction/{interaction_id}:
     get:
       operationId: getV1OauthInteractionByInteractionId
@@ -6713,6 +6854,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /v1/oauth/interaction/{interaction_id}/login:
     post:
       operationId: postV1OauthInteractionByInteractionIdLogin
@@ -6750,6 +6892,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /v1/oauth/interaction/{interaction_id}/consent:
     post:
       operationId: postV1OauthInteractionByInteractionIdConsent
@@ -6792,6 +6935,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /v1/oauth/interaction/{interaction_id}/reject:
     post:
       operationId: postV1OauthInteractionByInteractionIdReject
@@ -6830,6 +6974,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /v1/oauth/grants:
     get:
       operationId: getV1OauthGrants
@@ -6860,6 +7005,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /v1/oauth/grants/{grant_id}:
     delete:
       operationId: deleteV1OauthGrantsByGrantId
@@ -6888,6 +7034,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: OIDCProvider
   /v1/projects/{project_id}/admin/users:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -6946,6 +7093,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
     post:
       operationId: postV1ProjectsByProjectIdAdminUsers
       x-since: 1.0.0
@@ -6997,6 +7145,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -7035,6 +7184,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     patch:
       operationId: patchV1ProjectsByProjectIdAdminUsersByUserId
       x-since: 1.0.0
@@ -7072,6 +7222,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminUsersByUserId
       x-since: 1.0.0
@@ -7104,6 +7255,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/ban:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdBan
@@ -7151,6 +7303,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/unban:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdUnban
@@ -7186,6 +7339,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/password:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdPassword
@@ -7231,6 +7385,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/verify-email:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail
@@ -7266,6 +7421,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/verify-phone:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone
@@ -7301,6 +7457,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/mfa/reset:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdMfaReset
@@ -7348,6 +7505,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/sessions:
     get:
       operationId: getV1ProjectsByProjectIdAdminUsersByUserIdSessions
@@ -7389,6 +7547,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/sessions/revoke:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke
@@ -7434,6 +7593,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/sessions/{session_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId
@@ -7473,6 +7633,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/identities:
     get:
       operationId: getV1ProjectsByProjectIdAdminUsersByUserIdIdentities
@@ -7510,6 +7671,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/identities/{identity_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId
@@ -7549,6 +7711,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/grants:
     get:
       operationId: getV1ProjectsByProjectIdAdminUsersByUserIdGrants
@@ -7590,6 +7753,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/grants/{grant_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId
@@ -7629,6 +7793,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/impersonate:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdImpersonate
@@ -7680,6 +7845,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/anonymize:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdAnonymize
@@ -7720,6 +7886,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/users/{user_id}/export:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdExport
@@ -7755,6 +7922,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/apps:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -7793,6 +7961,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
     post:
       operationId: postV1ProjectsByProjectIdAdminApps
       x-since: 1.0.0
@@ -7837,6 +8006,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/apps/{app_id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -7875,6 +8045,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     patch:
       operationId: patchV1ProjectsByProjectIdAdminAppsByAppId
       x-since: 1.0.0
@@ -7912,6 +8083,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminAppsByAppId
       x-since: 1.0.0
@@ -7939,6 +8111,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/apps/{app_id}/secrets:
     post:
       operationId: postV1ProjectsByProjectIdAdminAppsByAppIdSecrets
@@ -7991,6 +8164,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/apps/{app_id}/secrets/{secret_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId
@@ -8030,6 +8204,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/config/auth:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8059,6 +8234,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     patch:
       operationId: patchV1ProjectsByProjectIdAdminConfigAuth
       x-since: 1.0.0
@@ -8090,6 +8266,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/config/password-policy:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8118,6 +8295,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     patch:
       operationId: patchV1ProjectsByProjectIdAdminConfigPasswordPolicy
       x-since: 1.0.0
@@ -8149,6 +8327,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/config/session-policy:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8177,6 +8356,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     patch:
       operationId: patchV1ProjectsByProjectIdAdminConfigSessionPolicy
       x-since: 1.0.0
@@ -8208,6 +8388,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/config/mfa-policy:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8236,6 +8417,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     patch:
       operationId: patchV1ProjectsByProjectIdAdminConfigMfaPolicy
       x-since: 1.1.0
@@ -8267,6 +8449,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/config/rate-limits:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8295,6 +8478,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     patch:
       operationId: patchV1ProjectsByProjectIdAdminConfigRateLimits
       x-since: 1.4.0
@@ -8326,6 +8510,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/features:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8357,6 +8542,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     put:
       operationId: putV1ProjectsByProjectIdAdminFeatures
       x-since: 1.0.0
@@ -8392,6 +8578,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/i18n/{locale}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8428,6 +8615,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     put:
       operationId: putV1ProjectsByProjectIdAdminI18nByLocale
       x-since: 1.0.0
@@ -8461,6 +8649,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/consents:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8489,6 +8678,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     put:
       operationId: putV1ProjectsByProjectIdAdminConsents
       x-since: 1.0.0
@@ -8520,6 +8710,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/retention-policy:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8548,6 +8739,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     put:
       operationId: putV1ProjectsByProjectIdAdminRetentionPolicy
       x-since: 1.4.0
@@ -8579,6 +8771,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/oauth-providers:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8613,6 +8806,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     post:
       operationId: postV1ProjectsByProjectIdAdminOauthProviders
       x-since: 1.2.0
@@ -8645,6 +8839,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/oauth-providers/{id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8686,6 +8881,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminOauthProvidersById
       x-since: 1.2.0
@@ -8713,6 +8909,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/email-providers:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8747,6 +8944,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     post:
       operationId: postV1ProjectsByProjectIdAdminEmailProviders
       x-since: 1.0.0
@@ -8779,6 +8977,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/email-providers/{id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8820,6 +9019,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminEmailProvidersById
       x-since: 1.0.0
@@ -8847,6 +9047,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/sms-providers:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8881,6 +9082,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     post:
       operationId: postV1ProjectsByProjectIdAdminSmsProviders
       x-since: 1.0.0
@@ -8913,6 +9115,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/sms-providers/{id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -8954,6 +9157,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminSmsProvidersById
       x-since: 1.0.0
@@ -8981,6 +9185,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/email-templates:
     get:
       operationId: getV1ProjectsByProjectIdAdminEmailTemplates
@@ -9009,6 +9214,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/email-templates/{id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -9052,6 +9258,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/email-templates/{id}/preview:
     post:
       operationId: postV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview
@@ -9102,6 +9309,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/email-templates/{id}/send-test:
     post:
       operationId: postV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest
@@ -9150,6 +9358,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/webhooks:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -9187,6 +9396,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
     post:
       operationId: postV1ProjectsByProjectIdAdminWebhooks
       x-since: 1.4.0
@@ -9238,6 +9448,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/webhooks/{id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -9276,6 +9487,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     patch:
       operationId: patchV1ProjectsByProjectIdAdminWebhooksById
       x-since: 1.4.0
@@ -9313,6 +9525,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminWebhooksById
       x-since: 1.4.0
@@ -9340,6 +9553,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/webhooks/{id}/rotate-secret:
     post:
       operationId: postV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret
@@ -9375,6 +9589,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/webhooks/{id}/test:
     post:
       operationId: postV1ProjectsByProjectIdAdminWebhooksByIdTest
@@ -9417,6 +9632,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/webhook-deliveries:
     get:
       operationId: getV1ProjectsByProjectIdAdminWebhookDeliveries
@@ -9455,6 +9671,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/webhook-deliveries/{delivery_id}/retry:
     post:
       operationId: postV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry
@@ -9488,6 +9705,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/events:
     get:
       operationId: getV1ProjectsByProjectIdAdminEvents
@@ -9534,6 +9752,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/events/{event_id}/replay:
     post:
       operationId: postV1ProjectsByProjectIdAdminEventsByEventIdReplay
@@ -9575,6 +9794,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/hooks:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -9612,6 +9832,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
     post:
       operationId: postV1ProjectsByProjectIdAdminHooks
       x-since: 1.4.0
@@ -9661,6 +9882,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/hooks/{id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -9706,6 +9928,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminHooksById
       x-since: 1.4.0
@@ -9733,6 +9956,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/hooks/{id}/test:
     post:
       operationId: postV1ProjectsByProjectIdAdminHooksByIdTest
@@ -9782,6 +10006,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/jwks:
     get:
       operationId: getV1ProjectsByProjectIdAdminJwks
@@ -9814,6 +10039,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/jwks/rotate:
     post:
       operationId: postV1ProjectsByProjectIdAdminJwksRotate
@@ -9853,6 +10079,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/jwks/{key_id}/activate:
     post:
       operationId: postV1ProjectsByProjectIdAdminJwksByKeyIdActivate
@@ -9888,6 +10115,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/jwks/{key_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminJwksByKeyId
@@ -9922,6 +10150,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/token-profiles:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -9960,6 +10189,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
     post:
       operationId: postV1ProjectsByProjectIdAdminTokenProfiles
       x-since: 1.0.0
@@ -9995,6 +10225,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/token-profiles/{id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -10040,6 +10271,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminTokenProfilesById
       x-since: 1.0.0
@@ -10067,6 +10299,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/token-profiles/{id}/preview:
     post:
       operationId: postV1ProjectsByProjectIdAdminTokenProfilesByIdPreview
@@ -10114,6 +10347,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/tokens/introspect:
     post:
       operationId: postV1TokensIntrospect
@@ -10149,6 +10383,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/tokens/revoke:
     post:
       operationId: postV1TokensRevoke
@@ -10182,6 +10417,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/tokens/verify:
     post:
       operationId: postV1TokensVerify
@@ -10225,6 +10461,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/tokens/current:
     get:
       operationId: getV1TokensCurrent
@@ -10249,6 +10486,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/projects/{project_id}/admin/jobs:
     get:
       operationId: getV1ProjectsByProjectIdAdminJobs
@@ -10295,6 +10533,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/jobs/{job_id}:
     get:
       operationId: getV1ProjectsByProjectIdAdminJobsByJobId
@@ -10332,6 +10571,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/jobs/{job_id}/cancel:
     post:
       operationId: postV1ProjectsByProjectIdAdminJobsByJobIdCancel
@@ -10367,6 +10607,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/import/users:
     post:
       operationId: postV1ProjectsByProjectIdAdminImportUsers
@@ -10417,6 +10658,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/import/password-hashes/verify:
     post:
       operationId: postV1ProjectsByProjectIdAdminImportPasswordHashesVerify
@@ -10467,6 +10709,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/exports/{job_id}:
     get:
       operationId: getV1ProjectsByProjectIdAdminExportsByJobId
@@ -10508,6 +10751,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/audit-logs:
     get:
       operationId: getV1ProjectsByProjectIdAdminAuditLogs
@@ -10559,6 +10803,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/audit-logs/{audit_id}:
     get:
       operationId: getV1ProjectsByProjectIdAdminAuditLogsByAuditId
@@ -10596,6 +10841,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/audit/export:
     post:
       operationId: postV1ProjectsByProjectIdAdminAuditExport
@@ -10643,6 +10889,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/challenges/captcha/verify:
     post:
       operationId: postV1ChallengesCaptchaVerify
@@ -10683,6 +10930,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/projects/{project_id}/admin/risk/events:
     get:
       operationId: getV1ProjectsByProjectIdAdminRiskEvents
@@ -10728,6 +10976,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/risk/rules:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -10765,6 +11014,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
     post:
       operationId: postV1ProjectsByProjectIdAdminRiskRules
       x-since: 1.4.0
@@ -10797,6 +11047,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/risk/rules/{rule_id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -10838,6 +11089,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminRiskRulesByRuleId
       x-since: 1.4.0
@@ -10865,6 +11117,7 @@ paths:
       - environment
       parameters:
       - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/rate-limit/blocks:
     post:
       operationId: postV1ProjectsByProjectIdAdminRateLimitBlocks
@@ -10917,6 +11170,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/rate-limit/blocks/{block_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId
@@ -10951,6 +11205,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/auth/access-requests:
     post:
       operationId: postV1AuthAccessRequests
@@ -10993,6 +11248,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: CoreAuth
   /v1/projects/{project_id}/admin/access-requests:
     get:
       operationId: getV1ProjectsByProjectIdAdminAccessRequests
@@ -11033,6 +11289,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/access-requests/{id}/approve:
     post:
       operationId: postV1ProjectsByProjectIdAdminAccessRequestsByIdApprove
@@ -11071,6 +11328,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/access-requests/{id}/deny:
     post:
       operationId: postV1ProjectsByProjectIdAdminAccessRequestsByIdDeny
@@ -11114,6 +11372,7 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
   /v1/test/messages:
     get:
       operationId: getV1TestMessages
@@ -11151,6 +11410,7 @@ paths:
       - environment
       security:
       - adminToken: []
+      x-ogen-operation-group: Admin
   /v1/test/clock:
     post:
       operationId: postV1TestClock
@@ -11188,6 +11448,7 @@ paths:
       - environment
       security:
       - adminToken: []
+      x-ogen-operation-group: Admin
   /v1/test/reset:
     post:
       operationId: postV1TestReset
@@ -11215,6 +11476,7 @@ paths:
       - environment
       security:
       - adminToken: []
+      x-ogen-operation-group: Admin
   /v1/test/seed:
     post:
       operationId: postV1TestSeed
@@ -11248,6 +11510,7 @@ paths:
       - environment
       security:
       - adminToken: []
+      x-ogen-operation-group: Admin
   /mgmt/v1/projects:
     get:
       operationId: getMgmtV1Projects
@@ -11284,6 +11547,7 @@ paths:
       - masterKey: []
       x-audience: operator
       x-scopes: []
+      x-ogen-operation-group: Operator
     post:
       operationId: postMgmtV1Projects
       x-since: 1.0.0
@@ -11333,6 +11597,7 @@ paths:
       - $ref: '#/components/parameters/IdempotencyKey'
       x-audience: operator
       x-scopes: []
+      x-ogen-operation-group: Operator
   /mgmt/v1/projects/{project_id}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -11363,6 +11628,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
     patch:
       operationId: patchMgmtV1ProjectsByProjectId
       x-since: 1.0.0
@@ -11397,6 +11663,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
     delete:
       operationId: deleteMgmtV1ProjectsByProjectId
       x-since: 1.0.0
@@ -11427,6 +11694,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
   /mgmt/v1/projects/{project_id}/features:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -11454,6 +11722,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
     patch:
       operationId: patchMgmtV1ProjectsByProjectIdFeatures
       x-since: 1.0.0
@@ -11486,6 +11755,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
   /mgmt/v1/projects/{project_id}/environments:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -11516,6 +11786,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
     post:
       operationId: postMgmtV1ProjectsByProjectIdEnvironments
       x-since: 1.0.0
@@ -11556,6 +11827,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
   /mgmt/v1/projects/{project_id}/environments/{env}:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -11591,6 +11863,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
     delete:
       operationId: deleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv
       x-since: 1.0.0
@@ -11615,6 +11888,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
   /mgmt/v1/projects/{project_id}/admin-tokens:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -11641,6 +11915,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
     post:
       operationId: postMgmtV1ProjectsByProjectIdAdminTokens
       x-since: 1.0.0
@@ -11688,6 +11963,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
   /mgmt/v1/projects/{project_id}/admin-tokens/{token_id}:
     delete:
       operationId: deleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId
@@ -11720,6 +11996,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
   /mgmt/v1/projects/{project_id}/config:export:
     get:
       operationId: getMgmtV1ProjectsByProjectIdConfigExport
@@ -11749,6 +12026,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
   /mgmt/v1/projects/{project_id}/config:plan:
     post:
       operationId: postMgmtV1ProjectsByProjectIdConfigPlan
@@ -11782,6 +12060,7 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator
   /mgmt/v1/projects/{project_id}/config:apply:
     post:
       operationId: postMgmtV1ProjectsByProjectIdConfigApply
@@ -11815,3 +12094,4 @@ paths:
       x-audience: operator
       x-scopes:
       - project
+      x-ogen-operation-group: Operator

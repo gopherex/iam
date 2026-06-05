@@ -87,54 +87,144 @@ func trimTrailingSlashes(u *url.URL) {
 
 // Invoker invokes operations described by OpenAPI v3 specification.
 type Invoker interface {
-	// DeleteMgmtV1ProjectsByProjectId invokes deleteMgmtV1ProjectsByProjectId operation.
-	//
-	// Delete a project.
-	//
-	// DELETE /mgmt/v1/projects/{project_id}
-	DeleteMgmtV1ProjectsByProjectId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdRes, error)
-	// DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId invokes deleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId operation.
-	//
-	// Revoke an admin token.
-	//
-	// DELETE /mgmt/v1/projects/{project_id}/admin-tokens/{token_id}
-	DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes, error)
-	// DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv invokes deleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv operation.
-	//
-	// Delete an environment.
-	//
-	// DELETE /mgmt/v1/projects/{project_id}/environments/{env}
-	DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, error)
+	AccountInvoker
+	AdminInvoker
+	CoreAuthInvoker
+	FederationInvoker
+	MFAInvoker
+	MachineIdentityInvoker
+	OAuthSocialInvoker
+	OIDCProviderInvoker
+	OperatorInvoker
+	PasswordlessInvoker
+	PlatformInvoker
+	WebAuthnInvoker
+}
+
+// AccountInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Account
+type AccountInvoker interface {
 	// DeleteV1AuthIdentitiesByIdentityId invokes deleteV1AuthIdentitiesByIdentityId operation.
 	//
 	// Unlink an identity (step-up).
 	//
 	// DELETE /v1/auth/identities/{identity_id}
 	DeleteV1AuthIdentitiesByIdentityId(ctx context.Context, params DeleteV1AuthIdentitiesByIdentityIdParams, options ...RequestOption) (DeleteV1AuthIdentitiesByIdentityIdRes, error)
-	// DeleteV1AuthMfaFactorsByFactorId invokes deleteV1AuthMfaFactorsByFactorId operation.
+	// DeleteV1Sessions invokes deleteV1Sessions operation.
 	//
-	// Remove a factor (step-up).
+	// Revoke multiple own sessions.
 	//
-	// DELETE /v1/auth/mfa/factors/{factor_id}
-	DeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params DeleteV1AuthMfaFactorsByFactorIdParams, options ...RequestOption) (DeleteV1AuthMfaFactorsByFactorIdRes, error)
-	// DeleteV1AuthWebauthnCredentialsByCredentialId invokes deleteV1AuthWebauthnCredentialsByCredentialId operation.
+	// DELETE /v1/sessions
+	DeleteV1Sessions(ctx context.Context, request OptDeleteV1SessionsReq, options ...RequestOption) (DeleteV1SessionsRes, error)
+	// DeleteV1SessionsBySessionId invokes deleteV1SessionsBySessionId operation.
 	//
-	// Remove a passkey.
+	// Revoke a session.
 	//
-	// DELETE /v1/auth/webauthn/credentials/{credential_id}
-	DeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, params DeleteV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (DeleteV1AuthWebauthnCredentialsByCredentialIdRes, error)
-	// DeleteV1OauthGrantsByGrantId invokes deleteV1OauthGrantsByGrantId operation.
+	// DELETE /v1/sessions/{session_id}
+	DeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams, options ...RequestOption) (DeleteV1SessionsBySessionIdRes, error)
+	// DeleteV1UsersMe invokes deleteV1UsersMe operation.
 	//
-	// Revoke an OAuth grant.
+	// Delete own account (step-up).
 	//
-	// DELETE /v1/oauth/grants/{grant_id}
-	DeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams, options ...RequestOption) (DeleteV1OauthGrantsByGrantIdRes, error)
-	// DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId invokes deleteV1ProjectsByProjectIdAdminApiKeysByKeyId operation.
+	// DELETE /v1/users/me
+	DeleteV1UsersMe(ctx context.Context, request OptDeleteV1UsersMeReq, options ...RequestOption) (DeleteV1UsersMeRes, error)
+	// GetV1AccountCapabilities invokes getV1AccountCapabilities operation.
 	//
-	// Delete a key.
+	// What this user may self-manage.
 	//
-	// DELETE /v1/projects/{project_id}/admin/api-keys/{key_id}
-	DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, error)
+	// GET /v1/account/capabilities
+	GetV1AccountCapabilities(ctx context.Context, options ...RequestOption) (GetV1AccountCapabilitiesRes, error)
+	// GetV1AuthIdentities invokes getV1AuthIdentities operation.
+	//
+	// List linked identities.
+	//
+	// GET /v1/auth/identities
+	GetV1AuthIdentities(ctx context.Context, options ...RequestOption) (GetV1AuthIdentitiesRes, error)
+	// GetV1Sessions invokes getV1Sessions operation.
+	//
+	// List own sessions.
+	//
+	// GET /v1/sessions
+	GetV1Sessions(ctx context.Context, options ...RequestOption) (GetV1SessionsRes, error)
+	// GetV1SessionsCurrent invokes getV1SessionsCurrent operation.
+	//
+	// Current session details.
+	//
+	// GET /v1/sessions/current
+	GetV1SessionsCurrent(ctx context.Context, options ...RequestOption) (GetV1SessionsCurrentRes, error)
+	// GetV1UsersMe invokes getV1UsersMe operation.
+	//
+	// Get the current user.
+	//
+	// GET /v1/users/me
+	GetV1UsersMe(ctx context.Context, options ...RequestOption) (GetV1UsersMeRes, error)
+	// GetV1UsersMeActivity invokes getV1UsersMeActivity operation.
+	//
+	// Own security activity.
+	//
+	// GET /v1/users/me/activity
+	GetV1UsersMeActivity(ctx context.Context, params GetV1UsersMeActivityParams, options ...RequestOption) (GetV1UsersMeActivityRes, error)
+	// GetV1UsersMeConsents invokes getV1UsersMeConsents operation.
+	//
+	// Read own consents.
+	//
+	// GET /v1/users/me/consents
+	GetV1UsersMeConsents(ctx context.Context, options ...RequestOption) (GetV1UsersMeConsentsRes, error)
+	// GetV1UsersMeExportByJobId invokes getV1UsersMeExportByJobId operation.
+	//
+	// Export status/download.
+	//
+	// GET /v1/users/me/export/{job_id}
+	GetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams, options ...RequestOption) (GetV1UsersMeExportByJobIdRes, error)
+	// PatchV1SessionsBySessionId invokes patchV1SessionsBySessionId operation.
+	//
+	// Rename a session/device.
+	//
+	// PATCH /v1/sessions/{session_id}
+	PatchV1SessionsBySessionId(ctx context.Context, request *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams, options ...RequestOption) (PatchV1SessionsBySessionIdRes, error)
+	// PatchV1UsersMe invokes patchV1UsersMe operation.
+	//
+	// Update the core profile.
+	//
+	// PATCH /v1/users/me
+	PatchV1UsersMe(ctx context.Context, request *PatchV1UsersMeReq, options ...RequestOption) (PatchV1UsersMeRes, error)
+	// PostV1AuthIdentitiesMergeConfirm invokes postV1AuthIdentitiesMergeConfirm operation.
+	//
+	// Confirm a merge.
+	//
+	// POST /v1/auth/identities/merge/confirm
+	PostV1AuthIdentitiesMergeConfirm(ctx context.Context, request *PostV1AuthIdentitiesMergeConfirmReq, options ...RequestOption) (PostV1AuthIdentitiesMergeConfirmRes, error)
+	// PostV1AuthIdentitiesMergeStart invokes postV1AuthIdentitiesMergeStart operation.
+	//
+	// Start an account merge.
+	//
+	// POST /v1/auth/identities/merge/start
+	PostV1AuthIdentitiesMergeStart(ctx context.Context, request *PostV1AuthIdentitiesMergeStartReq, options ...RequestOption) (PostV1AuthIdentitiesMergeStartRes, error)
+	// PostV1SessionsBySessionIdTrust invokes postV1SessionsBySessionIdTrust operation.
+	//
+	// Mark a device trusted (MFA).
+	//
+	// POST /v1/sessions/{session_id}/trust
+	PostV1SessionsBySessionIdTrust(ctx context.Context, request *PostV1SessionsBySessionIdTrustReq, params PostV1SessionsBySessionIdTrustParams, options ...RequestOption) (PostV1SessionsBySessionIdTrustRes, error)
+	// PostV1UsersMeConsents invokes postV1UsersMeConsents operation.
+	//
+	// Accept consents.
+	//
+	// POST /v1/users/me/consents
+	PostV1UsersMeConsents(ctx context.Context, request *PostV1UsersMeConsentsReq, options ...RequestOption) (PostV1UsersMeConsentsRes, error)
+	// PostV1UsersMeExport invokes postV1UsersMeExport operation.
+	//
+	// Start a GDPR export.
+	//
+	// POST /v1/users/me/export
+	PostV1UsersMeExport(ctx context.Context, options ...RequestOption) (PostV1UsersMeExportRes, error)
+}
+
+// AdminInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Admin
+type AdminInvoker interface {
 	// DeleteV1ProjectsByProjectIdAdminAppsByAppId invokes deleteV1ProjectsByProjectIdAdminAppsByAppId operation.
 	//
 	// Delete an app client.
@@ -147,12 +237,6 @@ type Invoker interface {
 	//
 	// DELETE /v1/projects/{project_id}/admin/apps/{app_id}/secrets/{secret_id}
 	DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes, error)
-	// DeleteV1ProjectsByProjectIdAdminDomainsByDomainId invokes deleteV1ProjectsByProjectIdAdminDomainsByDomainId operation.
-	//
-	// Remove a domain.
-	//
-	// DELETE /v1/projects/{project_id}/admin/domains/{domain_id}
-	DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes, error)
 	// DeleteV1ProjectsByProjectIdAdminEmailProvidersById invokes deleteV1ProjectsByProjectIdAdminEmailProvidersById operation.
 	//
 	// Delete email provider.
@@ -189,36 +273,12 @@ type Invoker interface {
 	//
 	// DELETE /v1/projects/{project_id}/admin/risk/rules/{rule_id}
 	DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes, error)
-	// DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId invokes deleteV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
-	//
-	// Delete a service account.
-	//
-	// DELETE /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-	DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error)
-	// DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId invokes deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId operation.
-	//
-	// Revoke a secret.
-	//
-	// DELETE /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets/{secret_id}
-	DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes, error)
 	// DeleteV1ProjectsByProjectIdAdminSmsProvidersById invokes deleteV1ProjectsByProjectIdAdminSmsProvidersById operation.
 	//
 	// Delete SMS provider.
 	//
 	// DELETE /v1/projects/{project_id}/admin/sms-providers/{id}
 	DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes, error)
-	// DeleteV1ProjectsByProjectIdAdminSsoConnectionsById invokes deleteV1ProjectsByProjectIdAdminSsoConnectionsById operation.
-	//
-	// Delete a connection.
-	//
-	// DELETE /v1/projects/{project_id}/admin/sso/connections/{id}
-	DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error)
-	// DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId invokes deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId operation.
-	//
-	// Revoke a SCIM token.
-	//
-	// DELETE /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens/{token_id}
-	DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes, error)
 	// DeleteV1ProjectsByProjectIdAdminTokenProfilesById invokes deleteV1ProjectsByProjectIdAdminTokenProfilesById operation.
 	//
 	// Delete a token profile.
@@ -255,246 +315,12 @@ type Invoker interface {
 	//
 	// DELETE /v1/projects/{project_id}/admin/webhooks/{id}
 	DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminWebhooksByIdRes, error)
-	// DeleteV1ScimV2ByConnectionIdGroupsByGroupId invokes deleteV1ScimV2ByConnectionIdGroupsByGroupId operation.
-	//
-	// Delete a SCIM group (forwarded downstream).
-	//
-	// DELETE /v1/scim/v2/{connection_id}/Groups/{group_id}
-	DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (DeleteV1ScimV2ByConnectionIdGroupsByGroupIdRes, error)
-	// DeleteV1ScimV2ByConnectionIdUsersByScimUserId invokes deleteV1ScimV2ByConnectionIdUsersByScimUserId operation.
-	//
-	// Deprovision a user.
-	//
-	// DELETE /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-	DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (DeleteV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
-	// DeleteV1Sessions invokes deleteV1Sessions operation.
-	//
-	// Revoke multiple own sessions.
-	//
-	// DELETE /v1/sessions
-	DeleteV1Sessions(ctx context.Context, request OptDeleteV1SessionsReq, options ...RequestOption) (DeleteV1SessionsRes, error)
-	// DeleteV1SessionsBySessionId invokes deleteV1SessionsBySessionId operation.
-	//
-	// Revoke a session.
-	//
-	// DELETE /v1/sessions/{session_id}
-	DeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams, options ...RequestOption) (DeleteV1SessionsBySessionIdRes, error)
-	// DeleteV1UsersMe invokes deleteV1UsersMe operation.
-	//
-	// Delete own account (step-up).
-	//
-	// DELETE /v1/users/me
-	DeleteV1UsersMe(ctx context.Context, request OptDeleteV1UsersMeReq, options ...RequestOption) (DeleteV1UsersMeRes, error)
-	// GetMgmtV1Projects invokes getMgmtV1Projects operation.
-	//
-	// List/search projects.
-	//
-	// GET /mgmt/v1/projects
-	GetMgmtV1Projects(ctx context.Context, params GetMgmtV1ProjectsParams, options ...RequestOption) (GetMgmtV1ProjectsRes, error)
-	// GetMgmtV1ProjectsByProjectId invokes getMgmtV1ProjectsByProjectId operation.
-	//
-	// Get a project.
-	//
-	// GET /mgmt/v1/projects/{project_id}
-	GetMgmtV1ProjectsByProjectId(ctx context.Context, params GetMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdRes, error)
-	// GetMgmtV1ProjectsByProjectIdAdminTokens invokes getMgmtV1ProjectsByProjectIdAdminTokens operation.
-	//
-	// List admin tokens.
-	//
-	// GET /mgmt/v1/projects/{project_id}/admin-tokens
-	GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params GetMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdAdminTokensRes, error)
-	// GetMgmtV1ProjectsByProjectIdConfigExport invokes getMgmtV1ProjectsByProjectIdConfigExport operation.
-	//
-	// Export project config (IaC; secrets redacted).
-	//
-	// GET /mgmt/v1/projects/{project_id}/config:export
-	GetMgmtV1ProjectsByProjectIdConfigExport(ctx context.Context, params GetMgmtV1ProjectsByProjectIdConfigExportParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdConfigExportRes, error)
-	// GetMgmtV1ProjectsByProjectIdEnvironments invokes getMgmtV1ProjectsByProjectIdEnvironments operation.
-	//
-	// List environments.
-	//
-	// GET /mgmt/v1/projects/{project_id}/environments
-	GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdEnvironmentsRes, error)
-	// GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv invokes getMgmtV1ProjectsByProjectIdEnvironmentsByEnv operation.
-	//
-	// Get an environment.
-	//
-	// GET /mgmt/v1/projects/{project_id}/environments/{env}
-	GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, error)
-	// GetMgmtV1ProjectsByProjectIdFeatures invokes getMgmtV1ProjectsByProjectIdFeatures operation.
-	//
-	// Get operator feature gates.
-	//
-	// GET /mgmt/v1/projects/{project_id}/features
-	GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params GetMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdFeaturesRes, error)
-	// GetOauth2Authorize invokes getOauth2Authorize operation.
-	//
-	// Authorization endpoint (headless; may redirect to interaction).
-	//
-	// GET /oauth2/authorize
-	GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, options ...RequestOption) (*GetOauth2AuthorizeFound, error)
-	// GetOauth2Logout invokes getOauth2Logout operation.
-	//
-	// RP-initiated logout.
-	//
-	// GET /oauth2/logout
-	GetOauth2Logout(ctx context.Context, params GetOauth2LogoutParams, options ...RequestOption) (*GetOauth2LogoutFound, error)
-	// GetOauth2Userinfo invokes getOauth2Userinfo operation.
-	//
-	// OIDC UserInfo.
-	//
-	// GET /oauth2/userinfo
-	GetOauth2Userinfo(ctx context.Context, options ...RequestOption) (GetOauth2UserinfoRes, error)
-	// GetPByProjectIdEByEnvWellKnownJwksJson invokes getPByProjectIdEByEnvWellKnownJwksJson operation.
-	//
-	// JWKS public keys.
-	//
-	// GET /p/{project_id}/e/{env}/.well-known/jwks.json
-	GetPByProjectIdEByEnvWellKnownJwksJson(ctx context.Context, params GetPByProjectIdEByEnvWellKnownJwksJsonParams, options ...RequestOption) (GetPByProjectIdEByEnvWellKnownJwksJsonOK, error)
-	// GetPByProjectIdEByEnvWellKnownOpenidConfiguration invokes getPByProjectIdEByEnvWellKnownOpenidConfiguration operation.
-	//
-	// OIDC discovery document.
-	//
-	// GET /p/{project_id}/e/{env}/.well-known/openid-configuration
-	GetPByProjectIdEByEnvWellKnownOpenidConfiguration(ctx context.Context, params GetPByProjectIdEByEnvWellKnownOpenidConfigurationParams, options ...RequestOption) (GetPByProjectIdEByEnvWellKnownOpenidConfigurationOK, error)
-	// GetV1AccountCapabilities invokes getV1AccountCapabilities operation.
-	//
-	// What this user may self-manage.
-	//
-	// GET /v1/account/capabilities
-	GetV1AccountCapabilities(ctx context.Context, options ...RequestOption) (GetV1AccountCapabilitiesRes, error)
-	// GetV1AuthEmailChangeCancel invokes getV1AuthEmailChangeCancel operation.
-	//
-	// Cancel a pending email change (from old-address link).
-	//
-	// GET /v1/auth/email/change/cancel
-	GetV1AuthEmailChangeCancel(ctx context.Context, params GetV1AuthEmailChangeCancelParams, options ...RequestOption) (*Ok, error)
-	// GetV1AuthEmailVerificationCallback invokes getV1AuthEmailVerificationCallback operation.
-	//
-	// Email link callback (redirects with code).
-	//
-	// GET /v1/auth/email/verification/callback
-	GetV1AuthEmailVerificationCallback(ctx context.Context, params GetV1AuthEmailVerificationCallbackParams, options ...RequestOption) (*GetV1AuthEmailVerificationCallbackFound, error)
-	// GetV1AuthIdentities invokes getV1AuthIdentities operation.
-	//
-	// List linked identities.
-	//
-	// GET /v1/auth/identities
-	GetV1AuthIdentities(ctx context.Context, options ...RequestOption) (GetV1AuthIdentitiesRes, error)
-	// GetV1AuthMagicLinkCallback invokes getV1AuthMagicLinkCallback operation.
-	//
-	// Magic-link callback (redirects with code).
-	//
-	// GET /v1/auth/magic-link/callback
-	GetV1AuthMagicLinkCallback(ctx context.Context, params GetV1AuthMagicLinkCallbackParams, options ...RequestOption) (*GetV1AuthMagicLinkCallbackFound, error)
-	// GetV1AuthMfaFactors invokes getV1AuthMfaFactors operation.
-	//
-	// List MFA factors.
-	//
-	// GET /v1/auth/mfa/factors
-	GetV1AuthMfaFactors(ctx context.Context, options ...RequestOption) (GetV1AuthMfaFactorsRes, error)
-	// GetV1AuthOauthByProviderCallback invokes getV1AuthOauthByProviderCallback operation.
-	//
-	// Provider callback (redirects to product with code).
-	//
-	// GET /v1/auth/oauth/{provider}/callback
-	GetV1AuthOauthByProviderCallback(ctx context.Context, params GetV1AuthOauthByProviderCallbackParams, options ...RequestOption) (*GetV1AuthOauthByProviderCallbackFound, error)
-	// GetV1AuthOauthByProviderLinkCallback invokes getV1AuthOauthByProviderLinkCallback operation.
-	//
-	// Link callback (redirects to product).
-	//
-	// GET /v1/auth/oauth/{provider}/link/callback
-	GetV1AuthOauthByProviderLinkCallback(ctx context.Context, params GetV1AuthOauthByProviderLinkCallbackParams, options ...RequestOption) (*GetV1AuthOauthByProviderLinkCallbackFound, error)
-	// GetV1AuthOauthByProviderLinkStart invokes getV1AuthOauthByProviderLinkStart operation.
-	//
-	// Begin linking a provider to the current user.
-	//
-	// GET /v1/auth/oauth/{provider}/link/start
-	GetV1AuthOauthByProviderLinkStart(ctx context.Context, params GetV1AuthOauthByProviderLinkStartParams, options ...RequestOption) (*GetV1AuthOauthByProviderLinkStartFound, error)
-	// GetV1AuthOauthByProviderStart invokes getV1AuthOauthByProviderStart operation.
-	//
-	// Begin OAuth (redirects to provider).
-	//
-	// GET /v1/auth/oauth/{provider}/start
-	GetV1AuthOauthByProviderStart(ctx context.Context, params GetV1AuthOauthByProviderStartParams, options ...RequestOption) (*GetV1AuthOauthByProviderStartFound, error)
-	// GetV1AuthOauthProviders invokes getV1AuthOauthProviders operation.
-	//
-	// List enabled OAuth providers.
-	//
-	// GET /v1/auth/oauth/providers
-	GetV1AuthOauthProviders(ctx context.Context, params GetV1AuthOauthProvidersParams, options ...RequestOption) (*GetV1AuthOauthProvidersOK, error)
-	// GetV1AuthSession invokes getV1AuthSession operation.
-	//
-	// Get current session and user.
-	//
-	// GET /v1/auth/session
-	GetV1AuthSession(ctx context.Context, options ...RequestOption) (GetV1AuthSessionRes, error)
-	// GetV1AuthWebauthnCredentials invokes getV1AuthWebauthnCredentials operation.
-	//
-	// List the user's passkeys.
-	//
-	// GET /v1/auth/webauthn/credentials
-	GetV1AuthWebauthnCredentials(ctx context.Context, options ...RequestOption) (GetV1AuthWebauthnCredentialsRes, error)
-	// GetV1ConfigPublic invokes getV1ConfigPublic operation.
-	//
-	// Unauthenticated; resolved per app client via `X-Client-Id`.
-	//
-	// GET /v1/config/public
-	GetV1ConfigPublic(ctx context.Context, params GetV1ConfigPublicParams, options ...RequestOption) (*PublicConfig, error)
-	// GetV1Csrf invokes getV1Csrf operation.
-	//
-	// Issue a CSRF token (cookie mode).
-	//
-	// GET /v1/csrf
-	GetV1Csrf(ctx context.Context, params GetV1CsrfParams, options ...RequestOption) (*GetV1CsrfOK, error)
-	// GetV1Device invokes getV1Device operation.
-	//
-	// Device verification-page data.
-	//
-	// GET /v1/device
-	GetV1Device(ctx context.Context, params GetV1DeviceParams, options ...RequestOption) (*GetV1DeviceOK, error)
-	// GetV1Health invokes getV1Health operation.
-	//
-	// Aggregate healthcheck.
-	//
-	// GET /v1/health
-	GetV1Health(ctx context.Context, options ...RequestOption) (*GetV1HealthOK, error)
-	// GetV1HealthLive invokes getV1HealthLive operation.
-	//
-	// Liveness probe.
-	//
-	// GET /v1/health/live
-	GetV1HealthLive(ctx context.Context, options ...RequestOption) (*GetV1HealthLiveOK, error)
-	// GetV1HealthReady invokes getV1HealthReady operation.
-	//
-	// Readiness probe.
-	//
-	// GET /v1/health/ready
-	GetV1HealthReady(ctx context.Context, options ...RequestOption) (GetV1HealthReadyRes, error)
-	// GetV1OauthGrants invokes getV1OauthGrants operation.
-	//
-	// List the user's authorized apps.
-	//
-	// GET /v1/oauth/grants
-	GetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams, options ...RequestOption) (GetV1OauthGrantsRes, error)
-	// GetV1OauthInteractionByInteractionId invokes getV1OauthInteractionByInteractionId operation.
-	//
-	// Fetch interaction context.
-	//
-	// GET /v1/oauth/interaction/{interaction_id}
-	GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams, options ...RequestOption) (GetV1OauthInteractionByInteractionIdRes, error)
 	// GetV1ProjectsByProjectIdAdminAccessRequests invokes getV1ProjectsByProjectIdAdminAccessRequests operation.
 	//
 	// List access requests.
 	//
 	// GET /v1/projects/{project_id}/admin/access-requests
 	GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params GetV1ProjectsByProjectIdAdminAccessRequestsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAccessRequestsRes, error)
-	// GetV1ProjectsByProjectIdAdminApiKeys invokes getV1ProjectsByProjectIdAdminApiKeys operation.
-	//
-	// List API keys.
-	//
-	// GET /v1/projects/{project_id}/admin/api-keys
-	GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params GetV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminApiKeysRes, error)
 	// GetV1ProjectsByProjectIdAdminApps invokes getV1ProjectsByProjectIdAdminApps operation.
 	//
 	// List app clients.
@@ -555,12 +381,6 @@ type Invoker interface {
 	//
 	// GET /v1/projects/{project_id}/admin/consents
 	GetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params GetV1ProjectsByProjectIdAdminConsentsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConsentsRes, error)
-	// GetV1ProjectsByProjectIdAdminDomains invokes getV1ProjectsByProjectIdAdminDomains operation.
-	//
-	// List domains.
-	//
-	// GET /v1/projects/{project_id}/admin/domains
-	GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params GetV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminDomainsRes, error)
 	// GetV1ProjectsByProjectIdAdminEmailProviders invokes getV1ProjectsByProjectIdAdminEmailProviders operation.
 	//
 	// List email providers.
@@ -645,42 +465,12 @@ type Invoker interface {
 	//
 	// GET /v1/projects/{project_id}/admin/risk/rules
 	GetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskRulesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminRiskRulesRes, error)
-	// GetV1ProjectsByProjectIdAdminServiceAccounts invokes getV1ProjectsByProjectIdAdminServiceAccounts operation.
-	//
-	// List service accounts.
-	//
-	// GET /v1/projects/{project_id}/admin/service-accounts
-	GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminServiceAccountsRes, error)
-	// GetV1ProjectsByProjectIdAdminServiceAccountsBySaId invokes getV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
-	//
-	// Get a service account.
-	//
-	// GET /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-	GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error)
 	// GetV1ProjectsByProjectIdAdminSmsProviders invokes getV1ProjectsByProjectIdAdminSmsProviders operation.
 	//
 	// List SMS providers.
 	//
 	// GET /v1/projects/{project_id}/admin/sms-providers
 	GetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminSmsProvidersParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSmsProvidersRes, error)
-	// GetV1ProjectsByProjectIdAdminSsoConnections invokes getV1ProjectsByProjectIdAdminSsoConnections operation.
-	//
-	// List SSO connections.
-	//
-	// GET /v1/projects/{project_id}/admin/sso/connections
-	GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsRes, error)
-	// GetV1ProjectsByProjectIdAdminSsoConnectionsById invokes getV1ProjectsByProjectIdAdminSsoConnectionsById operation.
-	//
-	// Get a connection.
-	//
-	// GET /v1/projects/{project_id}/admin/sso/connections/{id}
-	GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error)
-	// GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens invokes getV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens operation.
-	//
-	// List SCIM tokens.
-	//
-	// GET /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens
-	GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, error)
 	// GetV1ProjectsByProjectIdAdminTokenProfiles invokes getV1ProjectsByProjectIdAdminTokenProfiles operation.
 	//
 	// List token profiles.
@@ -735,132 +525,12 @@ type Invoker interface {
 	//
 	// GET /v1/projects/{project_id}/admin/webhooks/{id}
 	GetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhooksByIdRes, error)
-	// GetV1ScimV2ByConnectionIdGroups invokes getV1ScimV2ByConnectionIdGroups operation.
-	//
-	// List SCIM groups (forwarded downstream).
-	//
-	// GET /v1/scim/v2/{connection_id}/Groups
-	GetV1ScimV2ByConnectionIdGroups(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsRes, error)
-	// GetV1ScimV2ByConnectionIdGroupsByGroupId invokes getV1ScimV2ByConnectionIdGroupsByGroupId operation.
-	//
-	// Get a SCIM group (forwarded downstream).
-	//
-	// GET /v1/scim/v2/{connection_id}/Groups/{group_id}
-	GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsByGroupIdRes, error)
-	// GetV1ScimV2ByConnectionIdUsers invokes getV1ScimV2ByConnectionIdUsers operation.
-	//
-	// List SCIM users.
-	//
-	// GET /v1/scim/v2/{connection_id}/Users
-	GetV1ScimV2ByConnectionIdUsers(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersRes, error)
-	// GetV1ScimV2ByConnectionIdUsersByScimUserId invokes getV1ScimV2ByConnectionIdUsersByScimUserId operation.
-	//
-	// Get a SCIM user.
-	//
-	// GET /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-	GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
-	// GetV1Sessions invokes getV1Sessions operation.
-	//
-	// List own sessions.
-	//
-	// GET /v1/sessions
-	GetV1Sessions(ctx context.Context, options ...RequestOption) (GetV1SessionsRes, error)
-	// GetV1SessionsCurrent invokes getV1SessionsCurrent operation.
-	//
-	// Current session details.
-	//
-	// GET /v1/sessions/current
-	GetV1SessionsCurrent(ctx context.Context, options ...RequestOption) (GetV1SessionsCurrentRes, error)
-	// GetV1SsoConnectionsResolve invokes getV1SsoConnectionsResolve operation.
-	//
-	// Resolve an email to its SSO connection.
-	//
-	// GET /v1/sso/connections/resolve
-	GetV1SsoConnectionsResolve(ctx context.Context, params GetV1SsoConnectionsResolveParams, options ...RequestOption) (GetV1SsoConnectionsResolveRes, error)
-	// GetV1SsoOidcByConnectionIdCallback invokes getV1SsoOidcByConnectionIdCallback operation.
-	//
-	// OIDC IdP callback.
-	//
-	// GET /v1/sso/oidc/{connection_id}/callback
-	GetV1SsoOidcByConnectionIdCallback(ctx context.Context, params GetV1SsoOidcByConnectionIdCallbackParams, options ...RequestOption) (*GetV1SsoOidcByConnectionIdCallbackFound, error)
-	// GetV1SsoOidcByConnectionIdStart invokes getV1SsoOidcByConnectionIdStart operation.
-	//
-	// Start enterprise OIDC login.
-	//
-	// GET /v1/sso/oidc/{connection_id}/start
-	GetV1SsoOidcByConnectionIdStart(ctx context.Context, params GetV1SsoOidcByConnectionIdStartParams, options ...RequestOption) (*GetV1SsoOidcByConnectionIdStartFound, error)
-	// GetV1SsoSamlByConnectionIdLogin invokes getV1SsoSamlByConnectionIdLogin operation.
-	//
-	// SP-initiated SAML login (redirect to IdP).
-	//
-	// GET /v1/sso/saml/{connection_id}/login
-	GetV1SsoSamlByConnectionIdLogin(ctx context.Context, params GetV1SsoSamlByConnectionIdLoginParams, options ...RequestOption) (*GetV1SsoSamlByConnectionIdLoginFound, error)
-	// GetV1SsoSamlByConnectionIdMetadata invokes getV1SsoSamlByConnectionIdMetadata operation.
-	//
-	// SP metadata XML.
-	//
-	// GET /v1/sso/saml/{connection_id}/metadata
-	GetV1SsoSamlByConnectionIdMetadata(ctx context.Context, params GetV1SsoSamlByConnectionIdMetadataParams, options ...RequestOption) (GetV1SsoSamlByConnectionIdMetadataOK, error)
 	// GetV1TestMessages invokes getV1TestMessages operation.
 	//
 	// Read captured test-mode messages (inbox).
 	//
 	// GET /v1/test/messages
 	GetV1TestMessages(ctx context.Context, params GetV1TestMessagesParams, options ...RequestOption) (GetV1TestMessagesRes, error)
-	// GetV1TokensCurrent invokes getV1TokensCurrent operation.
-	//
-	// Current token claims.
-	//
-	// GET /v1/tokens/current
-	GetV1TokensCurrent(ctx context.Context, options ...RequestOption) (GetV1TokensCurrentRes, error)
-	// GetV1UsersMe invokes getV1UsersMe operation.
-	//
-	// Get the current user.
-	//
-	// GET /v1/users/me
-	GetV1UsersMe(ctx context.Context, options ...RequestOption) (GetV1UsersMeRes, error)
-	// GetV1UsersMeActivity invokes getV1UsersMeActivity operation.
-	//
-	// Own security activity.
-	//
-	// GET /v1/users/me/activity
-	GetV1UsersMeActivity(ctx context.Context, params GetV1UsersMeActivityParams, options ...RequestOption) (GetV1UsersMeActivityRes, error)
-	// GetV1UsersMeConsents invokes getV1UsersMeConsents operation.
-	//
-	// Read own consents.
-	//
-	// GET /v1/users/me/consents
-	GetV1UsersMeConsents(ctx context.Context, options ...RequestOption) (GetV1UsersMeConsentsRes, error)
-	// GetV1UsersMeExportByJobId invokes getV1UsersMeExportByJobId operation.
-	//
-	// Export status/download.
-	//
-	// GET /v1/users/me/export/{job_id}
-	GetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams, options ...RequestOption) (GetV1UsersMeExportByJobIdRes, error)
-	// PatchMgmtV1ProjectsByProjectId invokes patchMgmtV1ProjectsByProjectId operation.
-	//
-	// Update a project.
-	//
-	// PATCH /mgmt/v1/projects/{project_id}
-	PatchMgmtV1ProjectsByProjectId(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdReq, params PatchMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (PatchMgmtV1ProjectsByProjectIdRes, error)
-	// PatchMgmtV1ProjectsByProjectIdFeatures invokes patchMgmtV1ProjectsByProjectIdFeatures operation.
-	//
-	// Set operator feature gates.
-	//
-	// PATCH /mgmt/v1/projects/{project_id}/features
-	PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdFeaturesReq, params PatchMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (PatchMgmtV1ProjectsByProjectIdFeaturesRes, error)
-	// PatchV1AuthWebauthnCredentialsByCredentialId invokes patchV1AuthWebauthnCredentialsByCredentialId operation.
-	//
-	// Rename a passkey.
-	//
-	// PATCH /v1/auth/webauthn/credentials/{credential_id}
-	PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, request *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (PatchV1AuthWebauthnCredentialsByCredentialIdRes, error)
-	// PatchV1ProjectsByProjectIdAdminApiKeysByKeyId invokes patchV1ProjectsByProjectIdAdminApiKeysByKeyId operation.
-	//
-	// Update key metadata/scopes.
-	//
-	// PATCH /v1/projects/{project_id}/admin/api-keys/{key_id}
-	PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, error)
 	// PatchV1ProjectsByProjectIdAdminAppsByAppId invokes patchV1ProjectsByProjectIdAdminAppsByAppId operation.
 	//
 	// Update an app client.
@@ -927,24 +597,12 @@ type Invoker interface {
 	//
 	// PATCH /v1/projects/{project_id}/admin/risk/rules/{rule_id}
 	PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, request *RiskRule, params PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes, error)
-	// PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId invokes patchV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
-	//
-	// Update a service account.
-	//
-	// PATCH /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-	PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error)
 	// PatchV1ProjectsByProjectIdAdminSmsProvidersById invokes patchV1ProjectsByProjectIdAdminSmsProvidersById operation.
 	//
 	// Update SMS provider.
 	//
 	// PATCH /v1/projects/{project_id}/admin/sms-providers/{id}
 	PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, request *SmsProvider, params PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminSmsProvidersByIdRes, error)
-	// PatchV1ProjectsByProjectIdAdminSsoConnectionsById invokes patchV1ProjectsByProjectIdAdminSsoConnectionsById operation.
-	//
-	// Update a connection.
-	//
-	// PATCH /v1/projects/{project_id}/admin/sso/connections/{id}
-	PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error)
 	// PatchV1ProjectsByProjectIdAdminTokenProfilesById invokes patchV1ProjectsByProjectIdAdminTokenProfilesById operation.
 	//
 	// Update a token profile.
@@ -963,402 +621,6 @@ type Invoker interface {
 	//
 	// PATCH /v1/projects/{project_id}/admin/webhooks/{id}
 	PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminWebhooksByIdRes, error)
-	// PatchV1ScimV2ByConnectionIdGroupsByGroupId invokes patchV1ScimV2ByConnectionIdGroupsByGroupId operation.
-	//
-	// Patch a SCIM group (forwarded downstream).
-	//
-	// PATCH /v1/scim/v2/{connection_id}/Groups/{group_id}
-	PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdGroupsByGroupIdRes, error)
-	// PatchV1ScimV2ByConnectionIdUsersByScimUserId invokes patchV1ScimV2ByConnectionIdUsersByScimUserId operation.
-	//
-	// Patch a SCIM user.
-	//
-	// PATCH /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-	PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
-	// PatchV1SessionsBySessionId invokes patchV1SessionsBySessionId operation.
-	//
-	// Rename a session/device.
-	//
-	// PATCH /v1/sessions/{session_id}
-	PatchV1SessionsBySessionId(ctx context.Context, request *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams, options ...RequestOption) (PatchV1SessionsBySessionIdRes, error)
-	// PatchV1UsersMe invokes patchV1UsersMe operation.
-	//
-	// Update the core profile.
-	//
-	// PATCH /v1/users/me
-	PatchV1UsersMe(ctx context.Context, request *PatchV1UsersMeReq, options ...RequestOption) (PatchV1UsersMeRes, error)
-	// PostMgmtV1Projects invokes postMgmtV1Projects operation.
-	//
-	// Create a project.
-	//
-	// POST /mgmt/v1/projects
-	PostMgmtV1Projects(ctx context.Context, request *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams, options ...RequestOption) (PostMgmtV1ProjectsRes, error)
-	// PostMgmtV1ProjectsByProjectIdAdminTokens invokes postMgmtV1ProjectsByProjectIdAdminTokens operation.
-	//
-	// Mint a project-admin token.
-	//
-	// POST /mgmt/v1/projects/{project_id}/admin-tokens
-	PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdAdminTokensRes, error)
-	// PostMgmtV1ProjectsByProjectIdConfigApply invokes postMgmtV1ProjectsByProjectIdConfigApply operation.
-	//
-	// Apply config (idempotent).
-	//
-	// POST /mgmt/v1/projects/{project_id}/config:apply
-	PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigApplyReq, params PostMgmtV1ProjectsByProjectIdConfigApplyParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigApplyRes, error)
-	// PostMgmtV1ProjectsByProjectIdConfigPlan invokes postMgmtV1ProjectsByProjectIdConfigPlan operation.
-	//
-	// Plan a config apply (diff + drift).
-	//
-	// POST /mgmt/v1/projects/{project_id}/config:plan
-	PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigPlanReq, params PostMgmtV1ProjectsByProjectIdConfigPlanParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigPlanRes, error)
-	// PostMgmtV1ProjectsByProjectIdEnvironments invokes postMgmtV1ProjectsByProjectIdEnvironments operation.
-	//
-	// Create an environment.
-	//
-	// POST /mgmt/v1/projects/{project_id}/environments
-	PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdEnvironmentsRes, error)
-	// PostOauth2BackchannelLogout invokes postOauth2BackchannelLogout operation.
-	//
-	// OIDC back-channel logout.
-	//
-	// POST /oauth2/backchannel-logout
-	PostOauth2BackchannelLogout(ctx context.Context, request *PostOauth2BackchannelLogoutReq, options ...RequestOption) error
-	// PostOauth2DeviceAuthorization invokes postOauth2DeviceAuthorization operation.
-	//
-	// Start the device flow.
-	//
-	// POST /oauth2/device_authorization
-	PostOauth2DeviceAuthorization(ctx context.Context, request *PostOauth2DeviceAuthorizationReq, options ...RequestOption) (PostOauth2DeviceAuthorizationRes, error)
-	// PostOauth2Introspect invokes postOauth2Introspect operation.
-	//
-	// RFC 7662 token introspection.
-	//
-	// POST /oauth2/introspect
-	PostOauth2Introspect(ctx context.Context, request *PostOauth2IntrospectReq, options ...RequestOption) (PostOauth2IntrospectRes, error)
-	// PostOauth2Par invokes postOauth2Par operation.
-	//
-	// Pushed Authorization Request.
-	//
-	// POST /oauth2/par
-	PostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, options ...RequestOption) (PostOauth2ParRes, error)
-	// PostOauth2Revoke invokes postOauth2Revoke operation.
-	//
-	// RFC 7009 token revocation.
-	//
-	// POST /oauth2/revoke
-	PostOauth2Revoke(ctx context.Context, request *PostOauth2RevokeReq, options ...RequestOption) (PostOauth2RevokeRes, error)
-	// PostOauth2Token invokes postOauth2Token operation.
-	//
-	// Token endpoint.
-	//
-	// POST /oauth2/token
-	PostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, options ...RequestOption) (PostOauth2TokenRes, error)
-	// PostV1AuthAccessRequests invokes postV1AuthAccessRequests operation.
-	//
-	// Submit an access request (request-access mode).
-	//
-	// POST /v1/auth/access-requests
-	PostV1AuthAccessRequests(ctx context.Context, request *PostV1AuthAccessRequestsReq, params PostV1AuthAccessRequestsParams, options ...RequestOption) (*PostV1AuthAccessRequestsOK, error)
-	// PostV1AuthEmailChangeStart invokes postV1AuthEmailChangeStart operation.
-	//
-	// Start an email change (step-up; notifies old address).
-	//
-	// POST /v1/auth/email/change/start
-	PostV1AuthEmailChangeStart(ctx context.Context, request *PostV1AuthEmailChangeStartReq, options ...RequestOption) (PostV1AuthEmailChangeStartRes, error)
-	// PostV1AuthEmailChangeVerify invokes postV1AuthEmailChangeVerify operation.
-	//
-	// Confirm the new email.
-	//
-	// POST /v1/auth/email/change/verify
-	PostV1AuthEmailChangeVerify(ctx context.Context, request *PostV1AuthEmailChangeVerifyReq, options ...RequestOption) (PostV1AuthEmailChangeVerifyRes, error)
-	// PostV1AuthEmailVerificationStart invokes postV1AuthEmailVerificationStart operation.
-	//
-	// Send an email verification challenge.
-	//
-	// POST /v1/auth/email/verification/start
-	PostV1AuthEmailVerificationStart(ctx context.Context, request *PostV1AuthEmailVerificationStartReq, params PostV1AuthEmailVerificationStartParams, options ...RequestOption) (PostV1AuthEmailVerificationStartRes, error)
-	// PostV1AuthEmailVerificationVerify invokes postV1AuthEmailVerificationVerify operation.
-	//
-	// Verify email by code or token.
-	//
-	// POST /v1/auth/email/verification/verify
-	PostV1AuthEmailVerificationVerify(ctx context.Context, request *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams, options ...RequestOption) (PostV1AuthEmailVerificationVerifyRes, error)
-	// PostV1AuthGuest invokes postV1AuthGuest operation.
-	//
-	// Create an anonymous guest user and session.
-	//
-	// POST /v1/auth/guest
-	PostV1AuthGuest(ctx context.Context, request *PostV1AuthGuestReq, params PostV1AuthGuestParams, options ...RequestOption) (PostV1AuthGuestRes, error)
-	// PostV1AuthIdentitiesMergeConfirm invokes postV1AuthIdentitiesMergeConfirm operation.
-	//
-	// Confirm a merge.
-	//
-	// POST /v1/auth/identities/merge/confirm
-	PostV1AuthIdentitiesMergeConfirm(ctx context.Context, request *PostV1AuthIdentitiesMergeConfirmReq, options ...RequestOption) (PostV1AuthIdentitiesMergeConfirmRes, error)
-	// PostV1AuthIdentitiesMergeStart invokes postV1AuthIdentitiesMergeStart operation.
-	//
-	// Start an account merge.
-	//
-	// POST /v1/auth/identities/merge/start
-	PostV1AuthIdentitiesMergeStart(ctx context.Context, request *PostV1AuthIdentitiesMergeStartReq, options ...RequestOption) (PostV1AuthIdentitiesMergeStartRes, error)
-	// PostV1AuthMagicLinkStart invokes postV1AuthMagicLinkStart operation.
-	//
-	// Send a magic link.
-	//
-	// POST /v1/auth/magic-link/start
-	PostV1AuthMagicLinkStart(ctx context.Context, request *MagicLinkStartRequest, params PostV1AuthMagicLinkStartParams, options ...RequestOption) (PostV1AuthMagicLinkStartRes, error)
-	// PostV1AuthMagicLinkVerify invokes postV1AuthMagicLinkVerify operation.
-	//
-	// Headless verify of a magic-link token.
-	//
-	// POST /v1/auth/magic-link/verify
-	PostV1AuthMagicLinkVerify(ctx context.Context, request *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams, options ...RequestOption) (PostV1AuthMagicLinkVerifyRes, error)
-	// PostV1AuthMfaChallenge invokes postV1AuthMfaChallenge operation.
-	//
-	// Create an MFA challenge.
-	//
-	// POST /v1/auth/mfa/challenge
-	PostV1AuthMfaChallenge(ctx context.Context, request OptPostV1AuthMfaChallengeReq, params PostV1AuthMfaChallengeParams, options ...RequestOption) (*Challenge, error)
-	// PostV1AuthMfaEmailEnroll invokes postV1AuthMfaEmailEnroll operation.
-	//
-	// Enroll an email factor.
-	//
-	// POST /v1/auth/mfa/email/enroll
-	PostV1AuthMfaEmailEnroll(ctx context.Context, request *PostV1AuthMfaEmailEnrollReq, options ...RequestOption) (PostV1AuthMfaEmailEnrollRes, error)
-	// PostV1AuthMfaRecoveryCodesGenerate invokes postV1AuthMfaRecoveryCodesGenerate operation.
-	//
-	// Generate recovery codes (AAL2).
-	//
-	// POST /v1/auth/mfa/recovery-codes/generate
-	PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, request OptPostV1AuthMfaRecoveryCodesGenerateReq, options ...RequestOption) (PostV1AuthMfaRecoveryCodesGenerateRes, error)
-	// PostV1AuthMfaRecoveryCodesVerify invokes postV1AuthMfaRecoveryCodesVerify operation.
-	//
-	// Use a recovery code.
-	//
-	// POST /v1/auth/mfa/recovery-codes/verify
-	PostV1AuthMfaRecoveryCodesVerify(ctx context.Context, request *PostV1AuthMfaRecoveryCodesVerifyReq, params PostV1AuthMfaRecoveryCodesVerifyParams, options ...RequestOption) (*AuthResult, error)
-	// PostV1AuthMfaSmsEnroll invokes postV1AuthMfaSmsEnroll operation.
-	//
-	// Enroll an SMS factor.
-	//
-	// POST /v1/auth/mfa/sms/enroll
-	PostV1AuthMfaSmsEnroll(ctx context.Context, request *PostV1AuthMfaSmsEnrollReq, options ...RequestOption) (PostV1AuthMfaSmsEnrollRes, error)
-	// PostV1AuthMfaTotpEnroll invokes postV1AuthMfaTotpEnroll operation.
-	//
-	// Start TOTP enrollment.
-	//
-	// POST /v1/auth/mfa/totp/enroll
-	PostV1AuthMfaTotpEnroll(ctx context.Context, request OptPostV1AuthMfaTotpEnrollReq, options ...RequestOption) (PostV1AuthMfaTotpEnrollRes, error)
-	// PostV1AuthMfaTotpVerify invokes postV1AuthMfaTotpVerify operation.
-	//
-	// Confirm TOTP enrollment.
-	//
-	// POST /v1/auth/mfa/totp/verify
-	PostV1AuthMfaTotpVerify(ctx context.Context, request *PostV1AuthMfaTotpVerifyReq, options ...RequestOption) (PostV1AuthMfaTotpVerifyRes, error)
-	// PostV1AuthMfaVerify invokes postV1AuthMfaVerify operation.
-	//
-	// Verify an MFA challenge.
-	//
-	// POST /v1/auth/mfa/verify
-	PostV1AuthMfaVerify(ctx context.Context, request *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams, options ...RequestOption) (PostV1AuthMfaVerifyRes, error)
-	// PostV1AuthMfaWebauthnEnrollOptions invokes postV1AuthMfaWebauthnEnrollOptions operation.
-	//
-	// Start a WebAuthn MFA factor.
-	//
-	// POST /v1/auth/mfa/webauthn/enroll/options
-	PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, request OptPostV1AuthMfaWebauthnEnrollOptionsReq, options ...RequestOption) (PostV1AuthMfaWebauthnEnrollOptionsRes, error)
-	// PostV1AuthMfaWebauthnEnrollVerify invokes postV1AuthMfaWebauthnEnrollVerify operation.
-	//
-	// Verify a WebAuthn MFA factor.
-	//
-	// POST /v1/auth/mfa/webauthn/enroll/verify
-	PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, request *PostV1AuthMfaWebauthnEnrollVerifyReq, options ...RequestOption) (PostV1AuthMfaWebauthnEnrollVerifyRes, error)
-	// PostV1AuthOauthByProviderUnlink invokes postV1AuthOauthByProviderUnlink operation.
-	//
-	// Unlink a provider identity (step-up).
-	//
-	// POST /v1/auth/oauth/{provider}/unlink
-	PostV1AuthOauthByProviderUnlink(ctx context.Context, request *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams, options ...RequestOption) (PostV1AuthOauthByProviderUnlinkRes, error)
-	// PostV1AuthOauthExchange invokes postV1AuthOauthExchange operation.
-	//
-	// Exchange OAuth code (alias of token/exchange).
-	//
-	// POST /v1/auth/oauth/exchange
-	PostV1AuthOauthExchange(ctx context.Context, request *PostV1AuthOauthExchangeReq, params PostV1AuthOauthExchangeParams, options ...RequestOption) (*AuthResult, error)
-	// PostV1AuthOtpStart invokes postV1AuthOtpStart operation.
-	//
-	// Start OTP login/signup/verify.
-	//
-	// POST /v1/auth/otp/start
-	PostV1AuthOtpStart(ctx context.Context, request *OtpStartRequest, params PostV1AuthOtpStartParams, options ...RequestOption) (PostV1AuthOtpStartRes, error)
-	// PostV1AuthOtpVerify invokes postV1AuthOtpVerify operation.
-	//
-	// Verify OTP.
-	//
-	// POST /v1/auth/otp/verify
-	PostV1AuthOtpVerify(ctx context.Context, request *OtpVerifyRequest, params PostV1AuthOtpVerifyParams, options ...RequestOption) (PostV1AuthOtpVerifyRes, error)
-	// PostV1AuthPasswordChange invokes postV1AuthPasswordChange operation.
-	//
-	// Change a known password.
-	//
-	// POST /v1/auth/password/change
-	PostV1AuthPasswordChange(ctx context.Context, request *PasswordChangeRequest, options ...RequestOption) (PostV1AuthPasswordChangeRes, error)
-	// PostV1AuthPasswordCheck invokes postV1AuthPasswordCheck operation.
-	//
-	// Check a candidate password against policy.
-	//
-	// POST /v1/auth/password/check
-	PostV1AuthPasswordCheck(ctx context.Context, request *PostV1AuthPasswordCheckReq, params PostV1AuthPasswordCheckParams, options ...RequestOption) (*PostV1AuthPasswordCheckOK, error)
-	// PostV1AuthPasswordForgot invokes postV1AuthPasswordForgot operation.
-	//
-	// Start a password reset.
-	//
-	// POST /v1/auth/password/forgot
-	PostV1AuthPasswordForgot(ctx context.Context, request *PasswordForgotRequest, params PostV1AuthPasswordForgotParams, options ...RequestOption) (PostV1AuthPasswordForgotRes, error)
-	// PostV1AuthPasswordReset invokes postV1AuthPasswordReset operation.
-	//
-	// Reset by token or code.
-	//
-	// POST /v1/auth/password/reset
-	PostV1AuthPasswordReset(ctx context.Context, request *PasswordResetRequest, params PostV1AuthPasswordResetParams, options ...RequestOption) (PostV1AuthPasswordResetRes, error)
-	// PostV1AuthPasswordVerify invokes postV1AuthPasswordVerify operation.
-	//
-	// Verify current password (step-up).
-	//
-	// POST /v1/auth/password/verify
-	PostV1AuthPasswordVerify(ctx context.Context, request *PostV1AuthPasswordVerifyReq, options ...RequestOption) (PostV1AuthPasswordVerifyRes, error)
-	// PostV1AuthPhoneChangeStart invokes postV1AuthPhoneChangeStart operation.
-	//
-	// Start a phone change.
-	//
-	// POST /v1/auth/phone/change/start
-	PostV1AuthPhoneChangeStart(ctx context.Context, request *PostV1AuthPhoneChangeStartReq, options ...RequestOption) (PostV1AuthPhoneChangeStartRes, error)
-	// PostV1AuthPhoneChangeVerify invokes postV1AuthPhoneChangeVerify operation.
-	//
-	// Confirm the new phone.
-	//
-	// POST /v1/auth/phone/change/verify
-	PostV1AuthPhoneChangeVerify(ctx context.Context, request *PostV1AuthPhoneChangeVerifyReq, options ...RequestOption) (PostV1AuthPhoneChangeVerifyRes, error)
-	// PostV1AuthPhoneVerificationStart invokes postV1AuthPhoneVerificationStart operation.
-	//
-	// Send an SMS/WhatsApp verification code.
-	//
-	// POST /v1/auth/phone/verification/start
-	PostV1AuthPhoneVerificationStart(ctx context.Context, request *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams, options ...RequestOption) (PostV1AuthPhoneVerificationStartRes, error)
-	// PostV1AuthPhoneVerificationVerify invokes postV1AuthPhoneVerificationVerify operation.
-	//
-	// Verify a phone code.
-	//
-	// POST /v1/auth/phone/verification/verify
-	PostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, options ...RequestOption) (PostV1AuthPhoneVerificationVerifyRes, error)
-	// PostV1AuthSessionStepUp invokes postV1AuthSessionStepUp operation.
-	//
-	// Begin step-up authentication.
-	//
-	// POST /v1/auth/session/step-up
-	PostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, options ...RequestOption) (PostV1AuthSessionStepUpRes, error)
-	// PostV1AuthSessionSwitchGroup invokes postV1AuthSessionSwitchGroup operation.
-	//
-	// Re-issues a token with a new active-group claim. Membership is validated externally.
-	//
-	// POST /v1/auth/session/switch-group
-	PostV1AuthSessionSwitchGroup(ctx context.Context, request *PostV1AuthSessionSwitchGroupReq, options ...RequestOption) (PostV1AuthSessionSwitchGroupRes, error)
-	// PostV1AuthSignInPassword invokes postV1AuthSignInPassword operation.
-	//
-	// Sign in with password.
-	//
-	// POST /v1/auth/sign-in/password
-	PostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, options ...RequestOption) (PostV1AuthSignInPasswordRes, error)
-	// PostV1AuthSignOut invokes postV1AuthSignOut operation.
-	//
-	// Revoke the current session.
-	//
-	// POST /v1/auth/sign-out
-	PostV1AuthSignOut(ctx context.Context, request OptPostV1AuthSignOutReq, options ...RequestOption) (PostV1AuthSignOutRes, error)
-	// PostV1AuthSignOutAll invokes postV1AuthSignOutAll operation.
-	//
-	// Revoke all of the user's sessions.
-	//
-	// POST /v1/auth/sign-out-all
-	PostV1AuthSignOutAll(ctx context.Context, request OptPostV1AuthSignOutAllReq, options ...RequestOption) (PostV1AuthSignOutAllRes, error)
-	// PostV1AuthSignUp invokes postV1AuthSignUp operation.
-	//
-	// Register a user.
-	//
-	// POST /v1/auth/sign-up
-	PostV1AuthSignUp(ctx context.Context, request *SignUpRequest, params PostV1AuthSignUpParams, options ...RequestOption) (PostV1AuthSignUpRes, error)
-	// PostV1AuthTokenExchange invokes postV1AuthTokenExchange operation.
-	//
-	// Exchange a browser-flow auth_code for a session.
-	//
-	// POST /v1/auth/token/exchange
-	PostV1AuthTokenExchange(ctx context.Context, request *CodeExchangeRequest, params PostV1AuthTokenExchangeParams, options ...RequestOption) (PostV1AuthTokenExchangeRes, error)
-	// PostV1AuthTokenRefresh invokes postV1AuthTokenRefresh operation.
-	//
-	// Rotate refresh token, issue new access token.
-	//
-	// POST /v1/auth/token/refresh
-	PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, options ...RequestOption) (PostV1AuthTokenRefreshRes, error)
-	// PostV1AuthWebauthnLoginOptions invokes postV1AuthWebauthnLoginOptions operation.
-	//
-	// Create a passkey login challenge.
-	//
-	// POST /v1/auth/webauthn/login/options
-	PostV1AuthWebauthnLoginOptions(ctx context.Context, request OptPostV1AuthWebauthnLoginOptionsReq, params PostV1AuthWebauthnLoginOptionsParams, options ...RequestOption) (*PostV1AuthWebauthnLoginOptionsOK, error)
-	// PostV1AuthWebauthnLoginVerify invokes postV1AuthWebauthnLoginVerify operation.
-	//
-	// Verify a passkey assertion.
-	//
-	// POST /v1/auth/webauthn/login/verify
-	PostV1AuthWebauthnLoginVerify(ctx context.Context, request *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams, options ...RequestOption) (PostV1AuthWebauthnLoginVerifyRes, error)
-	// PostV1AuthWebauthnRegisterOptions invokes postV1AuthWebauthnRegisterOptions operation.
-	//
-	// Create a passkey registration challenge.
-	//
-	// POST /v1/auth/webauthn/register/options
-	PostV1AuthWebauthnRegisterOptions(ctx context.Context, request OptPostV1AuthWebauthnRegisterOptionsReq, options ...RequestOption) (PostV1AuthWebauthnRegisterOptionsRes, error)
-	// PostV1AuthWebauthnRegisterVerify invokes postV1AuthWebauthnRegisterVerify operation.
-	//
-	// Verify a newly created passkey.
-	//
-	// POST /v1/auth/webauthn/register/verify
-	PostV1AuthWebauthnRegisterVerify(ctx context.Context, request *PostV1AuthWebauthnRegisterVerifyReq, options ...RequestOption) (PostV1AuthWebauthnRegisterVerifyRes, error)
-	// PostV1ChallengesCaptchaVerify invokes postV1ChallengesCaptchaVerify operation.
-	//
-	// Verify a captcha token.
-	//
-	// POST /v1/challenges/captcha/verify
-	PostV1ChallengesCaptchaVerify(ctx context.Context, request *PostV1ChallengesCaptchaVerifyReq, options ...RequestOption) (*PostV1ChallengesCaptchaVerifyOK, error)
-	// PostV1DeviceApprove invokes postV1DeviceApprove operation.
-	//
-	// Approve a device code.
-	//
-	// POST /v1/device/approve
-	PostV1DeviceApprove(ctx context.Context, request *PostV1DeviceApproveReq, options ...RequestOption) (PostV1DeviceApproveRes, error)
-	// PostV1DeviceDeny invokes postV1DeviceDeny operation.
-	//
-	// Deny a device code.
-	//
-	// POST /v1/device/deny
-	PostV1DeviceDeny(ctx context.Context, request *PostV1DeviceDenyReq, options ...RequestOption) (PostV1DeviceDenyRes, error)
-	// PostV1OauthInteractionByInteractionIdConsent invokes postV1OauthInteractionByInteractionIdConsent operation.
-	//
-	// Record consent.
-	//
-	// POST /v1/oauth/interaction/{interaction_id}/consent
-	PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, request *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams, options ...RequestOption) (PostV1OauthInteractionByInteractionIdConsentRes, error)
-	// PostV1OauthInteractionByInteractionIdLogin invokes postV1OauthInteractionByInteractionIdLogin operation.
-	//
-	// Attach the authenticated user to the interaction.
-	//
-	// POST /v1/oauth/interaction/{interaction_id}/login
-	PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams, options ...RequestOption) (PostV1OauthInteractionByInteractionIdLoginRes, error)
-	// PostV1OauthInteractionByInteractionIdReject invokes postV1OauthInteractionByInteractionIdReject operation.
-	//
-	// Cancel the interaction.
-	//
-	// POST /v1/oauth/interaction/{interaction_id}/reject
-	PostV1OauthInteractionByInteractionIdReject(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdRejectReq, params PostV1OauthInteractionByInteractionIdRejectParams, options ...RequestOption) (*PostV1OauthInteractionByInteractionIdRejectOK, error)
 	// PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove invokes postV1ProjectsByProjectIdAdminAccessRequestsByIdApprove operation.
 	//
 	// Approve an access request.
@@ -1371,18 +633,6 @@ type Invoker interface {
 	//
 	// POST /v1/projects/{project_id}/admin/access-requests/{id}/deny
 	PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyRes, error)
-	// PostV1ProjectsByProjectIdAdminApiKeys invokes postV1ProjectsByProjectIdAdminApiKeys operation.
-	//
-	// Create an API key.
-	//
-	// POST /v1/projects/{project_id}/admin/api-keys
-	PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, request *PostV1ProjectsByProjectIdAdminApiKeysReq, params PostV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminApiKeysRes, error)
-	// PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate invokes postV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate operation.
-	//
-	// Rotate the key secret.
-	//
-	// POST /v1/projects/{project_id}/admin/api-keys/{key_id}/rotate
-	PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes, error)
 	// PostV1ProjectsByProjectIdAdminApps invokes postV1ProjectsByProjectIdAdminApps operation.
 	//
 	// Create an app client.
@@ -1401,18 +651,6 @@ type Invoker interface {
 	//
 	// POST /v1/projects/{project_id}/admin/audit/export
 	PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAuditExportReq, params PostV1ProjectsByProjectIdAdminAuditExportParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAuditExportRes, error)
-	// PostV1ProjectsByProjectIdAdminDomains invokes postV1ProjectsByProjectIdAdminDomains operation.
-	//
-	// Add a domain.
-	//
-	// POST /v1/projects/{project_id}/admin/domains
-	PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, request *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminDomainsRes, error)
-	// PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify invokes postV1ProjectsByProjectIdAdminDomainsByDomainIdVerify operation.
-	//
-	// Verify a domain via DNS.
-	//
-	// POST /v1/projects/{project_id}/admin/domains/{domain_id}/verify
-	PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes, error)
 	// PostV1ProjectsByProjectIdAdminEmailProviders invokes postV1ProjectsByProjectIdAdminEmailProviders operation.
 	//
 	// Create email provider.
@@ -1497,48 +735,12 @@ type Invoker interface {
 	//
 	// POST /v1/projects/{project_id}/admin/risk/rules
 	PostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, request *RiskRule, params PostV1ProjectsByProjectIdAdminRiskRulesParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminRiskRulesRes, error)
-	// PostV1ProjectsByProjectIdAdminServiceAccounts invokes postV1ProjectsByProjectIdAdminServiceAccounts operation.
-	//
-	// Create a service account.
-	//
-	// POST /v1/projects/{project_id}/admin/service-accounts
-	PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminServiceAccountsRes, error)
-	// PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets invokes postV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets operation.
-	//
-	// Create a client secret.
-	//
-	// POST /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets
-	PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes, error)
 	// PostV1ProjectsByProjectIdAdminSmsProviders invokes postV1ProjectsByProjectIdAdminSmsProviders operation.
 	//
 	// Create SMS provider.
 	//
 	// POST /v1/projects/{project_id}/admin/sms-providers
 	PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, request *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSmsProvidersRes, error)
-	// PostV1ProjectsByProjectIdAdminSsoConnections invokes postV1ProjectsByProjectIdAdminSsoConnections operation.
-	//
-	// Create an SSO connection.
-	//
-	// POST /v1/projects/{project_id}/admin/sso/connections
-	PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsRes, error)
-	// PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate invokes postV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate operation.
-	//
-	// Rotate the SP certificate.
-	//
-	// POST /v1/projects/{project_id}/admin/sso/connections/{id}/rotate-certificate
-	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes, error)
-	// PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens invokes postV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens operation.
-	//
-	// Create a SCIM token.
-	//
-	// POST /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens
-	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, error)
-	// PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest invokes postV1ProjectsByProjectIdAdminSsoConnectionsByIdTest operation.
-	//
-	// Test a connection.
-	//
-	// POST /v1/projects/{project_id}/admin/sso/connections/{id}/test
-	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes, error)
 	// PostV1ProjectsByProjectIdAdminTokenProfiles invokes postV1ProjectsByProjectIdAdminTokenProfiles operation.
 	//
 	// Create a token profile.
@@ -1641,48 +843,6 @@ type Invoker interface {
 	//
 	// POST /v1/projects/{project_id}/admin/webhooks/{id}/test
 	PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksByIdTestRes, error)
-	// PostV1ScimV2ByConnectionIdGroups invokes postV1ScimV2ByConnectionIdGroups operation.
-	//
-	// Create a SCIM group (forwarded downstream).
-	//
-	// POST /v1/scim/v2/{connection_id}/Groups
-	PostV1ScimV2ByConnectionIdGroups(ctx context.Context, request PostV1ScimV2ByConnectionIdGroupsReq, params PostV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdGroupsRes, error)
-	// PostV1ScimV2ByConnectionIdUsers invokes postV1ScimV2ByConnectionIdUsers operation.
-	//
-	// Create/provision a user identity.
-	//
-	// POST /v1/scim/v2/{connection_id}/Users
-	PostV1ScimV2ByConnectionIdUsers(ctx context.Context, request *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdUsersRes, error)
-	// PostV1ServiceAccountsTokens invokes postV1ServiceAccountsTokens operation.
-	//
-	// Authenticated with the service account's client secret or private_key_jwt.
-	//
-	// POST /v1/service-accounts/tokens
-	PostV1ServiceAccountsTokens(ctx context.Context, request *PostV1ServiceAccountsTokensReq, options ...RequestOption) (PostV1ServiceAccountsTokensRes, error)
-	// PostV1SessionsBySessionIdTrust invokes postV1SessionsBySessionIdTrust operation.
-	//
-	// Mark a device trusted (MFA).
-	//
-	// POST /v1/sessions/{session_id}/trust
-	PostV1SessionsBySessionIdTrust(ctx context.Context, request *PostV1SessionsBySessionIdTrustReq, params PostV1SessionsBySessionIdTrustParams, options ...RequestOption) (PostV1SessionsBySessionIdTrustRes, error)
-	// PostV1SsoExchange invokes postV1SsoExchange operation.
-	//
-	// Exchange SSO code (alias of token/exchange).
-	//
-	// POST /v1/sso/exchange
-	PostV1SsoExchange(ctx context.Context, request *PostV1SsoExchangeReq, params PostV1SsoExchangeParams, options ...RequestOption) (*AuthResult, error)
-	// PostV1SsoSamlByConnectionIdAcs invokes postV1SsoSamlByConnectionIdAcs operation.
-	//
-	// SAML ACS endpoint.
-	//
-	// POST /v1/sso/saml/{connection_id}/acs
-	PostV1SsoSamlByConnectionIdAcs(ctx context.Context, request OptPostV1SsoSamlByConnectionIdAcsReq, params PostV1SsoSamlByConnectionIdAcsParams, options ...RequestOption) (*PostV1SsoSamlByConnectionIdAcsFound, error)
-	// PostV1SsoSamlByConnectionIdSlo invokes postV1SsoSamlByConnectionIdSlo operation.
-	//
-	// SAML single logout.
-	//
-	// POST /v1/sso/saml/{connection_id}/slo
-	PostV1SsoSamlByConnectionIdSlo(ctx context.Context, params PostV1SsoSamlByConnectionIdSloParams, options ...RequestOption) (*PostV1SsoSamlByConnectionIdSloFound, error)
 	// PostV1TestClock invokes postV1TestClock operation.
 	//
 	// Advance/reset the test clock.
@@ -1701,36 +861,6 @@ type Invoker interface {
 	//
 	// POST /v1/test/seed
 	PostV1TestSeed(ctx context.Context, request PostV1TestSeedReq, params PostV1TestSeedParams, options ...RequestOption) (PostV1TestSeedRes, error)
-	// PostV1TokensIntrospect invokes postV1TokensIntrospect operation.
-	//
-	// Live token introspection.
-	//
-	// POST /v1/tokens/introspect
-	PostV1TokensIntrospect(ctx context.Context, request *PostV1TokensIntrospectReq, options ...RequestOption) (PostV1TokensIntrospectRes, error)
-	// PostV1TokensRevoke invokes postV1TokensRevoke operation.
-	//
-	// Revoke a token/session.
-	//
-	// POST /v1/tokens/revoke
-	PostV1TokensRevoke(ctx context.Context, request *PostV1TokensRevokeReq, options ...RequestOption) (PostV1TokensRevokeRes, error)
-	// PostV1TokensVerify invokes postV1TokensVerify operation.
-	//
-	// Verify a token via the server.
-	//
-	// POST /v1/tokens/verify
-	PostV1TokensVerify(ctx context.Context, request *PostV1TokensVerifyReq, options ...RequestOption) (PostV1TokensVerifyRes, error)
-	// PostV1UsersMeConsents invokes postV1UsersMeConsents operation.
-	//
-	// Accept consents.
-	//
-	// POST /v1/users/me/consents
-	PostV1UsersMeConsents(ctx context.Context, request *PostV1UsersMeConsentsReq, options ...RequestOption) (PostV1UsersMeConsentsRes, error)
-	// PostV1UsersMeExport invokes postV1UsersMeExport operation.
-	//
-	// Start a GDPR export.
-	//
-	// POST /v1/users/me/export
-	PostV1UsersMeExport(ctx context.Context, options ...RequestOption) (PostV1UsersMeExportRes, error)
 	// PutV1ProjectsByProjectIdAdminConsents invokes putV1ProjectsByProjectIdAdminConsents operation.
 	//
 	// Set required consents.
@@ -1755,6 +885,396 @@ type Invoker interface {
 	//
 	// PUT /v1/projects/{project_id}/admin/retention-policy
 	PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, request *RetentionPolicy, params PutV1ProjectsByProjectIdAdminRetentionPolicyParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminRetentionPolicyRes, error)
+}
+
+// CoreAuthInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: CoreAuth
+type CoreAuthInvoker interface {
+	// GetV1AuthEmailChangeCancel invokes getV1AuthEmailChangeCancel operation.
+	//
+	// Cancel a pending email change (from old-address link).
+	//
+	// GET /v1/auth/email/change/cancel
+	GetV1AuthEmailChangeCancel(ctx context.Context, params GetV1AuthEmailChangeCancelParams, options ...RequestOption) (*Ok, error)
+	// GetV1AuthEmailVerificationCallback invokes getV1AuthEmailVerificationCallback operation.
+	//
+	// Email link callback (redirects with code).
+	//
+	// GET /v1/auth/email/verification/callback
+	GetV1AuthEmailVerificationCallback(ctx context.Context, params GetV1AuthEmailVerificationCallbackParams, options ...RequestOption) (*GetV1AuthEmailVerificationCallbackFound, error)
+	// GetV1AuthSession invokes getV1AuthSession operation.
+	//
+	// Get current session and user.
+	//
+	// GET /v1/auth/session
+	GetV1AuthSession(ctx context.Context, options ...RequestOption) (GetV1AuthSessionRes, error)
+	// GetV1TokensCurrent invokes getV1TokensCurrent operation.
+	//
+	// Current token claims.
+	//
+	// GET /v1/tokens/current
+	GetV1TokensCurrent(ctx context.Context, options ...RequestOption) (GetV1TokensCurrentRes, error)
+	// PostV1AuthAccessRequests invokes postV1AuthAccessRequests operation.
+	//
+	// Submit an access request (request-access mode).
+	//
+	// POST /v1/auth/access-requests
+	PostV1AuthAccessRequests(ctx context.Context, request *PostV1AuthAccessRequestsReq, params PostV1AuthAccessRequestsParams, options ...RequestOption) (*PostV1AuthAccessRequestsOK, error)
+	// PostV1AuthEmailChangeStart invokes postV1AuthEmailChangeStart operation.
+	//
+	// Start an email change (step-up; notifies old address).
+	//
+	// POST /v1/auth/email/change/start
+	PostV1AuthEmailChangeStart(ctx context.Context, request *PostV1AuthEmailChangeStartReq, options ...RequestOption) (PostV1AuthEmailChangeStartRes, error)
+	// PostV1AuthEmailChangeVerify invokes postV1AuthEmailChangeVerify operation.
+	//
+	// Confirm the new email.
+	//
+	// POST /v1/auth/email/change/verify
+	PostV1AuthEmailChangeVerify(ctx context.Context, request *PostV1AuthEmailChangeVerifyReq, options ...RequestOption) (PostV1AuthEmailChangeVerifyRes, error)
+	// PostV1AuthEmailVerificationStart invokes postV1AuthEmailVerificationStart operation.
+	//
+	// Send an email verification challenge.
+	//
+	// POST /v1/auth/email/verification/start
+	PostV1AuthEmailVerificationStart(ctx context.Context, request *PostV1AuthEmailVerificationStartReq, params PostV1AuthEmailVerificationStartParams, options ...RequestOption) (PostV1AuthEmailVerificationStartRes, error)
+	// PostV1AuthEmailVerificationVerify invokes postV1AuthEmailVerificationVerify operation.
+	//
+	// Verify email by code or token.
+	//
+	// POST /v1/auth/email/verification/verify
+	PostV1AuthEmailVerificationVerify(ctx context.Context, request *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams, options ...RequestOption) (PostV1AuthEmailVerificationVerifyRes, error)
+	// PostV1AuthGuest invokes postV1AuthGuest operation.
+	//
+	// Create an anonymous guest user and session.
+	//
+	// POST /v1/auth/guest
+	PostV1AuthGuest(ctx context.Context, request *PostV1AuthGuestReq, params PostV1AuthGuestParams, options ...RequestOption) (PostV1AuthGuestRes, error)
+	// PostV1AuthPasswordChange invokes postV1AuthPasswordChange operation.
+	//
+	// Change a known password.
+	//
+	// POST /v1/auth/password/change
+	PostV1AuthPasswordChange(ctx context.Context, request *PasswordChangeRequest, options ...RequestOption) (PostV1AuthPasswordChangeRes, error)
+	// PostV1AuthPasswordCheck invokes postV1AuthPasswordCheck operation.
+	//
+	// Check a candidate password against policy.
+	//
+	// POST /v1/auth/password/check
+	PostV1AuthPasswordCheck(ctx context.Context, request *PostV1AuthPasswordCheckReq, params PostV1AuthPasswordCheckParams, options ...RequestOption) (*PostV1AuthPasswordCheckOK, error)
+	// PostV1AuthPasswordForgot invokes postV1AuthPasswordForgot operation.
+	//
+	// Start a password reset.
+	//
+	// POST /v1/auth/password/forgot
+	PostV1AuthPasswordForgot(ctx context.Context, request *PasswordForgotRequest, params PostV1AuthPasswordForgotParams, options ...RequestOption) (PostV1AuthPasswordForgotRes, error)
+	// PostV1AuthPasswordReset invokes postV1AuthPasswordReset operation.
+	//
+	// Reset by token or code.
+	//
+	// POST /v1/auth/password/reset
+	PostV1AuthPasswordReset(ctx context.Context, request *PasswordResetRequest, params PostV1AuthPasswordResetParams, options ...RequestOption) (PostV1AuthPasswordResetRes, error)
+	// PostV1AuthPasswordVerify invokes postV1AuthPasswordVerify operation.
+	//
+	// Verify current password (step-up).
+	//
+	// POST /v1/auth/password/verify
+	PostV1AuthPasswordVerify(ctx context.Context, request *PostV1AuthPasswordVerifyReq, options ...RequestOption) (PostV1AuthPasswordVerifyRes, error)
+	// PostV1AuthPhoneChangeStart invokes postV1AuthPhoneChangeStart operation.
+	//
+	// Start a phone change.
+	//
+	// POST /v1/auth/phone/change/start
+	PostV1AuthPhoneChangeStart(ctx context.Context, request *PostV1AuthPhoneChangeStartReq, options ...RequestOption) (PostV1AuthPhoneChangeStartRes, error)
+	// PostV1AuthPhoneChangeVerify invokes postV1AuthPhoneChangeVerify operation.
+	//
+	// Confirm the new phone.
+	//
+	// POST /v1/auth/phone/change/verify
+	PostV1AuthPhoneChangeVerify(ctx context.Context, request *PostV1AuthPhoneChangeVerifyReq, options ...RequestOption) (PostV1AuthPhoneChangeVerifyRes, error)
+	// PostV1AuthPhoneVerificationStart invokes postV1AuthPhoneVerificationStart operation.
+	//
+	// Send an SMS/WhatsApp verification code.
+	//
+	// POST /v1/auth/phone/verification/start
+	PostV1AuthPhoneVerificationStart(ctx context.Context, request *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams, options ...RequestOption) (PostV1AuthPhoneVerificationStartRes, error)
+	// PostV1AuthPhoneVerificationVerify invokes postV1AuthPhoneVerificationVerify operation.
+	//
+	// Verify a phone code.
+	//
+	// POST /v1/auth/phone/verification/verify
+	PostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, options ...RequestOption) (PostV1AuthPhoneVerificationVerifyRes, error)
+	// PostV1AuthSessionStepUp invokes postV1AuthSessionStepUp operation.
+	//
+	// Begin step-up authentication.
+	//
+	// POST /v1/auth/session/step-up
+	PostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, options ...RequestOption) (PostV1AuthSessionStepUpRes, error)
+	// PostV1AuthSessionSwitchGroup invokes postV1AuthSessionSwitchGroup operation.
+	//
+	// Re-issues a token with a new active-group claim. Membership is validated externally.
+	//
+	// POST /v1/auth/session/switch-group
+	PostV1AuthSessionSwitchGroup(ctx context.Context, request *PostV1AuthSessionSwitchGroupReq, options ...RequestOption) (PostV1AuthSessionSwitchGroupRes, error)
+	// PostV1AuthSignInPassword invokes postV1AuthSignInPassword operation.
+	//
+	// Sign in with password.
+	//
+	// POST /v1/auth/sign-in/password
+	PostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, options ...RequestOption) (PostV1AuthSignInPasswordRes, error)
+	// PostV1AuthSignOut invokes postV1AuthSignOut operation.
+	//
+	// Revoke the current session.
+	//
+	// POST /v1/auth/sign-out
+	PostV1AuthSignOut(ctx context.Context, request OptPostV1AuthSignOutReq, options ...RequestOption) (PostV1AuthSignOutRes, error)
+	// PostV1AuthSignOutAll invokes postV1AuthSignOutAll operation.
+	//
+	// Revoke all of the user's sessions.
+	//
+	// POST /v1/auth/sign-out-all
+	PostV1AuthSignOutAll(ctx context.Context, request OptPostV1AuthSignOutAllReq, options ...RequestOption) (PostV1AuthSignOutAllRes, error)
+	// PostV1AuthSignUp invokes postV1AuthSignUp operation.
+	//
+	// Register a user.
+	//
+	// POST /v1/auth/sign-up
+	PostV1AuthSignUp(ctx context.Context, request *SignUpRequest, params PostV1AuthSignUpParams, options ...RequestOption) (PostV1AuthSignUpRes, error)
+	// PostV1AuthTokenExchange invokes postV1AuthTokenExchange operation.
+	//
+	// Exchange a browser-flow auth_code for a session.
+	//
+	// POST /v1/auth/token/exchange
+	PostV1AuthTokenExchange(ctx context.Context, request *CodeExchangeRequest, params PostV1AuthTokenExchangeParams, options ...RequestOption) (PostV1AuthTokenExchangeRes, error)
+	// PostV1AuthTokenRefresh invokes postV1AuthTokenRefresh operation.
+	//
+	// Rotate refresh token, issue new access token.
+	//
+	// POST /v1/auth/token/refresh
+	PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, options ...RequestOption) (PostV1AuthTokenRefreshRes, error)
+	// PostV1ChallengesCaptchaVerify invokes postV1ChallengesCaptchaVerify operation.
+	//
+	// Verify a captcha token.
+	//
+	// POST /v1/challenges/captcha/verify
+	PostV1ChallengesCaptchaVerify(ctx context.Context, request *PostV1ChallengesCaptchaVerifyReq, options ...RequestOption) (*PostV1ChallengesCaptchaVerifyOK, error)
+	// PostV1TokensIntrospect invokes postV1TokensIntrospect operation.
+	//
+	// Live token introspection.
+	//
+	// POST /v1/tokens/introspect
+	PostV1TokensIntrospect(ctx context.Context, request *PostV1TokensIntrospectReq, options ...RequestOption) (PostV1TokensIntrospectRes, error)
+	// PostV1TokensRevoke invokes postV1TokensRevoke operation.
+	//
+	// Revoke a token/session.
+	//
+	// POST /v1/tokens/revoke
+	PostV1TokensRevoke(ctx context.Context, request *PostV1TokensRevokeReq, options ...RequestOption) (PostV1TokensRevokeRes, error)
+	// PostV1TokensVerify invokes postV1TokensVerify operation.
+	//
+	// Verify a token via the server.
+	//
+	// POST /v1/tokens/verify
+	PostV1TokensVerify(ctx context.Context, request *PostV1TokensVerifyReq, options ...RequestOption) (PostV1TokensVerifyRes, error)
+}
+
+// FederationInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Federation
+type FederationInvoker interface {
+	// DeleteV1ProjectsByProjectIdAdminDomainsByDomainId invokes deleteV1ProjectsByProjectIdAdminDomainsByDomainId operation.
+	//
+	// Remove a domain.
+	//
+	// DELETE /v1/projects/{project_id}/admin/domains/{domain_id}
+	DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes, error)
+	// DeleteV1ProjectsByProjectIdAdminSsoConnectionsById invokes deleteV1ProjectsByProjectIdAdminSsoConnectionsById operation.
+	//
+	// Delete a connection.
+	//
+	// DELETE /v1/projects/{project_id}/admin/sso/connections/{id}
+	DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error)
+	// DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId invokes deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId operation.
+	//
+	// Revoke a SCIM token.
+	//
+	// DELETE /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens/{token_id}
+	DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes, error)
+	// DeleteV1ScimV2ByConnectionIdGroupsByGroupId invokes deleteV1ScimV2ByConnectionIdGroupsByGroupId operation.
+	//
+	// Delete a SCIM group (forwarded downstream).
+	//
+	// DELETE /v1/scim/v2/{connection_id}/Groups/{group_id}
+	DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (DeleteV1ScimV2ByConnectionIdGroupsByGroupIdRes, error)
+	// DeleteV1ScimV2ByConnectionIdUsersByScimUserId invokes deleteV1ScimV2ByConnectionIdUsersByScimUserId operation.
+	//
+	// Deprovision a user.
+	//
+	// DELETE /v1/scim/v2/{connection_id}/Users/{scim_user_id}
+	DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (DeleteV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
+	// GetV1ProjectsByProjectIdAdminDomains invokes getV1ProjectsByProjectIdAdminDomains operation.
+	//
+	// List domains.
+	//
+	// GET /v1/projects/{project_id}/admin/domains
+	GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params GetV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminDomainsRes, error)
+	// GetV1ProjectsByProjectIdAdminSsoConnections invokes getV1ProjectsByProjectIdAdminSsoConnections operation.
+	//
+	// List SSO connections.
+	//
+	// GET /v1/projects/{project_id}/admin/sso/connections
+	GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsRes, error)
+	// GetV1ProjectsByProjectIdAdminSsoConnectionsById invokes getV1ProjectsByProjectIdAdminSsoConnectionsById operation.
+	//
+	// Get a connection.
+	//
+	// GET /v1/projects/{project_id}/admin/sso/connections/{id}
+	GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error)
+	// GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens invokes getV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens operation.
+	//
+	// List SCIM tokens.
+	//
+	// GET /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens
+	GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, error)
+	// GetV1ScimV2ByConnectionIdGroups invokes getV1ScimV2ByConnectionIdGroups operation.
+	//
+	// List SCIM groups (forwarded downstream).
+	//
+	// GET /v1/scim/v2/{connection_id}/Groups
+	GetV1ScimV2ByConnectionIdGroups(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsRes, error)
+	// GetV1ScimV2ByConnectionIdGroupsByGroupId invokes getV1ScimV2ByConnectionIdGroupsByGroupId operation.
+	//
+	// Get a SCIM group (forwarded downstream).
+	//
+	// GET /v1/scim/v2/{connection_id}/Groups/{group_id}
+	GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsByGroupIdRes, error)
+	// GetV1ScimV2ByConnectionIdUsers invokes getV1ScimV2ByConnectionIdUsers operation.
+	//
+	// List SCIM users.
+	//
+	// GET /v1/scim/v2/{connection_id}/Users
+	GetV1ScimV2ByConnectionIdUsers(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersRes, error)
+	// GetV1ScimV2ByConnectionIdUsersByScimUserId invokes getV1ScimV2ByConnectionIdUsersByScimUserId operation.
+	//
+	// Get a SCIM user.
+	//
+	// GET /v1/scim/v2/{connection_id}/Users/{scim_user_id}
+	GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
+	// GetV1SsoConnectionsResolve invokes getV1SsoConnectionsResolve operation.
+	//
+	// Resolve an email to its SSO connection.
+	//
+	// GET /v1/sso/connections/resolve
+	GetV1SsoConnectionsResolve(ctx context.Context, params GetV1SsoConnectionsResolveParams, options ...RequestOption) (GetV1SsoConnectionsResolveRes, error)
+	// GetV1SsoOidcByConnectionIdCallback invokes getV1SsoOidcByConnectionIdCallback operation.
+	//
+	// OIDC IdP callback.
+	//
+	// GET /v1/sso/oidc/{connection_id}/callback
+	GetV1SsoOidcByConnectionIdCallback(ctx context.Context, params GetV1SsoOidcByConnectionIdCallbackParams, options ...RequestOption) (*GetV1SsoOidcByConnectionIdCallbackFound, error)
+	// GetV1SsoOidcByConnectionIdStart invokes getV1SsoOidcByConnectionIdStart operation.
+	//
+	// Start enterprise OIDC login.
+	//
+	// GET /v1/sso/oidc/{connection_id}/start
+	GetV1SsoOidcByConnectionIdStart(ctx context.Context, params GetV1SsoOidcByConnectionIdStartParams, options ...RequestOption) (*GetV1SsoOidcByConnectionIdStartFound, error)
+	// GetV1SsoSamlByConnectionIdLogin invokes getV1SsoSamlByConnectionIdLogin operation.
+	//
+	// SP-initiated SAML login (redirect to IdP).
+	//
+	// GET /v1/sso/saml/{connection_id}/login
+	GetV1SsoSamlByConnectionIdLogin(ctx context.Context, params GetV1SsoSamlByConnectionIdLoginParams, options ...RequestOption) (*GetV1SsoSamlByConnectionIdLoginFound, error)
+	// GetV1SsoSamlByConnectionIdMetadata invokes getV1SsoSamlByConnectionIdMetadata operation.
+	//
+	// SP metadata XML.
+	//
+	// GET /v1/sso/saml/{connection_id}/metadata
+	GetV1SsoSamlByConnectionIdMetadata(ctx context.Context, params GetV1SsoSamlByConnectionIdMetadataParams, options ...RequestOption) (GetV1SsoSamlByConnectionIdMetadataOK, error)
+	// PatchV1ProjectsByProjectIdAdminSsoConnectionsById invokes patchV1ProjectsByProjectIdAdminSsoConnectionsById operation.
+	//
+	// Update a connection.
+	//
+	// PATCH /v1/projects/{project_id}/admin/sso/connections/{id}
+	PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error)
+	// PatchV1ScimV2ByConnectionIdGroupsByGroupId invokes patchV1ScimV2ByConnectionIdGroupsByGroupId operation.
+	//
+	// Patch a SCIM group (forwarded downstream).
+	//
+	// PATCH /v1/scim/v2/{connection_id}/Groups/{group_id}
+	PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdGroupsByGroupIdRes, error)
+	// PatchV1ScimV2ByConnectionIdUsersByScimUserId invokes patchV1ScimV2ByConnectionIdUsersByScimUserId operation.
+	//
+	// Patch a SCIM user.
+	//
+	// PATCH /v1/scim/v2/{connection_id}/Users/{scim_user_id}
+	PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
+	// PostV1ProjectsByProjectIdAdminDomains invokes postV1ProjectsByProjectIdAdminDomains operation.
+	//
+	// Add a domain.
+	//
+	// POST /v1/projects/{project_id}/admin/domains
+	PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, request *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminDomainsRes, error)
+	// PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify invokes postV1ProjectsByProjectIdAdminDomainsByDomainIdVerify operation.
+	//
+	// Verify a domain via DNS.
+	//
+	// POST /v1/projects/{project_id}/admin/domains/{domain_id}/verify
+	PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes, error)
+	// PostV1ProjectsByProjectIdAdminSsoConnections invokes postV1ProjectsByProjectIdAdminSsoConnections operation.
+	//
+	// Create an SSO connection.
+	//
+	// POST /v1/projects/{project_id}/admin/sso/connections
+	PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsRes, error)
+	// PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate invokes postV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate operation.
+	//
+	// Rotate the SP certificate.
+	//
+	// POST /v1/projects/{project_id}/admin/sso/connections/{id}/rotate-certificate
+	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes, error)
+	// PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens invokes postV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens operation.
+	//
+	// Create a SCIM token.
+	//
+	// POST /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens
+	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, error)
+	// PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest invokes postV1ProjectsByProjectIdAdminSsoConnectionsByIdTest operation.
+	//
+	// Test a connection.
+	//
+	// POST /v1/projects/{project_id}/admin/sso/connections/{id}/test
+	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes, error)
+	// PostV1ScimV2ByConnectionIdGroups invokes postV1ScimV2ByConnectionIdGroups operation.
+	//
+	// Create a SCIM group (forwarded downstream).
+	//
+	// POST /v1/scim/v2/{connection_id}/Groups
+	PostV1ScimV2ByConnectionIdGroups(ctx context.Context, request PostV1ScimV2ByConnectionIdGroupsReq, params PostV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdGroupsRes, error)
+	// PostV1ScimV2ByConnectionIdUsers invokes postV1ScimV2ByConnectionIdUsers operation.
+	//
+	// Create/provision a user identity.
+	//
+	// POST /v1/scim/v2/{connection_id}/Users
+	PostV1ScimV2ByConnectionIdUsers(ctx context.Context, request *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdUsersRes, error)
+	// PostV1SsoExchange invokes postV1SsoExchange operation.
+	//
+	// Exchange SSO code (alias of token/exchange).
+	//
+	// POST /v1/sso/exchange
+	PostV1SsoExchange(ctx context.Context, request *PostV1SsoExchangeReq, params PostV1SsoExchangeParams, options ...RequestOption) (*AuthResult, error)
+	// PostV1SsoSamlByConnectionIdAcs invokes postV1SsoSamlByConnectionIdAcs operation.
+	//
+	// SAML ACS endpoint.
+	//
+	// POST /v1/sso/saml/{connection_id}/acs
+	PostV1SsoSamlByConnectionIdAcs(ctx context.Context, request OptPostV1SsoSamlByConnectionIdAcsReq, params PostV1SsoSamlByConnectionIdAcsParams, options ...RequestOption) (*PostV1SsoSamlByConnectionIdAcsFound, error)
+	// PostV1SsoSamlByConnectionIdSlo invokes postV1SsoSamlByConnectionIdSlo operation.
+	//
+	// SAML single logout.
+	//
+	// POST /v1/sso/saml/{connection_id}/slo
+	PostV1SsoSamlByConnectionIdSlo(ctx context.Context, params PostV1SsoSamlByConnectionIdSloParams, options ...RequestOption) (*PostV1SsoSamlByConnectionIdSloFound, error)
 	// PutV1ScimV2ByConnectionIdGroupsByGroupId invokes putV1ScimV2ByConnectionIdGroupsByGroupId operation.
 	//
 	// Replace a SCIM group (forwarded downstream).
@@ -1767,6 +1287,570 @@ type Invoker interface {
 	//
 	// PUT /v1/scim/v2/{connection_id}/Users/{scim_user_id}
 	PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PutV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
+}
+
+// MFAInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: MFA
+type MFAInvoker interface {
+	// DeleteV1AuthMfaFactorsByFactorId invokes deleteV1AuthMfaFactorsByFactorId operation.
+	//
+	// Remove a factor (step-up).
+	//
+	// DELETE /v1/auth/mfa/factors/{factor_id}
+	DeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params DeleteV1AuthMfaFactorsByFactorIdParams, options ...RequestOption) (DeleteV1AuthMfaFactorsByFactorIdRes, error)
+	// GetV1AuthMfaFactors invokes getV1AuthMfaFactors operation.
+	//
+	// List MFA factors.
+	//
+	// GET /v1/auth/mfa/factors
+	GetV1AuthMfaFactors(ctx context.Context, options ...RequestOption) (GetV1AuthMfaFactorsRes, error)
+	// PostV1AuthMfaChallenge invokes postV1AuthMfaChallenge operation.
+	//
+	// Create an MFA challenge.
+	//
+	// POST /v1/auth/mfa/challenge
+	PostV1AuthMfaChallenge(ctx context.Context, request OptPostV1AuthMfaChallengeReq, params PostV1AuthMfaChallengeParams, options ...RequestOption) (*Challenge, error)
+	// PostV1AuthMfaEmailEnroll invokes postV1AuthMfaEmailEnroll operation.
+	//
+	// Enroll an email factor.
+	//
+	// POST /v1/auth/mfa/email/enroll
+	PostV1AuthMfaEmailEnroll(ctx context.Context, request *PostV1AuthMfaEmailEnrollReq, options ...RequestOption) (PostV1AuthMfaEmailEnrollRes, error)
+	// PostV1AuthMfaRecoveryCodesGenerate invokes postV1AuthMfaRecoveryCodesGenerate operation.
+	//
+	// Generate recovery codes (AAL2).
+	//
+	// POST /v1/auth/mfa/recovery-codes/generate
+	PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, request OptPostV1AuthMfaRecoveryCodesGenerateReq, options ...RequestOption) (PostV1AuthMfaRecoveryCodesGenerateRes, error)
+	// PostV1AuthMfaRecoveryCodesVerify invokes postV1AuthMfaRecoveryCodesVerify operation.
+	//
+	// Use a recovery code.
+	//
+	// POST /v1/auth/mfa/recovery-codes/verify
+	PostV1AuthMfaRecoveryCodesVerify(ctx context.Context, request *PostV1AuthMfaRecoveryCodesVerifyReq, params PostV1AuthMfaRecoveryCodesVerifyParams, options ...RequestOption) (*AuthResult, error)
+	// PostV1AuthMfaSmsEnroll invokes postV1AuthMfaSmsEnroll operation.
+	//
+	// Enroll an SMS factor.
+	//
+	// POST /v1/auth/mfa/sms/enroll
+	PostV1AuthMfaSmsEnroll(ctx context.Context, request *PostV1AuthMfaSmsEnrollReq, options ...RequestOption) (PostV1AuthMfaSmsEnrollRes, error)
+	// PostV1AuthMfaTotpEnroll invokes postV1AuthMfaTotpEnroll operation.
+	//
+	// Start TOTP enrollment.
+	//
+	// POST /v1/auth/mfa/totp/enroll
+	PostV1AuthMfaTotpEnroll(ctx context.Context, request OptPostV1AuthMfaTotpEnrollReq, options ...RequestOption) (PostV1AuthMfaTotpEnrollRes, error)
+	// PostV1AuthMfaTotpVerify invokes postV1AuthMfaTotpVerify operation.
+	//
+	// Confirm TOTP enrollment.
+	//
+	// POST /v1/auth/mfa/totp/verify
+	PostV1AuthMfaTotpVerify(ctx context.Context, request *PostV1AuthMfaTotpVerifyReq, options ...RequestOption) (PostV1AuthMfaTotpVerifyRes, error)
+	// PostV1AuthMfaVerify invokes postV1AuthMfaVerify operation.
+	//
+	// Verify an MFA challenge.
+	//
+	// POST /v1/auth/mfa/verify
+	PostV1AuthMfaVerify(ctx context.Context, request *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams, options ...RequestOption) (PostV1AuthMfaVerifyRes, error)
+	// PostV1AuthMfaWebauthnEnrollOptions invokes postV1AuthMfaWebauthnEnrollOptions operation.
+	//
+	// Start a WebAuthn MFA factor.
+	//
+	// POST /v1/auth/mfa/webauthn/enroll/options
+	PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, request OptPostV1AuthMfaWebauthnEnrollOptionsReq, options ...RequestOption) (PostV1AuthMfaWebauthnEnrollOptionsRes, error)
+	// PostV1AuthMfaWebauthnEnrollVerify invokes postV1AuthMfaWebauthnEnrollVerify operation.
+	//
+	// Verify a WebAuthn MFA factor.
+	//
+	// POST /v1/auth/mfa/webauthn/enroll/verify
+	PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, request *PostV1AuthMfaWebauthnEnrollVerifyReq, options ...RequestOption) (PostV1AuthMfaWebauthnEnrollVerifyRes, error)
+}
+
+// MachineIdentityInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: MachineIdentity
+type MachineIdentityInvoker interface {
+	// DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId invokes deleteV1ProjectsByProjectIdAdminApiKeysByKeyId operation.
+	//
+	// Delete a key.
+	//
+	// DELETE /v1/projects/{project_id}/admin/api-keys/{key_id}
+	DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, error)
+	// DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId invokes deleteV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
+	//
+	// Delete a service account.
+	//
+	// DELETE /v1/projects/{project_id}/admin/service-accounts/{sa_id}
+	DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error)
+	// DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId invokes deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId operation.
+	//
+	// Revoke a secret.
+	//
+	// DELETE /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets/{secret_id}
+	DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes, error)
+	// GetV1ProjectsByProjectIdAdminApiKeys invokes getV1ProjectsByProjectIdAdminApiKeys operation.
+	//
+	// List API keys.
+	//
+	// GET /v1/projects/{project_id}/admin/api-keys
+	GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params GetV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminApiKeysRes, error)
+	// GetV1ProjectsByProjectIdAdminServiceAccounts invokes getV1ProjectsByProjectIdAdminServiceAccounts operation.
+	//
+	// List service accounts.
+	//
+	// GET /v1/projects/{project_id}/admin/service-accounts
+	GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminServiceAccountsRes, error)
+	// GetV1ProjectsByProjectIdAdminServiceAccountsBySaId invokes getV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
+	//
+	// Get a service account.
+	//
+	// GET /v1/projects/{project_id}/admin/service-accounts/{sa_id}
+	GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error)
+	// PatchV1ProjectsByProjectIdAdminApiKeysByKeyId invokes patchV1ProjectsByProjectIdAdminApiKeysByKeyId operation.
+	//
+	// Update key metadata/scopes.
+	//
+	// PATCH /v1/projects/{project_id}/admin/api-keys/{key_id}
+	PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, error)
+	// PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId invokes patchV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
+	//
+	// Update a service account.
+	//
+	// PATCH /v1/projects/{project_id}/admin/service-accounts/{sa_id}
+	PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error)
+	// PostV1ProjectsByProjectIdAdminApiKeys invokes postV1ProjectsByProjectIdAdminApiKeys operation.
+	//
+	// Create an API key.
+	//
+	// POST /v1/projects/{project_id}/admin/api-keys
+	PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, request *PostV1ProjectsByProjectIdAdminApiKeysReq, params PostV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminApiKeysRes, error)
+	// PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate invokes postV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate operation.
+	//
+	// Rotate the key secret.
+	//
+	// POST /v1/projects/{project_id}/admin/api-keys/{key_id}/rotate
+	PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes, error)
+	// PostV1ProjectsByProjectIdAdminServiceAccounts invokes postV1ProjectsByProjectIdAdminServiceAccounts operation.
+	//
+	// Create a service account.
+	//
+	// POST /v1/projects/{project_id}/admin/service-accounts
+	PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminServiceAccountsRes, error)
+	// PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets invokes postV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets operation.
+	//
+	// Create a client secret.
+	//
+	// POST /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets
+	PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes, error)
+	// PostV1ServiceAccountsTokens invokes postV1ServiceAccountsTokens operation.
+	//
+	// Authenticated with the service account's client secret or private_key_jwt.
+	//
+	// POST /v1/service-accounts/tokens
+	PostV1ServiceAccountsTokens(ctx context.Context, request *PostV1ServiceAccountsTokensReq, options ...RequestOption) (PostV1ServiceAccountsTokensRes, error)
+}
+
+// OAuthSocialInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: OAuthSocial
+type OAuthSocialInvoker interface {
+	// GetV1AuthOauthByProviderCallback invokes getV1AuthOauthByProviderCallback operation.
+	//
+	// Provider callback (redirects to product with code).
+	//
+	// GET /v1/auth/oauth/{provider}/callback
+	GetV1AuthOauthByProviderCallback(ctx context.Context, params GetV1AuthOauthByProviderCallbackParams, options ...RequestOption) (*GetV1AuthOauthByProviderCallbackFound, error)
+	// GetV1AuthOauthByProviderLinkCallback invokes getV1AuthOauthByProviderLinkCallback operation.
+	//
+	// Link callback (redirects to product).
+	//
+	// GET /v1/auth/oauth/{provider}/link/callback
+	GetV1AuthOauthByProviderLinkCallback(ctx context.Context, params GetV1AuthOauthByProviderLinkCallbackParams, options ...RequestOption) (*GetV1AuthOauthByProviderLinkCallbackFound, error)
+	// GetV1AuthOauthByProviderLinkStart invokes getV1AuthOauthByProviderLinkStart operation.
+	//
+	// Begin linking a provider to the current user.
+	//
+	// GET /v1/auth/oauth/{provider}/link/start
+	GetV1AuthOauthByProviderLinkStart(ctx context.Context, params GetV1AuthOauthByProviderLinkStartParams, options ...RequestOption) (*GetV1AuthOauthByProviderLinkStartFound, error)
+	// GetV1AuthOauthByProviderStart invokes getV1AuthOauthByProviderStart operation.
+	//
+	// Begin OAuth (redirects to provider).
+	//
+	// GET /v1/auth/oauth/{provider}/start
+	GetV1AuthOauthByProviderStart(ctx context.Context, params GetV1AuthOauthByProviderStartParams, options ...RequestOption) (*GetV1AuthOauthByProviderStartFound, error)
+	// GetV1AuthOauthProviders invokes getV1AuthOauthProviders operation.
+	//
+	// List enabled OAuth providers.
+	//
+	// GET /v1/auth/oauth/providers
+	GetV1AuthOauthProviders(ctx context.Context, params GetV1AuthOauthProvidersParams, options ...RequestOption) (*GetV1AuthOauthProvidersOK, error)
+	// PostV1AuthOauthByProviderUnlink invokes postV1AuthOauthByProviderUnlink operation.
+	//
+	// Unlink a provider identity (step-up).
+	//
+	// POST /v1/auth/oauth/{provider}/unlink
+	PostV1AuthOauthByProviderUnlink(ctx context.Context, request *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams, options ...RequestOption) (PostV1AuthOauthByProviderUnlinkRes, error)
+	// PostV1AuthOauthExchange invokes postV1AuthOauthExchange operation.
+	//
+	// Exchange OAuth code (alias of token/exchange).
+	//
+	// POST /v1/auth/oauth/exchange
+	PostV1AuthOauthExchange(ctx context.Context, request *PostV1AuthOauthExchangeReq, params PostV1AuthOauthExchangeParams, options ...RequestOption) (*AuthResult, error)
+}
+
+// OIDCProviderInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: OIDCProvider
+type OIDCProviderInvoker interface {
+	// DeleteV1OauthGrantsByGrantId invokes deleteV1OauthGrantsByGrantId operation.
+	//
+	// Revoke an OAuth grant.
+	//
+	// DELETE /v1/oauth/grants/{grant_id}
+	DeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams, options ...RequestOption) (DeleteV1OauthGrantsByGrantIdRes, error)
+	// GetOauth2Authorize invokes getOauth2Authorize operation.
+	//
+	// Authorization endpoint (headless; may redirect to interaction).
+	//
+	// GET /oauth2/authorize
+	GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, options ...RequestOption) (*GetOauth2AuthorizeFound, error)
+	// GetOauth2Logout invokes getOauth2Logout operation.
+	//
+	// RP-initiated logout.
+	//
+	// GET /oauth2/logout
+	GetOauth2Logout(ctx context.Context, params GetOauth2LogoutParams, options ...RequestOption) (*GetOauth2LogoutFound, error)
+	// GetOauth2Userinfo invokes getOauth2Userinfo operation.
+	//
+	// OIDC UserInfo.
+	//
+	// GET /oauth2/userinfo
+	GetOauth2Userinfo(ctx context.Context, options ...RequestOption) (GetOauth2UserinfoRes, error)
+	// GetPByProjectIdEByEnvWellKnownJwksJson invokes getPByProjectIdEByEnvWellKnownJwksJson operation.
+	//
+	// JWKS public keys.
+	//
+	// GET /p/{project_id}/e/{env}/.well-known/jwks.json
+	GetPByProjectIdEByEnvWellKnownJwksJson(ctx context.Context, params GetPByProjectIdEByEnvWellKnownJwksJsonParams, options ...RequestOption) (GetPByProjectIdEByEnvWellKnownJwksJsonOK, error)
+	// GetPByProjectIdEByEnvWellKnownOpenidConfiguration invokes getPByProjectIdEByEnvWellKnownOpenidConfiguration operation.
+	//
+	// OIDC discovery document.
+	//
+	// GET /p/{project_id}/e/{env}/.well-known/openid-configuration
+	GetPByProjectIdEByEnvWellKnownOpenidConfiguration(ctx context.Context, params GetPByProjectIdEByEnvWellKnownOpenidConfigurationParams, options ...RequestOption) (GetPByProjectIdEByEnvWellKnownOpenidConfigurationOK, error)
+	// GetV1Device invokes getV1Device operation.
+	//
+	// Device verification-page data.
+	//
+	// GET /v1/device
+	GetV1Device(ctx context.Context, params GetV1DeviceParams, options ...RequestOption) (*GetV1DeviceOK, error)
+	// GetV1OauthGrants invokes getV1OauthGrants operation.
+	//
+	// List the user's authorized apps.
+	//
+	// GET /v1/oauth/grants
+	GetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams, options ...RequestOption) (GetV1OauthGrantsRes, error)
+	// GetV1OauthInteractionByInteractionId invokes getV1OauthInteractionByInteractionId operation.
+	//
+	// Fetch interaction context.
+	//
+	// GET /v1/oauth/interaction/{interaction_id}
+	GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams, options ...RequestOption) (GetV1OauthInteractionByInteractionIdRes, error)
+	// PostOauth2BackchannelLogout invokes postOauth2BackchannelLogout operation.
+	//
+	// OIDC back-channel logout.
+	//
+	// POST /oauth2/backchannel-logout
+	PostOauth2BackchannelLogout(ctx context.Context, request *PostOauth2BackchannelLogoutReq, options ...RequestOption) error
+	// PostOauth2DeviceAuthorization invokes postOauth2DeviceAuthorization operation.
+	//
+	// Start the device flow.
+	//
+	// POST /oauth2/device_authorization
+	PostOauth2DeviceAuthorization(ctx context.Context, request *PostOauth2DeviceAuthorizationReq, options ...RequestOption) (PostOauth2DeviceAuthorizationRes, error)
+	// PostOauth2Introspect invokes postOauth2Introspect operation.
+	//
+	// RFC 7662 token introspection.
+	//
+	// POST /oauth2/introspect
+	PostOauth2Introspect(ctx context.Context, request *PostOauth2IntrospectReq, options ...RequestOption) (PostOauth2IntrospectRes, error)
+	// PostOauth2Par invokes postOauth2Par operation.
+	//
+	// Pushed Authorization Request.
+	//
+	// POST /oauth2/par
+	PostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, options ...RequestOption) (PostOauth2ParRes, error)
+	// PostOauth2Revoke invokes postOauth2Revoke operation.
+	//
+	// RFC 7009 token revocation.
+	//
+	// POST /oauth2/revoke
+	PostOauth2Revoke(ctx context.Context, request *PostOauth2RevokeReq, options ...RequestOption) (PostOauth2RevokeRes, error)
+	// PostOauth2Token invokes postOauth2Token operation.
+	//
+	// Token endpoint.
+	//
+	// POST /oauth2/token
+	PostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, options ...RequestOption) (PostOauth2TokenRes, error)
+	// PostV1DeviceApprove invokes postV1DeviceApprove operation.
+	//
+	// Approve a device code.
+	//
+	// POST /v1/device/approve
+	PostV1DeviceApprove(ctx context.Context, request *PostV1DeviceApproveReq, options ...RequestOption) (PostV1DeviceApproveRes, error)
+	// PostV1DeviceDeny invokes postV1DeviceDeny operation.
+	//
+	// Deny a device code.
+	//
+	// POST /v1/device/deny
+	PostV1DeviceDeny(ctx context.Context, request *PostV1DeviceDenyReq, options ...RequestOption) (PostV1DeviceDenyRes, error)
+	// PostV1OauthInteractionByInteractionIdConsent invokes postV1OauthInteractionByInteractionIdConsent operation.
+	//
+	// Record consent.
+	//
+	// POST /v1/oauth/interaction/{interaction_id}/consent
+	PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, request *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams, options ...RequestOption) (PostV1OauthInteractionByInteractionIdConsentRes, error)
+	// PostV1OauthInteractionByInteractionIdLogin invokes postV1OauthInteractionByInteractionIdLogin operation.
+	//
+	// Attach the authenticated user to the interaction.
+	//
+	// POST /v1/oauth/interaction/{interaction_id}/login
+	PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams, options ...RequestOption) (PostV1OauthInteractionByInteractionIdLoginRes, error)
+	// PostV1OauthInteractionByInteractionIdReject invokes postV1OauthInteractionByInteractionIdReject operation.
+	//
+	// Cancel the interaction.
+	//
+	// POST /v1/oauth/interaction/{interaction_id}/reject
+	PostV1OauthInteractionByInteractionIdReject(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdRejectReq, params PostV1OauthInteractionByInteractionIdRejectParams, options ...RequestOption) (*PostV1OauthInteractionByInteractionIdRejectOK, error)
+}
+
+// OperatorInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Operator
+type OperatorInvoker interface {
+	// DeleteMgmtV1ProjectsByProjectId invokes deleteMgmtV1ProjectsByProjectId operation.
+	//
+	// Delete a project.
+	//
+	// DELETE /mgmt/v1/projects/{project_id}
+	DeleteMgmtV1ProjectsByProjectId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdRes, error)
+	// DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId invokes deleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId operation.
+	//
+	// Revoke an admin token.
+	//
+	// DELETE /mgmt/v1/projects/{project_id}/admin-tokens/{token_id}
+	DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes, error)
+	// DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv invokes deleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv operation.
+	//
+	// Delete an environment.
+	//
+	// DELETE /mgmt/v1/projects/{project_id}/environments/{env}
+	DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, error)
+	// GetMgmtV1Projects invokes getMgmtV1Projects operation.
+	//
+	// List/search projects.
+	//
+	// GET /mgmt/v1/projects
+	GetMgmtV1Projects(ctx context.Context, params GetMgmtV1ProjectsParams, options ...RequestOption) (GetMgmtV1ProjectsRes, error)
+	// GetMgmtV1ProjectsByProjectId invokes getMgmtV1ProjectsByProjectId operation.
+	//
+	// Get a project.
+	//
+	// GET /mgmt/v1/projects/{project_id}
+	GetMgmtV1ProjectsByProjectId(ctx context.Context, params GetMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdRes, error)
+	// GetMgmtV1ProjectsByProjectIdAdminTokens invokes getMgmtV1ProjectsByProjectIdAdminTokens operation.
+	//
+	// List admin tokens.
+	//
+	// GET /mgmt/v1/projects/{project_id}/admin-tokens
+	GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params GetMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdAdminTokensRes, error)
+	// GetMgmtV1ProjectsByProjectIdConfigExport invokes getMgmtV1ProjectsByProjectIdConfigExport operation.
+	//
+	// Export project config (IaC; secrets redacted).
+	//
+	// GET /mgmt/v1/projects/{project_id}/config:export
+	GetMgmtV1ProjectsByProjectIdConfigExport(ctx context.Context, params GetMgmtV1ProjectsByProjectIdConfigExportParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdConfigExportRes, error)
+	// GetMgmtV1ProjectsByProjectIdEnvironments invokes getMgmtV1ProjectsByProjectIdEnvironments operation.
+	//
+	// List environments.
+	//
+	// GET /mgmt/v1/projects/{project_id}/environments
+	GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdEnvironmentsRes, error)
+	// GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv invokes getMgmtV1ProjectsByProjectIdEnvironmentsByEnv operation.
+	//
+	// Get an environment.
+	//
+	// GET /mgmt/v1/projects/{project_id}/environments/{env}
+	GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, error)
+	// GetMgmtV1ProjectsByProjectIdFeatures invokes getMgmtV1ProjectsByProjectIdFeatures operation.
+	//
+	// Get operator feature gates.
+	//
+	// GET /mgmt/v1/projects/{project_id}/features
+	GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params GetMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdFeaturesRes, error)
+	// PatchMgmtV1ProjectsByProjectId invokes patchMgmtV1ProjectsByProjectId operation.
+	//
+	// Update a project.
+	//
+	// PATCH /mgmt/v1/projects/{project_id}
+	PatchMgmtV1ProjectsByProjectId(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdReq, params PatchMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (PatchMgmtV1ProjectsByProjectIdRes, error)
+	// PatchMgmtV1ProjectsByProjectIdFeatures invokes patchMgmtV1ProjectsByProjectIdFeatures operation.
+	//
+	// Set operator feature gates.
+	//
+	// PATCH /mgmt/v1/projects/{project_id}/features
+	PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdFeaturesReq, params PatchMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (PatchMgmtV1ProjectsByProjectIdFeaturesRes, error)
+	// PostMgmtV1Projects invokes postMgmtV1Projects operation.
+	//
+	// Create a project.
+	//
+	// POST /mgmt/v1/projects
+	PostMgmtV1Projects(ctx context.Context, request *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams, options ...RequestOption) (PostMgmtV1ProjectsRes, error)
+	// PostMgmtV1ProjectsByProjectIdAdminTokens invokes postMgmtV1ProjectsByProjectIdAdminTokens operation.
+	//
+	// Mint a project-admin token.
+	//
+	// POST /mgmt/v1/projects/{project_id}/admin-tokens
+	PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdAdminTokensRes, error)
+	// PostMgmtV1ProjectsByProjectIdConfigApply invokes postMgmtV1ProjectsByProjectIdConfigApply operation.
+	//
+	// Apply config (idempotent).
+	//
+	// POST /mgmt/v1/projects/{project_id}/config:apply
+	PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigApplyReq, params PostMgmtV1ProjectsByProjectIdConfigApplyParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigApplyRes, error)
+	// PostMgmtV1ProjectsByProjectIdConfigPlan invokes postMgmtV1ProjectsByProjectIdConfigPlan operation.
+	//
+	// Plan a config apply (diff + drift).
+	//
+	// POST /mgmt/v1/projects/{project_id}/config:plan
+	PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigPlanReq, params PostMgmtV1ProjectsByProjectIdConfigPlanParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigPlanRes, error)
+	// PostMgmtV1ProjectsByProjectIdEnvironments invokes postMgmtV1ProjectsByProjectIdEnvironments operation.
+	//
+	// Create an environment.
+	//
+	// POST /mgmt/v1/projects/{project_id}/environments
+	PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdEnvironmentsRes, error)
+}
+
+// PasswordlessInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Passwordless
+type PasswordlessInvoker interface {
+	// GetV1AuthMagicLinkCallback invokes getV1AuthMagicLinkCallback operation.
+	//
+	// Magic-link callback (redirects with code).
+	//
+	// GET /v1/auth/magic-link/callback
+	GetV1AuthMagicLinkCallback(ctx context.Context, params GetV1AuthMagicLinkCallbackParams, options ...RequestOption) (*GetV1AuthMagicLinkCallbackFound, error)
+	// PostV1AuthMagicLinkStart invokes postV1AuthMagicLinkStart operation.
+	//
+	// Send a magic link.
+	//
+	// POST /v1/auth/magic-link/start
+	PostV1AuthMagicLinkStart(ctx context.Context, request *MagicLinkStartRequest, params PostV1AuthMagicLinkStartParams, options ...RequestOption) (PostV1AuthMagicLinkStartRes, error)
+	// PostV1AuthMagicLinkVerify invokes postV1AuthMagicLinkVerify operation.
+	//
+	// Headless verify of a magic-link token.
+	//
+	// POST /v1/auth/magic-link/verify
+	PostV1AuthMagicLinkVerify(ctx context.Context, request *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams, options ...RequestOption) (PostV1AuthMagicLinkVerifyRes, error)
+	// PostV1AuthOtpStart invokes postV1AuthOtpStart operation.
+	//
+	// Start OTP login/signup/verify.
+	//
+	// POST /v1/auth/otp/start
+	PostV1AuthOtpStart(ctx context.Context, request *OtpStartRequest, params PostV1AuthOtpStartParams, options ...RequestOption) (PostV1AuthOtpStartRes, error)
+	// PostV1AuthOtpVerify invokes postV1AuthOtpVerify operation.
+	//
+	// Verify OTP.
+	//
+	// POST /v1/auth/otp/verify
+	PostV1AuthOtpVerify(ctx context.Context, request *OtpVerifyRequest, params PostV1AuthOtpVerifyParams, options ...RequestOption) (PostV1AuthOtpVerifyRes, error)
+}
+
+// PlatformInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Platform
+type PlatformInvoker interface {
+	// GetV1ConfigPublic invokes getV1ConfigPublic operation.
+	//
+	// Unauthenticated; resolved per app client via `X-Client-Id`.
+	//
+	// GET /v1/config/public
+	GetV1ConfigPublic(ctx context.Context, params GetV1ConfigPublicParams, options ...RequestOption) (*PublicConfig, error)
+	// GetV1Csrf invokes getV1Csrf operation.
+	//
+	// Issue a CSRF token (cookie mode).
+	//
+	// GET /v1/csrf
+	GetV1Csrf(ctx context.Context, params GetV1CsrfParams, options ...RequestOption) (*GetV1CsrfOK, error)
+	// GetV1Health invokes getV1Health operation.
+	//
+	// Aggregate healthcheck.
+	//
+	// GET /v1/health
+	GetV1Health(ctx context.Context, options ...RequestOption) (*GetV1HealthOK, error)
+	// GetV1HealthLive invokes getV1HealthLive operation.
+	//
+	// Liveness probe.
+	//
+	// GET /v1/health/live
+	GetV1HealthLive(ctx context.Context, options ...RequestOption) (*GetV1HealthLiveOK, error)
+	// GetV1HealthReady invokes getV1HealthReady operation.
+	//
+	// Readiness probe.
+	//
+	// GET /v1/health/ready
+	GetV1HealthReady(ctx context.Context, options ...RequestOption) (GetV1HealthReadyRes, error)
+}
+
+// WebAuthnInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: WebAuthn
+type WebAuthnInvoker interface {
+	// DeleteV1AuthWebauthnCredentialsByCredentialId invokes deleteV1AuthWebauthnCredentialsByCredentialId operation.
+	//
+	// Remove a passkey.
+	//
+	// DELETE /v1/auth/webauthn/credentials/{credential_id}
+	DeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, params DeleteV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (DeleteV1AuthWebauthnCredentialsByCredentialIdRes, error)
+	// GetV1AuthWebauthnCredentials invokes getV1AuthWebauthnCredentials operation.
+	//
+	// List the user's passkeys.
+	//
+	// GET /v1/auth/webauthn/credentials
+	GetV1AuthWebauthnCredentials(ctx context.Context, options ...RequestOption) (GetV1AuthWebauthnCredentialsRes, error)
+	// PatchV1AuthWebauthnCredentialsByCredentialId invokes patchV1AuthWebauthnCredentialsByCredentialId operation.
+	//
+	// Rename a passkey.
+	//
+	// PATCH /v1/auth/webauthn/credentials/{credential_id}
+	PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, request *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (PatchV1AuthWebauthnCredentialsByCredentialIdRes, error)
+	// PostV1AuthWebauthnLoginOptions invokes postV1AuthWebauthnLoginOptions operation.
+	//
+	// Create a passkey login challenge.
+	//
+	// POST /v1/auth/webauthn/login/options
+	PostV1AuthWebauthnLoginOptions(ctx context.Context, request OptPostV1AuthWebauthnLoginOptionsReq, params PostV1AuthWebauthnLoginOptionsParams, options ...RequestOption) (*PostV1AuthWebauthnLoginOptionsOK, error)
+	// PostV1AuthWebauthnLoginVerify invokes postV1AuthWebauthnLoginVerify operation.
+	//
+	// Verify a passkey assertion.
+	//
+	// POST /v1/auth/webauthn/login/verify
+	PostV1AuthWebauthnLoginVerify(ctx context.Context, request *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams, options ...RequestOption) (PostV1AuthWebauthnLoginVerifyRes, error)
+	// PostV1AuthWebauthnRegisterOptions invokes postV1AuthWebauthnRegisterOptions operation.
+	//
+	// Create a passkey registration challenge.
+	//
+	// POST /v1/auth/webauthn/register/options
+	PostV1AuthWebauthnRegisterOptions(ctx context.Context, request OptPostV1AuthWebauthnRegisterOptionsReq, options ...RequestOption) (PostV1AuthWebauthnRegisterOptionsRes, error)
+	// PostV1AuthWebauthnRegisterVerify invokes postV1AuthWebauthnRegisterVerify operation.
+	//
+	// Verify a newly created passkey.
+	//
+	// POST /v1/auth/webauthn/register/verify
+	PostV1AuthWebauthnRegisterVerify(ctx context.Context, request *PostV1AuthWebauthnRegisterVerifyReq, options ...RequestOption) (PostV1AuthWebauthnRegisterVerifyRes, error)
 }
 
 // Client implements OAS client.

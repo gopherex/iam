@@ -10,3 +10,8 @@ client + server, request/response validation, request options & editors,
 reentrant security, OpenTelemetry, fakers and example tests. All 280 operations
 are generated (union responses use `oneOf` + a `result_type` discriminator; the
 PAR form body is typed).
+
+The server `Handler` is split into 12 per-feature sub-interfaces
+(`CoreAuthHandler`, `FederationHandler`, `AdminHandler`, …) via
+`x-ogen-operation-group` (set from each operation's `x-feature`); the top-level
+`Handler` embeds them. Implement groups independently in pkg/api.
