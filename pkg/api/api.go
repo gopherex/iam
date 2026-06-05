@@ -14,8 +14,7 @@ import "github.com/gopherex/iam/internal/oas"
 // the generated code so importers depend only on pkg/api.
 type Handler = oas.Handler
 
-// Service implements Handler. Its methods are added as the stack is wired;
-// once complete it will satisfy:
-//
-//	var _ Handler = (*Service)(nil)
-type Service struct{}
+// The implementation is split per feature module: one XxxService per
+// oas.<Group>Handler (core_auth.go, federation.go, admin.go, …). Each embeds
+// oas.UnimplementedHandler — so any operation it does not override returns
+// not-implemented — and panics on every v1.0.0 operation until written.
