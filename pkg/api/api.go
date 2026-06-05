@@ -3,9 +3,14 @@
 // (module-private under internal/oas) and re-exports the public surface so
 // callers never import internal packages.
 //
-// The generated wire types/client/server live in internal/oas; this package
-// is where our handler logic and public façade live. Handlers are filled in
-// as the runtime stack is wired.
+// The implementation is split per feature module: one XxxService per
+// oas.<Group>Handler (core_auth.go, federation.go, admin.go, …). Each embeds
+// oas.UnimplementedHandler — so any operation it does not override returns
+// not-implemented — and panics on every v1.0.0 operation until written.
+//
+// Service composes the twelve groups into one oas.Handler. Callers inject their
+// own group implementations via options; any group left out defaults to the
+// scaffolded XxxService.
 package api
 
 import "github.com/gopherex/iam/internal/oas"
@@ -14,7 +19,95 @@ import "github.com/gopherex/iam/internal/oas"
 // the generated code so importers depend only on pkg/api.
 type Handler = oas.Handler
 
-// The implementation is split per feature module: one XxxService per
-// oas.<Group>Handler (core_auth.go, federation.go, admin.go, …). Each embeds
-// oas.UnimplementedHandler — so any operation it does not override returns
-// not-implemented — and panics on every v1.0.0 operation until written.
+// Service is the full IAM handler, assembled from the twelve per-feature group
+// handlers. It satisfies oas.Handler by embedding each group interface; every
+// operation belongs to exactly one group, so the method sets are disjoint.
+type Service struct {
+	oas.PlatformHandler
+	oas.CoreAuthHandler
+	oas.PasswordlessHandler
+	oas.OAuthSocialHandler
+	oas.WebAuthnHandler
+	oas.MFAHandler
+	oas.AccountHandler
+	oas.MachineIdentityHandler
+	oas.FederationHandler
+	oas.OIDCProviderHandler
+	oas.AdminHandler
+	oas.OperatorHandler
+}
+
+var _ oas.Handler = (*Service)(nil)
+
+// Option injects a group implementation into a Service.
+type Option func(*Service)
+
+// New assembles the IAM handler. Each group defaults to its scaffolded
+// XxxService (panics on v1.0.0 operations, not-implemented otherwise); pass
+// options to replace any group with a real implementation.
+func New(opts ...Option) *Service {
+	s := &Service{
+		PlatformHandler:        &PlatformService{},
+		CoreAuthHandler:        &CoreAuthService{},
+		PasswordlessHandler:    &PasswordlessService{},
+		OAuthSocialHandler:     &OAuthSocialService{},
+		WebAuthnHandler:        &WebAuthnService{},
+		MFAHandler:             &MFAService{},
+		AccountHandler:         &AccountService{},
+		MachineIdentityHandler: &MachineIdentityService{},
+		FederationHandler:      &FederationService{},
+		OIDCProviderHandler:    &OIDCProviderService{},
+		AdminHandler:           &AdminService{},
+		OperatorHandler:        &OperatorService{},
+	}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
+}
+
+// WithPlatform sets the Platform group implementation.
+func WithPlatform(h oas.PlatformHandler) Option { return func(s *Service) { s.PlatformHandler = h } }
+
+// WithCoreAuth sets the Core Auth group implementation.
+func WithCoreAuth(h oas.CoreAuthHandler) Option { return func(s *Service) { s.CoreAuthHandler = h } }
+
+// WithPasswordless sets the Passwordless group implementation.
+func WithPasswordless(h oas.PasswordlessHandler) Option {
+	return func(s *Service) { s.PasswordlessHandler = h }
+}
+
+// WithOAuthSocial sets the OAuth Social group implementation.
+func WithOAuthSocial(h oas.OAuthSocialHandler) Option {
+	return func(s *Service) { s.OAuthSocialHandler = h }
+}
+
+// WithWebAuthn sets the WebAuthn group implementation.
+func WithWebAuthn(h oas.WebAuthnHandler) Option { return func(s *Service) { s.WebAuthnHandler = h } }
+
+// WithMFA sets the MFA group implementation.
+func WithMFA(h oas.MFAHandler) Option { return func(s *Service) { s.MFAHandler = h } }
+
+// WithAccount sets the Account group implementation.
+func WithAccount(h oas.AccountHandler) Option { return func(s *Service) { s.AccountHandler = h } }
+
+// WithMachineIdentity sets the Machine Identity group implementation.
+func WithMachineIdentity(h oas.MachineIdentityHandler) Option {
+	return func(s *Service) { s.MachineIdentityHandler = h }
+}
+
+// WithFederation sets the Federation group implementation.
+func WithFederation(h oas.FederationHandler) Option {
+	return func(s *Service) { s.FederationHandler = h }
+}
+
+// WithOIDCProvider sets the OIDC Provider group implementation.
+func WithOIDCProvider(h oas.OIDCProviderHandler) Option {
+	return func(s *Service) { s.OIDCProviderHandler = h }
+}
+
+// WithAdmin sets the Admin group implementation.
+func WithAdmin(h oas.AdminHandler) Option { return func(s *Service) { s.AdminHandler = h } }
+
+// WithOperator sets the Operator group implementation.
+func WithOperator(h oas.OperatorHandler) Option { return func(s *Service) { s.OperatorHandler = h } }
