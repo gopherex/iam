@@ -17,7 +17,10 @@ import (
 
 type OIDCGrants interface {
 	ResolveInteraction(ctx context.Context, interactionID string) (*domain.Interaction, error)
-	CompleteLogin(ctx context.Context, interactionID, accountID string) error
+	// CompleteLogin binds the interaction to the caller. sessionID lets the
+	// adapter verify the interaction belongs to this session (anti-hijack)
+	// before completing.
+	CompleteLogin(ctx context.Context, interactionID, accountID, sessionID string) error
 	ListGrants(ctx context.Context, accountID string) ([]domain.Grant, error)
 	RevokeGrant(ctx context.Context, accountID, grantID string) error
 }
@@ -139,7 +142,7 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdLogin(ctx con
 	if err != nil {
 		return nil, err
 	}
-	if err := s.deps.Grants.CompleteLogin(ctx, params.InteractionID, p.AccountID); err != nil {
+	if err := s.deps.Grants.CompleteLogin(ctx, params.InteractionID, p.AccountID, p.SessionID); err != nil {
 		return nil, err
 	}
 	return &oas.PostV1OauthInteractionByInteractionIdLoginOK{}, nil

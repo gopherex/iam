@@ -45,6 +45,39 @@ func requirePrincipal(ctx context.Context) (*domain.Principal, error) {
 	return nil, domain.ErrUnauthorized
 }
 
+// requireProjectAdmin enforces IAM's tenancy boundary: the authenticated
+// principal may only act on the project its credential is scoped to. This is
+// the IDOR / cross-tenant guard for /v1/projects/{project_id}/admin/... — a
+// project-admin token for project A must not touch project B. Fine-grained
+// permissions are AuthZ's concern; this is the coarse ownership check IAM owns.
+// Operator (master key) is cross-project by design.
+func requireProjectAdmin(ctx context.Context, projectID string) (*domain.Principal, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if p.Kind == domain.PrincipalOperator {
+		return p, nil
+	}
+	if (p.Kind == domain.PrincipalAdmin || p.Kind == domain.PrincipalService) &&
+		p.ProjectID != "" && p.ProjectID == projectID {
+		return p, nil
+	}
+	return nil, domain.ErrForbidden
+}
+
+// requireOperator enforces operator (master-key) authority for /mgmt/... ops.
+func requireOperator(ctx context.Context) (*domain.Principal, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if p.Kind != domain.PrincipalOperator {
+		return nil, domain.ErrForbidden
+	}
+	return p, nil
+}
+
 // ----- ogen SecurityHandler -----
 
 // NewSecurityHandler wires an Authenticator into the ogen SecurityHandler.

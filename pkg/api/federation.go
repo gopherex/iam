@@ -64,7 +64,7 @@ func (s *FederationService) GetV1ProjectsByProjectIdAdminDomains(ctx context.Con
 }
 
 func (s *FederationService) GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminSsoConnectionsParams) (*oas.GetV1ProjectsByProjectIdAdminSsoConnectionsOK, error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 	conns, err := s.deps.Connections.ListConnections(ctx, params.ProjectID)
@@ -81,7 +81,7 @@ func (s *FederationService) GetV1ProjectsByProjectIdAdminSsoConnections(ctx cont
 }
 
 func (s *FederationService) GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (*oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 	conn, err := s.deps.Connections.GetConnection(ctx, params.ProjectID, params.ID)
@@ -146,7 +146,7 @@ func (s *FederationService) PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx con
 }
 
 func (s *FederationService) PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminDomainsReq, params oas.PostV1ProjectsByProjectIdAdminDomainsParams) (*oas.PostV1ProjectsByProjectIdAdminDomainsCreated, error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 	dom, err := s.deps.Connections.AddDomain(ctx, params.ProjectID, req.ConnectionID.Or(""), req.Domain)
@@ -159,7 +159,7 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminDomains(ctx context.Co
 }
 
 func (s *FederationService) PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams) (*oas.PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK, error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 	dom, err := s.deps.Connections.VerifyDomain(ctx, params.ProjectID, params.DomainID)
@@ -172,7 +172,7 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerif
 }
 
 func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params oas.PostV1ProjectsByProjectIdAdminSsoConnectionsParams) (*oas.PostV1ProjectsByProjectIdAdminSsoConnectionsCreated, error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 	cmd := domain.ConnectionCmd{

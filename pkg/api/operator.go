@@ -49,7 +49,7 @@ func (s *OperatorService) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx c
 }
 
 func (s *OperatorService) GetMgmtV1Projects(ctx context.Context, params oas.GetMgmtV1ProjectsParams) (r *oas.GetMgmtV1ProjectsOK, _ error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 	projects, err := s.deps.Projects.ListProjects(ctx)
@@ -64,7 +64,7 @@ func (s *OperatorService) GetMgmtV1Projects(ctx context.Context, params oas.GetM
 }
 
 func (s *OperatorService) GetMgmtV1ProjectsByProjectId(ctx context.Context, params oas.GetMgmtV1ProjectsByProjectIdParams) (r *oas.GetMgmtV1ProjectsByProjectIdOK, _ error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 	proj, err := s.deps.Projects.GetProject(ctx, params.ProjectID)
@@ -105,7 +105,7 @@ func (s *OperatorService) PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Con
 }
 
 func (s *OperatorService) PostMgmtV1Projects(ctx context.Context, req *oas.PostMgmtV1ProjectsReq, params oas.PostMgmtV1ProjectsParams) (r *oas.PostMgmtV1ProjectsCreated, _ error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 	cmd := domain.ProjectCmd{
@@ -123,7 +123,7 @@ func (s *OperatorService) PostMgmtV1Projects(ctx context.Context, req *oas.PostM
 }
 
 func (s *OperatorService) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, req *oas.PostMgmtV1ProjectsByProjectIdAdminTokensReq, params oas.PostMgmtV1ProjectsByProjectIdAdminTokensParams) (r *oas.PostMgmtV1ProjectsByProjectIdAdminTokensOK, _ error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 	token, err := s.deps.Projects.MintAdminToken(ctx, params.ProjectID)
@@ -144,7 +144,7 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Co
 }
 
 func (s *OperatorService) PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, req *oas.PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params oas.PostMgmtV1ProjectsByProjectIdEnvironmentsParams) (r *oas.PostMgmtV1ProjectsByProjectIdEnvironmentsCreated, _ error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 	cmd := domain.EnvironmentCmd{

@@ -39,7 +39,7 @@ var _ oas.Handler = (*MachineIdentityService)(nil)
 
 // PostV1ProjectsByProjectIdAdminServiceAccounts creates a service account in a project.
 func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminServiceAccountsReq, params oas.PostV1ProjectsByProjectIdAdminServiceAccountsParams) (*oas.PostV1ProjectsByProjectIdAdminServiceAccountsCreated, error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 	sa, err := s.deps.Keys.CreateServiceAccount(ctx, domain.ServiceAccountCmd{
@@ -73,7 +73,7 @@ func (s *MachineIdentityService) PostV1ServiceAccountsTokens(ctx context.Context
 
 // PostV1ProjectsByProjectIdAdminApiKeys creates an API key in a project.
 func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminApiKeysReq, params oas.PostV1ProjectsByProjectIdAdminApiKeysParams) (*oas.PostV1ProjectsByProjectIdAdminApiKeysCreated, error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 	key, secret, err := s.deps.Keys.CreateAPIKey(ctx, domain.APIKeyCmd{
@@ -92,7 +92,7 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminApiKeys(ctx conte
 
 // DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId revokes an API key.
 func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams) (*oas.Ok, error) {
-	if _, err := requirePrincipal(ctx); err != nil {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 	if err := s.deps.Keys.RevokeAPIKey(ctx, params.ProjectID, params.KeyID); err != nil {
