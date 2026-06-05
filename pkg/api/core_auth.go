@@ -20,7 +20,7 @@ import (
 type CoreAuthAccounts interface {
 	Register(ctx context.Context, cmd domain.RegisterCmd) (*domain.Account, *domain.Session, error)
 	AuthenticatePassword(ctx context.Context, projectID, email, password string) (*domain.Account, *domain.Session, error)
-	Refresh(ctx context.Context, refreshToken string) (*domain.Session, error)
+	Refresh(ctx context.Context, refreshToken string) (*domain.Account, *domain.Session, error)
 	ExchangeCode(ctx context.Context, code, verifier string) (*domain.Account, *domain.Session, error)
 	CreateGuest(ctx context.Context, projectID string) (*domain.Account, *domain.Session, error)
 	GetSession(ctx context.Context, sessionID string) (*domain.Account, *domain.Session, error)
@@ -77,8 +77,12 @@ func (s *CoreAuthService) PostV1AuthEmailVerificationVerify(ctx context.Context,
 	panic("implement me")
 }
 
-func (s *CoreAuthService) PostV1AuthGuest(ctx context.Context, req *oas.PostV1AuthGuestReq, params oas.PostV1AuthGuestParams) (r *oas.AuthResult, _ error) {
-	panic("implement me")
+func (s *CoreAuthService) PostV1AuthGuest(ctx context.Context, req *oas.PostV1AuthGuestReq, params oas.PostV1AuthGuestParams) (*oas.AuthResult, error) {
+	acct, sess, err := s.deps.Accounts.CreateGuest(ctx, params.XClientID)
+	if err != nil {
+		return nil, err
+	}
+	return authResult(acct, sess), nil
 }
 
 func (s *CoreAuthService) PostV1AuthPasswordChange(ctx context.Context, req *oas.PasswordChangeRequest) (r *oas.Ok, _ error) {
@@ -125,8 +129,12 @@ func (s *CoreAuthService) PostV1AuthSessionSwitchGroup(ctx context.Context, req 
 	panic("implement me")
 }
 
-func (s *CoreAuthService) PostV1AuthSignInPassword(ctx context.Context, req *oas.PasswordSignInRequest, params oas.PostV1AuthSignInPasswordParams) (r oas.AuthResultOrNextStep, _ error) {
-	panic("implement me")
+func (s *CoreAuthService) PostV1AuthSignInPassword(ctx context.Context, req *oas.PasswordSignInRequest, params oas.PostV1AuthSignInPasswordParams) (oas.AuthResultOrNextStep, error) {
+	acct, sess, err := s.deps.Accounts.AuthenticatePassword(ctx, params.XClientID, req.Email.Or(""), req.Password)
+	if err != nil {
+		return oas.AuthResultOrNextStep{}, err
+	}
+	return oas.NewAuthResultAuthResultOrNextStep(*authResult(acct, sess)), nil
 }
 
 func (s *CoreAuthService) PostV1AuthSignOut(ctx context.Context, req oas.OptPostV1AuthSignOutReq) (r *oas.Ok, _ error) {
@@ -137,16 +145,45 @@ func (s *CoreAuthService) PostV1AuthSignOutAll(ctx context.Context, req oas.OptP
 	panic("implement me")
 }
 
-func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpRequest, params oas.PostV1AuthSignUpParams) (r *oas.AuthResult, _ error) {
-	panic("implement me")
+func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpRequest, params oas.PostV1AuthSignUpParams) (*oas.AuthResult, error) {
+	cmd := domain.RegisterCmd{
+		ProjectID: params.XClientID,
+		Email:     req.Email.Or(""),
+		Phone:     req.Phone.Or(""),
+		Password:  req.Password.Or(""),
+		Name:      req.Name.Or(""),
+	}
+	if err := cmd.Validate(); err != nil {
+		return nil, err
+	}
+	acct, sess, err := s.deps.Accounts.Register(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthTokenExchange(ctx context.Context, req *oas.CodeExchangeRequest, params oas.PostV1AuthTokenExchangeParams) (r *oas.AuthResult, _ error) {
-	panic("implement me")
+func (s *CoreAuthService) PostV1AuthTokenExchange(ctx context.Context, req *oas.CodeExchangeRequest, params oas.PostV1AuthTokenExchangeParams) (*oas.AuthResult, error) {
+	acct, sess, err := s.deps.Accounts.ExchangeCode(ctx, req.Code, req.CodeVerifier.Or(""))
+	if err != nil {
+		return nil, err
+	}
+	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.OptRefreshRequest, params oas.PostV1AuthTokenRefreshParams) (r *oas.AuthResult, _ error) {
-	panic("implement me")
+func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.OptRefreshRequest, params oas.PostV1AuthTokenRefreshParams) (*oas.AuthResult, error) {
+	rt := ""
+	if v, ok := req.Get(); ok {
+		rt = v.RefreshToken.Or("")
+	}
+	if rt == "" {
+		return nil, domain.ErrInvalidToken.WithMessage("refresh_token is required")
+	}
+	acct, sess, err := s.deps.Accounts.Refresh(ctx, rt)
+	if err != nil {
+		return nil, err
+	}
+	return authResult(acct, sess), nil
 }
 
 func (s *CoreAuthService) PostV1ChallengesCaptchaVerify(ctx context.Context, req *oas.PostV1ChallengesCaptchaVerifyReq) (r *oas.PostV1ChallengesCaptchaVerifyOK, _ error) {

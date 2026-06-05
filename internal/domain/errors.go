@@ -54,19 +54,19 @@ var (
 	ErrChallengeInvalid   = newErr(http.StatusUnauthorized, "challenge_invalid", "Invalid challenge.")
 
 	// 403 — permitted-but-blocked / gated.
-	ErrForbidden         = newErr(http.StatusForbidden, "forbidden", "Not permitted.")
-	ErrAccountSuspended  = newErr(http.StatusForbidden, "account_suspended", "Account suspended.")
-	ErrAccountBanned     = newErr(http.StatusForbidden, "account_banned", "Account banned.")
-	ErrAccountLocked     = newErr(http.StatusForbidden, "account_locked", "Account locked.")
-	ErrEmailNotVerified  = newErr(http.StatusForbidden, "email_not_verified", "Email not verified.")
-	ErrPhoneNotVerified  = newErr(http.StatusForbidden, "phone_not_verified", "Phone not verified.")
-	ErrMFARequired       = newErr(http.StatusForbidden, "mfa_required", "MFA is required.")
-	ErrStepUpRequired    = newErr(http.StatusForbidden, "step_up_required", "Step-up authentication is required.")
+	ErrForbidden          = newErr(http.StatusForbidden, "forbidden", "Not permitted.")
+	ErrAccountSuspended   = newErr(http.StatusForbidden, "account_suspended", "Account suspended.")
+	ErrAccountBanned      = newErr(http.StatusForbidden, "account_banned", "Account banned.")
+	ErrAccountLocked      = newErr(http.StatusForbidden, "account_locked", "Account locked.")
+	ErrEmailNotVerified   = newErr(http.StatusForbidden, "email_not_verified", "Email not verified.")
+	ErrPhoneNotVerified   = newErr(http.StatusForbidden, "phone_not_verified", "Phone not verified.")
+	ErrMFARequired        = newErr(http.StatusForbidden, "mfa_required", "MFA is required.")
+	ErrStepUpRequired     = newErr(http.StatusForbidden, "step_up_required", "Step-up authentication is required.")
 	ErrRegistrationClosed = newErr(http.StatusForbidden, "registration_closed", "Registration is closed.")
 	ErrInvitationRequired = newErr(http.StatusForbidden, "invitation_required", "An invitation is required.")
-	ErrCaptchaRequired   = newErr(http.StatusForbidden, "captcha_required", "Captcha is required.")
-	ErrCaptchaInvalid    = newErr(http.StatusForbidden, "captcha_invalid", "Invalid captcha.")
-	ErrConsentRequired   = newErr(http.StatusForbidden, "consent_required", "Consent is required.")
+	ErrCaptchaRequired    = newErr(http.StatusForbidden, "captcha_required", "Captcha is required.")
+	ErrCaptchaInvalid     = newErr(http.StatusForbidden, "captcha_invalid", "Invalid captcha.")
+	ErrConsentRequired    = newErr(http.StatusForbidden, "consent_required", "Consent is required.")
 
 	// 404 — not found / not visible.
 	ErrNotFound            = newErr(http.StatusNotFound, "not_found", "Not found.")
@@ -79,20 +79,20 @@ var (
 	ErrDomainNotFound      = newErr(http.StatusNotFound, "domain_not_found", "Domain not found.")
 
 	// 409 — conflict.
-	ErrConflict      = newErr(http.StatusConflict, "conflict", "Conflicting state.")
-	ErrEmailExists   = newErr(http.StatusConflict, "email_exists", "Email already in use.")
-	ErrPhoneExists   = newErr(http.StatusConflict, "phone_exists", "Phone already in use.")
+	ErrConflict       = newErr(http.StatusConflict, "conflict", "Conflicting state.")
+	ErrEmailExists    = newErr(http.StatusConflict, "email_exists", "Email already in use.")
+	ErrPhoneExists    = newErr(http.StatusConflict, "phone_exists", "Phone already in use.")
 	ErrIdentityExists = newErr(http.StatusConflict, "identity_exists", "Identity already linked.")
-	ErrAlreadyLinked = newErr(http.StatusConflict, "already_linked", "Already linked.")
-	ErrDomainTaken   = newErr(http.StatusConflict, "domain_taken", "Domain already claimed.")
+	ErrAlreadyLinked  = newErr(http.StatusConflict, "already_linked", "Already linked.")
+	ErrDomainTaken    = newErr(http.StatusConflict, "domain_taken", "Domain already claimed.")
 
 	// 410 — gone / single-use consumed.
 	ErrChallengeExpired = newErr(http.StatusGone, "challenge_expired", "The challenge has expired.")
 	ErrTokenUsed        = newErr(http.StatusGone, "token_already_used", "The token has already been used.")
 
 	// 422 — validation.
-	ErrValidation    = newErr(http.StatusUnprocessableEntity, "validation_failed", "Validation failed.")
-	ErrWeakPassword  = newErr(http.StatusUnprocessableEntity, "weak_password", "The password is too weak.")
+	ErrValidation     = newErr(http.StatusUnprocessableEntity, "validation_failed", "Validation failed.")
+	ErrWeakPassword   = newErr(http.StatusUnprocessableEntity, "weak_password", "The password is too weak.")
 	ErrPasswordReused = newErr(http.StatusUnprocessableEntity, "password_reused", "The password was used before.")
 
 	// 400 — malformed.
