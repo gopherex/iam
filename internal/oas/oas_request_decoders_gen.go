@@ -390,6 +390,14 @@ func (s *Server) decodePatchV1AuthWebauthnCredentialsByCredentialIdRequest(r *ht
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -460,6 +468,14 @@ func (s *Server) decodePatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(r *h
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -682,6 +698,14 @@ func (s *Server) decodePatchV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(r *
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -824,6 +848,14 @@ func (s *Server) decodePatchV1ProjectsByProjectIdAdminConfigRateLimitsRequest(r 
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -965,6 +997,14 @@ func (s *Server) decodePatchV1ProjectsByProjectIdAdminEmailProvidersByIdRequest(
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -1179,6 +1219,14 @@ func (s *Server) decodePatchV1ProjectsByProjectIdAdminOauthProvidersByIdRequest(
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -1329,6 +1377,14 @@ func (s *Server) decodePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReque
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -1399,6 +1455,14 @@ func (s *Server) decodePatchV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(r 
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -1826,6 +1890,14 @@ func (s *Server) decodePatchV1ScimV2ByConnectionIdUsersByScimUserIdRequest(r *ht
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -1896,6 +1968,14 @@ func (s *Server) decodePatchV1SessionsBySessionIdRequest(r *http.Request) (
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -1968,6 +2048,14 @@ func (s *Server) decodePatchV1UsersMeRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -2039,6 +2127,14 @@ func (s *Server) decodePostMgmtV1ProjectsRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -2109,6 +2205,14 @@ func (s *Server) decodePostMgmtV1ProjectsByProjectIdAdminTokensRequest(r *http.R
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -2323,6 +2427,14 @@ func (s *Server) decodePostMgmtV1ProjectsByProjectIdEnvironmentsRequest(r *http.
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -2395,6 +2507,33 @@ func (s *Server) decodePostOauth2BackchannelLogoutRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"logout_token\"")
+				}
+				if err := func() error {
+					if value, ok := request.LogoutToken.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     4096,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -2471,6 +2610,33 @@ func (s *Server) decodePostOauth2DeviceAuthorizationRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"client_id\"")
 				}
+				if err := func() error {
+					if value, ok := request.ClientID.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     256,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -2502,6 +2668,33 @@ func (s *Server) decodePostOauth2DeviceAuthorizationRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"scope\"")
+				}
+				if err := func() error {
+					if value, ok := request.Scope.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -2578,6 +2771,33 @@ func (s *Server) decodePostOauth2IntrospectRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"token\"")
 				}
+				if err := func() error {
+					if value, ok := request.Token.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     4096,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		return &request, rawBody, close, nil
@@ -2646,6 +2866,26 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"response_type\"")
 				}
+				if err := func() error {
+					if err := (validate.String{
+						MinLength:     0,
+						MinLengthSet:  false,
+						MaxLength:     1024,
+						MaxLengthSet:  true,
+						Email:         false,
+						Hostname:      false,
+						Regex:         nil,
+						MinNumeric:    0,
+						MinNumericSet: false,
+						MaxNumeric:    0,
+						MaxNumericSet: false,
+					}).Validate(string(request.ResponseType)); err != nil {
+						return errors.Wrap(err, "string")
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			} else {
 				return req, rawBody, close, errors.Wrap(err, "query")
 			}
@@ -2672,6 +2912,26 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"client_id\"")
+				}
+				if err := func() error {
+					if err := (validate.String{
+						MinLength:     0,
+						MinLengthSet:  false,
+						MaxLength:     256,
+						MaxLengthSet:  true,
+						Email:         false,
+						Hostname:      false,
+						Regex:         nil,
+						MinNumeric:    0,
+						MinNumericSet: false,
+						MaxNumeric:    0,
+						MaxNumericSet: false,
+					}).Validate(string(request.ClientID)); err != nil {
+						return errors.Wrap(err, "string")
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			} else {
 				return req, rawBody, close, errors.Wrap(err, "query")
@@ -2739,6 +2999,33 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"scope\"")
 				}
+				if err := func() error {
+					if value, ok := request.Scope.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -2771,6 +3058,33 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"state\"")
 				}
+				if err := func() error {
+					if value, ok := request.State.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -2802,6 +3116,33 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"code_challenge\"")
+				}
+				if err := func() error {
+					if value, ok := request.CodeChallenge.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -2882,6 +3223,33 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"nonce\"")
 				}
+				if err := func() error {
+					if value, ok := request.Nonce.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -2913,6 +3281,33 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"response_mode\"")
+				}
+				if err := func() error {
+					if value, ok := request.ResponseMode.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -2946,6 +3341,33 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"prompt\"")
 				}
+				if err := func() error {
+					if value, ok := request.Prompt.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -2977,6 +3399,33 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"login_hint\"")
+				}
+				if err := func() error {
+					if value, ok := request.LoginHint.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -3010,6 +3459,33 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"request\"")
 				}
+				if err := func() error {
+					if value, ok := request.Request.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -3042,6 +3518,33 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"client_assertion_type\"")
 				}
+				if err := func() error {
+					if value, ok := request.ClientAssertionType.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -3073,6 +3576,33 @@ func (s *Server) decodePostOauth2ParRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"client_assertion\"")
+				}
+				if err := func() error {
+					if value, ok := request.ClientAssertion.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -3149,6 +3679,33 @@ func (s *Server) decodePostOauth2RevokeRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"token\"")
 				}
+				if err := func() error {
+					if value, ok := request.Token.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     4096,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -3180,6 +3737,33 @@ func (s *Server) decodePostOauth2RevokeRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"token_type_hint\"")
+				}
+				if err := func() error {
+					if value, ok := request.TokenTypeHint.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -3256,6 +3840,33 @@ func (s *Server) decodePostOauth2TokenRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"grant_type\"")
 				}
+				if err := func() error {
+					if value, ok := request.GrantType.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -3287,6 +3898,33 @@ func (s *Server) decodePostOauth2TokenRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"code\"")
+				}
+				if err := func() error {
+					if value, ok := request.Code.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     512,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -3320,6 +3958,33 @@ func (s *Server) decodePostOauth2TokenRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"redirect_uri\"")
 				}
+				if err := func() error {
+					if value, ok := request.RedirectURI.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     2048,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -3351,6 +4016,33 @@ func (s *Server) decodePostOauth2TokenRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"code_verifier\"")
+				}
+				if err := func() error {
+					if value, ok := request.CodeVerifier.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -3384,6 +4076,33 @@ func (s *Server) decodePostOauth2TokenRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"refresh_token\"")
 				}
+				if err := func() error {
+					if value, ok := request.RefreshToken.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     4096,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -3415,6 +4134,33 @@ func (s *Server) decodePostOauth2TokenRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"client_id\"")
+				}
+				if err := func() error {
+					if value, ok := request.ClientID.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     256,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -3448,6 +4194,33 @@ func (s *Server) decodePostOauth2TokenRequest(r *http.Request) (
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"client_secret\"")
 				}
+				if err := func() error {
+					if value, ok := request.ClientSecret.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
 			}
 		}
 		{
@@ -3479,6 +4252,33 @@ func (s *Server) decodePostOauth2TokenRequest(r *http.Request) (
 					return nil
 				}); err != nil {
 					return req, rawBody, close, errors.Wrap(err, "decode \"device_code\"")
+				}
+				if err := func() error {
+					if value, ok := request.DeviceCode.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     1024,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
 				}
 			}
 		}
@@ -3711,6 +4511,14 @@ func (s *Server) decodePostV1AuthEmailChangeVerifyRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -3861,6 +4669,14 @@ func (s *Server) decodePostV1AuthEmailVerificationVerifyRequest(r *http.Request)
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -4009,6 +4825,14 @@ func (s *Server) decodePostV1AuthIdentitiesMergeConfirmRequest(r *http.Request) 
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -4079,6 +4903,14 @@ func (s *Server) decodePostV1AuthIdentitiesMergeStartRequest(r *http.Request) (
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -4230,6 +5062,14 @@ func (s *Server) decodePostV1AuthMagicLinkVerifyRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -4304,6 +5144,21 @@ func (s *Server) decodePostV1AuthMfaChallengeRequest(r *http.Request) (
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return request, rawBody, close, nil
 	default:
@@ -4530,6 +5385,14 @@ func (s *Server) decodePostV1AuthMfaRecoveryCodesVerifyRequest(r *http.Request) 
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -4684,6 +5547,21 @@ func (s *Server) decodePostV1AuthMfaTotpEnrollRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -4755,6 +5633,14 @@ func (s *Server) decodePostV1AuthMfaTotpVerifyRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -4825,6 +5711,14 @@ func (s *Server) decodePostV1AuthMfaVerifyRequest(r *http.Request) (
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -4901,6 +5795,21 @@ func (s *Server) decodePostV1AuthMfaWebauthnEnrollOptionsRequest(r *http.Request
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -4971,6 +5880,14 @@ func (s *Server) decodePostV1AuthMfaWebauthnEnrollVerifyRequest(r *http.Request)
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -5043,6 +5960,14 @@ func (s *Server) decodePostV1AuthOauthByProviderUnlinkRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -5113,6 +6038,14 @@ func (s *Server) decodePostV1AuthOauthExchangeRequest(r *http.Request) (
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -5263,6 +6196,14 @@ func (s *Server) decodePostV1AuthOtpVerifyRequest(r *http.Request) (
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -5809,6 +6750,14 @@ func (s *Server) decodePostV1AuthPhoneChangeVerifyRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -5959,6 +6908,14 @@ func (s *Server) decodePostV1AuthPhoneVerificationVerifyRequest(r *http.Request)
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -6108,6 +7065,14 @@ func (s *Server) decodePostV1AuthSessionSwitchGroupRequest(r *http.Request) (
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -6571,6 +7536,21 @@ func (s *Server) decodePostV1AuthTokenRefreshRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -6732,6 +7712,14 @@ func (s *Server) decodePostV1AuthWebauthnLoginVerifyRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -6807,6 +7795,21 @@ func (s *Server) decodePostV1AuthWebauthnRegisterOptionsRequest(r *http.Request)
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -6877,6 +7880,14 @@ func (s *Server) decodePostV1AuthWebauthnRegisterVerifyRequest(r *http.Request) 
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -6949,6 +7960,14 @@ func (s *Server) decodePostV1ChallengesCaptchaVerifyRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -7019,6 +8038,14 @@ func (s *Server) decodePostV1DeviceApproveRequest(r *http.Request) (
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -7091,6 +8118,14 @@ func (s *Server) decodePostV1DeviceDenyRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -7161,6 +8196,14 @@ func (s *Server) decodePostV1OauthInteractionByInteractionIdConsentRequest(r *ht
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -7237,6 +8280,21 @@ func (s *Server) decodePostV1OauthInteractionByInteractionIdLoginRequest(r *http
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -7311,6 +8369,21 @@ func (s *Server) decodePostV1OauthInteractionByInteractionIdRejectRequest(r *htt
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return request, rawBody, close, nil
 	default:
@@ -7463,6 +8536,21 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReque
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return request, rawBody, close, nil
 	default:
@@ -7693,6 +8781,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRequest(r
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -7763,6 +8859,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminAuditExportRequest(r *http.
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -7835,6 +8939,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminDomainsRequest(r *http.Requ
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -7905,6 +9017,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminEmailProvidersRequest(r *ht
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -7981,6 +9101,21 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRe
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -8051,6 +9186,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestR
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -8127,6 +9270,21 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminEventsByEventIdReplayReques
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -8197,6 +9355,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminHooksRequest(r *http.Reques
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -8577,6 +9743,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminOauthProvidersRequest(r *ht
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -8806,6 +9980,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminServiceAccountsRequest(r *h
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -8877,6 +10059,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecret
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -8947,6 +10137,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminSmsProvidersRequest(r *http
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -9098,6 +10296,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimToken
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -9169,6 +10375,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminTokenProfilesRequest(r *htt
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -9239,6 +10453,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -9394,6 +10616,21 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReque
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -9465,6 +10702,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminUsersByUserIdBanRequest(r *
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -9535,6 +10780,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -9780,6 +11033,21 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if value, ok := request.Get(); ok {
+				if err := func() error {
+					if err := value.Validate(); err != nil {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -9930,6 +11198,14 @@ func (s *Server) decodePostV1ProjectsByProjectIdAdminWebhooksByIdTestRequest(r *
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -10072,6 +11348,14 @@ func (s *Server) decodePostV1ScimV2ByConnectionIdUsersRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -10142,6 +11426,14 @@ func (s *Server) decodePostV1ServiceAccountsTokensRequest(r *http.Request) (
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -10285,6 +11577,14 @@ func (s *Server) decodePostV1SsoExchangeRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -10363,6 +11663,33 @@ func (s *Server) decodePostV1SsoSamlByConnectionIdAcsRequest(r *http.Request) (
 					}); err != nil {
 						return req, rawBody, close, errors.Wrap(err, "decode \"SAMLResponse\"")
 					}
+					if err := func() error {
+						if value, ok := optForm.SAMLResponse.Get(); ok {
+							if err := func() error {
+								if err := (validate.String{
+									MinLength:     0,
+									MinLengthSet:  false,
+									MaxLength:     1024,
+									MaxLengthSet:  true,
+									Email:         false,
+									Hostname:      false,
+									Regex:         nil,
+									MinNumeric:    0,
+									MinNumericSet: false,
+									MaxNumeric:    0,
+									MaxNumericSet: false,
+								}).Validate(string(value)); err != nil {
+									return errors.Wrap(err, "string")
+								}
+								return nil
+							}(); err != nil {
+								return err
+							}
+						}
+						return nil
+					}(); err != nil {
+						return req, rawBody, close, errors.Wrap(err, "validate")
+					}
 				}
 			}
 			{
@@ -10394,6 +11721,33 @@ func (s *Server) decodePostV1SsoSamlByConnectionIdAcsRequest(r *http.Request) (
 						return nil
 					}); err != nil {
 						return req, rawBody, close, errors.Wrap(err, "decode \"RelayState\"")
+					}
+					if err := func() error {
+						if value, ok := optForm.RelayState.Get(); ok {
+							if err := func() error {
+								if err := (validate.String{
+									MinLength:     0,
+									MinLengthSet:  false,
+									MaxLength:     1024,
+									MaxLengthSet:  true,
+									Email:         false,
+									Hostname:      false,
+									Regex:         nil,
+									MinNumeric:    0,
+									MinNumericSet: false,
+									MaxNumeric:    0,
+									MaxNumericSet: false,
+								}).Validate(string(value)); err != nil {
+									return errors.Wrap(err, "string")
+								}
+								return nil
+							}(); err != nil {
+								return err
+							}
+						}
+						return nil
+					}(); err != nil {
+						return req, rawBody, close, errors.Wrap(err, "validate")
 					}
 				}
 			}
@@ -10615,6 +11969,14 @@ func (s *Server) decodePostV1TokensIntrospectRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -10686,6 +12048,14 @@ func (s *Server) decodePostV1TokensRevokeRequest(r *http.Request) (
 			}
 			return req, rawBody, close, err
 		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
 		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
@@ -10756,6 +12126,14 @@ func (s *Server) decodePostV1TokensVerifyRequest(r *http.Request) (
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -10906,6 +12284,14 @@ func (s *Server) decodePutV1ProjectsByProjectIdAdminConsentsRequest(r *http.Requ
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:
@@ -11269,6 +12655,14 @@ func (s *Server) decodePutV1ScimV2ByConnectionIdUsersByScimUserIdRequest(r *http
 				Err:         err,
 			}
 			return req, rawBody, close, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
 		return &request, rawBody, close, nil
 	default:

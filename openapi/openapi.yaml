@@ -368,6 +368,7 @@ components:
       schema:
         type: string
         example: prj_7Fk2
+        maxLength: 256
     XEnvironment:
       name: X-Environment
       in: header
@@ -375,6 +376,7 @@ components:
       schema:
         type: string
         example: live
+        maxLength: 1024
       description: Selects the environment for admin calls.
     XClientId:
       name: X-Client-Id
@@ -383,12 +385,14 @@ components:
       schema:
         type: string
         example: app_web
+        maxLength: 1024
     Cursor:
       name: cursor
       in: query
       required: false
       schema:
         type: string
+        maxLength: 1024
     Limit:
       name: limit
       in: query
@@ -404,6 +408,7 @@ components:
       required: false
       schema:
         type: string
+        maxLength: 1024
       description: Optional key to safely retry a create without duplicating it.
   responses:
     Default:
@@ -428,11 +433,14 @@ components:
               type: string
               description: Stable machine-readable code. Branch on this.
               example: invalid_credentials
+              maxLength: 512
             message:
               type: string
               description: Localized human-readable message.
+              maxLength: 1024
             request_id:
               type: string
+              maxLength: 256
             details:
               type:
               - object
@@ -468,13 +476,17 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 256
         avatar_url:
           type:
           - string
           - 'null'
+          maxLength: 2048
         locale:
           type: string
           example: en
+          pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+          maxLength: 35
     User:
       type: object
       required:
@@ -485,6 +497,7 @@ components:
         id:
           type: string
           example: usr_9aQ2
+          maxLength: 256
         kind:
           $ref: '#/components/schemas/UserKind'
         status:
@@ -502,6 +515,7 @@ components:
           - string
           - 'null'
           pattern: ^\+[1-9]\d{1,14}$
+          maxLength: 320
         phone_verified:
           type: boolean
         profile:
@@ -522,6 +536,7 @@ components:
         id:
           type: string
           example: idn_b2
+          maxLength: 256
         type:
           type: string
           enum:
@@ -534,10 +549,12 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 1024
         provider_account_id:
           type:
           - string
           - 'null'
+          maxLength: 256
         email:
           type:
           - string
@@ -554,18 +571,23 @@ components:
         id:
           type: string
           example: sess_4t
+          maxLength: 256
         user_id:
           type: string
+          maxLength: 256
         client_id:
           type: string
+          maxLength: 256
         device_name:
           type:
           - string
           - 'null'
+          maxLength: 1024
         amr:
           type: array
           items:
             type: string
+          maxItems: 1000
         aal:
           type: integer
           enum:
@@ -589,15 +611,18 @@ components:
         access_token:
           type: string
           example: eyJ…
+          maxLength: 4096
         refresh_token:
           type: string
           example: rt_…
+          maxLength: 4096
         expires_in:
           type: integer
           example: 1800
         token_type:
           type: string
           example: Bearer
+          maxLength: 1024
     NextStep:
       type:
       - string
@@ -616,6 +641,7 @@ components:
         id:
           type: string
           example: fac_totp
+          maxLength: 256
         type:
           type: string
           enum:
@@ -632,6 +658,7 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 1024
     AuthResult:
       type: object
       required:
@@ -666,14 +693,17 @@ components:
         flow_token:
           type: string
           example: flw_…
+          maxLength: 4096
         factors:
           type: array
           items:
             $ref: '#/components/schemas/Factor'
+          maxItems: 1000
         documents:
           type: array
           items:
             $ref: '#/components/schemas/ConsentDocRef'
+          maxItems: 1000
     AuthResultOrNextStep:
       oneOf:
       - $ref: '#/components/schemas/AuthResult'
@@ -692,23 +722,28 @@ components:
         challenge_id:
           type: string
           example: chl_e1
+          maxLength: 256
         expires_at:
           $ref: '#/components/schemas/Timestamp'
         type:
           type: string
+          maxLength: 1024
     ConsentDocRef:
       type: object
       properties:
         key:
           type: string
           example: tos
+          maxLength: 1024
         version:
           type: string
           example: '2026-06-01'
+          maxLength: 1024
         url:
           type:
           - string
           - 'null'
+          maxLength: 2048
     ConsentAcceptance:
       type: object
       required:
@@ -717,8 +752,10 @@ components:
       properties:
         key:
           type: string
+          maxLength: 1024
         version:
           type: string
+          maxLength: 1024
     PageMeta:
       type: object
       properties:
@@ -726,6 +763,7 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 1024
         has_more:
           type: boolean
     AppClient:
@@ -734,8 +772,10 @@ components:
         id:
           type: string
           example: app_web
+          maxLength: 256
         name:
           type: string
+          maxLength: 256
         type:
           type: string
           enum:
@@ -745,26 +785,32 @@ components:
           - machine
         environment:
           type: string
+          maxLength: 1024
         redirect_uris:
           type: array
           items:
             type: string
+          maxItems: 1000
         allowed_origins:
           type: array
           items:
             type: string
+          maxItems: 1000
         login_uri:
           type:
           - string
           - 'null'
+          maxLength: 2048
         consent_uri:
           type:
           - string
           - 'null'
+          maxLength: 2048
         default_redirect_uri:
           type:
           - string
           - 'null'
+          maxLength: 2048
         registration_override:
           anyOf:
           - $ref: '#/components/schemas/RegistrationConfig'
@@ -773,10 +819,12 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 1024
         token_profile:
           type:
           - string
           - 'null'
+          maxLength: 1024
     RegistrationConfig:
       type: object
       properties:
@@ -795,6 +843,7 @@ components:
           properties:
             name:
               type: string
+              maxLength: 256
             branding:
               type: object
               additionalProperties: true
@@ -804,6 +853,7 @@ components:
           type: array
           items:
             type: string
+          maxItems: 1000
         providers:
           type: array
           items:
@@ -811,8 +861,11 @@ components:
             properties:
               id:
                 type: string
+                maxLength: 256
               name:
                 type: string
+                maxLength: 256
+          maxItems: 1000
         password_policy:
           type: object
           additionalProperties: true
@@ -827,16 +880,21 @@ components:
           type: array
           items:
             type: string
+          maxItems: 1000
         default_locale:
           type: string
+          pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+          maxLength: 35
     WebAuthnCredential:
       type: object
       properties:
         id:
           type: string
           example: cred_1
+          maxLength: 256
         name:
           type: string
+          maxLength: 256
         created_at:
           $ref: '#/components/schemas/Timestamp'
         last_used_at:
@@ -846,17 +904,21 @@ components:
       properties:
         id:
           type: string
+          maxLength: 256
         type:
           type: string
           example: session.created
+          maxLength: 1024
         ip:
           type:
           - string
           - 'null'
+          maxLength: 1024
         device:
           type:
           - string
           - 'null'
+          maxLength: 1024
         at:
           $ref: '#/components/schemas/Timestamp'
     ServiceAccount:
@@ -865,12 +927,15 @@ components:
         id:
           type: string
           example: sa_ci
+          maxLength: 256
         name:
           type: string
+          maxLength: 256
         scopes:
           type: array
           items:
             type: string
+          maxItems: 1000
         disabled:
           type: boolean
     ApiKey:
@@ -879,14 +944,18 @@ components:
         id:
           type: string
           example: key_3
+          maxLength: 256
         name:
           type: string
+          maxLength: 256
         scopes:
           type: array
           items:
             type: string
+          maxItems: 1000
         prefix:
           type: string
+          maxLength: 1024
         disabled:
           type: boolean
         expires_at:
@@ -897,6 +966,7 @@ components:
         id:
           type: string
           example: sso_1
+          maxLength: 256
         type:
           type: string
           enum:
@@ -904,16 +974,20 @@ components:
           - oidc
         name:
           type: string
+          maxLength: 256
         status:
           type: string
+          maxLength: 1024
         domains:
           type: array
           items:
             type: string
+          maxItems: 1000
         external_ref:
           type:
           - string
           - 'null'
+          maxLength: 256
         config:
           type: object
           additionalProperties: true
@@ -924,14 +998,17 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 2048
     Domain:
       type: object
       properties:
         id:
           type: string
           example: dom_1
+          maxLength: 256
         domain:
           type: string
+          maxLength: 1024
         status:
           type: string
           enum:
@@ -941,6 +1018,7 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 256
         verified_at:
           $ref: '#/components/schemas/Timestamp'
     Project:
@@ -949,16 +1027,23 @@ components:
         id:
           type: string
           example: prj_7Fk2
+          maxLength: 256
         name:
           type: string
+          maxLength: 256
         slug:
           type: string
+          pattern: ^[a-z0-9-]{1,64}$
+          maxLength: 64
         default_locale:
           type: string
+          pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+          maxLength: 35
         supported_locales:
           type: array
           items:
             type: string
+          maxItems: 1000
         feature_gates:
           type: object
           additionalProperties:
@@ -967,6 +1052,7 @@ components:
           type: array
           items:
             type: string
+          maxItems: 1000
         created_at:
           $ref: '#/components/schemas/Timestamp'
     Environment:
@@ -974,10 +1060,13 @@ components:
       properties:
         name:
           type: string
+          maxLength: 256
         project_id:
           type: string
+          maxLength: 256
         issuer:
           type: string
+          maxLength: 1024
         created_at:
           $ref: '#/components/schemas/Timestamp'
     Webhook:
@@ -986,12 +1075,15 @@ components:
         id:
           type: string
           example: wh_1
+          maxLength: 256
         url:
           type: string
+          maxLength: 2048
         events:
           type: array
           items:
             type: string
+          maxItems: 1000
         enabled:
           type: boolean
     Hook:
@@ -1000,6 +1092,7 @@ components:
         id:
           type: string
           example: hk_1
+          maxLength: 256
         type:
           type: string
           enum:
@@ -1008,6 +1101,7 @@ components:
           - before_user_create
         url:
           type: string
+          maxLength: 2048
         timeout_ms:
           type: integer
         enabled:
@@ -1018,8 +1112,10 @@ components:
         id:
           type: string
           example: job_imp_1
+          maxLength: 256
         type:
           type: string
+          maxLength: 1024
         status:
           type: string
           enum:
@@ -1040,21 +1136,26 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 2048
     AuditLog:
       type: object
       properties:
         id:
           type: string
+          maxLength: 256
         type:
           type: string
+          maxLength: 1024
         actor_id:
           type:
           - string
           - 'null'
+          maxLength: 256
         target_id:
           type:
           - string
           - 'null'
+          maxLength: 256
         at:
           $ref: '#/components/schemas/Timestamp'
         data:
@@ -1066,15 +1167,19 @@ components:
         id:
           type: string
           example: evt_9
+          maxLength: 256
         type:
           type: string
           example: user.created
+          maxLength: 1024
         created_at:
           $ref: '#/components/schemas/Timestamp'
         project_id:
           type: string
+          maxLength: 256
         environment:
           type: string
+          maxLength: 1024
         data:
           type: object
           additionalProperties: true
@@ -1083,12 +1188,15 @@ components:
       properties:
         kid:
           type: string
+          maxLength: 256
         alg:
           type: string
           example: RS256
+          maxLength: 1024
         use:
           type: string
           example: sig
+          maxLength: 1024
         status:
           type: string
           enum:
@@ -1103,10 +1211,13 @@ components:
         id:
           type: string
           example: tp_api
+          maxLength: 256
         name:
           type: string
+          maxLength: 256
         audience:
           type: string
+          maxLength: 1024
         access_ttl:
           type: integer
         refresh_ttl:
@@ -1120,17 +1231,21 @@ components:
         id:
           type: string
           example: grant_1
+          maxLength: 256
         client:
           type: object
           properties:
             id:
               type: string
+              maxLength: 256
             name:
               type: string
+              maxLength: 256
         scopes:
           type: array
           items:
             type: string
+          maxItems: 1000
         granted_at:
           $ref: '#/components/schemas/Timestamp'
     AccessRequest:
@@ -1139,6 +1254,7 @@ components:
         id:
           type: string
           example: areq_5
+          maxLength: 256
         email:
           type: string
           pattern: ^[^@\s]+@[^@\s]+\.[^@\s]+$
@@ -1147,6 +1263,7 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 1024
         fields:
           type: object
           additionalProperties: true
@@ -1191,6 +1308,7 @@ components:
           type: array
           items:
             type: string
+          maxItems: 1000
         remember_device:
           type: boolean
     RateLimitRule:
@@ -1198,14 +1316,17 @@ components:
       properties:
         endpoint:
           type: string
+          maxLength: 1024
         action:
           type: string
+          maxLength: 1024
         limit:
           type: integer
         window_seconds:
           type: integer
         by:
           type: string
+          maxLength: 1024
     RateLimits:
       type: object
       properties:
@@ -1213,6 +1334,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RateLimitRule'
+          maxItems: 1000
     RetentionPolicy:
       type: object
       properties:
@@ -1242,14 +1364,17 @@ components:
       properties:
         key:
           type: string
+          maxLength: 1024
         version:
           type: string
+          maxLength: 1024
         required:
           type: boolean
         url:
           type:
           - string
           - 'null'
+          maxLength: 2048
       required:
       - key
       - version
@@ -1260,6 +1385,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ConsentDocument'
+          maxItems: 1000
     AuthConfig:
       type: object
       properties:
@@ -1267,22 +1393,28 @@ components:
           type: array
           items:
             type: string
+          maxItems: 1000
         registration:
           $ref: '#/components/schemas/RegistrationConfig'
         default_locale:
           type: string
+          pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+          maxLength: 35
         supported_locales:
           type: array
           items:
             type: string
+          maxItems: 1000
       additionalProperties: true
     EmailProvider:
       type: object
       properties:
         id:
           type: string
+          maxLength: 256
         type:
           type: string
+          maxLength: 1024
         config:
           type: object
           additionalProperties: true
@@ -1295,8 +1427,10 @@ components:
       properties:
         id:
           type: string
+          maxLength: 256
         type:
           type: string
+          maxLength: 1024
         config:
           type: object
           additionalProperties: true
@@ -1309,16 +1443,21 @@ components:
       properties:
         id:
           type: string
+          maxLength: 256
         provider:
           type: string
+          maxLength: 1024
         client_id:
           type: string
+          maxLength: 256
         client_secret:
           type: string
+          maxLength: 1024
         scopes:
           type: array
           items:
             type: string
+          maxItems: 1000
         enabled:
           type: boolean
       required:
@@ -1328,10 +1467,13 @@ components:
       properties:
         id:
           type: string
+          maxLength: 256
         name:
           type: string
+          maxLength: 256
         condition:
           type: string
+          maxLength: 1024
         action:
           type: string
           enum:
@@ -1350,10 +1492,13 @@ components:
           type: array
           items:
             type: string
+          maxItems: 1000
         id:
           type: string
+          maxLength: 256
         userName:
           type: string
+          maxLength: 1024
         name:
           type: object
           additionalProperties: true
@@ -1362,8 +1507,10 @@ components:
           items:
             type: object
             additionalProperties: true
+          maxItems: 1000
         externalId:
           type: string
+          maxLength: 256
         active:
           type: boolean
       additionalProperties: true
@@ -1381,6 +1528,7 @@ components:
           - string
           - 'null'
           pattern: ^\+[1-9]\d{1,14}$
+          maxLength: 320
         password:
           type:
           - string
@@ -1391,6 +1539,7 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 256
         metadata:
           type: object
           additionalProperties: true
@@ -1398,14 +1547,17 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 4096
         consents:
           type: array
           items:
             $ref: '#/components/schemas/ConsentAcceptance'
+          maxItems: 1000
         captcha_token:
           type:
           - string
           - 'null'
+          maxLength: 4096
         test:
           type: boolean
           default: false
@@ -1425,6 +1577,7 @@ components:
           - string
           - 'null'
           pattern: ^\+[1-9]\d{1,14}$
+          maxLength: 320
         password:
           type: string
           minLength: 8
@@ -1433,11 +1586,13 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 4096
     RefreshRequest:
       type: object
       properties:
         refresh_token:
           type: string
+          maxLength: 4096
     CodeExchangeRequest:
       type: object
       required:
@@ -1451,10 +1606,12 @@ components:
         code:
           type: string
           example: ac_…
+          maxLength: 512
         code_verifier:
           type:
           - string
           - 'null'
+          maxLength: 1024
     OtpStartRequest:
       type: object
       required:
@@ -1464,6 +1621,7 @@ components:
       properties:
         identifier:
           type: string
+          maxLength: 1024
         channel:
           type: string
           enum:
@@ -1480,10 +1638,12 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 2048
         captcha_token:
           type:
           - string
           - 'null'
+          maxLength: 4096
     OtpVerifyRequest:
       type: object
       required:
@@ -1492,8 +1652,10 @@ components:
       properties:
         challenge_id:
           type: string
+          maxLength: 256
         code:
           type: string
+          maxLength: 512
     MagicLinkStartRequest:
       type: object
       required:
@@ -1507,6 +1669,7 @@ components:
           maxLength: 254
         redirect_to:
           type: string
+          maxLength: 2048
         purpose:
           type: string
           enum:
@@ -1516,6 +1679,7 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 4096
     MagicLinkVerifyRequest:
       type: object
       required:
@@ -1523,6 +1687,7 @@ components:
       properties:
         token:
           type: string
+          maxLength: 4096
     PasswordForgotRequest:
       type: object
       required:
@@ -1536,14 +1701,18 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 2048
         locale:
           type:
           - string
           - 'null'
+          pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+          maxLength: 35
         captcha_token:
           type:
           - string
           - 'null'
+          maxLength: 4096
     PasswordResetRequest:
       type: object
       required:
@@ -1553,14 +1722,17 @@ components:
           type:
           - string
           - 'null'
+          maxLength: 4096
         challenge_id:
           type:
           - string
           - 'null'
+          maxLength: 256
         code:
           type:
           - string
           - 'null'
+          maxLength: 512
         new_password:
           type: string
           minLength: 8
@@ -1633,18 +1805,24 @@ components:
         response_type:
           type: string
           example: code
+          maxLength: 1024
         client_id:
           type: string
+          maxLength: 256
         redirect_uri:
           type: string
           format: uri
+          maxLength: 2048
         scope:
           type: string
           example: openid profile
+          maxLength: 1024
         state:
           type: string
+          maxLength: 1024
         code_challenge:
           type: string
+          maxLength: 1024
         code_challenge_method:
           type: string
           enum:
@@ -1652,19 +1830,26 @@ components:
           - plain
         nonce:
           type: string
+          maxLength: 1024
         response_mode:
           type: string
+          maxLength: 1024
         prompt:
           type: string
+          maxLength: 1024
         login_hint:
           type: string
+          maxLength: 1024
         request:
           type: string
           description: Request object JWT (RFC 9101).
+          maxLength: 1024
         client_assertion_type:
           type: string
+          maxLength: 1024
         client_assertion:
           type: string
+          maxLength: 1024
 paths:
   /v1/health:
     get:
@@ -1685,10 +1870,12 @@ paths:
                   status:
                     type: string
                     example: ok
+                    maxLength: 1024
                   time:
                     $ref: '#/components/schemas/Timestamp'
                   version:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -1713,6 +1900,7 @@ paths:
                   status:
                     type: string
                     example: ok
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -1736,11 +1924,13 @@ paths:
                 properties:
                   status:
                     type: string
+                    maxLength: 1024
                   checks:
                     type: array
                     items:
                       type: object
                       additionalProperties: true
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -1792,6 +1982,7 @@ paths:
                   csrf_token:
                     type: string
                     example: csrf_…
+                    maxLength: 4096
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -2026,6 +2217,7 @@ paths:
               properties:
                 group_id:
                   type: string
+                  maxLength: 256
       responses:
         '200':
           description: New AuthResult.
@@ -2059,6 +2251,7 @@ paths:
                 purpose:
                   type: string
                   example: delete_account
+                  maxLength: 1024
                 required_aal:
                   type: integer
                   enum:
@@ -2136,10 +2329,13 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 2048
                 locale:
                   type:
                   - string
                   - 'null'
+                  pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+                  maxLength: 35
       responses:
         '200':
           description: Challenge created.
@@ -2175,14 +2371,17 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
                 code:
                   type:
                   - string
                   - 'null'
+                  maxLength: 512
                 token:
                   type:
                   - string
                   - 'null'
+                  maxLength: 4096
       responses:
         '200':
           description: Verified.
@@ -2211,11 +2410,13 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 4096
       - name: redirect_to
         in: query
         required: false
         schema:
           type: string
+          maxLength: 2048
       responses:
         '302':
           description: Redirect to product with auth code.
@@ -2260,10 +2461,13 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 2048
                 locale:
                   type:
                   - string
                   - 'null'
+                  pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+                  maxLength: 35
       responses:
         '200':
           description: Challenge created.
@@ -2296,14 +2500,17 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
                 code:
                   type:
                   - string
                   - 'null'
+                  maxLength: 512
                 token:
                   type:
                   - string
                   - 'null'
+                  maxLength: 4096
       responses:
         '200':
           description: Updated user.
@@ -2335,6 +2542,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 4096
       responses:
         '200':
           description: Cancelled.
@@ -2372,6 +2580,7 @@ paths:
                   type: string
                   example: '+14155550123'
                   pattern: ^\+[1-9]\d{1,14}$
+                  maxLength: 320
                 channel:
                   type: string
                   enum:
@@ -2382,6 +2591,8 @@ paths:
                   type:
                   - string
                   - 'null'
+                  pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+                  maxLength: 35
       responses:
         '200':
           description: Challenge created.
@@ -2418,8 +2629,10 @@ paths:
               properties:
                 challenge_id:
                   type: string
+                  maxLength: 256
                 code:
                   type: string
+                  maxLength: 512
       responses:
         '200':
           description: Verified.
@@ -2453,6 +2666,7 @@ paths:
                 new_phone:
                   type: string
                   pattern: ^\+[1-9]\d{1,14}$
+                  maxLength: 320
                 channel:
                   type: string
                   enum:
@@ -2492,8 +2706,10 @@ paths:
               properties:
                 challenge_id:
                   type: string
+                  maxLength: 256
                 code:
                   type: string
+                  maxLength: 512
       responses:
         '200':
           description: Updated user.
@@ -2645,11 +2861,13 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 4096
       - name: redirect_to
         in: query
         required: false
         schema:
           type: string
+          maxLength: 2048
       responses:
         '302':
           description: Redirect to product with auth code.
@@ -2695,12 +2913,16 @@ paths:
                       properties:
                         id:
                           type: string
+                          maxLength: 256
                         name:
                           type: string
+                          maxLength: 256
                         scopes:
                           type: array
                           items:
                             type: string
+                          maxItems: 1000
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -2722,31 +2944,37 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 1024
       - name: redirect_to
         in: query
         required: true
         schema:
           type: string
+          maxLength: 2048
       - name: state
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: code_challenge
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: prompt
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: login_hint
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       responses:
         '302':
           description: Redirect to provider.
@@ -2777,21 +3005,25 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 1024
       - name: code
         in: query
         required: false
         schema:
           type: string
+          maxLength: 512
       - name: state
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: error
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       responses:
         '302':
           description: Redirect to product.
@@ -2833,10 +3065,12 @@ paths:
               properties:
                 code:
                   type: string
+                  maxLength: 512
                 code_verifier:
                   type:
                   - string
                   - 'null'
+                  maxLength: 1024
       responses:
         '200':
           description: AuthResult.
@@ -2864,16 +3098,19 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 1024
       - name: redirect_to
         in: query
         required: true
         schema:
           type: string
+          maxLength: 2048
       - name: state
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       responses:
         '302':
           description: Redirect to provider.
@@ -2904,6 +3141,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 1024
       responses:
         '302':
           description: Redirect to product.
@@ -2933,6 +3171,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 1024
       requestBody:
         required: true
         content:
@@ -2944,6 +3183,7 @@ paths:
               properties:
                 identity_id:
                   type: string
+                  maxLength: 256
       responses:
         '200':
           description: OK.
@@ -2984,6 +3224,7 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 1024
                 mediation:
                   type:
                   - string
@@ -3002,6 +3243,7 @@ paths:
                 properties:
                   challenge_id:
                     type: string
+                    maxLength: 256
                   publicKey:
                     type: object
                     additionalProperties: true
@@ -3034,6 +3276,7 @@ paths:
               properties:
                 challenge_id:
                   type: string
+                  maxLength: 256
                 credential:
                   type: object
                   additionalProperties: true
@@ -3068,14 +3311,17 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
                 resident_key:
                   type:
                   - string
                   - 'null'
+                  maxLength: 1024
                 user_verification:
                   type:
                   - string
                   - 'null'
+                  maxLength: 1024
       responses:
         '200':
           description: Creation options + challenge_id.
@@ -3086,6 +3332,7 @@ paths:
                 properties:
                   challenge_id:
                     type: string
+                    maxLength: 256
                   publicKey:
                     type: object
                     additionalProperties: true
@@ -3115,6 +3362,7 @@ paths:
               properties:
                 challenge_id:
                   type: string
+                  maxLength: 256
                 credential:
                   type: object
                   additionalProperties: true
@@ -3122,6 +3370,7 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
       responses:
         '200':
           description: Credential.
@@ -3158,6 +3407,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/WebAuthnCredential'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -3178,6 +3428,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       requestBody:
         required: true
         content:
@@ -3189,6 +3440,7 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
       responses:
         '200':
           description: Credential.
@@ -3218,6 +3470,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       responses:
         '200':
           description: OK.
@@ -3251,6 +3504,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Factor'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -3278,14 +3532,17 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 4096
                 factor_id:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
                 type:
                   type:
                   - string
                   - 'null'
+                  maxLength: 1024
       responses:
         '200':
           description: Challenge.
@@ -3321,18 +3578,22 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 4096
                 challenge_id:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
                 factor_id:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
                 code:
                   type:
                   - string
                   - 'null'
+                  maxLength: 512
                 credential:
                   type:
                   - object
@@ -3342,6 +3603,7 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 1024
       responses:
         '200':
           description: AuthResult.
@@ -3373,6 +3635,7 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
       responses:
         '200':
           description: TOTP secret + provisioning URI.
@@ -3383,14 +3646,18 @@ paths:
                 properties:
                   factor_id:
                     type: string
+                    maxLength: 256
                   secret:
                     type: string
+                    maxLength: 1024
                   otpauth_url:
                     type: string
+                    maxLength: 2048
                   qr_svg:
                     type:
                     - string
                     - 'null'
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -3417,8 +3684,10 @@ paths:
               properties:
                 factor_id:
                   type: string
+                  maxLength: 256
                 code:
                   type: string
+                  maxLength: 512
       responses:
         '200':
           description: Factor.
@@ -3455,6 +3724,7 @@ paths:
                 phone:
                   type: string
                   pattern: ^\+[1-9]\d{1,14}$
+                  maxLength: 320
       responses:
         '200':
           description: Factor + challenge.
@@ -3465,8 +3735,10 @@ paths:
                 properties:
                   factor_id:
                     type: string
+                    maxLength: 256
                   challenge_id:
                     type: string
+                    maxLength: 256
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -3504,8 +3776,10 @@ paths:
                 properties:
                   factor_id:
                     type: string
+                    maxLength: 256
                   challenge_id:
                     type: string
+                    maxLength: 256
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -3530,6 +3804,7 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
       responses:
         '200':
           description: Creation options + challenge_id.
@@ -3540,6 +3815,7 @@ paths:
                 properties:
                   challenge_id:
                     type: string
+                    maxLength: 256
                   publicKey:
                     type: object
                     additionalProperties: true
@@ -3569,6 +3845,7 @@ paths:
               properties:
                 challenge_id:
                   type: string
+                  maxLength: 256
                 credential:
                   type: object
                   additionalProperties: true
@@ -3617,6 +3894,7 @@ paths:
                     type: array
                     items:
                       type: string
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -3645,8 +3923,10 @@ paths:
               properties:
                 flow_token:
                   type: string
+                  maxLength: 4096
                 code:
                   type: string
+                  maxLength: 512
       responses:
         '200':
           description: AuthResult.
@@ -3674,6 +3954,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       responses:
         '200':
           description: OK.
@@ -3799,6 +4080,7 @@ paths:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
       responses:
         '200':
           description: OK with assurance.
@@ -3815,6 +4097,7 @@ paths:
                     type: array
                     items:
                       type: string
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -3861,6 +4144,7 @@ paths:
                     type: array
                     items:
                       type: string
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -3907,12 +4191,16 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
                 avatar_url:
                   type:
                   - string
                   - 'null'
+                  maxLength: 2048
                 locale:
                   type: string
+                  pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+                  maxLength: 35
                 metadata:
                   type: object
                   additionalProperties: true
@@ -3951,6 +4239,7 @@ paths:
                   maxLength: 256
                 reason:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: OK.
@@ -4003,6 +4292,7 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 1024
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       responses:
@@ -4018,6 +4308,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/ActivityEvent'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -4043,6 +4334,7 @@ paths:
                 properties:
                   job_id:
                     type: string
+                    maxLength: 256
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -4063,6 +4355,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       responses:
         '200':
           description: Export status.
@@ -4073,10 +4366,12 @@ paths:
                 properties:
                   status:
                     type: string
+                    maxLength: 1024
                   download_url:
                     type:
                     - string
                     - 'null'
+                    maxLength: 2048
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -4110,6 +4405,9 @@ paths:
                             $ref: '#/components/schemas/Timestamp'
                           locale:
                             type: string
+                            pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+                            maxLength: 35
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -4136,6 +4434,7 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/ConsentAcceptance'
+                  maxItems: 1000
       responses:
         '200':
           description: Consents.
@@ -4149,6 +4448,7 @@ paths:
                     items:
                       type: object
                       additionalProperties: true
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -4175,6 +4475,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Identity'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -4195,6 +4496,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       responses:
         '200':
           description: OK.
@@ -4227,6 +4529,7 @@ paths:
               properties:
                 target_identifier:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Challenge.
@@ -4237,6 +4540,7 @@ paths:
                 properties:
                   challenge_id:
                     type: string
+                    maxLength: 256
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -4263,8 +4567,10 @@ paths:
               properties:
                 challenge_id:
                   type: string
+                  maxLength: 256
                 code:
                   type: string
+                  maxLength: 512
       responses:
         '200':
           description: Merged.
@@ -4279,6 +4585,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Identity'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -4305,6 +4612,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Session'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -4381,6 +4689,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       requestBody:
         required: true
         content:
@@ -4392,6 +4701,7 @@ paths:
               properties:
                 device_name:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Session.
@@ -4421,6 +4731,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       responses:
         '200':
           description: OK.
@@ -4448,6 +4759,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       requestBody:
         required: true
         content:
@@ -4495,6 +4807,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  maxItems: 1000
                 ttl_seconds:
                   type: integer
                   default: 600
@@ -4508,11 +4821,13 @@ paths:
                 properties:
                   access_token:
                     type: string
+                    maxLength: 4096
                   expires_in:
                     type: integer
                   token_type:
                     type: string
                     example: Bearer
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -4549,6 +4864,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/ServiceAccount'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -4576,10 +4892,12 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
                 scopes:
                   type: array
                   items:
                     type: string
+                  maxItems: 1000
       responses:
         '201':
           description: Created.
@@ -4610,6 +4928,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     get:
       operationId: getV1ProjectsByProjectIdAdminServiceAccountsBySaId
       x-since: 1.3.0
@@ -4654,6 +4973,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  maxItems: 1000
                 disabled:
                   type: boolean
       responses:
@@ -4709,6 +5029,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     post:
       operationId: postV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets
       x-since: 1.3.0
@@ -4726,9 +5047,11 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
                 expires_at:
                   type: string
                   format: date-time
+                  maxLength: 1024
       responses:
         '201':
           description: Secret (shown once).
@@ -4739,10 +5062,13 @@ paths:
                 properties:
                   secret_id:
                     type: string
+                    maxLength: 256
                   client_id:
                     type: string
+                    maxLength: 256
                   client_secret:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -4769,11 +5095,13 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - name: secret_id
         in: path
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -4813,6 +5141,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/ApiKey'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -4842,13 +5171,16 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
                 scopes:
                   type: array
                   items:
                     type: string
+                  maxItems: 1000
                 expires_at:
                   type: string
                   format: date-time
+                  maxLength: 1024
       responses:
         '201':
           description: Key + secret (shown once).
@@ -4861,6 +5193,7 @@ paths:
                     $ref: '#/components/schemas/ApiKey'
                   secret:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -4881,6 +5214,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     patch:
       operationId: patchV1ProjectsByProjectIdAdminApiKeysByKeyId
       x-since: 1.3.0
@@ -4896,10 +5230,12 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
                 scopes:
                   type: array
                   items:
                     type: string
+                  maxItems: 1000
                 disabled:
                   type: boolean
       responses:
@@ -4961,6 +5297,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -4974,6 +5311,7 @@ paths:
                     $ref: '#/components/schemas/ApiKey'
                   secret:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -5006,6 +5344,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/SSOConnection'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -5043,12 +5382,15 @@ paths:
                   - oidc
                 name:
                   type: string
+                  maxLength: 256
                 domains:
                   type: array
                   items:
                     type: string
+                  maxItems: 1000
                 external_ref:
                   type: string
+                  maxLength: 256
                 config:
                   type: object
                   additionalProperties: true
@@ -5085,6 +5427,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     get:
       operationId: getV1ProjectsByProjectIdAdminSsoConnectionsById
       x-since: 3.0.0
@@ -5184,6 +5527,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -5195,6 +5539,7 @@ paths:
                 properties:
                   test_url:
                     type: string
+                    maxLength: 2048
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -5218,6 +5563,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -5229,6 +5575,7 @@ paths:
                 properties:
                   certificate:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -5253,6 +5600,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 320
       responses:
         '200':
           description: Connection.
@@ -5284,6 +5632,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       responses:
         '200':
           description: SP metadata.
@@ -5312,16 +5661,19 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - name: redirect_to
         in: query
         required: true
         schema:
           type: string
+          maxLength: 2048
       - name: state
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       responses:
         '302':
           description: Redirect to IdP.
@@ -5352,6 +5704,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -5360,8 +5713,10 @@ paths:
               properties:
                 SAMLResponse:
                   type: string
+                  maxLength: 1024
                 RelayState:
                   type: string
+                  maxLength: 1024
       responses:
         '302':
           description: Redirect to product with auth code.
@@ -5396,6 +5751,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       responses:
         '302':
           description: Redirect / XML.
@@ -5426,21 +5782,25 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - name: redirect_to
         in: query
         required: true
         schema:
           type: string
+          maxLength: 2048
       - name: state
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: login_hint
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       responses:
         '302':
           description: Redirect to IdP.
@@ -5471,16 +5831,19 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - name: code
         in: query
         required: true
         schema:
           type: string
+          maxLength: 512
       - name: state
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       responses:
         '302':
           description: Redirect to product with auth code.
@@ -5522,6 +5885,7 @@ paths:
               properties:
                 code:
                   type: string
+                  maxLength: 512
       responses:
         '200':
           description: AuthResult.
@@ -5544,6 +5908,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     get:
       operationId: getV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens
       x-since: 3.0.0
@@ -5563,6 +5928,7 @@ paths:
                     items:
                       type: object
                       additionalProperties: true
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -5591,9 +5957,11 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
                 expires_at:
                   type: string
                   format: date-time
+                  maxLength: 1024
       responses:
         '201':
           description: Token + secret (shown once).
@@ -5607,10 +5975,13 @@ paths:
                     properties:
                       id:
                         type: string
+                        maxLength: 256
                       name:
                         type: string
+                        maxLength: 256
                   secret:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -5637,11 +6008,13 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - name: token_id
         in: path
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -5666,6 +6039,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     get:
       operationId: getV1ScimV2ByConnectionIdUsers
       x-since: 3.0.0
@@ -5678,6 +6052,7 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: startIndex
         in: query
         required: false
@@ -5741,11 +6116,13 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     - name: scim_user_id
       in: path
       required: true
       schema:
         type: string
+        maxLength: 256
     get:
       operationId: getV1ScimV2ByConnectionIdUsersByScimUserId
       x-since: 3.0.0
@@ -5852,6 +6229,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     get:
       operationId: getV1ScimV2ByConnectionIdGroups
       x-since: 3.0.0
@@ -5912,11 +6290,13 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     - name: group_id
       in: path
       required: true
       schema:
         type: string
+        maxLength: 256
     get:
       operationId: getV1ScimV2ByConnectionIdGroupsByGroupId
       x-since: 3.0.0
@@ -6041,6 +6421,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/Domain'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -6072,10 +6453,12 @@ paths:
               properties:
                 domain:
                   type: string
+                  maxLength: 1024
                 connection_id:
                   type:
                   - string
                   - 'null'
+                  maxLength: 256
       responses:
         '201':
           description: Domain + verification record.
@@ -6091,10 +6474,13 @@ paths:
                     properties:
                       type:
                         type: string
+                        maxLength: 1024
                       name:
                         type: string
+                        maxLength: 256
                       value:
                         type: string
+                        maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -6121,6 +6507,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -6155,6 +6542,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -6187,6 +6575,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 1024
       responses:
         '200':
           description: OIDC metadata.
@@ -6217,6 +6606,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 1024
       responses:
         '200':
           description: JWKS.
@@ -6246,6 +6636,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - name: response_type
         in: query
         required: true
@@ -6258,36 +6649,43 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 2048
       - name: scope
         in: query
         required: true
         schema:
           type: string
+          maxLength: 1024
       - name: state
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: code_challenge
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: nonce
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: prompt
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: request_uri
         in: query
         required: false
         schema:
           type: string
+          maxLength: 2048
       responses:
         '302':
           description: Redirect to the interaction UI, or to redirect_uri with a code.
@@ -6322,20 +6720,28 @@ paths:
               properties:
                 grant_type:
                   type: string
+                  maxLength: 1024
                 code:
                   type: string
+                  maxLength: 512
                 redirect_uri:
                   type: string
+                  maxLength: 2048
                 code_verifier:
                   type: string
+                  maxLength: 1024
                 refresh_token:
                   type: string
+                  maxLength: 4096
                 client_id:
                   type: string
+                  maxLength: 256
                 client_secret:
                   type: string
+                  maxLength: 1024
                 device_code:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: OAuth token response.
@@ -6369,8 +6775,10 @@ paths:
               properties:
                 token:
                   type: string
+                  maxLength: 4096
                 token_type_hint:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Empty.
@@ -6397,6 +6805,7 @@ paths:
               properties:
                 token:
                   type: string
+                  maxLength: 4096
       responses:
         '200':
           description: Introspection result.
@@ -6457,16 +6866,19 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: post_logout_redirect_uri
         in: query
         required: false
         schema:
           type: string
+          maxLength: 2048
       - name: state
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       responses:
         '302':
           description: Redirect after logout.
@@ -6500,6 +6912,7 @@ paths:
               properties:
                 logout_token:
                   type: string
+                  maxLength: 4096
       responses:
         '200':
           description: Empty.
@@ -6533,6 +6946,7 @@ paths:
                 properties:
                   request_uri:
                     type: string
+                    maxLength: 2048
                   expires_in:
                     type: integer
         default:
@@ -6560,8 +6974,10 @@ paths:
               properties:
                 client_id:
                   type: string
+                  maxLength: 256
                 scope:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Device + user codes.
@@ -6572,12 +6988,16 @@ paths:
                 properties:
                   device_code:
                     type: string
+                    maxLength: 1024
                   user_code:
                     type: string
+                    maxLength: 1024
                   verification_uri:
                     type: string
+                    maxLength: 2048
                   verification_uri_complete:
                     type: string
+                    maxLength: 1024
                   expires_in:
                     type: integer
                   interval:
@@ -6606,6 +7026,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 1024
       responses:
         '200':
           description: Client + scopes.
@@ -6621,6 +7042,7 @@ paths:
                     type: array
                     items:
                       type: string
+                    maxItems: 1000
                   expires_at:
                     $ref: '#/components/schemas/Timestamp'
         default:
@@ -6648,6 +7070,7 @@ paths:
               properties:
                 user_code:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: OK.
@@ -6680,6 +7103,7 @@ paths:
               properties:
                 user_code:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: OK.
@@ -6709,6 +7133,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       responses:
         '200':
           description: Interaction context.
@@ -6729,10 +7154,12 @@ paths:
                     type: array
                     items:
                       type: string
+                    maxItems: 1000
                   prompt:
                     type:
                     - string
                     - 'null'
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -6753,6 +7180,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       requestBody:
         content:
           application/json:
@@ -6761,6 +7189,7 @@ paths:
               properties:
                 flow_token:
                   type: string
+                  maxLength: 4096
       responses:
         '200':
           description: Redirect target.
@@ -6771,6 +7200,7 @@ paths:
                 properties:
                   redirect_to:
                     type: string
+                    maxLength: 2048
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -6791,6 +7221,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       requestBody:
         required: true
         content:
@@ -6802,6 +7233,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  maxItems: 1000
                 remember:
                   type: boolean
       responses:
@@ -6814,6 +7246,7 @@ paths:
                 properties:
                   redirect_to:
                     type: string
+                    maxLength: 2048
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -6835,6 +7268,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       requestBody:
         content:
           application/json:
@@ -6843,8 +7277,10 @@ paths:
               properties:
                 error:
                   type: string
+                  maxLength: 1024
                 error_description:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Redirect target.
@@ -6855,6 +7291,7 @@ paths:
                 properties:
                   redirect_to:
                     type: string
+                    maxLength: 2048
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -6882,6 +7319,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/OAuthGrant'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -6906,6 +7344,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       responses:
         '200':
           description: OK.
@@ -6936,21 +7375,25 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: email
         in: query
         required: false
         schema:
           type: string
+          maxLength: 320
       - name: phone
         in: query
         required: false
         schema:
           type: string
+          maxLength: 320
       - name: kind
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/XEnvironment'
@@ -6967,6 +7410,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/User'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -6997,6 +7441,7 @@ paths:
                 phone:
                   type: string
                   pattern: ^\+[1-9]\d{1,14}$
+                  maxLength: 320
                 password:
                   type: string
                   minLength: 8
@@ -7040,6 +7485,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     get:
       operationId: getV1ProjectsByProjectIdAdminUsersByUserId
       x-since: 1.0.0
@@ -7144,6 +7590,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         content:
@@ -7153,9 +7600,11 @@ paths:
               properties:
                 reason:
                   type: string
+                  maxLength: 1024
                 until:
                   type: string
                   format: date-time
+                  maxLength: 1024
         required: true
       responses:
         '200':
@@ -7190,6 +7639,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -7224,6 +7674,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         required: true
@@ -7270,6 +7721,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -7304,6 +7756,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -7338,6 +7791,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         content:
@@ -7351,6 +7805,7 @@ paths:
                   - 'null'
                   items:
                     type: string
+                  maxItems: 1000
       responses:
         '200':
           description: Removed count.
@@ -7384,6 +7839,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/XEnvironment'
@@ -7400,6 +7856,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/Session'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -7424,6 +7881,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         content:
@@ -7433,8 +7891,10 @@ paths:
               properties:
                 except_session_id:
                   type: string
+                  maxLength: 256
                 reason:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Revoked count.
@@ -7468,11 +7928,13 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - name: session_id
         in: path
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -7504,6 +7966,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -7517,6 +7980,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Identity'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -7540,11 +8004,13 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - name: identity_id
         in: path
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -7576,6 +8042,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/XEnvironment'
@@ -7592,6 +8059,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/OAuthGrant'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -7616,11 +8084,13 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - name: grant_id
         in: path
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -7652,6 +8122,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         required: true
@@ -7665,6 +8136,7 @@ paths:
               properties:
                 reason:
                   type: string
+                  maxLength: 1024
                 duration_seconds:
                   type: integer
       responses:
@@ -7677,6 +8149,7 @@ paths:
                 properties:
                   impersonation_url:
                     type: string
+                    maxLength: 2048
                   expires_at:
                     $ref: '#/components/schemas/Timestamp'
         default:
@@ -7702,6 +8175,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         content:
@@ -7711,6 +8185,7 @@ paths:
               properties:
                 reason:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: OK.
@@ -7741,6 +8216,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -7752,6 +8228,7 @@ paths:
                 properties:
                   job_id:
                     type: string
+                    maxLength: 256
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -7784,6 +8261,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/AppClient'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -7829,6 +8307,7 @@ paths:
                     type:
                     - string
                     - 'null'
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -7849,6 +8328,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     get:
       operationId: getV1ProjectsByProjectIdAdminAppsByAppId
       x-since: 1.0.0
@@ -7948,6 +8428,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
@@ -7961,9 +8442,11 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
                 expires_at:
                   type: string
                   format: date-time
+                  maxLength: 1024
       responses:
         '201':
           description: Secret (shown once).
@@ -7974,8 +8457,10 @@ paths:
                 properties:
                   secret_id:
                     type: string
+                    maxLength: 256
                   client_secret:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -7999,11 +8484,13 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - name: secret_id
         in: path
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -8379,6 +8866,8 @@ paths:
       required: true
       schema:
         type: string
+        pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+        maxLength: 35
     get:
       operationId: getV1ProjectsByProjectIdAdminI18nByLocale
       x-since: 1.0.0
@@ -8572,6 +9061,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/OAuthProviderConfig'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -8622,6 +9112,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     patch:
       operationId: patchV1ProjectsByProjectIdAdminOauthProvidersById
       x-since: 1.2.0
@@ -8698,6 +9189,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/EmailProvider'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -8748,6 +9240,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     patch:
       operationId: patchV1ProjectsByProjectIdAdminEmailProvidersById
       x-since: 1.0.0
@@ -8824,6 +9317,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/SmsProvider'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -8874,6 +9368,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     patch:
       operationId: patchV1ProjectsByProjectIdAdminSmsProvidersById
       x-since: 1.0.0
@@ -8963,6 +9458,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     patch:
       operationId: patchV1ProjectsByProjectIdAdminEmailTemplatesById
       x-since: 1.0.0
@@ -9009,6 +9505,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         content:
@@ -9018,6 +9515,8 @@ paths:
               properties:
                 locale:
                   type: string
+                  pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+                  maxLength: 35
                 data:
                   type: object
                   additionalProperties: true
@@ -9031,10 +9530,13 @@ paths:
                 properties:
                   subject:
                     type: string
+                    maxLength: 1024
                   html:
                     type: string
+                    maxLength: 1024
                   text:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -9058,6 +9560,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         required: true
@@ -9070,8 +9573,11 @@ paths:
               properties:
                 to:
                   type: string
+                  maxLength: 1024
                 locale:
                   type: string
+                  pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+                  maxLength: 35
                 data:
                   type: object
                   additionalProperties: true
@@ -9113,6 +9619,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/Webhook'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -9145,12 +9652,15 @@ paths:
               properties:
                 url:
                   type: string
+                  maxLength: 2048
                 events:
                   type: array
                   items:
                     type: string
+                  maxItems: 1000
                 description:
                   type: string
+                  maxLength: 1024
                 enabled:
                   type: boolean
       responses:
@@ -9165,6 +9675,7 @@ paths:
                     $ref: '#/components/schemas/Webhook'
                   signing_secret:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -9185,6 +9696,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     get:
       operationId: getV1ProjectsByProjectIdAdminWebhooksById
       x-since: 1.4.0
@@ -9284,6 +9796,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -9295,6 +9808,7 @@ paths:
                 properties:
                   signing_secret:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -9318,6 +9832,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         required: true
@@ -9328,6 +9843,7 @@ paths:
               properties:
                 event_type:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Delivery.
@@ -9359,11 +9875,13 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 256
       - name: status
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -9396,6 +9914,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -9428,11 +9947,13 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: user_id
         in: query
         required: false
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/XEnvironment'
@@ -9449,6 +9970,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/Event'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -9473,6 +9995,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         content:
@@ -9482,6 +10005,7 @@ paths:
               properties:
                 webhook_id:
                   type: string
+                  maxLength: 256
       responses:
         '200':
           description: Deliveries.
@@ -9521,6 +10045,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/Hook'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -9553,8 +10078,10 @@ paths:
               properties:
                 type:
                   type: string
+                  maxLength: 1024
                 url:
                   type: string
+                  maxLength: 2048
                 timeout_ms:
                   type: integer
                 enabled:
@@ -9571,6 +10098,7 @@ paths:
                     $ref: '#/components/schemas/Hook'
                   signing_secret:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -9591,6 +10119,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     patch:
       operationId: patchV1ProjectsByProjectIdAdminHooksById
       x-since: 1.4.0
@@ -9663,6 +10192,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         content:
@@ -9719,6 +10249,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/SigningKey'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -9780,6 +10311,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -9814,6 +10346,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -9854,6 +10387,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/TokenProfile'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -9910,6 +10444,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     patch:
       operationId: patchV1ProjectsByProjectIdAdminTokenProfilesById
       x-since: 1.0.0
@@ -9982,6 +10517,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         required: true
@@ -9994,6 +10530,7 @@ paths:
               properties:
                 user_id:
                   type: string
+                  maxLength: 256
       responses:
         '200':
           description: Claims.
@@ -10032,6 +10569,7 @@ paths:
               properties:
                 token:
                   type: string
+                  maxLength: 4096
       responses:
         '200':
           description: Introspection.
@@ -10066,10 +10604,13 @@ paths:
               properties:
                 token:
                   type: string
+                  maxLength: 4096
                 session_id:
                   type: string
+                  maxLength: 256
                 reason:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: OK.
@@ -10102,8 +10643,10 @@ paths:
               properties:
                 token:
                   type: string
+                  maxLength: 4096
                 audience:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Verification.
@@ -10121,6 +10664,7 @@ paths:
                     type:
                     - string
                     - 'null'
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -10167,11 +10711,13 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: status
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/XEnvironment'
@@ -10188,6 +10734,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/Job'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -10212,6 +10759,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -10246,6 +10794,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -10290,8 +10839,10 @@ paths:
                   items:
                     type: object
                     additionalProperties: true
+                  maxItems: 1000
                 password_hash_format:
                   type: string
+                  maxLength: 1024
                 send_invites:
                   type: boolean
       responses:
@@ -10304,8 +10855,10 @@ paths:
                 properties:
                   job_id:
                     type: string
+                    maxLength: 256
                   status:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -10338,12 +10891,14 @@ paths:
               properties:
                 hash:
                   type: string
+                  maxLength: 1024
                 password:
                   type: string
                   minLength: 8
                   maxLength: 256
                 format:
                   type: string
+                  maxLength: 1024
                 params:
                   type: object
                   additionalProperties: true
@@ -10380,6 +10935,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -10391,10 +10947,12 @@ paths:
                 properties:
                   status:
                     type: string
+                    maxLength: 1024
                   download_url:
                     type:
                     - string
                     - 'null'
+                    maxLength: 2048
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -10418,16 +10976,19 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 256
       - name: target_id
         in: query
         required: false
         schema:
           type: string
+          maxLength: 256
       - name: type
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/XEnvironment'
@@ -10444,6 +11005,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/AuditLog'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -10468,6 +11030,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -10508,11 +11071,14 @@ paths:
                 from:
                   type: string
                   format: date-time
+                  maxLength: 1024
                 to:
                   type: string
                   format: date-time
+                  maxLength: 1024
                 format:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Job.
@@ -10523,8 +11089,10 @@ paths:
                 properties:
                   job_id:
                     type: string
+                    maxLength: 256
                   status:
                     type: string
+                    maxLength: 1024
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -10554,10 +11122,13 @@ paths:
               properties:
                 provider:
                   type: string
+                  maxLength: 1024
                 token:
                   type: string
+                  maxLength: 4096
                 action:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Result.
@@ -10591,16 +11162,19 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 256
       - name: ip
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: type
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/XEnvironment'
@@ -10643,6 +11217,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/RiskRule'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -10696,6 +11271,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 256
     patch:
       operationId: patchV1ProjectsByProjectIdAdminRiskRulesByRuleId
       x-since: 1.4.0
@@ -10779,11 +11355,14 @@ paths:
                   - asn
                 value:
                   type: string
+                  maxLength: 1024
                 expires_at:
                   type: string
                   format: date-time
+                  maxLength: 1024
                 reason:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Block.
@@ -10815,6 +11394,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -10857,11 +11437,13 @@ paths:
                   maxLength: 254
                 reason:
                   type: string
+                  maxLength: 1024
                 fields:
                   type: object
                   additionalProperties: true
                 captcha_token:
                   type: string
+                  maxLength: 4096
       responses:
         '200':
           description: Request.
@@ -10893,6 +11475,7 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 1024
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/XEnvironment'
       responses:
@@ -10908,6 +11491,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/AccessRequest'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -10932,6 +11516,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         content:
@@ -10969,6 +11554,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       - $ref: '#/components/parameters/XEnvironment'
       requestBody:
         content:
@@ -10978,6 +11564,7 @@ paths:
               properties:
                 reason:
                   type: string
+                  maxLength: 1024
       responses:
         '200':
           description: Denied.
@@ -11010,11 +11597,13 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 1024
       - name: to
         in: query
         required: false
         schema:
           type: string
+          maxLength: 1024
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -11140,6 +11729,7 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 1024
       - $ref: '#/components/parameters/Cursor'
       responses:
         '200':
@@ -11154,6 +11744,7 @@ paths:
                       type: array
                       items:
                         $ref: '#/components/schemas/Project'
+                      maxItems: 1000
                 - $ref: '#/components/schemas/PageMeta'
         default:
           $ref: '#/components/responses/Default'
@@ -11179,14 +11770,20 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
                 slug:
                   type: string
+                  pattern: ^[a-z0-9-]{1,64}$
+                  maxLength: 64
                 default_locale:
                   type: string
+                  pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+                  maxLength: 35
                 supported_locales:
                   type: array
                   items:
                     type: string
+                  maxItems: 1000
                 feature_gates:
                   type: object
                   additionalProperties:
@@ -11373,6 +11970,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Environment'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -11398,8 +11996,10 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
                 clone_config_from:
                   type: string
+                  maxLength: 1024
       responses:
         '201':
           description: Environment.
@@ -11428,6 +12028,7 @@ paths:
       required: true
       schema:
         type: string
+        maxLength: 1024
     get:
       operationId: getMgmtV1ProjectsByProjectIdEnvironmentsByEnv
       x-since: 1.0.0
@@ -11515,13 +12116,16 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 256
                 scopes:
                   type: array
                   items:
                     type: string
+                  maxItems: 1000
                 expires_at:
                   type: string
                   format: date-time
+                  maxLength: 1024
       responses:
         '200':
           description: Admin token (shown once).
@@ -11532,6 +12136,7 @@ paths:
                 properties:
                   admin_token:
                     type: string
+                    maxLength: 4096
                   expires_at:
                     $ref: '#/components/schemas/Timestamp'
         default:
@@ -11558,6 +12163,7 @@ paths:
         required: true
         schema:
           type: string
+          maxLength: 256
       responses:
         '200':
           description: OK.

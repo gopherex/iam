@@ -86,6 +86,15 @@ func decodeDeleteMgmtV1ProjectsByProjectIdResponse(resp *http.Response) (res *Ok
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -168,6 +177,15 @@ func decodeDeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdResponse(resp *htt
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -252,6 +270,15 @@ func decodeDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvResponse(resp *http.R
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -334,6 +361,15 @@ func decodeDeleteV1AuthIdentitiesByIdentityIdResponse(resp *http.Response) (res 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -418,6 +454,15 @@ func decodeDeleteV1AuthMfaFactorsByFactorIdResponse(resp *http.Response) (res *O
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -500,6 +545,15 @@ func decodeDeleteV1AuthWebauthnCredentialsByCredentialIdResponse(resp *http.Resp
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -584,6 +638,15 @@ func decodeDeleteV1OauthGrantsByGrantIdResponse(resp *http.Response) (res *Ok, _
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -666,6 +729,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdResponse(resp *http.Res
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -750,6 +822,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminAppsByAppIdResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -832,6 +913,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdResponse(
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -916,6 +1006,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminDomainsByDomainIdResponse(resp *http.
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -998,6 +1097,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminEmailProvidersByIdResponse(resp *http
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -1082,6 +1190,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminHooksByIdResponse(resp *http.Response
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -1164,6 +1281,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminJwksByKeyIdResponse(resp *http.Respon
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -1248,6 +1374,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminOauthProvidersByIdResponse(resp *http
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -1330,6 +1465,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdResponse(resp
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -1414,6 +1558,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdResponse(resp *http.
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -1496,6 +1649,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdResponse(resp *h
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -1580,6 +1742,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretI
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -1662,6 +1833,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminSmsProvidersByIdResponse(resp *http.R
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -1746,6 +1926,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdResponse(resp *http
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -1828,6 +2017,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -1912,6 +2110,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminTokenProfilesByIdResponse(resp *http.
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -1994,6 +2201,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminUsersByUserIdResponse(resp *http.Resp
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -2078,6 +2294,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdResponse(
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -2160,6 +2385,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRe
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -2244,6 +2478,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRespo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -2327,6 +2570,15 @@ func decodeDeleteV1ProjectsByProjectIdAdminWebhooksByIdResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -2378,6 +2630,15 @@ func decodeDeleteV1ScimV2ByConnectionIdGroupsByGroupIdResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -2428,6 +2689,15 @@ func decodeDeleteV1ScimV2ByConnectionIdUsersByScimUserIdResponse(resp *http.Resp
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -2512,6 +2782,15 @@ func decodeDeleteV1SessionsResponse(resp *http.Response) (res *DeleteV1SessionsO
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -2594,6 +2873,15 @@ func decodeDeleteV1SessionsBySessionIdResponse(resp *http.Response) (res *Ok, _ 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -2678,6 +2966,15 @@ func decodeDeleteV1UsersMeResponse(resp *http.Response) (res *Ok, _ error) {
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -2725,6 +3022,15 @@ func decodeGetMgmtV1ProjectsResponse(resp *http.Response) (res *GetMgmtV1Project
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -2760,6 +3066,15 @@ func decodeGetMgmtV1ProjectsResponse(resp *http.Response) (res *GetMgmtV1Project
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -2808,6 +3123,15 @@ func decodeGetMgmtV1ProjectsByProjectIdResponse(resp *http.Response) (res *GetMg
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -2843,6 +3167,15 @@ func decodeGetMgmtV1ProjectsByProjectIdResponse(resp *http.Response) (res *GetMg
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -2926,6 +3259,15 @@ func decodeGetMgmtV1ProjectsByProjectIdAdminTokensResponse(resp *http.Response) 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -3019,6 +3361,15 @@ func decodeGetMgmtV1ProjectsByProjectIdConfigExportResponse(resp *http.Response)
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -3066,6 +3417,15 @@ func decodeGetMgmtV1ProjectsByProjectIdEnvironmentsResponse(resp *http.Response)
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -3101,6 +3461,15 @@ func decodeGetMgmtV1ProjectsByProjectIdEnvironmentsResponse(resp *http.Response)
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -3149,6 +3518,15 @@ func decodeGetMgmtV1ProjectsByProjectIdEnvironmentsByEnvResponse(resp *http.Resp
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -3184,6 +3562,15 @@ func decodeGetMgmtV1ProjectsByProjectIdEnvironmentsByEnvResponse(resp *http.Resp
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -3267,6 +3654,15 @@ func decodeGetMgmtV1ProjectsByProjectIdFeaturesResponse(resp *http.Response) (re
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -3358,6 +3754,15 @@ func decodeGetOauth2AuthorizeResponse(resp *http.Response) (res *GetOauth2Author
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -3448,6 +3853,15 @@ func decodeGetOauth2LogoutResponse(resp *http.Response) (res *GetOauth2LogoutFou
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -3530,6 +3944,15 @@ func decodeGetOauth2UserinfoResponse(resp *http.Response) (res GetOauth2Userinfo
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -3614,6 +4037,15 @@ func decodeGetPByProjectIdEByEnvWellKnownJwksJsonResponse(resp *http.Response) (
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -3696,6 +4128,15 @@ func decodeGetPByProjectIdEByEnvWellKnownOpenidConfigurationResponse(resp *http.
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -3780,6 +4221,15 @@ func decodeGetV1AccountCapabilitiesResponse(resp *http.Response) (res *GetV1Acco
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -3862,6 +4312,15 @@ func decodeGetV1AuthEmailChangeCancelResponse(resp *http.Response) (res *Ok, _ e
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -3990,6 +4449,15 @@ func decodeGetV1AuthEmailVerificationCallbackResponse(resp *http.Response) (res 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -4081,6 +4549,15 @@ func decodeGetV1AuthIdentitiesResponse(resp *http.Response) (res *GetV1AuthIdent
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -4209,6 +4686,15 @@ func decodeGetV1AuthMagicLinkCallbackResponse(resp *http.Response) (res *GetV1Au
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -4300,6 +4786,15 @@ func decodeGetV1AuthMfaFactorsResponse(resp *http.Response) (res *GetV1AuthMfaFa
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -4428,6 +4923,15 @@ func decodeGetV1AuthOauthByProviderCallbackResponse(resp *http.Response) (res *G
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -4517,6 +5021,15 @@ func decodeGetV1AuthOauthByProviderLinkCallbackResponse(resp *http.Response) (re
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -4608,6 +5121,15 @@ func decodeGetV1AuthOauthByProviderLinkStartResponse(resp *http.Response) (res *
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -4698,6 +5220,15 @@ func decodeGetV1AuthOauthByProviderStartResponse(resp *http.Response) (res *GetV
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -4745,6 +5276,15 @@ func decodeGetV1AuthOauthProvidersResponse(resp *http.Response) (res *GetV1AuthO
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -4780,6 +5320,15 @@ func decodeGetV1AuthOauthProvidersResponse(resp *http.Response) (res *GetV1AuthO
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -4873,6 +5422,15 @@ func decodeGetV1AuthSessionResponse(resp *http.Response) (res *GetV1AuthSessionO
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -4920,6 +5478,15 @@ func decodeGetV1AuthWebauthnCredentialsResponse(resp *http.Response) (res *GetV1
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -4955,6 +5522,15 @@ func decodeGetV1AuthWebauthnCredentialsResponse(resp *http.Response) (res *GetV1
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -5048,6 +5624,15 @@ func decodeGetV1ConfigPublicResponse(resp *http.Response) (res *PublicConfig, _ 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -5095,6 +5680,15 @@ func decodeGetV1CsrfResponse(resp *http.Response) (res *GetV1CsrfOK, _ error) {
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -5130,6 +5724,15 @@ func decodeGetV1CsrfResponse(resp *http.Response) (res *GetV1CsrfOK, _ error) {
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -5178,6 +5781,15 @@ func decodeGetV1DeviceResponse(resp *http.Response) (res *GetV1DeviceOK, _ error
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -5213,6 +5825,15 @@ func decodeGetV1DeviceResponse(resp *http.Response) (res *GetV1DeviceOK, _ error
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -5261,6 +5882,15 @@ func decodeGetV1HealthResponse(resp *http.Response) (res *GetV1HealthOK, _ error
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -5296,6 +5926,15 @@ func decodeGetV1HealthResponse(resp *http.Response) (res *GetV1HealthOK, _ error
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -5344,6 +5983,15 @@ func decodeGetV1HealthLiveResponse(resp *http.Response) (res *GetV1HealthLiveOK,
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -5379,6 +6027,15 @@ func decodeGetV1HealthLiveResponse(resp *http.Response) (res *GetV1HealthLiveOK,
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -5427,6 +6084,15 @@ func decodeGetV1HealthReadyResponse(resp *http.Response) (res *GetV1HealthReadyO
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -5462,6 +6128,15 @@ func decodeGetV1HealthReadyResponse(resp *http.Response) (res *GetV1HealthReadyO
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -5510,6 +6185,15 @@ func decodeGetV1OauthGrantsResponse(resp *http.Response) (res *GetV1OauthGrantsO
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -5545,6 +6229,15 @@ func decodeGetV1OauthGrantsResponse(resp *http.Response) (res *GetV1OauthGrantsO
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -5638,6 +6331,15 @@ func decodeGetV1OauthInteractionByInteractionIdResponse(resp *http.Response) (re
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -5730,6 +6432,15 @@ func decodeGetV1ProjectsByProjectIdAdminAccessRequestsResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -5777,6 +6488,15 @@ func decodeGetV1ProjectsByProjectIdAdminApiKeysResponse(resp *http.Response) (re
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -5812,6 +6532,15 @@ func decodeGetV1ProjectsByProjectIdAdminApiKeysResponse(resp *http.Response) (re
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -5905,6 +6634,15 @@ func decodeGetV1ProjectsByProjectIdAdminAppsResponse(resp *http.Response) (res *
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -5997,6 +6735,15 @@ func decodeGetV1ProjectsByProjectIdAdminAppsByAppIdResponse(resp *http.Response)
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -6044,6 +6791,15 @@ func decodeGetV1ProjectsByProjectIdAdminAuditLogsResponse(resp *http.Response) (
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -6079,6 +6835,15 @@ func decodeGetV1ProjectsByProjectIdAdminAuditLogsResponse(resp *http.Response) (
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -6127,6 +6892,15 @@ func decodeGetV1ProjectsByProjectIdAdminAuditLogsByAuditIdResponse(resp *http.Re
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -6162,6 +6936,15 @@ func decodeGetV1ProjectsByProjectIdAdminAuditLogsByAuditIdResponse(resp *http.Re
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -6255,6 +7038,15 @@ func decodeGetV1ProjectsByProjectIdAdminConfigAuthResponse(resp *http.Response) 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -6302,6 +7094,15 @@ func decodeGetV1ProjectsByProjectIdAdminConfigMfaPolicyResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -6337,6 +7138,15 @@ func decodeGetV1ProjectsByProjectIdAdminConfigMfaPolicyResponse(resp *http.Respo
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -6421,6 +7231,15 @@ func decodeGetV1ProjectsByProjectIdAdminConfigPasswordPolicyResponse(resp *http.
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -6468,6 +7287,15 @@ func decodeGetV1ProjectsByProjectIdAdminConfigRateLimitsResponse(resp *http.Resp
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -6503,6 +7331,15 @@ func decodeGetV1ProjectsByProjectIdAdminConfigRateLimitsResponse(resp *http.Resp
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -6587,6 +7424,15 @@ func decodeGetV1ProjectsByProjectIdAdminConfigSessionPolicyResponse(resp *http.R
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -6634,6 +7480,15 @@ func decodeGetV1ProjectsByProjectIdAdminConsentsResponse(resp *http.Response) (r
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -6669,6 +7524,15 @@ func decodeGetV1ProjectsByProjectIdAdminConsentsResponse(resp *http.Response) (r
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -6762,6 +7626,15 @@ func decodeGetV1ProjectsByProjectIdAdminDomainsResponse(resp *http.Response) (re
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -6809,6 +7682,15 @@ func decodeGetV1ProjectsByProjectIdAdminEmailProvidersResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -6844,6 +7726,15 @@ func decodeGetV1ProjectsByProjectIdAdminEmailProvidersResponse(resp *http.Respon
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -6928,6 +7819,15 @@ func decodeGetV1ProjectsByProjectIdAdminEmailTemplatesResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -6975,6 +7875,15 @@ func decodeGetV1ProjectsByProjectIdAdminEventsResponse(resp *http.Response) (res
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -7010,6 +7919,15 @@ func decodeGetV1ProjectsByProjectIdAdminEventsResponse(resp *http.Response) (res
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -7058,6 +7976,15 @@ func decodeGetV1ProjectsByProjectIdAdminExportsByJobIdResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -7093,6 +8020,15 @@ func decodeGetV1ProjectsByProjectIdAdminExportsByJobIdResponse(resp *http.Respon
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -7176,6 +8112,15 @@ func decodeGetV1ProjectsByProjectIdAdminFeaturesResponse(resp *http.Response) (r
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -7269,6 +8214,15 @@ func decodeGetV1ProjectsByProjectIdAdminHooksResponse(resp *http.Response) (res 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -7351,6 +8305,15 @@ func decodeGetV1ProjectsByProjectIdAdminI18nByLocaleResponse(resp *http.Response
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -7444,6 +8407,15 @@ func decodeGetV1ProjectsByProjectIdAdminJobsResponse(resp *http.Response) (res *
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -7535,6 +8507,15 @@ func decodeGetV1ProjectsByProjectIdAdminJobsByJobIdResponse(resp *http.Response)
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -7628,6 +8609,15 @@ func decodeGetV1ProjectsByProjectIdAdminJwksResponse(resp *http.Response) (res *
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -7675,6 +8665,15 @@ func decodeGetV1ProjectsByProjectIdAdminOauthProvidersResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -7710,6 +8709,15 @@ func decodeGetV1ProjectsByProjectIdAdminOauthProvidersResponse(resp *http.Respon
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -7803,6 +8811,15 @@ func decodeGetV1ProjectsByProjectIdAdminRetentionPolicyResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -7885,6 +8902,15 @@ func decodeGetV1ProjectsByProjectIdAdminRiskEventsResponse(resp *http.Response) 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -7978,6 +9004,15 @@ func decodeGetV1ProjectsByProjectIdAdminRiskRulesResponse(resp *http.Response) (
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -8025,6 +9060,15 @@ func decodeGetV1ProjectsByProjectIdAdminServiceAccountsResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -8060,6 +9104,15 @@ func decodeGetV1ProjectsByProjectIdAdminServiceAccountsResponse(resp *http.Respo
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -8108,6 +9161,15 @@ func decodeGetV1ProjectsByProjectIdAdminServiceAccountsBySaIdResponse(resp *http
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -8143,6 +9205,15 @@ func decodeGetV1ProjectsByProjectIdAdminServiceAccountsBySaIdResponse(resp *http
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -8191,6 +9262,15 @@ func decodeGetV1ProjectsByProjectIdAdminSmsProvidersResponse(resp *http.Response
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -8226,6 +9306,15 @@ func decodeGetV1ProjectsByProjectIdAdminSmsProvidersResponse(resp *http.Response
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -8319,6 +9408,15 @@ func decodeGetV1ProjectsByProjectIdAdminSsoConnectionsResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -8411,6 +9509,15 @@ func decodeGetV1ProjectsByProjectIdAdminSsoConnectionsByIdResponse(resp *http.Re
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -8458,6 +9565,15 @@ func decodeGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensResponse(res
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -8493,6 +9609,15 @@ func decodeGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensResponse(res
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -8541,6 +9666,15 @@ func decodeGetV1ProjectsByProjectIdAdminTokenProfilesResponse(resp *http.Respons
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -8576,6 +9710,15 @@ func decodeGetV1ProjectsByProjectIdAdminTokenProfilesResponse(resp *http.Respons
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -8669,6 +9812,15 @@ func decodeGetV1ProjectsByProjectIdAdminUsersResponse(resp *http.Response) (res 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -8761,6 +9913,15 @@ func decodeGetV1ProjectsByProjectIdAdminUsersByUserIdResponse(resp *http.Respons
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -8808,6 +9969,15 @@ func decodeGetV1ProjectsByProjectIdAdminUsersByUserIdGrantsResponse(resp *http.R
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -8843,6 +10013,15 @@ func decodeGetV1ProjectsByProjectIdAdminUsersByUserIdGrantsResponse(resp *http.R
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -8936,6 +10115,15 @@ func decodeGetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesResponse(resp *ht
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -9028,6 +10216,15 @@ func decodeGetV1ProjectsByProjectIdAdminUsersByUserIdSessionsResponse(resp *http
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -9111,6 +10308,15 @@ func decodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesResponse(resp *http.Res
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -9158,6 +10364,15 @@ func decodeGetV1ProjectsByProjectIdAdminWebhooksResponse(resp *http.Response) (r
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -9193,6 +10408,15 @@ func decodeGetV1ProjectsByProjectIdAdminWebhooksResponse(resp *http.Response) (r
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -9241,6 +10465,15 @@ func decodeGetV1ProjectsByProjectIdAdminWebhooksByIdResponse(resp *http.Response
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -9276,6 +10509,15 @@ func decodeGetV1ProjectsByProjectIdAdminWebhooksByIdResponse(resp *http.Response
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -9360,6 +10602,15 @@ func decodeGetV1ScimV2ByConnectionIdGroupsResponse(resp *http.Response) (res Get
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -9442,6 +10693,15 @@ func decodeGetV1ScimV2ByConnectionIdGroupsByGroupIdResponse(resp *http.Response)
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -9526,6 +10786,15 @@ func decodeGetV1ScimV2ByConnectionIdUsersResponse(resp *http.Response) (res GetV
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -9608,6 +10877,15 @@ func decodeGetV1ScimV2ByConnectionIdUsersByScimUserIdResponse(resp *http.Respons
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -9701,6 +10979,15 @@ func decodeGetV1SessionsResponse(resp *http.Response) (res *GetV1SessionsOK, _ e
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -9793,6 +11080,15 @@ func decodeGetV1SessionsCurrentResponse(resp *http.Response) (res *GetV1Sessions
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -9884,6 +11180,15 @@ func decodeGetV1SsoConnectionsResolveResponse(resp *http.Response) (res *GetV1Ss
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -10012,6 +11317,15 @@ func decodeGetV1SsoOidcByConnectionIdCallbackResponse(resp *http.Response) (res 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -10101,6 +11415,15 @@ func decodeGetV1SsoOidcByConnectionIdStartResponse(resp *http.Response) (res *Ge
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -10192,6 +11515,15 @@ func decodeGetV1SsoSamlByConnectionIdLoginResponse(resp *http.Response) (res *Ge
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -10258,6 +11590,15 @@ func decodeGetV1SsoSamlByConnectionIdMetadataResponse(resp *http.Response) (res 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -10342,6 +11683,15 @@ func decodeGetV1TestMessagesResponse(resp *http.Response) (res GetV1TestMessages
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -10424,6 +11774,15 @@ func decodeGetV1TokensCurrentResponse(resp *http.Response) (res *GetV1TokensCurr
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -10517,6 +11876,15 @@ func decodeGetV1UsersMeResponse(resp *http.Response) (res *GetV1UsersMeOK, _ err
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -10564,6 +11932,15 @@ func decodeGetV1UsersMeActivityResponse(resp *http.Response) (res *GetV1UsersMeA
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -10599,6 +11976,15 @@ func decodeGetV1UsersMeActivityResponse(resp *http.Response) (res *GetV1UsersMeA
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -10647,6 +12033,15 @@ func decodeGetV1UsersMeConsentsResponse(resp *http.Response) (res *GetV1UsersMeC
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -10682,6 +12077,15 @@ func decodeGetV1UsersMeConsentsResponse(resp *http.Response) (res *GetV1UsersMeC
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -10730,6 +12134,15 @@ func decodeGetV1UsersMeExportByJobIdResponse(resp *http.Response) (res *GetV1Use
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -10765,6 +12178,15 @@ func decodeGetV1UsersMeExportByJobIdResponse(resp *http.Response) (res *GetV1Use
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -10813,6 +12235,15 @@ func decodePatchMgmtV1ProjectsByProjectIdResponse(resp *http.Response) (res *Pat
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -10848,6 +12279,15 @@ func decodePatchMgmtV1ProjectsByProjectIdResponse(resp *http.Response) (res *Pat
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -10932,6 +12372,15 @@ func decodePatchMgmtV1ProjectsByProjectIdFeaturesResponse(resp *http.Response) (
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -10979,6 +12428,15 @@ func decodePatchV1AuthWebauthnCredentialsByCredentialIdResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -11014,6 +12472,15 @@ func decodePatchV1AuthWebauthnCredentialsByCredentialIdResponse(resp *http.Respo
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -11062,6 +12529,15 @@ func decodePatchV1ProjectsByProjectIdAdminApiKeysByKeyIdResponse(resp *http.Resp
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -11097,6 +12573,15 @@ func decodePatchV1ProjectsByProjectIdAdminApiKeysByKeyIdResponse(resp *http.Resp
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -11190,6 +12675,15 @@ func decodePatchV1ProjectsByProjectIdAdminAppsByAppIdResponse(resp *http.Respons
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -11282,6 +12776,15 @@ func decodePatchV1ProjectsByProjectIdAdminConfigAuthResponse(resp *http.Response
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -11329,6 +12832,15 @@ func decodePatchV1ProjectsByProjectIdAdminConfigMfaPolicyResponse(resp *http.Res
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -11364,6 +12876,15 @@ func decodePatchV1ProjectsByProjectIdAdminConfigMfaPolicyResponse(resp *http.Res
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -11448,6 +12969,15 @@ func decodePatchV1ProjectsByProjectIdAdminConfigPasswordPolicyResponse(resp *htt
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -11495,6 +13025,15 @@ func decodePatchV1ProjectsByProjectIdAdminConfigRateLimitsResponse(resp *http.Re
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -11530,6 +13069,15 @@ func decodePatchV1ProjectsByProjectIdAdminConfigRateLimitsResponse(resp *http.Re
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -11614,6 +13162,15 @@ func decodePatchV1ProjectsByProjectIdAdminConfigSessionPolicyResponse(resp *http
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -11661,6 +13218,15 @@ func decodePatchV1ProjectsByProjectIdAdminEmailProvidersByIdResponse(resp *http.
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -11696,6 +13262,15 @@ func decodePatchV1ProjectsByProjectIdAdminEmailProvidersByIdResponse(resp *http.
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -11779,6 +13354,15 @@ func decodePatchV1ProjectsByProjectIdAdminEmailTemplatesByIdResponse(resp *http.
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -11872,6 +13456,15 @@ func decodePatchV1ProjectsByProjectIdAdminHooksByIdResponse(resp *http.Response)
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -11919,6 +13512,15 @@ func decodePatchV1ProjectsByProjectIdAdminOauthProvidersByIdResponse(resp *http.
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -11954,6 +13556,15 @@ func decodePatchV1ProjectsByProjectIdAdminOauthProvidersByIdResponse(resp *http.
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -12047,6 +13658,15 @@ func decodePatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdResponse(resp *http.R
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -12094,6 +13714,15 @@ func decodePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdResponse(resp *ht
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -12129,6 +13758,15 @@ func decodePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdResponse(resp *ht
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -12177,6 +13815,15 @@ func decodePatchV1ProjectsByProjectIdAdminSmsProvidersByIdResponse(resp *http.Re
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -12212,6 +13859,15 @@ func decodePatchV1ProjectsByProjectIdAdminSmsProvidersByIdResponse(resp *http.Re
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -12305,6 +13961,15 @@ func decodePatchV1ProjectsByProjectIdAdminSsoConnectionsByIdResponse(resp *http.
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -12352,6 +14017,15 @@ func decodePatchV1ProjectsByProjectIdAdminTokenProfilesByIdResponse(resp *http.R
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -12387,6 +14061,15 @@ func decodePatchV1ProjectsByProjectIdAdminTokenProfilesByIdResponse(resp *http.R
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -12480,6 +14163,15 @@ func decodePatchV1ProjectsByProjectIdAdminUsersByUserIdResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -12527,6 +14219,15 @@ func decodePatchV1ProjectsByProjectIdAdminWebhooksByIdResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -12562,6 +14263,15 @@ func decodePatchV1ProjectsByProjectIdAdminWebhooksByIdResponse(resp *http.Respon
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -12646,6 +14356,15 @@ func decodePatchV1ScimV2ByConnectionIdGroupsByGroupIdResponse(resp *http.Respons
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -12728,6 +14447,15 @@ func decodePatchV1ScimV2ByConnectionIdUsersByScimUserIdResponse(resp *http.Respo
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -12821,6 +14549,15 @@ func decodePatchV1SessionsBySessionIdResponse(resp *http.Response) (res *PatchV1
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -12913,6 +14650,15 @@ func decodePatchV1UsersMeResponse(resp *http.Response) (res *PatchV1UsersMeOK, _
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -12960,6 +14706,15 @@ func decodePostMgmtV1ProjectsResponse(resp *http.Response) (res *PostMgmtV1Proje
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -12995,6 +14750,15 @@ func decodePostMgmtV1ProjectsResponse(resp *http.Response) (res *PostMgmtV1Proje
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -13043,6 +14807,15 @@ func decodePostMgmtV1ProjectsByProjectIdAdminTokensResponse(resp *http.Response)
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -13078,6 +14851,15 @@ func decodePostMgmtV1ProjectsByProjectIdAdminTokensResponse(resp *http.Response)
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -13162,6 +14944,15 @@ func decodePostMgmtV1ProjectsByProjectIdConfigApplyResponse(resp *http.Response)
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -13245,6 +15036,15 @@ func decodePostMgmtV1ProjectsByProjectIdConfigPlanResponse(resp *http.Response) 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -13292,6 +15092,15 @@ func decodePostMgmtV1ProjectsByProjectIdEnvironmentsResponse(resp *http.Response
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -13327,6 +15136,15 @@ func decodePostMgmtV1ProjectsByProjectIdEnvironmentsResponse(resp *http.Response
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -13379,6 +15197,15 @@ func decodePostOauth2BackchannelLogoutResponse(resp *http.Response) (res *PostOa
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -13426,6 +15253,15 @@ func decodePostOauth2DeviceAuthorizationResponse(resp *http.Response) (res *Post
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -13461,6 +15297,15 @@ func decodePostOauth2DeviceAuthorizationResponse(resp *http.Response) (res *Post
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -13545,6 +15390,15 @@ func decodePostOauth2IntrospectResponse(resp *http.Response) (res *PostOauth2Int
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -13592,6 +15446,15 @@ func decodePostOauth2ParResponse(resp *http.Response) (res *PostOauth2ParCreated
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -13627,6 +15490,15 @@ func decodePostOauth2ParResponse(resp *http.Response) (res *PostOauth2ParCreated
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -13678,6 +15550,15 @@ func decodePostOauth2RevokeResponse(resp *http.Response) (res *PostOauth2RevokeO
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -13761,6 +15642,15 @@ func decodePostOauth2TokenResponse(resp *http.Response) (res PostOauth2TokenOK, 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -13854,6 +15744,15 @@ func decodePostV1AuthAccessRequestsResponse(resp *http.Response) (res *PostV1Aut
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -13901,6 +15800,15 @@ func decodePostV1AuthEmailChangeStartResponse(resp *http.Response) (res *Challen
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -13936,6 +15844,15 @@ func decodePostV1AuthEmailChangeStartResponse(resp *http.Response) (res *Challen
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -14029,6 +15946,15 @@ func decodePostV1AuthEmailChangeVerifyResponse(resp *http.Response) (res *PostV1
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -14076,6 +16002,15 @@ func decodePostV1AuthEmailVerificationStartResponse(resp *http.Response) (res *C
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -14111,6 +16046,15 @@ func decodePostV1AuthEmailVerificationStartResponse(resp *http.Response) (res *C
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -14204,6 +16148,15 @@ func decodePostV1AuthEmailVerificationVerifyResponse(resp *http.Response) (res *
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -14295,6 +16248,15 @@ func decodePostV1AuthGuestResponse(resp *http.Response) (res *AuthResult, _ erro
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -14388,6 +16350,15 @@ func decodePostV1AuthIdentitiesMergeConfirmResponse(resp *http.Response) (res *P
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -14435,6 +16406,15 @@ func decodePostV1AuthIdentitiesMergeStartResponse(resp *http.Response) (res *Pos
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -14470,6 +16450,15 @@ func decodePostV1AuthIdentitiesMergeStartResponse(resp *http.Response) (res *Pos
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -14518,6 +16507,15 @@ func decodePostV1AuthMagicLinkStartResponse(resp *http.Response) (res *Challenge
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -14553,6 +16551,15 @@ func decodePostV1AuthMagicLinkStartResponse(resp *http.Response) (res *Challenge
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -14646,6 +16653,15 @@ func decodePostV1AuthMagicLinkVerifyResponse(resp *http.Response) (res *AuthResu
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -14693,6 +16709,15 @@ func decodePostV1AuthMfaChallengeResponse(resp *http.Response) (res *Challenge, 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -14728,6 +16753,15 @@ func decodePostV1AuthMfaChallengeResponse(resp *http.Response) (res *Challenge, 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -14776,6 +16810,15 @@ func decodePostV1AuthMfaEmailEnrollResponse(resp *http.Response) (res *PostV1Aut
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -14811,6 +16854,15 @@ func decodePostV1AuthMfaEmailEnrollResponse(resp *http.Response) (res *PostV1Aut
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -14859,6 +16911,15 @@ func decodePostV1AuthMfaRecoveryCodesGenerateResponse(resp *http.Response) (res 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -14894,6 +16955,15 @@ func decodePostV1AuthMfaRecoveryCodesGenerateResponse(resp *http.Response) (res 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -14987,6 +17057,15 @@ func decodePostV1AuthMfaRecoveryCodesVerifyResponse(resp *http.Response) (res *A
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -15034,6 +17113,15 @@ func decodePostV1AuthMfaSmsEnrollResponse(resp *http.Response) (res *PostV1AuthM
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -15069,6 +17157,15 @@ func decodePostV1AuthMfaSmsEnrollResponse(resp *http.Response) (res *PostV1AuthM
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -15117,6 +17214,15 @@ func decodePostV1AuthMfaTotpEnrollResponse(resp *http.Response) (res *PostV1Auth
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -15152,6 +17258,15 @@ func decodePostV1AuthMfaTotpEnrollResponse(resp *http.Response) (res *PostV1Auth
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -15245,6 +17360,15 @@ func decodePostV1AuthMfaTotpVerifyResponse(resp *http.Response) (res *PostV1Auth
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -15337,6 +17461,15 @@ func decodePostV1AuthMfaVerifyResponse(resp *http.Response) (res *AuthResult, _ 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -15384,6 +17517,15 @@ func decodePostV1AuthMfaWebauthnEnrollOptionsResponse(resp *http.Response) (res 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -15419,6 +17561,15 @@ func decodePostV1AuthMfaWebauthnEnrollOptionsResponse(resp *http.Response) (res 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -15512,6 +17663,15 @@ func decodePostV1AuthMfaWebauthnEnrollVerifyResponse(resp *http.Response) (res *
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -15594,6 +17754,15 @@ func decodePostV1AuthOauthByProviderUnlinkResponse(resp *http.Response) (res *Ok
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -15687,6 +17856,15 @@ func decodePostV1AuthOauthExchangeResponse(resp *http.Response) (res *AuthResult
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -15734,6 +17912,15 @@ func decodePostV1AuthOtpStartResponse(resp *http.Response) (res *Challenge, _ er
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -15769,6 +17956,15 @@ func decodePostV1AuthOtpStartResponse(resp *http.Response) (res *Challenge, _ er
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -15862,6 +18058,15 @@ func decodePostV1AuthOtpVerifyResponse(resp *http.Response) (res *AuthResult, _ 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -15945,6 +18150,15 @@ func decodePostV1AuthPasswordChangeResponse(resp *http.Response) (res *Ok, _ err
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -15992,6 +18206,15 @@ func decodePostV1AuthPasswordCheckResponse(resp *http.Response) (res *PostV1Auth
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -16027,6 +18250,15 @@ func decodePostV1AuthPasswordCheckResponse(resp *http.Response) (res *PostV1Auth
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -16110,6 +18342,15 @@ func decodePostV1AuthPasswordForgotResponse(resp *http.Response) (res *Ok, _ err
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -16203,6 +18444,15 @@ func decodePostV1AuthPasswordResetResponse(resp *http.Response) (res *AuthResult
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -16250,6 +18500,15 @@ func decodePostV1AuthPasswordVerifyResponse(resp *http.Response) (res *PostV1Aut
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -16285,6 +18544,15 @@ func decodePostV1AuthPasswordVerifyResponse(resp *http.Response) (res *PostV1Aut
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -16333,6 +18601,15 @@ func decodePostV1AuthPhoneChangeStartResponse(resp *http.Response) (res *Challen
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -16368,6 +18645,15 @@ func decodePostV1AuthPhoneChangeStartResponse(resp *http.Response) (res *Challen
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -16461,6 +18747,15 @@ func decodePostV1AuthPhoneChangeVerifyResponse(resp *http.Response) (res *PostV1
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -16508,6 +18803,15 @@ func decodePostV1AuthPhoneVerificationStartResponse(resp *http.Response) (res *C
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -16543,6 +18847,15 @@ func decodePostV1AuthPhoneVerificationStartResponse(resp *http.Response) (res *C
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -16636,6 +18949,15 @@ func decodePostV1AuthPhoneVerificationVerifyResponse(resp *http.Response) (res P
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -16727,6 +19049,15 @@ func decodePostV1AuthSessionStepUpResponse(resp *http.Response) (res StepUpResul
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -16820,6 +19151,15 @@ func decodePostV1AuthSessionSwitchGroupResponse(resp *http.Response) (res *AuthR
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -16912,6 +19252,15 @@ func decodePostV1AuthSignInPasswordResponse(resp *http.Response) (res AuthResult
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -16995,6 +19344,15 @@ func decodePostV1AuthSignOutResponse(resp *http.Response) (res *Ok, _ error) {
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -17077,6 +19435,15 @@ func decodePostV1AuthSignOutAllResponse(resp *http.Response) (res *PostV1AuthSig
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -17170,6 +19537,15 @@ func decodePostV1AuthSignUpResponse(resp *http.Response) (res *AuthResult, _ err
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -17261,6 +19637,15 @@ func decodePostV1AuthTokenExchangeResponse(resp *http.Response) (res *AuthResult
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -17354,6 +19739,15 @@ func decodePostV1AuthTokenRefreshResponse(resp *http.Response) (res *AuthResult,
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -17401,6 +19795,15 @@ func decodePostV1AuthWebauthnLoginOptionsResponse(resp *http.Response) (res *Pos
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -17436,6 +19839,15 @@ func decodePostV1AuthWebauthnLoginOptionsResponse(resp *http.Response) (res *Pos
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -17529,6 +19941,15 @@ func decodePostV1AuthWebauthnLoginVerifyResponse(resp *http.Response) (res *Auth
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -17576,6 +19997,15 @@ func decodePostV1AuthWebauthnRegisterOptionsResponse(resp *http.Response) (res *
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -17611,6 +20041,15 @@ func decodePostV1AuthWebauthnRegisterOptionsResponse(resp *http.Response) (res *
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -17659,6 +20098,15 @@ func decodePostV1AuthWebauthnRegisterVerifyResponse(resp *http.Response) (res *P
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -17694,6 +20142,15 @@ func decodePostV1AuthWebauthnRegisterVerifyResponse(resp *http.Response) (res *P
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -17787,6 +20244,15 @@ func decodePostV1ChallengesCaptchaVerifyResponse(resp *http.Response) (res *Post
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -17869,6 +20335,15 @@ func decodePostV1DeviceApproveResponse(resp *http.Response) (res *Ok, _ error) {
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -17953,6 +20428,15 @@ func decodePostV1DeviceDenyResponse(resp *http.Response) (res *Ok, _ error) {
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -18000,6 +20484,15 @@ func decodePostV1OauthInteractionByInteractionIdConsentResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -18035,6 +20528,15 @@ func decodePostV1OauthInteractionByInteractionIdConsentResponse(resp *http.Respo
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -18083,6 +20585,15 @@ func decodePostV1OauthInteractionByInteractionIdLoginResponse(resp *http.Respons
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -18118,6 +20629,15 @@ func decodePostV1OauthInteractionByInteractionIdLoginResponse(resp *http.Respons
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -18166,6 +20686,15 @@ func decodePostV1OauthInteractionByInteractionIdRejectResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -18201,6 +20730,15 @@ func decodePostV1OauthInteractionByInteractionIdRejectResponse(resp *http.Respon
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -18284,6 +20822,15 @@ func decodePostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveResponse(resp 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -18377,6 +20924,15 @@ func decodePostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyResponse(resp *ht
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -18424,6 +20980,15 @@ func decodePostV1ProjectsByProjectIdAdminApiKeysResponse(resp *http.Response) (r
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -18459,6 +21024,15 @@ func decodePostV1ProjectsByProjectIdAdminApiKeysResponse(resp *http.Response) (r
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -18507,6 +21081,15 @@ func decodePostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateResponse(resp *http
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -18542,6 +21125,15 @@ func decodePostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateResponse(resp *http
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -18635,6 +21227,15 @@ func decodePostV1ProjectsByProjectIdAdminAppsResponse(resp *http.Response) (res 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -18682,6 +21283,15 @@ func decodePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsResponse(resp *http.R
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -18717,6 +21327,15 @@ func decodePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsResponse(resp *http.R
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -18765,6 +21384,15 @@ func decodePostV1ProjectsByProjectIdAdminAuditExportResponse(resp *http.Response
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -18800,6 +21428,15 @@ func decodePostV1ProjectsByProjectIdAdminAuditExportResponse(resp *http.Response
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -18893,6 +21530,15 @@ func decodePostV1ProjectsByProjectIdAdminDomainsResponse(resp *http.Response) (r
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -18985,6 +21631,15 @@ func decodePostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyResponse(resp *h
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -19032,6 +21687,15 @@ func decodePostV1ProjectsByProjectIdAdminEmailProvidersResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -19067,6 +21731,15 @@ func decodePostV1ProjectsByProjectIdAdminEmailProvidersResponse(resp *http.Respo
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -19115,6 +21788,15 @@ func decodePostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewResponse(resp 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -19150,6 +21832,15 @@ func decodePostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewResponse(resp 
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -19234,6 +21925,15 @@ func decodePostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestResponse(resp
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -19316,6 +22016,15 @@ func decodePostV1ProjectsByProjectIdAdminEventsByEventIdReplayResponse(resp *htt
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -19409,6 +22118,15 @@ func decodePostV1ProjectsByProjectIdAdminHooksResponse(resp *http.Response) (res
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -19491,6 +22209,15 @@ func decodePostV1ProjectsByProjectIdAdminHooksByIdTestResponse(resp *http.Respon
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -19575,6 +22302,15 @@ func decodePostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyResponse(resp
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -19622,6 +22358,15 @@ func decodePostV1ProjectsByProjectIdAdminImportUsersResponse(resp *http.Response
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -19657,6 +22402,15 @@ func decodePostV1ProjectsByProjectIdAdminImportUsersResponse(resp *http.Response
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -19750,6 +22504,15 @@ func decodePostV1ProjectsByProjectIdAdminJobsByJobIdCancelResponse(resp *http.Re
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -19841,6 +22604,15 @@ func decodePostV1ProjectsByProjectIdAdminJwksByKeyIdActivateResponse(resp *http.
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -19934,6 +22706,15 @@ func decodePostV1ProjectsByProjectIdAdminJwksRotateResponse(resp *http.Response)
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -19981,6 +22762,15 @@ func decodePostV1ProjectsByProjectIdAdminOauthProvidersResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -20016,6 +22806,15 @@ func decodePostV1ProjectsByProjectIdAdminOauthProvidersResponse(resp *http.Respo
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -20099,6 +22898,15 @@ func decodePostV1ProjectsByProjectIdAdminRateLimitBlocksResponse(resp *http.Resp
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -20192,6 +23000,15 @@ func decodePostV1ProjectsByProjectIdAdminRiskRulesResponse(resp *http.Response) 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -20239,6 +23056,15 @@ func decodePostV1ProjectsByProjectIdAdminServiceAccountsResponse(resp *http.Resp
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -20274,6 +23100,15 @@ func decodePostV1ProjectsByProjectIdAdminServiceAccountsResponse(resp *http.Resp
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -20322,6 +23157,15 @@ func decodePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsResponse(re
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -20357,6 +23201,15 @@ func decodePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsResponse(re
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -20405,6 +23258,15 @@ func decodePostV1ProjectsByProjectIdAdminSmsProvidersResponse(resp *http.Respons
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -20440,6 +23302,15 @@ func decodePostV1ProjectsByProjectIdAdminSmsProvidersResponse(resp *http.Respons
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -20533,6 +23404,15 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -20580,6 +23460,15 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateResp
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -20615,6 +23504,15 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateResp
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -20663,6 +23561,15 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensResponse(re
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -20698,6 +23605,15 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensResponse(re
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -20746,6 +23662,15 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestResponse(resp *ht
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -20781,6 +23706,15 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestResponse(resp *ht
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -20829,6 +23763,15 @@ func decodePostV1ProjectsByProjectIdAdminTokenProfilesResponse(resp *http.Respon
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -20864,6 +23807,15 @@ func decodePostV1ProjectsByProjectIdAdminTokenProfilesResponse(resp *http.Respon
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -20947,6 +23899,15 @@ func decodePostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewResponse(resp *
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -21040,6 +24001,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersResponse(resp *http.Response) (res
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -21122,6 +24092,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeResponse(resp *ht
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -21215,6 +24194,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdBanResponse(resp *http.Res
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -21262,6 +24250,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdExportResponse(resp *http.
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -21297,6 +24294,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdExportResponse(resp *http.
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -21345,6 +24351,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateResponse(resp *
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -21380,6 +24395,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateResponse(resp *
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -21464,6 +24488,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetResponse(resp *htt
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -21547,6 +24580,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdPasswordResponse(resp *htt
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -21629,6 +24671,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeResponse(res
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -21722,6 +24773,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdUnbanResponse(resp *http.R
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -21813,6 +24873,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailResponse(resp *
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -21906,6 +24975,15 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneResponse(resp *
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -21989,6 +25067,15 @@ func decodePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRespo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -22036,6 +25123,15 @@ func decodePostV1ProjectsByProjectIdAdminWebhooksResponse(resp *http.Response) (
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -22071,6 +25167,15 @@ func decodePostV1ProjectsByProjectIdAdminWebhooksResponse(resp *http.Response) (
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -22119,6 +25224,15 @@ func decodePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretResponse(resp *
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -22154,6 +25268,15 @@ func decodePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretResponse(resp *
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -22238,6 +25361,15 @@ func decodePostV1ProjectsByProjectIdAdminWebhooksByIdTestResponse(resp *http.Res
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -22320,6 +25452,15 @@ func decodePostV1ScimV2ByConnectionIdGroupsResponse(resp *http.Response) (res Po
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -22404,6 +25545,15 @@ func decodePostV1ScimV2ByConnectionIdUsersResponse(resp *http.Response) (res Pos
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -22451,6 +25601,15 @@ func decodePostV1ServiceAccountsTokensResponse(resp *http.Response) (res *PostV1
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -22486,6 +25645,15 @@ func decodePostV1ServiceAccountsTokensResponse(resp *http.Response) (res *PostV1
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -22579,6 +25747,15 @@ func decodePostV1SessionsBySessionIdTrustResponse(resp *http.Response) (res *Pos
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -22670,6 +25847,15 @@ func decodePostV1SsoExchangeResponse(resp *http.Response) (res *AuthResult, _ er
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -22798,6 +25984,15 @@ func decodePostV1SsoSamlByConnectionIdAcsResponse(resp *http.Response) (res *Pos
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -22888,6 +26083,15 @@ func decodePostV1SsoSamlByConnectionIdSloResponse(resp *http.Response) (res *Pos
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -22970,6 +26174,15 @@ func decodePostV1TestClockResponse(resp *http.Response) (res *Ok, _ error) {
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -23054,6 +26267,15 @@ func decodePostV1TestResetResponse(resp *http.Response) (res PostV1TestResetOK, 
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -23136,6 +26358,15 @@ func decodePostV1TestSeedResponse(resp *http.Response) (res *Ok, _ error) {
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -23220,6 +26451,15 @@ func decodePostV1TokensIntrospectResponse(resp *http.Response) (res *PostV1Token
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -23303,6 +26543,15 @@ func decodePostV1TokensRevokeResponse(resp *http.Response) (res *Ok, _ error) {
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -23350,6 +26599,15 @@ func decodePostV1TokensVerifyResponse(resp *http.Response) (res *PostV1TokensVer
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -23385,6 +26643,15 @@ func decodePostV1TokensVerifyResponse(resp *http.Response) (res *PostV1TokensVer
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -23433,6 +26700,15 @@ func decodePostV1UsersMeConsentsResponse(resp *http.Response) (res *PostV1UsersM
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -23468,6 +26744,15 @@ func decodePostV1UsersMeConsentsResponse(resp *http.Response) (res *PostV1UsersM
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -23516,6 +26801,15 @@ func decodePostV1UsersMeExportResponse(resp *http.Response) (res *PostV1UsersMeE
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -23551,6 +26845,15 @@ func decodePostV1UsersMeExportResponse(resp *http.Response) (res *PostV1UsersMeE
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -23599,6 +26902,15 @@ func decodePutV1ProjectsByProjectIdAdminConsentsResponse(resp *http.Response) (r
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
@@ -23634,6 +26946,15 @@ func decodePutV1ProjectsByProjectIdAdminConsentsResponse(resp *http.Response) (r
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -23718,6 +27039,15 @@ func decodePutV1ProjectsByProjectIdAdminFeaturesResponse(resp *http.Response) (r
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -23800,6 +27130,15 @@ func decodePutV1ProjectsByProjectIdAdminI18nByLocaleResponse(resp *http.Response
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
@@ -23893,6 +27232,15 @@ func decodePutV1ProjectsByProjectIdAdminRetentionPolicyResponse(resp *http.Respo
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -23976,6 +27324,15 @@ func decodePutV1ScimV2ByConnectionIdGroupsByGroupIdResponse(resp *http.Response)
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,
 				Response:   response,
@@ -24058,6 +27415,15 @@ func decodePutV1ScimV2ByConnectionIdUsersByScimUserIdResponse(resp *http.Respons
 					Err:         err,
 				}
 				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
 			}
 			return &DefaultStatusCode{
 				StatusCode: resp.StatusCode,

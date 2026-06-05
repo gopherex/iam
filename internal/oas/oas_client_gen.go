@@ -23750,6 +23750,15 @@ func (c *Client) PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Contex
 }
 
 func (c *Client) sendPatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, request *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams, requestOptions ...RequestOption) (res *PatchV1AuthWebauthnCredentialsByCredentialIdOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1AuthWebauthnCredentialsByCredentialId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -23904,6 +23913,15 @@ func (c *Client) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Conte
 }
 
 func (c *Client) sendPatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminApiKeysByKeyId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -24465,6 +24483,15 @@ func (c *Client) PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Cont
 }
 
 func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, request *MfaPolicy, params PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams, requestOptions ...RequestOption) (res *MfaPolicy, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminConfigMfaPolicy"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -24809,6 +24836,15 @@ func (c *Client) PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Con
 }
 
 func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, request *RateLimits, params PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams, requestOptions ...RequestOption) (res *RateLimits, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminConfigRateLimits"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -25153,6 +25189,15 @@ func (c *Client) PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.C
 }
 
 func (c *Client) sendPatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, request *EmailProvider, params PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams, requestOptions ...RequestOption) (res *EmailProvider, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminEmailProvidersById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -25723,6 +25768,15 @@ func (c *Client) PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.C
 }
 
 func (c *Client) sendPatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, request *OAuthProviderConfig, params PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams, requestOptions ...RequestOption) (res *OAuthProviderConfig, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminOauthProvidersById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -26112,6 +26166,15 @@ func (c *Client) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx contex
 }
 
 func (c *Client) sendPatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminServiceAccountsBySaId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -26302,6 +26365,15 @@ func (c *Client) PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Con
 }
 
 func (c *Client) sendPatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, request *SmsProvider, params PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams, requestOptions ...RequestOption) (res *SmsProvider, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminSmsProvidersById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -27425,6 +27497,15 @@ func (c *Client) PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Contex
 }
 
 func (c *Client) sendPatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams, requestOptions ...RequestOption) (res PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ScimV2ByConnectionIdUsersByScimUserId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -27598,6 +27679,15 @@ func (c *Client) PatchV1SessionsBySessionId(ctx context.Context, request *PatchV
 }
 
 func (c *Client) sendPatchV1SessionsBySessionId(ctx context.Context, request *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams, requestOptions ...RequestOption) (res *PatchV1SessionsBySessionIdOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1SessionsBySessionId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -27752,6 +27842,15 @@ func (c *Client) PatchV1UsersMe(ctx context.Context, request *PatchV1UsersMeReq,
 }
 
 func (c *Client) sendPatchV1UsersMe(ctx context.Context, request *PatchV1UsersMeReq, requestOptions ...RequestOption) (res *PatchV1UsersMeOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1UsersMe"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -27888,6 +27987,15 @@ func (c *Client) PostMgmtV1Projects(ctx context.Context, request *PostMgmtV1Proj
 }
 
 func (c *Client) sendPostMgmtV1Projects(ctx context.Context, request *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams, requestOptions ...RequestOption) (res *PostMgmtV1ProjectsCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postMgmtV1Projects"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28041,6 +28149,15 @@ func (c *Client) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, r
 }
 
 func (c *Client) sendPostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams, requestOptions ...RequestOption) (res *PostMgmtV1ProjectsByProjectIdAdminTokensOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postMgmtV1ProjectsByProjectIdAdminTokens"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28523,6 +28640,15 @@ func (c *Client) PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, 
 }
 
 func (c *Client) sendPostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams, requestOptions ...RequestOption) (res *PostMgmtV1ProjectsByProjectIdEnvironmentsCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postMgmtV1ProjectsByProjectIdEnvironments"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28695,6 +28821,15 @@ func (c *Client) PostOauth2BackchannelLogout(ctx context.Context, request *PostO
 }
 
 func (c *Client) sendPostOauth2BackchannelLogout(ctx context.Context, request *PostOauth2BackchannelLogoutReq, requestOptions ...RequestOption) (res *PostOauth2BackchannelLogoutOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postOauth2BackchannelLogout"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28798,6 +28933,15 @@ func (c *Client) PostOauth2DeviceAuthorization(ctx context.Context, request *Pos
 }
 
 func (c *Client) sendPostOauth2DeviceAuthorization(ctx context.Context, request *PostOauth2DeviceAuthorizationReq, requestOptions ...RequestOption) (res *PostOauth2DeviceAuthorizationOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postOauth2DeviceAuthorization"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28934,6 +29078,15 @@ func (c *Client) PostOauth2Introspect(ctx context.Context, request *PostOauth2In
 }
 
 func (c *Client) sendPostOauth2Introspect(ctx context.Context, request *PostOauth2IntrospectReq, requestOptions ...RequestOption) (res *PostOauth2IntrospectOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postOauth2Introspect"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -29215,6 +29368,15 @@ func (c *Client) PostOauth2Revoke(ctx context.Context, request *PostOauth2Revoke
 }
 
 func (c *Client) sendPostOauth2Revoke(ctx context.Context, request *PostOauth2RevokeReq, requestOptions ...RequestOption) (res *PostOauth2RevokeOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postOauth2Revoke"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -29351,6 +29513,15 @@ func (c *Client) PostOauth2Token(ctx context.Context, request *PostOauth2TokenRe
 }
 
 func (c *Client) sendPostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, requestOptions ...RequestOption) (res PostOauth2TokenOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postOauth2Token"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -29758,6 +29929,15 @@ func (c *Client) PostV1AuthEmailChangeVerify(ctx context.Context, request *PostV
 }
 
 func (c *Client) sendPostV1AuthEmailChangeVerify(ctx context.Context, request *PostV1AuthEmailChangeVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthEmailChangeVerifyOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthEmailChangeVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30020,6 +30200,15 @@ func (c *Client) PostV1AuthEmailVerificationVerify(ctx context.Context, request 
 }
 
 func (c *Client) sendPostV1AuthEmailVerificationVerify(ctx context.Context, request *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthEmailVerificationVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30254,6 +30443,15 @@ func (c *Client) PostV1AuthIdentitiesMergeConfirm(ctx context.Context, request *
 }
 
 func (c *Client) sendPostV1AuthIdentitiesMergeConfirm(ctx context.Context, request *PostV1AuthIdentitiesMergeConfirmReq, requestOptions ...RequestOption) (res *PostV1AuthIdentitiesMergeConfirmOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthIdentitiesMergeConfirm"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30390,6 +30588,15 @@ func (c *Client) PostV1AuthIdentitiesMergeStart(ctx context.Context, request *Po
 }
 
 func (c *Client) sendPostV1AuthIdentitiesMergeStart(ctx context.Context, request *PostV1AuthIdentitiesMergeStartReq, requestOptions ...RequestOption) (res *PostV1AuthIdentitiesMergeStartOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthIdentitiesMergeStart"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30652,6 +30859,15 @@ func (c *Client) PostV1AuthMagicLinkVerify(ctx context.Context, request *MagicLi
 }
 
 func (c *Client) sendPostV1AuthMagicLinkVerify(ctx context.Context, request *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMagicLinkVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30769,6 +30985,22 @@ func (c *Client) PostV1AuthMfaChallenge(ctx context.Context, request OptPostV1Au
 }
 
 func (c *Client) sendPostV1AuthMfaChallenge(ctx context.Context, request OptPostV1AuthMfaChallengeReq, params PostV1AuthMfaChallengeParams, requestOptions ...RequestOption) (res *Challenge, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaChallenge"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31167,6 +31399,15 @@ func (c *Client) PostV1AuthMfaRecoveryCodesVerify(ctx context.Context, request *
 }
 
 func (c *Client) sendPostV1AuthMfaRecoveryCodesVerify(ctx context.Context, request *PostV1AuthMfaRecoveryCodesVerifyReq, params PostV1AuthMfaRecoveryCodesVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaRecoveryCodesVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31429,6 +31670,22 @@ func (c *Client) PostV1AuthMfaTotpEnroll(ctx context.Context, request OptPostV1A
 }
 
 func (c *Client) sendPostV1AuthMfaTotpEnroll(ctx context.Context, request OptPostV1AuthMfaTotpEnrollReq, requestOptions ...RequestOption) (res *PostV1AuthMfaTotpEnrollOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaTotpEnroll"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31565,6 +31822,15 @@ func (c *Client) PostV1AuthMfaTotpVerify(ctx context.Context, request *PostV1Aut
 }
 
 func (c *Client) sendPostV1AuthMfaTotpVerify(ctx context.Context, request *PostV1AuthMfaTotpVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthMfaTotpVerifyOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaTotpVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31701,6 +31967,15 @@ func (c *Client) PostV1AuthMfaVerify(ctx context.Context, request *PostV1AuthMfa
 }
 
 func (c *Client) sendPostV1AuthMfaVerify(ctx context.Context, request *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31818,6 +32093,22 @@ func (c *Client) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, request
 }
 
 func (c *Client) sendPostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, request OptPostV1AuthMfaWebauthnEnrollOptionsReq, requestOptions ...RequestOption) (res *PostV1AuthMfaWebauthnEnrollOptionsOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaWebauthnEnrollOptions"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31954,6 +32245,15 @@ func (c *Client) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, request 
 }
 
 func (c *Client) sendPostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, request *PostV1AuthMfaWebauthnEnrollVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthMfaWebauthnEnrollVerifyOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaWebauthnEnrollVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -32090,6 +32390,15 @@ func (c *Client) PostV1AuthOauthByProviderUnlink(ctx context.Context, request *P
 }
 
 func (c *Client) sendPostV1AuthOauthByProviderUnlink(ctx context.Context, request *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams, requestOptions ...RequestOption) (res *Ok, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthOauthByProviderUnlink"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -32245,6 +32554,15 @@ func (c *Client) PostV1AuthOauthExchange(ctx context.Context, request *PostV1Aut
 }
 
 func (c *Client) sendPostV1AuthOauthExchange(ctx context.Context, request *PostV1AuthOauthExchangeReq, params PostV1AuthOauthExchangeParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthOauthExchange"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -32488,6 +32806,15 @@ func (c *Client) PostV1AuthOtpVerify(ctx context.Context, request *OtpVerifyRequ
 }
 
 func (c *Client) sendPostV1AuthOtpVerify(ctx context.Context, request *OtpVerifyRequest, params PostV1AuthOtpVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthOtpVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -33418,6 +33745,15 @@ func (c *Client) PostV1AuthPhoneChangeVerify(ctx context.Context, request *PostV
 }
 
 func (c *Client) sendPostV1AuthPhoneChangeVerify(ctx context.Context, request *PostV1AuthPhoneChangeVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthPhoneChangeVerifyOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthPhoneChangeVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -33680,6 +34016,15 @@ func (c *Client) PostV1AuthPhoneVerificationVerify(ctx context.Context, request 
 }
 
 func (c *Client) sendPostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, requestOptions ...RequestOption) (res PhoneVerifyResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthPhoneVerificationVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -33942,6 +34287,15 @@ func (c *Client) PostV1AuthSessionSwitchGroup(ctx context.Context, request *Post
 }
 
 func (c *Client) sendPostV1AuthSessionSwitchGroup(ctx context.Context, request *PostV1AuthSessionSwitchGroupReq, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthSessionSwitchGroup"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -34728,6 +35082,22 @@ func (c *Client) PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshR
 }
 
 func (c *Client) sendPostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthTokenRefresh"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -34978,6 +35348,15 @@ func (c *Client) PostV1AuthWebauthnLoginVerify(ctx context.Context, request *Pos
 }
 
 func (c *Client) sendPostV1AuthWebauthnLoginVerify(ctx context.Context, request *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthWebauthnLoginVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35095,6 +35474,22 @@ func (c *Client) PostV1AuthWebauthnRegisterOptions(ctx context.Context, request 
 }
 
 func (c *Client) sendPostV1AuthWebauthnRegisterOptions(ctx context.Context, request OptPostV1AuthWebauthnRegisterOptionsReq, requestOptions ...RequestOption) (res *PostV1AuthWebauthnRegisterOptionsOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthWebauthnRegisterOptions"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35231,6 +35626,15 @@ func (c *Client) PostV1AuthWebauthnRegisterVerify(ctx context.Context, request *
 }
 
 func (c *Client) sendPostV1AuthWebauthnRegisterVerify(ctx context.Context, request *PostV1AuthWebauthnRegisterVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthWebauthnRegisterVerifyOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthWebauthnRegisterVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35367,6 +35771,15 @@ func (c *Client) PostV1ChallengesCaptchaVerify(ctx context.Context, request *Pos
 }
 
 func (c *Client) sendPostV1ChallengesCaptchaVerify(ctx context.Context, request *PostV1ChallengesCaptchaVerifyReq, requestOptions ...RequestOption) (res *PostV1ChallengesCaptchaVerifyOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ChallengesCaptchaVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35470,6 +35883,15 @@ func (c *Client) PostV1DeviceApprove(ctx context.Context, request *PostV1DeviceA
 }
 
 func (c *Client) sendPostV1DeviceApprove(ctx context.Context, request *PostV1DeviceApproveReq, requestOptions ...RequestOption) (res *Ok, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1DeviceApprove"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35606,6 +36028,15 @@ func (c *Client) PostV1DeviceDeny(ctx context.Context, request *PostV1DeviceDeny
 }
 
 func (c *Client) sendPostV1DeviceDeny(ctx context.Context, request *PostV1DeviceDenyReq, requestOptions ...RequestOption) (res *Ok, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1DeviceDeny"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35742,6 +36173,15 @@ func (c *Client) PostV1OauthInteractionByInteractionIdConsent(ctx context.Contex
 }
 
 func (c *Client) sendPostV1OauthInteractionByInteractionIdConsent(ctx context.Context, request *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams, requestOptions ...RequestOption) (res *PostV1OauthInteractionByInteractionIdConsentOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1OauthInteractionByInteractionIdConsent"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35897,6 +36337,22 @@ func (c *Client) PostV1OauthInteractionByInteractionIdLogin(ctx context.Context,
 }
 
 func (c *Client) sendPostV1OauthInteractionByInteractionIdLogin(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams, requestOptions ...RequestOption) (res *PostV1OauthInteractionByInteractionIdLoginOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1OauthInteractionByInteractionIdLogin"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -36052,6 +36508,22 @@ func (c *Client) PostV1OauthInteractionByInteractionIdReject(ctx context.Context
 }
 
 func (c *Client) sendPostV1OauthInteractionByInteractionIdReject(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdRejectReq, params PostV1OauthInteractionByInteractionIdRejectParams, requestOptions ...RequestOption) (res *PostV1OauthInteractionByInteractionIdRejectOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1OauthInteractionByInteractionIdReject"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -36365,6 +36837,22 @@ func (c *Client) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx contex
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminAccessRequestsByIdDeny"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -37134,6 +37622,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Co
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminAppsByAppIdSecrets"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -37339,6 +37836,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, 
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAuditExportReq, params PostV1ProjectsByProjectIdAdminAuditExportParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminAuditExportOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminAuditExport"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -37511,6 +38017,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, requ
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminDomains(ctx context.Context, request *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminDomainsCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminDomains"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -37885,6 +38400,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Contex
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, request *EmailProvider, params PostV1ProjectsByProjectIdAdminEmailProvidersParams, requestOptions ...RequestOption) (res *EmailProvider, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminEmailProviders"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -38071,6 +38595,22 @@ func (c *Client) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx con
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -38262,6 +38802,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx co
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams, requestOptions ...RequestOption) (res *Ok, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -38453,6 +39002,22 @@ func (c *Client) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminEventsByEventIdReplay"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -38644,6 +39209,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminHooks(ctx context.Context, reques
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminHooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminHooksReq, params PostV1ProjectsByProjectIdAdminHooksParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminHooksCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminHooks"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -39931,6 +40505,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Contex
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, request *OAuthProviderConfig, params PostV1ProjectsByProjectIdAdminOauthProvidersParams, requestOptions ...RequestOption) (res *OAuthProviderConfig, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminOauthProviders"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -40493,6 +41076,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Conte
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminServiceAccountsCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminServiceAccounts"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -40679,6 +41271,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx 
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -40884,6 +41485,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context,
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, request *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams, requestOptions ...RequestOption) (res *SmsProvider, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminSmsProviders"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -41453,6 +42063,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx 
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -41846,6 +42465,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, request *TokenProfile, params PostV1ProjectsByProjectIdAdminTokenProfilesParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminTokenProfilesCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminTokenProfiles"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -42032,6 +42660,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx cont
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, request *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminTokenProfilesByIdPreview"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -42418,6 +43055,22 @@ func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx contex
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams, requestOptions ...RequestOption) (res *Ok, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdAnonymize"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -42609,6 +43262,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Cont
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdBan"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -42988,6 +43650,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx cont
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdImpersonate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -43586,6 +44257,22 @@ func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx c
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -44912,6 +45599,15 @@ func (c *Client) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Cont
 }
 
 func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminWebhooksByIdTest"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -45258,6 +45954,15 @@ func (c *Client) PostV1ScimV2ByConnectionIdUsers(ctx context.Context, request *S
 }
 
 func (c *Client) sendPostV1ScimV2ByConnectionIdUsers(ctx context.Context, request *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams, requestOptions ...RequestOption) (res PostV1ScimV2ByConnectionIdUsersCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ScimV2ByConnectionIdUsers"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -45413,6 +46118,15 @@ func (c *Client) PostV1ServiceAccountsTokens(ctx context.Context, request *PostV
 }
 
 func (c *Client) sendPostV1ServiceAccountsTokens(ctx context.Context, request *PostV1ServiceAccountsTokensReq, requestOptions ...RequestOption) (res *PostV1ServiceAccountsTokensOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ServiceAccountsTokens"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -45704,6 +46418,15 @@ func (c *Client) PostV1SsoExchange(ctx context.Context, request *PostV1SsoExchan
 }
 
 func (c *Client) sendPostV1SsoExchange(ctx context.Context, request *PostV1SsoExchangeReq, params PostV1SsoExchangeParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1SsoExchange"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -45821,6 +46544,22 @@ func (c *Client) PostV1SsoSamlByConnectionIdAcs(ctx context.Context, request Opt
 }
 
 func (c *Client) sendPostV1SsoSamlByConnectionIdAcs(ctx context.Context, request OptPostV1SsoSamlByConnectionIdAcsReq, params PostV1SsoSamlByConnectionIdAcsParams, requestOptions ...RequestOption) (res *PostV1SsoSamlByConnectionIdAcsFound, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1SsoSamlByConnectionIdAcs"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -46518,6 +47257,15 @@ func (c *Client) PostV1TokensIntrospect(ctx context.Context, request *PostV1Toke
 }
 
 func (c *Client) sendPostV1TokensIntrospect(ctx context.Context, request *PostV1TokensIntrospectReq, requestOptions ...RequestOption) (res *PostV1TokensIntrospectOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1TokensIntrospect"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -46654,6 +47402,15 @@ func (c *Client) PostV1TokensRevoke(ctx context.Context, request *PostV1TokensRe
 }
 
 func (c *Client) sendPostV1TokensRevoke(ctx context.Context, request *PostV1TokensRevokeReq, requestOptions ...RequestOption) (res *Ok, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1TokensRevoke"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -46790,6 +47547,15 @@ func (c *Client) PostV1TokensVerify(ctx context.Context, request *PostV1TokensVe
 }
 
 func (c *Client) sendPostV1TokensVerify(ctx context.Context, request *PostV1TokensVerifyReq, requestOptions ...RequestOption) (res *PostV1TokensVerifyOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1TokensVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -47204,6 +47970,15 @@ func (c *Client) PutV1ProjectsByProjectIdAdminConsents(ctx context.Context, requ
 }
 
 func (c *Client) sendPutV1ProjectsByProjectIdAdminConsents(ctx context.Context, request *ConsentConfig, params PutV1ProjectsByProjectIdAdminConsentsParams, requestOptions ...RequestOption) (res *ConsentConfig, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("putV1ProjectsByProjectIdAdminConsents"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
@@ -48092,6 +48867,15 @@ func (c *Client) PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context,
 }
 
 func (c *Client) sendPutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams, requestOptions ...RequestOption) (res PutV1ScimV2ByConnectionIdUsersByScimUserIdOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("putV1ScimV2ByConnectionIdUsersByScimUserId"),
 		semconv.HTTPRequestMethodKey.String("PUT"),

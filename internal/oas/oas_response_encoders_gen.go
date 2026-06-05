@@ -464,6 +464,14 @@ func encodeDeleteV1UsersMeResponse(response *Ok, w http.ResponseWriter, span tra
 }
 
 func encodeGetMgmtV1ProjectsResponse(response *GetMgmtV1ProjectsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -478,6 +486,14 @@ func encodeGetMgmtV1ProjectsResponse(response *GetMgmtV1ProjectsOK, w http.Respo
 }
 
 func encodeGetMgmtV1ProjectsByProjectIdResponse(response *GetMgmtV1ProjectsByProjectIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -541,6 +557,14 @@ func encodeGetMgmtV1ProjectsByProjectIdConfigExportResponse(response GetMgmtV1Pr
 }
 
 func encodeGetMgmtV1ProjectsByProjectIdEnvironmentsResponse(response *GetMgmtV1ProjectsByProjectIdEnvironmentsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -555,6 +579,14 @@ func encodeGetMgmtV1ProjectsByProjectIdEnvironmentsResponse(response *GetMgmtV1P
 }
 
 func encodeGetMgmtV1ProjectsByProjectIdEnvironmentsByEnvResponse(response *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -958,6 +990,14 @@ func encodeGetV1AuthOauthByProviderStartResponse(response *GetV1AuthOauthByProvi
 }
 
 func encodeGetV1AuthOauthProvidersResponse(response *GetV1AuthOauthProvidersOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -994,6 +1034,14 @@ func encodeGetV1AuthSessionResponse(response *GetV1AuthSessionOK, w http.Respons
 }
 
 func encodeGetV1AuthWebauthnCredentialsResponse(response *GetV1AuthWebauthnCredentialsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1030,6 +1078,14 @@ func encodeGetV1ConfigPublicResponse(response *PublicConfig, w http.ResponseWrit
 }
 
 func encodeGetV1CsrfResponse(response *GetV1CsrfOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1044,6 +1100,14 @@ func encodeGetV1CsrfResponse(response *GetV1CsrfOK, w http.ResponseWriter, span 
 }
 
 func encodeGetV1DeviceResponse(response *GetV1DeviceOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1058,6 +1122,14 @@ func encodeGetV1DeviceResponse(response *GetV1DeviceOK, w http.ResponseWriter, s
 }
 
 func encodeGetV1HealthResponse(response *GetV1HealthOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1072,6 +1144,14 @@ func encodeGetV1HealthResponse(response *GetV1HealthOK, w http.ResponseWriter, s
 }
 
 func encodeGetV1HealthLiveResponse(response *GetV1HealthLiveOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1086,6 +1166,14 @@ func encodeGetV1HealthLiveResponse(response *GetV1HealthLiveOK, w http.ResponseW
 }
 
 func encodeGetV1HealthReadyResponse(response *GetV1HealthReadyOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1100,6 +1188,14 @@ func encodeGetV1HealthReadyResponse(response *GetV1HealthReadyOK, w http.Respons
 }
 
 func encodeGetV1OauthGrantsResponse(response *GetV1OauthGrantsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1158,6 +1254,14 @@ func encodeGetV1ProjectsByProjectIdAdminAccessRequestsResponse(response *GetV1Pr
 }
 
 func encodeGetV1ProjectsByProjectIdAdminApiKeysResponse(response *GetV1ProjectsByProjectIdAdminApiKeysOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1216,6 +1320,14 @@ func encodeGetV1ProjectsByProjectIdAdminAppsByAppIdResponse(response *GetV1Proje
 }
 
 func encodeGetV1ProjectsByProjectIdAdminAuditLogsResponse(response *GetV1ProjectsByProjectIdAdminAuditLogsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1230,6 +1342,14 @@ func encodeGetV1ProjectsByProjectIdAdminAuditLogsResponse(response *GetV1Project
 }
 
 func encodeGetV1ProjectsByProjectIdAdminAuditLogsByAuditIdResponse(response *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1266,6 +1386,14 @@ func encodeGetV1ProjectsByProjectIdAdminConfigAuthResponse(response *AuthConfig,
 }
 
 func encodeGetV1ProjectsByProjectIdAdminConfigMfaPolicyResponse(response *MfaPolicy, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1294,6 +1422,14 @@ func encodeGetV1ProjectsByProjectIdAdminConfigPasswordPolicyResponse(response *P
 }
 
 func encodeGetV1ProjectsByProjectIdAdminConfigRateLimitsResponse(response *RateLimits, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1322,6 +1458,14 @@ func encodeGetV1ProjectsByProjectIdAdminConfigSessionPolicyResponse(response *Se
 }
 
 func encodeGetV1ProjectsByProjectIdAdminConsentsResponse(response *ConsentConfig, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1358,6 +1502,14 @@ func encodeGetV1ProjectsByProjectIdAdminDomainsResponse(response *GetV1ProjectsB
 }
 
 func encodeGetV1ProjectsByProjectIdAdminEmailProvidersResponse(response *GetV1ProjectsByProjectIdAdminEmailProvidersOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1386,6 +1538,14 @@ func encodeGetV1ProjectsByProjectIdAdminEmailTemplatesResponse(response GetV1Pro
 }
 
 func encodeGetV1ProjectsByProjectIdAdminEventsResponse(response *GetV1ProjectsByProjectIdAdminEventsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1400,6 +1560,14 @@ func encodeGetV1ProjectsByProjectIdAdminEventsResponse(response *GetV1ProjectsBy
 }
 
 func encodeGetV1ProjectsByProjectIdAdminExportsByJobIdResponse(response *GetV1ProjectsByProjectIdAdminExportsByJobIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1530,6 +1698,14 @@ func encodeGetV1ProjectsByProjectIdAdminJwksResponse(response *GetV1ProjectsByPr
 }
 
 func encodeGetV1ProjectsByProjectIdAdminOauthProvidersResponse(response *GetV1ProjectsByProjectIdAdminOauthProvidersOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1602,6 +1778,14 @@ func encodeGetV1ProjectsByProjectIdAdminRiskRulesResponse(response *GetV1Project
 }
 
 func encodeGetV1ProjectsByProjectIdAdminServiceAccountsResponse(response *GetV1ProjectsByProjectIdAdminServiceAccountsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1616,6 +1800,14 @@ func encodeGetV1ProjectsByProjectIdAdminServiceAccountsResponse(response *GetV1P
 }
 
 func encodeGetV1ProjectsByProjectIdAdminServiceAccountsBySaIdResponse(response *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1630,6 +1822,14 @@ func encodeGetV1ProjectsByProjectIdAdminServiceAccountsBySaIdResponse(response *
 }
 
 func encodeGetV1ProjectsByProjectIdAdminSmsProvidersResponse(response *GetV1ProjectsByProjectIdAdminSmsProvidersOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1688,6 +1888,14 @@ func encodeGetV1ProjectsByProjectIdAdminSsoConnectionsByIdResponse(response *Get
 }
 
 func encodeGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensResponse(response *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1702,6 +1910,14 @@ func encodeGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensResponse(res
 }
 
 func encodeGetV1ProjectsByProjectIdAdminTokenProfilesResponse(response *GetV1ProjectsByProjectIdAdminTokenProfilesOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1760,6 +1976,14 @@ func encodeGetV1ProjectsByProjectIdAdminUsersByUserIdResponse(response *GetV1Pro
 }
 
 func encodeGetV1ProjectsByProjectIdAdminUsersByUserIdGrantsResponse(response *GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1832,6 +2056,14 @@ func encodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesResponse(response GetV1
 }
 
 func encodeGetV1ProjectsByProjectIdAdminWebhooksResponse(response *GetV1ProjectsByProjectIdAdminWebhooksOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -1846,6 +2078,14 @@ func encodeGetV1ProjectsByProjectIdAdminWebhooksResponse(response *GetV1Projects
 }
 
 func encodeGetV1ProjectsByProjectIdAdminWebhooksByIdResponse(response *GetV1ProjectsByProjectIdAdminWebhooksByIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2144,6 +2384,14 @@ func encodeGetV1UsersMeResponse(response *GetV1UsersMeOK, w http.ResponseWriter,
 }
 
 func encodeGetV1UsersMeActivityResponse(response *GetV1UsersMeActivityOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2158,6 +2406,14 @@ func encodeGetV1UsersMeActivityResponse(response *GetV1UsersMeActivityOK, w http
 }
 
 func encodeGetV1UsersMeConsentsResponse(response *GetV1UsersMeConsentsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2172,6 +2428,14 @@ func encodeGetV1UsersMeConsentsResponse(response *GetV1UsersMeConsentsOK, w http
 }
 
 func encodeGetV1UsersMeExportByJobIdResponse(response *GetV1UsersMeExportByJobIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2186,6 +2450,14 @@ func encodeGetV1UsersMeExportByJobIdResponse(response *GetV1UsersMeExportByJobId
 }
 
 func encodePatchMgmtV1ProjectsByProjectIdResponse(response *PatchMgmtV1ProjectsByProjectIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2214,6 +2486,14 @@ func encodePatchMgmtV1ProjectsByProjectIdFeaturesResponse(response PatchMgmtV1Pr
 }
 
 func encodePatchV1AuthWebauthnCredentialsByCredentialIdResponse(response *PatchV1AuthWebauthnCredentialsByCredentialIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2228,6 +2508,14 @@ func encodePatchV1AuthWebauthnCredentialsByCredentialIdResponse(response *PatchV
 }
 
 func encodePatchV1ProjectsByProjectIdAdminApiKeysByKeyIdResponse(response *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2286,6 +2574,14 @@ func encodePatchV1ProjectsByProjectIdAdminConfigAuthResponse(response *AuthConfi
 }
 
 func encodePatchV1ProjectsByProjectIdAdminConfigMfaPolicyResponse(response *MfaPolicy, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2314,6 +2610,14 @@ func encodePatchV1ProjectsByProjectIdAdminConfigPasswordPolicyResponse(response 
 }
 
 func encodePatchV1ProjectsByProjectIdAdminConfigRateLimitsResponse(response *RateLimits, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2342,6 +2646,14 @@ func encodePatchV1ProjectsByProjectIdAdminConfigSessionPolicyResponse(response *
 }
 
 func encodePatchV1ProjectsByProjectIdAdminEmailProvidersByIdResponse(response *EmailProvider, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2392,6 +2704,14 @@ func encodePatchV1ProjectsByProjectIdAdminHooksByIdResponse(response *PatchV1Pro
 }
 
 func encodePatchV1ProjectsByProjectIdAdminOauthProvidersByIdResponse(response *OAuthProviderConfig, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2428,6 +2748,14 @@ func encodePatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdResponse(response *Ri
 }
 
 func encodePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdResponse(response *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2442,6 +2770,14 @@ func encodePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdResponse(response
 }
 
 func encodePatchV1ProjectsByProjectIdAdminSmsProvidersByIdResponse(response *SmsProvider, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2478,6 +2814,14 @@ func encodePatchV1ProjectsByProjectIdAdminSsoConnectionsByIdResponse(response *P
 }
 
 func encodePatchV1ProjectsByProjectIdAdminTokenProfilesByIdResponse(response *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2514,6 +2858,14 @@ func encodePatchV1ProjectsByProjectIdAdminUsersByUserIdResponse(response *PatchV
 }
 
 func encodePatchV1ProjectsByProjectIdAdminWebhooksByIdResponse(response *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2600,6 +2952,14 @@ func encodePatchV1UsersMeResponse(response *PatchV1UsersMeOK, w http.ResponseWri
 }
 
 func encodePostMgmtV1ProjectsResponse(response *PostMgmtV1ProjectsCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -2614,6 +2974,14 @@ func encodePostMgmtV1ProjectsResponse(response *PostMgmtV1ProjectsCreated, w htt
 }
 
 func encodePostMgmtV1ProjectsByProjectIdAdminTokensResponse(response *PostMgmtV1ProjectsByProjectIdAdminTokensOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2656,6 +3024,14 @@ func encodePostMgmtV1ProjectsByProjectIdConfigPlanResponse(response PostMgmtV1Pr
 }
 
 func encodePostMgmtV1ProjectsByProjectIdEnvironmentsResponse(response *PostMgmtV1ProjectsByProjectIdEnvironmentsCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -2677,6 +3053,14 @@ func encodePostOauth2BackchannelLogoutResponse(response *PostOauth2BackchannelLo
 }
 
 func encodePostOauth2DeviceAuthorizationResponse(response *PostOauth2DeviceAuthorizationOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2705,6 +3089,14 @@ func encodePostOauth2IntrospectResponse(response *PostOauth2IntrospectOK, w http
 }
 
 func encodePostOauth2ParResponse(response *PostOauth2ParCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -2762,6 +3154,14 @@ func encodePostV1AuthAccessRequestsResponse(response *PostV1AuthAccessRequestsOK
 }
 
 func encodePostV1AuthEmailChangeStartResponse(response *Challenge, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2798,6 +3198,14 @@ func encodePostV1AuthEmailChangeVerifyResponse(response *PostV1AuthEmailChangeVe
 }
 
 func encodePostV1AuthEmailVerificationStartResponse(response *Challenge, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2878,6 +3286,14 @@ func encodePostV1AuthIdentitiesMergeConfirmResponse(response *PostV1AuthIdentiti
 }
 
 func encodePostV1AuthIdentitiesMergeStartResponse(response *PostV1AuthIdentitiesMergeStartOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2892,6 +3308,14 @@ func encodePostV1AuthIdentitiesMergeStartResponse(response *PostV1AuthIdentities
 }
 
 func encodePostV1AuthMagicLinkStartResponse(response *Challenge, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2928,6 +3352,14 @@ func encodePostV1AuthMagicLinkVerifyResponse(response *AuthResult, w http.Respon
 }
 
 func encodePostV1AuthMfaChallengeResponse(response *Challenge, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2942,6 +3374,14 @@ func encodePostV1AuthMfaChallengeResponse(response *Challenge, w http.ResponseWr
 }
 
 func encodePostV1AuthMfaEmailEnrollResponse(response *PostV1AuthMfaEmailEnrollOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2956,6 +3396,14 @@ func encodePostV1AuthMfaEmailEnrollResponse(response *PostV1AuthMfaEmailEnrollOK
 }
 
 func encodePostV1AuthMfaRecoveryCodesGenerateResponse(response *PostV1AuthMfaRecoveryCodesGenerateOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -2992,6 +3440,14 @@ func encodePostV1AuthMfaRecoveryCodesVerifyResponse(response *AuthResult, w http
 }
 
 func encodePostV1AuthMfaSmsEnrollResponse(response *PostV1AuthMfaSmsEnrollOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3006,6 +3462,14 @@ func encodePostV1AuthMfaSmsEnrollResponse(response *PostV1AuthMfaSmsEnrollOK, w 
 }
 
 func encodePostV1AuthMfaTotpEnrollResponse(response *PostV1AuthMfaTotpEnrollOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3064,6 +3528,14 @@ func encodePostV1AuthMfaVerifyResponse(response *AuthResult, w http.ResponseWrit
 }
 
 func encodePostV1AuthMfaWebauthnEnrollOptionsResponse(response *PostV1AuthMfaWebauthnEnrollOptionsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3136,6 +3608,14 @@ func encodePostV1AuthOauthExchangeResponse(response *AuthResult, w http.Response
 }
 
 func encodePostV1AuthOtpStartResponse(response *Challenge, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3186,6 +3666,14 @@ func encodePostV1AuthPasswordChangeResponse(response *Ok, w http.ResponseWriter,
 }
 
 func encodePostV1AuthPasswordCheckResponse(response *PostV1AuthPasswordCheckOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3236,6 +3724,14 @@ func encodePostV1AuthPasswordResetResponse(response *AuthResult, w http.Response
 }
 
 func encodePostV1AuthPasswordVerifyResponse(response *PostV1AuthPasswordVerifyOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3250,6 +3746,14 @@ func encodePostV1AuthPasswordVerifyResponse(response *PostV1AuthPasswordVerifyOK
 }
 
 func encodePostV1AuthPhoneChangeStartResponse(response *Challenge, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3286,6 +3790,14 @@ func encodePostV1AuthPhoneChangeVerifyResponse(response *PostV1AuthPhoneChangeVe
 }
 
 func encodePostV1AuthPhoneVerificationStartResponse(response *Challenge, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3482,6 +3994,14 @@ func encodePostV1AuthTokenRefreshResponse(response *AuthResult, w http.ResponseW
 }
 
 func encodePostV1AuthWebauthnLoginOptionsResponse(response *PostV1AuthWebauthnLoginOptionsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3518,6 +4038,14 @@ func encodePostV1AuthWebauthnLoginVerifyResponse(response *AuthResult, w http.Re
 }
 
 func encodePostV1AuthWebauthnRegisterOptionsResponse(response *PostV1AuthWebauthnRegisterOptionsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3532,6 +4060,14 @@ func encodePostV1AuthWebauthnRegisterOptionsResponse(response *PostV1AuthWebauth
 }
 
 func encodePostV1AuthWebauthnRegisterVerifyResponse(response *PostV1AuthWebauthnRegisterVerifyOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3596,6 +4132,14 @@ func encodePostV1DeviceDenyResponse(response *Ok, w http.ResponseWriter, span tr
 }
 
 func encodePostV1OauthInteractionByInteractionIdConsentResponse(response *PostV1OauthInteractionByInteractionIdConsentOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3610,6 +4154,14 @@ func encodePostV1OauthInteractionByInteractionIdConsentResponse(response *PostV1
 }
 
 func encodePostV1OauthInteractionByInteractionIdLoginResponse(response *PostV1OauthInteractionByInteractionIdLoginOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3624,6 +4176,14 @@ func encodePostV1OauthInteractionByInteractionIdLoginResponse(response *PostV1Oa
 }
 
 func encodePostV1OauthInteractionByInteractionIdRejectResponse(response *PostV1OauthInteractionByInteractionIdRejectOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3674,6 +4234,14 @@ func encodePostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyResponse(response
 }
 
 func encodePostV1ProjectsByProjectIdAdminApiKeysResponse(response *PostV1ProjectsByProjectIdAdminApiKeysCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -3688,6 +4256,14 @@ func encodePostV1ProjectsByProjectIdAdminApiKeysResponse(response *PostV1Project
 }
 
 func encodePostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateResponse(response *PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3724,6 +4300,14 @@ func encodePostV1ProjectsByProjectIdAdminAppsResponse(response *PostV1ProjectsBy
 }
 
 func encodePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsResponse(response *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -3738,6 +4322,14 @@ func encodePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsResponse(response *Po
 }
 
 func encodePostV1ProjectsByProjectIdAdminAuditExportResponse(response *PostV1ProjectsByProjectIdAdminAuditExportOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3796,6 +4388,14 @@ func encodePostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyResponse(respons
 }
 
 func encodePostV1ProjectsByProjectIdAdminEmailProvidersResponse(response *EmailProvider, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -3810,6 +4410,14 @@ func encodePostV1ProjectsByProjectIdAdminEmailProvidersResponse(response *EmailP
 }
 
 func encodePostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewResponse(response *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3902,6 +4510,14 @@ func encodePostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyResponse(resp
 }
 
 func encodePostV1ProjectsByProjectIdAdminImportUsersResponse(response *PostV1ProjectsByProjectIdAdminImportUsersOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -3982,6 +4598,14 @@ func encodePostV1ProjectsByProjectIdAdminJwksRotateResponse(response *PostV1Proj
 }
 
 func encodePostV1ProjectsByProjectIdAdminOauthProvidersResponse(response *OAuthProviderConfig, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -4032,6 +4656,14 @@ func encodePostV1ProjectsByProjectIdAdminRiskRulesResponse(response *RiskRule, w
 }
 
 func encodePostV1ProjectsByProjectIdAdminServiceAccountsResponse(response *PostV1ProjectsByProjectIdAdminServiceAccountsCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -4046,6 +4678,14 @@ func encodePostV1ProjectsByProjectIdAdminServiceAccountsResponse(response *PostV
 }
 
 func encodePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsResponse(response *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -4060,6 +4700,14 @@ func encodePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsResponse(re
 }
 
 func encodePostV1ProjectsByProjectIdAdminSmsProvidersResponse(response *SmsProvider, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -4096,6 +4744,14 @@ func encodePostV1ProjectsByProjectIdAdminSsoConnectionsResponse(response *PostV1
 }
 
 func encodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateResponse(response *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4110,6 +4766,14 @@ func encodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateResp
 }
 
 func encodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensResponse(response *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -4124,6 +4788,14 @@ func encodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensResponse(re
 }
 
 func encodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestResponse(response *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4138,6 +4810,14 @@ func encodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestResponse(response
 }
 
 func encodePostV1ProjectsByProjectIdAdminTokenProfilesResponse(response *PostV1ProjectsByProjectIdAdminTokenProfilesCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -4224,6 +4904,14 @@ func encodePostV1ProjectsByProjectIdAdminUsersByUserIdBanResponse(response *Post
 }
 
 func encodePostV1ProjectsByProjectIdAdminUsersByUserIdExportResponse(response *PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4238,6 +4926,14 @@ func encodePostV1ProjectsByProjectIdAdminUsersByUserIdExportResponse(response *P
 }
 
 func encodePostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateResponse(response *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4374,6 +5070,14 @@ func encodePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRespo
 }
 
 func encodePostV1ProjectsByProjectIdAdminWebhooksResponse(response *PostV1ProjectsByProjectIdAdminWebhooksCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
 	span.SetStatus(codes.Ok, http.StatusText(201))
@@ -4388,6 +5092,14 @@ func encodePostV1ProjectsByProjectIdAdminWebhooksResponse(response *PostV1Projec
 }
 
 func encodePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretResponse(response *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4444,6 +5156,14 @@ func encodePostV1ScimV2ByConnectionIdUsersResponse(response PostV1ScimV2ByConnec
 }
 
 func encodePostV1ServiceAccountsTokensResponse(response *PostV1ServiceAccountsTokensOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4641,6 +5361,14 @@ func encodePostV1TokensRevokeResponse(response *Ok, w http.ResponseWriter, span 
 }
 
 func encodePostV1TokensVerifyResponse(response *PostV1TokensVerifyOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4655,6 +5383,14 @@ func encodePostV1TokensVerifyResponse(response *PostV1TokensVerifyOK, w http.Res
 }
 
 func encodePostV1UsersMeConsentsResponse(response *PostV1UsersMeConsentsOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4669,6 +5405,14 @@ func encodePostV1UsersMeConsentsResponse(response *PostV1UsersMeConsentsOK, w ht
 }
 
 func encodePostV1UsersMeExportResponse(response *PostV1UsersMeExportOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4683,6 +5427,14 @@ func encodePostV1UsersMeExportResponse(response *PostV1UsersMeExportOK, w http.R
 }
 
 func encodePutV1ProjectsByProjectIdAdminConsentsResponse(response *ConsentConfig, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4775,6 +5527,14 @@ func encodePutV1ScimV2ByConnectionIdUsersByScimUserIdResponse(response PutV1Scim
 }
 
 func encodeErrorResponse(response *DefaultStatusCode, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	code := response.StatusCode
 	if code == 0 {
