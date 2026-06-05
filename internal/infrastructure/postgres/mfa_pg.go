@@ -289,7 +289,7 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 		if err != nil {
 			return result{}, err
 		}
-		sess, err := a.mfaMintSession(acc)
+		sess, err := a.mfaMintSession(ctx, acc)
 		if err != nil {
 			return result{}, err
 		}
@@ -426,7 +426,7 @@ func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARe
 		if err != nil {
 			return result{}, err
 		}
-		sess, err := a.mfaMintSession(acc)
+		sess, err := a.mfaMintSession(ctx, acc)
 		if err != nil {
 			return result{}, err
 		}
@@ -643,11 +643,27 @@ func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accou
 	return nil
 }
 
-// mfaMintSession produces an opaque-token session for a freshly verified account.
-// The access/refresh tokens here are opaque random handles; JWT minting is not
-// implemented in this adapter.
-func (a *pgMFAAccounts) mfaMintSession(acc *domain.Account) (*domain.Session, error) {
-	access, err := mfaNewOpaqueToken(32)
+// mfaDefaultEnv is the environment whose signing key mints the MFA session's
+// access-token JWT.
+const mfaDefaultEnv = "live"
+
+// mfaAccessTTL bounds the minted access-token JWT.
+const mfaAccessTTL = 30 * time.Minute
+
+// mfaMintSession produces a session for a freshly verified (AAL2) account. The
+// access token is a signed RS256 JWT minted by the project Signer (jwx, carrying
+// the session sid); the refresh token stays an opaque random handle.
+func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account) (*domain.Session, error) {
+	sessionID := newUUID()
+	access, err := a.db.Signer().Sign(ctx, acc.ProjectID, mfaDefaultEnv, map[string]any{
+		"iss": acc.ProjectID,
+		"sub": acc.ID,
+		"sid": sessionID,
+		"pid": acc.ProjectID,
+		"aal": 2,
+		"amr": []string{"mfa"},
+		"typ": "access",
+	}, mfaAccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -655,16 +671,15 @@ func (a *pgMFAAccounts) mfaMintSession(acc *domain.Account) (*domain.Session, er
 	if err != nil {
 		return nil, err
 	}
-	// TODO: sign/verify with signing key (mint JWT access/id token instead of opaque handle)
 	return &domain.Session{
-		ID:           newUUID(),
+		ID:           sessionID,
 		AccountID:    acc.ID,
 		ProjectID:    acc.ProjectID,
 		AMR:          []string{"mfa"},
 		AAL:          2,
 		AccessToken:  access,
 		RefreshToken: refresh,
-		ExpiresIn:    3600,
+		ExpiresIn:    int(mfaAccessTTL / time.Second),
 		CreatedAt:    nowUTC(),
 	}, nil
 }

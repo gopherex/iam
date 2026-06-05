@@ -52,6 +52,10 @@ import (
 // iam_config / iam_signing_keys default their environment column to "live".
 const adminDefaultEnvironment = "live"
 
+// adminTokenProfilePreviewTTL bounds the signed sample token returned by
+// PreviewTokenProfile; it is a throwaway example, so a short lifetime is fine.
+const adminTokenProfilePreviewTTL = 5 * time.Minute
+
 func adminEnv(env string) string {
 	if env == "" {
 		return adminDefaultEnvironment
@@ -455,11 +459,20 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 			ttl = 300
 		}
 		expiresAt := nowUTC().Add(time.Duration(ttl) * time.Second)
-		// Opaque, single-use impersonation token: persist only its hash.
-		token, hash, err := adminRandomToken(32)
+		// Short-TTL signed impersonation JWT (jwx, project Signer): typ=impersonation,
+		// sub=target user, act=admin actor. Persist only its hash so the challenge row
+		// can gate single-use redemption.
+		token, err := a.db.Signer().Sign(ctx, cmd.ProjectID, adminDefaultEnvironment, map[string]any{
+			"iss": cmd.ProjectID,
+			"sub": cmd.AccountID,
+			"pid": cmd.ProjectID,
+			"act": cmd.ActorID,
+			"typ": "impersonation",
+		}, time.Duration(ttl)*time.Second)
 		if err != nil {
 			return nil, err
 		}
+		hash := adminSHA256(token)
 		ch := map[string]any{
 			"type":     "impersonation",
 			"user_id":  cmd.AccountID,
@@ -484,8 +497,6 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
-		// TODO: sign/verify with signing key — the impersonation link carries an
-		// opaque token here; the redeemable session JWT is minted elsewhere.
 		// TODO outbox event: user.impersonation_started
 		return &domain.AdminImpersonation{
 			URL:       fmt.Sprintf("/impersonate?token=%s", token),
@@ -1646,15 +1657,43 @@ func (a *pgAdminKeys) PreviewTokenProfile(ctx context.Context, cmd domain.AdminT
 	if row.ProjectID != cmd.ProjectID {
 		return nil, domain.ErrNotFound
 	}
-	// Surface the profile's claims template as the previewed claim set. Actual
-	// claim resolution for cmd.UserID (and signing) is the token subsystem's job.
-	// TODO: sign/verify with signing key — preview returns unsigned claims only.
+	// Surface the profile's claims template as the previewed claim set, AND mint a
+	// real signed sample token over those same claims with the project's active
+	// signing key (jwx, db.Signer()). The signed JWT is returned alongside the
+	// claims under the synthetic "_sample_token" key so callers can inspect both
+	// the resolved claims and a verifiable example token.
 	profile := adminTokenProfileToDomain(row)
 	claims := profile.ClaimsTemplate
 	if claims == nil {
 		claims = map[string]jx.Raw{}
 	}
-	return claims, nil
+	// Decode each jx.Raw claim into a plain value for the Signer's claim map.
+	sampleClaims := make(map[string]any, len(claims)+1)
+	for k, v := range claims {
+		var dv any
+		if err := json.Unmarshal([]byte(v), &dv); err != nil {
+			return nil, err
+		}
+		sampleClaims[k] = dv
+	}
+	if cmd.UserID != "" {
+		sampleClaims["sub"] = cmd.UserID
+	}
+	sampleClaims["typ"] = "access"
+	token, err := a.db.Signer().Sign(ctx, cmd.ProjectID, adminEnv(cmd.Environment), sampleClaims, adminTokenProfilePreviewTTL)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]jx.Raw, len(claims)+1)
+	for k, v := range claims {
+		out[k] = v
+	}
+	tokraw, err := json.Marshal(token)
+	if err != nil {
+		return nil, err
+	}
+	out["_sample_token"] = jx.Raw(tokraw)
+	return out, nil
 }
 
 // =====================================================================

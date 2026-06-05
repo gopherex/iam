@@ -954,6 +954,21 @@ func fedEmailDomain(email string) string {
 // leave the resolution to Exchange (still a TODO — no code/user table here).
 type pgFederationRuntime struct{ db *DB }
 
+const (
+	// fedDefaultEnv is the environment whose signing key mints the access token for
+	// a federated (SSO) login session.
+	fedDefaultEnv = "live"
+
+	// fedAccessTTL / fedRefreshTTL bound the access and refresh JWTs minted for an
+	// SSO-provisioned session.
+	fedAccessTTL  = time.Hour
+	fedRefreshTTL = 30 * 24 * time.Hour
+
+	// fedExchangeCodeTTL bounds the single-use exchange code that maps a verified
+	// external subject's minted session to the /v1/sso/exchange leg.
+	fedExchangeCodeTTL = 5 * time.Minute
+)
+
 // NewPgFederationRuntime builds the Postgres-backed FederationRuntime adapter.
 func NewPgFederationRuntime(db *DB) *pgFederationRuntime {
 	return &pgFederationRuntime{db: db}
@@ -1036,16 +1051,17 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	if subject == "" {
 		return nil, domain.ErrSSOError
 	}
-	// The id_token is verified; the external subject is now trusted. Mapping the
-	// external subject to an IAM user + session requires a user-provisioning port
-	// (account link/create) and an exchange-code store, neither of which this
-	// adapter owns. We mint an opaque single-use exchange code for the
-	// provisioning leg to resolve; persisting (code -> verified subject/claims)
-	// belongs to that port.
-	// TODO: provision/link the verified OIDC subject to an IAM user + session
-	//       (needs a user-provisioning port + exchange-code store not owned here).
+	email, _ := claims["email"].(string)
+	// The id_token is verified; the external subject is now trusted. Provision/link
+	// the verified subject to an IAM user + session, then persist a single-use
+	// exchange code (code -> minted session) for the provisioning leg to resolve.
+	// The provider key is the issuer when known, else the connection id.
+	provider := oidcCfg.Issuer
+	if provider == "" {
+		provider = cmd.ConnectionID
+	}
 	// TODO outbox event: federation.sso.oidc_callback
-	exchangeCode, err := fedRandomToken()
+	exchangeCode, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, provider, "oidc", subject, email)
 	if err != nil {
 		return nil, err
 	}
@@ -1128,19 +1144,16 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	if err := a.fedAssertNotReplayed(ctx, row.ProjectID, cmd.ConnectionID, assertion.ID, notAfter); err != nil {
 		return nil, err
 	}
-	subject, _ := fedSamlSubject(assertion)
+	subject, email := fedSamlSubject(assertion)
 	if subject == "" {
 		return nil, domain.ErrSSOError
 	}
 	// The assertion signature is verified; the external subject is now trusted.
-	// Mapping it to an IAM user + session requires a user-provisioning port
-	// (account link/create) and an exchange-code store, neither of which this
-	// adapter owns. We mint an opaque single-use exchange code for the
-	// provisioning leg to resolve.
-	// TODO: provision/link the verified SAML subject to an IAM user + session
-	//       (needs a user-provisioning port + exchange-code store not owned here).
+	// Provision/link the subject to an IAM user + session, then persist a
+	// single-use exchange code (code -> minted session) for the provisioning leg
+	// to resolve. The provider key is the connection id (no issuer for SAML).
 	// TODO outbox event: federation.sso.saml_acs
-	exchangeCode, err := fedRandomToken()
+	exchangeCode, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, cmd.ConnectionID, "saml", subject, email)
 	if err != nil {
 		return nil, err
 	}
@@ -1209,29 +1222,304 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 		sess *domain.Session
 	}
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
-		// The exchange code is an opaque single-use token persisted (hashed) by
-		// the callback leg and resolved here to the user it authenticated. The
-		// code store is not part of this adapter's tables; until it lands we
-		// cannot resolve the principal.
-		// TODO: sign/verify with signing key — resolve the exchange code to a user.
+		// The exchange code is an opaque single-use token persisted (hashed) by the
+		// callback leg; resolve it (project-scoped) to the session it authenticated.
+		// The session JSON was stored whole in the code's data envelope at callback
+		// time (after the external subject was provisioned to an IAM user); here we
+		// validate single-use + expiry, consume it, and return account + session.
 		hash := fedHashToken(code)
-		_ = hash
-
-		// Resolution of the exchange code to an account is not yet wired (no code
-		// table in this adapter); treat any code as unresolved.
-		return result{}, domain.ErrInvalidCredentials
-
-		// Once the code resolves to (projectID, userID), the session is minted:
-		//   acc := loaded account
-		//   sess := &domain.Session{ID: newUUID(), AccountID: acc.ID, ProjectID: projectID, ...}
-		//   persist into iam_sessions; mint the access/refresh tokens.
-		//   // TODO: sign/verify with signing key — mint the access/id token JWT.
-		//   // TODO outbox event: federation.sso.exchanged
+		rows, err := models.IamAuthCodes.Query(
+			sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
+			sm.Where(models.IamAuthCodes.Columns.ProjectID.EQ(psql.Arg(projectID))),
+			sm.Limit(1),
+		).All(ctx, a.db.Bobx())
+		if err != nil {
+			return result{}, err
+		}
+		if len(rows) == 0 {
+			return result{}, domain.ErrInvalidToken
+		}
+		row := rows[0]
+		if row.Consumed {
+			return result{}, domain.ErrInvalidToken
+		}
+		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
+			return result{}, domain.ErrInvalidToken
+		}
+		// Mark consumed (single-use) before handing back the session.
+		consumed := true
+		if err := row.Update(ctx, a.db.Bobx(), &models.IamAuthCodeSetter{Consumed: &consumed}); err != nil {
+			return result{}, err
+		}
+		var sess domain.Session
+		if err := unmarshal(row.Data, &sess); err != nil {
+			return result{}, err
+		}
+		acc, err := a.fedLoadAccount(ctx, projectID, row.UserID.GetOrZero())
+		if err != nil {
+			return result{}, err
+		}
+		// TODO outbox event: federation.sso.exchanged
+		return result{acc: acc, sess: &sess}, nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 	return res.acc, res.sess, nil
+}
+
+// ===========================================================================
+// SSO provisioning + exchange-code store
+// ===========================================================================
+
+// fedProvisionAndStoreCode is the post-verification provisioning path shared by
+// OidcCallback and SamlAcs: inside one serializable tx it provisions/links the
+// verified external subject to an IAM user + session (fedProvisionSubject) and
+// persists a single-use exchange code (sha256(code) -> minted session JSON,
+// user_id = account id, expires_at = now+5m). The opaque code is returned for the
+// /v1/sso/exchange redirect; only its hash is stored.
+func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, projectID, connectionID, provider, idType, providerAccountID, email string) (string, error) {
+	code, err := fedRandomToken()
+	if err != nil {
+		return "", err
+	}
+	err = a.db.withTx(ctx, func(ctx context.Context) error {
+		acct, sess, err := a.fedProvisionSubject(ctx, projectID, connectionID, provider, idType, providerAccountID, email)
+		if err != nil {
+			return err
+		}
+		raw, err := marshal(sess)
+		if err != nil {
+			return err
+		}
+		rm := json.RawMessage(raw)
+		uid := null.From(acct.ID)
+		setter := &models.IamAuthCodeSetter{
+			ID:        ptr(newUUID()),
+			ProjectID: &projectID,
+			CodeHash:  ptr(fedHashToken(code)),
+			UserID:    &uid,
+			ExpiresAt: ptr(nowUTC().Add(fedExchangeCodeTTL)),
+			Data:      &rm,
+		}
+		if _, err := models.IamAuthCodes.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+			if isUniqueViolation(err) {
+				return domain.ErrConflict
+			}
+			return err
+		}
+		// TODO outbox event: federation.sso.exchange_code_issued
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return code, nil
+}
+
+// fedProvisionSubject mirrors oauthsocial.resolveLoginAndMint for SSO: it finds an
+// iam_identities row by (projectID, provider, providerAccountID); when absent it
+// provisions a fresh iam_users account (status active, kind human,
+// primary_email=email) and links an iam_identities row (Type "saml" | "oidc");
+// otherwise it loads the existing account. It then mints an iam_sessions row +
+// signed access-token JWT (fedMintSession). Runs inside the caller's tx.
+func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID, connectionID, provider, idType, providerAccountID, email string) (*domain.Account, *domain.Session, error) {
+	ident, err := a.fedFindIdentity(ctx, projectID, provider, providerAccountID)
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return nil, nil, err
+	}
+	var acct *domain.Account
+	if errors.Is(err, domain.ErrNotFound) {
+		acct, err = a.fedCreateAccount(ctx, projectID, email)
+		if err != nil {
+			return nil, nil, err
+		}
+		if err := a.fedInsertIdentity(ctx, &domain.Identity{
+			ID:                newUUID(),
+			Type:              idType,
+			Provider:          provider,
+			ProviderAccountID: providerAccountID,
+			Email:             email,
+		}, projectID, acct.ID); err != nil {
+			return nil, nil, err
+		}
+		// TODO outbox event: identity.linked
+	} else {
+		acct, err = a.fedLoadAccount(ctx, projectID, ident.UserID)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	sess, err := a.fedMintSession(ctx, acct, idType)
+	if err != nil {
+		return nil, nil, err
+	}
+	// TODO outbox event: session.created
+	return acct, sess, nil
+}
+
+// fedFindIdentity loads the SSO identity for a (project, provider, providerAccountID)
+// triple, mapping no-rows to domain.ErrNotFound. Tenant-scoped by project_id.
+func (a *pgFederationRuntime) fedFindIdentity(ctx context.Context, projectID, provider, providerAccountID string) (*models.IamIdentity, error) {
+	rows, err := models.IamIdentities.Query(
+		sm.Where(models.IamIdentities.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamIdentities.Columns.Provider.EQ(psql.Arg(provider))),
+		sm.Where(models.IamIdentities.Columns.ProviderAccountID.EQ(psql.Arg(providerAccountID))),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, domain.ErrNotFound
+	}
+	return rows[0], nil
+}
+
+// fedInsertIdentity writes the SSO provider link row for an account. Lookup
+// columns carry the provider correlation; the domain Identity is stored in the
+// data envelope.
+func (a *pgFederationRuntime) fedInsertIdentity(ctx context.Context, ident *domain.Identity, projectID, userID string) error {
+	raw, err := marshal(ident)
+	if err != nil {
+		return err
+	}
+	rm := json.RawMessage(raw)
+	setter := &models.IamIdentitySetter{
+		ID:        &ident.ID,
+		ProjectID: &projectID,
+		UserID:    &userID,
+		Type:      ptr(ident.Type),
+		Data:      &rm,
+	}
+	if ident.Provider != "" {
+		v := null.From(ident.Provider)
+		setter.Provider = &v
+	}
+	if ident.ProviderAccountID != "" {
+		v := null.From(ident.ProviderAccountID)
+		setter.ProviderAccountID = &v
+	}
+	if ident.Email != "" {
+		v := null.From(ident.Email)
+		setter.Email = &v
+	}
+	if _, err := models.IamIdentities.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+		if isUniqueViolation(err) {
+			return domain.ErrIdentityExists
+		}
+		return err
+	}
+	return nil
+}
+
+// fedCreateAccount provisions a new IAM account for a first-time SSO login.
+func (a *pgFederationRuntime) fedCreateAccount(ctx context.Context, projectID, email string) (*domain.Account, error) {
+	acct := &domain.Account{
+		ID:            newUUID(),
+		ProjectID:     projectID,
+		Kind:          "human",
+		Status:        "active",
+		PrimaryEmail:  email,
+		EmailVerified: email != "", // IdP-asserted email is treated as verified
+		CreatedAt:     nowUTC(),
+		UpdatedAt:     nowUTC(),
+	}
+	raw, err := marshal(acct)
+	if err != nil {
+		return nil, err
+	}
+	rm := json.RawMessage(raw)
+	setter := &models.IamUserSetter{
+		ID:        &acct.ID,
+		ProjectID: &acct.ProjectID,
+		Kind:      ptr(acct.Kind),
+		Status:    ptr(acct.Status),
+		Data:      &rm,
+	}
+	if acct.PrimaryEmail != "" {
+		v := null.From(acct.PrimaryEmail)
+		setter.PrimaryEmail = &v
+	}
+	if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+		if isUniqueViolation(err) {
+			return nil, domain.ErrEmailExists
+		}
+		return nil, err
+	}
+	// TODO outbox event: user.created
+	return acct, nil
+}
+
+// fedLoadAccount reads the account aggregate from iam_users, tenant-scoped.
+func (a *pgFederationRuntime) fedLoadAccount(ctx context.Context, projectID, userID string) (*domain.Account, error) {
+	row, err := models.FindIamUser(ctx, a.db.Bobx(), userID)
+	if err != nil {
+		return nil, translatePgErr("user", err)
+	}
+	if row.ProjectID != projectID { // tenant boundary
+		return nil, domain.ErrUserNotFound
+	}
+	var acct domain.Account
+	if err := unmarshal(row.Data, &acct); err != nil {
+		return nil, err
+	}
+	return &acct, nil
+}
+
+// fedMintSession creates an iam_sessions row for an account and returns it with a
+// signed RS256 JWT access token (minted by the project Signer) plus a refresh
+// token signed by the same key. amr carries the SSO method ("saml" | "oidc").
+func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.Account, amr string) (*domain.Session, error) {
+	sessionID := newUUID()
+	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, fedDefaultEnv, map[string]any{
+		"iss": acct.ProjectID,
+		"sub": acct.ID,
+		"sid": sessionID,
+		"pid": acct.ProjectID,
+		"aal": 1,
+		"amr": []string{amr},
+		"typ": "access",
+	}, fedAccessTTL)
+	if err != nil {
+		return nil, err
+	}
+	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, fedDefaultEnv, map[string]any{
+		"iss": acct.ProjectID,
+		"sub": acct.ID,
+		"sid": sessionID,
+		"pid": acct.ProjectID,
+		"typ": "refresh",
+	}, fedRefreshTTL)
+	if err != nil {
+		return nil, err
+	}
+	sess := &domain.Session{
+		ID:           sessionID,
+		AccountID:    acct.ID,
+		ProjectID:    acct.ProjectID,
+		AMR:          []string{amr},
+		AAL:          1,
+		AccessToken:  access,
+		RefreshToken: refresh,
+		ExpiresIn:    int(fedAccessTTL / time.Second),
+		CreatedAt:    nowUTC(),
+	}
+	raw, err := marshal(sess)
+	if err != nil {
+		return nil, err
+	}
+	rm := json.RawMessage(raw)
+	setter := &models.IamSessionSetter{
+		ID:        &sess.ID,
+		ProjectID: &sess.ProjectID,
+		UserID:    &sess.AccountID,
+		Aal:       ptr(int32(sess.AAL)),
+		Data:      &rm,
+	}
+	if _, err := models.IamSessions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+		return nil, err
+	}
+	return sess, nil
 }
 
 // ===========================================================================

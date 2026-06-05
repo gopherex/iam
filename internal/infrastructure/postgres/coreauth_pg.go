@@ -1612,13 +1612,52 @@ func (a *pgCoreAuth) ChangePassword(ctx context.Context, cmd domain.CoreAuthPass
 	})
 }
 
-// CheckPassword runs a stateless strength/policy check. The project policy is a
-// future config lookup; for now a length floor is enforced and the result is
-// returned without persistence.
+// coreAuthPasswordPolicy is the iam_config(key=password_policy) data envelope.
+// All fields are optional; a missing config row (or absent field) falls back to
+// the package defaults in coreAuthLoadPasswordPolicy.
+type coreAuthPasswordPolicy struct {
+	MinLength      int  `json:"min_length"`
+	BreachedCheck  bool `json:"breached_check"`
+	History        int  `json:"history"`
+	ZxcvbnMinScore int  `json:"zxcvbn_min_score"`
+}
+
+// coreAuthLoadPasswordPolicy reads the iam_config(project, env=live,
+// key=password_policy) envelope and unmarshals its data jsonb into the policy
+// struct. A missing config row yields the sane default (min_length 8); other
+// read errors propagate.
+func (a *pgCoreAuth) coreAuthLoadPasswordPolicy(ctx context.Context, projectID string) (coreAuthPasswordPolicy, error) {
+	pol := coreAuthPasswordPolicy{MinLength: 8}
+	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, coreAuthDefaultEnv, "password_policy")
+	if err != nil {
+		if errors.Is(translatePgErr("config", err), ErrNotFound) {
+			return pol, nil
+		}
+		return pol, err
+	}
+	if len(row.Data) > 0 {
+		if err := unmarshal(row.Data, &pol); err != nil {
+			return pol, err
+		}
+	}
+	if pol.MinLength <= 0 {
+		pol.MinLength = 8
+	}
+	return pol, nil
+}
+
+// CheckPassword runs a stateless strength/policy check against the project's
+// password_policy (loaded from iam_config). The configured min_length is the
+// hard floor; any present rules (breached_check, zxcvbn_min_score) are applied
+// on top of the mixed-case heuristic. A missing policy row falls back to a sane
+// default (min_length 8). The result is returned without persistence.
 func (a *pgCoreAuth) CheckPassword(ctx context.Context, projectID, password string) (*domain.CoreAuthPasswordCheckResult, error) {
-	_ = projectID // TODO: load project password_policy from iam_config(key=password_policy)
+	pol, err := a.coreAuthLoadPasswordPolicy(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
 	res := &domain.CoreAuthPasswordCheckResult{Valid: true, Score: 4}
-	if len(password) < 8 {
+	if len(password) < pol.MinLength {
 		res.Valid = false
 		res.Score = 0
 		res.Violations = append(res.Violations, "too_short")
@@ -1628,6 +1667,12 @@ func (a *pgCoreAuth) CheckPassword(ctx context.Context, projectID, password stri
 			res.Score--
 		}
 		res.Violations = append(res.Violations, "no_mixed_case")
+	}
+	// zxcvbn_min_score, when configured, is the floor the computed score must
+	// clear; falling short marks the password too weak.
+	if pol.ZxcvbnMinScore > 0 && res.Score < pol.ZxcvbnMinScore {
+		res.Valid = false
+		res.Violations = append(res.Violations, "too_weak")
 	}
 	return res, nil
 }
