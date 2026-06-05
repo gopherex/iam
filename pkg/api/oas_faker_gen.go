@@ -312,7 +312,60 @@ func (s *AuthConfigAdditional) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *AuthNextStep) SetFake() {
+	{
+		{
+			s.ResultType.SetFake()
+		}
+	}
+	{
+		{
+			s.NextStep.SetFake()
+		}
+	}
+	{
+		{
+			s.FlowToken.SetFake()
+		}
+	}
+	{
+		{
+			s.Factors = nil
+			for i := 0; i < 0; i++ {
+				var elem Factor
+				{
+					elem.SetFake()
+				}
+				s.Factors = append(s.Factors, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Documents = nil
+			for i := 0; i < 0; i++ {
+				var elem ConsentDocRef
+				{
+					elem.SetFake()
+				}
+				s.Documents = append(s.Documents, elem)
+			}
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *AuthNextStepResultType) SetFake() {
+	*s = AuthNextStepResultTypeNextStep
+}
+
+// SetFake set fake values.
 func (s *AuthResult) SetFake() {
+	{
+		{
+			s.ResultType.SetFake()
+		}
+	}
 	{
 		{
 			s.User.SetFake()
@@ -332,41 +385,17 @@ func (s *AuthResult) SetFake() {
 
 // SetFake set fake values.
 func (s *AuthResultOrNextStep) SetFake() {
-	var variant AuthenticatedResult
+	var variant AuthResult
 
 	{
 		variant.SetFake()
 	}
-	s.SetAuthenticatedResult(variant)
+	s.SetAuthResult(variant)
 }
 
 // SetFake set fake values.
-func (s *AuthenticatedResult) SetFake() {
-	{
-		{
-			s.User.SetFake()
-		}
-	}
-	{
-		{
-			s.Session.SetFake()
-		}
-	}
-	{
-		{
-			s.NextStep.SetFake()
-		}
-	}
-	{
-		{
-			s.ResultType.SetFake()
-		}
-	}
-}
-
-// SetFake set fake values.
-func (s *AuthenticatedResultResultType) SetFake() {
-	*s = AuthenticatedResultResultTypeAuthenticated
+func (s *AuthResultResultType) SetFake() {
+	*s = AuthResultResultTypeAuthenticated
 }
 
 // SetFake set fake values.
@@ -4160,54 +4189,6 @@ func (s *NextStep) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *NextStepResult) SetFake() {
-	{
-		{
-			s.NextStep.SetFake()
-		}
-	}
-	{
-		{
-			s.FlowToken.SetFake()
-		}
-	}
-	{
-		{
-			s.Factors = nil
-			for i := 0; i < 0; i++ {
-				var elem Factor
-				{
-					elem.SetFake()
-				}
-				s.Factors = append(s.Factors, elem)
-			}
-		}
-	}
-	{
-		{
-			s.Documents = nil
-			for i := 0; i < 0; i++ {
-				var elem ConsentDocRef
-				{
-					elem.SetFake()
-				}
-				s.Documents = append(s.Documents, elem)
-			}
-		}
-	}
-	{
-		{
-			s.ResultType.SetFake()
-		}
-	}
-}
-
-// SetFake set fake values.
-func (s *NextStepResultResultType) SetFake() {
-	*s = NextStepResultResultTypeNextStep
-}
-
-// SetFake set fake values.
 func (s *NilNextStep) SetFake() {
 	s.Null = true
 }
@@ -6463,12 +6444,12 @@ func (s *PatchV1UsersMeUnprocessableEntity) SetFake() {
 
 // SetFake set fake values.
 func (s *PhoneVerifyResult) SetFake() {
-	var variant AuthenticatedResult
+	var variant AuthResult
 
 	{
 		variant.SetFake()
 	}
-	s.SetAuthenticatedResult(variant)
+	s.SetAuthResult(variant)
 }
 
 // SetFake set fake values.
@@ -11304,12 +11285,12 @@ func (s *SmsProviderConfig) SetFake() {
 
 // SetFake set fake values.
 func (s *StepUpResult) SetFake() {
-	var variant NextStepResult
+	var variant AuthNextStep
 
 	{
 		variant.SetFake()
 	}
-	s.SetNextStepResult(variant)
+	s.SetAuthNextStep(variant)
 }
 
 // SetFake set fake values.

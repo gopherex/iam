@@ -679,9 +679,15 @@ components:
     AuthResult:
       type: object
       required:
+      - result_type
       - user
       - session
       properties:
+        result_type:
+          type: string
+          enum:
+          - authenticated
+          description: Discriminates the auth response variant.
         user:
           $ref: '#/components/schemas/User'
         session:
@@ -691,8 +697,14 @@ components:
     AuthNextStep:
       type: object
       required:
+      - result_type
       - next_step
       properties:
+        result_type:
+          type: string
+          enum:
+          - next_step
+          description: Discriminates the auth response variant.
         next_step:
           $ref: '#/components/schemas/NextStep'
         flow_token:
@@ -708,13 +720,13 @@ components:
             $ref: '#/components/schemas/ConsentDocRef'
     AuthResultOrNextStep:
       oneOf:
-      - $ref: '#/components/schemas/AuthenticatedResult'
-      - $ref: '#/components/schemas/NextStepResult'
+      - $ref: '#/components/schemas/AuthResult'
+      - $ref: '#/components/schemas/AuthNextStep'
       discriminator:
         propertyName: result_type
         mapping:
-          authenticated: '#/components/schemas/AuthenticatedResult'
-          next_step: '#/components/schemas/NextStepResult'
+          authenticated: '#/components/schemas/AuthResult'
+          next_step: '#/components/schemas/AuthNextStep'
     Challenge:
       type: object
       required:
@@ -1593,28 +1605,6 @@ components:
         revoke_other_sessions:
           type: boolean
           default: false
-    AuthenticatedResult:
-      allOf:
-      - $ref: '#/components/schemas/AuthResult'
-      - type: object
-        required:
-        - result_type
-        properties:
-          result_type:
-            type: string
-            enum:
-            - authenticated
-    NextStepResult:
-      allOf:
-      - $ref: '#/components/schemas/AuthNextStep'
-      - type: object
-        required:
-        - result_type
-        properties:
-          result_type:
-            type: string
-            enum:
-            - next_step
     OkResult:
       allOf:
       - $ref: '#/components/schemas/Ok'
@@ -1640,21 +1630,21 @@ components:
           $ref: '#/components/schemas/User'
     StepUpResult:
       oneOf:
-      - $ref: '#/components/schemas/NextStepResult'
+      - $ref: '#/components/schemas/AuthNextStep'
       - $ref: '#/components/schemas/OkResult'
       discriminator:
         propertyName: result_type
         mapping:
-          next_step: '#/components/schemas/NextStepResult'
+          next_step: '#/components/schemas/AuthNextStep'
           ok: '#/components/schemas/OkResult'
     PhoneVerifyResult:
       oneOf:
-      - $ref: '#/components/schemas/AuthenticatedResult'
+      - $ref: '#/components/schemas/AuthResult'
       - $ref: '#/components/schemas/UserUpdatedResult'
       discriminator:
         propertyName: result_type
         mapping:
-          authenticated: '#/components/schemas/AuthenticatedResult'
+          authenticated: '#/components/schemas/AuthResult'
           user_updated: '#/components/schemas/UserUpdatedResult'
     PushedAuthorizationRequest:
       type: object

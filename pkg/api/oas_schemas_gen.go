@@ -639,11 +639,113 @@ func (s *AuthConfigAdditional) init() AuthConfigAdditional {
 	return m
 }
 
+// Ref: #/components/schemas/AuthNextStep
+type AuthNextStep struct {
+	// Discriminates the auth response variant.
+	ResultType AuthNextStepResultType `json:"result_type"`
+	NextStep   NilNextStep            `json:"next_step"`
+	FlowToken  OptString              `json:"flow_token"`
+	Factors    []Factor               `json:"factors"`
+	Documents  []ConsentDocRef        `json:"documents"`
+}
+
+// GetResultType returns the value of ResultType.
+func (s *AuthNextStep) GetResultType() AuthNextStepResultType {
+	return s.ResultType
+}
+
+// GetNextStep returns the value of NextStep.
+func (s *AuthNextStep) GetNextStep() NilNextStep {
+	return s.NextStep
+}
+
+// GetFlowToken returns the value of FlowToken.
+func (s *AuthNextStep) GetFlowToken() OptString {
+	return s.FlowToken
+}
+
+// GetFactors returns the value of Factors.
+func (s *AuthNextStep) GetFactors() []Factor {
+	return s.Factors
+}
+
+// GetDocuments returns the value of Documents.
+func (s *AuthNextStep) GetDocuments() []ConsentDocRef {
+	return s.Documents
+}
+
+// SetResultType sets the value of ResultType.
+func (s *AuthNextStep) SetResultType(val AuthNextStepResultType) {
+	s.ResultType = val
+}
+
+// SetNextStep sets the value of NextStep.
+func (s *AuthNextStep) SetNextStep(val NilNextStep) {
+	s.NextStep = val
+}
+
+// SetFlowToken sets the value of FlowToken.
+func (s *AuthNextStep) SetFlowToken(val OptString) {
+	s.FlowToken = val
+}
+
+// SetFactors sets the value of Factors.
+func (s *AuthNextStep) SetFactors(val []Factor) {
+	s.Factors = val
+}
+
+// SetDocuments sets the value of Documents.
+func (s *AuthNextStep) SetDocuments(val []ConsentDocRef) {
+	s.Documents = val
+}
+
+// Discriminates the auth response variant.
+type AuthNextStepResultType string
+
+const (
+	AuthNextStepResultTypeNextStep AuthNextStepResultType = "next_step"
+)
+
+// AllValues returns all AuthNextStepResultType values.
+func (AuthNextStepResultType) AllValues() []AuthNextStepResultType {
+	return []AuthNextStepResultType{
+		AuthNextStepResultTypeNextStep,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AuthNextStepResultType) MarshalText() ([]byte, error) {
+	switch s {
+	case AuthNextStepResultTypeNextStep:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AuthNextStepResultType) UnmarshalText(data []byte) error {
+	switch AuthNextStepResultType(data) {
+	case AuthNextStepResultTypeNextStep:
+		*s = AuthNextStepResultTypeNextStep
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/AuthResult
 type AuthResult struct {
-	User     User           `json:"user"`
-	Session  SessionTokens  `json:"session"`
-	NextStep OptNilNextStep `json:"next_step"`
+	// Discriminates the auth response variant.
+	ResultType AuthResultResultType `json:"result_type"`
+	User       User                 `json:"user"`
+	Session    SessionTokens        `json:"session"`
+	NextStep   OptNilNextStep       `json:"next_step"`
+}
+
+// GetResultType returns the value of ResultType.
+func (s *AuthResult) GetResultType() AuthResultResultType {
+	return s.ResultType
 }
 
 // GetUser returns the value of User.
@@ -659,6 +761,11 @@ func (s *AuthResult) GetSession() SessionTokens {
 // GetNextStep returns the value of NextStep.
 func (s *AuthResult) GetNextStep() OptNilNextStep {
 	return s.NextStep
+}
+
+// SetResultType sets the value of ResultType.
+func (s *AuthResult) SetResultType(val AuthResultResultType) {
+	s.ResultType = val
 }
 
 // SetUser sets the value of User.
@@ -691,9 +798,9 @@ func (*AuthResult) postV1AuthWebauthnLoginVerifyRes()     {}
 // Ref: #/components/schemas/AuthResultOrNextStep
 // AuthResultOrNextStep represents sum type.
 type AuthResultOrNextStep struct {
-	Type                AuthResultOrNextStepType // switch on this field
-	AuthenticatedResult AuthenticatedResult
-	NextStepResult      NextStepResult
+	Type         AuthResultOrNextStepType // switch on this field
+	AuthResult   AuthResult
+	AuthNextStep AuthNextStep
 }
 
 // AuthResultOrNextStepType is oneOf type of AuthResultOrNextStep.
@@ -701,130 +808,80 @@ type AuthResultOrNextStepType string
 
 // Possible values for AuthResultOrNextStepType.
 const (
-	AuthenticatedResultAuthResultOrNextStep AuthResultOrNextStepType = "authenticated"
-	NextStepResultAuthResultOrNextStep      AuthResultOrNextStepType = "next_step"
+	AuthResultAuthResultOrNextStep   AuthResultOrNextStepType = "authenticated"
+	AuthNextStepAuthResultOrNextStep AuthResultOrNextStepType = "next_step"
 )
 
-// IsAuthenticatedResult reports whether AuthResultOrNextStep is AuthenticatedResult.
-func (s AuthResultOrNextStep) IsAuthenticatedResult() bool {
-	return s.Type == AuthenticatedResultAuthResultOrNextStep
+// IsAuthResult reports whether AuthResultOrNextStep is AuthResult.
+func (s AuthResultOrNextStep) IsAuthResult() bool { return s.Type == AuthResultAuthResultOrNextStep }
+
+// IsAuthNextStep reports whether AuthResultOrNextStep is AuthNextStep.
+func (s AuthResultOrNextStep) IsAuthNextStep() bool {
+	return s.Type == AuthNextStepAuthResultOrNextStep
 }
 
-// IsNextStepResult reports whether AuthResultOrNextStep is NextStepResult.
-func (s AuthResultOrNextStep) IsNextStepResult() bool {
-	return s.Type == NextStepResultAuthResultOrNextStep
+// SetAuthResult sets AuthResultOrNextStep to AuthResult.
+func (s *AuthResultOrNextStep) SetAuthResult(v AuthResult) {
+	s.Type = AuthResultAuthResultOrNextStep
+	s.AuthResult = v
 }
 
-// SetAuthenticatedResult sets AuthResultOrNextStep to AuthenticatedResult.
-func (s *AuthResultOrNextStep) SetAuthenticatedResult(v AuthenticatedResult) {
-	s.Type = AuthenticatedResultAuthResultOrNextStep
-	s.AuthenticatedResult = v
-}
-
-// GetAuthenticatedResult returns AuthenticatedResult and true boolean if AuthResultOrNextStep is AuthenticatedResult.
-func (s AuthResultOrNextStep) GetAuthenticatedResult() (v AuthenticatedResult, ok bool) {
-	if !s.IsAuthenticatedResult() {
+// GetAuthResult returns AuthResult and true boolean if AuthResultOrNextStep is AuthResult.
+func (s AuthResultOrNextStep) GetAuthResult() (v AuthResult, ok bool) {
+	if !s.IsAuthResult() {
 		return v, false
 	}
-	return s.AuthenticatedResult, true
+	return s.AuthResult, true
 }
 
-// NewAuthenticatedResultAuthResultOrNextStep returns new AuthResultOrNextStep from AuthenticatedResult.
-func NewAuthenticatedResultAuthResultOrNextStep(v AuthenticatedResult) AuthResultOrNextStep {
+// NewAuthResultAuthResultOrNextStep returns new AuthResultOrNextStep from AuthResult.
+func NewAuthResultAuthResultOrNextStep(v AuthResult) AuthResultOrNextStep {
 	var s AuthResultOrNextStep
-	s.SetAuthenticatedResult(v)
+	s.SetAuthResult(v)
 	return s
 }
 
-// SetNextStepResult sets AuthResultOrNextStep to NextStepResult.
-func (s *AuthResultOrNextStep) SetNextStepResult(v NextStepResult) {
-	s.Type = NextStepResultAuthResultOrNextStep
-	s.NextStepResult = v
+// SetAuthNextStep sets AuthResultOrNextStep to AuthNextStep.
+func (s *AuthResultOrNextStep) SetAuthNextStep(v AuthNextStep) {
+	s.Type = AuthNextStepAuthResultOrNextStep
+	s.AuthNextStep = v
 }
 
-// GetNextStepResult returns NextStepResult and true boolean if AuthResultOrNextStep is NextStepResult.
-func (s AuthResultOrNextStep) GetNextStepResult() (v NextStepResult, ok bool) {
-	if !s.IsNextStepResult() {
+// GetAuthNextStep returns AuthNextStep and true boolean if AuthResultOrNextStep is AuthNextStep.
+func (s AuthResultOrNextStep) GetAuthNextStep() (v AuthNextStep, ok bool) {
+	if !s.IsAuthNextStep() {
 		return v, false
 	}
-	return s.NextStepResult, true
+	return s.AuthNextStep, true
 }
 
-// NewNextStepResultAuthResultOrNextStep returns new AuthResultOrNextStep from NextStepResult.
-func NewNextStepResultAuthResultOrNextStep(v NextStepResult) AuthResultOrNextStep {
+// NewAuthNextStepAuthResultOrNextStep returns new AuthResultOrNextStep from AuthNextStep.
+func NewAuthNextStepAuthResultOrNextStep(v AuthNextStep) AuthResultOrNextStep {
 	var s AuthResultOrNextStep
-	s.SetNextStepResult(v)
+	s.SetAuthNextStep(v)
 	return s
 }
 
 func (*AuthResultOrNextStep) postV1AuthSignInPasswordRes() {}
 
-// Merged schema.
-// Ref: #/components/schemas/AuthenticatedResult
-type AuthenticatedResult struct {
-	User       User                          `json:"user"`
-	Session    SessionTokens                 `json:"session"`
-	NextStep   OptNilNextStep                `json:"next_step"`
-	ResultType AuthenticatedResultResultType `json:"result_type"`
-}
-
-// GetUser returns the value of User.
-func (s *AuthenticatedResult) GetUser() User {
-	return s.User
-}
-
-// GetSession returns the value of Session.
-func (s *AuthenticatedResult) GetSession() SessionTokens {
-	return s.Session
-}
-
-// GetNextStep returns the value of NextStep.
-func (s *AuthenticatedResult) GetNextStep() OptNilNextStep {
-	return s.NextStep
-}
-
-// GetResultType returns the value of ResultType.
-func (s *AuthenticatedResult) GetResultType() AuthenticatedResultResultType {
-	return s.ResultType
-}
-
-// SetUser sets the value of User.
-func (s *AuthenticatedResult) SetUser(val User) {
-	s.User = val
-}
-
-// SetSession sets the value of Session.
-func (s *AuthenticatedResult) SetSession(val SessionTokens) {
-	s.Session = val
-}
-
-// SetNextStep sets the value of NextStep.
-func (s *AuthenticatedResult) SetNextStep(val OptNilNextStep) {
-	s.NextStep = val
-}
-
-// SetResultType sets the value of ResultType.
-func (s *AuthenticatedResult) SetResultType(val AuthenticatedResultResultType) {
-	s.ResultType = val
-}
-
-type AuthenticatedResultResultType string
+// Discriminates the auth response variant.
+type AuthResultResultType string
 
 const (
-	AuthenticatedResultResultTypeAuthenticated AuthenticatedResultResultType = "authenticated"
+	AuthResultResultTypeAuthenticated AuthResultResultType = "authenticated"
 )
 
-// AllValues returns all AuthenticatedResultResultType values.
-func (AuthenticatedResultResultType) AllValues() []AuthenticatedResultResultType {
-	return []AuthenticatedResultResultType{
-		AuthenticatedResultResultTypeAuthenticated,
+// AllValues returns all AuthResultResultType values.
+func (AuthResultResultType) AllValues() []AuthResultResultType {
+	return []AuthResultResultType{
+		AuthResultResultTypeAuthenticated,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s AuthenticatedResultResultType) MarshalText() ([]byte, error) {
+func (s AuthResultResultType) MarshalText() ([]byte, error) {
 	switch s {
-	case AuthenticatedResultResultTypeAuthenticated:
+	case AuthResultResultTypeAuthenticated:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -832,10 +889,10 @@ func (s AuthenticatedResultResultType) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *AuthenticatedResultResultType) UnmarshalText(data []byte) error {
-	switch AuthenticatedResultResultType(data) {
-	case AuthenticatedResultResultTypeAuthenticated:
-		*s = AuthenticatedResultResultTypeAuthenticated
+func (s *AuthResultResultType) UnmarshalText(data []byte) error {
+	switch AuthResultResultType(data) {
+	case AuthResultResultTypeAuthenticated:
+		*s = AuthResultResultTypeAuthenticated
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -5575,100 +5632,6 @@ func (s *NextStep) UnmarshalText(data []byte) error {
 		return nil
 	case NextStepSignupRequired:
 		*s = NextStepSignupRequired
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Merged schema.
-// Ref: #/components/schemas/NextStepResult
-type NextStepResult struct {
-	NextStep   NilNextStep              `json:"next_step"`
-	FlowToken  OptString                `json:"flow_token"`
-	Factors    []Factor                 `json:"factors"`
-	Documents  []ConsentDocRef          `json:"documents"`
-	ResultType NextStepResultResultType `json:"result_type"`
-}
-
-// GetNextStep returns the value of NextStep.
-func (s *NextStepResult) GetNextStep() NilNextStep {
-	return s.NextStep
-}
-
-// GetFlowToken returns the value of FlowToken.
-func (s *NextStepResult) GetFlowToken() OptString {
-	return s.FlowToken
-}
-
-// GetFactors returns the value of Factors.
-func (s *NextStepResult) GetFactors() []Factor {
-	return s.Factors
-}
-
-// GetDocuments returns the value of Documents.
-func (s *NextStepResult) GetDocuments() []ConsentDocRef {
-	return s.Documents
-}
-
-// GetResultType returns the value of ResultType.
-func (s *NextStepResult) GetResultType() NextStepResultResultType {
-	return s.ResultType
-}
-
-// SetNextStep sets the value of NextStep.
-func (s *NextStepResult) SetNextStep(val NilNextStep) {
-	s.NextStep = val
-}
-
-// SetFlowToken sets the value of FlowToken.
-func (s *NextStepResult) SetFlowToken(val OptString) {
-	s.FlowToken = val
-}
-
-// SetFactors sets the value of Factors.
-func (s *NextStepResult) SetFactors(val []Factor) {
-	s.Factors = val
-}
-
-// SetDocuments sets the value of Documents.
-func (s *NextStepResult) SetDocuments(val []ConsentDocRef) {
-	s.Documents = val
-}
-
-// SetResultType sets the value of ResultType.
-func (s *NextStepResult) SetResultType(val NextStepResultResultType) {
-	s.ResultType = val
-}
-
-type NextStepResultResultType string
-
-const (
-	NextStepResultResultTypeNextStep NextStepResultResultType = "next_step"
-)
-
-// AllValues returns all NextStepResultResultType values.
-func (NextStepResultResultType) AllValues() []NextStepResultResultType {
-	return []NextStepResultResultType{
-		NextStepResultResultTypeNextStep,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s NextStepResultResultType) MarshalText() ([]byte, error) {
-	switch s {
-	case NextStepResultResultTypeNextStep:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *NextStepResultResultType) UnmarshalText(data []byte) error {
-	switch NextStepResultResultType(data) {
-	case NextStepResultResultTypeNextStep:
-		*s = NextStepResultResultTypeNextStep
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -12832,9 +12795,9 @@ func (*PatchV1UsersMeUnprocessableEntity) patchV1UsersMeRes() {}
 // Ref: #/components/schemas/PhoneVerifyResult
 // PhoneVerifyResult represents sum type.
 type PhoneVerifyResult struct {
-	Type                PhoneVerifyResultType // switch on this field
-	AuthenticatedResult AuthenticatedResult
-	UserUpdatedResult   UserUpdatedResult
+	Type              PhoneVerifyResultType // switch on this field
+	AuthResult        AuthResult
+	UserUpdatedResult UserUpdatedResult
 }
 
 // PhoneVerifyResultType is oneOf type of PhoneVerifyResult.
@@ -12842,38 +12805,36 @@ type PhoneVerifyResultType string
 
 // Possible values for PhoneVerifyResultType.
 const (
-	AuthenticatedResultPhoneVerifyResult PhoneVerifyResultType = "authenticated"
-	UserUpdatedResultPhoneVerifyResult   PhoneVerifyResultType = "user_updated"
+	AuthResultPhoneVerifyResult        PhoneVerifyResultType = "authenticated"
+	UserUpdatedResultPhoneVerifyResult PhoneVerifyResultType = "user_updated"
 )
 
-// IsAuthenticatedResult reports whether PhoneVerifyResult is AuthenticatedResult.
-func (s PhoneVerifyResult) IsAuthenticatedResult() bool {
-	return s.Type == AuthenticatedResultPhoneVerifyResult
-}
+// IsAuthResult reports whether PhoneVerifyResult is AuthResult.
+func (s PhoneVerifyResult) IsAuthResult() bool { return s.Type == AuthResultPhoneVerifyResult }
 
 // IsUserUpdatedResult reports whether PhoneVerifyResult is UserUpdatedResult.
 func (s PhoneVerifyResult) IsUserUpdatedResult() bool {
 	return s.Type == UserUpdatedResultPhoneVerifyResult
 }
 
-// SetAuthenticatedResult sets PhoneVerifyResult to AuthenticatedResult.
-func (s *PhoneVerifyResult) SetAuthenticatedResult(v AuthenticatedResult) {
-	s.Type = AuthenticatedResultPhoneVerifyResult
-	s.AuthenticatedResult = v
+// SetAuthResult sets PhoneVerifyResult to AuthResult.
+func (s *PhoneVerifyResult) SetAuthResult(v AuthResult) {
+	s.Type = AuthResultPhoneVerifyResult
+	s.AuthResult = v
 }
 
-// GetAuthenticatedResult returns AuthenticatedResult and true boolean if PhoneVerifyResult is AuthenticatedResult.
-func (s PhoneVerifyResult) GetAuthenticatedResult() (v AuthenticatedResult, ok bool) {
-	if !s.IsAuthenticatedResult() {
+// GetAuthResult returns AuthResult and true boolean if PhoneVerifyResult is AuthResult.
+func (s PhoneVerifyResult) GetAuthResult() (v AuthResult, ok bool) {
+	if !s.IsAuthResult() {
 		return v, false
 	}
-	return s.AuthenticatedResult, true
+	return s.AuthResult, true
 }
 
-// NewAuthenticatedResultPhoneVerifyResult returns new PhoneVerifyResult from AuthenticatedResult.
-func NewAuthenticatedResultPhoneVerifyResult(v AuthenticatedResult) PhoneVerifyResult {
+// NewAuthResultPhoneVerifyResult returns new PhoneVerifyResult from AuthResult.
+func NewAuthResultPhoneVerifyResult(v AuthResult) PhoneVerifyResult {
 	var s PhoneVerifyResult
-	s.SetAuthenticatedResult(v)
+	s.SetAuthResult(v)
 	return s
 }
 
@@ -20433,9 +20394,9 @@ func (s *SmsProviderConfig) init() SmsProviderConfig {
 // Ref: #/components/schemas/StepUpResult
 // StepUpResult represents sum type.
 type StepUpResult struct {
-	Type           StepUpResultType // switch on this field
-	NextStepResult NextStepResult
-	OkResult       OkResult
+	Type         StepUpResultType // switch on this field
+	AuthNextStep AuthNextStep
+	OkResult     OkResult
 }
 
 // StepUpResultType is oneOf type of StepUpResult.
@@ -20443,34 +20404,34 @@ type StepUpResultType string
 
 // Possible values for StepUpResultType.
 const (
-	NextStepResultStepUpResult StepUpResultType = "next_step"
-	OkResultStepUpResult       StepUpResultType = "ok"
+	AuthNextStepStepUpResult StepUpResultType = "next_step"
+	OkResultStepUpResult     StepUpResultType = "ok"
 )
 
-// IsNextStepResult reports whether StepUpResult is NextStepResult.
-func (s StepUpResult) IsNextStepResult() bool { return s.Type == NextStepResultStepUpResult }
+// IsAuthNextStep reports whether StepUpResult is AuthNextStep.
+func (s StepUpResult) IsAuthNextStep() bool { return s.Type == AuthNextStepStepUpResult }
 
 // IsOkResult reports whether StepUpResult is OkResult.
 func (s StepUpResult) IsOkResult() bool { return s.Type == OkResultStepUpResult }
 
-// SetNextStepResult sets StepUpResult to NextStepResult.
-func (s *StepUpResult) SetNextStepResult(v NextStepResult) {
-	s.Type = NextStepResultStepUpResult
-	s.NextStepResult = v
+// SetAuthNextStep sets StepUpResult to AuthNextStep.
+func (s *StepUpResult) SetAuthNextStep(v AuthNextStep) {
+	s.Type = AuthNextStepStepUpResult
+	s.AuthNextStep = v
 }
 
-// GetNextStepResult returns NextStepResult and true boolean if StepUpResult is NextStepResult.
-func (s StepUpResult) GetNextStepResult() (v NextStepResult, ok bool) {
-	if !s.IsNextStepResult() {
+// GetAuthNextStep returns AuthNextStep and true boolean if StepUpResult is AuthNextStep.
+func (s StepUpResult) GetAuthNextStep() (v AuthNextStep, ok bool) {
+	if !s.IsAuthNextStep() {
 		return v, false
 	}
-	return s.NextStepResult, true
+	return s.AuthNextStep, true
 }
 
-// NewNextStepResultStepUpResult returns new StepUpResult from NextStepResult.
-func NewNextStepResultStepUpResult(v NextStepResult) StepUpResult {
+// NewAuthNextStepStepUpResult returns new StepUpResult from AuthNextStep.
+func NewAuthNextStepStepUpResult(v AuthNextStep) StepUpResult {
 	var s StepUpResult
-	s.SetNextStepResult(v)
+	s.SetAuthNextStep(v)
 	return s
 }
 

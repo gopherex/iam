@@ -27,5 +27,10 @@ sum type (switch on `.Type`):
 | `StepUpResult` | `next_step`, `ok` |
 | `PhoneVerifyResult` | `authenticated`, `user_updated` |
 
+`AuthResult` (`authenticated`) and `AuthNextStep` (`next_step`) carry
+`result_type` on **every** response that returns them, union or standalone, so
+auth responses are uniformly self-identifying. `Ok` stays a generic ack and is
+only tagged (`OkResult`) inside the step-up union.
+
 The OAuth `PushedAuthorizationRequest` (PAR) form body is typed (RFC 9126), so
 the form endpoint generates too.

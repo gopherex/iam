@@ -1297,6 +1297,226 @@ func (s *AuthConfigAdditional) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *AuthNextStep) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *AuthNextStep) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("result_type")
+		s.ResultType.Encode(e)
+	}
+	{
+		e.FieldStart("next_step")
+		s.NextStep.Encode(e)
+	}
+	{
+		if s.FlowToken.Set {
+			e.FieldStart("flow_token")
+			s.FlowToken.Encode(e)
+		}
+	}
+	{
+		if s.Factors != nil {
+			e.FieldStart("factors")
+			e.ArrStart()
+			for _, elem := range s.Factors {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Documents != nil {
+			e.FieldStart("documents")
+			e.ArrStart()
+			for _, elem := range s.Documents {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfAuthNextStep = [5]string{
+	0: "result_type",
+	1: "next_step",
+	2: "flow_token",
+	3: "factors",
+	4: "documents",
+}
+
+// Decode decodes AuthNextStep from json.
+func (s *AuthNextStep) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AuthNextStep to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "result_type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.ResultType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"result_type\"")
+			}
+		case "next_step":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				if err := s.NextStep.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"next_step\"")
+			}
+		case "flow_token":
+			if err := func() error {
+				s.FlowToken.Reset()
+				if err := s.FlowToken.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"flow_token\"")
+			}
+		case "factors":
+			if err := func() error {
+				s.Factors = make([]Factor, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Factor
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Factors = append(s.Factors, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"factors\"")
+			}
+		case "documents":
+			if err := func() error {
+				s.Documents = make([]ConsentDocRef, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ConsentDocRef
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Documents = append(s.Documents, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"documents\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode AuthNextStep")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfAuthNextStep) {
+					name = jsonFieldsNameOfAuthNextStep[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *AuthNextStep) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AuthNextStep) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes AuthNextStepResultType as json.
+func (s AuthNextStepResultType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes AuthNextStepResultType from json.
+func (s *AuthNextStepResultType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AuthNextStepResultType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch AuthNextStepResultType(v) {
+	case AuthNextStepResultTypeNextStep:
+		*s = AuthNextStepResultTypeNextStep
+	default:
+		*s = AuthNextStepResultType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s AuthNextStepResultType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AuthNextStepResultType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *AuthResult) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -1305,6 +1525,10 @@ func (s *AuthResult) Encode(e *jx.Encoder) {
 
 // encodeFields encodes fields.
 func (s *AuthResult) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("result_type")
+		s.ResultType.Encode(e)
+	}
 	{
 		e.FieldStart("user")
 		s.User.Encode(e)
@@ -1321,10 +1545,11 @@ func (s *AuthResult) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfAuthResult = [3]string{
-	0: "user",
-	1: "session",
-	2: "next_step",
+var jsonFieldsNameOfAuthResult = [4]string{
+	0: "result_type",
+	1: "user",
+	2: "session",
+	3: "next_step",
 }
 
 // Decode decodes AuthResult from json.
@@ -1336,8 +1561,18 @@ func (s *AuthResult) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "user":
+		case "result_type":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.ResultType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"result_type\"")
+			}
+		case "user":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.User.Decode(d); err != nil {
 					return err
@@ -1347,7 +1582,7 @@ func (s *AuthResult) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"user\"")
 			}
 		case "session":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				if err := s.Session.Decode(d); err != nil {
 					return err
@@ -1376,7 +1611,7 @@ func (s *AuthResult) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -1431,11 +1666,11 @@ func (s AuthResultOrNextStep) Encode(e *jx.Encoder) {
 
 func (s AuthResultOrNextStep) encodeFields(e *jx.Encoder) {
 	switch s.Type {
-	case AuthenticatedResultAuthResultOrNextStep:
+	case AuthResultAuthResultOrNextStep:
 		e.FieldStart("result_type")
 		e.Str("authenticated")
 		{
-			s := s.AuthenticatedResult
+			s := s.AuthResult
 			{
 				e.FieldStart("user")
 				s.User.Encode(e)
@@ -1451,11 +1686,11 @@ func (s AuthResultOrNextStep) encodeFields(e *jx.Encoder) {
 				}
 			}
 		}
-	case NextStepResultAuthResultOrNextStep:
+	case AuthNextStepAuthResultOrNextStep:
 		e.FieldStart("result_type")
 		e.Str("next_step")
 		{
-			s := s.NextStepResult
+			s := s.AuthNextStep
 			{
 				e.FieldStart("next_step")
 				s.NextStep.Encode(e)
@@ -1514,10 +1749,10 @@ func (s *AuthResultOrNextStep) Decode(d *jx.Decoder) error {
 				}
 				switch typ {
 				case "authenticated":
-					s.Type = AuthenticatedResultAuthResultOrNextStep
+					s.Type = AuthResultAuthResultOrNextStep
 					found = true
 				case "next_step":
-					s.Type = NextStepResultAuthResultOrNextStep
+					s.Type = AuthNextStepAuthResultOrNextStep
 					found = true
 				default:
 					return errors.Errorf("unknown type %s", typ)
@@ -1533,12 +1768,12 @@ func (s *AuthResultOrNextStep) Decode(d *jx.Decoder) error {
 		return errors.New("unable to detect sum type variant")
 	}
 	switch s.Type {
-	case AuthenticatedResultAuthResultOrNextStep:
-		if err := s.AuthenticatedResult.Decode(d); err != nil {
+	case AuthResultAuthResultOrNextStep:
+		if err := s.AuthResult.Decode(d); err != nil {
 			return err
 		}
-	case NextStepResultAuthResultOrNextStep:
-		if err := s.NextStepResult.Decode(d); err != nil {
+	case AuthNextStepAuthResultOrNextStep:
+		if err := s.AuthNextStep.Decode(d); err != nil {
 			return err
 		}
 	default:
@@ -1560,181 +1795,40 @@ func (s *AuthResultOrNextStep) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode implements json.Marshaler.
-func (s *AuthenticatedResult) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *AuthenticatedResult) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("user")
-		s.User.Encode(e)
-	}
-	{
-		e.FieldStart("session")
-		s.Session.Encode(e)
-	}
-	{
-		if s.NextStep.Set {
-			e.FieldStart("next_step")
-			s.NextStep.Encode(e)
-		}
-	}
-	{
-		e.FieldStart("result_type")
-		s.ResultType.Encode(e)
-	}
-}
-
-var jsonFieldsNameOfAuthenticatedResult = [4]string{
-	0: "user",
-	1: "session",
-	2: "next_step",
-	3: "result_type",
-}
-
-// Decode decodes AuthenticatedResult from json.
-func (s *AuthenticatedResult) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode AuthenticatedResult to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "user":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				if err := s.User.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"user\"")
-			}
-		case "session":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				if err := s.Session.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"session\"")
-			}
-		case "next_step":
-			if err := func() error {
-				s.NextStep.Reset()
-				if err := s.NextStep.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"next_step\"")
-			}
-		case "result_type":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				if err := s.ResultType.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"result_type\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode AuthenticatedResult")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00001011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfAuthenticatedResult) {
-					name = jsonFieldsNameOfAuthenticatedResult[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *AuthenticatedResult) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AuthenticatedResult) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes AuthenticatedResultResultType as json.
-func (s AuthenticatedResultResultType) Encode(e *jx.Encoder) {
+// Encode encodes AuthResultResultType as json.
+func (s AuthResultResultType) Encode(e *jx.Encoder) {
 	e.Str(string(s))
 }
 
-// Decode decodes AuthenticatedResultResultType from json.
-func (s *AuthenticatedResultResultType) Decode(d *jx.Decoder) error {
+// Decode decodes AuthResultResultType from json.
+func (s *AuthResultResultType) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AuthenticatedResultResultType to nil")
+		return errors.New("invalid: unable to decode AuthResultResultType to nil")
 	}
 	v, err := d.StrBytes()
 	if err != nil {
 		return err
 	}
 	// Try to use constant string.
-	switch AuthenticatedResultResultType(v) {
-	case AuthenticatedResultResultTypeAuthenticated:
-		*s = AuthenticatedResultResultTypeAuthenticated
+	switch AuthResultResultType(v) {
+	case AuthResultResultTypeAuthenticated:
+		*s = AuthResultResultTypeAuthenticated
 	default:
-		*s = AuthenticatedResultResultType(v)
+		*s = AuthResultResultType(v)
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s AuthenticatedResultResultType) MarshalJSON() ([]byte, error) {
+func (s AuthResultResultType) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AuthenticatedResultResultType) UnmarshalJSON(data []byte) error {
+func (s *AuthResultResultType) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -19446,226 +19540,6 @@ func (s *NextStep) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode implements json.Marshaler.
-func (s *NextStepResult) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *NextStepResult) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("next_step")
-		s.NextStep.Encode(e)
-	}
-	{
-		if s.FlowToken.Set {
-			e.FieldStart("flow_token")
-			s.FlowToken.Encode(e)
-		}
-	}
-	{
-		if s.Factors != nil {
-			e.FieldStart("factors")
-			e.ArrStart()
-			for _, elem := range s.Factors {
-				elem.Encode(e)
-			}
-			e.ArrEnd()
-		}
-	}
-	{
-		if s.Documents != nil {
-			e.FieldStart("documents")
-			e.ArrStart()
-			for _, elem := range s.Documents {
-				elem.Encode(e)
-			}
-			e.ArrEnd()
-		}
-	}
-	{
-		e.FieldStart("result_type")
-		s.ResultType.Encode(e)
-	}
-}
-
-var jsonFieldsNameOfNextStepResult = [5]string{
-	0: "next_step",
-	1: "flow_token",
-	2: "factors",
-	3: "documents",
-	4: "result_type",
-}
-
-// Decode decodes NextStepResult from json.
-func (s *NextStepResult) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode NextStepResult to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "next_step":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				if err := s.NextStep.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"next_step\"")
-			}
-		case "flow_token":
-			if err := func() error {
-				s.FlowToken.Reset()
-				if err := s.FlowToken.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"flow_token\"")
-			}
-		case "factors":
-			if err := func() error {
-				s.Factors = make([]Factor, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem Factor
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.Factors = append(s.Factors, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"factors\"")
-			}
-		case "documents":
-			if err := func() error {
-				s.Documents = make([]ConsentDocRef, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem ConsentDocRef
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.Documents = append(s.Documents, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"documents\"")
-			}
-		case "result_type":
-			requiredBitSet[0] |= 1 << 4
-			if err := func() error {
-				if err := s.ResultType.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"result_type\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode NextStepResult")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00010001,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfNextStepResult) {
-					name = jsonFieldsNameOfNextStepResult[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *NextStepResult) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *NextStepResult) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes NextStepResultResultType as json.
-func (s NextStepResultResultType) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes NextStepResultResultType from json.
-func (s *NextStepResultResultType) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode NextStepResultResultType to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch NextStepResultResultType(v) {
-	case NextStepResultResultTypeNextStep:
-		*s = NextStepResultResultTypeNextStep
-	default:
-		*s = NextStepResultResultType(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s NextStepResultResultType) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *NextStepResultResultType) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes NextStep as json.
 func (o NilNextStep) Encode(e *jx.Encoder) {
 	if o.Null {
@@ -30003,11 +29877,11 @@ func (s PhoneVerifyResult) Encode(e *jx.Encoder) {
 
 func (s PhoneVerifyResult) encodeFields(e *jx.Encoder) {
 	switch s.Type {
-	case AuthenticatedResultPhoneVerifyResult:
+	case AuthResultPhoneVerifyResult:
 		e.FieldStart("result_type")
 		e.Str("authenticated")
 		{
-			s := s.AuthenticatedResult
+			s := s.AuthResult
 			{
 				e.FieldStart("user")
 				s.User.Encode(e)
@@ -30060,7 +29934,7 @@ func (s *PhoneVerifyResult) Decode(d *jx.Decoder) error {
 				}
 				switch typ {
 				case "authenticated":
-					s.Type = AuthenticatedResultPhoneVerifyResult
+					s.Type = AuthResultPhoneVerifyResult
 					found = true
 				case "user_updated":
 					s.Type = UserUpdatedResultPhoneVerifyResult
@@ -30079,8 +29953,8 @@ func (s *PhoneVerifyResult) Decode(d *jx.Decoder) error {
 		return errors.New("unable to detect sum type variant")
 	}
 	switch s.Type {
-	case AuthenticatedResultPhoneVerifyResult:
-		if err := s.AuthenticatedResult.Decode(d); err != nil {
+	case AuthResultPhoneVerifyResult:
+		if err := s.AuthResult.Decode(d); err != nil {
 			return err
 		}
 	case UserUpdatedResultPhoneVerifyResult:
@@ -56012,11 +55886,11 @@ func (s StepUpResult) Encode(e *jx.Encoder) {
 
 func (s StepUpResult) encodeFields(e *jx.Encoder) {
 	switch s.Type {
-	case NextStepResultStepUpResult:
+	case AuthNextStepStepUpResult:
 		e.FieldStart("result_type")
 		e.Str("next_step")
 		{
-			s := s.NextStepResult
+			s := s.AuthNextStep
 			{
 				e.FieldStart("next_step")
 				s.NextStep.Encode(e)
@@ -56087,7 +55961,7 @@ func (s *StepUpResult) Decode(d *jx.Decoder) error {
 				}
 				switch typ {
 				case "next_step":
-					s.Type = NextStepResultStepUpResult
+					s.Type = AuthNextStepStepUpResult
 					found = true
 				case "ok":
 					s.Type = OkResultStepUpResult
@@ -56106,8 +55980,8 @@ func (s *StepUpResult) Decode(d *jx.Decoder) error {
 		return errors.New("unable to detect sum type variant")
 	}
 	switch s.Type {
-	case NextStepResultStepUpResult:
-		if err := s.NextStepResult.Decode(d); err != nil {
+	case AuthNextStepStepUpResult:
+		if err := s.AuthNextStep.Decode(d); err != nil {
 			return err
 		}
 	case OkResultStepUpResult:
