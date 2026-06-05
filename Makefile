@@ -3,7 +3,10 @@
 
 MODULE      := github.com/gopherex/iam
 OPENAPI     := openapi/openapi.yaml
-API_PKG_DIR := pkg/api
+# Generated ogen output is module-private (internal/oas); hand-written API
+# implementation that consumers import lives in pkg/api.
+OAS_DIR     := internal/oas
+OAS_PKG     := oas
 BIN_DIR     := bin
 SERVER_BIN  := $(BIN_DIR)/iam
 OGEN        := go run github.com/ogen-go/ogen/cmd/ogen@latest
@@ -31,12 +34,12 @@ validate:
 .PHONY: generate
 generate: generate-go generate-ts
 
-## generate-go: generate the Go API (ogen) into pkg/api
+## generate-go: generate the ogen code (module-private) into internal/oas
 .PHONY: generate-go
 generate-go:
 	@mkdir -p $(dir $(OPENAPI_30))
 	python3 scripts/openapi_to_30.py $(OPENAPI) $(OPENAPI_30)
-	$(OGEN) --config .ogen.yaml --target $(API_PKG_DIR) --package api --clean $(OPENAPI_30)
+	$(OGEN) --config .ogen.yaml --target $(OAS_DIR) --package $(OAS_PKG) --clean $(OPENAPI_30)
 
 ## generate-ts: generate the TypeScript SDK from the spec
 .PHONY: generate-ts

@@ -10,8 +10,9 @@ source of truth: [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.1.0).
 | [`Makefile`](Makefile) | Developer entry point — `make help` lists targets. |
 | [`openapi/`](openapi) | The OpenAPI 3.1 spec (source of truth) + notes. |
 | [`.ogen.yaml`](.ogen.yaml) | [ogen](https://ogen.dev) config — Go codegen from the spec. |
-| [`pkg/`](pkg) | Public, importable Go: the generated API (`pkg/api`) and the Go SDK (`pkg/sdk`). |
-| [`internal/`](internal) | Module-private packages; not importable from outside. |
+| [`pkg/`](pkg) | Public, importable Go: the API implementation (`pkg/api`) and the Go SDK (`pkg/sdk`). |
+| [`internal/oas/`](internal/oas) | Module-private generated ogen code (wire types, client, server scaffolding). |
+| [`internal/`](internal) | Other module-private packages; not importable from outside. |
 | [`cmd/iam/`](cmd/iam) | The Go server — serves the API and the embedded admin SPA. |
 | [`ts/`](ts) | Yarn workspace; the TypeScript SDK, published to the GitHub npm registry. |
 | [`web/`](web) | Admin panel SPA, served by the server. |
