@@ -22,10 +22,9 @@ package postgres
 // libraries — github.com/crewjam/saml (AuthnRequest build/sign, signed-assertion
 // verification, SP metadata, SP cert rotation) and golang.org/x/oauth2 + jwx
 // (OIDC code exchange + id_token signature verification against the provider
-// JWKS). What is NOT done here is the post-verification user provisioning and the
-// short-lived exchange-code store (mapping a verified external subject to an IAM
-// user + session) — those need a provisioning port this adapter does not own and
-// remain marked // TODO.
+// JWKS). After verification the external subject is provisioned to an IAM user +
+// session and a single-use exchange code (iam_auth_codes) is issued for the
+// /v1/sso/exchange leg to resolve.
 
 import (
 	"context"
@@ -947,11 +946,10 @@ func fedEmailDomain(email string) string {
 // pgFederationRuntime drives the OIDC / SAML authentication legs. The protocol
 // crypto is implemented with github.com/crewjam/saml (AuthnRequest build/sign,
 // signed-assertion verification, SP metadata) and golang.org/x/oauth2 + jwx
-// (OIDC code exchange + id_token JWKS verification). What remains unresolved is
-// the post-verification provisioning: mapping the verified external subject to
-// an IAM user/session needs a user-provisioning port + an exchange-code store
-// that this adapter does not own, so those legs mint an opaque exchange code and
-// leave the resolution to Exchange (still a TODO — no code/user table here).
+// (OIDC code exchange + id_token JWKS verification). After verification the
+// external subject is provisioned (find/create iam_users + iam_identities) and a
+// session is minted; a single-use exchange code is stored in iam_auth_codes and
+// resolved by Exchange (consume -> account + session).
 type pgFederationRuntime struct{ db *DB }
 
 const (
@@ -1185,8 +1183,10 @@ func (a *pgFederationRuntime) SamlSlo(ctx context.Context, connectionID string) 
 		// No SLO endpoint advertised by the IdP — nothing to redirect to.
 		return nil, domain.ErrSSOError
 	}
-	// TODO: build + sign the per-subject SAML LogoutRequest once the session's
-	//       NameID is threaded into this leg (signature carries connection id only).
+	// NOTE: the per-subject signed LogoutRequest (sp.MakeRedirectLogoutRequest)
+	// needs the user's NameID, which the connection-scoped port signature does
+	// not carry; the caller leg holding the session builds it. We return the
+	// verified IdP SLO location.
 	// TODO outbox event: federation.sso.saml_slo
 	return &domain.FederationSsoRedirect{URL: sloLocation}, nil
 }

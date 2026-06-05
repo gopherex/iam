@@ -19,10 +19,14 @@ package postgres
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -48,6 +52,10 @@ const (
 	// refresh JWTs.
 	oauthSocialAccessTTL  = time.Hour
 	oauthSocialRefreshTTL = 30 * 24 * time.Hour
+
+	// oauthSocialExchangeCodeTTL bounds the single-use exchange code that maps a
+	// minted session to the ?code= redirect handed back by CompleteLoginRedirect.
+	oauthSocialExchangeCodeTTL = 5 * time.Minute
 )
 
 // pgOAuthSocial is the Postgres-backed OAuthSocialAccounts adapter.
@@ -330,8 +338,21 @@ func (a *pgOAuthSocial) Unlink(ctx context.Context, accountID, identityID string
 	})
 }
 
-// Exchange swaps a one-time OAuth authorization code (PKCE-protected) for an
-// account + session, scoped to the command's project.
+// oauthExchangeCodeData is the iam_auth_codes data envelope for a social-login
+// exchange code: the minted session plus the optional PKCE challenge bound to
+// the code at issue time. Stored whole in the code's data jsonb column.
+type oauthExchangeCodeData struct {
+	Session       *domain.Session `json:"session"`
+	CodeChallenge string          `json:"code_challenge,omitempty"`
+}
+
+// Exchange resolves a one-time exchange code (issued by CompleteLoginRedirect)
+// into the account + session it authenticated, scoped to the command's project.
+// The code is looked up by sha256 hash in iam_auth_codes; missing / consumed /
+// expired codes map to domain.ErrInvalidToken. The code is consumed (single-use)
+// before the stored session is returned. When a PKCE code_challenge was stored
+// with the code, the supplied CodeVerifier must hash (S256) to it; a flow that
+// carried no challenge skips PKCE.
 func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExchangeCmd) (*domain.Account, *domain.Session, error) {
 	if cmd.ProjectID == "" || cmd.Code == "" {
 		return nil, nil, domain.ErrBadRequest
@@ -341,30 +362,63 @@ func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExch
 		sess *domain.Session
 	}
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
-		// TODO: validate the one-time code (and PKCE CodeVerifier) against the
-		// stored authorization grant, then resolve the linked identity. No grant
-		// store wired here yet; we treat the code as the identity correlator.
-		providerAccountID := cmd.Code
-
-		ident, err := a.findIdentityAnyProvider(ctx, cmd.ProjectID, providerAccountID)
+		hash := fedHashToken(cmd.Code)
+		rows, err := models.IamAuthCodes.Query(
+			sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
+			sm.Where(models.IamAuthCodes.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
+			sm.Limit(1),
+		).All(ctx, a.db.Bobx())
 		if err != nil {
 			return result{}, err
 		}
-		acct, err := a.loadAccount(ctx, cmd.ProjectID, ident.UserID)
+		if len(rows) == 0 {
+			return result{}, domain.ErrInvalidToken
+		}
+		row := rows[0]
+		if row.Consumed {
+			return result{}, domain.ErrInvalidToken
+		}
+		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
+			return result{}, domain.ErrInvalidToken
+		}
+		var data oauthExchangeCodeData
+		if err := unmarshal(row.Data, &data); err != nil {
+			return result{}, err
+		}
+		if data.Session == nil {
+			return result{}, domain.ErrInvalidToken
+		}
+		if data.CodeChallenge != "" {
+			if oauthPKCEChallengeS256(cmd.CodeVerifier) != data.CodeChallenge {
+				return result{}, domain.ErrInvalidToken
+			}
+		}
+		// Mark consumed (single-use) before handing back the session.
+		consumed := true
+		if err := row.Update(ctx, a.db.Bobx(), &models.IamAuthCodeSetter{Consumed: &consumed}); err != nil {
+			return result{}, err
+		}
+		acct, err := a.loadAccount(ctx, cmd.ProjectID, row.UserID.GetOrZero())
 		if err != nil {
 			return result{}, err
 		}
-		sess, err := a.mintSession(ctx, acct)
-		if err != nil {
-			return result{}, err
-		}
-		// TODO outbox event: session.created
-		return result{acct: acct, sess: sess}, nil
+		// TODO outbox event: oauth.social.exchanged
+		return result{acct: acct, sess: data.Session}, nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 	return res.acct, res.sess, nil
+}
+
+// oauthPKCEChallengeS256 derives the S256 PKCE code_challenge from a verifier:
+// base64url(sha256(verifier)) without padding (RFC 7636).
+func oauthPKCEChallengeS256(verifier string) string {
+	if verifier == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(verifier))
+	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
 // StartLogin builds the provider authorize URL for a browser redirect, looking
@@ -440,10 +494,72 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 		return domain.OAuthSocialCallbackResult{}, err
 	}
 
+	// Persist a single-use exchange code mapping to the minted session so the SPA
+	// can complete sign-in via Exchange (token mode); cookie mode uses SetCookie.
+	code, err := a.storeExchangeCode(ctx, cmd.ProjectID, sess)
+	if err != nil {
+		return domain.OAuthSocialCallbackResult{}, err
+	}
+
 	if redirect == "" {
 		redirect = d.RedirectURL
 	}
+	redirect = oauthAppendCode(redirect, code)
 	return domain.OAuthSocialCallbackResult{RedirectURL: redirect, SetCookie: sess.AccessToken}, nil
+}
+
+// oauthAppendCode appends ?code=<code> (or &code=<code>) to a redirect URL,
+// URL-encoding the code. A blank redirect is returned unchanged.
+func oauthAppendCode(redirect, code string) string {
+	if redirect == "" {
+		return redirect
+	}
+	sep := "?"
+	if strings.Contains(redirect, "?") {
+		sep = "&"
+	}
+	return redirect + sep + "code=" + url.QueryEscape(code)
+}
+
+// storeExchangeCode mints a single-use exchange code and persists it in
+// iam_auth_codes (sha256(code) -> minted session JSON, user_id = account id,
+// project-scoped, expires_at = now+5m). The opaque plaintext code is returned
+// for the ?code= redirect; only its hash is stored. Mirrors federation's
+// fedProvisionAndStoreCode without re-provisioning (the session is already
+// minted by resolveLoginAndMint).
+func (a *pgOAuthSocial) storeExchangeCode(ctx context.Context, projectID string, sess *domain.Session) (string, error) {
+	code, err := fedRandomToken()
+	if err != nil {
+		return "", err
+	}
+	err = a.db.withTx(ctx, func(ctx context.Context) error {
+		raw, err := marshal(oauthExchangeCodeData{Session: sess})
+		if err != nil {
+			return err
+		}
+		rm := json.RawMessage(raw)
+		uid := null.From(sess.AccountID)
+		setter := &models.IamAuthCodeSetter{
+			ID:        ptr(newUUID()),
+			ProjectID: &projectID,
+			CodeHash:  ptr(fedHashToken(code)),
+			UserID:    &uid,
+			ExpiresAt: ptr(nowUTC().Add(oauthSocialExchangeCodeTTL)),
+			Data:      &rm,
+		}
+		if _, err := models.IamAuthCodes.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+			if isUniqueViolation(err) {
+				return domain.ErrConflict
+			}
+			return err
+		}
+		// TODO outbox event: oauth.social.exchange_code_issued
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return code, nil
 }
 
 // resolveLoginAndMint upserts the identity link for an exchanged provider
@@ -691,24 +807,6 @@ func (a *pgOAuthSocial) findIdentity(ctx context.Context, projectID, provider, p
 	rows, err := models.IamIdentities.Query(
 		sm.Where(models.IamIdentities.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamIdentities.Columns.Provider.EQ(psql.Arg(provider))),
-		sm.Where(models.IamIdentities.Columns.ProviderAccountID.EQ(psql.Arg(providerAccountID))),
-	).All(ctx, a.db.Bobx())
-	if err != nil {
-		return nil, err
-	}
-	if len(rows) == 0 {
-		return nil, domain.ErrNotFound
-	}
-	return rows[0], nil
-}
-
-// findIdentityAnyProvider loads an OAuth identity by provider account id within a
-// project, regardless of provider. Used by Exchange where the grant carries the
-// linked identity but the provider is implicit.
-func (a *pgOAuthSocial) findIdentityAnyProvider(ctx context.Context, projectID, providerAccountID string) (*models.IamIdentity, error) {
-	rows, err := models.IamIdentities.Query(
-		sm.Where(models.IamIdentities.Columns.ProjectID.EQ(psql.Arg(projectID))),
-		sm.Where(models.IamIdentities.Columns.Type.EQ(psql.Arg("oauth"))),
 		sm.Where(models.IamIdentities.Columns.ProviderAccountID.EQ(psql.Arg(providerAccountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {

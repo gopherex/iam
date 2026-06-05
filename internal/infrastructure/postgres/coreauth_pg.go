@@ -28,6 +28,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -1231,19 +1234,112 @@ func (a *pgCoreAuth) coreAuthFindChallengeByTokenAnyProject(ctx context.Context,
 	return nil, domain.ErrChallengeInvalid
 }
 
-// VerifyCaptcha verifies a CAPTCHA token with the configured provider. CAPTCHA
-// provider verification is an out-of-process call this adapter does not make;
-// it is accepted optimistically and a TODO marks the integration point.
+// coreAuthCaptchaConfig is the iam_config(key=captcha) data envelope: the
+// provider name, the siteverify secret, an optional verify URL override and the
+// optional minimum score threshold (reCAPTCHA v3 / Turnstile style).
+type coreAuthCaptchaConfig struct {
+	Provider  string  `json:"provider"`
+	Secret    string  `json:"secret"`
+	VerifyURL string  `json:"verify_url"`
+	MinScore  float64 `json:"min_score"`
+}
+
+// coreAuthCaptchaSiteverifyResp is the subset of a provider siteverify response
+// we consume (hCaptcha / reCAPTCHA / Turnstile share this shape).
+type coreAuthCaptchaSiteverifyResp struct {
+	Success    bool     `json:"success"`
+	Score      float64  `json:"score"`
+	Action     string   `json:"action"`
+	ErrorCodes []string `json:"error-codes"`
+}
+
+// coreAuthCaptchaVerifyURL resolves the siteverify endpoint: the config override
+// wins, else the provider default. An unknown provider yields "".
+func coreAuthCaptchaVerifyURL(provider, override string) string {
+	if override != "" {
+		return override
+	}
+	switch strings.ToLower(provider) {
+	case "hcaptcha":
+		return "https://api.hcaptcha.com/siteverify"
+	case "recaptcha":
+		return "https://www.google.com/recaptcha/api/siteverify"
+	case "turnstile":
+		return "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+	default:
+		return ""
+	}
+}
+
+// VerifyCaptcha verifies a CAPTCHA token against the project's configured
+// provider siteverify endpoint. The provider config lives in
+// iam_config(project, env=live, key=captcha); a missing row or empty secret
+// means no provider is configured and the token is accepted (enforcement is a
+// policy decision made upstream). With a provider configured, the token is
+// POSTed (form-encoded) to the siteverify URL and the JSON response mapped to
+// the result; an HTTP/parse failure yields Valid:false (never a request error).
 func (a *pgCoreAuth) VerifyCaptcha(ctx context.Context, projectID, provider, token, action string) (*domain.CoreAuthCaptchaVerifyResult, error) {
-	_ = projectID
-	_ = provider
 	_ = action
 	if strings.TrimSpace(token) == "" {
 		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
 	}
-	// TODO: call the configured CAPTCHA provider (hCaptcha/reCAPTCHA/Turnstile)
-	// siteverify endpoint and map the score; no provider call is made here.
-	return &domain.CoreAuthCaptchaVerifyResult{Valid: true, Score: 1}, nil
+
+	var cfg coreAuthCaptchaConfig
+	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, coreAuthDefaultEnv, "captcha")
+	if err != nil {
+		if errors.Is(translatePgErr("config", err), ErrNotFound) {
+			// No provider configured: accept (enforcement decided upstream).
+			return &domain.CoreAuthCaptchaVerifyResult{Valid: true, Score: 1}, nil
+		}
+		return nil, err
+	}
+	if len(row.Data) > 0 {
+		if err := unmarshal(row.Data, &cfg); err != nil {
+			return nil, err
+		}
+	}
+	if cfg.Provider == "" {
+		cfg.Provider = provider
+	}
+	if cfg.Secret == "" {
+		// No provider configured: accept (enforcement decided upstream).
+		return &domain.CoreAuthCaptchaVerifyResult{Valid: true, Score: 1}, nil
+	}
+
+	verifyURL := coreAuthCaptchaVerifyURL(cfg.Provider, cfg.VerifyURL)
+	if verifyURL == "" {
+		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
+	}
+
+	form := url.Values{}
+	form.Set("secret", cfg.Secret)
+	form.Set("response", token)
+
+	verifyCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(verifyCtx, http.MethodPost, verifyURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
+	if err != nil {
+		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil {
+		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
+	}
+	var parsed coreAuthCaptchaSiteverifyResp
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
+	}
+	valid := parsed.Success
+	if valid && cfg.MinScore > 0 && parsed.Score > 0 {
+		valid = parsed.Score >= cfg.MinScore
+	}
+	return &domain.CoreAuthCaptchaVerifyResult{Valid: valid, Score: parsed.Score}, nil
 }
 
 // StartEmailChange mints an email-change challenge for the current account

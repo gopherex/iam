@@ -12,9 +12,8 @@ package postgres
 //
 // Crypto: service-account secrets and API-key secrets are opaque random tokens
 // minted with crypto/rand; only their sha256 hash is persisted, never the
-// plaintext. The plaintext is returned exactly once at creation. JWT access
-// tokens are not signed here — MintToken returns an opaque bearer token and the
-// signing step is marked with a TODO.
+// plaintext. The plaintext is returned exactly once at creation. MintToken
+// issues a signed RS256 JWT access token (typ=service) via the project Signer.
 
 import (
 	"context"

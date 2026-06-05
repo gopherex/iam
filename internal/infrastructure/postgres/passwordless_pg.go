@@ -8,9 +8,8 @@ package postgres
 //
 // Crypto: the OTP code and the magic-link token are minted with crypto/rand and
 // returned to the caller in plaintext exactly once (via the Challenge); only
-// their sha256 hash is persisted in code_hash. The access/refresh tokens on the
-// returned session are opaque random material — actual JWT signing is left to
-// the signing-key layer (see the TODO markers).
+// their sha256 hash is persisted in code_hash. The session's access token is a
+// signed RS256 JWT (project Signer); the refresh token stays opaque (revocable).
 
 import (
 	"context"
