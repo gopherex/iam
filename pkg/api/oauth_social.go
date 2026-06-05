@@ -20,6 +20,7 @@ type OAuthSocialAccounts interface {
 	CompleteLogin(ctx context.Context, projectID, provider, code string) (*domain.Account, *domain.Session, error)
 	Link(ctx context.Context, accountID, provider, code string) error
 	Unlink(ctx context.Context, accountID, identityID string) error
+	Exchange(ctx context.Context, cmd domain.OAuthSocialExchangeCmd) (*domain.Account, *domain.Session, error)
 }
 
 type OAuthSocialDeps struct{ Accounts OAuthSocialAccounts }
@@ -76,8 +77,17 @@ func (s *OAuthSocialService) PostV1AuthOauthByProviderUnlink(ctx context.Context
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *OAuthSocialService) PostV1AuthOauthExchange(ctx context.Context, req *oas.PostV1AuthOauthExchangeReq, params oas.PostV1AuthOauthExchangeParams) (r *oas.AuthResult, _ error) {
-	panic("implement me")
+func (s *OAuthSocialService) PostV1AuthOauthExchange(ctx context.Context, req *oas.PostV1AuthOauthExchangeReq, params oas.PostV1AuthOauthExchangeParams) (*oas.AuthResult, error) {
+	cmd := domain.OAuthSocialExchangeCmd{
+		ProjectID:    params.XClientID,
+		Code:         req.Code,
+		CodeVerifier: req.CodeVerifier.Or(""),
+	}
+	acct, sess, err := s.deps.Accounts.Exchange(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return authResult(acct, sess), nil
 }
 
 // oasOAuthProvider maps a domain OAuth provider to its OAS list item shape.

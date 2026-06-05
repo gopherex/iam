@@ -25,6 +25,7 @@ type WebAuthnAccounts interface {
 	FinishRegistration(ctx context.Context, accountID, challengeID string, credential map[string]any) (*domain.WebAuthnCredential, error)
 	ListCredentials(ctx context.Context, accountID string) ([]domain.WebAuthnCredential, error)
 	RemoveCredential(ctx context.Context, accountID, credentialID string) error
+	RenameCredential(ctx context.Context, cmd domain.WebAuthnRenameCredentialCmd) (*domain.WebAuthnCredential, error)
 }
 
 type WebAuthnDeps struct{ Accounts WebAuthnAccounts }
@@ -119,8 +120,22 @@ func (s *WebAuthnService) DeleteV1AuthWebauthnCredentialsByCredentialId(ctx cont
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *WebAuthnService) PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, req *oas.PatchV1AuthWebauthnCredentialsByCredentialIdReq, params oas.PatchV1AuthWebauthnCredentialsByCredentialIdParams) (r *oas.PatchV1AuthWebauthnCredentialsByCredentialIdOK, _ error) {
-	panic("implement me")
+func (s *WebAuthnService) PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, req *oas.PatchV1AuthWebauthnCredentialsByCredentialIdReq, params oas.PatchV1AuthWebauthnCredentialsByCredentialIdParams) (*oas.PatchV1AuthWebauthnCredentialsByCredentialIdOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cred, err := s.deps.Accounts.RenameCredential(ctx, domain.WebAuthnRenameCredentialCmd{
+		AccountID:    p.AccountID,
+		CredentialID: params.CredentialID,
+		Name:         req.Name,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PatchV1AuthWebauthnCredentialsByCredentialIdOK{
+		Credential: oas.NewOptWebAuthnCredential(oasWebAuthnCredential(*cred)),
+	}, nil
 }
 
 // ----- service-local mappers -----

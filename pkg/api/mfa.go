@@ -22,6 +22,13 @@ type MFAAccounts interface {
 	Verify(ctx context.Context, challengeID, code string) (*domain.Account, *domain.Session, error)
 	GenerateRecoveryCodes(ctx context.Context, accountID string) ([]string, error)
 	RemoveFactor(ctx context.Context, accountID, factorID string) error
+
+	EnrollEmail(ctx context.Context, cmd domain.MFAEmailEnrollCmd) (*domain.Factor, *domain.Challenge, error)
+	EnrollSMS(ctx context.Context, cmd domain.MFASmsEnrollCmd) (*domain.Factor, *domain.Challenge, error)
+	VerifyTOTP(ctx context.Context, cmd domain.MFATotpVerifyCmd) (*domain.Factor, error)
+	VerifyRecoveryCode(ctx context.Context, cmd domain.MFARecoveryVerifyCmd) (*domain.Account, *domain.Session, error)
+	EnrollWebAuthnOptions(ctx context.Context, cmd domain.MFAWebAuthnEnrollOptionsCmd) (*domain.Challenge, error)
+	EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFAWebAuthnEnrollVerifyCmd) (*domain.Factor, error)
 }
 
 type MFADeps struct{ Accounts MFAAccounts }
@@ -80,8 +87,26 @@ func (s *MFAService) PostV1AuthMfaChallenge(ctx context.Context, req oas.OptPost
 	return oasChallenge(ch), nil
 }
 
-func (s *MFAService) PostV1AuthMfaEmailEnroll(ctx context.Context, req *oas.PostV1AuthMfaEmailEnrollReq) (r *oas.PostV1AuthMfaEmailEnrollOK, _ error) {
-	panic("implement me")
+func (s *MFAService) PostV1AuthMfaEmailEnroll(ctx context.Context, req *oas.PostV1AuthMfaEmailEnrollReq) (*oas.PostV1AuthMfaEmailEnrollOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	factor, ch, err := s.deps.Accounts.EnrollEmail(ctx, domain.MFAEmailEnrollCmd{
+		AccountID: p.AccountID,
+		Email:     req.Email,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.PostV1AuthMfaEmailEnrollOK{}
+	if factor != nil {
+		out.FactorID = oas.NewOptString(factor.ID)
+	}
+	if ch != nil {
+		out.ChallengeID = oas.NewOptString(ch.ID)
+	}
+	return out, nil
 }
 
 func (s *MFAService) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, req oas.OptPostV1AuthMfaRecoveryCodesGenerateReq) (*oas.PostV1AuthMfaRecoveryCodesGenerateOK, error) {
@@ -96,12 +121,41 @@ func (s *MFAService) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, req
 	return &oas.PostV1AuthMfaRecoveryCodesGenerateOK{Codes: codes}, nil
 }
 
-func (s *MFAService) PostV1AuthMfaRecoveryCodesVerify(ctx context.Context, req *oas.PostV1AuthMfaRecoveryCodesVerifyReq, params oas.PostV1AuthMfaRecoveryCodesVerifyParams) (r *oas.AuthResult, _ error) {
-	panic("implement me")
+func (s *MFAService) PostV1AuthMfaRecoveryCodesVerify(ctx context.Context, req *oas.PostV1AuthMfaRecoveryCodesVerifyReq, params oas.PostV1AuthMfaRecoveryCodesVerifyParams) (*oas.AuthResult, error) {
+	if req.Code == "" {
+		return nil, domain.ErrValidation.WithMessage("code is required")
+	}
+	acct, sess, err := s.deps.Accounts.VerifyRecoveryCode(ctx, domain.MFARecoveryVerifyCmd{
+		ProjectID: params.XClientID,
+		FlowToken: req.FlowToken.Or(""),
+		Code:      req.Code,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return authResult(acct, sess), nil
 }
 
-func (s *MFAService) PostV1AuthMfaSmsEnroll(ctx context.Context, req *oas.PostV1AuthMfaSmsEnrollReq) (r *oas.PostV1AuthMfaSmsEnrollOK, _ error) {
-	panic("implement me")
+func (s *MFAService) PostV1AuthMfaSmsEnroll(ctx context.Context, req *oas.PostV1AuthMfaSmsEnrollReq) (*oas.PostV1AuthMfaSmsEnrollOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	factor, ch, err := s.deps.Accounts.EnrollSMS(ctx, domain.MFASmsEnrollCmd{
+		AccountID: p.AccountID,
+		Phone:     req.Phone,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.PostV1AuthMfaSmsEnrollOK{}
+	if factor != nil {
+		out.FactorID = oas.NewOptString(factor.ID)
+	}
+	if ch != nil {
+		out.ChallengeID = oas.NewOptString(ch.ID)
+	}
+	return out, nil
 }
 
 func (s *MFAService) PostV1AuthMfaTotpEnroll(ctx context.Context, req oas.OptPostV1AuthMfaTotpEnrollReq) (*oas.PostV1AuthMfaTotpEnrollOK, error) {
@@ -118,8 +172,22 @@ func (s *MFAService) PostV1AuthMfaTotpEnroll(ctx context.Context, req oas.OptPos
 	}, nil
 }
 
-func (s *MFAService) PostV1AuthMfaTotpVerify(ctx context.Context, req *oas.PostV1AuthMfaTotpVerifyReq) (r *oas.PostV1AuthMfaTotpVerifyOK, _ error) {
-	panic("implement me")
+func (s *MFAService) PostV1AuthMfaTotpVerify(ctx context.Context, req *oas.PostV1AuthMfaTotpVerifyReq) (*oas.PostV1AuthMfaTotpVerifyOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	factor, err := s.deps.Accounts.VerifyTOTP(ctx, domain.MFATotpVerifyCmd{
+		AccountID: p.AccountID,
+		FactorID:  req.FactorID,
+		Code:      req.Code,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1AuthMfaTotpVerifyOK{
+		Factor: oas.NewOptFactor(oasFactor(factor)),
+	}, nil
 }
 
 func (s *MFAService) PostV1AuthMfaVerify(ctx context.Context, req *oas.PostV1AuthMfaVerifyReq, params oas.PostV1AuthMfaVerifyParams) (*oas.AuthResult, error) {
@@ -134,12 +202,44 @@ func (s *MFAService) PostV1AuthMfaVerify(ctx context.Context, req *oas.PostV1Aut
 	return authResult(acct, sess), nil
 }
 
-func (s *MFAService) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, req oas.OptPostV1AuthMfaWebauthnEnrollOptionsReq) (r *oas.PostV1AuthMfaWebauthnEnrollOptionsOK, _ error) {
-	panic("implement me")
+func (s *MFAService) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, req oas.OptPostV1AuthMfaWebauthnEnrollOptionsReq) (*oas.PostV1AuthMfaWebauthnEnrollOptionsOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	name := ""
+	if v, ok := req.Get(); ok {
+		name = v.Name.Or("")
+	}
+	ch, err := s.deps.Accounts.EnrollWebAuthnOptions(ctx, domain.MFAWebAuthnEnrollOptionsCmd{
+		AccountID: p.AccountID,
+		Name:      name,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1AuthMfaWebauthnEnrollOptionsOK{
+		ChallengeID: oas.NewOptString(ch.ID),
+		PublicKey:   oas.NewOptPostV1AuthMfaWebauthnEnrollOptionsOKPublicKey(oasRawMap[oas.PostV1AuthMfaWebauthnEnrollOptionsOKPublicKey](ch.PublicKey)),
+	}, nil
 }
 
-func (s *MFAService) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, req *oas.PostV1AuthMfaWebauthnEnrollVerifyReq) (r *oas.PostV1AuthMfaWebauthnEnrollVerifyOK, _ error) {
-	panic("implement me")
+func (s *MFAService) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, req *oas.PostV1AuthMfaWebauthnEnrollVerifyReq) (*oas.PostV1AuthMfaWebauthnEnrollVerifyOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	factor, err := s.deps.Accounts.EnrollWebAuthnVerify(ctx, domain.MFAWebAuthnEnrollVerifyCmd{
+		AccountID:   p.AccountID,
+		ChallengeID: req.ChallengeID,
+		Credential:  anyMap(req.Credential),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1AuthMfaWebauthnEnrollVerifyOK{
+		Factor: oas.NewOptFactor(oasFactor(factor)),
+	}, nil
 }
 
 // oasFactor maps a domain Factor to its wire representation.

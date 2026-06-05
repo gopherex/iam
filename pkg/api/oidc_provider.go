@@ -21,6 +21,12 @@ type OIDCGrants interface {
 	// adapter verify the interaction belongs to this session (anti-hijack)
 	// before completing.
 	CompleteLogin(ctx context.Context, interactionID, accountID, sessionID string) error
+	// Consent records the resource-owner's consent decision and returns the
+	// redirect target the user-agent should follow next.
+	Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (string, error)
+	// Reject cancels the interaction and returns the redirect target carrying
+	// the OAuth2 error back to the client. It is a public operation.
+	Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (string, error)
 	ListGrants(ctx context.Context, accountID string) ([]domain.Grant, error)
 	RevokeGrant(ctx context.Context, accountID, grantID string) error
 }
@@ -133,8 +139,24 @@ func (s *OIDCProviderService) PostV1DeviceDeny(ctx context.Context, req *oas.Pos
 	panic("implement me")
 }
 
-func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, req *oas.PostV1OauthInteractionByInteractionIdConsentReq, params oas.PostV1OauthInteractionByInteractionIdConsentParams) (r *oas.PostV1OauthInteractionByInteractionIdConsentOK, _ error) {
-	panic("implement me")
+func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, req *oas.PostV1OauthInteractionByInteractionIdConsentReq, params oas.PostV1OauthInteractionByInteractionIdConsentParams) (*oas.PostV1OauthInteractionByInteractionIdConsentOK, error) {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	redirectTo, err := s.deps.Grants.Consent(ctx, domain.OIDCConsentCmd{
+		InteractionID: params.InteractionID,
+		AccountID:     p.AccountID,
+		SessionID:     p.SessionID,
+		GrantedScopes: req.GrantedScopes,
+		Remember:      req.Remember.Or(false),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1OauthInteractionByInteractionIdConsentOK{
+		RedirectTo: oas.NewOptString(redirectTo),
+	}, nil
 }
 
 func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, req oas.OptPostV1OauthInteractionByInteractionIdLoginReq, params oas.PostV1OauthInteractionByInteractionIdLoginParams) (*oas.PostV1OauthInteractionByInteractionIdLoginOK, error) {
@@ -148,8 +170,19 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdLogin(ctx con
 	return &oas.PostV1OauthInteractionByInteractionIdLoginOK{}, nil
 }
 
-func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdReject(ctx context.Context, req oas.OptPostV1OauthInteractionByInteractionIdRejectReq, params oas.PostV1OauthInteractionByInteractionIdRejectParams) (r *oas.PostV1OauthInteractionByInteractionIdRejectOK, _ error) {
-	panic("implement me")
+func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdReject(ctx context.Context, req oas.OptPostV1OauthInteractionByInteractionIdRejectReq, params oas.PostV1OauthInteractionByInteractionIdRejectParams) (*oas.PostV1OauthInteractionByInteractionIdRejectOK, error) {
+	cmd := domain.OIDCRejectCmd{InteractionID: params.InteractionID}
+	if v, ok := req.Get(); ok {
+		cmd.Error = v.Error.Or("")
+		cmd.ErrorDescription = v.ErrorDescription.Or("")
+	}
+	redirectTo, err := s.deps.Grants.Reject(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1OauthInteractionByInteractionIdRejectOK{
+		RedirectTo: oas.NewOptString(redirectTo),
+	}, nil
 }
 
 // oasOAuthGrant maps a domain Grant to its oas representation.

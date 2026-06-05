@@ -20,8 +20,16 @@ type PlatformConfig interface {
 	PublicConfig(ctx context.Context, projectID, clientID string) (*domain.PublicConfig, error)
 }
 
+// PlatformCsrf issues CSRF tokens for cookie-mode clients.
+type PlatformCsrf interface {
+	IssueCsrfToken(ctx context.Context, clientID string) (*domain.PlatformCsrfToken, error)
+}
+
 // PlatformDeps are the ports the Platform service orchestrates.
-type PlatformDeps struct{ Config PlatformConfig }
+type PlatformDeps struct {
+	Config PlatformConfig
+	Csrf   PlatformCsrf
+}
 
 // PlatformService implements the PlatformHandler slice of oas.Handler.
 type PlatformService struct {
@@ -42,8 +50,12 @@ func (s *PlatformService) GetV1ConfigPublic(ctx context.Context, params oas.GetV
 	return oasPublicConfig(cfg), nil
 }
 
-func (s *PlatformService) GetV1Csrf(ctx context.Context, params oas.GetV1CsrfParams) (r *oas.GetV1CsrfOK, _ error) {
-	panic("implement me")
+func (s *PlatformService) GetV1Csrf(ctx context.Context, params oas.GetV1CsrfParams) (*oas.GetV1CsrfOK, error) {
+	tok, err := s.deps.Csrf.IssueCsrfToken(ctx, params.XClientID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1CsrfOK{CsrfToken: oas.NewOptString(tok.Token)}, nil
 }
 
 func (s *PlatformService) GetV1Health(ctx context.Context) (*oas.GetV1HealthOK, error) {

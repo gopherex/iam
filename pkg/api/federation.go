@@ -10,6 +10,7 @@ package api
 
 import (
 	"context"
+	"time"
 
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
@@ -19,8 +20,17 @@ type FederationConnections interface {
 	CreateConnection(ctx context.Context, cmd domain.ConnectionCmd) (*domain.Connection, error)
 	GetConnection(ctx context.Context, projectID, id string) (*domain.Connection, error)
 	ListConnections(ctx context.Context, projectID string) ([]domain.Connection, error)
+	UpdateConnection(ctx context.Context, cmd domain.FederationConnectionUpdateCmd) (*domain.Connection, error)
+	DeleteConnection(ctx context.Context, projectID, id string) error
+	TestConnection(ctx context.Context, projectID, id string) (string, error)
+	RotateConnectionCertificate(ctx context.Context, projectID, id string) (string, error)
 	AddDomain(ctx context.Context, projectID, connectionID, name string) (*domain.Domain, error)
 	VerifyDomain(ctx context.Context, projectID, domainID string) (*domain.Domain, error)
+	ListDomains(ctx context.Context, projectID string) ([]domain.Domain, error)
+	DeleteDomain(ctx context.Context, projectID, domainID string) error
+	CreateScimToken(ctx context.Context, cmd domain.FederationScimTokenCmd) (*domain.ScimToken, string, error)
+	ListScimTokens(ctx context.Context, projectID, connectionID string) ([]domain.ScimToken, error)
+	DeleteScimToken(ctx context.Context, projectID, connectionID, tokenID string) error
 }
 
 type FederationDeps struct{ Connections FederationConnections }
@@ -39,15 +49,33 @@ func NewFederationService(deps FederationDeps) *FederationService {
 var _ oas.Handler = (*FederationService)(nil)
 
 func (s *FederationService) DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams) (*oas.Ok, error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Connections.DeleteDomain(ctx, params.ProjectID, params.DomainID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *FederationService) DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (*oas.Ok, error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Connections.DeleteConnection(ctx, params.ProjectID, params.ID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *FederationService) DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams) (*oas.Ok, error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Connections.DeleteScimToken(ctx, params.ProjectID, params.ID, params.TokenID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *FederationService) DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params oas.DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams) error {
@@ -59,8 +87,21 @@ func (s *FederationService) DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx co
 }
 
 func (s *FederationService) GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminDomainsParams) (*oas.GetV1ProjectsByProjectIdAdminDomainsOK, error) {
-	// No port lists domains; only single domain add/verify are exposed.
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doms, err := s.deps.Connections.ListDomains(ctx, params.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.Domain, 0, len(doms))
+	for i := range doms {
+		data = append(data, oasDomain(&doms[i]))
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminDomainsOK{
+		Data:    data,
+		HasMore: oas.NewOptBool(false),
+	}, nil
 }
 
 func (s *FederationService) GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminSsoConnectionsParams) (*oas.GetV1ProjectsByProjectIdAdminSsoConnectionsOK, error) {
@@ -94,7 +135,20 @@ func (s *FederationService) GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx 
 }
 
 func (s *FederationService) GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams) (*oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK, error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	toks, err := s.deps.Connections.ListScimTokens(ctx, params.ProjectID, params.ID)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOKDataItem, 0, len(toks))
+	for i := range toks {
+		data = append(data, oasRawMap[oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOKDataItem](oasFederationScimTokenMap(&toks[i])))
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK{
+		Data: data,
+	}, nil
 }
 
 func (s *FederationService) GetV1ScimV2ByConnectionIdGroups(ctx context.Context, params oas.GetV1ScimV2ByConnectionIdGroupsParams) (oas.GetV1ScimV2ByConnectionIdGroupsOK, error) {
@@ -134,7 +188,20 @@ func (s *FederationService) GetV1SsoSamlByConnectionIdMetadata(ctx context.Conte
 }
 
 func (s *FederationService) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (*oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	conn, err := s.deps.Connections.UpdateConnection(ctx, domain.FederationConnectionUpdateCmd{
+		ProjectID: params.ProjectID,
+		ID:        params.ID,
+		Patch:     anyMap(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK{
+		Connection: oas.NewOptSSOConnection(oasConnection(conn)),
+	}, nil
 }
 
 func (s *FederationService) PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, req oas.PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params oas.PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams) (oas.PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK, error) {
@@ -191,15 +258,51 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnections(ctx con
 }
 
 func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams) (*oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK, error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	cert, err := s.deps.Connections.RotateConnectionCertificate(ctx, params.ProjectID, params.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK{
+		Certificate: oas.NewOptString(cert),
+	}, nil
 }
 
 func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams) (*oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated, error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	tok, secret, err := s.deps.Connections.CreateScimToken(ctx, domain.FederationScimTokenCmd{
+		ProjectID:    params.ProjectID,
+		ConnectionID: params.ID,
+		Name:         req.Name,
+		ExpiresAt:    req.ExpiresAt.Or(time.Time{}),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated{
+		Token: oas.NewOptPostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreatedToken(oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreatedToken{
+			ID:   oas.NewOptString(tok.ID),
+			Name: oas.NewOptString(tok.Name),
+		}),
+		Secret: oas.NewOptString(secret),
+	}, nil
 }
 
 func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams) (*oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK, error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	testURL, err := s.deps.Connections.TestConnection(ctx, params.ProjectID, params.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK{
+		TestURL: oas.NewOptString(testURL),
+	}, nil
 }
 
 func (s *FederationService) PostV1ScimV2ByConnectionIdGroups(ctx context.Context, req oas.PostV1ScimV2ByConnectionIdGroupsReq, params oas.PostV1ScimV2ByConnectionIdGroupsParams) (oas.PostV1ScimV2ByConnectionIdGroupsCreated, error) {
@@ -245,6 +348,22 @@ func oasConnection(c *domain.Connection) oas.SSOConnection {
 		out.ExternalRef = oas.NewOptNilString(c.ExternalRef)
 	}
 	return out
+}
+
+// oasFederationScimTokenMap projects a domain ScimToken onto a plain wire map
+// (the generated list item type is a free-form map[string]jx.Raw).
+func oasFederationScimTokenMap(t *domain.ScimToken) map[string]any {
+	m := map[string]any{
+		"id":   t.ID,
+		"name": t.Name,
+	}
+	if t.ConnectionID != "" {
+		m["connection_id"] = t.ConnectionID
+	}
+	if !t.ExpiresAt.IsZero() {
+		m["expires_at"] = t.ExpiresAt.Format(time.RFC3339)
+	}
+	return m
 }
 
 // oasDomain maps a domain Domain to its oas representation.
