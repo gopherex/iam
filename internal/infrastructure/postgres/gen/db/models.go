@@ -10,17 +10,412 @@ import (
 type IamUsers struct {
 	ID           string
 	ProjectID    string
+	Kind         string
+	Status       string
 	PrimaryEmail *string
+	PrimaryPhone *string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	Data         json.RawMessage
 }
 
-type IamSessions struct {
+type IamCredentials struct {
 	ID        string
 	ProjectID string
 	UserID    string
+	Type      string
+	Secret    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Data      json.RawMessage
+}
+
+type IamIdentities struct {
+	ID                string
+	ProjectID         string
+	UserID            string
+	Type              string
+	Provider          *string
+	ProviderAccountID *string
+	Email             *string
+	CreatedAt         time.Time
+	Data              json.RawMessage
+}
+
+type IamSessions struct {
+	ID           string
+	ProjectID    string
+	UserID       string
+	ClientID     *string
+	Aal          int32
+	Trusted      bool
+	ExpiresAt    *time.Time
+	CreatedAt    time.Time
+	LastActiveAt time.Time
+	Data         json.RawMessage
+}
+
+type IamRefreshTokens struct {
+	ID        string
+	ProjectID string
+	UserID    string
+	SessionID string
+	Hash      string
+	Revoked   bool
+	ExpiresAt *time.Time
+	CreatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamFactors struct {
+	ID        string
+	ProjectID string
+	UserID    string
+	Type      string
+	Status    string
+	Secret    string
+	CreatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamWebauthnCredentials struct {
+	ID           string
+	ProjectID    string
+	UserID       string
+	CredentialID string
+	PublicKey    []byte
+	SignCount    int64
+	CreatedAt    time.Time
+	LastUsedAt   *time.Time
+	Data         json.RawMessage
+}
+
+type IamRecoveryCodes struct {
+	ID        string
+	ProjectID string
+	UserID    string
+	Hash      string
+	Used      bool
+	CreatedAt time.Time
+}
+
+type IamChallenges struct {
+	ID        string
+	ProjectID string
+	Type      string
+	Subject   *string
+	CodeHash  *string
+	ExpiresAt time.Time
+	Consumed  bool
+	CreatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamConsents struct {
+	ID         string
+	ProjectID  string
+	UserID     string
+	DocKey     string
+	Version    string
+	Locale     *string
+	AcceptedAt time.Time
+}
+
+type IamServiceAccounts struct {
+	ID        string
+	ProjectID string
+	Name      string
+	Disabled  bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamAPIKeys struct {
+	ID        string
+	ProjectID string
+	Prefix    string
+	Hash      string
+	Disabled  bool
+	ExpiresAt *time.Time
+	CreatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamAppClients struct {
+	ID          string
+	ProjectID   string
+	Environment string
+	Name        string
+	Type        string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Data        json.RawMessage
+}
+
+type IamAppSecrets struct {
+	ID        string
+	ProjectID string
+	AppID     string
+	Hash      string
+	CreatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamSsoConnections struct {
+	ID          string
+	ProjectID   string
+	Type        string
+	Status      string
+	Name        string
+	ExternalRef *string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Data        json.RawMessage
+}
+
+type IamDomains struct {
+	ID           string
+	ProjectID    string
+	ConnectionID *string
+	Domain       string
+	Status       string
+	VerifiedAt   *time.Time
+	CreatedAt    time.Time
+	Data         json.RawMessage
+}
+
+type IamScimTokens struct {
+	ID           string
+	ProjectID    string
+	ConnectionID string
+	Hash         string
+	CreatedAt    time.Time
+	Data         json.RawMessage
+}
+
+type IamScimResources struct {
+	ID           string
+	ProjectID    string
+	ConnectionID string
+	ResourceType string
+	ExternalID   *string
+	UserID       *string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	Data         json.RawMessage
+}
+
+type IamOauthGrants struct {
+	ID        string
+	ProjectID string
+	UserID    string
+	ClientID  string
+	GrantedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamInteractions struct {
+	ID        string
+	ProjectID string
+	ClientID  *string
+	SessionID *string
+	ExpiresAt *time.Time
+	CreatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamAuthCodes struct {
+	ID        string
+	ProjectID string
+	CodeHash  string
+	ClientID  *string
+	UserID    *string
+	ExpiresAt time.Time
+	Consumed  bool
+	CreatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamParRequests struct {
+	ID         string
+	ProjectID  string
+	RequestUri string
+	ClientID   *string
+	ExpiresAt  time.Time
+	CreatedAt  time.Time
+	Data       json.RawMessage
+}
+
+type IamDeviceCodes struct {
+	ID         string
+	ProjectID  string
+	DeviceCode string
+	UserCode   string
+	Status     string
+	UserID     *string
+	ExpiresAt  time.Time
+	CreatedAt  time.Time
+	Data       json.RawMessage
+}
+
+type IamProjects struct {
+	ID        string
+	Slug      string
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamEnvironments struct {
+	ProjectID string
+	Name      string
+	Issuer    *string
+	CreatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamSigningKeys struct {
+	Kid         string
+	ProjectID   string
+	Environment string
+	Alg         string
+	Use         string
+	Status      string
+	PrivatePem  *string
+	CreatedAt   time.Time
+	Data        json.RawMessage
+}
+
+type IamTokenProfiles struct {
+	ID        string
+	ProjectID string
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamAdminTokens struct {
+	ID        string
+	ProjectID string
+	Hash      string
+	ExpiresAt *time.Time
+	CreatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamConfig struct {
+	ProjectID   string
+	Environment string
+	Key         string
+	UpdatedAt   time.Time
+	Data        json.RawMessage
+}
+
+type IamProviders struct {
+	ID        string
+	ProjectID string
+	Kind      string
+	Provider  string
+	Enabled   bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamEmailTemplates struct {
+	ID        string
+	ProjectID string
+	Key       string
+	Locale    string
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamWebhooks struct {
+	ID        string
+	ProjectID string
+	Enabled   bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamHooks struct {
+	ID        string
+	ProjectID string
+	Type      string
+	Enabled   bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamJobs struct {
+	ID        string
+	ProjectID string
+	Type      string
+	Status    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamAuditLogs struct {
+	ID        string
+	ProjectID string
+	Type      string
+	ActorID   *string
+	TargetID  *string
+	At        time.Time
+	Data      json.RawMessage
+}
+
+type IamAccessRequests struct {
+	ID        string
+	ProjectID string
+	Email     string
+	Status    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamRiskRules struct {
+	ID        string
+	ProjectID string
+	Enabled   bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
+type IamBlocks struct {
+	ID        string
+	ProjectID string
+	Subject   string
+	CreatedAt time.Time
+	ExpiresAt *time.Time
+	Data      json.RawMessage
+}
+
+type IamActivity struct {
+	ID        string
+	ProjectID string
+	UserID    string
+	Type      string
+	At        time.Time
+	Data      json.RawMessage
+}
+
+type IamEvents struct {
+	ID          string
+	ProjectID   string
+	Environment string
+	Type        string
+	Published   bool
+	CreatedAt   time.Time
+	Data        json.RawMessage
 }

@@ -9,6 +9,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/aarondl/opt/null"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
@@ -20,12 +21,16 @@ import (
 
 // IamSession is an object representing the database table.
 type IamSession struct {
-	ID        string          `db:"id,pk" `
-	ProjectID string          `db:"project_id" `
-	UserID    string          `db:"user_id" `
-	CreatedAt time.Time       `db:"created_at" `
-	UpdatedAt time.Time       `db:"updated_at" `
-	Data      json.RawMessage `db:"data" `
+	ID           string              `db:"id,pk" `
+	ProjectID    string              `db:"project_id" `
+	UserID       string              `db:"user_id" `
+	ClientID     null.Val[string]    `db:"client_id" `
+	Aal          int32               `db:"aal" `
+	Trusted      bool                `db:"trusted" `
+	ExpiresAt    null.Val[time.Time] `db:"expires_at" `
+	CreatedAt    time.Time           `db:"created_at" `
+	LastActiveAt time.Time           `db:"last_active_at" `
+	Data         json.RawMessage     `db:"data" `
 }
 
 // IamSessionSlice is an alias for a slice of pointers to IamSession.
@@ -40,7 +45,7 @@ type IamSessionsQuery = *psql.ViewQuery[*IamSession, IamSessionSlice]
 
 func buildIamSessionColumns(tableName string) iamSessionColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "user_id", "created_at", "updated_at", "data",
+		"id", "project_id", "user_id", "client_id", "aal", "trusted", "expires_at", "created_at", "last_active_at", "data",
 	)
 
 	if tableName != "" {
@@ -48,26 +53,34 @@ func buildIamSessionColumns(tableName string) iamSessionColumns {
 	}
 
 	return iamSessionColumns{
-		ColumnsExpr: columnsExpr,
-		tableAlias:  tableName,
-		ID:          buildIamSessionColumn(tableName, "id"),
-		ProjectID:   buildIamSessionColumn(tableName, "project_id"),
-		UserID:      buildIamSessionColumn(tableName, "user_id"),
-		CreatedAt:   buildIamSessionColumn(tableName, "created_at"),
-		UpdatedAt:   buildIamSessionColumn(tableName, "updated_at"),
-		Data:        buildIamSessionColumn(tableName, "data"),
+		ColumnsExpr:  columnsExpr,
+		tableAlias:   tableName,
+		ID:           buildIamSessionColumn(tableName, "id"),
+		ProjectID:    buildIamSessionColumn(tableName, "project_id"),
+		UserID:       buildIamSessionColumn(tableName, "user_id"),
+		ClientID:     buildIamSessionColumn(tableName, "client_id"),
+		Aal:          buildIamSessionColumn(tableName, "aal"),
+		Trusted:      buildIamSessionColumn(tableName, "trusted"),
+		ExpiresAt:    buildIamSessionColumn(tableName, "expires_at"),
+		CreatedAt:    buildIamSessionColumn(tableName, "created_at"),
+		LastActiveAt: buildIamSessionColumn(tableName, "last_active_at"),
+		Data:         buildIamSessionColumn(tableName, "data"),
 	}
 }
 
 type iamSessionColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamSessionColumn
-	ProjectID  iamSessionColumn
-	UserID     iamSessionColumn
-	CreatedAt  iamSessionColumn
-	UpdatedAt  iamSessionColumn
-	Data       iamSessionColumn
+	tableAlias   string
+	ID           iamSessionColumn
+	ProjectID    iamSessionColumn
+	UserID       iamSessionColumn
+	ClientID     iamSessionColumn
+	Aal          iamSessionColumn
+	Trusted      iamSessionColumn
+	ExpiresAt    iamSessionColumn
+	CreatedAt    iamSessionColumn
+	LastActiveAt iamSessionColumn
+	Data         iamSessionColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -113,16 +126,20 @@ func (c iamSessionColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamSessionSetter struct {
-	ID        *string          `db:"id,pk" `
-	ProjectID *string          `db:"project_id" `
-	UserID    *string          `db:"user_id" `
-	CreatedAt *time.Time       `db:"created_at" `
-	UpdatedAt *time.Time       `db:"updated_at" `
-	Data      *json.RawMessage `db:"data" `
+	ID           *string              `db:"id,pk" `
+	ProjectID    *string              `db:"project_id" `
+	UserID       *string              `db:"user_id" `
+	ClientID     *null.Val[string]    `db:"client_id" `
+	Aal          *int32               `db:"aal" `
+	Trusted      *bool                `db:"trusted" `
+	ExpiresAt    *null.Val[time.Time] `db:"expires_at" `
+	CreatedAt    *time.Time           `db:"created_at" `
+	LastActiveAt *time.Time           `db:"last_active_at" `
+	Data         *json.RawMessage     `db:"data" `
 }
 
 func (s IamSessionSetter) SetColumns() []string {
-	vals := make([]string, 0, 6)
+	vals := make([]string, 0, 10)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
@@ -132,11 +149,23 @@ func (s IamSessionSetter) SetColumns() []string {
 	if s.UserID != nil {
 		vals = append(vals, "user_id")
 	}
+	if s.ClientID != nil {
+		vals = append(vals, "client_id")
+	}
+	if s.Aal != nil {
+		vals = append(vals, "aal")
+	}
+	if s.Trusted != nil {
+		vals = append(vals, "trusted")
+	}
+	if s.ExpiresAt != nil {
+		vals = append(vals, "expires_at")
+	}
 	if s.CreatedAt != nil {
 		vals = append(vals, "created_at")
 	}
-	if s.UpdatedAt != nil {
-		vals = append(vals, "updated_at")
+	if s.LastActiveAt != nil {
+		vals = append(vals, "last_active_at")
 	}
 	if s.Data != nil {
 		vals = append(vals, "data")
@@ -169,6 +198,40 @@ func (s IamSessionSetter) Overwrite(t *IamSession) {
 			return *s.UserID
 		}()
 	}
+	if s.ClientID != nil {
+		t.ClientID = func() null.Val[string] {
+			if s.ClientID == nil {
+				return *new(null.Val[string])
+			}
+			v := s.ClientID
+			return *v
+		}()
+	}
+	if s.Aal != nil {
+		t.Aal = func() int32 {
+			if s.Aal == nil {
+				return *new(int32)
+			}
+			return *s.Aal
+		}()
+	}
+	if s.Trusted != nil {
+		t.Trusted = func() bool {
+			if s.Trusted == nil {
+				return *new(bool)
+			}
+			return *s.Trusted
+		}()
+	}
+	if s.ExpiresAt != nil {
+		t.ExpiresAt = func() null.Val[time.Time] {
+			if s.ExpiresAt == nil {
+				return *new(null.Val[time.Time])
+			}
+			v := s.ExpiresAt
+			return *v
+		}()
+	}
 	if s.CreatedAt != nil {
 		t.CreatedAt = func() time.Time {
 			if s.CreatedAt == nil {
@@ -177,12 +240,12 @@ func (s IamSessionSetter) Overwrite(t *IamSession) {
 			return *s.CreatedAt
 		}()
 	}
-	if s.UpdatedAt != nil {
-		t.UpdatedAt = func() time.Time {
-			if s.UpdatedAt == nil {
+	if s.LastActiveAt != nil {
+		t.LastActiveAt = func() time.Time {
+			if s.LastActiveAt == nil {
 				return *new(time.Time)
 			}
-			return *s.UpdatedAt
+			return *s.LastActiveAt
 		}()
 	}
 	if s.Data != nil {
@@ -201,7 +264,7 @@ func (s *IamSessionSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 6)
+		vals := make([]bob.Expression, 10)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -235,37 +298,83 @@ func (s *IamSessionSetter) Apply(q *dialect.InsertQuery) {
 			vals[2] = psql.Raw("DEFAULT")
 		}
 
+		if s.ClientID != nil {
+			vals[3] = psql.Arg(func() null.Val[string] {
+				if s.ClientID == nil {
+					return *new(null.Val[string])
+				}
+				v := s.ClientID
+				return *v
+			}())
+		} else {
+			vals[3] = psql.Raw("DEFAULT")
+		}
+
+		if s.Aal != nil {
+			vals[4] = psql.Arg(func() int32 {
+				if s.Aal == nil {
+					return *new(int32)
+				}
+				return *s.Aal
+			}())
+		} else {
+			vals[4] = psql.Raw("DEFAULT")
+		}
+
+		if s.Trusted != nil {
+			vals[5] = psql.Arg(func() bool {
+				if s.Trusted == nil {
+					return *new(bool)
+				}
+				return *s.Trusted
+			}())
+		} else {
+			vals[5] = psql.Raw("DEFAULT")
+		}
+
+		if s.ExpiresAt != nil {
+			vals[6] = psql.Arg(func() null.Val[time.Time] {
+				if s.ExpiresAt == nil {
+					return *new(null.Val[time.Time])
+				}
+				v := s.ExpiresAt
+				return *v
+			}())
+		} else {
+			vals[6] = psql.Raw("DEFAULT")
+		}
+
 		if s.CreatedAt != nil {
-			vals[3] = psql.Arg(func() time.Time {
+			vals[7] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
-		if s.UpdatedAt != nil {
-			vals[4] = psql.Arg(func() time.Time {
-				if s.UpdatedAt == nil {
+		if s.LastActiveAt != nil {
+			vals[8] = psql.Arg(func() time.Time {
+				if s.LastActiveAt == nil {
 					return *new(time.Time)
 				}
-				return *s.UpdatedAt
+				return *s.LastActiveAt
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[5] = psql.Arg(func() json.RawMessage {
+			vals[9] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -277,7 +386,7 @@ func (s IamSessionSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamSessionSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 6)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -300,6 +409,34 @@ func (s IamSessionSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.ClientID != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "client_id")...),
+			psql.Arg(s.ClientID),
+		}})
+	}
+
+	if s.Aal != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "aal")...),
+			psql.Arg(s.Aal),
+		}})
+	}
+
+	if s.Trusted != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "trusted")...),
+			psql.Arg(s.Trusted),
+		}})
+	}
+
+	if s.ExpiresAt != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "expires_at")...),
+			psql.Arg(s.ExpiresAt),
+		}})
+	}
+
 	if s.CreatedAt != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "created_at")...),
@@ -307,10 +444,10 @@ func (s IamSessionSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
-	if s.UpdatedAt != nil {
+	if s.LastActiveAt != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
-			psql.Quote(append(prefix, "updated_at")...),
-			psql.Arg(s.UpdatedAt),
+			psql.Quote(append(prefix, "last_active_at")...),
+			psql.Arg(s.LastActiveAt),
 		}})
 	}
 
@@ -579,12 +716,16 @@ func (o IamSessionSlice) ReloadAll(ctx context.Context, exec bob.Executor) error
 }
 
 type iamSessionWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	UserID    psql.WhereMod[Q, string]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	UpdatedAt psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID           psql.WhereMod[Q, string]
+	ProjectID    psql.WhereMod[Q, string]
+	UserID       psql.WhereMod[Q, string]
+	ClientID     psql.WhereNullMod[Q, string]
+	Aal          psql.WhereMod[Q, int32]
+	Trusted      psql.WhereMod[Q, bool]
+	ExpiresAt    psql.WhereNullMod[Q, time.Time]
+	CreatedAt    psql.WhereMod[Q, time.Time]
+	LastActiveAt psql.WhereMod[Q, time.Time]
+	Data         psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamSessionWhere[Q]) AliasedAs(alias string) iamSessionWhere[Q] {
@@ -593,11 +734,15 @@ func (iamSessionWhere[Q]) AliasedAs(alias string) iamSessionWhere[Q] {
 
 func buildIamSessionWhere[Q psql.Filterable](cols iamSessionColumns) iamSessionWhere[Q] {
 	return iamSessionWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		UserID:    psql.Where[Q, string](cols.UserID.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		UpdatedAt: psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:           psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:    psql.Where[Q, string](cols.ProjectID.Expression),
+		UserID:       psql.Where[Q, string](cols.UserID.Expression),
+		ClientID:     psql.WhereNull[Q, string](cols.ClientID.Expression),
+		Aal:          psql.Where[Q, int32](cols.Aal.Expression),
+		Trusted:      psql.Where[Q, bool](cols.Trusted.Expression),
+		ExpiresAt:    psql.WhereNull[Q, time.Time](cols.ExpiresAt.Expression),
+		CreatedAt:    psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		LastActiveAt: psql.Where[Q, time.Time](cols.LastActiveAt.Expression),
+		Data:         psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }
