@@ -12,6 +12,14 @@ SERVER_BIN  := $(BIN_DIR)/iam
 OGEN        := go run github.com/ogen-go/ogen/cmd/ogen@latest
 # ogen consumes OpenAPI 3.0; this is the down-projected build artifact.
 OPENAPI_30  := openapi/.build/openapi.3.0.yaml
+# Postgres store codegen (sqld toolchain): reads schema.sql + queries/*.sql,
+# writes gen/db + gen/bob and migrations.
+SQLD_CFG    := internal/infrastructure/postgres/sqld.yaml
+SQLD_MIGR   := internal/infrastructure/postgres/migrations
+# DB-backed test wiring (auto-starts the compose postgres on :5436).
+POSTGRES_PASSWORD ?= $(shell grep -E '^POSTGRES_PASSWORD=' .env 2>/dev/null | cut -d= -f2)
+POSTGRES_PASSWORD := $(if $(POSTGRES_PASSWORD),$(POSTGRES_PASSWORD),iam)
+TEST_DATABASE_URL ?= postgres://iam:$(POSTGRES_PASSWORD)@127.0.0.1:5436/iam?sslmode=disable
 
 .DEFAULT_GOAL := help
 
@@ -30,9 +38,38 @@ tidy:
 validate:
 	python -m openapi_spec_validator $(OPENAPI)
 
-## generate: regenerate all code from the spec (Go + TS)
+## generate: regenerate all code (API + DB store)
 .PHONY: generate
-generate: generate-go generate-ts
+generate: generate-go generate-ts db-gen
+
+## tools: install the sqld code generators into ./bin
+.PHONY: tools
+tools:
+	GOFLAGS=-mod=mod GOBIN=$(CURDIR)/bin go install github.com/gopherex/sqld/cmd/sqld@v1.0.0
+	GOFLAGS=-mod=mod GOBIN=$(CURDIR)/bin go install github.com/gopherex/sqld/cmd/sqld-gen-go@v1.0.0
+	GOFLAGS=-mod=mod GOBIN=$(CURDIR)/bin go install github.com/gopherex/sqld/cmd/sqld-gen-bob@v1.0.0
+
+## db-gen: generate gen/db + gen/bob from schema.sql + queries/*.sql
+.PHONY: db-gen
+db-gen: tools
+	./bin/sqld generate -c $(SQLD_CFG)
+
+## migrate-generate: generate a migration by schema diff (usage: make migrate-generate name=add_table)
+.PHONY: migrate-generate
+migrate-generate: tools
+	@test -n "$(name)" || (echo "usage: make migrate-generate name=add_table" && exit 2)
+	./bin/sqld migrate generate $(name) -c $(SQLD_CFG)
+
+## migrate-clear: regenerate the single bootstrap migration from schema.sql, then regenerate code
+.PHONY: migrate-clear
+migrate-clear: tools
+	rm -f $(SQLD_MIGR)/*.sql
+	./bin/sqld migrate generate bootstrap -c $(SQLD_CFG)
+	@for f in $(SQLD_MIGR)/*.sql; do \
+		awk 'index(tolower($$0), "-- sqld:" "up") == 1 { next } index(tolower($$0), "-- sqld:" "down") == 1 { exit } { print }' "$$f" > "$$f.tmp"; \
+		mv "$$f.tmp" "$$f"; \
+	done
+	$(MAKE) db-gen
 
 ## generate-go: generate the ogen code (module-private) into internal/oas
 .PHONY: generate-go
@@ -75,6 +112,13 @@ down:
 .PHONY: test
 test:
 	go test ./...
+
+## test-db: run DB-backed tests (auto-starts the compose postgres)
+.PHONY: test-db
+test-db:
+	@docker compose ps --status running --services 2>/dev/null | grep -qx postgres \
+		|| (echo "Starting postgres for tests..."; docker compose up -d postgres; sleep 4)
+	@TEST_DATABASE_URL="$(TEST_DATABASE_URL)" go test ./... -count=1 -p 1
 
 ## lint: vet + format check
 .PHONY: lint
