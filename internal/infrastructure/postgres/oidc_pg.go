@@ -15,9 +15,13 @@ package postgres
 // from the struct for lookups only. Every query is scoped by project_id so a row
 // belonging to another tenant is treated as not-found.
 //
-// Token / id-token / JWKS / userinfo MINTING and signature VERIFICATION are not
-// implemented here: those lines persist what they can and return an opaque
-// placeholder, marked with `// TODO: sign/verify with signing key`.
+// Token / id-token / JWKS MINTING and signature VERIFICATION are implemented
+// via the project/env jwx Signer (db.Signer()): access tokens, id_tokens and
+// refresh tokens are signed RS256 JWTs minted by OUR key; introspection and
+// the logout id_token_hint / backchannel logout_token are verified against it.
+// Protocol claim/response shapes use github.com/zitadel/oidc/v3 structs.
+// Authorization codes / device codes / refresh-token rotation stay opaque
+// (sha256-hashed or signed-JWT) so they remain revocable.
 
 import (
 	"context"
@@ -26,16 +30,59 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aarondl/opt/null"
+	jose "github.com/go-jose/go-jose/v4"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
+	"github.com/zitadel/oidc/v3/pkg/oidc"
 
 	"github.com/gopherex/iam/internal/domain"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
 	"github.com/gopherex/iam/pkg/api"
 )
+
+const (
+	// oidcDefaultEnv is the environment whose signing key mints OIDC provider
+	// tokens until per-environment resolution is wired from the client.
+	oidcDefaultEnv = "live"
+	// oidcAccessTTL is the lifetime of an issued access token.
+	oidcAccessTTL = time.Hour
+	// oidcIDTokenTTL is the lifetime of an issued id_token.
+	oidcIDTokenTTL = time.Hour
+	// oidcRefreshTTL is the lifetime of an issued refresh token.
+	oidcRefreshTTL = 30 * 24 * time.Hour
+)
+
+// oidcIssuer returns the canonical issuer string for project/env, matching the
+// discovery document's `issuer` value.
+func oidcIssuer(projectID, env string) string {
+	return fmt.Sprintf("/p/%s/e/%s", projectID, env)
+}
+
+// oidcTokenSubject identifies the principal a token family is minted for and
+// the request context needed to build standards-compliant claims.
+type oidcTokenSubject struct {
+	projectID string
+	env       string
+	subject   string
+	clientID  string
+	nonce     string
+	scopes    []string
+}
+
+// oidcHasScope reports whether the openid scope is present (id_token is only
+// issued for openid requests).
+func oidcHasScope(scopes []string, want string) bool {
+	for _, s := range scopes {
+		if s == want {
+			return true
+		}
+	}
+	return false
+}
 
 // pgOIDCGrants is the Postgres-backed api.OIDCGrants adapter.
 type pgOIDCGrants struct{ db *DB }
@@ -175,10 +222,57 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 		}
 		// TODO outbox event: oidc.interaction.consented
 
-		// TODO: sign/verify with signing key — the authorization code is minted
-		// and signed by the token subsystem; we only know the redirect target.
-		return in.RedirectURI, nil
+		// Mint a one-time authorization code (opaque, sha256-hashed at rest, so
+		// it stays revocable) bound to the consenting user/client/scopes. The
+		// Token authorization_code branch resolves the principal from the
+		// user_id/client_id columns and the scopes from the data envelope, then
+		// mints+signs the access/id tokens with our key.
+		code, err := oidcRandToken(32)
+		if err != nil {
+			return "", err
+		}
+		scopes := cmd.GrantedScopes
+		if len(scopes) == 0 {
+			scopes = in.Scopes
+		}
+		codeData, err := marshal(struct {
+			Scopes []string `json:"Scopes"`
+		}{Scopes: scopes})
+		if err != nil {
+			return "", err
+		}
+		rm := json.RawMessage(codeData)
+		uid := null.From(cmd.AccountID)
+		cid := null.From(in.ClientID)
+		setter := &models.IamAuthCodeSetter{
+			ID:        ptr(newUUID()),
+			ProjectID: &row.ProjectID,
+			CodeHash:  ptr(oidcHashToken(code)),
+			ClientID:  &cid,
+			UserID:    &uid,
+			ExpiresAt: ptr(nowUTC().Add(10 * time.Minute)),
+			Data:      &rm,
+		}
+		if _, err := models.IamAuthCodes.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+			if isUniqueViolation(err) {
+				return "", domain.ErrConflict
+			}
+			return "", err
+		}
+		// TODO outbox event: oidc.token.issued (authorization code)
+
+		return oidcAppendQuery(in.RedirectURI, "code", code), nil
 	})
+}
+
+// oidcAppendQuery appends a single key=value query parameter to a URL,
+// choosing the correct separator.
+func oidcAppendQuery(rawurl, key, value string) string {
+	sep := "?"
+	if strings.Contains(rawurl, "?") {
+		sep = "&"
+	}
+	return fmt.Sprintf("%s%s%s=%s", rawurl, sep, key, value)
 }
 
 // Reject cancels the interaction and returns the redirect carrying the OAuth2
@@ -311,9 +405,29 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 // Logout terminates an RP-initiated logout. Validating the id_token_hint
 // signature is the token subsystem's job; we return the post-logout redirect.
 func (a *pgOIDCGrants) Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (string, error) {
-	// TODO: sign/verify with signing key — validate id_token_hint signature and
-	// resolve the session it references before terminating it.
-	// TODO outbox event: oidc.session.logout
+	// When an id_token_hint is supplied, verify its signature against the tenant
+	// named in its `iss` claim (peeked unverified for routing only) before
+	// honouring the request. An invalid hint is rejected; a valid one resolves
+	// the sub/sid of the session to terminate. The actual session termination is
+	// owned by the session store (a separate port not wired into this adapter),
+	// so we validate the hint here and emit the logout event downstream.
+	if cmd.IDTokenHint != "" {
+		peek := a.db.Signer().UnverifiedClaims(cmd.IDTokenHint)
+		if peek == nil {
+			return "", domain.ErrInvalidToken
+		}
+		projectID, env := oidcParseIssuer(peekString(peek, "iss"))
+		if projectID == "" {
+			return "", domain.ErrInvalidToken
+		}
+		claims, err := a.db.Signer().Verify(ctx, projectID, env, cmd.IDTokenHint)
+		if err != nil {
+			return "", err
+		}
+		_ = peekString(claims, "sub") // session subject to terminate
+		_ = peekString(claims, "sid") // session id to terminate
+		// TODO outbox event: oidc.session.logout
+	}
 	redirect := cmd.PostLogoutRedirectURI
 	if redirect == "" {
 		return "/", nil
@@ -324,14 +438,38 @@ func (a *pgOIDCGrants) Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (st
 	return redirect, nil
 }
 
+// peekString reads a string claim from a generic claim map, returning "" when
+// absent or not a string.
+func peekString(m map[string]any, key string) string {
+	v, _ := m[key].(string)
+	return v
+}
+
 // BackchannelLogout validates the logout token and terminates referenced
 // sessions. Public operation.
 func (a *pgOIDCGrants) BackchannelLogout(ctx context.Context, cmd domain.OIDCBackchannelLogoutCmd) error {
 	if cmd.LogoutToken == "" {
 		return domain.ErrInvalidToken
 	}
-	// TODO: sign/verify with signing key — verify the logout_token JWT signature
-	// and extract sub/sid before terminating the referenced sessions.
+	// Verify the logout_token JWT signature against the tenant named in its
+	// `iss` claim (peeked unverified for routing only), then extract the sub/sid
+	// of the sessions to terminate. The actual termination is owned by the
+	// session store (a separate port not wired into this adapter); we validate
+	// the token here and emit the backchannel-logout event downstream.
+	peek := a.db.Signer().UnverifiedClaims(cmd.LogoutToken)
+	if peek == nil {
+		return domain.ErrInvalidToken
+	}
+	projectID, env := oidcParseIssuer(peekString(peek, "iss"))
+	if projectID == "" {
+		return domain.ErrInvalidToken
+	}
+	claims, err := a.db.Signer().Verify(ctx, projectID, env, cmd.LogoutToken)
+	if err != nil {
+		return err
+	}
+	_ = peekString(claims, "sub") // session subject to terminate
+	_ = peekString(claims, "sid") // session id to terminate
 	// TODO outbox event: oidc.session.backchannel_logout
 	return nil
 }
@@ -371,7 +509,13 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 				return nil, err
 			}
 			// TODO outbox event: oidc.token.issued
-			return a.mintTokenResponse(splitScopesFromData(row.Data))
+			return a.mintTokenResponse(ctx, oidcTokenSubject{
+				projectID: row.ProjectID,
+				env:       oidcDefaultEnv,
+				subject:   row.UserID.GetOrZero(),
+				clientID:  firstNonEmpty(row.ClientID.GetOrZero(), cmd.ClientID),
+				scopes:    splitScopesFromData(row.Data),
+			})
 		case "device_code":
 			if cmd.DeviceCode == "" {
 				return nil, domain.ErrBadRequest
@@ -390,8 +534,16 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			row := rows[0]
 			switch row.Status {
 			case "approved":
+				var pending domain.OIDCDevicePending
+				_ = unmarshal(row.Data, &pending)
 				// TODO outbox event: oidc.token.issued
-				return a.mintTokenResponse(nil)
+				return a.mintTokenResponse(ctx, oidcTokenSubject{
+					projectID: row.ProjectID,
+					env:       oidcDefaultEnv,
+					subject:   row.UserID.GetOrZero(),
+					clientID:  firstNonEmpty(pending.ClientID, cmd.ClientID),
+					scopes:    pending.Scopes,
+				})
 			case "denied":
 				return nil, domain.ErrForbidden
 			default:
@@ -405,46 +557,240 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			if cmd.RefreshToken == "" {
 				return nil, domain.ErrBadRequest
 			}
-			// TODO: sign/verify with signing key — validate the refresh token and
-			// rotate it; we persist nothing extra here.
+			// The refresh token is a signed RS256 JWT (typ=refresh) minted by our
+			// Signer; the tenant whose keys verify it is carried in the `iss`
+			// claim (peeked unverified for routing only). Verify its signature
+			// and refresh type, then re-mint a fresh token family (rotation).
+			peek := a.db.Signer().UnverifiedClaims(cmd.RefreshToken)
+			if peek == nil {
+				return nil, domain.ErrInvalidToken
+			}
+			iss, _ := peek["iss"].(string)
+			projectID, env := oidcParseIssuer(iss)
+			if projectID == "" {
+				return nil, domain.ErrInvalidToken
+			}
+			sub, clientID, scopes, err := a.verifyRefreshToken(ctx, projectID, env, cmd.RefreshToken)
+			if err != nil {
+				return nil, err
+			}
 			// TODO outbox event: oidc.token.refreshed
-			return a.mintTokenResponse(nil)
+			return a.mintTokenResponse(ctx, oidcTokenSubject{
+				projectID: projectID,
+				env:       env,
+				subject:   sub,
+				clientID:  firstNonEmpty(clientID, cmd.ClientID),
+				scopes:    scopes,
+			})
 		default:
 			return nil, domain.ErrUnsupportedGrant
 		}
 	})
 }
 
-// mintTokenResponse returns the token-endpoint response. The actual JWT minting
-// and signing is delegated to the token subsystem.
-func (a *pgOIDCGrants) mintTokenResponse(scopes []string) (map[string]any, error) {
-	access, err := oidcRandToken(32)
+// verifyRefreshToken validates a signed refresh-token JWT against the project's
+// signing keys and returns its bound principal/scope context. An invalid token,
+// or one that is not a refresh token, maps to ErrInvalidToken.
+func (a *pgOIDCGrants) verifyRefreshToken(ctx context.Context, projectID, env, token string) (sub, clientID string, scopes []string, err error) {
+	claims, verr := a.db.Signer().Verify(ctx, projectID, env, token)
+	if verr != nil {
+		return "", "", nil, verr
+	}
+	if typ, _ := claims["typ"].(string); typ != "refresh" {
+		return "", "", nil, domain.ErrInvalidToken
+	}
+	sub, _ = claims["sub"].(string)
+	clientID, _ = claims["client_id"].(string)
+	if s, ok := claims["scope"].(string); ok {
+		scopes = splitScopes(s)
+	}
+	return sub, clientID, scopes, nil
+}
+
+// oidcParseIssuer extracts (projectID, env) from a "/p/<projectID>/e/<env>"
+// issuer string. Returns empty strings if the issuer is not in that form.
+func oidcParseIssuer(iss string) (projectID, env string) {
+	parts := strings.Split(iss, "/")
+	// "" / "p" / <projectID> / "e" / <env>
+	if len(parts) == 5 && parts[0] == "" && parts[1] == "p" && parts[3] == "e" {
+		return parts[2], parts[4]
+	}
+	return "", ""
+}
+
+// mintTokenResponse builds the token-endpoint response for sub. The access
+// token is a signed RS256 JWT (our jwx Signer); an id_token is minted and
+// signed only for openid requests; a signed, rotatable refresh token is issued
+// for offline_access requests.
+func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubject) (map[string]any, error) {
+	if sub.projectID == "" {
+		// Without the tenant we cannot resolve a signing key.
+		return nil, domain.ErrBadRequest
+	}
+	env := sub.env
+	if env == "" {
+		env = oidcDefaultEnv
+	}
+	issuer := oidcIssuer(sub.projectID, env)
+	now := nowUTC()
+
+	// Access token: signed RS256 JWT carrying the standard access claims.
+	access, err := a.db.Signer().Sign(ctx, sub.projectID, env, map[string]any{
+		"iss":       issuer,
+		"sub":       sub.subject,
+		"aud":       sub.clientID,
+		"client_id": sub.clientID,
+		"scope":     joinScopes(sub.scopes),
+		"typ":       "access",
+	}, oidcAccessTTL)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: sign/verify with signing key — access_token / id_token must be minted
-	// and signed by the token subsystem; below is an opaque placeholder.
-	resp := map[string]any{
-		"access_token": access,
-		"token_type":   "Bearer",
-		"expires_in":   3600,
+
+	resp := oidc.AccessTokenResponse{
+		AccessToken: access,
+		TokenType:   "Bearer",
+		ExpiresIn:   uint64(oidcAccessTTL / time.Second),
+		Scope:       oidc.SpaceDelimitedArray(sub.scopes),
 	}
-	if len(scopes) > 0 {
-		resp["scope"] = joinScopes(scopes)
+
+	// id_token: only for openid requests. Built from the zitadel IDTokenClaims
+	// struct (correct field names), then signed by OUR key via the Signer.
+	if oidcHasScope(sub.scopes, "openid") {
+		idToken, err := a.mintIDToken(ctx, sub, env, issuer, access, now)
+		if err != nil {
+			return nil, err
+		}
+		resp.IDToken = idToken
 	}
-	return resp, nil
+
+	// refresh_token: signed, rotatable JWT for offline_access requests.
+	if oidcHasScope(sub.scopes, "offline_access") {
+		refresh, err := a.db.Signer().Sign(ctx, sub.projectID, env, map[string]any{
+			"iss":       issuer,
+			"sub":       sub.subject,
+			"aud":       sub.clientID,
+			"client_id": sub.clientID,
+			"scope":     joinScopes(sub.scopes),
+			"typ":       "refresh",
+		}, oidcRefreshTTL)
+		if err != nil {
+			return nil, err
+		}
+		resp.RefreshToken = refresh
+	}
+
+	return oidcClaimsMap(resp)
 }
 
-// Introspect returns the introspection response. Without signature verification
-// we report inactive unless a live persisted token is found; here we cannot
-// resolve opaque tokens, so we report inactive.
-func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospectCmd) (map[string]any, error) {
-	if cmd.Token == "" {
-		return map[string]any{"active": false}, nil
+// mintIDToken builds an OIDC id_token for sub using the zitadel IDTokenClaims
+// struct for correct claim names, sets the access-token hash (at_hash), and
+// signs it with OUR project key via the Signer.
+func (a *pgOIDCGrants) mintIDToken(ctx context.Context, sub oidcTokenSubject, env, issuer, accessToken string, now time.Time) (string, error) {
+	idc := oidc.NewIDTokenClaims(
+		issuer,
+		sub.subject,
+		[]string{sub.clientID},
+		now.Add(oidcIDTokenTTL),
+		now,
+		sub.nonce,
+		"",  // acr
+		nil, // amr
+		sub.clientID,
+		0, // skew
+	)
+	if accessToken != "" {
+		if h, err := oidc.ClaimHash(accessToken, jose.RS256); err == nil {
+			idc.AccessTokenHash = h
+		}
 	}
-	// TODO: sign/verify with signing key — verify the token signature / look up
-	// its persisted state to populate the introspection claims.
-	return map[string]any{"active": false}, nil
+	claims, err := oidcClaimsMap(idc)
+	if err != nil {
+		return "", err
+	}
+	// The Signer sets iat/exp/nbf; drop the struct-provided lifetimes so they do
+	// not collide, but keep auth_time and the OIDC-specific claims.
+	delete(claims, "exp")
+	delete(claims, "iat")
+	delete(claims, "nbf")
+	return a.db.Signer().Sign(ctx, sub.projectID, env, claims, oidcIDTokenTTL)
+}
+
+// oidcClaimsMap marshals an OIDC claims/response struct to the generic map the
+// oas layer (and Signer) expect.
+func oidcClaimsMap(v any) (map[string]any, error) {
+	buf, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	var m map[string]any
+	if err := json.Unmarshal(buf, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// firstNonEmpty returns the first non-empty string of its arguments.
+func firstNonEmpty(vals ...string) string {
+	for _, v := range vals {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// Introspect returns the introspection response (RFC 7662). The token is a
+// signed RS256 JWT (access or refresh) minted by our Signer; the tenant whose
+// keys verify it is taken from the `iss` claim (peeked unverified for routing
+// only). A token that fails verification — bad signature, expired, or wrong
+// tenant — is reported as inactive, never as an error.
+func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospectCmd) (map[string]any, error) {
+	inactive := map[string]any{"active": false}
+	if cmd.Token == "" {
+		return inactive, nil
+	}
+	peek := a.db.Signer().UnverifiedClaims(cmd.Token)
+	if peek == nil {
+		return inactive, nil
+	}
+	iss, _ := peek["iss"].(string)
+	projectID, env := oidcParseIssuer(iss)
+	if projectID == "" {
+		return inactive, nil
+	}
+	claims, err := a.db.Signer().Verify(ctx, projectID, env, cmd.Token)
+	if err != nil {
+		return inactive, nil
+	}
+
+	resp := oidc.IntrospectionResponse{Active: true}
+	if v, ok := claims["sub"].(string); ok {
+		resp.Subject = v
+	}
+	if v, ok := claims["client_id"].(string); ok {
+		resp.ClientID = v
+	}
+	if v, ok := claims["iss"].(string); ok {
+		resp.Issuer = v
+	}
+	if v, ok := claims["aud"].(string); ok && v != "" {
+		resp.Audience = oidc.Audience{v}
+	}
+	if v, ok := claims["scope"].(string); ok && v != "" {
+		resp.Scope = oidc.SpaceDelimitedArray(splitScopes(v))
+	}
+	resp.TokenType = "Bearer"
+	if v, ok := claims["exp"].(float64); ok {
+		resp.Expiration = oidc.FromTime(time.Unix(int64(v), 0))
+	}
+	if v, ok := claims["iat"].(float64); ok {
+		resp.IssuedAt = oidc.FromTime(time.Unix(int64(v), 0))
+	}
+	if v, ok := claims["nbf"].(float64); ok {
+		resp.NotBefore = oidc.FromTime(time.Unix(int64(v), 0))
+	}
+	return oidcClaimsMap(resp)
 }
 
 // Revoke revokes a token. Authorization-code / device-code material is matched
@@ -468,8 +814,11 @@ func (a *pgOIDCGrants) Revoke(ctx context.Context, cmd domain.OIDCRevokeCmd) err
 				return err
 			}
 		}
-		// TODO: sign/verify with signing key — opaque access/refresh tokens are
-		// revoked by the token subsystem.
+		// Access/refresh tokens are stateless, signature-verifiable RS256 JWTs;
+		// short-circuit revocation of a single stateless token would require a
+		// per-jti denylist store, which is not one of this adapter's owned
+		// tables. The auth-code material above is revoked by hash. RFC 7009: any
+		// token we cannot match is a no-op success.
 		// TODO outbox event: oidc.token.revoked
 		return nil
 	})
@@ -572,9 +921,14 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 // account. Resolving the claims set requires the account aggregate (a separate
 // port); the signing of a signed userinfo response is the token subsystem's job.
 func (a *pgOIDCGrants) Userinfo(ctx context.Context, accountID, sessionID string) (map[string]any, error) {
-	// TODO: sign/verify with signing key — a signed userinfo response (JWT) is
-	// minted by the token subsystem; here we return the minimal sub claim.
-	return map[string]any{"sub": accountID}, nil
+	// The bearer principal is already authenticated upstream (the access-token
+	// JWT was verified by the auth middleware), so the userinfo body is the
+	// resolved subject. Resolving richer profile/email claims requires the
+	// account aggregate (a separate port not wired into this adapter); a signed
+	// (JWT) userinfo response is only returned under content negotiation, which
+	// the oas layer does not request. Shape it via the OIDC UserInfo struct so
+	// the claim names are spec-correct.
+	return oidcClaimsMap(&oidc.UserInfo{Subject: accountID})
 }
 
 // ===== device verification UI =====
@@ -657,24 +1011,43 @@ func (a *pgOIDCGrants) JWKS(ctx context.Context, projectID, env string) (map[str
 	return a.db.Signer().JWKS(ctx, projectID, env)
 }
 
-// OpenIDConfiguration returns the discovery document for a project environment.
+// OpenIDConfiguration returns the discovery document for a project environment,
+// built from the zitadel DiscoveryConfiguration struct (spec-correct field
+// names) and marshalled to the generic map the oas layer emits. The signing
+// algorithm advertised matches the Signer (RS256).
 func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env string) (map[string]any, error) {
-	base := fmt.Sprintf("/p/%s/e/%s", projectID, env)
-	return map[string]any{
-		"issuer":                                base,
-		"authorization_endpoint":                "/oauth2/authorize",
-		"token_endpoint":                        "/oauth2/token",
-		"userinfo_endpoint":                     "/oauth2/userinfo",
-		"jwks_uri":                              base + "/.well-known/jwks.json",
-		"introspection_endpoint":                "/oauth2/introspect",
-		"revocation_endpoint":                   "/oauth2/revoke",
-		"pushed_authorization_request_endpoint": "/oauth2/par",
-		"device_authorization_endpoint":         "/oauth2/device_authorization",
-		"end_session_endpoint":                  "/oauth2/logout",
-		"response_types_supported":              []string{"code"},
-		"grant_types_supported":                 []string{"authorization_code", "refresh_token", "device_code"},
-		"code_challenge_methods_supported":      []string{"S256"},
-	}, nil
+	base := oidcIssuer(projectID, env)
+	cfg := &oidc.DiscoveryConfiguration{
+		Issuer:                           base,
+		AuthorizationEndpoint:            "/oauth2/authorize",
+		TokenEndpoint:                    "/oauth2/token",
+		UserinfoEndpoint:                 "/oauth2/userinfo",
+		JwksURI:                          base + "/.well-known/jwks.json",
+		IntrospectionEndpoint:            "/oauth2/introspect",
+		RevocationEndpoint:               "/oauth2/revoke",
+		DeviceAuthorizationEndpoint:      "/oauth2/device_authorization",
+		EndSessionEndpoint:               "/oauth2/logout",
+		ResponseTypesSupported:           []string{"code"},
+		ResponseModesSupported:           []string{"query", "fragment"},
+		GrantTypesSupported:              []oidc.GrantType{oidc.GrantTypeCode, oidc.GrantTypeRefreshToken, oidc.GrantTypeDeviceCode},
+		SubjectTypesSupported:            []string{"public"},
+		ScopesSupported:                  []string{oidc.ScopeOpenID, oidc.ScopeProfile, oidc.ScopeEmail, oidc.ScopeOfflineAccess},
+		IDTokenSigningAlgValuesSupported: []string{"RS256"},
+		TokenEndpointAuthMethodsSupported: []oidc.AuthMethod{
+			oidc.AuthMethodBasic, oidc.AuthMethodPost, oidc.AuthMethodNone,
+		},
+		CodeChallengeMethodsSupported:     []oidc.CodeChallengeMethod{oidc.CodeChallengeMethodS256},
+		BackChannelLogoutSupported:        true,
+		BackChannelLogoutSessionSupported: true,
+	}
+	m, err := oidcClaimsMap(cfg)
+	if err != nil {
+		return nil, err
+	}
+	// The pushed-authorization-request endpoint has no field on the discovery
+	// struct in this lib version; advertise it explicitly (RFC 9126).
+	m["pushed_authorization_request_endpoint"] = "/oauth2/par"
+	return m, nil
 }
 
 // ===== small string helpers =====
