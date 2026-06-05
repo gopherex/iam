@@ -55,6 +55,8 @@ type OIDCLogoutCmd struct {
 // ClientID/ClientSecret in the body (or via HTTP basic auth at the adapter).
 // The adapter dispatches on GrantType and returns the raw token response map.
 type OIDCTokenCmd struct {
+	ProjectID    string // request tenant (authenticated client), NOT the token
+	Env          string
 	GrantType    string
 	Code         string
 	RedirectURI  string
@@ -69,12 +71,16 @@ type OIDCTokenCmd struct {
 // client-authenticated. The adapter returns the introspection response map,
 // including the mandatory "active" flag.
 type OIDCIntrospectCmd struct {
-	Token string
+	ProjectID string // request tenant (authenticated client), NOT the token
+	Env       string
+	Token     string
 }
 
 // OIDCRevokeCmd is the /oauth2/revoke request (RFC 7009). It is
 // client-authenticated. TokenTypeHint is optional.
 type OIDCRevokeCmd struct {
+	ProjectID     string // request tenant (authenticated client), NOT the token
+	Env           string
 	Token         string
 	TokenTypeHint string
 }

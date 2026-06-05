@@ -229,9 +229,17 @@ func (s *OIDCProviderService) PostOauth2DeviceAuthorization(ctx context.Context,
 }
 
 func (s *OIDCProviderService) PostOauth2Introspect(ctx context.Context, req *oas.PostOauth2IntrospectReq) (r *oas.PostOauth2IntrospectOK, _ error) {
-	// Client-authenticated token introspection (RFC 7662).
+	// Client-authenticated token introspection (RFC 7662). The verifying tenant
+	// is the authenticated client's project — never the token's self-asserted
+	// issuer (cross-tenant confusion).
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
 	res, err := s.deps.Grants.Introspect(ctx, domain.OIDCIntrospectCmd{
-		Token: req.Token.Or(""),
+		ProjectID: p.ProjectID,
+		Env:       oidcEnv(p),
+		Token:     req.Token.Or(""),
 	})
 	if err != nil {
 		return nil, err
@@ -276,15 +284,36 @@ func (s *OIDCProviderService) PostOauth2Par(ctx context.Context, req *oas.Pushed
 
 func (s *OIDCProviderService) PostOauth2Revoke(ctx context.Context, req *oas.PostOauth2RevokeReq) error {
 	// Client-authenticated token revocation (RFC 7009).
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return err
+	}
 	return s.deps.Grants.Revoke(ctx, domain.OIDCRevokeCmd{
+		ProjectID:     p.ProjectID,
+		Env:           oidcEnv(p),
 		Token:         req.Token.Or(""),
 		TokenTypeHint: req.TokenTypeHint.Or(""),
 	})
 }
 
+// oidcEnv resolves the environment for a client/principal, defaulting to live.
+func oidcEnv(p *domain.Principal) string {
+	if p.Environment != "" {
+		return p.Environment
+	}
+	return "live"
+}
+
 func (s *OIDCProviderService) PostOauth2Token(ctx context.Context, req *oas.PostOauth2TokenReq) (r oas.PostOauth2TokenOK, _ error) {
-	// Client-authenticated token endpoint (RFC 6749 + extensions).
+	// Client-authenticated token endpoint (RFC 6749 + extensions). The tenant is
+	// the authenticated client's project, not the token's issuer.
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
 	res, err := s.deps.Grants.Token(ctx, domain.OIDCTokenCmd{
+		ProjectID:    p.ProjectID,
+		Env:          oidcEnv(p),
 		GrantType:    req.GrantType.Or(""),
 		Code:         req.Code.Or(""),
 		RedirectURI:  req.RedirectURI.Or(""),

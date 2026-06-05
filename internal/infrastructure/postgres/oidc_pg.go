@@ -557,16 +557,15 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			if cmd.RefreshToken == "" {
 				return nil, domain.ErrBadRequest
 			}
-			// The refresh token is a signed RS256 JWT (typ=refresh) minted by our
-			// Signer; the tenant whose keys verify it is carried in the `iss`
-			// claim (peeked unverified for routing only). Verify its signature
-			// and refresh type, then re-mint a fresh token family (rotation).
-			peek := a.db.Signer().UnverifiedClaims(cmd.RefreshToken)
-			if peek == nil {
-				return nil, domain.ErrInvalidToken
+			// The refresh token is a signed RS256 JWT (typ=refresh). Verify it
+			// against the REQUEST tenant (the authenticated client's project) —
+			// never the token's self-asserted issuer: a token from another tenant
+			// fails signature verification against this project's keys.
+			projectID := cmd.ProjectID
+			env := cmd.Env
+			if env == "" {
+				env = oidcDefaultEnv
 			}
-			iss, _ := peek["iss"].(string)
-			projectID, env := oidcParseIssuer(iss)
 			if projectID == "" {
 				return nil, domain.ErrInvalidToken
 			}
@@ -750,18 +749,23 @@ func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospect
 	if cmd.Token == "" {
 		return inactive, nil
 	}
-	peek := a.db.Signer().UnverifiedClaims(cmd.Token)
-	if peek == nil {
+	// Anchor verification to the REQUEST tenant (the authenticated client's
+	// project), never to the token's self-asserted issuer: a token minted under
+	// another tenant fails signature verification against this project's keys
+	// and is reported inactive (prevents cross-tenant token confusion).
+	if cmd.ProjectID == "" {
 		return inactive, nil
 	}
-	iss, _ := peek["iss"].(string)
-	projectID, env := oidcParseIssuer(iss)
-	if projectID == "" {
-		return inactive, nil
+	env := cmd.Env
+	if env == "" {
+		env = oidcDefaultEnv
 	}
-	claims, err := a.db.Signer().Verify(ctx, projectID, env, cmd.Token)
+	claims, err := a.db.Signer().Verify(ctx, cmd.ProjectID, env, cmd.Token)
 	if err != nil {
 		return inactive, nil
+	}
+	if iss, _ := claims["iss"].(string); iss != oidcIssuer(cmd.ProjectID, env) {
+		return inactive, nil // issuer does not match the request tenant
 	}
 
 	resp := oidc.IntrospectionResponse{Active: true}
