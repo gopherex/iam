@@ -1,0 +1,15 @@
+# ogen configuration — https://ogen.dev/docs/configuration
+# Drives Go code generation from openapi/openapi.yaml into pkg/api.
+# Invoked via `make generate-go` (see Makefile / pkg/api/gen.go).
+
+generator:
+  # Vendor extensions used by our spec are informational only (x-audience,
+  # x-scopes, x-feature, x-tagGroups, x-features, x-filter-planes) and do not
+  # affect generation. Add feature toggles here when the server stack is fixed.
+  features:
+    enable: []
+    disable: []
+
+parser:
+  # The spec is self-contained; no remote $ref resolution.
+  allowRemote: false

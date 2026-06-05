@@ -1,0 +1,10 @@
+{
+  "name": "@gopherex/iam-admin",
+  "private": true,
+  "version": "0.0.0",
+  "description": "IAM admin panel — built to static assets and served by the Go server.",
+  "scripts": {
+    "build": "echo \"TODO: build admin SPA to dist/\" && exit 0",
+    "dev": "echo \"TODO: dev server\" && exit 0"
+  }
+}

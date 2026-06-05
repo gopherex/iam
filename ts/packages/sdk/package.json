@@ -1,0 +1,25 @@
+{
+  "name": "@gopherex/iam-sdk",
+  "version": "0.0.0",
+  "description": "TypeScript SDK for the IAM API, generated from openapi/openapi.yaml.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "generate": "echo \"TODO: generate client from ../../../openapi/openapi.yaml\" && exit 0",
+    "build": "echo \"TODO: build SDK (tsc)\" && exit 0"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gopherex/iam.git",
+    "directory": "ts/packages/sdk"
+  }
+}

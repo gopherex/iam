@@ -1,0 +1,29 @@
+# Local development environment for IAM — full infra coverage.
+# Brought up with `make dev` (docker compose up -d).
+#
+# Concrete services are finalized once the runtime stack is fixed. The blocks
+# below are the expected shape (datastore, cache, mail capture); uncomment and
+# pin versions when the stack is chosen.
+
+name: iam-dev
+
+services: {}
+  # db:
+  #   image: postgres:17
+  #   environment:
+  #     POSTGRES_USER: iam
+  #     POSTGRES_PASSWORD: iam
+  #     POSTGRES_DB: iam
+  #   ports: ["5432:5432"]
+  #   volumes: ["dbdata:/var/lib/postgresql/data"]
+
+  # cache:
+  #   image: redis:7
+  #   ports: ["6379:6379"]
+
+  # mail:
+  #   image: axllent/mailpit
+  #   ports: ["8025:8025", "1025:1025"]
+
+# volumes:
+#   dbdata:
