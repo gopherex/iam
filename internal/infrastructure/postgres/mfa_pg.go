@@ -24,13 +24,13 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base32"
 	"encoding/hex"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/aarondl/opt/null"
+	"github.com/pquerna/otp"
+	"github.com/pquerna/otp/totp"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dm"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
@@ -39,6 +39,10 @@ import (
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
 	"github.com/gopherex/iam/pkg/api"
 )
+
+// mfaTOTPIssuer is the issuer label embedded in provisioned otpauth URLs and
+// shown by authenticator apps.
+const mfaTOTPIssuer = "gopherex-iam"
 
 // mfaChallengeTTL bounds how long a freshly issued challenge stays verifiable.
 const mfaChallengeTTL = 5 * time.Minute
@@ -81,13 +85,19 @@ func mfaRandomBytes(n int) ([]byte, error) {
 	return b, nil
 }
 
-// mfaNewTOTPSecret mints a base32 (RFC 3548, no padding) TOTP shared secret.
-func mfaNewTOTPSecret() (string, error) {
-	b, err := mfaRandomBytes(20) // 160-bit secret
-	if err != nil {
-		return "", err
+// mfaGenerateTOTPKey provisions a fresh TOTP key via the RFC 6238 library. The
+// returned *otp.Key exposes the base32 shared secret (key.Secret(), stored in
+// iam_factors.secret) and the otpauth:// provisioning URL (key.URL(), surfaced
+// to the caller for QR rendering). accountName is the per-user label shown in
+// the authenticator app (the account's primary email when available).
+func mfaGenerateTOTPKey(accountName string) (*otp.Key, error) {
+	if accountName == "" {
+		accountName = "user"
 	}
-	return strings.TrimRight(base32.StdEncoding.EncodeToString(b), "="), nil
+	return totp.Generate(totp.GenerateOpts{
+		Issuer:      mfaTOTPIssuer,
+		AccountName: accountName,
+	})
 }
 
 // mfaNewOpaqueToken mints a hex opaque token (e.g. a flow / delivery code).
@@ -171,22 +181,27 @@ func (a *pgMFAAccounts) ListFactors(ctx context.Context, accountID string) ([]do
 // happens later via VerifyTOTP once the user proves possession of the secret.
 func (a *pgMFAAccounts) EnrollTOTP(ctx context.Context, accountID string) (*domain.Factor, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Factor, error) {
-		// Owning account also fixes the tenant the factor belongs to.
-		projectID, err := a.mfaResolveProject(ctx, accountID)
+		// The owning account fixes the tenant and supplies the label the
+		// authenticator app shows for this enrollment.
+		acc, err := a.mfaResolveAccount(ctx, accountID)
 		if err != nil {
 			return nil, err
 		}
-		secret, err := mfaNewTOTPSecret()
+		// Provision the shared secret + otpauth URL via the RFC 6238 library;
+		// key.Secret() is the base32 secret stored in iam_factors.secret and
+		// key.URL() is the otpauth:// URL the caller renders as a QR code.
+		key, err := mfaGenerateTOTPKey(acc.PrimaryEmail)
 		if err != nil {
 			return nil, err
 		}
 		f := domain.Factor{
-			ID:     newUUID(),
-			Type:   "totp",
-			Status: "pending",
-			Hint:   "authenticator app",
+			ID:         newUUID(),
+			Type:       "totp",
+			Status:     "pending",
+			Hint:       "authenticator app",
+			OTPAuthURL: key.URL(),
 		}
-		if err := a.mfaInsertFactorFor(ctx, projectID, accountID, &f, secret); err != nil {
+		if err := a.mfaInsertFactorFor(ctx, acc.ProjectID, accountID, &f, key.Secret()); err != nil {
 			return nil, err
 		}
 		// TODO outbox event: mfa.factor.enrolled
@@ -219,7 +234,7 @@ func (a *pgMFAAccounts) Challenge(ctx context.Context, accountID, factorID strin
 }
 
 // Verify consumes a challenge and, on success, returns the authenticated account
-// plus a fresh session. The actual code check for TOTP delegates to a TODO.
+// plus a fresh session. TOTP codes are checked with the RFC 6238 library.
 func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*domain.Account, *domain.Session, error) {
 	type result struct {
 		acc  *domain.Account
@@ -246,14 +261,26 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 		// Code verification:
 		//   - delivery factors (email/sms) compare the sha256 of the supplied code
 		//     against the stored code hash;
-		//   - TOTP delegates to the authenticator math (TODO below).
+		//   - TOTP validates the supplied code against the factor's shared
+		//     secret with the RFC 6238 library.
 		switch row.Type {
 		case "email", "sms":
 			if data.FlowTokenHash == "" || mfaSha256Hex(code) != data.FlowTokenHash {
 				return result{}, domain.ErrMFAInvalid
 			}
 		default:
-			// TODO: verify TOTP code against the factor secret (RFC 6238 totp math)
+			// TOTP: load the factor's shared secret and check the supplied code
+			// with the RFC 6238 library. An invalid/expired code is ErrMFAInvalid.
+			if data.FactorID == "" {
+				return result{}, domain.ErrMFAInvalid
+			}
+			factor, err := a.mfaFindFactor(ctx, accountID, data.FactorID)
+			if err != nil {
+				return result{}, err
+			}
+			if !totp.Validate(code, factor.Secret) {
+				return result{}, domain.ErrMFAInvalid
+			}
 		}
 		if err := a.mfaConsumeChallenge(ctx, row); err != nil {
 			return result{}, err
@@ -349,8 +376,11 @@ func (a *pgMFAAccounts) VerifyTOTP(ctx context.Context, cmd domain.MFATotpVerify
 		if err != nil {
 			return nil, err
 		}
-		// TODO: verify cmd.Code against row.Secret (RFC 6238 totp math)
-		_ = row.Secret
+		// Prove possession of the secret before activating: check the code
+		// against the stored shared secret with the RFC 6238 library.
+		if !totp.Validate(cmd.Code, row.Secret) {
+			return nil, domain.ErrMFAInvalid
+		}
 
 		f, err := mfaFactorFromRow(row)
 		if err != nil {
@@ -485,6 +515,25 @@ func (a *pgMFAAccounts) mfaResolveProject(ctx context.Context, accountID string)
 		return "", translatePgErr("user", err)
 	}
 	return row.ProjectID, nil
+}
+
+// mfaResolveAccount loads the owning account aggregate by id (project resolved
+// from the row). It is the enroll-path counterpart to mfaResolveProject when the
+// caller also needs account material such as the primary email for the TOTP
+// authenticator label.
+func (a *pgMFAAccounts) mfaResolveAccount(ctx context.Context, accountID string) (*domain.Account, error) {
+	row, err := models.FindIamUser(ctx, a.db.Bobx(), accountID)
+	if err != nil {
+		return nil, translatePgErr("user", err)
+	}
+	var acc domain.Account
+	if err := unmarshal(row.Data, &acc); err != nil {
+		return nil, err
+	}
+	// Envelope is authoritative for the tenant + identifier.
+	acc.ID = row.ID
+	acc.ProjectID = row.ProjectID
+	return &acc, nil
 }
 
 // mfaInsertChallenge persists a challenge envelope. subject carries the owning

@@ -11,24 +11,43 @@ package postgres
 //     session it mints.
 //
 // The provider code-exchange / redirect-URL handshake with the upstream IdP is
-// not implemented here (no HTTP client / IdP secrets in this layer); those legs
-// carry a TODO. We persist the identity link, account and session, and return a
-// generated opaque session token (real JWT minting is a signing-key TODO).
+// implemented with golang.org/x/oauth2: an oauth2.Config is assembled from the
+// iam_providers row (kind=oauth, config in the data envelope), AuthCodeURL drives
+// the browser redirect and Exchange + a userinfo fetch resolves the external
+// id/email. We persist the identity link, account and session, and mint a real
+// signed JWT access token via the project Signer.
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"time"
 
 	"github.com/aarondl/opt/null"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
+	"golang.org/x/oauth2"
 
 	"github.com/gopherex/iam/internal/domain"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
 	"github.com/gopherex/iam/pkg/api"
+)
+
+const (
+	// oauthSocialDefaultEnv is the environment whose signing key mints the access
+	// token for a social login session.
+	oauthSocialDefaultEnv = "live"
+
+	// timeSecondDur is time.Second, used to derive ExpiresIn (seconds) from the
+	// access-token TTL.
+	timeSecondDur = time.Second
+
+	// oauthSocialAccessTTL / oauthSocialRefreshTTL bound the minted access and
+	// refresh JWTs.
+	oauthSocialAccessTTL  = time.Hour
+	oauthSocialRefreshTTL = 30 * 24 * time.Hour
 )
 
 // pgOAuthSocial is the Postgres-backed OAuthSocialAccounts adapter.
@@ -40,22 +59,99 @@ func NewPgOAuthSocial(db *DB) *pgOAuthSocial { return &pgOAuthSocial{db: db} }
 var _ api.OAuthSocialAccounts = (*pgOAuthSocial)(nil)
 
 // oauthProviderData is the iam_providers `data` jsonb envelope for an OAuth
-// provider: the display name and requested scopes. The id/project/kind/provider
-// live in the lookup columns.
+// provider: the display name, requested scopes and the upstream client config
+// (credentials + endpoints) used to build the golang.org/x/oauth2 Config. The
+// id/project/kind/provider live in the lookup columns.
+//
+// The endpoint fields may live either at the top level or nested under a
+// `config` object (the shape AdminConfig persists); we accept both.
 type oauthProviderData struct {
 	Name   string   `json:"name"`
 	Scopes []string `json:"scopes"`
+
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	AuthURL      string `json:"auth_url"`
+	TokenURL     string `json:"token_url"`
+	UserInfoURL  string `json:"userinfo_url"`
+	RedirectURL  string `json:"redirect_url"`
+
+	Config *oauthProviderData `json:"config,omitempty"`
 }
 
-// oauthRandToken returns a 32-byte crypto/rand opaque token, hex-encoded. Used
-// for the session access/refresh tokens we hand back until real JWT minting
-// lands.
-func oauthRandToken() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
+// resolved folds the optional nested `config` envelope into the top level so
+// callers see a single flat view of the provider's OAuth settings.
+func (d oauthProviderData) resolved() oauthProviderData {
+	out := d
+	out.Config = nil
+	if d.Config != nil {
+		c := *d.Config
+		if out.Name == "" {
+			out.Name = c.Name
+		}
+		if len(out.Scopes) == 0 {
+			out.Scopes = c.Scopes
+		}
+		if out.ClientID == "" {
+			out.ClientID = c.ClientID
+		}
+		if out.ClientSecret == "" {
+			out.ClientSecret = c.ClientSecret
+		}
+		if out.AuthURL == "" {
+			out.AuthURL = c.AuthURL
+		}
+		if out.TokenURL == "" {
+			out.TokenURL = c.TokenURL
+		}
+		if out.UserInfoURL == "" {
+			out.UserInfoURL = c.UserInfoURL
+		}
+		if out.RedirectURL == "" {
+			out.RedirectURL = c.RedirectURL
+		}
 	}
-	return hex.EncodeToString(b), nil
+	return out
+}
+
+// oauthUserInfo is the subset of an OAuth/OIDC userinfo response we consume: the
+// stable external subject id and the (provider-asserted) email. Different IdPs
+// spell the id field differently, so we accept the common variants.
+type oauthUserInfo struct {
+	Sub      string `json:"sub"`
+	ID       any    `json:"id"`
+	UserID   string `json:"user_id"`
+	Email    string `json:"email"`
+	Verified *bool  `json:"email_verified"`
+}
+
+// externalID returns the stable provider account id, preferring `sub` (OIDC),
+// then `id` (e.g. GitHub/Google v1), then `user_id`.
+func (u oauthUserInfo) externalID() string {
+	if u.Sub != "" {
+		return u.Sub
+	}
+	switch v := u.ID.(type) {
+	case string:
+		if v != "" {
+			return v
+		}
+	case float64:
+		if v != 0 {
+			return jsonNumberString(v)
+		}
+	case json.Number:
+		if s := v.String(); s != "" {
+			return s
+		}
+	}
+	return u.UserID
+}
+
+// jsonNumberString renders a numeric id without scientific notation.
+func jsonNumberString(f float64) string {
+	b, _ := json.Marshal(f)
+	return string(b)
 }
 
 // EnabledProviders lists the enabled OAuth providers configured for a project.
@@ -71,10 +167,11 @@ func (a *pgOAuthSocial) EnabledProviders(ctx context.Context, projectID string) 
 	}
 	out := make([]domain.OAuthProvider, 0, len(rows))
 	for _, row := range rows {
-		var d oauthProviderData
-		if err := unmarshal(row.Data, &d); err != nil {
+		var raw oauthProviderData
+		if err := unmarshal(row.Data, &raw); err != nil {
 			return nil, err
 		}
+		d := raw.resolved()
 		name := d.Name
 		if name == "" {
 			name = row.Provider
@@ -90,25 +187,32 @@ func (a *pgOAuthSocial) EnabledProviders(ctx context.Context, projectID string) 
 
 // CompleteLogin resolves the OAuth callback `code` into an account + session.
 //
-// The upstream code-exchange (swap `code` at the provider token endpoint, fetch
-// the userinfo claims) is not implemented here. Once we have the provider
-// account id + email we upsert the iam_identities link, resolve/create the
-// iam_users account, and mint an iam_sessions row.
+// It swaps `code` at the provider token endpoint (golang.org/x/oauth2 Exchange)
+// and fetches the userinfo claims (provider account id + email), then upserts the
+// iam_identities link, resolves/creates the iam_users account, and mints an
+// iam_sessions row.
 func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, code string) (*domain.Account, *domain.Session, error) {
 	if projectID == "" || provider == "" || code == "" {
 		return nil, nil, domain.ErrBadRequest
 	}
+
+	// Exchange the code at the provider token endpoint and fetch the userinfo
+	// claims (provider account id + email) BEFORE opening the serializable tx —
+	// the upstream round-trip must not hold the transaction open.
+	cfg, d, err := a.loadOAuthConfig(ctx, projectID, provider, "")
+	if err != nil {
+		return nil, nil, err
+	}
+	providerAccountID, email, err := a.oauthExchange(ctx, cfg, d, code, "")
+	if err != nil {
+		return nil, nil, err
+	}
+
 	type result struct {
 		acct *domain.Account
 		sess *domain.Session
 	}
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
-		// TODO: exchange `code` at the provider token endpoint and fetch the
-		// userinfo claims (provider account id + email). No IdP HTTP client in
-		// this layer yet.
-		providerAccountID := code // placeholder identity correlation until exchange lands
-		email := ""
-
 		// Find an existing identity for this provider account (tenant-scoped).
 		ident, err := a.findIdentity(ctx, projectID, provider, providerAccountID)
 		if err != nil && !errors.Is(err, domain.ErrNotFound) {
@@ -154,24 +258,32 @@ func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, 
 
 // Link attaches a provider identity to an already authenticated account.
 //
-// As with CompleteLogin the upstream code-exchange is a TODO; we persist the
+// As with CompleteLogin the upstream code-exchange runs via golang.org/x/oauth2
+// (Exchange + userinfo) to resolve the provider account, then we persist the
 // link to iam_identities for the account.
 func (a *pgOAuthSocial) Link(ctx context.Context, accountID, provider, code string) error {
 	if accountID == "" || provider == "" || code == "" {
 		return domain.ErrBadRequest
 	}
+
+	// The account row carries the tenant; we link inside its project. Resolve it
+	// up front so the upstream code-exchange runs outside the serializable tx.
+	row, err := models.FindIamUser(ctx, a.db.Bobx(), accountID)
+	if err != nil {
+		return translatePgErr("user", err)
+	}
+	projectID := row.ProjectID
+
+	cfg, d, err := a.loadOAuthConfig(ctx, projectID, provider, "")
+	if err != nil {
+		return err
+	}
+	providerAccountID, email, err := a.oauthExchange(ctx, cfg, d, code, "")
+	if err != nil {
+		return err
+	}
+
 	return a.db.withTx(ctx, func(ctx context.Context) error {
-		// The account row carries the tenant; we link inside its project.
-		row, err := models.FindIamUser(ctx, a.db.Bobx(), accountID)
-		if err != nil {
-			return translatePgErr("user", err)
-		}
-		projectID := row.ProjectID
-
-		// TODO: exchange `code` at the provider token endpoint for the provider
-		// account id + email.
-		providerAccountID := code // placeholder until exchange lands
-
 		// Reject if this provider account is already linked elsewhere.
 		if existing, err := a.findIdentity(ctx, projectID, provider, providerAccountID); err == nil {
 			if existing.UserID == accountID {
@@ -187,6 +299,7 @@ func (a *pgOAuthSocial) Link(ctx context.Context, accountID, provider, code stri
 			Type:              "oauth",
 			Provider:          provider,
 			ProviderAccountID: providerAccountID,
+			Email:             email,
 		}, projectID, accountID); err != nil {
 			return err
 		}
@@ -254,12 +367,38 @@ func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExch
 	return res.acct, res.sess, nil
 }
 
-// StartLogin builds the provider authorize URL for a browser redirect.
+// StartLogin builds the provider authorize URL for a browser redirect, looking
+// up the provider client_id / authorize endpoint from iam_providers and
+// appending state, the optional PKCE challenge, prompt and login_hint.
 func (a *pgOAuthSocial) StartLogin(ctx context.Context, cmd domain.OAuthSocialStartCmd) (string, error) {
-	// TODO: build the provider authorize URL — look up the provider client_id /
-	// authorize endpoint from iam_providers, append state/PKCE/prompt/login_hint
-	// and the callback redirect_uri. No IdP metadata client in this layer yet.
-	return "", domain.ErrServiceUnavailable.WithMessage("oauth authorize URL building not implemented")
+	if cmd.ProjectID == "" || cmd.Provider == "" {
+		return "", domain.ErrBadRequest
+	}
+	cfg, _, err := a.loadOAuthConfig(ctx, cmd.ProjectID, cmd.Provider, cmd.RedirectTo)
+	if err != nil {
+		return "", err
+	}
+	opts := a.authCodeOpts(cmd.CodeChallenge, cmd.Prompt, cmd.LoginHint)
+	return cfg.AuthCodeURL(cmd.State, opts...), nil
+}
+
+// authCodeOpts assembles the AuthCodeURL options shared by StartLogin and
+// StartLink: an S256 PKCE challenge, an explicit prompt and an OIDC login_hint.
+func (a *pgOAuthSocial) authCodeOpts(codeChallenge, prompt, loginHint string) []oauth2.AuthCodeOption {
+	var opts []oauth2.AuthCodeOption
+	if codeChallenge != "" {
+		opts = append(opts,
+			oauth2.SetAuthURLParam("code_challenge", codeChallenge),
+			oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+		)
+	}
+	if prompt != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("prompt", prompt))
+	}
+	if loginHint != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("login_hint", loginHint))
+	}
+	return opts
 }
 
 // CompleteLoginRedirect handles the provider callback and returns the product
@@ -268,30 +407,261 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 	if cmd.Error != "" {
 		return domain.OAuthSocialCallbackResult{}, domain.ErrProviderError.WithMessage(cmd.Error)
 	}
-	// TODO: validate `state` against the stored PAR/interaction, run
-	// CompleteLogin to mint the session, then build the product redirect URL and
-	// (cookie mode) the Set-Cookie header. State store and redirect resolution
-	// are not wired in this layer yet.
-	return domain.OAuthSocialCallbackResult{}, domain.ErrServiceUnavailable.WithMessage("oauth callback redirect not implemented")
+	if cmd.ProjectID == "" || cmd.Provider == "" || cmd.Code == "" {
+		return domain.OAuthSocialCallbackResult{}, domain.ErrBadRequest
+	}
+
+	// Exchange the code (PKCE-protected when a verifier is supplied) for the
+	// userinfo claims, then resolve/create the account and mint the session.
+	cfg, d, err := a.loadOAuthConfig(ctx, cmd.ProjectID, cmd.Provider, cmd.RedirectTo)
+	if err != nil {
+		return domain.OAuthSocialCallbackResult{}, err
+	}
+	providerAccountID, email, err := a.oauthExchange(ctx, cfg, d, cmd.Code, cmd.CodeVerifier)
+	if err != nil {
+		return domain.OAuthSocialCallbackResult{}, err
+	}
+
+	sess, err := a.resolveLoginAndMint(ctx, cmd.ProjectID, cmd.Provider, providerAccountID, email)
+	if err != nil {
+		return domain.OAuthSocialCallbackResult{}, err
+	}
+
+	// TODO: validate `state` against the stored PAR/interaction and, in cookie
+	// mode, build the Set-Cookie header. No interaction/state store wired here
+	// yet, so we hand the session token to the caller via the redirect.
+	result := domain.OAuthSocialCallbackResult{RedirectURL: cmd.RedirectTo}
+	if result.RedirectURL == "" {
+		result.RedirectURL = d.RedirectURL
+	}
+	result.SetCookie = sess.AccessToken
+	return result, nil
 }
 
-// StartLink builds the provider authorize URL for an account-link flow.
+// resolveLoginAndMint upserts the identity link for an exchanged provider
+// account, resolves/creates the iam_users account and mints an iam_sessions row,
+// all inside one serializable tx. Shared by CompleteLogin and the redirect flow.
+func (a *pgOAuthSocial) resolveLoginAndMint(ctx context.Context, projectID, provider, providerAccountID, email string) (*domain.Session, error) {
+	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Session, error) {
+		ident, err := a.findIdentity(ctx, projectID, provider, providerAccountID)
+		if err != nil && !errors.Is(err, domain.ErrNotFound) {
+			return nil, err
+		}
+		var acct *domain.Account
+		if errors.Is(err, domain.ErrNotFound) {
+			acct, err = a.createSocialAccount(ctx, projectID, email)
+			if err != nil {
+				return nil, err
+			}
+			if err := a.insertIdentity(ctx, &domain.Identity{
+				ID:                newUUID(),
+				Type:              "oauth",
+				Provider:          provider,
+				ProviderAccountID: providerAccountID,
+				Email:             email,
+			}, projectID, acct.ID); err != nil {
+				return nil, err
+			}
+			// TODO outbox event: identity.linked
+		} else {
+			acct, err = a.loadAccount(ctx, projectID, ident.UserID)
+			if err != nil {
+				return nil, err
+			}
+		}
+		sess, err := a.mintSession(ctx, acct)
+		if err != nil {
+			return nil, err
+		}
+		// TODO outbox event: session.created
+		return sess, nil
+	})
+}
+
+// StartLink builds the provider authorize URL for an account-link flow. The
+// authenticated AccountID is carried by the caller's signed `state`.
 func (a *pgOAuthSocial) StartLink(ctx context.Context, cmd domain.OAuthSocialLinkStartCmd) (string, error) {
-	// TODO: build the provider authorize URL for the link flow (carries the
-	// authenticated AccountID in signed state). Same IdP-metadata dependency as
-	// StartLogin.
-	return "", domain.ErrServiceUnavailable.WithMessage("oauth link authorize URL building not implemented")
+	if cmd.AccountID == "" || cmd.Provider == "" {
+		return "", domain.ErrBadRequest
+	}
+	projectID := cmd.ProjectID
+	if projectID == "" {
+		// Fall back to the account's tenant when the caller did not supply it.
+		row, err := models.FindIamUser(ctx, a.db.Bobx(), cmd.AccountID)
+		if err != nil {
+			return "", translatePgErr("user", err)
+		}
+		projectID = row.ProjectID
+	}
+	cfg, _, err := a.loadOAuthConfig(ctx, projectID, cmd.Provider, cmd.RedirectTo)
+	if err != nil {
+		return "", err
+	}
+	return cfg.AuthCodeURL(cmd.State), nil
 }
 
-// CompleteLink handles the link callback and returns the product redirect URL.
+// CompleteLink handles the link callback: it exchanges the code for the provider
+// account and attaches the identity to the authenticated AccountID, then returns
+// the product redirect URL. The signed `state` carrying the AccountID is
+// validated by the caller; AccountID is taken from the principal here.
 func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocialLinkCallbackCmd) (string, error) {
-	// TODO: validate signed state to recover the AccountID, run Link to attach
-	// the identity, then return the product redirect URL. State store and
-	// redirect resolution not wired in this layer yet.
-	return "", domain.ErrServiceUnavailable.WithMessage("oauth link callback not implemented")
+	if cmd.Error != "" {
+		return "", domain.ErrProviderError.WithMessage(cmd.Error)
+	}
+	if cmd.AccountID == "" || cmd.Provider == "" || cmd.Code == "" {
+		return "", domain.ErrBadRequest
+	}
+
+	// The account row carries the tenant; resolve it before the upstream exchange.
+	row, err := models.FindIamUser(ctx, a.db.Bobx(), cmd.AccountID)
+	if err != nil {
+		return "", translatePgErr("user", err)
+	}
+	projectID := row.ProjectID
+	if cmd.ProjectID != "" && cmd.ProjectID != projectID { // tenant boundary
+		return "", domain.ErrForbidden
+	}
+
+	cfg, d, err := a.loadOAuthConfig(ctx, projectID, cmd.Provider, cmd.RedirectTo)
+	if err != nil {
+		return "", err
+	}
+	providerAccountID, email, err := a.oauthExchange(ctx, cfg, d, cmd.Code, cmd.CodeVerifier)
+	if err != nil {
+		return "", err
+	}
+
+	err = a.db.withTx(ctx, func(ctx context.Context) error {
+		if existing, err := a.findIdentity(ctx, projectID, cmd.Provider, providerAccountID); err == nil {
+			if existing.UserID == cmd.AccountID {
+				return domain.ErrAlreadyLinked
+			}
+			return domain.ErrIdentityExists
+		} else if !errors.Is(err, domain.ErrNotFound) {
+			return err
+		}
+		if err := a.insertIdentity(ctx, &domain.Identity{
+			ID:                newUUID(),
+			Type:              "oauth",
+			Provider:          cmd.Provider,
+			ProviderAccountID: providerAccountID,
+			Email:             email,
+		}, projectID, cmd.AccountID); err != nil {
+			return err
+		}
+		// TODO outbox event: identity.linked
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	redirect := cmd.RedirectTo
+	if redirect == "" {
+		redirect = d.RedirectURL
+	}
+	return redirect, nil
 }
 
 // ===== local helpers (oauth-prefixed where they touch package scope) =====
+
+// loadOAuthConfig loads the enabled iam_providers row for (project, provider,
+// kind=oauth) and assembles the golang.org/x/oauth2 Config from its data
+// envelope. redirectOverride, when non-empty, wins over the persisted
+// RedirectURL (the callback URL is request/deployment specific). A missing
+// provider maps to ErrNotFound; a provider lacking client/endpoint config maps
+// to ErrProviderError.
+func (a *pgOAuthSocial) loadOAuthConfig(ctx context.Context, projectID, provider, redirectOverride string) (*oauth2.Config, *oauthProviderData, error) {
+	rows, err := models.IamProviders.Query(
+		sm.Where(models.IamProviders.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamProviders.Columns.Provider.EQ(psql.Arg(provider))),
+		sm.Where(models.IamProviders.Columns.Kind.EQ(psql.Arg("oauth"))),
+		sm.Where(models.IamProviders.Columns.Enabled.EQ(psql.Arg(true))),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(rows) == 0 {
+		return nil, nil, domain.ErrNotFound
+	}
+	var raw oauthProviderData
+	if err := unmarshal(rows[0].Data, &raw); err != nil {
+		return nil, nil, err
+	}
+	d := raw.resolved()
+	if d.ClientID == "" || d.AuthURL == "" || d.TokenURL == "" {
+		return nil, nil, domain.ErrProviderError.WithMessage("oauth provider misconfigured: missing client_id/auth_url/token_url")
+	}
+	redirect := d.RedirectURL
+	if redirectOverride != "" {
+		redirect = redirectOverride
+	}
+	cfg := &oauth2.Config{
+		ClientID:     d.ClientID,
+		ClientSecret: d.ClientSecret,
+		RedirectURL:  redirect,
+		Scopes:       d.Scopes,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  d.AuthURL,
+			TokenURL: d.TokenURL,
+		},
+	}
+	return cfg, &d, nil
+}
+
+// oauthExchange swaps the authorization code for a token (golang.org/x/oauth2's
+// Exchange) and fetches the userinfo endpoint with that token to resolve the
+// external account id + email. The optional codeVerifier carries the PKCE
+// verifier paired with the StartLogin challenge. Upstream/transport failures map
+// to ErrProviderError.
+func (a *pgOAuthSocial) oauthExchange(ctx context.Context, cfg *oauth2.Config, d *oauthProviderData, code, codeVerifier string) (providerAccountID, email string, err error) {
+	var opts []oauth2.AuthCodeOption
+	if codeVerifier != "" {
+		opts = append(opts, oauth2.VerifierOption(codeVerifier))
+	}
+	tok, err := cfg.Exchange(ctx, code, opts...)
+	if err != nil {
+		return "", "", domain.ErrProviderError.WithMessage("oauth code exchange failed")
+	}
+	if d.UserInfoURL == "" {
+		return "", "", domain.ErrProviderError.WithMessage("oauth provider misconfigured: missing userinfo_url")
+	}
+	info, err := a.fetchUserInfo(ctx, cfg, tok, d.UserInfoURL)
+	if err != nil {
+		return "", "", err
+	}
+	providerAccountID = info.externalID()
+	if providerAccountID == "" {
+		return "", "", domain.ErrProviderError.WithMessage("oauth userinfo missing subject id")
+	}
+	return providerAccountID, info.Email, nil
+}
+
+// fetchUserInfo GETs the provider userinfo endpoint using the exchanged token
+// (cfg.Client attaches the bearer token and auto-refreshes) and decodes the
+// claims. Non-2xx / transport / decode failures map to ErrProviderError.
+func (a *pgOAuthSocial) fetchUserInfo(ctx context.Context, cfg *oauth2.Config, tok *oauth2.Token, userInfoURL string) (oauthUserInfo, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, userInfoURL, nil)
+	if err != nil {
+		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo request build failed")
+	}
+	resp, err := cfg.Client(ctx, tok).Do(req)
+	if err != nil {
+		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo fetch failed")
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil {
+		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo read failed")
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo returned non-2xx")
+	}
+	var info oauthUserInfo
+	if err := json.Unmarshal(body, &info); err != nil {
+		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo decode failed")
+	}
+	return info, nil
+}
 
 // findIdentity loads the OAuth identity for a (project, provider, providerAccountID)
 // triple, mapping no-rows to domain.ErrNotFound. Tenant-scoped by project_id.
@@ -418,28 +788,43 @@ func (a *pgOAuthSocial) loadAccount(ctx context.Context, projectID, userID strin
 	return &acct, nil
 }
 
-// mintSession creates a session row for an account and returns it with an opaque
-// access/refresh token. Real JWT access/id token minting is a signing-key TODO.
+// mintSession creates a session row for an account and returns it with a signed
+// RS256 JWT access token (minted by the project Signer) plus a refresh token
+// signed by the same key.
 func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (*domain.Session, error) {
-	access, err := oauthRandToken()
+	sessionID := newUUID()
+
+	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, oauthSocialDefaultEnv, map[string]any{
+		"iss": acct.ProjectID,
+		"sub": acct.ID,
+		"sid": sessionID,
+		"pid": acct.ProjectID,
+		"aal": 1,
+		"amr": []string{"oauth"},
+		"typ": "access",
+	}, oauthSocialAccessTTL)
 	if err != nil {
 		return nil, err
 	}
-	refresh, err := oauthRandToken()
+	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, oauthSocialDefaultEnv, map[string]any{
+		"iss": acct.ProjectID,
+		"sub": acct.ID,
+		"sid": sessionID,
+		"pid": acct.ProjectID,
+		"typ": "refresh",
+	}, oauthSocialRefreshTTL)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: sign/verify with signing key — mint a real JWT access/id token here
-	// instead of the opaque random token.
 	sess := &domain.Session{
-		ID:           newUUID(),
+		ID:           sessionID,
 		AccountID:    acct.ID,
 		ProjectID:    acct.ProjectID,
 		AMR:          []string{"oauth"},
 		AAL:          1,
 		AccessToken:  access,
 		RefreshToken: refresh,
-		ExpiresIn:    3600,
+		ExpiresIn:    int(oauthSocialAccessTTL / timeSecondDur),
 		CreatedAt:    nowUTC(),
 	}
 	raw, err := marshal(sess)

@@ -94,3 +94,48 @@ type FederationScimListQuery struct {
 	StartIndex   int
 	Count        int
 }
+
+// FederationConnectionConfig is the protocol-specific provider configuration of
+// an SSO connection, persisted whole in the connection's jsonb envelope. Exactly
+// one of Saml / Oidc is populated, matching Connection.Type.
+type FederationConnectionConfig struct {
+	Saml *FederationSamlConfig `json:"saml,omitempty"`
+	Oidc *FederationOidcConfig `json:"oidc,omitempty"`
+}
+
+// FederationSamlConfig carries the SAML Service Provider's view of an IdP: the
+// IdP metadata XML (preferred) or a raw IdP signing certificate, plus the SP
+// endpoint URLs used to build the AuthnRequest / ACS / metadata documents.
+type FederationSamlConfig struct {
+	// IDPMetadataXML is the IdP's SAML metadata document (entityID, SSO URL,
+	// signing certificate). When present it is the authoritative source.
+	IDPMetadataXML string `json:"idp_metadata_xml,omitempty"`
+	// IDPCertificatePEM is a fallback IdP signing certificate (PEM) used when no
+	// full metadata document is available.
+	IDPCertificatePEM string `json:"idp_certificate_pem,omitempty"`
+	// EntityID is the SP entity ID advertised to the IdP. Defaults to MetadataURL.
+	EntityID string `json:"entity_id,omitempty"`
+	// AcsURL is the SP Assertion Consumer Service URL (where the IdP POSTs the
+	// signed Response).
+	AcsURL string `json:"acs_url,omitempty"`
+	// MetadataURL is the SP metadata endpoint URL.
+	MetadataURL string `json:"metadata_url,omitempty"`
+	// SPCertificatePEM / SPPrivateKeyPEM is the SP's own signing keypair used to
+	// sign AuthnRequests and to advertise the SP signing certificate in metadata.
+	// Optional: when absent the SP runs without request signing.
+	SPCertificatePEM string `json:"sp_certificate_pem,omitempty"`
+	SPPrivateKeyPEM  string `json:"sp_private_key_pem,omitempty"`
+}
+
+// FederationOidcConfig carries the external OIDC provider settings used to drive
+// the authorization-code leg and to verify the returned id_token.
+type FederationOidcConfig struct {
+	Issuer       string   `json:"issuer,omitempty"`
+	AuthURL      string   `json:"auth_url,omitempty"`
+	TokenURL     string   `json:"token_url,omitempty"`
+	JWKSURL      string   `json:"jwks_url,omitempty"`
+	ClientID     string   `json:"client_id,omitempty"`
+	ClientSecret string   `json:"client_secret,omitempty"`
+	RedirectURL  string   `json:"redirect_url,omitempty"`
+	Scopes       []string `json:"scopes,omitempty"`
+}

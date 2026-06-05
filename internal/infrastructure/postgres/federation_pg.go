@@ -17,23 +17,43 @@ package postgres
 // does not match the request is treated as not-found).
 //
 // Crypto policy: SCIM token secrets and SSO exchange/auth codes are opaque
-// tokens minted with crypto/rand; only their sha256 hash is persisted. JWT /
-// SAML / OIDC token minting and signature verification are NOT implemented here
-// (marked // TODO: sign/verify with signing key) — the runtime legs persist what
-// they can and return generated opaque material.
+// tokens minted with crypto/rand; only their sha256 hash is persisted. The SAML
+// and external-OIDC protocol crypto IS implemented here with the upstream
+// libraries — github.com/crewjam/saml (AuthnRequest build/sign, signed-assertion
+// verification, SP metadata, SP cert rotation) and golang.org/x/oauth2 + jwx
+// (OIDC code exchange + id_token signature verification against the provider
+// JWKS). What is NOT done here is the post-verification user provisioning and the
+// short-lived exchange-code store (mapping a verified external subject to an IAM
+// user + session) — those need a provisioning port this adapter does not own and
+// remain marked // TODO.
 
 import (
 	"context"
+	"crypto"
 	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
+	"encoding/xml"
 	"errors"
+	"math/big"
+	"net/url"
 	"time"
 
 	"github.com/aarondl/opt/null"
+	"github.com/crewjam/saml"
+	"github.com/crewjam/saml/samlsp"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
+	"golang.org/x/oauth2"
 
 	"github.com/gopherex/iam/internal/domain"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
@@ -151,6 +171,294 @@ func fedConnSetter(c *domain.Connection) (*models.IamSsoConnectionSetter, error)
 		setter.ExternalRef = &v
 	}
 	return setter, nil
+}
+
+// ===========================================================================
+// SAML / OIDC protocol crypto helpers (github.com/crewjam/saml, x/oauth2, jwx)
+// ===========================================================================
+
+// fedParsePrivateKeyPEM decodes a PEM-encoded RSA/PKCS#8 private key used to sign
+// SAML AuthnRequests. It accepts PKCS#1 ("RSA PRIVATE KEY") and PKCS#8 ("PRIVATE
+// KEY") blocks.
+func fedParsePrivateKeyPEM(pemStr string) (crypto.Signer, error) {
+	block, _ := pem.Decode([]byte(pemStr))
+	if block == nil {
+		return nil, domain.ErrProviderError
+	}
+	if key, err := x509.ParsePKCS1PrivateKey(block.Bytes); err == nil {
+		return key, nil
+	}
+	keyAny, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, domain.ErrProviderError
+	}
+	signer, ok := keyAny.(crypto.Signer)
+	if !ok {
+		return nil, domain.ErrProviderError
+	}
+	return signer, nil
+}
+
+// fedParseCertificatePEM decodes a PEM-encoded X.509 certificate (the SP signing
+// certificate advertised in metadata / used to sign AuthnRequests).
+func fedParseCertificatePEM(pemStr string) (*x509.Certificate, error) {
+	block, _ := pem.Decode([]byte(pemStr))
+	if block == nil {
+		return nil, domain.ErrProviderError
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, domain.ErrProviderError
+	}
+	return cert, nil
+}
+
+// fedSamlServiceProvider builds a crewjam saml.ServiceProvider from a connection's
+// stored config. IdP metadata XML is the authoritative source for the IdP entity
+// (SSO endpoint + signing certificate); when only a raw IdP certificate is stored
+// it is wrapped into a minimal IDPMetadata so signature verification still works.
+// The SP keypair (Key/Certificate) is optional — when present, AuthnRequests are
+// signed.
+func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error) {
+	if c.Config == nil || c.Config.Saml == nil {
+		return nil, domain.ErrProviderError
+	}
+	cfg := c.Config.Saml
+
+	sp := &saml.ServiceProvider{
+		EntityID: cfg.EntityID,
+	}
+	if cfg.AcsURL != "" {
+		u, err := url.Parse(cfg.AcsURL)
+		if err != nil {
+			return nil, domain.ErrProviderError
+		}
+		sp.AcsURL = *u
+	}
+	if cfg.MetadataURL != "" {
+		u, err := url.Parse(cfg.MetadataURL)
+		if err != nil {
+			return nil, domain.ErrProviderError
+		}
+		sp.MetadataURL = *u
+	}
+
+	switch {
+	case cfg.IDPMetadataXML != "":
+		md, err := samlsp.ParseMetadata([]byte(cfg.IDPMetadataXML))
+		if err != nil {
+			return nil, domain.ErrProviderError
+		}
+		sp.IDPMetadata = md
+	case cfg.IDPCertificatePEM != "":
+		// Wrap the raw IdP signing cert into a minimal IDPMetadata so the library's
+		// signature verification (getIDPSigningCerts) can find it. The DER bytes are
+		// base64-encoded into an X509Certificate descriptor.
+		cert, err := fedParseCertificatePEM(cfg.IDPCertificatePEM)
+		if err != nil {
+			return nil, err
+		}
+		sp.IDPMetadata = &saml.EntityDescriptor{
+			IDPSSODescriptors: []saml.IDPSSODescriptor{{
+				SSODescriptor: saml.SSODescriptor{
+					RoleDescriptor: saml.RoleDescriptor{
+						KeyDescriptors: []saml.KeyDescriptor{{
+							Use: "signing",
+							KeyInfo: saml.KeyInfo{
+								X509Data: saml.X509Data{
+									X509Certificates: []saml.X509Certificate{{
+										Data: base64.StdEncoding.EncodeToString(cert.Raw),
+									}},
+								},
+							},
+						}},
+					},
+				},
+			}},
+		}
+	default:
+		return nil, domain.ErrProviderError
+	}
+
+	// Optional SP signing keypair (enables signed AuthnRequests + signing cert in
+	// the SP metadata document).
+	if cfg.SPPrivateKeyPEM != "" {
+		key, err := fedParsePrivateKeyPEM(cfg.SPPrivateKeyPEM)
+		if err != nil {
+			return nil, err
+		}
+		sp.Key = key
+	}
+	if cfg.SPCertificatePEM != "" {
+		cert, err := fedParseCertificatePEM(cfg.SPCertificatePEM)
+		if err != nil {
+			return nil, err
+		}
+		sp.Certificate = cert
+	}
+	return sp, nil
+}
+
+// fedSamlSubject extracts the external subject (a stable opaque id) and email
+// from a verified SAML assertion: the NameID is the subject; the email is taken
+// from common email attributes (falling back to the NameID when it looks like an
+// address).
+func fedSamlSubject(a *saml.Assertion) (subject, email string) {
+	if a.Subject != nil && a.Subject.NameID != nil {
+		subject = a.Subject.NameID.Value
+	}
+	emailNames := map[string]bool{
+		"email":        true,
+		"mail":         true,
+		"emailaddress": true,
+		"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": true,
+		"urn:oid:0.9.2342.19200300.100.1.3":                                  true,
+	}
+	for _, stmt := range a.AttributeStatements {
+		for _, attr := range stmt.Attributes {
+			if email != "" {
+				break
+			}
+			if emailNames[attr.FriendlyName] || emailNames[attr.Name] {
+				for _, v := range attr.Values {
+					if v.Value != "" {
+						email = v.Value
+						break
+					}
+				}
+			}
+		}
+	}
+	if email == "" && subject != "" && fedEmailDomain(subject) != "" {
+		email = subject
+	}
+	if subject == "" {
+		subject = email
+	}
+	return subject, email
+}
+
+// fedOauth2Config builds the x/oauth2 Config for an external OIDC connection.
+func fedOauth2Config(c *domain.Connection) (*oauth2.Config, *domain.FederationOidcConfig, error) {
+	if c.Config == nil || c.Config.Oidc == nil {
+		return nil, nil, domain.ErrProviderError
+	}
+	cfg := c.Config.Oidc
+	scopes := cfg.Scopes
+	if len(scopes) == 0 {
+		scopes = []string{"openid", "email", "profile"}
+	}
+	return &oauth2.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		RedirectURL:  cfg.RedirectURL,
+		Scopes:       scopes,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  cfg.AuthURL,
+			TokenURL: cfg.TokenURL,
+		},
+	}, cfg, nil
+}
+
+// fedVerifyIDToken verifies an OIDC id_token against the provider's JWKS
+// (cfg.JWKSURL) and returns its claims. The signature is checked with the
+// provider keys; issuer/audience are checked against the connection config.
+func fedVerifyIDToken(ctx context.Context, cfg *domain.FederationOidcConfig, rawIDToken string) (map[string]any, error) {
+	if cfg.JWKSURL == "" {
+		return nil, domain.ErrProviderError
+	}
+	set, err := jwk.Fetch(ctx, cfg.JWKSURL)
+	if err != nil {
+		return nil, domain.ErrProviderError
+	}
+	tok, err := jwt.Parse([]byte(rawIDToken),
+		jwt.WithKeySet(set),
+		jwt.WithValidate(true),
+	)
+	if err != nil {
+		return nil, domain.ErrInvalidToken
+	}
+	claims, err := tokenClaims(tok)
+	if err != nil {
+		return nil, domain.ErrInvalidToken
+	}
+	if cfg.Issuer != "" {
+		if iss, _ := claims["iss"].(string); iss != cfg.Issuer {
+			return nil, domain.ErrInvalidToken
+		}
+	}
+	if cfg.ClientID != "" {
+		if !fedAudienceContains(claims["aud"], cfg.ClientID) {
+			return nil, domain.ErrInvalidToken
+		}
+	}
+	return claims, nil
+}
+
+// fedAudienceContains reports whether the id_token "aud" claim (string or []any)
+// contains the expected client id.
+func fedAudienceContains(aud any, clientID string) bool {
+	switch v := aud.(type) {
+	case string:
+		return v == clientID
+	case []any:
+		for _, item := range v {
+			if s, ok := item.(string); ok && s == clientID {
+				return true
+			}
+		}
+	case []string:
+		for _, s := range v {
+			if s == clientID {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// fedGenerateSPCertificate mints a fresh self-signed RSA-2048 SP signing
+// certificate (PEM) and its private key (PKCS#1 PEM), returning both plus the
+// SHA-1 fingerprint of the certificate (a stable external reference). Used by
+// RotateConnectionCertificate to roll the SP's SAML signing material.
+func fedGenerateSPCertificate(commonName string) (certPEM, keyPEM, fingerprint string, err error) {
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", "", err
+	}
+	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		return "", "", "", err
+	}
+	now := nowUTC()
+	tmpl := &x509.Certificate{
+		SerialNumber:          serial,
+		Subject:               pkix.Name{CommonName: commonName},
+		NotBefore:             now.Add(-time.Minute),
+		NotAfter:              now.AddDate(2, 0, 0),
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		BasicConstraintsValid: true,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &priv.PublicKey, priv)
+	if err != nil {
+		return "", "", "", err
+	}
+	certPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
+	keyPEM = string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}))
+	sum := sha1.Sum(der)
+	fingerprint = hex.EncodeToString(sum[:])
+	return certPEM, keyPEM, fingerprint, nil
+}
+
+// xmlMarshalIndent renders a SAML metadata document to a pretty-printed XML
+// document with the standard declaration prepended.
+func xmlMarshalIndent(v any) ([]byte, error) {
+	body, err := xml.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	out := append([]byte(xml.Header), body...)
+	return out, nil
 }
 
 // ===========================================================================
@@ -315,10 +623,30 @@ func (a *pgFederationConnections) TestConnection(ctx context.Context, projectID,
 		return "", err
 	}
 	// The SSO test leg drives the provider login flow and validates the round
-	// trip; the protocol crypto (AuthnRequest signing / OIDC client assertion)
-	// is not implemented here.
-	// TODO: sign/verify with signing key — build a real provider test URL.
-	return "/v1/sso/" + conn.Type + "/" + conn.ID + "/start?test=1", nil
+	// trip by building a real provider login URL from the connection's protocol
+	// config: a signed SAML AuthnRequest redirect for SAML, or the OIDC authorize
+	// URL for OIDC. A config error surfaces as a provider error so the operator
+	// sees that the connection is misconfigured.
+	switch conn.Type {
+	case "saml":
+		sp, err := fedSamlServiceProvider(conn)
+		if err != nil {
+			return "", err
+		}
+		redirectURL, err := sp.MakeRedirectAuthenticationRequest("test")
+		if err != nil {
+			return "", domain.ErrSSOError
+		}
+		return redirectURL.String(), nil
+	case "oidc":
+		oauthCfg, _, err := fedOauth2Config(conn)
+		if err != nil {
+			return "", err
+		}
+		return oauthCfg.AuthCodeURL("test"), nil
+	default:
+		return "", domain.ErrProviderError
+	}
 }
 
 func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Context, projectID, id string) (string, error) {
@@ -337,15 +665,23 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 		if err != nil {
 			return "", err
 		}
-		// A real rotation generates a new SAML signing keypair / SP certificate
-		// and stores the private key in the signing-key store. We persist a fresh
-		// opaque reference and return the (placeholder) public certificate.
-		// TODO: sign/verify with signing key — mint a real X.509 keypair.
-		certRef, err := fedRandomToken()
+		// Rotation generates a fresh SP signing keypair (self-signed X.509) and
+		// stores it on the connection's SAML config; the new public certificate
+		// (PEM) is returned and also advertised in the SP metadata document. The
+		// private key never leaves the envelope.
+		certPEM, keyPEM, fp, err := fedGenerateSPCertificate(conn.ID)
 		if err != nil {
 			return "", err
 		}
-		conn.ExternalRef = certRef
+		if conn.Config == nil {
+			conn.Config = &domain.FederationConnectionConfig{}
+		}
+		if conn.Config.Saml == nil {
+			conn.Config.Saml = &domain.FederationSamlConfig{}
+		}
+		conn.Config.Saml.SPCertificatePEM = certPEM
+		conn.Config.Saml.SPPrivateKeyPEM = keyPEM
+		conn.ExternalRef = fp // fingerprint as the stable external reference
 		setter, err := fedConnSetter(conn)
 		if err != nil {
 			return "", err
@@ -357,7 +693,7 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 			return "", err
 		}
 		// TODO outbox event: federation.connection.certificate_rotated
-		return certRef, nil
+		return certPEM, nil
 	})
 }
 
@@ -609,10 +945,13 @@ func fedEmailDomain(email string) string {
 // ===========================================================================
 
 // pgFederationRuntime drives the OIDC / SAML authentication legs. The protocol
-// crypto (AuthnRequest signing, OIDC code exchange, assertion signature
-// verification, JWT minting) is NOT implemented here: each such line is marked
-// // TODO: sign/verify with signing key. Exchange resolves a short-lived opaque
-// exchange code to the authenticated account + session.
+// crypto is implemented with github.com/crewjam/saml (AuthnRequest build/sign,
+// signed-assertion verification, SP metadata) and golang.org/x/oauth2 + jwx
+// (OIDC code exchange + id_token JWKS verification). What remains unresolved is
+// the post-verification provisioning: mapping the verified external subject to
+// an IAM user/session needs a user-provisioning port + an exchange-code store
+// that this adapter does not own, so those legs mint an opaque exchange code and
+// leave the resolution to Exchange (still a TODO — no code/user table here).
 type pgFederationRuntime struct{ db *DB }
 
 // NewPgFederationRuntime builds the Postgres-backed FederationRuntime adapter.
@@ -636,31 +975,75 @@ func (a *pgFederationRuntime) fedConnByID(ctx context.Context, connectionID stri
 }
 
 func (a *pgFederationRuntime) OidcStart(ctx context.Context, cmd domain.FederationSsoStartCmd) (*domain.FederationSsoRedirect, error) {
-	if _, err := a.fedConnByID(ctx, cmd.ConnectionID); err != nil {
-		return nil, err
-	}
-	// Build the OIDC authorization-code redirect with PKCE + state. The PKCE
-	// verifier / nonce persistence and provider metadata discovery are not
-	// implemented here.
-	// TODO: sign/verify with signing key — build a real OIDC authorize URL.
-	state, err := fedRandomToken()
+	row, err := a.fedConnByID(ctx, cmd.ConnectionID)
 	if err != nil {
 		return nil, err
 	}
-	_ = state
-	return &domain.FederationSsoRedirect{
-		URL: "/v1/sso/oidc/" + cmd.ConnectionID + "/start?redirect_to=" + cmd.RedirectTo,
-	}, nil
+	conn, err := fedConnectionFromRow(row)
+	if err != nil {
+		return nil, err
+	}
+	oauthCfg, _, err := fedOauth2Config(conn)
+	if err != nil {
+		return nil, err
+	}
+	// Build the OIDC authorization-code authorize URL with state. The caller's
+	// RedirectTo is carried back through the state token; we mint an opaque,
+	// unguessable state value.
+	state := cmd.State
+	if state == "" {
+		state, err = fedRandomToken()
+		if err != nil {
+			return nil, err
+		}
+	}
+	opts := []oauth2.AuthCodeOption{}
+	if cmd.LoginHint != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("login_hint", cmd.LoginHint))
+	}
+	authURL := oauthCfg.AuthCodeURL(state, opts...)
+	return &domain.FederationSsoRedirect{URL: authURL}, nil
 }
 
 func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.FederationSsoCallbackCmd) (*domain.FederationSsoRedirect, error) {
-	if _, err := a.fedConnByID(ctx, cmd.ConnectionID); err != nil {
+	row, err := a.fedConnByID(ctx, cmd.ConnectionID)
+	if err != nil {
 		return nil, err
 	}
-	// Exchange the authorization code at the provider token endpoint, verify the
-	// id_token signature, provision/link the account and mint a session. None of
-	// the provider crypto is implemented here.
-	// TODO: sign/verify with signing key — verify id_token + exchange code.
+	conn, err := fedConnectionFromRow(row)
+	if err != nil {
+		return nil, err
+	}
+	oauthCfg, oidcCfg, err := fedOauth2Config(conn)
+	if err != nil {
+		return nil, err
+	}
+	// Exchange the authorization code at the provider token endpoint.
+	tok, err := oauthCfg.Exchange(ctx, cmd.Code)
+	if err != nil {
+		return nil, domain.ErrProviderError
+	}
+	rawIDToken, ok := tok.Extra("id_token").(string)
+	if !ok || rawIDToken == "" {
+		return nil, domain.ErrSSOError
+	}
+	// Verify the id_token signature against the provider JWKS and check iss/aud.
+	claims, err := fedVerifyIDToken(ctx, oidcCfg, rawIDToken)
+	if err != nil {
+		return nil, err
+	}
+	subject, _ := claims["sub"].(string)
+	if subject == "" {
+		return nil, domain.ErrSSOError
+	}
+	// The id_token is verified; the external subject is now trusted. Mapping the
+	// external subject to an IAM user + session requires a user-provisioning port
+	// (account link/create) and an exchange-code store, neither of which this
+	// adapter owns. We mint an opaque single-use exchange code for the
+	// provisioning leg to resolve; persisting (code -> verified subject/claims)
+	// belongs to that port.
+	// TODO: provision/link the verified OIDC subject to an IAM user + session
+	//       (needs a user-provisioning port + exchange-code store not owned here).
 	// TODO outbox event: federation.sso.oidc_callback
 	exchangeCode, err := fedRandomToken()
 	if err != nil {
@@ -672,24 +1055,69 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 }
 
 func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.FederationSsoStartCmd) (*domain.FederationSsoRedirect, error) {
-	if _, err := a.fedConnByID(ctx, cmd.ConnectionID); err != nil {
+	row, err := a.fedConnByID(ctx, cmd.ConnectionID)
+	if err != nil {
 		return nil, err
 	}
-	// Build and sign the SAML AuthnRequest and redirect to the IdP SSO endpoint.
-	// TODO: sign/verify with signing key — build + sign the SAML AuthnRequest.
-	return &domain.FederationSsoRedirect{
-		URL: "/v1/sso/saml/" + cmd.ConnectionID + "/login?redirect_to=" + cmd.RedirectTo,
-	}, nil
+	conn, err := fedConnectionFromRow(row)
+	if err != nil {
+		return nil, err
+	}
+	sp, err := fedSamlServiceProvider(conn)
+	if err != nil {
+		return nil, err
+	}
+	// Build the SAML AuthnRequest and the redirect URL to the IdP SSO endpoint.
+	// When the connection carries an SP signing keypair the request is signed by
+	// the library; RelayState carries the caller's post-login target.
+	relayState := cmd.State
+	if relayState == "" {
+		relayState = cmd.RedirectTo
+	}
+	redirectURL, err := sp.MakeRedirectAuthenticationRequest(relayState)
+	if err != nil {
+		return nil, domain.ErrSSOError
+	}
+	return &domain.FederationSsoRedirect{URL: redirectURL.String()}, nil
 }
 
 func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.FederationSamlAcsCmd) (*domain.FederationSsoRedirect, error) {
-	if _, err := a.fedConnByID(ctx, cmd.ConnectionID); err != nil {
+	row, err := a.fedConnByID(ctx, cmd.ConnectionID)
+	if err != nil {
 		return nil, err
 	}
-	// Validate the SAML Response signature, extract the assertion, provision/link
-	// the account and mint a session. The XML-DSig verification is not
-	// implemented here.
-	// TODO: sign/verify with signing key — verify the SAML assertion signature.
+	conn, err := fedConnectionFromRow(row)
+	if err != nil {
+		return nil, err
+	}
+	sp, err := fedSamlServiceProvider(conn)
+	if err != nil {
+		return nil, err
+	}
+	// The cmd carries the raw base64 SAMLResponse posted by the IdP; decode it to
+	// the assertion XML and let the library verify the XML-DSig signature, the
+	// conditions and the audience.
+	decoded, err := base64.StdEncoding.DecodeString(cmd.SAMLResponse)
+	if err != nil {
+		return nil, domain.ErrSSOError
+	}
+	// possibleRequestIDs is empty: we accept IdP-initiated and SP-initiated flows
+	// without correlating an outstanding AuthnRequest (no request-id store here).
+	assertion, err := sp.ParseXMLResponse(decoded, []string{}, sp.AcsURL)
+	if err != nil {
+		return nil, domain.ErrSSOError
+	}
+	subject, _ := fedSamlSubject(assertion)
+	if subject == "" {
+		return nil, domain.ErrSSOError
+	}
+	// The assertion signature is verified; the external subject is now trusted.
+	// Mapping it to an IAM user + session requires a user-provisioning port
+	// (account link/create) and an exchange-code store, neither of which this
+	// adapter owns. We mint an opaque single-use exchange code for the
+	// provisioning leg to resolve.
+	// TODO: provision/link the verified SAML subject to an IAM user + session
+	//       (needs a user-provisioning port + exchange-code store not owned here).
 	// TODO outbox event: federation.sso.saml_acs
 	exchangeCode, err := fedRandomToken()
 	if err != nil {
@@ -701,15 +1129,32 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 }
 
 func (a *pgFederationRuntime) SamlSlo(ctx context.Context, connectionID string) (*domain.FederationSsoRedirect, error) {
-	if _, err := a.fedConnByID(ctx, connectionID); err != nil {
+	row, err := a.fedConnByID(ctx, connectionID)
+	if err != nil {
 		return nil, err
 	}
-	// Build and sign the SAML LogoutRequest / LogoutResponse.
-	// TODO: sign/verify with signing key — build + sign the SAML LogoutRequest.
+	conn, err := fedConnectionFromRow(row)
+	if err != nil {
+		return nil, err
+	}
+	sp, err := fedSamlServiceProvider(conn)
+	if err != nil {
+		return nil, err
+	}
+	// Resolve the IdP's Single-Logout endpoint from its metadata. Building the
+	// fully-signed LogoutRequest (sp.MakeRedirectLogoutRequest) additionally needs
+	// the user's NameID, which this signature (connection id only, no session
+	// context) does not carry; the per-subject LogoutRequest is therefore built by
+	// the caller leg that holds the session. We return the real IdP SLO location.
+	sloLocation := sp.GetSLOBindingLocation(saml.HTTPRedirectBinding)
+	if sloLocation == "" {
+		// No SLO endpoint advertised by the IdP — nothing to redirect to.
+		return nil, domain.ErrSSOError
+	}
+	// TODO: build + sign the per-subject SAML LogoutRequest once the session's
+	//       NameID is threaded into this leg (signature carries connection id only).
 	// TODO outbox event: federation.sso.saml_slo
-	return &domain.FederationSsoRedirect{
-		URL: "/v1/sso/saml/" + connectionID + "/slo",
-	}, nil
+	return &domain.FederationSsoRedirect{URL: sloLocation}, nil
 }
 
 func (a *pgFederationRuntime) SamlMetadata(ctx context.Context, connectionID string) ([]byte, error) {
@@ -717,16 +1162,24 @@ func (a *pgFederationRuntime) SamlMetadata(ctx context.Context, connectionID str
 	if err != nil {
 		return nil, err
 	}
-	// Render the SP metadata XML (entityID, ACS URL, signing certificate). The
-	// embedded signing certificate comes from the connection's signing key.
-	// TODO: sign/verify with signing key — embed the real SP signing certificate.
-	xml := `<?xml version="1.0" encoding="UTF-8"?>` +
-		`<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="` + row.ID + `">` +
-		`<SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">` +
-		`<AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" ` +
-		`Location="/v1/sso/saml/` + row.ID + `/acs" index="0"/>` +
-		`</SPSSODescriptor></EntityDescriptor>`
-	return []byte(xml), nil
+	conn, err := fedConnectionFromRow(row)
+	if err != nil {
+		return nil, err
+	}
+	sp, err := fedSamlServiceProvider(conn)
+	if err != nil {
+		return nil, err
+	}
+	// Render the SP metadata XML (entityID, ACS URL, signing certificate) from the
+	// library. The embedded signing certificate is the connection's SP certificate
+	// when stored; when absent the metadata is rendered without a signing
+	// KeyDescriptor (the SP simply runs without request signing).
+	md := sp.Metadata()
+	out, err := xmlMarshalIndent(md)
+	if err != nil {
+		return nil, domain.ErrSSOError
+	}
+	return out, nil
 }
 
 func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code string) (*domain.Account, *domain.Session, error) {

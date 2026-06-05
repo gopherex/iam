@@ -14,6 +14,7 @@ type OAuthSocialExchangeCmd struct {
 // for a 302 redirect. RedirectTo is the product URL the provider callback will
 // ultimately bounce the user back to.
 type OAuthSocialStartCmd struct {
+	ProjectID     string
 	Provider      string
 	RedirectTo    string
 	State         string
@@ -27,10 +28,13 @@ type OAuthSocialStartCmd struct {
 // returns the product redirect URL (plus an optional Set-Cookie value in cookie
 // mode).
 type OAuthSocialCallbackCmd struct {
-	Provider string
-	Code     string
-	State    string
-	Error    string
+	ProjectID    string
+	Provider     string
+	Code         string
+	State        string
+	Error        string
+	CodeVerifier string // optional PKCE verifier paired with the StartLogin challenge
+	RedirectTo   string // product URL to bounce the browser back to after minting
 }
 
 // OAuthSocialCallbackResult is the outcome of a social-login callback: the URL
@@ -44,6 +48,7 @@ type OAuthSocialCallbackResult struct {
 // authenticated account. AccountID comes from the principal, never the request.
 type OAuthSocialLinkStartCmd struct {
 	AccountID  string
+	ProjectID  string
 	Provider   string
 	RedirectTo string
 	State      string
@@ -52,5 +57,12 @@ type OAuthSocialLinkStartCmd struct {
 // OAuthSocialLinkCallbackCmd carries the provider callback for an account-link
 // flow; the adapter attaches the identity and returns the product redirect URL.
 type OAuthSocialLinkCallbackCmd struct {
-	Provider string
+	AccountID    string
+	ProjectID    string
+	Provider     string
+	Code         string
+	State        string
+	Error        string
+	CodeVerifier string // optional PKCE verifier paired with the StartLink challenge
+	RedirectTo   string // product URL to bounce the browser back to after linking
 }

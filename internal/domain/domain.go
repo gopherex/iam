@@ -60,6 +60,11 @@ type Factor struct {
 	Type   string // totp | sms | email | webauthn
 	Status string // pending | active
 	Hint   string
+	// OTPAuthURL is the otpauth:// provisioning URL returned to the caller at
+	// TOTP enrollment time so it can be rendered as a QR code. It is transient
+	// provisioning material, not a stored credential (the shared secret lives
+	// in iam_factors.secret), so it is excluded from the persisted aggregate.
+	OTPAuthURL string `json:"-"`
 }
 
 type WebAuthnCredential struct {
@@ -88,6 +93,10 @@ type Connection struct {
 	Status      string
 	Domains     []string
 	ExternalRef string
+	// Config carries the protocol-specific provider settings (SAML IdP metadata
+	// / certificate, OIDC issuer / client credentials). It is persisted whole in
+	// the connection's jsonb envelope; see FederationSamlConfig / FederationOidcConfig.
+	Config *FederationConnectionConfig `json:",omitempty"`
 }
 
 type Domain struct {
