@@ -161,6 +161,42 @@ func TestAuthResult_EncodeDecode(t *testing.T) {
 	var typ2 AuthResult
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestAuthResultOrNextStep_EncodeDecode(t *testing.T) {
+	var typ AuthResultOrNextStep
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AuthResultOrNextStep
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAuthenticatedResult_EncodeDecode(t *testing.T) {
+	var typ AuthenticatedResult
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AuthenticatedResult
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAuthenticatedResultResultType_EncodeDecode(t *testing.T) {
+	var typ AuthenticatedResultResultType
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AuthenticatedResultResultType
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestChallenge_EncodeDecode(t *testing.T) {
 	var typ Challenge
 	typ.SetFake()
@@ -219,6 +255,18 @@ func TestConsentConfig_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 ConsentConfig
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestConsentDocRef_EncodeDecode(t *testing.T) {
+	var typ ConsentDocRef
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ConsentDocRef
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestConsentDocument_EncodeDecode(t *testing.T) {
@@ -4171,6 +4219,30 @@ func TestNextStep_EncodeDecode(t *testing.T) {
 	var typ2 NextStep
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestNextStepResult_EncodeDecode(t *testing.T) {
+	var typ NextStepResult
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 NextStepResult
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestNextStepResultResultType_EncodeDecode(t *testing.T) {
+	var typ NextStepResultResultType
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 NextStepResultResultType
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestOAuthGrant_EncodeDecode(t *testing.T) {
 	var typ OAuthGrant
 	typ.SetFake()
@@ -4217,6 +4289,30 @@ func TestOk_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 Ok
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestOkResult_EncodeDecode(t *testing.T) {
+	var typ OkResult
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 OkResult
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestOkResultResultType_EncodeDecode(t *testing.T) {
+	var typ OkResultResultType
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 OkResultResultType
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestOtpStartRequest_EncodeDecode(t *testing.T) {
@@ -4313,6 +4409,18 @@ func TestPasswordResetRequest_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 PasswordResetRequest
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestPasswordSignInRequest_EncodeDecode(t *testing.T) {
+	var typ PasswordSignInRequest
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PasswordSignInRequest
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestPatchMgmtV1ProjectsByProjectIdFeaturesForbidden_EncodeDecode(t *testing.T) {
@@ -5521,6 +5629,18 @@ func TestPatchV1UsersMeUnprocessableEntity_EncodeDecode(t *testing.T) {
 	var typ2 PatchV1UsersMeUnprocessableEntity
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestPhoneVerifyResult_EncodeDecode(t *testing.T) {
+	var typ PhoneVerifyResult
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PhoneVerifyResult
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestPostMgmtV1ProjectsByProjectIdAdminTokensForbidden_EncodeDecode(t *testing.T) {
 	var typ PostMgmtV1ProjectsByProjectIdAdminTokensForbidden
 	typ.SetFake()
@@ -5819,6 +5939,18 @@ func TestPostOauth2IntrospectOKAdditional_EncodeDecode(t *testing.T) {
 
 	var typ2 PostOauth2IntrospectOKAdditional
 	typ2 = make(PostOauth2IntrospectOKAdditional)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestPostOauth2ParCreated_EncodeDecode(t *testing.T) {
+	var typ PostOauth2ParCreated
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PostOauth2ParCreated
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestPostOauth2TokenBadRequest_EncodeDecode(t *testing.T) {
@@ -6453,6 +6585,42 @@ func TestPostV1AuthPhoneVerificationStartReqChannel_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 PostV1AuthPhoneVerificationStartReqChannel
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestPostV1AuthPhoneVerificationVerifyReq_EncodeDecode(t *testing.T) {
+	var typ PostV1AuthPhoneVerificationVerifyReq
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PostV1AuthPhoneVerificationVerifyReq
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestPostV1AuthSessionStepUpReq_EncodeDecode(t *testing.T) {
+	var typ PostV1AuthSessionStepUpReq
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PostV1AuthSessionStepUpReq
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestPostV1AuthSessionStepUpReqRequiredAal_EncodeDecode(t *testing.T) {
+	var typ PostV1AuthSessionStepUpReqRequiredAal
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PostV1AuthSessionStepUpReqRequiredAal
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestPostV1AuthSessionSwitchGroupForbidden_EncodeDecode(t *testing.T) {
@@ -10135,6 +10303,18 @@ func TestSmsProviderConfig_EncodeDecode(t *testing.T) {
 	typ2 = make(SmsProviderConfig)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestStepUpResult_EncodeDecode(t *testing.T) {
+	var typ StepUpResult
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 StepUpResult
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestTimestamp_EncodeDecode(t *testing.T) {
 	var typ Timestamp
 	typ.SetFake()
@@ -10221,6 +10401,30 @@ func TestUserStatus_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 UserStatus
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestUserUpdatedResult_EncodeDecode(t *testing.T) {
+	var typ UserUpdatedResult
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 UserUpdatedResult
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestUserUpdatedResultResultType_EncodeDecode(t *testing.T) {
+	var typ UserUpdatedResultResultType
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 UserUpdatedResultResultType
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestWebAuthnCredential_EncodeDecode(t *testing.T) {

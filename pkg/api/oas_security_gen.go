@@ -258,6 +258,7 @@ var operationRolesBearerAuth = map[string][]string{
 	PostV1AuthPasswordVerifyOperation:                      []string{},
 	PostV1AuthPhoneChangeStartOperation:                    []string{},
 	PostV1AuthPhoneChangeVerifyOperation:                   []string{},
+	PostV1AuthSessionStepUpOperation:                       []string{},
 	PostV1AuthSessionSwitchGroupOperation:                  []string{},
 	PostV1AuthSignOutOperation:                             []string{},
 	PostV1AuthSignOutAllOperation:                          []string{},
@@ -300,6 +301,7 @@ func GetRolesForBearerAuth(operation string) []string {
 var operationRolesClientSecretBasic = map[string][]string{
 	PostOauth2DeviceAuthorizationOperation: []string{},
 	PostOauth2IntrospectOperation:          []string{},
+	PostOauth2ParOperation:                 []string{},
 	PostOauth2RevokeOperation:              []string{},
 	PostOauth2TokenOperation:               []string{},
 }

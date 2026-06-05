@@ -956,6 +956,12 @@ type Handler interface {
 	//
 	// POST /oauth2/introspect
 	PostOauth2Introspect(ctx context.Context, req *PostOauth2IntrospectReq) (PostOauth2IntrospectRes, error)
+	// PostOauth2Par implements postOauth2Par operation.
+	//
+	// Pushed Authorization Request.
+	//
+	// POST /oauth2/par
+	PostOauth2Par(ctx context.Context, req *PushedAuthorizationRequest) (PostOauth2ParRes, error)
 	// PostOauth2Revoke implements postOauth2Revoke operation.
 	//
 	// RFC 7009 token revocation.
@@ -1160,12 +1166,30 @@ type Handler interface {
 	//
 	// POST /v1/auth/phone/verification/start
 	PostV1AuthPhoneVerificationStart(ctx context.Context, req *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams) (PostV1AuthPhoneVerificationStartRes, error)
+	// PostV1AuthPhoneVerificationVerify implements postV1AuthPhoneVerificationVerify operation.
+	//
+	// Verify a phone code.
+	//
+	// POST /v1/auth/phone/verification/verify
+	PostV1AuthPhoneVerificationVerify(ctx context.Context, req *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams) (PostV1AuthPhoneVerificationVerifyRes, error)
+	// PostV1AuthSessionStepUp implements postV1AuthSessionStepUp operation.
+	//
+	// Begin step-up authentication.
+	//
+	// POST /v1/auth/session/step-up
+	PostV1AuthSessionStepUp(ctx context.Context, req *PostV1AuthSessionStepUpReq) (PostV1AuthSessionStepUpRes, error)
 	// PostV1AuthSessionSwitchGroup implements postV1AuthSessionSwitchGroup operation.
 	//
 	// Re-issues a token with a new active-group claim. Membership is validated externally.
 	//
 	// POST /v1/auth/session/switch-group
 	PostV1AuthSessionSwitchGroup(ctx context.Context, req *PostV1AuthSessionSwitchGroupReq) (PostV1AuthSessionSwitchGroupRes, error)
+	// PostV1AuthSignInPassword implements postV1AuthSignInPassword operation.
+	//
+	// Sign in with password.
+	//
+	// POST /v1/auth/sign-in/password
+	PostV1AuthSignInPassword(ctx context.Context, req *PasswordSignInRequest, params PostV1AuthSignInPasswordParams) (PostV1AuthSignInPasswordRes, error)
 	// PostV1AuthSignOut implements postV1AuthSignOut operation.
 	//
 	// Revoke the current session.

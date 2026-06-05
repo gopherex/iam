@@ -331,6 +331,45 @@ func (s *AuthResult) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *AuthResultOrNextStep) SetFake() {
+	var variant AuthenticatedResult
+
+	{
+		variant.SetFake()
+	}
+	s.SetAuthenticatedResult(variant)
+}
+
+// SetFake set fake values.
+func (s *AuthenticatedResult) SetFake() {
+	{
+		{
+			s.User.SetFake()
+		}
+	}
+	{
+		{
+			s.Session.SetFake()
+		}
+	}
+	{
+		{
+			s.NextStep.SetFake()
+		}
+	}
+	{
+		{
+			s.ResultType.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *AuthenticatedResultResultType) SetFake() {
+	*s = AuthenticatedResultResultTypeAuthenticated
+}
+
+// SetFake set fake values.
 func (s *Challenge) SetFake() {
 	{
 		{
@@ -399,6 +438,25 @@ func (s *ConsentConfig) SetFake() {
 				}
 				s.Documents = append(s.Documents, elem)
 			}
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *ConsentDocRef) SetFake() {
+	{
+		{
+			s.Key.SetFake()
+		}
+	}
+	{
+		{
+			s.Version.SetFake()
+		}
+	}
+	{
+		{
+			s.URL.SetFake()
 		}
 	}
 }
@@ -4102,6 +4160,59 @@ func (s *NextStep) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *NextStepResult) SetFake() {
+	{
+		{
+			s.NextStep.SetFake()
+		}
+	}
+	{
+		{
+			s.FlowToken.SetFake()
+		}
+	}
+	{
+		{
+			s.Factors = nil
+			for i := 0; i < 0; i++ {
+				var elem Factor
+				{
+					elem.SetFake()
+				}
+				s.Factors = append(s.Factors, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Documents = nil
+			for i := 0; i < 0; i++ {
+				var elem ConsentDocRef
+				{
+					elem.SetFake()
+				}
+				s.Documents = append(s.Documents, elem)
+			}
+		}
+	}
+	{
+		{
+			s.ResultType.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *NextStepResultResultType) SetFake() {
+	*s = NextStepResultResultTypeNextStep
+}
+
+// SetFake set fake values.
+func (s *NilNextStep) SetFake() {
+	s.Null = true
+}
+
+// SetFake set fake values.
 func (s *OAuthGrant) SetFake() {
 	{
 		{
@@ -4194,6 +4305,25 @@ func (s *Ok) SetFake() {
 			s.Ok.SetFake()
 		}
 	}
+}
+
+// SetFake set fake values.
+func (s *OkResult) SetFake() {
+	{
+		{
+			s.Ok.SetFake()
+		}
+	}
+	{
+		{
+			s.ResultType.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *OkResultResultType) SetFake() {
+	*s = OkResultResultTypeOk
 }
 
 // SetFake set fake values.
@@ -4500,6 +4630,12 @@ func (s *OptNilErrorEnvelopeErrorDetails) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptNilInt) SetFake() {
+	s.Null = true
+	s.Set = true
+}
+
+// SetFake set fake values.
 func (s *OptNilNextStep) SetFake() {
 	s.Null = true
 	s.Set = true
@@ -4628,6 +4764,15 @@ func (s *OptPostV1AuthPhoneChangeStartReqChannel) SetFake() {
 // SetFake set fake values.
 func (s *OptPostV1AuthPhoneVerificationStartReqChannel) SetFake() {
 	var elem PostV1AuthPhoneVerificationStartReqChannel
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptPostV1AuthSessionStepUpReqRequiredAal) SetFake() {
+	var elem PostV1AuthSessionStepUpReqRequiredAal
 	{
 		elem.SetFake()
 	}
@@ -5332,6 +5477,30 @@ func (s *PasswordResetRequest) SetFake() {
 	{
 		{
 			s.NewPassword = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *PasswordSignInRequest) SetFake() {
+	{
+		{
+			s.Email.SetFake()
+		}
+	}
+	{
+		{
+			s.Phone.SetFake()
+		}
+	}
+	{
+		{
+			s.Password = "string"
+		}
+	}
+	{
+		{
+			s.CaptchaToken.SetFake()
 		}
 	}
 }
@@ -6293,6 +6462,16 @@ func (s *PatchV1UsersMeUnprocessableEntity) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *PhoneVerifyResult) SetFake() {
+	var variant AuthenticatedResult
+
+	{
+		variant.SetFake()
+	}
+	s.SetAuthenticatedResult(variant)
+}
+
+// SetFake set fake values.
 func (s *PostMgmtV1ProjectsByProjectIdAdminTokensForbidden) SetFake() {
 	var unwrapped ErrorEnvelope
 	{
@@ -6601,6 +6780,20 @@ func (s *PostOauth2IntrospectOKAdditional) SetFake() {
 	)
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
+	}
+}
+
+// SetFake set fake values.
+func (s *PostOauth2ParCreated) SetFake() {
+	{
+		{
+			s.RequestURI.SetFake()
+		}
+	}
+	{
+		{
+			s.ExpiresIn.SetFake()
+		}
 	}
 }
 
@@ -7290,6 +7483,44 @@ func (s *PostV1AuthPhoneVerificationStartReq) SetFake() {
 // SetFake set fake values.
 func (s *PostV1AuthPhoneVerificationStartReqChannel) SetFake() {
 	*s = PostV1AuthPhoneVerificationStartReqChannelSMS
+}
+
+// SetFake set fake values.
+func (s *PostV1AuthPhoneVerificationVerifyReq) SetFake() {
+	{
+		{
+			s.ChallengeID = "string"
+		}
+	}
+	{
+		{
+			s.Code = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *PostV1AuthSessionStepUpReq) SetFake() {
+	{
+		{
+			s.Purpose = "string"
+		}
+	}
+	{
+		{
+			s.RequiredAal.SetFake()
+		}
+	}
+	{
+		{
+			s.MaxAgeSeconds.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *PostV1AuthSessionStepUpReqRequiredAal) SetFake() {
+	*s = PostV1AuthSessionStepUpReqRequiredAal1
 }
 
 // SetFake set fake values.
@@ -11072,6 +11303,16 @@ func (s *SmsProviderConfig) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *StepUpResult) SetFake() {
+	var variant NextStepResult
+
+	{
+		variant.SetFake()
+	}
+	s.SetNextStepResult(variant)
+}
+
+// SetFake set fake values.
 func (s *Timestamp) SetFake() {
 	var unwrapped time.Time
 	{
@@ -11203,6 +11444,25 @@ func (s *UserMetadata) SetFake() {
 // SetFake set fake values.
 func (s *UserStatus) SetFake() {
 	*s = UserStatusActive
+}
+
+// SetFake set fake values.
+func (s *UserUpdatedResult) SetFake() {
+	{
+		{
+			s.ResultType.SetFake()
+		}
+	}
+	{
+		{
+			s.User.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *UserUpdatedResultResultType) SetFake() {
+	*s = UserUpdatedResultResultTypeUserUpdated
 }
 
 // SetFake set fake values.

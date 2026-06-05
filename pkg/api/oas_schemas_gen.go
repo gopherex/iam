@@ -688,6 +688,160 @@ func (*AuthResult) postV1AuthTokenExchangeRes()           {}
 func (*AuthResult) postV1AuthTokenRefreshRes()            {}
 func (*AuthResult) postV1AuthWebauthnLoginVerifyRes()     {}
 
+// Ref: #/components/schemas/AuthResultOrNextStep
+// AuthResultOrNextStep represents sum type.
+type AuthResultOrNextStep struct {
+	Type                AuthResultOrNextStepType // switch on this field
+	AuthenticatedResult AuthenticatedResult
+	NextStepResult      NextStepResult
+}
+
+// AuthResultOrNextStepType is oneOf type of AuthResultOrNextStep.
+type AuthResultOrNextStepType string
+
+// Possible values for AuthResultOrNextStepType.
+const (
+	AuthenticatedResultAuthResultOrNextStep AuthResultOrNextStepType = "authenticated"
+	NextStepResultAuthResultOrNextStep      AuthResultOrNextStepType = "next_step"
+)
+
+// IsAuthenticatedResult reports whether AuthResultOrNextStep is AuthenticatedResult.
+func (s AuthResultOrNextStep) IsAuthenticatedResult() bool {
+	return s.Type == AuthenticatedResultAuthResultOrNextStep
+}
+
+// IsNextStepResult reports whether AuthResultOrNextStep is NextStepResult.
+func (s AuthResultOrNextStep) IsNextStepResult() bool {
+	return s.Type == NextStepResultAuthResultOrNextStep
+}
+
+// SetAuthenticatedResult sets AuthResultOrNextStep to AuthenticatedResult.
+func (s *AuthResultOrNextStep) SetAuthenticatedResult(v AuthenticatedResult) {
+	s.Type = AuthenticatedResultAuthResultOrNextStep
+	s.AuthenticatedResult = v
+}
+
+// GetAuthenticatedResult returns AuthenticatedResult and true boolean if AuthResultOrNextStep is AuthenticatedResult.
+func (s AuthResultOrNextStep) GetAuthenticatedResult() (v AuthenticatedResult, ok bool) {
+	if !s.IsAuthenticatedResult() {
+		return v, false
+	}
+	return s.AuthenticatedResult, true
+}
+
+// NewAuthenticatedResultAuthResultOrNextStep returns new AuthResultOrNextStep from AuthenticatedResult.
+func NewAuthenticatedResultAuthResultOrNextStep(v AuthenticatedResult) AuthResultOrNextStep {
+	var s AuthResultOrNextStep
+	s.SetAuthenticatedResult(v)
+	return s
+}
+
+// SetNextStepResult sets AuthResultOrNextStep to NextStepResult.
+func (s *AuthResultOrNextStep) SetNextStepResult(v NextStepResult) {
+	s.Type = NextStepResultAuthResultOrNextStep
+	s.NextStepResult = v
+}
+
+// GetNextStepResult returns NextStepResult and true boolean if AuthResultOrNextStep is NextStepResult.
+func (s AuthResultOrNextStep) GetNextStepResult() (v NextStepResult, ok bool) {
+	if !s.IsNextStepResult() {
+		return v, false
+	}
+	return s.NextStepResult, true
+}
+
+// NewNextStepResultAuthResultOrNextStep returns new AuthResultOrNextStep from NextStepResult.
+func NewNextStepResultAuthResultOrNextStep(v NextStepResult) AuthResultOrNextStep {
+	var s AuthResultOrNextStep
+	s.SetNextStepResult(v)
+	return s
+}
+
+func (*AuthResultOrNextStep) postV1AuthSignInPasswordRes() {}
+
+// Merged schema.
+// Ref: #/components/schemas/AuthenticatedResult
+type AuthenticatedResult struct {
+	User       User                          `json:"user"`
+	Session    SessionTokens                 `json:"session"`
+	NextStep   OptNilNextStep                `json:"next_step"`
+	ResultType AuthenticatedResultResultType `json:"result_type"`
+}
+
+// GetUser returns the value of User.
+func (s *AuthenticatedResult) GetUser() User {
+	return s.User
+}
+
+// GetSession returns the value of Session.
+func (s *AuthenticatedResult) GetSession() SessionTokens {
+	return s.Session
+}
+
+// GetNextStep returns the value of NextStep.
+func (s *AuthenticatedResult) GetNextStep() OptNilNextStep {
+	return s.NextStep
+}
+
+// GetResultType returns the value of ResultType.
+func (s *AuthenticatedResult) GetResultType() AuthenticatedResultResultType {
+	return s.ResultType
+}
+
+// SetUser sets the value of User.
+func (s *AuthenticatedResult) SetUser(val User) {
+	s.User = val
+}
+
+// SetSession sets the value of Session.
+func (s *AuthenticatedResult) SetSession(val SessionTokens) {
+	s.Session = val
+}
+
+// SetNextStep sets the value of NextStep.
+func (s *AuthenticatedResult) SetNextStep(val OptNilNextStep) {
+	s.NextStep = val
+}
+
+// SetResultType sets the value of ResultType.
+func (s *AuthenticatedResult) SetResultType(val AuthenticatedResultResultType) {
+	s.ResultType = val
+}
+
+type AuthenticatedResultResultType string
+
+const (
+	AuthenticatedResultResultTypeAuthenticated AuthenticatedResultResultType = "authenticated"
+)
+
+// AllValues returns all AuthenticatedResultResultType values.
+func (AuthenticatedResultResultType) AllValues() []AuthenticatedResultResultType {
+	return []AuthenticatedResultResultType{
+		AuthenticatedResultResultTypeAuthenticated,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AuthenticatedResultResultType) MarshalText() ([]byte, error) {
+	switch s {
+	case AuthenticatedResultResultTypeAuthenticated:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AuthenticatedResultResultType) UnmarshalText(data []byte) error {
+	switch AuthenticatedResultResultType(data) {
+	case AuthenticatedResultResultTypeAuthenticated:
+		*s = AuthenticatedResultResultTypeAuthenticated
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type BearerAuth struct {
 	Token string
 	Roles []string
@@ -907,6 +1061,43 @@ func (s *ConsentConfig) SetDocuments(val []ConsentDocument) {
 
 func (*ConsentConfig) getV1ProjectsByProjectIdAdminConsentsRes() {}
 func (*ConsentConfig) putV1ProjectsByProjectIdAdminConsentsRes() {}
+
+// Ref: #/components/schemas/ConsentDocRef
+type ConsentDocRef struct {
+	Key     OptString    `json:"key"`
+	Version OptString    `json:"version"`
+	URL     OptNilString `json:"url"`
+}
+
+// GetKey returns the value of Key.
+func (s *ConsentDocRef) GetKey() OptString {
+	return s.Key
+}
+
+// GetVersion returns the value of Version.
+func (s *ConsentDocRef) GetVersion() OptString {
+	return s.Version
+}
+
+// GetURL returns the value of URL.
+func (s *ConsentDocRef) GetURL() OptNilString {
+	return s.URL
+}
+
+// SetKey sets the value of Key.
+func (s *ConsentDocRef) SetKey(val OptString) {
+	s.Key = val
+}
+
+// SetVersion sets the value of Version.
+func (s *ConsentDocRef) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetURL sets the value of URL.
+func (s *ConsentDocRef) SetURL(val OptNilString) {
+	s.URL = val
+}
 
 // Ref: #/components/schemas/ConsentDocument
 type ConsentDocument struct {
@@ -1749,6 +1940,7 @@ func (*ErrorEnvelope) getV1UsersMeConsentsRes()                         {}
 func (*ErrorEnvelope) getV1UsersMeRes()                                 {}
 func (*ErrorEnvelope) postOauth2DeviceAuthorizationRes()                {}
 func (*ErrorEnvelope) postOauth2IntrospectRes()                         {}
+func (*ErrorEnvelope) postOauth2ParRes()                                {}
 func (*ErrorEnvelope) postOauth2RevokeRes()                             {}
 func (*ErrorEnvelope) postV1AuthEmailChangeStartRes()                   {}
 func (*ErrorEnvelope) postV1AuthEmailChangeVerifyRes()                  {}
@@ -1771,6 +1963,8 @@ func (*ErrorEnvelope) postV1AuthPasswordChangeRes()                     {}
 func (*ErrorEnvelope) postV1AuthPasswordVerifyRes()                     {}
 func (*ErrorEnvelope) postV1AuthPhoneChangeStartRes()                   {}
 func (*ErrorEnvelope) postV1AuthPhoneChangeVerifyRes()                  {}
+func (*ErrorEnvelope) postV1AuthSessionStepUpRes()                      {}
+func (*ErrorEnvelope) postV1AuthSignInPasswordRes()                     {}
 func (*ErrorEnvelope) postV1AuthSignOutAllRes()                         {}
 func (*ErrorEnvelope) postV1AuthSignOutRes()                            {}
 func (*ErrorEnvelope) postV1AuthTokenExchangeRes()                      {}
@@ -5387,6 +5581,145 @@ func (s *NextStep) UnmarshalText(data []byte) error {
 	}
 }
 
+// Merged schema.
+// Ref: #/components/schemas/NextStepResult
+type NextStepResult struct {
+	NextStep   NilNextStep              `json:"next_step"`
+	FlowToken  OptString                `json:"flow_token"`
+	Factors    []Factor                 `json:"factors"`
+	Documents  []ConsentDocRef          `json:"documents"`
+	ResultType NextStepResultResultType `json:"result_type"`
+}
+
+// GetNextStep returns the value of NextStep.
+func (s *NextStepResult) GetNextStep() NilNextStep {
+	return s.NextStep
+}
+
+// GetFlowToken returns the value of FlowToken.
+func (s *NextStepResult) GetFlowToken() OptString {
+	return s.FlowToken
+}
+
+// GetFactors returns the value of Factors.
+func (s *NextStepResult) GetFactors() []Factor {
+	return s.Factors
+}
+
+// GetDocuments returns the value of Documents.
+func (s *NextStepResult) GetDocuments() []ConsentDocRef {
+	return s.Documents
+}
+
+// GetResultType returns the value of ResultType.
+func (s *NextStepResult) GetResultType() NextStepResultResultType {
+	return s.ResultType
+}
+
+// SetNextStep sets the value of NextStep.
+func (s *NextStepResult) SetNextStep(val NilNextStep) {
+	s.NextStep = val
+}
+
+// SetFlowToken sets the value of FlowToken.
+func (s *NextStepResult) SetFlowToken(val OptString) {
+	s.FlowToken = val
+}
+
+// SetFactors sets the value of Factors.
+func (s *NextStepResult) SetFactors(val []Factor) {
+	s.Factors = val
+}
+
+// SetDocuments sets the value of Documents.
+func (s *NextStepResult) SetDocuments(val []ConsentDocRef) {
+	s.Documents = val
+}
+
+// SetResultType sets the value of ResultType.
+func (s *NextStepResult) SetResultType(val NextStepResultResultType) {
+	s.ResultType = val
+}
+
+type NextStepResultResultType string
+
+const (
+	NextStepResultResultTypeNextStep NextStepResultResultType = "next_step"
+)
+
+// AllValues returns all NextStepResultResultType values.
+func (NextStepResultResultType) AllValues() []NextStepResultResultType {
+	return []NextStepResultResultType{
+		NextStepResultResultTypeNextStep,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s NextStepResultResultType) MarshalText() ([]byte, error) {
+	switch s {
+	case NextStepResultResultTypeNextStep:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *NextStepResultResultType) UnmarshalText(data []byte) error {
+	switch NextStepResultResultType(data) {
+	case NextStepResultResultTypeNextStep:
+		*s = NextStepResultResultTypeNextStep
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// NewNilNextStep returns new NilNextStep with value set to v.
+func NewNilNextStep(v NextStep) NilNextStep {
+	return NilNextStep{
+		Value: v,
+	}
+}
+
+// NilNextStep is nullable NextStep.
+type NilNextStep struct {
+	Value NextStep
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilNextStep) SetTo(v NextStep) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilNextStep) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilNextStep) SetToNull() {
+	o.Null = true
+	var v NextStep
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilNextStep) Get() (v NextStep, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilNextStep) Or(d NextStep) NextStep {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 type OAuth2 struct {
 	Token  string
 	Scopes []string
@@ -5615,6 +5948,67 @@ func (*Ok) postV1ProjectsByProjectIdAdminUsersByUserIdPasswordRes()             
 func (*Ok) postV1TestClockRes()                                                        {}
 func (*Ok) postV1TestSeedRes()                                                         {}
 func (*Ok) postV1TokensRevokeRes()                                                     {}
+
+// Merged schema.
+// Ref: #/components/schemas/OkResult
+type OkResult struct {
+	Ok         OptBool            `json:"ok"`
+	ResultType OkResultResultType `json:"result_type"`
+}
+
+// GetOk returns the value of Ok.
+func (s *OkResult) GetOk() OptBool {
+	return s.Ok
+}
+
+// GetResultType returns the value of ResultType.
+func (s *OkResult) GetResultType() OkResultResultType {
+	return s.ResultType
+}
+
+// SetOk sets the value of Ok.
+func (s *OkResult) SetOk(val OptBool) {
+	s.Ok = val
+}
+
+// SetResultType sets the value of ResultType.
+func (s *OkResult) SetResultType(val OkResultResultType) {
+	s.ResultType = val
+}
+
+type OkResultResultType string
+
+const (
+	OkResultResultTypeOk OkResultResultType = "ok"
+)
+
+// AllValues returns all OkResultResultType values.
+func (OkResultResultType) AllValues() []OkResultResultType {
+	return []OkResultResultType{
+		OkResultResultTypeOk,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s OkResultResultType) MarshalText() ([]byte, error) {
+	switch s {
+	case OkResultResultTypeOk:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *OkResultResultType) UnmarshalText(data []byte) error {
+	switch OkResultResultType(data) {
+	case OkResultResultTypeOk:
+		*s = OkResultResultTypeOk
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 // NewOptAccessRequest returns new OptAccessRequest with value set to v.
 func NewOptAccessRequest(v AccessRequest) OptAccessRequest {
@@ -7197,6 +7591,69 @@ func (o OptNilErrorEnvelopeErrorDetails) Or(d ErrorEnvelopeErrorDetails) ErrorEn
 	return d
 }
 
+// NewOptNilInt returns new OptNilInt with value set to v.
+func NewOptNilInt(v int) OptNilInt {
+	return OptNilInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilInt is optional nullable int.
+type OptNilInt struct {
+	Value int
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilInt was set.
+func (o OptNilInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilInt) SetTo(v int) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilInt) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilInt) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v int
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilInt) Get() (v int, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilNextStep returns new OptNilNextStep with value set to v.
 func NewOptNilNextStep(v NextStep) OptNilNextStep {
 	return OptNilNextStep{
@@ -8075,6 +8532,52 @@ func (o OptPostV1AuthPhoneVerificationStartReqChannel) Get() (v PostV1AuthPhoneV
 
 // Or returns value if set, or given parameter if does not.
 func (o OptPostV1AuthPhoneVerificationStartReqChannel) Or(d PostV1AuthPhoneVerificationStartReqChannel) PostV1AuthPhoneVerificationStartReqChannel {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptPostV1AuthSessionStepUpReqRequiredAal returns new OptPostV1AuthSessionStepUpReqRequiredAal with value set to v.
+func NewOptPostV1AuthSessionStepUpReqRequiredAal(v PostV1AuthSessionStepUpReqRequiredAal) OptPostV1AuthSessionStepUpReqRequiredAal {
+	return OptPostV1AuthSessionStepUpReqRequiredAal{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPostV1AuthSessionStepUpReqRequiredAal is optional PostV1AuthSessionStepUpReqRequiredAal.
+type OptPostV1AuthSessionStepUpReqRequiredAal struct {
+	Value PostV1AuthSessionStepUpReqRequiredAal
+	Set   bool
+}
+
+// IsSet returns true if OptPostV1AuthSessionStepUpReqRequiredAal was set.
+func (o OptPostV1AuthSessionStepUpReqRequiredAal) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPostV1AuthSessionStepUpReqRequiredAal) Reset() {
+	var v PostV1AuthSessionStepUpReqRequiredAal
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPostV1AuthSessionStepUpReqRequiredAal) SetTo(v PostV1AuthSessionStepUpReqRequiredAal) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPostV1AuthSessionStepUpReqRequiredAal) Get() (v PostV1AuthSessionStepUpReqRequiredAal, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPostV1AuthSessionStepUpReqRequiredAal) Or(d PostV1AuthSessionStepUpReqRequiredAal) PostV1AuthSessionStepUpReqRequiredAal {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -9745,6 +10248,52 @@ func (o OptPublicConfigProjectBranding) Or(d PublicConfigProjectBranding) Public
 	return d
 }
 
+// NewOptPushedAuthorizationRequestCodeChallengeMethod returns new OptPushedAuthorizationRequestCodeChallengeMethod with value set to v.
+func NewOptPushedAuthorizationRequestCodeChallengeMethod(v PushedAuthorizationRequestCodeChallengeMethod) OptPushedAuthorizationRequestCodeChallengeMethod {
+	return OptPushedAuthorizationRequestCodeChallengeMethod{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPushedAuthorizationRequestCodeChallengeMethod is optional PushedAuthorizationRequestCodeChallengeMethod.
+type OptPushedAuthorizationRequestCodeChallengeMethod struct {
+	Value PushedAuthorizationRequestCodeChallengeMethod
+	Set   bool
+}
+
+// IsSet returns true if OptPushedAuthorizationRequestCodeChallengeMethod was set.
+func (o OptPushedAuthorizationRequestCodeChallengeMethod) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPushedAuthorizationRequestCodeChallengeMethod) Reset() {
+	var v PushedAuthorizationRequestCodeChallengeMethod
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPushedAuthorizationRequestCodeChallengeMethod) SetTo(v PushedAuthorizationRequestCodeChallengeMethod) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPushedAuthorizationRequestCodeChallengeMethod) Get() (v PushedAuthorizationRequestCodeChallengeMethod, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPushedAuthorizationRequestCodeChallengeMethod) Or(d PushedAuthorizationRequestCodeChallengeMethod) PushedAuthorizationRequestCodeChallengeMethod {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptRefreshRequest returns new OptRefreshRequest with value set to v.
 func NewOptRefreshRequest(v RefreshRequest) OptRefreshRequest {
 	return OptRefreshRequest{
@@ -11398,6 +11947,54 @@ func (s *PasswordResetRequest) SetNewPassword(val string) {
 	s.NewPassword = val
 }
 
+// Ref: #/components/schemas/PasswordSignInRequest
+type PasswordSignInRequest struct {
+	Email        OptNilString `json:"email"`
+	Phone        OptNilString `json:"phone"`
+	Password     string       `json:"password"`
+	CaptchaToken OptNilString `json:"captcha_token"`
+}
+
+// GetEmail returns the value of Email.
+func (s *PasswordSignInRequest) GetEmail() OptNilString {
+	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *PasswordSignInRequest) GetPhone() OptNilString {
+	return s.Phone
+}
+
+// GetPassword returns the value of Password.
+func (s *PasswordSignInRequest) GetPassword() string {
+	return s.Password
+}
+
+// GetCaptchaToken returns the value of CaptchaToken.
+func (s *PasswordSignInRequest) GetCaptchaToken() OptNilString {
+	return s.CaptchaToken
+}
+
+// SetEmail sets the value of Email.
+func (s *PasswordSignInRequest) SetEmail(val OptNilString) {
+	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *PasswordSignInRequest) SetPhone(val OptNilString) {
+	s.Phone = val
+}
+
+// SetPassword sets the value of Password.
+func (s *PasswordSignInRequest) SetPassword(val string) {
+	s.Password = val
+}
+
+// SetCaptchaToken sets the value of CaptchaToken.
+func (s *PasswordSignInRequest) SetCaptchaToken(val OptNilString) {
+	s.CaptchaToken = val
+}
+
 type PatchMgmtV1ProjectsByProjectIdFeaturesForbidden ErrorEnvelope
 
 func (*PatchMgmtV1ProjectsByProjectIdFeaturesForbidden) patchMgmtV1ProjectsByProjectIdFeaturesRes() {}
@@ -12232,6 +12829,77 @@ type PatchV1UsersMeUnprocessableEntity ErrorEnvelope
 
 func (*PatchV1UsersMeUnprocessableEntity) patchV1UsersMeRes() {}
 
+// Ref: #/components/schemas/PhoneVerifyResult
+// PhoneVerifyResult represents sum type.
+type PhoneVerifyResult struct {
+	Type                PhoneVerifyResultType // switch on this field
+	AuthenticatedResult AuthenticatedResult
+	UserUpdatedResult   UserUpdatedResult
+}
+
+// PhoneVerifyResultType is oneOf type of PhoneVerifyResult.
+type PhoneVerifyResultType string
+
+// Possible values for PhoneVerifyResultType.
+const (
+	AuthenticatedResultPhoneVerifyResult PhoneVerifyResultType = "authenticated"
+	UserUpdatedResultPhoneVerifyResult   PhoneVerifyResultType = "user_updated"
+)
+
+// IsAuthenticatedResult reports whether PhoneVerifyResult is AuthenticatedResult.
+func (s PhoneVerifyResult) IsAuthenticatedResult() bool {
+	return s.Type == AuthenticatedResultPhoneVerifyResult
+}
+
+// IsUserUpdatedResult reports whether PhoneVerifyResult is UserUpdatedResult.
+func (s PhoneVerifyResult) IsUserUpdatedResult() bool {
+	return s.Type == UserUpdatedResultPhoneVerifyResult
+}
+
+// SetAuthenticatedResult sets PhoneVerifyResult to AuthenticatedResult.
+func (s *PhoneVerifyResult) SetAuthenticatedResult(v AuthenticatedResult) {
+	s.Type = AuthenticatedResultPhoneVerifyResult
+	s.AuthenticatedResult = v
+}
+
+// GetAuthenticatedResult returns AuthenticatedResult and true boolean if PhoneVerifyResult is AuthenticatedResult.
+func (s PhoneVerifyResult) GetAuthenticatedResult() (v AuthenticatedResult, ok bool) {
+	if !s.IsAuthenticatedResult() {
+		return v, false
+	}
+	return s.AuthenticatedResult, true
+}
+
+// NewAuthenticatedResultPhoneVerifyResult returns new PhoneVerifyResult from AuthenticatedResult.
+func NewAuthenticatedResultPhoneVerifyResult(v AuthenticatedResult) PhoneVerifyResult {
+	var s PhoneVerifyResult
+	s.SetAuthenticatedResult(v)
+	return s
+}
+
+// SetUserUpdatedResult sets PhoneVerifyResult to UserUpdatedResult.
+func (s *PhoneVerifyResult) SetUserUpdatedResult(v UserUpdatedResult) {
+	s.Type = UserUpdatedResultPhoneVerifyResult
+	s.UserUpdatedResult = v
+}
+
+// GetUserUpdatedResult returns UserUpdatedResult and true boolean if PhoneVerifyResult is UserUpdatedResult.
+func (s PhoneVerifyResult) GetUserUpdatedResult() (v UserUpdatedResult, ok bool) {
+	if !s.IsUserUpdatedResult() {
+		return v, false
+	}
+	return s.UserUpdatedResult, true
+}
+
+// NewUserUpdatedResultPhoneVerifyResult returns new PhoneVerifyResult from UserUpdatedResult.
+func NewUserUpdatedResultPhoneVerifyResult(v UserUpdatedResult) PhoneVerifyResult {
+	var s PhoneVerifyResult
+	s.SetUserUpdatedResult(v)
+	return s
+}
+
+func (*PhoneVerifyResult) postV1AuthPhoneVerificationVerifyRes() {}
+
 type PostMgmtV1ProjectsByProjectIdAdminTokensForbidden ErrorEnvelope
 
 func (*PostMgmtV1ProjectsByProjectIdAdminTokensForbidden) postMgmtV1ProjectsByProjectIdAdminTokensRes() {
@@ -12682,6 +13350,33 @@ func (s *PostOauth2IntrospectReq) GetToken() OptString {
 func (s *PostOauth2IntrospectReq) SetToken(val OptString) {
 	s.Token = val
 }
+
+type PostOauth2ParCreated struct {
+	RequestURI OptString `json:"request_uri"`
+	ExpiresIn  OptInt    `json:"expires_in"`
+}
+
+// GetRequestURI returns the value of RequestURI.
+func (s *PostOauth2ParCreated) GetRequestURI() OptString {
+	return s.RequestURI
+}
+
+// GetExpiresIn returns the value of ExpiresIn.
+func (s *PostOauth2ParCreated) GetExpiresIn() OptInt {
+	return s.ExpiresIn
+}
+
+// SetRequestURI sets the value of RequestURI.
+func (s *PostOauth2ParCreated) SetRequestURI(val OptString) {
+	s.RequestURI = val
+}
+
+// SetExpiresIn sets the value of ExpiresIn.
+func (s *PostOauth2ParCreated) SetExpiresIn(val OptInt) {
+	s.ExpiresIn = val
+}
+
+func (*PostOauth2ParCreated) postOauth2ParRes() {}
 
 // PostOauth2RevokeOK is response for PostOauth2Revoke operation.
 type PostOauth2RevokeOK struct{}
@@ -13951,6 +14646,82 @@ func (s *PostV1AuthPhoneVerificationStartReqChannel) UnmarshalText(data []byte) 
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type PostV1AuthPhoneVerificationVerifyReq struct {
+	ChallengeID string `json:"challenge_id"`
+	Code        string `json:"code"`
+}
+
+// GetChallengeID returns the value of ChallengeID.
+func (s *PostV1AuthPhoneVerificationVerifyReq) GetChallengeID() string {
+	return s.ChallengeID
+}
+
+// GetCode returns the value of Code.
+func (s *PostV1AuthPhoneVerificationVerifyReq) GetCode() string {
+	return s.Code
+}
+
+// SetChallengeID sets the value of ChallengeID.
+func (s *PostV1AuthPhoneVerificationVerifyReq) SetChallengeID(val string) {
+	s.ChallengeID = val
+}
+
+// SetCode sets the value of Code.
+func (s *PostV1AuthPhoneVerificationVerifyReq) SetCode(val string) {
+	s.Code = val
+}
+
+type PostV1AuthSessionStepUpReq struct {
+	Purpose       string                                   `json:"purpose"`
+	RequiredAal   OptPostV1AuthSessionStepUpReqRequiredAal `json:"required_aal"`
+	MaxAgeSeconds OptNilInt                                `json:"max_age_seconds"`
+}
+
+// GetPurpose returns the value of Purpose.
+func (s *PostV1AuthSessionStepUpReq) GetPurpose() string {
+	return s.Purpose
+}
+
+// GetRequiredAal returns the value of RequiredAal.
+func (s *PostV1AuthSessionStepUpReq) GetRequiredAal() OptPostV1AuthSessionStepUpReqRequiredAal {
+	return s.RequiredAal
+}
+
+// GetMaxAgeSeconds returns the value of MaxAgeSeconds.
+func (s *PostV1AuthSessionStepUpReq) GetMaxAgeSeconds() OptNilInt {
+	return s.MaxAgeSeconds
+}
+
+// SetPurpose sets the value of Purpose.
+func (s *PostV1AuthSessionStepUpReq) SetPurpose(val string) {
+	s.Purpose = val
+}
+
+// SetRequiredAal sets the value of RequiredAal.
+func (s *PostV1AuthSessionStepUpReq) SetRequiredAal(val OptPostV1AuthSessionStepUpReqRequiredAal) {
+	s.RequiredAal = val
+}
+
+// SetMaxAgeSeconds sets the value of MaxAgeSeconds.
+func (s *PostV1AuthSessionStepUpReq) SetMaxAgeSeconds(val OptNilInt) {
+	s.MaxAgeSeconds = val
+}
+
+type PostV1AuthSessionStepUpReqRequiredAal int
+
+const (
+	PostV1AuthSessionStepUpReqRequiredAal1 PostV1AuthSessionStepUpReqRequiredAal = 1
+	PostV1AuthSessionStepUpReqRequiredAal2 PostV1AuthSessionStepUpReqRequiredAal = 2
+)
+
+// AllValues returns all PostV1AuthSessionStepUpReqRequiredAal values.
+func (PostV1AuthSessionStepUpReqRequiredAal) AllValues() []PostV1AuthSessionStepUpReqRequiredAal {
+	return []PostV1AuthSessionStepUpReqRequiredAal{
+		PostV1AuthSessionStepUpReqRequiredAal1,
+		PostV1AuthSessionStepUpReqRequiredAal2,
 	}
 }
 
@@ -17951,6 +18722,206 @@ func (s *PublicConfigProvidersItem) SetName(val OptString) {
 	s.Name = val
 }
 
+// Ref: #/components/schemas/PushedAuthorizationRequest
+type PushedAuthorizationRequest struct {
+	ResponseType        string                                           `json:"response_type"`
+	ClientID            string                                           `json:"client_id"`
+	RedirectURI         OptURI                                           `json:"redirect_uri"`
+	Scope               OptString                                        `json:"scope"`
+	State               OptString                                        `json:"state"`
+	CodeChallenge       OptString                                        `json:"code_challenge"`
+	CodeChallengeMethod OptPushedAuthorizationRequestCodeChallengeMethod `json:"code_challenge_method"`
+	Nonce               OptString                                        `json:"nonce"`
+	ResponseMode        OptString                                        `json:"response_mode"`
+	Prompt              OptString                                        `json:"prompt"`
+	LoginHint           OptString                                        `json:"login_hint"`
+	// Request object JWT (RFC 9101).
+	Request             OptString `json:"request"`
+	ClientAssertionType OptString `json:"client_assertion_type"`
+	ClientAssertion     OptString `json:"client_assertion"`
+}
+
+// GetResponseType returns the value of ResponseType.
+func (s *PushedAuthorizationRequest) GetResponseType() string {
+	return s.ResponseType
+}
+
+// GetClientID returns the value of ClientID.
+func (s *PushedAuthorizationRequest) GetClientID() string {
+	return s.ClientID
+}
+
+// GetRedirectURI returns the value of RedirectURI.
+func (s *PushedAuthorizationRequest) GetRedirectURI() OptURI {
+	return s.RedirectURI
+}
+
+// GetScope returns the value of Scope.
+func (s *PushedAuthorizationRequest) GetScope() OptString {
+	return s.Scope
+}
+
+// GetState returns the value of State.
+func (s *PushedAuthorizationRequest) GetState() OptString {
+	return s.State
+}
+
+// GetCodeChallenge returns the value of CodeChallenge.
+func (s *PushedAuthorizationRequest) GetCodeChallenge() OptString {
+	return s.CodeChallenge
+}
+
+// GetCodeChallengeMethod returns the value of CodeChallengeMethod.
+func (s *PushedAuthorizationRequest) GetCodeChallengeMethod() OptPushedAuthorizationRequestCodeChallengeMethod {
+	return s.CodeChallengeMethod
+}
+
+// GetNonce returns the value of Nonce.
+func (s *PushedAuthorizationRequest) GetNonce() OptString {
+	return s.Nonce
+}
+
+// GetResponseMode returns the value of ResponseMode.
+func (s *PushedAuthorizationRequest) GetResponseMode() OptString {
+	return s.ResponseMode
+}
+
+// GetPrompt returns the value of Prompt.
+func (s *PushedAuthorizationRequest) GetPrompt() OptString {
+	return s.Prompt
+}
+
+// GetLoginHint returns the value of LoginHint.
+func (s *PushedAuthorizationRequest) GetLoginHint() OptString {
+	return s.LoginHint
+}
+
+// GetRequest returns the value of Request.
+func (s *PushedAuthorizationRequest) GetRequest() OptString {
+	return s.Request
+}
+
+// GetClientAssertionType returns the value of ClientAssertionType.
+func (s *PushedAuthorizationRequest) GetClientAssertionType() OptString {
+	return s.ClientAssertionType
+}
+
+// GetClientAssertion returns the value of ClientAssertion.
+func (s *PushedAuthorizationRequest) GetClientAssertion() OptString {
+	return s.ClientAssertion
+}
+
+// SetResponseType sets the value of ResponseType.
+func (s *PushedAuthorizationRequest) SetResponseType(val string) {
+	s.ResponseType = val
+}
+
+// SetClientID sets the value of ClientID.
+func (s *PushedAuthorizationRequest) SetClientID(val string) {
+	s.ClientID = val
+}
+
+// SetRedirectURI sets the value of RedirectURI.
+func (s *PushedAuthorizationRequest) SetRedirectURI(val OptURI) {
+	s.RedirectURI = val
+}
+
+// SetScope sets the value of Scope.
+func (s *PushedAuthorizationRequest) SetScope(val OptString) {
+	s.Scope = val
+}
+
+// SetState sets the value of State.
+func (s *PushedAuthorizationRequest) SetState(val OptString) {
+	s.State = val
+}
+
+// SetCodeChallenge sets the value of CodeChallenge.
+func (s *PushedAuthorizationRequest) SetCodeChallenge(val OptString) {
+	s.CodeChallenge = val
+}
+
+// SetCodeChallengeMethod sets the value of CodeChallengeMethod.
+func (s *PushedAuthorizationRequest) SetCodeChallengeMethod(val OptPushedAuthorizationRequestCodeChallengeMethod) {
+	s.CodeChallengeMethod = val
+}
+
+// SetNonce sets the value of Nonce.
+func (s *PushedAuthorizationRequest) SetNonce(val OptString) {
+	s.Nonce = val
+}
+
+// SetResponseMode sets the value of ResponseMode.
+func (s *PushedAuthorizationRequest) SetResponseMode(val OptString) {
+	s.ResponseMode = val
+}
+
+// SetPrompt sets the value of Prompt.
+func (s *PushedAuthorizationRequest) SetPrompt(val OptString) {
+	s.Prompt = val
+}
+
+// SetLoginHint sets the value of LoginHint.
+func (s *PushedAuthorizationRequest) SetLoginHint(val OptString) {
+	s.LoginHint = val
+}
+
+// SetRequest sets the value of Request.
+func (s *PushedAuthorizationRequest) SetRequest(val OptString) {
+	s.Request = val
+}
+
+// SetClientAssertionType sets the value of ClientAssertionType.
+func (s *PushedAuthorizationRequest) SetClientAssertionType(val OptString) {
+	s.ClientAssertionType = val
+}
+
+// SetClientAssertion sets the value of ClientAssertion.
+func (s *PushedAuthorizationRequest) SetClientAssertion(val OptString) {
+	s.ClientAssertion = val
+}
+
+type PushedAuthorizationRequestCodeChallengeMethod string
+
+const (
+	PushedAuthorizationRequestCodeChallengeMethodS256  PushedAuthorizationRequestCodeChallengeMethod = "S256"
+	PushedAuthorizationRequestCodeChallengeMethodPlain PushedAuthorizationRequestCodeChallengeMethod = "plain"
+)
+
+// AllValues returns all PushedAuthorizationRequestCodeChallengeMethod values.
+func (PushedAuthorizationRequestCodeChallengeMethod) AllValues() []PushedAuthorizationRequestCodeChallengeMethod {
+	return []PushedAuthorizationRequestCodeChallengeMethod{
+		PushedAuthorizationRequestCodeChallengeMethodS256,
+		PushedAuthorizationRequestCodeChallengeMethodPlain,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PushedAuthorizationRequestCodeChallengeMethod) MarshalText() ([]byte, error) {
+	switch s {
+	case PushedAuthorizationRequestCodeChallengeMethodS256:
+		return []byte(s), nil
+	case PushedAuthorizationRequestCodeChallengeMethodPlain:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PushedAuthorizationRequestCodeChallengeMethod) UnmarshalText(data []byte) error {
+	switch PushedAuthorizationRequestCodeChallengeMethod(data) {
+	case PushedAuthorizationRequestCodeChallengeMethodS256:
+		*s = PushedAuthorizationRequestCodeChallengeMethodS256
+		return nil
+	case PushedAuthorizationRequestCodeChallengeMethodPlain:
+		*s = PushedAuthorizationRequestCodeChallengeMethodPlain
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type PutV1ProjectsByProjectIdAdminConsentsForbidden ErrorEnvelope
 
 func (*PutV1ProjectsByProjectIdAdminConsentsForbidden) putV1ProjectsByProjectIdAdminConsentsRes() {}
@@ -19459,6 +20430,73 @@ func (s *SmsProviderConfig) init() SmsProviderConfig {
 	return m
 }
 
+// Ref: #/components/schemas/StepUpResult
+// StepUpResult represents sum type.
+type StepUpResult struct {
+	Type           StepUpResultType // switch on this field
+	NextStepResult NextStepResult
+	OkResult       OkResult
+}
+
+// StepUpResultType is oneOf type of StepUpResult.
+type StepUpResultType string
+
+// Possible values for StepUpResultType.
+const (
+	NextStepResultStepUpResult StepUpResultType = "next_step"
+	OkResultStepUpResult       StepUpResultType = "ok"
+)
+
+// IsNextStepResult reports whether StepUpResult is NextStepResult.
+func (s StepUpResult) IsNextStepResult() bool { return s.Type == NextStepResultStepUpResult }
+
+// IsOkResult reports whether StepUpResult is OkResult.
+func (s StepUpResult) IsOkResult() bool { return s.Type == OkResultStepUpResult }
+
+// SetNextStepResult sets StepUpResult to NextStepResult.
+func (s *StepUpResult) SetNextStepResult(v NextStepResult) {
+	s.Type = NextStepResultStepUpResult
+	s.NextStepResult = v
+}
+
+// GetNextStepResult returns NextStepResult and true boolean if StepUpResult is NextStepResult.
+func (s StepUpResult) GetNextStepResult() (v NextStepResult, ok bool) {
+	if !s.IsNextStepResult() {
+		return v, false
+	}
+	return s.NextStepResult, true
+}
+
+// NewNextStepResultStepUpResult returns new StepUpResult from NextStepResult.
+func NewNextStepResultStepUpResult(v NextStepResult) StepUpResult {
+	var s StepUpResult
+	s.SetNextStepResult(v)
+	return s
+}
+
+// SetOkResult sets StepUpResult to OkResult.
+func (s *StepUpResult) SetOkResult(v OkResult) {
+	s.Type = OkResultStepUpResult
+	s.OkResult = v
+}
+
+// GetOkResult returns OkResult and true boolean if StepUpResult is OkResult.
+func (s StepUpResult) GetOkResult() (v OkResult, ok bool) {
+	if !s.IsOkResult() {
+		return v, false
+	}
+	return s.OkResult, true
+}
+
+// NewOkResultStepUpResult returns new StepUpResult from OkResult.
+func NewOkResultStepUpResult(v OkResult) StepUpResult {
+	var s StepUpResult
+	s.SetOkResult(v)
+	return s
+}
+
+func (*StepUpResult) postV1AuthSessionStepUpRes() {}
+
 type Timestamp time.Time
 
 // Ref: #/components/schemas/TokenProfile
@@ -19610,6 +20648,8 @@ func (*TooManyRequestsHeaders) postV1AuthOtpVerifyRes()               {}
 func (*TooManyRequestsHeaders) postV1AuthPasswordForgotRes()          {}
 func (*TooManyRequestsHeaders) postV1AuthPasswordResetRes()           {}
 func (*TooManyRequestsHeaders) postV1AuthPhoneVerificationStartRes()  {}
+func (*TooManyRequestsHeaders) postV1AuthPhoneVerificationVerifyRes() {}
+func (*TooManyRequestsHeaders) postV1AuthSignInPasswordRes()          {}
 func (*TooManyRequestsHeaders) postV1AuthSignUpRes()                  {}
 
 // Ref: #/components/schemas/User
@@ -19847,6 +20887,66 @@ func (s *UserStatus) UnmarshalText(data []byte) error {
 		return nil
 	case UserStatusDeactivated:
 		*s = UserStatusDeactivated
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/UserUpdatedResult
+type UserUpdatedResult struct {
+	ResultType UserUpdatedResultResultType `json:"result_type"`
+	User       User                        `json:"user"`
+}
+
+// GetResultType returns the value of ResultType.
+func (s *UserUpdatedResult) GetResultType() UserUpdatedResultResultType {
+	return s.ResultType
+}
+
+// GetUser returns the value of User.
+func (s *UserUpdatedResult) GetUser() User {
+	return s.User
+}
+
+// SetResultType sets the value of ResultType.
+func (s *UserUpdatedResult) SetResultType(val UserUpdatedResultResultType) {
+	s.ResultType = val
+}
+
+// SetUser sets the value of User.
+func (s *UserUpdatedResult) SetUser(val User) {
+	s.User = val
+}
+
+type UserUpdatedResultResultType string
+
+const (
+	UserUpdatedResultResultTypeUserUpdated UserUpdatedResultResultType = "user_updated"
+)
+
+// AllValues returns all UserUpdatedResultResultType values.
+func (UserUpdatedResultResultType) AllValues() []UserUpdatedResultResultType {
+	return []UserUpdatedResultResultType{
+		UserUpdatedResultResultTypeUserUpdated,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s UserUpdatedResultResultType) MarshalText() ([]byte, error) {
+	switch s {
+	case UserUpdatedResultResultTypeUserUpdated:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *UserUpdatedResultResultType) UnmarshalText(data []byte) error {
+	switch UserUpdatedResultResultType(data) {
+	case UserUpdatedResultResultTypeUserUpdated:
+		*s = UserUpdatedResultResultTypeUserUpdated
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

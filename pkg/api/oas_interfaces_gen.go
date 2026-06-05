@@ -545,6 +545,10 @@ type PostOauth2IntrospectRes interface {
 	postOauth2IntrospectRes()
 }
 
+type PostOauth2ParRes interface {
+	postOauth2ParRes()
+}
+
 type PostOauth2RevokeRes interface {
 	postOauth2RevokeRes()
 }
@@ -661,8 +665,20 @@ type PostV1AuthPhoneVerificationStartRes interface {
 	postV1AuthPhoneVerificationStartRes()
 }
 
+type PostV1AuthPhoneVerificationVerifyRes interface {
+	postV1AuthPhoneVerificationVerifyRes()
+}
+
+type PostV1AuthSessionStepUpRes interface {
+	postV1AuthSessionStepUpRes()
+}
+
 type PostV1AuthSessionSwitchGroupRes interface {
 	postV1AuthSessionSwitchGroupRes()
+}
+
+type PostV1AuthSignInPasswordRes interface {
+	postV1AuthSignInPasswordRes()
 }
 
 type PostV1AuthSignOutAllRes interface {

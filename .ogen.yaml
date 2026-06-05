@@ -27,11 +27,6 @@ generator:
     disable: []
     disable_all: false
 
-  # Spec constructs ogen cannot codegen yet. Listed explicitly (not "all") so
-  # the set of skipped operations is known. "complex form schema" covers the
-  # OAuth2 application/x-www-form-urlencoded bodies (token/par/introspect/...);
-  # those endpoints follow the OAuth RFCs and are handled outside the generated
-  # client/server.
-  ignore_not_implemented:
-    - "complex form schema"
-    - "complex anyOf"
+  # Generate everything: union responses use oneOf+discriminator and the PAR
+  # form body is typed, so no operations are skipped.
+  ignore_not_implemented: []

@@ -1035,6 +1035,12 @@ type Invoker interface {
 	//
 	// POST /oauth2/introspect
 	PostOauth2Introspect(ctx context.Context, request *PostOauth2IntrospectReq, options ...RequestOption) (PostOauth2IntrospectRes, error)
+	// PostOauth2Par invokes postOauth2Par operation.
+	//
+	// Pushed Authorization Request.
+	//
+	// POST /oauth2/par
+	PostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, options ...RequestOption) (PostOauth2ParRes, error)
 	// PostOauth2Revoke invokes postOauth2Revoke operation.
 	//
 	// RFC 7009 token revocation.
@@ -1239,12 +1245,30 @@ type Invoker interface {
 	//
 	// POST /v1/auth/phone/verification/start
 	PostV1AuthPhoneVerificationStart(ctx context.Context, request *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams, options ...RequestOption) (PostV1AuthPhoneVerificationStartRes, error)
+	// PostV1AuthPhoneVerificationVerify invokes postV1AuthPhoneVerificationVerify operation.
+	//
+	// Verify a phone code.
+	//
+	// POST /v1/auth/phone/verification/verify
+	PostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, options ...RequestOption) (PostV1AuthPhoneVerificationVerifyRes, error)
+	// PostV1AuthSessionStepUp invokes postV1AuthSessionStepUp operation.
+	//
+	// Begin step-up authentication.
+	//
+	// POST /v1/auth/session/step-up
+	PostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, options ...RequestOption) (PostV1AuthSessionStepUpRes, error)
 	// PostV1AuthSessionSwitchGroup invokes postV1AuthSessionSwitchGroup operation.
 	//
 	// Re-issues a token with a new active-group claim. Membership is validated externally.
 	//
 	// POST /v1/auth/session/switch-group
 	PostV1AuthSessionSwitchGroup(ctx context.Context, request *PostV1AuthSessionSwitchGroupReq, options ...RequestOption) (PostV1AuthSessionSwitchGroupRes, error)
+	// PostV1AuthSignInPassword invokes postV1AuthSignInPassword operation.
+	//
+	// Sign in with password.
+	//
+	// POST /v1/auth/sign-in/password
+	PostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, options ...RequestOption) (PostV1AuthSignInPasswordRes, error)
 	// PostV1AuthSignOut invokes postV1AuthSignOut operation.
 	//
 	// Revoke the current session.
@@ -28935,6 +28959,151 @@ func (c *Client) sendPostOauth2Introspect(ctx context.Context, request *PostOaut
 	return result, nil
 }
 
+// PostOauth2Par invokes postOauth2Par operation.
+//
+// Pushed Authorization Request.
+//
+// POST /oauth2/par
+func (c *Client) PostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, options ...RequestOption) (PostOauth2ParRes, error) {
+	res, err := c.sendPostOauth2Par(ctx, request, options...)
+	return res, err
+}
+
+func (c *Client) sendPostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, requestOptions ...RequestOption) (res PostOauth2ParRes, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postOauth2Par"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/oauth2/par"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostOauth2ParOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [1]string
+	pathParts[0] = "/oauth2/par"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostOauth2ParRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ClientSecretBasic"
+			switch err := c.securityClientSecretBasic(ctx, PostOauth2ParOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ClientSecretBasic\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostOauth2ParResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // PostOauth2Revoke invokes postOauth2Revoke operation.
 //
 // RFC 7009 token revocation.
@@ -33310,6 +33479,268 @@ func (c *Client) sendPostV1AuthPhoneVerificationStart(ctx context.Context, reque
 	return result, nil
 }
 
+// PostV1AuthPhoneVerificationVerify invokes postV1AuthPhoneVerificationVerify operation.
+//
+// Verify a phone code.
+//
+// POST /v1/auth/phone/verification/verify
+func (c *Client) PostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, options ...RequestOption) (PostV1AuthPhoneVerificationVerifyRes, error) {
+	res, err := c.sendPostV1AuthPhoneVerificationVerify(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, requestOptions ...RequestOption) (res PostV1AuthPhoneVerificationVerifyRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1AuthPhoneVerificationVerify"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/auth/phone/verification/verify"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1AuthPhoneVerificationVerifyOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [1]string
+	pathParts[0] = "/v1/auth/phone/verification/verify"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostV1AuthPhoneVerificationVerifyRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1AuthPhoneVerificationVerifyResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostV1AuthSessionStepUp invokes postV1AuthSessionStepUp operation.
+//
+// Begin step-up authentication.
+//
+// POST /v1/auth/session/step-up
+func (c *Client) PostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, options ...RequestOption) (PostV1AuthSessionStepUpRes, error) {
+	res, err := c.sendPostV1AuthSessionStepUp(ctx, request, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, requestOptions ...RequestOption) (res PostV1AuthSessionStepUpRes, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1AuthSessionStepUp"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/auth/session/step-up"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1AuthSessionStepUpOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [1]string
+	pathParts[0] = "/v1/auth/session/step-up"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostV1AuthSessionStepUpRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, PostV1AuthSessionStepUpOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1AuthSessionStepUpResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // PostV1AuthSessionSwitchGroup invokes postV1AuthSessionSwitchGroup operation.
 //
 // Re-issues a token with a new active-group claim. Membership is validated externally.
@@ -33439,6 +33870,123 @@ func (c *Client) sendPostV1AuthSessionSwitchGroup(ctx context.Context, request *
 
 	stage = "DecodeResponse"
 	result, err := decodePostV1AuthSessionSwitchGroupResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostV1AuthSignInPassword invokes postV1AuthSignInPassword operation.
+//
+// Sign in with password.
+//
+// POST /v1/auth/sign-in/password
+func (c *Client) PostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, options ...RequestOption) (PostV1AuthSignInPasswordRes, error) {
+	res, err := c.sendPostV1AuthSignInPassword(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, requestOptions ...RequestOption) (res PostV1AuthSignInPasswordRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1AuthSignInPassword"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/auth/sign-in/password"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1AuthSignInPasswordOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [1]string
+	pathParts[0] = "/v1/auth/sign-in/password"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostV1AuthSignInPasswordRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1AuthSignInPasswordResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

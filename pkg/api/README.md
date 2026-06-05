@@ -15,14 +15,17 @@ first runs `scripts/openapi_to_30.py` to down-project (`type: [T,"null"]` →
 `type: T` + `nullable`) into `openapi/.build/openapi.3.0.yaml` (a build
 artifact), then runs ogen on it. The 3.1 spec stays the source of truth.
 
-## Not generated (ogen limitations)
+## Coverage
 
-Four operations use constructs ogen v1.20 cannot codegen and are skipped via
-`ignore_not_implemented`; integrate them manually:
+All 280 operations are generated (`ignore_not_implemented` is empty). Union
+responses use `oneOf` + a `result_type` discriminator, so ogen emits a typed
+sum type (switch on `.Type`):
 
-| Operation | Construct |
+| Response schema | Variants (`result_type`) |
 | --- | --- |
-| `POST /v1/auth/sign-in/password` | `anyOf` union response (AuthResult \| AuthNextStep) |
-| `POST /v1/auth/session/step-up` | `anyOf` union response |
-| `POST /v1/auth/phone/verification/verify` | `anyOf` union response |
-| `POST /oauth2/par` | complex `application/x-www-form-urlencoded` body |
+| `AuthResultOrNextStep` (sign-in) | `authenticated`, `next_step` |
+| `StepUpResult` | `next_step`, `ok` |
+| `PhoneVerifyResult` | `authenticated`, `user_updated` |
+
+The OAuth `PushedAuthorizationRequest` (PAR) form body is typed (RFC 9126), so
+the form endpoint generates too.

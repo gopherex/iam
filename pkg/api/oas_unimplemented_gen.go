@@ -1435,6 +1435,15 @@ func (UnimplementedHandler) PostOauth2Introspect(ctx context.Context, req *PostO
 	return r, ht.ErrNotImplemented
 }
 
+// PostOauth2Par implements postOauth2Par operation.
+//
+// Pushed Authorization Request.
+//
+// POST /oauth2/par
+func (UnimplementedHandler) PostOauth2Par(ctx context.Context, req *PushedAuthorizationRequest) (r PostOauth2ParRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // PostOauth2Revoke implements postOauth2Revoke operation.
 //
 // RFC 7009 token revocation.
@@ -1741,12 +1750,39 @@ func (UnimplementedHandler) PostV1AuthPhoneVerificationStart(ctx context.Context
 	return r, ht.ErrNotImplemented
 }
 
+// PostV1AuthPhoneVerificationVerify implements postV1AuthPhoneVerificationVerify operation.
+//
+// Verify a phone code.
+//
+// POST /v1/auth/phone/verification/verify
+func (UnimplementedHandler) PostV1AuthPhoneVerificationVerify(ctx context.Context, req *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams) (r PostV1AuthPhoneVerificationVerifyRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PostV1AuthSessionStepUp implements postV1AuthSessionStepUp operation.
+//
+// Begin step-up authentication.
+//
+// POST /v1/auth/session/step-up
+func (UnimplementedHandler) PostV1AuthSessionStepUp(ctx context.Context, req *PostV1AuthSessionStepUpReq) (r PostV1AuthSessionStepUpRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // PostV1AuthSessionSwitchGroup implements postV1AuthSessionSwitchGroup operation.
 //
 // Re-issues a token with a new active-group claim. Membership is validated externally.
 //
 // POST /v1/auth/session/switch-group
 func (UnimplementedHandler) PostV1AuthSessionSwitchGroup(ctx context.Context, req *PostV1AuthSessionSwitchGroupReq) (r PostV1AuthSessionSwitchGroupRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PostV1AuthSignInPassword implements postV1AuthSignInPassword operation.
+//
+// Sign in with password.
+//
+// POST /v1/auth/sign-in/password
+func (UnimplementedHandler) PostV1AuthSignInPassword(ctx context.Context, req *PasswordSignInRequest, params PostV1AuthSignInPasswordParams) (r PostV1AuthSignInPasswordRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

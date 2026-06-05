@@ -186,6 +186,84 @@ func (s *AuthResult) Validate() error {
 	return nil
 }
 
+func (s AuthResultOrNextStep) Validate() error {
+	switch s.Type {
+	case AuthenticatedResultAuthResultOrNextStep:
+		if err := s.AuthenticatedResult.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case NextStepResultAuthResultOrNextStep:
+		if err := s.NextStepResult.Validate(); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.Errorf("invalid type %q", s.Type)
+	}
+}
+
+func (s *AuthenticatedResult) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.User.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "user",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.NextStep.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "next_step",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.ResultType.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "result_type",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s AuthenticatedResultResultType) Validate() error {
+	switch s {
+	case "authenticated":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *CodeExchangeRequest) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -1340,6 +1418,113 @@ func (s NextStep) Validate() error {
 	}
 }
 
+func (s *NextStepResult) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.NextStep.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "next_step",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.Factors {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "factors",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.ResultType.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "result_type",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s NextStepResultResultType) Validate() error {
+	switch s {
+	case "next_step":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *OkResult) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.ResultType.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "result_type",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s OkResultResultType) Validate() error {
+	switch s {
+	case "ok":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *OtpStartRequest) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -1578,6 +1763,23 @@ func (s *PatchV1UsersMeOK) Validate() error {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
+}
+
+func (s PhoneVerifyResult) Validate() error {
+	switch s.Type {
+	case AuthenticatedResultPhoneVerifyResult:
+		if err := s.AuthenticatedResult.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case UserUpdatedResultPhoneVerifyResult:
+		if err := s.UserUpdatedResult.Validate(); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.Errorf("invalid type %q", s.Type)
+	}
 }
 
 func (s *PostV1AuthAccessRequestsOK) Validate() error {
@@ -1861,6 +2063,47 @@ func (s PostV1AuthPhoneVerificationStartReqChannel) Validate() error {
 	case "sms":
 		return nil
 	case "whatsapp":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *PostV1AuthSessionStepUpReq) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.RequiredAal.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "required_aal",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s PostV1AuthSessionStepUpReqRequiredAal) Validate() error {
+	switch s {
+	case 1:
+		return nil
+	case 2:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -2700,6 +2943,47 @@ func (s *PublicConfig) Validate() error {
 	return nil
 }
 
+func (s *PushedAuthorizationRequest) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.CodeChallengeMethod.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "code_challenge_method",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s PushedAuthorizationRequestCodeChallengeMethod) Validate() error {
+	switch s {
+	case "S256":
+		return nil
+	case "plain":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *RegistrationConfig) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -2988,6 +3272,23 @@ func (s SigningKeyStatus) Validate() error {
 	}
 }
 
+func (s StepUpResult) Validate() error {
+	switch s.Type {
+	case NextStepResultStepUpResult:
+		if err := s.NextStepResult.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case OkResultStepUpResult:
+		if err := s.OkResult.Validate(); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.Errorf("invalid type %q", s.Type)
+	}
+}
+
 func (s *User) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -3044,6 +3345,49 @@ func (s UserStatus) Validate() error {
 	case "banned":
 		return nil
 	case "deactivated":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *UserUpdatedResult) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.ResultType.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "result_type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.User.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "user",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s UserUpdatedResultResultType) Validate() error {
+	switch s {
+	case "user_updated":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

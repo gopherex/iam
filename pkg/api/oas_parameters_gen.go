@@ -22574,6 +22574,116 @@ func decodePostV1AuthPhoneVerificationStartParams(args [0]string, argsEscaped bo
 	return params, nil
 }
 
+// PostV1AuthPhoneVerificationVerifyParams is parameters of postV1AuthPhoneVerificationVerify operation.
+type PostV1AuthPhoneVerificationVerifyParams struct {
+	XClientID string
+}
+
+func unpackPostV1AuthPhoneVerificationVerifyParams(packed middleware.Parameters) (params PostV1AuthPhoneVerificationVerifyParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Client-Id",
+			In:   "header",
+		}
+		params.XClientID = packed[key].(string)
+	}
+	return params
+}
+
+func decodePostV1AuthPhoneVerificationVerifyParams(args [0]string, argsEscaped bool, r *http.Request) (params PostV1AuthPhoneVerificationVerifyParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: X-Client-Id.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.XClientID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// PostV1AuthSignInPasswordParams is parameters of postV1AuthSignInPassword operation.
+type PostV1AuthSignInPasswordParams struct {
+	XClientID string
+}
+
+func unpackPostV1AuthSignInPasswordParams(packed middleware.Parameters) (params PostV1AuthSignInPasswordParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Client-Id",
+			In:   "header",
+		}
+		params.XClientID = packed[key].(string)
+	}
+	return params
+}
+
+func decodePostV1AuthSignInPasswordParams(args [0]string, argsEscaped bool, r *http.Request) (params PostV1AuthSignInPasswordParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: X-Client-Id.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.XClientID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // PostV1AuthSignUpParams is parameters of postV1AuthSignUp operation.
 type PostV1AuthSignUpParams struct {
 	XClientID string
