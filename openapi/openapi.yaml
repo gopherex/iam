@@ -294,6 +294,18 @@ x-filter-planes:
     kind: protocol
     source: request/response content media-type
     values: 5
+  - id: since
+    kind: lifecycle
+    source: operation.x-since
+    values: 7
+    enum:
+    - 1.0.0
+    - 1.1.0
+    - 1.2.0
+    - 1.3.0
+    - 1.4.0
+    - 2.0.0
+    - 3.0.0
 security:
 - bearerAuth: []
 components:
@@ -1691,6 +1703,7 @@ paths:
   /v1/health:
     get:
       operationId: getV1Health
+      x-since: 1.0.0
       tags:
       - System
       summary: Aggregate healthcheck.
@@ -1715,6 +1728,7 @@ paths:
   /v1/health/live:
     get:
       operationId: getV1HealthLive
+      x-since: 1.0.0
       tags:
       - System
       summary: Liveness probe.
@@ -1735,6 +1749,7 @@ paths:
   /v1/health/ready:
     get:
       operationId: getV1HealthReady
+      x-since: 1.0.0
       tags:
       - System
       summary: Readiness probe.
@@ -1761,6 +1776,7 @@ paths:
   /v1/config/public:
     get:
       operationId: getV1ConfigPublic
+      x-since: 1.0.0
       tags:
       - System
       summary: Public bootstrap config.
@@ -1782,6 +1798,7 @@ paths:
   /v1/csrf:
     get:
       operationId: getV1Csrf
+      x-since: 1.0.0
       tags:
       - System
       summary: Issue a CSRF token (cookie mode).
@@ -1806,6 +1823,7 @@ paths:
   /v1/auth/sign-up:
     post:
       operationId: postV1AuthSignUp
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Register a user.
@@ -1840,6 +1858,7 @@ paths:
   /v1/auth/sign-in/password:
     post:
       operationId: postV1AuthSignInPassword
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Sign in with password.
@@ -1870,6 +1889,7 @@ paths:
   /v1/auth/token/refresh:
     post:
       operationId: postV1AuthTokenRefresh
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Rotate refresh token, issue new access token.
@@ -1897,6 +1917,7 @@ paths:
   /v1/auth/token/exchange:
     post:
       operationId: postV1AuthTokenExchange
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Exchange a browser-flow auth_code for a session.
@@ -1925,6 +1946,7 @@ paths:
   /v1/auth/sign-out:
     post:
       operationId: postV1AuthSignOut
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Revoke the current session.
@@ -1953,6 +1975,7 @@ paths:
   /v1/auth/sign-out-all:
     post:
       operationId: postV1AuthSignOutAll
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Revoke all of the user's sessions.
@@ -1984,6 +2007,7 @@ paths:
   /v1/auth/session:
     get:
       operationId: getV1AuthSession
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Get current session and user.
@@ -2008,6 +2032,7 @@ paths:
   /v1/auth/session/switch-group:
     post:
       operationId: postV1AuthSessionSwitchGroup
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Set active group, re-issue token (optional seam).
@@ -2041,6 +2066,7 @@ paths:
   /v1/auth/session/step-up:
     post:
       operationId: postV1AuthSessionStepUp
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Begin step-up authentication.
@@ -2081,6 +2107,7 @@ paths:
   /v1/auth/guest:
     post:
       operationId: postV1AuthGuest
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Create an anonymous guest user and session.
@@ -2108,6 +2135,7 @@ paths:
   /v1/auth/email/verification/start:
     post:
       operationId: postV1AuthEmailVerificationStart
+      x-since: 1.0.0
       tags:
       - Verification
       summary: Send an email verification challenge.
@@ -2147,6 +2175,7 @@ paths:
   /v1/auth/email/verification/verify:
     post:
       operationId: postV1AuthEmailVerificationVerify
+      x-since: 1.0.0
       tags:
       - Verification
       summary: Verify email by code or token.
@@ -2190,6 +2219,7 @@ paths:
   /v1/auth/email/verification/callback:
     get:
       operationId: getV1AuthEmailVerificationCallback
+      x-since: 1.0.0
       tags:
       - Verification
       summary: Email link callback (redirects with code).
@@ -2225,6 +2255,7 @@ paths:
   /v1/auth/email/change/start:
     post:
       operationId: postV1AuthEmailChangeStart
+      x-since: 1.0.0
       tags:
       - Verification
       summary: Start an email change (step-up; notifies old address).
@@ -2263,6 +2294,7 @@ paths:
   /v1/auth/email/change/verify:
     post:
       operationId: postV1AuthEmailChangeVerify
+      x-since: 1.0.0
       tags:
       - Verification
       summary: Confirm the new email.
@@ -2304,6 +2336,7 @@ paths:
   /v1/auth/email/change/cancel:
     get:
       operationId: getV1AuthEmailChangeCancel
+      x-since: 1.0.0
       tags:
       - Verification
       summary: Cancel a pending email change (from old-address link).
@@ -2328,6 +2361,7 @@ paths:
   /v1/auth/phone/verification/start:
     post:
       operationId: postV1AuthPhoneVerificationStart
+      x-since: 1.0.0
       tags:
       - Verification
       summary: Send an SMS/WhatsApp verification code.
@@ -2372,6 +2406,7 @@ paths:
   /v1/auth/phone/verification/verify:
     post:
       operationId: postV1AuthPhoneVerificationVerify
+      x-since: 1.0.0
       tags:
       - Verification
       summary: Verify a phone code.
@@ -2408,6 +2443,7 @@ paths:
   /v1/auth/phone/change/start:
     post:
       operationId: postV1AuthPhoneChangeStart
+      x-since: 1.0.0
       tags:
       - Verification
       summary: Start a phone change.
@@ -2444,6 +2480,7 @@ paths:
   /v1/auth/phone/change/verify:
     post:
       operationId: postV1AuthPhoneChangeVerify
+      x-since: 1.0.0
       tags:
       - Verification
       summary: Confirm the new phone.
@@ -2480,6 +2517,7 @@ paths:
   /v1/auth/otp/start:
     post:
       operationId: postV1AuthOtpStart
+      x-since: 1.1.0
       tags:
       - Passwordless
       summary: Start OTP login/signup/verify.
@@ -2510,6 +2548,7 @@ paths:
   /v1/auth/otp/verify:
     post:
       operationId: postV1AuthOtpVerify
+      x-since: 1.1.0
       tags:
       - Passwordless
       summary: Verify OTP.
@@ -2540,6 +2579,7 @@ paths:
   /v1/auth/magic-link/start:
     post:
       operationId: postV1AuthMagicLinkStart
+      x-since: 1.1.0
       tags:
       - Passwordless
       summary: Send a magic link.
@@ -2568,6 +2608,7 @@ paths:
   /v1/auth/magic-link/verify:
     post:
       operationId: postV1AuthMagicLinkVerify
+      x-since: 1.1.0
       tags:
       - Passwordless
       summary: Headless verify of a magic-link token.
@@ -2598,6 +2639,7 @@ paths:
   /v1/auth/magic-link/callback:
     get:
       operationId: getV1AuthMagicLinkCallback
+      x-since: 1.1.0
       tags:
       - Passwordless
       summary: Magic-link callback (redirects with code).
@@ -2633,6 +2675,7 @@ paths:
   /v1/auth/oauth/providers:
     get:
       operationId: getV1AuthOauthProviders
+      x-since: 1.2.0
       tags:
       - OAuth Social
       summary: List enabled OAuth providers.
@@ -2667,6 +2710,7 @@ paths:
   /v1/auth/oauth/{provider}/start:
     get:
       operationId: getV1AuthOauthByProviderStart
+      x-since: 1.2.0
       tags:
       - OAuth Social
       summary: Begin OAuth (redirects to provider).
@@ -2718,6 +2762,7 @@ paths:
   /v1/auth/oauth/{provider}/callback:
     get:
       operationId: getV1AuthOauthByProviderCallback
+      x-since: 1.2.0
       tags:
       - OAuth Social
       summary: Provider callback (redirects to product with code).
@@ -2763,6 +2808,7 @@ paths:
   /v1/auth/oauth/exchange:
     post:
       operationId: postV1AuthOauthExchange
+      x-since: 1.2.0
       tags:
       - OAuth Social
       summary: Exchange OAuth code (alias of token/exchange).
@@ -2798,6 +2844,7 @@ paths:
   /v1/auth/oauth/{provider}/link/start:
     get:
       operationId: getV1AuthOauthByProviderLinkStart
+      x-since: 1.2.0
       tags:
       - OAuth Social
       summary: Begin linking a provider to the current user.
@@ -2833,6 +2880,7 @@ paths:
   /v1/auth/oauth/{provider}/link/callback:
     get:
       operationId: getV1AuthOauthByProviderLinkCallback
+      x-since: 1.2.0
       tags:
       - OAuth Social
       summary: Link callback (redirects to product).
@@ -2859,6 +2907,7 @@ paths:
   /v1/auth/oauth/{provider}/unlink:
     post:
       operationId: postV1AuthOauthByProviderUnlink
+      x-since: 1.2.0
       tags:
       - OAuth Social
       summary: Unlink a provider identity (step-up).
@@ -2897,6 +2946,7 @@ paths:
   /v1/auth/webauthn/login/options:
     post:
       operationId: postV1AuthWebauthnLoginOptions
+      x-since: 1.2.0
       tags:
       - WebAuthn
       summary: Create a passkey login challenge.
@@ -2945,6 +2995,7 @@ paths:
   /v1/auth/webauthn/login/verify:
     post:
       operationId: postV1AuthWebauthnLoginVerify
+      x-since: 1.2.0
       tags:
       - WebAuthn
       summary: Verify a passkey assertion.
@@ -2982,6 +3033,7 @@ paths:
   /v1/auth/webauthn/register/options:
     post:
       operationId: postV1AuthWebauthnRegisterOptions
+      x-since: 1.2.0
       tags:
       - WebAuthn
       summary: Create a passkey registration challenge.
@@ -3025,6 +3077,7 @@ paths:
   /v1/auth/webauthn/register/verify:
     post:
       operationId: postV1AuthWebauthnRegisterVerify
+      x-since: 1.2.0
       tags:
       - WebAuthn
       summary: Verify a newly created passkey.
@@ -3066,6 +3119,7 @@ paths:
   /v1/auth/webauthn/credentials:
     get:
       operationId: getV1AuthWebauthnCredentials
+      x-since: 1.2.0
       tags:
       - WebAuthn
       summary: List the user's passkeys.
@@ -3090,6 +3144,7 @@ paths:
   /v1/auth/webauthn/credentials/{credential_id}:
     patch:
       operationId: patchV1AuthWebauthnCredentialsByCredentialId
+      x-since: 1.2.0
       tags:
       - WebAuthn
       summary: Rename a passkey.
@@ -3130,6 +3185,7 @@ paths:
       - environment
     delete:
       operationId: deleteV1AuthWebauthnCredentialsByCredentialId
+      x-since: 1.2.0
       tags:
       - WebAuthn
       summary: Remove a passkey.
@@ -3159,6 +3215,7 @@ paths:
   /v1/auth/mfa/factors:
     get:
       operationId: getV1AuthMfaFactors
+      x-since: 1.1.0
       tags:
       - MFA
       summary: List MFA factors.
@@ -3183,6 +3240,7 @@ paths:
   /v1/auth/mfa/challenge:
     post:
       operationId: postV1AuthMfaChallenge
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Create an MFA challenge.
@@ -3221,6 +3279,7 @@ paths:
   /v1/auth/mfa/verify:
     post:
       operationId: postV1AuthMfaVerify
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Verify an MFA challenge.
@@ -3275,6 +3334,7 @@ paths:
   /v1/auth/mfa/totp/enroll:
     post:
       operationId: postV1AuthMfaTotpEnroll
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Start TOTP enrollment.
@@ -3315,6 +3375,7 @@ paths:
   /v1/auth/mfa/totp/verify:
     post:
       operationId: postV1AuthMfaTotpVerify
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Confirm TOTP enrollment.
@@ -3351,6 +3412,7 @@ paths:
   /v1/auth/mfa/sms/enroll:
     post:
       operationId: postV1AuthMfaSmsEnroll
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Enroll an SMS factor.
@@ -3386,6 +3448,7 @@ paths:
   /v1/auth/mfa/email/enroll:
     post:
       operationId: postV1AuthMfaEmailEnroll
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Enroll an email factor.
@@ -3421,6 +3484,7 @@ paths:
   /v1/auth/mfa/webauthn/enroll/options:
     post:
       operationId: postV1AuthMfaWebauthnEnrollOptions
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Start a WebAuthn MFA factor.
@@ -3456,6 +3520,7 @@ paths:
   /v1/auth/mfa/webauthn/enroll/verify:
     post:
       operationId: postV1AuthMfaWebauthnEnrollVerify
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Verify a WebAuthn MFA factor.
@@ -3493,6 +3558,7 @@ paths:
   /v1/auth/mfa/recovery-codes/generate:
     post:
       operationId: postV1AuthMfaRecoveryCodesGenerate
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Generate recovery codes (AAL2).
@@ -3526,6 +3592,7 @@ paths:
   /v1/auth/mfa/recovery-codes/verify:
     post:
       operationId: postV1AuthMfaRecoveryCodesVerify
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Use a recovery code.
@@ -3559,6 +3626,7 @@ paths:
   /v1/auth/mfa/factors/{factor_id}:
     delete:
       operationId: deleteV1AuthMfaFactorsByFactorId
+      x-since: 1.1.0
       tags:
       - MFA
       summary: Remove a factor (step-up).
@@ -3586,6 +3654,7 @@ paths:
   /v1/auth/password/forgot:
     post:
       operationId: postV1AuthPasswordForgot
+      x-since: 1.0.0
       tags:
       - Password
       summary: Start a password reset.
@@ -3614,6 +3683,7 @@ paths:
   /v1/auth/password/reset:
     post:
       operationId: postV1AuthPasswordReset
+      x-since: 1.0.0
       tags:
       - Password
       summary: Reset by token or code.
@@ -3646,6 +3716,7 @@ paths:
   /v1/auth/password/change:
     post:
       operationId: postV1AuthPasswordChange
+      x-since: 1.0.0
       tags:
       - Password
       summary: Change a known password.
@@ -3671,6 +3742,7 @@ paths:
   /v1/auth/password/verify:
     post:
       operationId: postV1AuthPasswordVerify
+      x-since: 1.0.0
       tags:
       - Password
       summary: Verify current password (step-up).
@@ -3714,6 +3786,7 @@ paths:
   /v1/auth/password/check:
     post:
       operationId: postV1AuthPasswordCheck
+      x-since: 1.0.0
       tags:
       - Password
       summary: Check a candidate password against policy.
@@ -3754,6 +3827,7 @@ paths:
   /v1/users/me:
     get:
       operationId: getV1UsersMe
+      x-since: 1.0.0
       tags:
       - Users
       summary: Get the current user.
@@ -3775,6 +3849,7 @@ paths:
       - environment
     patch:
       operationId: patchV1UsersMe
+      x-since: 1.0.0
       tags:
       - Users
       summary: Update the core profile.
@@ -3816,6 +3891,7 @@ paths:
       - environment
     delete:
       operationId: deleteV1UsersMe
+      x-since: 1.0.0
       tags:
       - Users
       summary: Delete own account (step-up).
@@ -3847,6 +3923,7 @@ paths:
   /v1/account/capabilities:
     get:
       operationId: getV1AccountCapabilities
+      x-since: 1.0.0
       tags:
       - Users
       summary: What this user may self-manage.
@@ -3870,6 +3947,7 @@ paths:
   /v1/users/me/activity:
     get:
       operationId: getV1UsersMeActivity
+      x-since: 1.0.0
       tags:
       - Users
       summary: Own security activity.
@@ -3904,6 +3982,7 @@ paths:
   /v1/users/me/export:
     post:
       operationId: postV1UsersMeExport
+      x-since: 1.0.0
       tags:
       - Users
       summary: Start a GDPR export.
@@ -3926,6 +4005,7 @@ paths:
   /v1/users/me/export/{job_id}:
     get:
       operationId: getV1UsersMeExportByJobId
+      x-since: 1.0.0
       tags:
       - Users
       summary: Export status/download.
@@ -3960,6 +4040,7 @@ paths:
   /v1/users/me/consents:
     get:
       operationId: getV1UsersMeConsents
+      x-since: 1.0.0
       tags:
       - Users
       summary: Read own consents.
@@ -3990,6 +4071,7 @@ paths:
       - environment
     post:
       operationId: postV1UsersMeConsents
+      x-since: 1.0.0
       tags:
       - Users
       summary: Accept consents.
@@ -4028,6 +4110,7 @@ paths:
   /v1/auth/identities:
     get:
       operationId: getV1AuthIdentities
+      x-since: 1.0.0
       tags:
       - Identities
       summary: List linked identities.
@@ -4052,6 +4135,7 @@ paths:
   /v1/auth/identities/{identity_id}:
     delete:
       operationId: deleteV1AuthIdentitiesByIdentityId
+      x-since: 1.0.0
       tags:
       - Identities
       summary: Unlink an identity (step-up).
@@ -4081,6 +4165,7 @@ paths:
   /v1/auth/identities/merge/start:
     post:
       operationId: postV1AuthIdentitiesMergeStart
+      x-since: 1.0.0
       tags:
       - Identities
       summary: Start an account merge.
@@ -4114,6 +4199,7 @@ paths:
   /v1/auth/identities/merge/confirm:
     post:
       operationId: postV1AuthIdentitiesMergeConfirm
+      x-since: 1.0.0
       tags:
       - Identities
       summary: Confirm a merge.
@@ -4154,6 +4240,7 @@ paths:
   /v1/sessions:
     get:
       operationId: getV1Sessions
+      x-since: 1.0.0
       tags:
       - Sessions
       summary: List own sessions.
@@ -4177,6 +4264,7 @@ paths:
       - environment
     delete:
       operationId: deleteV1Sessions
+      x-since: 1.0.0
       tags:
       - Sessions
       summary: Revoke multiple own sessions.
@@ -4208,6 +4296,7 @@ paths:
   /v1/sessions/current:
     get:
       operationId: getV1SessionsCurrent
+      x-since: 1.0.0
       tags:
       - Sessions
       summary: Current session details.
@@ -4230,6 +4319,7 @@ paths:
   /v1/sessions/{session_id}:
     patch:
       operationId: patchV1SessionsBySessionId
+      x-since: 1.0.0
       tags:
       - Sessions
       summary: Rename a session/device.
@@ -4270,6 +4360,7 @@ paths:
       - environment
     delete:
       operationId: deleteV1SessionsBySessionId
+      x-since: 1.0.0
       tags:
       - Sessions
       summary: Revoke a session.
@@ -4297,6 +4388,7 @@ paths:
   /v1/sessions/{session_id}/trust:
     post:
       operationId: postV1SessionsBySessionIdTrust
+      x-since: 1.0.0
       tags:
       - Sessions
       summary: Mark a device trusted (MFA).
@@ -4336,6 +4428,7 @@ paths:
   /v1/service-accounts/tokens:
     post:
       operationId: postV1ServiceAccountsTokens
+      x-since: 1.3.0
       tags:
       - Service Accounts
       summary: Mint a short-lived service-account token.
@@ -4383,6 +4476,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminServiceAccounts
+      x-since: 1.3.0
       tags:
       - Service Accounts
       summary: List service accounts.
@@ -4416,6 +4510,7 @@ paths:
       - environment
     post:
       operationId: postV1ProjectsByProjectIdAdminServiceAccounts
+      x-since: 1.3.0
       tags:
       - Service Accounts
       summary: Create a service account.
@@ -4467,6 +4562,7 @@ paths:
         type: string
     get:
       operationId: getV1ProjectsByProjectIdAdminServiceAccountsBySaId
+      x-since: 1.3.0
       tags:
       - Service Accounts
       summary: Get a service account.
@@ -4496,6 +4592,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     patch:
       operationId: patchV1ProjectsByProjectIdAdminServiceAccountsBySaId
+      x-since: 1.3.0
       tags:
       - Service Accounts
       summary: Update a service account.
@@ -4538,6 +4635,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminServiceAccountsBySaId
+      x-since: 1.3.0
       tags:
       - Service Accounts
       summary: Delete a service account.
@@ -4572,6 +4670,7 @@ paths:
         type: string
     post:
       operationId: postV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets
+      x-since: 1.3.0
       tags:
       - Service Accounts
       summary: Create a client secret.
@@ -4619,6 +4718,7 @@ paths:
   /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets/{secret_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId
+      x-since: 1.3.0
       tags:
       - Service Accounts
       summary: Revoke a secret.
@@ -4660,6 +4760,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminApiKeys
+      x-since: 1.3.0
       tags:
       - API Keys
       summary: List API keys.
@@ -4689,6 +4790,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     post:
       operationId: postV1ProjectsByProjectIdAdminApiKeys
+      x-since: 1.3.0
       tags:
       - API Keys
       summary: Create an API key.
@@ -4746,6 +4848,7 @@ paths:
         type: string
     patch:
       operationId: patchV1ProjectsByProjectIdAdminApiKeysByKeyId
+      x-since: 1.3.0
       tags:
       - API Keys
       summary: Update key metadata/scopes.
@@ -4790,6 +4893,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminApiKeysByKeyId
+      x-since: 1.3.0
       tags:
       - API Keys
       summary: Delete a key.
@@ -4817,6 +4921,7 @@ paths:
   /v1/projects/{project_id}/admin/api-keys/{key_id}/rotate:
     post:
       operationId: postV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate
+      x-since: 1.3.0
       tags:
       - API Keys
       summary: Rotate the key secret.
@@ -4856,6 +4961,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminSsoConnections
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: List SSO connections.
@@ -4889,6 +4995,7 @@ paths:
       - environment
     post:
       operationId: postV1ProjectsByProjectIdAdminSsoConnections
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: Create an SSO connection.
@@ -4954,6 +5061,7 @@ paths:
         type: string
     get:
       operationId: getV1ProjectsByProjectIdAdminSsoConnectionsById
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: Get a connection.
@@ -4983,6 +5091,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     patch:
       operationId: patchV1ProjectsByProjectIdAdminSsoConnectionsById
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: Update a connection.
@@ -5019,6 +5128,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminSsoConnectionsById
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: Delete a connection.
@@ -5046,6 +5156,7 @@ paths:
   /v1/projects/{project_id}/admin/sso/connections/{id}/test:
     post:
       operationId: postV1ProjectsByProjectIdAdminSsoConnectionsByIdTest
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: Test a connection.
@@ -5080,6 +5191,7 @@ paths:
   /v1/projects/{project_id}/admin/sso/connections/{id}/rotate-certificate:
     post:
       operationId: postV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: Rotate the SP certificate.
@@ -5114,6 +5226,7 @@ paths:
   /v1/sso/connections/resolve:
     get:
       operationId: getV1SsoConnectionsResolve
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: Resolve an email to its SSO connection.
@@ -5144,6 +5257,7 @@ paths:
   /v1/sso/saml/{connection_id}/metadata:
     get:
       operationId: getV1SsoSamlByConnectionIdMetadata
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: SP metadata XML.
@@ -5168,6 +5282,7 @@ paths:
   /v1/sso/saml/{connection_id}/login:
     get:
       operationId: getV1SsoSamlByConnectionIdLogin
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: SP-initiated SAML login (redirect to IdP).
@@ -5204,6 +5319,7 @@ paths:
   /v1/sso/saml/{connection_id}/acs:
     post:
       operationId: postV1SsoSamlByConnectionIdAcs
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: SAML ACS endpoint.
@@ -5244,6 +5360,7 @@ paths:
   /v1/sso/saml/{connection_id}/slo:
     post:
       operationId: postV1SsoSamlByConnectionIdSlo
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: SAML single logout.
@@ -5270,6 +5387,7 @@ paths:
   /v1/sso/oidc/{connection_id}/start:
     get:
       operationId: getV1SsoOidcByConnectionIdStart
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: Start enterprise OIDC login.
@@ -5311,6 +5429,7 @@ paths:
   /v1/sso/oidc/{connection_id}/callback:
     get:
       operationId: getV1SsoOidcByConnectionIdCallback
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: OIDC IdP callback.
@@ -5351,6 +5470,7 @@ paths:
   /v1/sso/exchange:
     post:
       operationId: postV1SsoExchange
+      x-since: 3.0.0
       tags:
       - Enterprise SSO
       summary: Exchange SSO code (alias of token/exchange).
@@ -5389,6 +5509,7 @@ paths:
         type: string
     get:
       operationId: getV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: List SCIM tokens.
@@ -5419,6 +5540,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     post:
       operationId: postV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Create a SCIM token.
@@ -5469,6 +5591,7 @@ paths:
   /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens/{token_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Revoke a SCIM token.
@@ -5513,6 +5636,7 @@ paths:
         type: string
     get:
       operationId: getV1ScimV2ByConnectionIdUsers
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: List SCIM users.
@@ -5552,6 +5676,7 @@ paths:
       - environment
     post:
       operationId: postV1ScimV2ByConnectionIdUsers
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Create/provision a user identity.
@@ -5593,6 +5718,7 @@ paths:
         type: string
     get:
       operationId: getV1ScimV2ByConnectionIdUsersByScimUserId
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Get a SCIM user.
@@ -5618,6 +5744,7 @@ paths:
       - environment
     put:
       operationId: putV1ScimV2ByConnectionIdUsersByScimUserId
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Replace a SCIM user.
@@ -5647,6 +5774,7 @@ paths:
       - environment
     patch:
       operationId: patchV1ScimV2ByConnectionIdUsersByScimUserId
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Patch a SCIM user.
@@ -5678,6 +5806,7 @@ paths:
       - environment
     delete:
       operationId: deleteV1ScimV2ByConnectionIdUsersByScimUserId
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Deprovision a user.
@@ -5705,6 +5834,7 @@ paths:
         type: string
     get:
       operationId: getV1ScimV2ByConnectionIdGroups
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: List SCIM groups (forwarded downstream).
@@ -5728,6 +5858,7 @@ paths:
       - environment
     post:
       operationId: postV1ScimV2ByConnectionIdGroups
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Create a SCIM group (forwarded downstream).
@@ -5770,6 +5901,7 @@ paths:
         type: string
     get:
       operationId: getV1ScimV2ByConnectionIdGroupsByGroupId
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Get a SCIM group (forwarded downstream).
@@ -5795,6 +5927,7 @@ paths:
       - environment
     put:
       operationId: putV1ScimV2ByConnectionIdGroupsByGroupId
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Replace a SCIM group (forwarded downstream).
@@ -5825,6 +5958,7 @@ paths:
       - environment
     patch:
       operationId: patchV1ScimV2ByConnectionIdGroupsByGroupId
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Patch a SCIM group (forwarded downstream).
@@ -5857,6 +5991,7 @@ paths:
       - environment
     delete:
       operationId: deleteV1ScimV2ByConnectionIdGroupsByGroupId
+      x-since: 3.0.0
       tags:
       - SCIM
       summary: Delete a SCIM group (forwarded downstream).
@@ -5881,6 +6016,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminDomains
+      x-since: 3.0.0
       tags:
       - Domains
       summary: List domains.
@@ -5914,6 +6050,7 @@ paths:
       - environment
     post:
       operationId: postV1ProjectsByProjectIdAdminDomains
+      x-since: 3.0.0
       tags:
       - Domains
       summary: Add a domain.
@@ -5967,6 +6104,7 @@ paths:
   /v1/projects/{project_id}/admin/domains/{domain_id}/verify:
     post:
       operationId: postV1ProjectsByProjectIdAdminDomainsByDomainIdVerify
+      x-since: 3.0.0
       tags:
       - Domains
       summary: Verify a domain via DNS.
@@ -6001,6 +6139,7 @@ paths:
   /v1/projects/{project_id}/admin/domains/{domain_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminDomainsByDomainId
+      x-since: 3.0.0
       tags:
       - Domains
       summary: Remove a domain.
@@ -6034,6 +6173,7 @@ paths:
   /p/{project_id}/e/{env}/.well-known/openid-configuration:
     get:
       operationId: getPByProjectIdEByEnvWellKnownOpenidConfiguration
+      x-since: 2.0.0
       tags:
       - OIDC Provider
       summary: OIDC discovery document.
@@ -6060,6 +6200,7 @@ paths:
   /p/{project_id}/e/{env}/.well-known/jwks.json:
     get:
       operationId: getPByProjectIdEByEnvWellKnownJwksJson
+      x-since: 2.0.0
       tags:
       - OIDC Provider
       summary: JWKS public keys.
@@ -6086,6 +6227,7 @@ paths:
   /oauth2/authorize:
     get:
       operationId: getOauth2Authorize
+      x-since: 2.0.0
       tags:
       - OIDC Provider
       summary: Authorization endpoint (headless; may redirect to interaction).
@@ -6154,6 +6296,7 @@ paths:
   /oauth2/token:
     post:
       operationId: postOauth2Token
+      x-since: 2.0.0
       tags:
       - OIDC Provider
       summary: Token endpoint.
@@ -6201,6 +6344,7 @@ paths:
   /oauth2/revoke:
     post:
       operationId: postOauth2Revoke
+      x-since: 2.0.0
       tags:
       - OIDC Provider
       summary: RFC 7009 token revocation.
@@ -6229,6 +6373,7 @@ paths:
   /oauth2/introspect:
     post:
       operationId: postOauth2Introspect
+      x-since: 2.0.0
       tags:
       - OIDC Provider
       summary: RFC 7662 token introspection.
@@ -6263,6 +6408,7 @@ paths:
   /oauth2/userinfo:
     get:
       operationId: getOauth2Userinfo
+      x-since: 2.0.0
       tags:
       - OIDC Provider
       summary: OIDC UserInfo.
@@ -6287,6 +6433,7 @@ paths:
   /oauth2/logout:
     get:
       operationId: getOauth2Logout
+      x-since: 2.0.0
       tags:
       - OIDC Provider
       summary: RP-initiated logout.
@@ -6323,6 +6470,7 @@ paths:
   /oauth2/backchannel-logout:
     post:
       operationId: postOauth2BackchannelLogout
+      x-since: 2.0.0
       tags:
       - OIDC Provider
       summary: OIDC back-channel logout.
@@ -6346,6 +6494,7 @@ paths:
   /oauth2/par:
     post:
       operationId: postOauth2Par
+      x-since: 2.0.0
       tags:
       - OIDC Provider
       summary: Pushed Authorization Request.
@@ -6378,6 +6527,7 @@ paths:
   /oauth2/device_authorization:
     post:
       operationId: postOauth2DeviceAuthorization
+      x-since: 2.0.0
       tags:
       - Device Flow
       summary: Start the device flow.
@@ -6423,6 +6573,7 @@ paths:
   /v1/device:
     get:
       operationId: getV1Device
+      x-since: 2.0.0
       tags:
       - Device Flow
       summary: Device verification-page data.
@@ -6458,6 +6609,7 @@ paths:
   /v1/device/approve:
     post:
       operationId: postV1DeviceApprove
+      x-since: 2.0.0
       tags:
       - Device Flow
       summary: Approve a device code.
@@ -6488,6 +6640,7 @@ paths:
   /v1/device/deny:
     post:
       operationId: postV1DeviceDeny
+      x-since: 2.0.0
       tags:
       - Device Flow
       summary: Deny a device code.
@@ -6518,6 +6671,7 @@ paths:
   /v1/oauth/interaction/{interaction_id}:
     get:
       operationId: getV1OauthInteractionByInteractionId
+      x-since: 2.0.0
       tags:
       - OIDC Interaction
       summary: Fetch interaction context.
@@ -6562,6 +6716,7 @@ paths:
   /v1/oauth/interaction/{interaction_id}/login:
     post:
       operationId: postV1OauthInteractionByInteractionIdLogin
+      x-since: 2.0.0
       tags:
       - OIDC Interaction
       summary: Attach the authenticated user to the interaction.
@@ -6598,6 +6753,7 @@ paths:
   /v1/oauth/interaction/{interaction_id}/consent:
     post:
       operationId: postV1OauthInteractionByInteractionIdConsent
+      x-since: 2.0.0
       tags:
       - OIDC Interaction
       summary: Record consent.
@@ -6639,6 +6795,7 @@ paths:
   /v1/oauth/interaction/{interaction_id}/reject:
     post:
       operationId: postV1OauthInteractionByInteractionIdReject
+      x-since: 2.0.0
       tags:
       - OIDC Interaction
       summary: Cancel the interaction.
@@ -6676,6 +6833,7 @@ paths:
   /v1/oauth/grants:
     get:
       operationId: getV1OauthGrants
+      x-since: 2.0.0
       tags:
       - OIDC Interaction
       summary: List the user's authorized apps.
@@ -6705,6 +6863,7 @@ paths:
   /v1/oauth/grants/{grant_id}:
     delete:
       operationId: deleteV1OauthGrantsByGrantId
+      x-since: 2.0.0
       tags:
       - OIDC Interaction
       summary: Revoke an OAuth grant.
@@ -6735,6 +6894,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminUsers
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Search/list users.
@@ -6788,6 +6948,7 @@ paths:
       - environment
     post:
       operationId: postV1ProjectsByProjectIdAdminUsers
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Create a user.
@@ -6846,6 +7007,7 @@ paths:
         type: string
     get:
       operationId: getV1ProjectsByProjectIdAdminUsersByUserId
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Get a user.
@@ -6875,6 +7037,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     patch:
       operationId: patchV1ProjectsByProjectIdAdminUsersByUserId
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Update a user.
@@ -6911,6 +7074,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminUsersByUserId
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Delete a user.
@@ -6943,6 +7107,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/ban:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdBan
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Ban a user.
@@ -6989,6 +7154,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/unban:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdUnban
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Unban a user.
@@ -7023,6 +7189,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/password:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdPassword
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Set a user's password.
@@ -7067,6 +7234,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/verify-email:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Mark email verified.
@@ -7101,6 +7269,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/verify-phone:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Mark phone verified.
@@ -7135,6 +7304,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/mfa/reset:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdMfaReset
+      x-since: 1.1.0
       tags:
       - Admin Users
       summary: Remove MFA factors.
@@ -7181,6 +7351,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/sessions:
     get:
       operationId: getV1ProjectsByProjectIdAdminUsersByUserIdSessions
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: List a user's sessions.
@@ -7221,6 +7392,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/sessions/revoke:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Revoke a user's sessions.
@@ -7265,6 +7437,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/sessions/{session_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Revoke a specific user session.
@@ -7303,6 +7476,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/identities:
     get:
       operationId: getV1ProjectsByProjectIdAdminUsersByUserIdIdentities
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: List a user's identities.
@@ -7339,6 +7513,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/identities/{identity_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Remove a user identity.
@@ -7377,6 +7552,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/grants:
     get:
       operationId: getV1ProjectsByProjectIdAdminUsersByUserIdGrants
+      x-since: 2.0.0
       tags:
       - Admin Users
       summary: List a user's OAuth grants.
@@ -7417,6 +7593,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/grants/{grant_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId
+      x-since: 2.0.0
       tags:
       - Admin Users
       summary: Revoke a user's OAuth grant.
@@ -7455,6 +7632,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/impersonate:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdImpersonate
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Create a support impersonation session.
@@ -7505,6 +7683,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/anonymize:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdAnonymize
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Anonymize a user.
@@ -7544,6 +7723,7 @@ paths:
   /v1/projects/{project_id}/admin/users/{user_id}/export:
     post:
       operationId: postV1ProjectsByProjectIdAdminUsersByUserIdExport
+      x-since: 1.0.0
       tags:
       - Admin Users
       summary: Start a user data export.
@@ -7581,6 +7761,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminApps
+      x-since: 1.0.0
       tags:
       - Admin Apps
       summary: List app clients.
@@ -7614,6 +7795,7 @@ paths:
       - environment
     post:
       operationId: postV1ProjectsByProjectIdAdminApps
+      x-since: 1.0.0
       tags:
       - Admin Apps
       summary: Create an app client.
@@ -7665,6 +7847,7 @@ paths:
         type: string
     get:
       operationId: getV1ProjectsByProjectIdAdminAppsByAppId
+      x-since: 1.0.0
       tags:
       - Admin Apps
       summary: Get an app client.
@@ -7694,6 +7877,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     patch:
       operationId: patchV1ProjectsByProjectIdAdminAppsByAppId
+      x-since: 1.0.0
       tags:
       - Admin Apps
       summary: Update an app client.
@@ -7730,6 +7914,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminAppsByAppId
+      x-since: 1.0.0
       tags:
       - Admin Apps
       summary: Delete an app client.
@@ -7757,6 +7942,7 @@ paths:
   /v1/projects/{project_id}/admin/apps/{app_id}/secrets:
     post:
       operationId: postV1ProjectsByProjectIdAdminAppsByAppIdSecrets
+      x-since: 1.0.0
       tags:
       - Admin Apps
       summary: Create a client secret.
@@ -7808,6 +7994,7 @@ paths:
   /v1/projects/{project_id}/admin/apps/{app_id}/secrets/{secret_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId
+      x-since: 1.0.0
       tags:
       - Admin Apps
       summary: Revoke a client secret.
@@ -7849,6 +8036,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminConfigAuth
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Get auth config.
@@ -7873,6 +8061,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     patch:
       operationId: patchV1ProjectsByProjectIdAdminConfigAuth
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Update auth config.
@@ -7906,6 +8095,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getV1ProjectsByProjectIdAdminConfigPasswordPolicy
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Get password policy.
@@ -7930,6 +8120,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     patch:
       operationId: patchV1ProjectsByProjectIdAdminConfigPasswordPolicy
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Update password policy.
@@ -7963,6 +8154,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getV1ProjectsByProjectIdAdminConfigSessionPolicy
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Get session policy.
@@ -7987,6 +8179,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     patch:
       operationId: patchV1ProjectsByProjectIdAdminConfigSessionPolicy
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Update session policy.
@@ -8020,6 +8213,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getV1ProjectsByProjectIdAdminConfigMfaPolicy
+      x-since: 1.1.0
       tags:
       - Admin Config
       summary: Get MFA policy.
@@ -8044,6 +8238,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     patch:
       operationId: patchV1ProjectsByProjectIdAdminConfigMfaPolicy
+      x-since: 1.1.0
       tags:
       - Admin Config
       summary: Update MFA policy.
@@ -8077,6 +8272,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getV1ProjectsByProjectIdAdminConfigRateLimits
+      x-since: 1.4.0
       tags:
       - Admin Config
       summary: Get rate limits.
@@ -8101,6 +8297,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     patch:
       operationId: patchV1ProjectsByProjectIdAdminConfigRateLimits
+      x-since: 1.4.0
       tags:
       - Admin Config
       summary: Update rate limits.
@@ -8135,6 +8332,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminFeatures
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Get project feature toggles.
@@ -8161,6 +8359,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     put:
       operationId: putV1ProjectsByProjectIdAdminFeatures
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Set project feature toggles.
@@ -8203,6 +8402,7 @@ paths:
         type: string
     get:
       operationId: getV1ProjectsByProjectIdAdminI18nByLocale
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Get i18n catalogue.
@@ -8230,6 +8430,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     put:
       operationId: putV1ProjectsByProjectIdAdminI18nByLocale
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Set i18n catalogue overrides.
@@ -8265,6 +8466,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getV1ProjectsByProjectIdAdminConsents
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Get required consents.
@@ -8289,6 +8491,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     put:
       operationId: putV1ProjectsByProjectIdAdminConsents
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Set required consents.
@@ -8322,6 +8525,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getV1ProjectsByProjectIdAdminRetentionPolicy
+      x-since: 1.4.0
       tags:
       - Admin Config
       summary: Get retention policy.
@@ -8346,6 +8550,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     put:
       operationId: putV1ProjectsByProjectIdAdminRetentionPolicy
+      x-since: 1.4.0
       tags:
       - Admin Config
       summary: Set retention policy.
@@ -8380,6 +8585,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminOauthProviders
+      x-since: 1.2.0
       tags:
       - Admin Config
       summary: List OAuth providers.
@@ -8409,6 +8615,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     post:
       operationId: postV1ProjectsByProjectIdAdminOauthProviders
+      x-since: 1.2.0
       tags:
       - Admin Config
       summary: Create OAuth provider.
@@ -8448,6 +8655,7 @@ paths:
         type: string
     patch:
       operationId: patchV1ProjectsByProjectIdAdminOauthProvidersById
+      x-since: 1.2.0
       tags:
       - Admin Config
       summary: Update OAuth provider.
@@ -8480,6 +8688,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminOauthProvidersById
+      x-since: 1.2.0
       tags:
       - Admin Config
       summary: Delete OAuth provider.
@@ -8510,6 +8719,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminEmailProviders
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: List email providers.
@@ -8539,6 +8749,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     post:
       operationId: postV1ProjectsByProjectIdAdminEmailProviders
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Create email provider.
@@ -8578,6 +8789,7 @@ paths:
         type: string
     patch:
       operationId: patchV1ProjectsByProjectIdAdminEmailProvidersById
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Update email provider.
@@ -8610,6 +8822,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminEmailProvidersById
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Delete email provider.
@@ -8640,6 +8853,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminSmsProviders
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: List SMS providers.
@@ -8669,6 +8883,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     post:
       operationId: postV1ProjectsByProjectIdAdminSmsProviders
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Create SMS provider.
@@ -8708,6 +8923,7 @@ paths:
         type: string
     patch:
       operationId: patchV1ProjectsByProjectIdAdminSmsProvidersById
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Update SMS provider.
@@ -8740,6 +8956,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminSmsProvidersById
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Delete SMS provider.
@@ -8767,6 +8984,7 @@ paths:
   /v1/projects/{project_id}/admin/email-templates:
     get:
       operationId: getV1ProjectsByProjectIdAdminEmailTemplates
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: List email templates.
@@ -8801,6 +9019,7 @@ paths:
         type: string
     patch:
       operationId: patchV1ProjectsByProjectIdAdminEmailTemplatesById
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Update an email template.
@@ -8836,6 +9055,7 @@ paths:
   /v1/projects/{project_id}/admin/email-templates/{id}/preview:
     post:
       operationId: postV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Render a template preview.
@@ -8885,6 +9105,7 @@ paths:
   /v1/projects/{project_id}/admin/email-templates/{id}/send-test:
     post:
       operationId: postV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest
+      x-since: 1.0.0
       tags:
       - Admin Config
       summary: Send a test email.
@@ -8934,6 +9155,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getV1ProjectsByProjectIdAdminWebhooks
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: List webhooks.
@@ -8967,6 +9189,7 @@ paths:
       - environment
     post:
       operationId: postV1ProjectsByProjectIdAdminWebhooks
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Create a webhook.
@@ -9025,6 +9248,7 @@ paths:
         type: string
     get:
       operationId: getV1ProjectsByProjectIdAdminWebhooksById
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Get a webhook.
@@ -9054,6 +9278,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     patch:
       operationId: patchV1ProjectsByProjectIdAdminWebhooksById
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Update a webhook.
@@ -9090,6 +9315,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminWebhooksById
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Delete a webhook.
@@ -9117,6 +9343,7 @@ paths:
   /v1/projects/{project_id}/admin/webhooks/{id}/rotate-secret:
     post:
       operationId: postV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Rotate webhook signing secret.
@@ -9151,6 +9378,7 @@ paths:
   /v1/projects/{project_id}/admin/webhooks/{id}/test:
     post:
       operationId: postV1ProjectsByProjectIdAdminWebhooksByIdTest
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Send a test event.
@@ -9192,6 +9420,7 @@ paths:
   /v1/projects/{project_id}/admin/webhook-deliveries:
     get:
       operationId: getV1ProjectsByProjectIdAdminWebhookDeliveries
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: List deliveries.
@@ -9229,6 +9458,7 @@ paths:
   /v1/projects/{project_id}/admin/webhook-deliveries/{delivery_id}/retry:
     post:
       operationId: postV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Retry a delivery.
@@ -9261,6 +9491,7 @@ paths:
   /v1/projects/{project_id}/admin/events:
     get:
       operationId: getV1ProjectsByProjectIdAdminEvents
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: List events.
@@ -9306,6 +9537,7 @@ paths:
   /v1/projects/{project_id}/admin/events/{event_id}/replay:
     post:
       operationId: postV1ProjectsByProjectIdAdminEventsByEventIdReplay
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Replay an event to webhooks.
@@ -9348,6 +9580,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getV1ProjectsByProjectIdAdminHooks
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: List hooks.
@@ -9381,6 +9614,7 @@ paths:
       - environment
     post:
       operationId: postV1ProjectsByProjectIdAdminHooks
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Create a hook.
@@ -9437,6 +9671,7 @@ paths:
         type: string
     patch:
       operationId: patchV1ProjectsByProjectIdAdminHooksById
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Update a hook.
@@ -9473,6 +9708,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminHooksById
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Delete a hook.
@@ -9500,6 +9736,7 @@ paths:
   /v1/projects/{project_id}/admin/hooks/{id}/test:
     post:
       operationId: postV1ProjectsByProjectIdAdminHooksByIdTest
+      x-since: 1.4.0
       tags:
       - Admin Webhooks & Hooks
       summary: Test a hook.
@@ -9548,6 +9785,7 @@ paths:
   /v1/projects/{project_id}/admin/jwks:
     get:
       operationId: getV1ProjectsByProjectIdAdminJwks
+      x-since: 1.0.0
       tags:
       - Admin Keys
       summary: List signing keys.
@@ -9579,6 +9817,7 @@ paths:
   /v1/projects/{project_id}/admin/jwks/rotate:
     post:
       operationId: postV1ProjectsByProjectIdAdminJwksRotate
+      x-since: 1.0.0
       tags:
       - Admin Keys
       summary: Create a new signing key.
@@ -9617,6 +9856,7 @@ paths:
   /v1/projects/{project_id}/admin/jwks/{key_id}/activate:
     post:
       operationId: postV1ProjectsByProjectIdAdminJwksByKeyIdActivate
+      x-since: 1.0.0
       tags:
       - Admin Keys
       summary: Activate a signing key.
@@ -9651,6 +9891,7 @@ paths:
   /v1/projects/{project_id}/admin/jwks/{key_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminJwksByKeyId
+      x-since: 1.0.0
       tags:
       - Admin Keys
       summary: Retire a signing key.
@@ -9687,6 +9928,7 @@ paths:
     - $ref: '#/components/parameters/XEnvironment'
     get:
       operationId: getV1ProjectsByProjectIdAdminTokenProfiles
+      x-since: 1.0.0
       tags:
       - Admin Keys
       summary: List token profiles.
@@ -9720,6 +9962,7 @@ paths:
       - environment
     post:
       operationId: postV1ProjectsByProjectIdAdminTokenProfiles
+      x-since: 1.0.0
       tags:
       - Admin Keys
       summary: Create a token profile.
@@ -9762,6 +10005,7 @@ paths:
         type: string
     patch:
       operationId: patchV1ProjectsByProjectIdAdminTokenProfilesById
+      x-since: 1.0.0
       tags:
       - Admin Keys
       summary: Update a token profile.
@@ -9798,6 +10042,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminTokenProfilesById
+      x-since: 1.0.0
       tags:
       - Admin Keys
       summary: Delete a token profile.
@@ -9825,6 +10070,7 @@ paths:
   /v1/projects/{project_id}/admin/token-profiles/{id}/preview:
     post:
       operationId: postV1ProjectsByProjectIdAdminTokenProfilesByIdPreview
+      x-since: 1.0.0
       tags:
       - Admin Keys
       summary: Preview token claims.
@@ -9871,6 +10117,7 @@ paths:
   /v1/tokens/introspect:
     post:
       operationId: postV1TokensIntrospect
+      x-since: 1.0.0
       tags:
       - Tokens
       summary: Live token introspection.
@@ -9905,6 +10152,7 @@ paths:
   /v1/tokens/revoke:
     post:
       operationId: postV1TokensRevoke
+      x-since: 1.0.0
       tags:
       - Tokens
       summary: Revoke a token/session.
@@ -9937,6 +10185,7 @@ paths:
   /v1/tokens/verify:
     post:
       operationId: postV1TokensVerify
+      x-since: 1.0.0
       tags:
       - Tokens
       summary: Verify a token via the server.
@@ -9979,6 +10228,7 @@ paths:
   /v1/tokens/current:
     get:
       operationId: getV1TokensCurrent
+      x-since: 1.0.0
       tags:
       - Tokens
       summary: Current token claims.
@@ -10002,6 +10252,7 @@ paths:
   /v1/projects/{project_id}/admin/jobs:
     get:
       operationId: getV1ProjectsByProjectIdAdminJobs
+      x-since: 1.4.0
       tags:
       - Admin Jobs
       summary: List background jobs.
@@ -10047,6 +10298,7 @@ paths:
   /v1/projects/{project_id}/admin/jobs/{job_id}:
     get:
       operationId: getV1ProjectsByProjectIdAdminJobsByJobId
+      x-since: 1.4.0
       tags:
       - Admin Jobs
       summary: Get a job.
@@ -10083,6 +10335,7 @@ paths:
   /v1/projects/{project_id}/admin/jobs/{job_id}/cancel:
     post:
       operationId: postV1ProjectsByProjectIdAdminJobsByJobIdCancel
+      x-since: 1.4.0
       tags:
       - Admin Jobs
       summary: Cancel a job.
@@ -10117,6 +10370,7 @@ paths:
   /v1/projects/{project_id}/admin/import/users:
     post:
       operationId: postV1ProjectsByProjectIdAdminImportUsers
+      x-since: 1.4.0
       tags:
       - Admin Jobs
       summary: Bulk-import users.
@@ -10166,6 +10420,7 @@ paths:
   /v1/projects/{project_id}/admin/import/password-hashes/verify:
     post:
       operationId: postV1ProjectsByProjectIdAdminImportPasswordHashesVerify
+      x-since: 1.4.0
       tags:
       - Admin Jobs
       summary: Verify an imported hash config.
@@ -10215,6 +10470,7 @@ paths:
   /v1/projects/{project_id}/admin/exports/{job_id}:
     get:
       operationId: getV1ProjectsByProjectIdAdminExportsByJobId
+      x-since: 1.4.0
       tags:
       - Admin Jobs
       summary: Download/check an export.
@@ -10255,6 +10511,7 @@ paths:
   /v1/projects/{project_id}/admin/audit-logs:
     get:
       operationId: getV1ProjectsByProjectIdAdminAuditLogs
+      x-since: 1.4.0
       tags:
       - Admin Jobs
       summary: List audit logs.
@@ -10305,6 +10562,7 @@ paths:
   /v1/projects/{project_id}/admin/audit-logs/{audit_id}:
     get:
       operationId: getV1ProjectsByProjectIdAdminAuditLogsByAuditId
+      x-since: 1.4.0
       tags:
       - Admin Jobs
       summary: Get an audit entry.
@@ -10341,6 +10599,7 @@ paths:
   /v1/projects/{project_id}/admin/audit/export:
     post:
       operationId: postV1ProjectsByProjectIdAdminAuditExport
+      x-since: 1.4.0
       tags:
       - Admin Jobs
       summary: Export the audit log (signed).
@@ -10387,6 +10646,7 @@ paths:
   /v1/challenges/captcha/verify:
     post:
       operationId: postV1ChallengesCaptchaVerify
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Verify a captcha token.
@@ -10426,6 +10686,7 @@ paths:
   /v1/projects/{project_id}/admin/risk/events:
     get:
       operationId: getV1ProjectsByProjectIdAdminRiskEvents
+      x-since: 1.4.0
       tags:
       - Admin Risk
       summary: List risk events.
@@ -10472,6 +10733,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getV1ProjectsByProjectIdAdminRiskRules
+      x-since: 1.4.0
       tags:
       - Admin Risk
       summary: List risk rules.
@@ -10505,6 +10767,7 @@ paths:
       - environment
     post:
       operationId: postV1ProjectsByProjectIdAdminRiskRules
+      x-since: 1.4.0
       tags:
       - Admin Risk
       summary: Create a risk rule.
@@ -10544,6 +10807,7 @@ paths:
         type: string
     patch:
       operationId: patchV1ProjectsByProjectIdAdminRiskRulesByRuleId
+      x-since: 1.4.0
       tags:
       - Admin Risk
       summary: Update a risk rule.
@@ -10576,6 +10840,7 @@ paths:
       - $ref: '#/components/parameters/XEnvironment'
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminRiskRulesByRuleId
+      x-since: 1.4.0
       tags:
       - Admin Risk
       summary: Delete a risk rule.
@@ -10603,6 +10868,7 @@ paths:
   /v1/projects/{project_id}/admin/rate-limit/blocks:
     post:
       operationId: postV1ProjectsByProjectIdAdminRateLimitBlocks
+      x-since: 1.4.0
       tags:
       - Admin Risk
       summary: Block an identifier.
@@ -10654,6 +10920,7 @@ paths:
   /v1/projects/{project_id}/admin/rate-limit/blocks/{block_id}:
     delete:
       operationId: deleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId
+      x-since: 1.4.0
       tags:
       - Admin Risk
       summary: Remove a block.
@@ -10687,6 +10954,7 @@ paths:
   /v1/auth/access-requests:
     post:
       operationId: postV1AuthAccessRequests
+      x-since: 1.0.0
       tags:
       - Core Auth
       summary: Submit an access request (request-access mode).
@@ -10728,6 +10996,7 @@ paths:
   /v1/projects/{project_id}/admin/access-requests:
     get:
       operationId: getV1ProjectsByProjectIdAdminAccessRequests
+      x-since: 1.0.0
       tags:
       - Admin Risk
       summary: List access requests.
@@ -10767,6 +11036,7 @@ paths:
   /v1/projects/{project_id}/admin/access-requests/{id}/approve:
     post:
       operationId: postV1ProjectsByProjectIdAdminAccessRequestsByIdApprove
+      x-since: 1.0.0
       tags:
       - Admin Risk
       summary: Approve an access request.
@@ -10804,6 +11074,7 @@ paths:
   /v1/projects/{project_id}/admin/access-requests/{id}/deny:
     post:
       operationId: postV1ProjectsByProjectIdAdminAccessRequestsByIdDeny
+      x-since: 1.0.0
       tags:
       - Admin Risk
       summary: Deny an access request.
@@ -10846,6 +11117,7 @@ paths:
   /v1/test/messages:
     get:
       operationId: getV1TestMessages
+      x-since: 1.4.0
       tags:
       - Test Mode
       summary: Read captured test-mode messages (inbox).
@@ -10882,6 +11154,7 @@ paths:
   /v1/test/clock:
     post:
       operationId: postV1TestClock
+      x-since: 1.4.0
       tags:
       - Test Mode
       summary: Advance/reset the test clock.
@@ -10918,6 +11191,7 @@ paths:
   /v1/test/reset:
     post:
       operationId: postV1TestReset
+      x-since: 1.4.0
       tags:
       - Test Mode
       summary: Wipe test-environment data.
@@ -10944,6 +11218,7 @@ paths:
   /v1/test/seed:
     post:
       operationId: postV1TestSeed
+      x-since: 1.4.0
       tags:
       - Test Mode
       summary: Seed test-environment fixtures.
@@ -10976,6 +11251,7 @@ paths:
   /mgmt/v1/projects:
     get:
       operationId: getMgmtV1Projects
+      x-since: 1.0.0
       tags:
       - Management
       summary: List/search projects.
@@ -11010,6 +11286,7 @@ paths:
       x-scopes: []
     post:
       operationId: postMgmtV1Projects
+      x-since: 1.0.0
       tags:
       - Management
       summary: Create a project.
@@ -11061,6 +11338,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getMgmtV1ProjectsByProjectId
+      x-since: 1.0.0
       tags:
       - Management
       summary: Get a project.
@@ -11087,6 +11365,7 @@ paths:
       - project
     patch:
       operationId: patchMgmtV1ProjectsByProjectId
+      x-since: 1.0.0
       tags:
       - Management
       summary: Update a project.
@@ -11120,6 +11399,7 @@ paths:
       - project
     delete:
       operationId: deleteMgmtV1ProjectsByProjectId
+      x-since: 1.0.0
       tags:
       - Management
       summary: Delete a project.
@@ -11152,6 +11432,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getMgmtV1ProjectsByProjectIdFeatures
+      x-since: 1.0.0
       tags:
       - Management
       summary: Get operator feature gates.
@@ -11175,6 +11456,7 @@ paths:
       - project
     patch:
       operationId: patchMgmtV1ProjectsByProjectIdFeatures
+      x-since: 1.0.0
       tags:
       - Management
       summary: Set operator feature gates.
@@ -11209,6 +11491,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getMgmtV1ProjectsByProjectIdEnvironments
+      x-since: 1.0.0
       tags:
       - Management
       summary: List environments.
@@ -11235,6 +11518,7 @@ paths:
       - project
     post:
       operationId: postMgmtV1ProjectsByProjectIdEnvironments
+      x-since: 1.0.0
       tags:
       - Management
       summary: Create an environment.
@@ -11282,6 +11566,7 @@ paths:
         type: string
     get:
       operationId: getMgmtV1ProjectsByProjectIdEnvironmentsByEnv
+      x-since: 1.0.0
       tags:
       - Management
       summary: Get an environment.
@@ -11308,6 +11593,7 @@ paths:
       - project
     delete:
       operationId: deleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv
+      x-since: 1.0.0
       tags:
       - Management
       summary: Delete an environment.
@@ -11334,6 +11620,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getMgmtV1ProjectsByProjectIdAdminTokens
+      x-since: 1.0.0
       tags:
       - Management
       summary: List admin tokens.
@@ -11356,6 +11643,7 @@ paths:
       - project
     post:
       operationId: postMgmtV1ProjectsByProjectIdAdminTokens
+      x-since: 1.0.0
       tags:
       - Management
       summary: Mint a project-admin token.
@@ -11403,6 +11691,7 @@ paths:
   /mgmt/v1/projects/{project_id}/admin-tokens/{token_id}:
     delete:
       operationId: deleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId
+      x-since: 1.0.0
       tags:
       - Management
       summary: Revoke an admin token.
@@ -11434,6 +11723,7 @@ paths:
   /mgmt/v1/projects/{project_id}/config:export:
     get:
       operationId: getMgmtV1ProjectsByProjectIdConfigExport
+      x-since: 1.0.0
       tags:
       - Management
       summary: Export project config (IaC; secrets redacted).
@@ -11462,6 +11752,7 @@ paths:
   /mgmt/v1/projects/{project_id}/config:plan:
     post:
       operationId: postMgmtV1ProjectsByProjectIdConfigPlan
+      x-since: 1.0.0
       tags:
       - Management
       summary: Plan a config apply (diff + drift).
@@ -11494,6 +11785,7 @@ paths:
   /mgmt/v1/projects/{project_id}/config:apply:
     post:
       operationId: postMgmtV1ProjectsByProjectIdConfigApply
+      x-since: 1.0.0
       tags:
       - Management
       summary: Apply config (idempotent).
