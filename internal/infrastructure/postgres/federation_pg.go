@@ -1078,6 +1078,11 @@ func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.Federati
 	if err != nil {
 		return nil, domain.ErrSSOError
 	}
+	// Record the outstanding RelayState so the ACS can reject assertions that
+	// did not originate from an SP-initiated request (IdP-initiated CSRF).
+	if err := a.fedStoreSamlRequest(ctx, row.ProjectID, cmd.ConnectionID, relayState, cmd.RedirectTo); err != nil {
+		return nil, err
+	}
 	return &domain.FederationSsoRedirect{URL: redirectURL.String()}, nil
 }
 
@@ -1101,11 +1106,27 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	if err != nil {
 		return nil, domain.ErrSSOError
 	}
-	// possibleRequestIDs is empty: we accept IdP-initiated and SP-initiated flows
-	// without correlating an outstanding AuthnRequest (no request-id store here).
+	// Correlate the RelayState with an outstanding SP-initiated request. A POST
+	// with no matching RelayState is an IdP-initiated / forged assertion and is
+	// rejected (the library still verifies the XML-DSig signature below).
+	correlated, err := a.fedConsumeSamlRequest(ctx, row.ProjectID, cmd.ConnectionID, cmd.RelayState)
+	if err != nil {
+		return nil, err
+	}
+	if !correlated {
+		return nil, domain.ErrSSOError.WithMessage("unsolicited SAML response")
+	}
 	assertion, err := sp.ParseXMLResponse(decoded, []string{}, sp.AcsURL)
 	if err != nil {
 		return nil, domain.ErrSSOError
+	}
+	// Reject a replayed assertion (single-use within its validity window).
+	var notAfter time.Time
+	if assertion.Conditions != nil {
+		notAfter = assertion.Conditions.NotOnOrAfter
+	}
+	if err := a.fedAssertNotReplayed(ctx, row.ProjectID, cmd.ConnectionID, assertion.ID, notAfter); err != nil {
+		return nil, err
 	}
 	subject, _ := fedSamlSubject(assertion)
 	if subject == "" {

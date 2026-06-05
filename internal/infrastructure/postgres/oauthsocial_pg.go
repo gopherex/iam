@@ -374,8 +374,14 @@ func (a *pgOAuthSocial) StartLogin(ctx context.Context, cmd domain.OAuthSocialSt
 	if cmd.ProjectID == "" || cmd.Provider == "" {
 		return "", domain.ErrBadRequest
 	}
-	cfg, _, err := a.loadOAuthConfig(ctx, cmd.ProjectID, cmd.Provider, cmd.RedirectTo)
+	cfg, d, err := a.loadOAuthConfig(ctx, cmd.ProjectID, cmd.Provider, cmd.RedirectTo)
 	if err != nil {
+		return "", err
+	}
+	// Persist the CSRF state bound to a validated redirect (anti-CSRF + closes
+	// open redirect: only the stored, validated target is used at callback).
+	redirect := oauthSafeRedirect(cmd.RedirectTo, d.RedirectURL)
+	if err := a.storeState(ctx, cmd.ProjectID, cmd.Provider, cmd.State, redirect, ""); err != nil {
 		return "", err
 	}
 	opts := a.authCodeOpts(cmd.CodeChallenge, cmd.Prompt, cmd.LoginHint)
@@ -411,6 +417,13 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 		return domain.OAuthSocialCallbackResult{}, domain.ErrBadRequest
 	}
 
+	// Verify + consume the CSRF state BEFORE exchanging the code; the stored,
+	// validated redirect is used (never the request's raw redirect_to).
+	redirect, _, err := a.consumeState(ctx, cmd.ProjectID, cmd.Provider, cmd.State)
+	if err != nil {
+		return domain.OAuthSocialCallbackResult{}, err
+	}
+
 	// Exchange the code (PKCE-protected when a verifier is supplied) for the
 	// userinfo claims, then resolve/create the account and mint the session.
 	cfg, d, err := a.loadOAuthConfig(ctx, cmd.ProjectID, cmd.Provider, cmd.RedirectTo)
@@ -427,15 +440,10 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 		return domain.OAuthSocialCallbackResult{}, err
 	}
 
-	// TODO: validate `state` against the stored PAR/interaction and, in cookie
-	// mode, build the Set-Cookie header. No interaction/state store wired here
-	// yet, so we hand the session token to the caller via the redirect.
-	result := domain.OAuthSocialCallbackResult{RedirectURL: cmd.RedirectTo}
-	if result.RedirectURL == "" {
-		result.RedirectURL = d.RedirectURL
+	if redirect == "" {
+		redirect = d.RedirectURL
 	}
-	result.SetCookie = sess.AccessToken
-	return result, nil
+	return domain.OAuthSocialCallbackResult{RedirectURL: redirect, SetCookie: sess.AccessToken}, nil
 }
 
 // resolveLoginAndMint upserts the identity link for an exchanged provider
@@ -493,8 +501,13 @@ func (a *pgOAuthSocial) StartLink(ctx context.Context, cmd domain.OAuthSocialLin
 		}
 		projectID = row.ProjectID
 	}
-	cfg, _, err := a.loadOAuthConfig(ctx, projectID, cmd.Provider, cmd.RedirectTo)
+	cfg, d, err := a.loadOAuthConfig(ctx, projectID, cmd.Provider, cmd.RedirectTo)
 	if err != nil {
+		return "", err
+	}
+	// Bind the CSRF state to the validated redirect AND the linking account.
+	redirect := oauthSafeRedirect(cmd.RedirectTo, d.RedirectURL)
+	if err := a.storeState(ctx, projectID, cmd.Provider, cmd.State, redirect, cmd.AccountID); err != nil {
 		return "", err
 	}
 	return cfg.AuthCodeURL(cmd.State), nil
@@ -519,6 +532,15 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 	}
 	projectID := row.ProjectID
 	if cmd.ProjectID != "" && cmd.ProjectID != projectID { // tenant boundary
+		return "", domain.ErrForbidden
+	}
+
+	// Verify + consume the CSRF state; it must have been started by THIS account.
+	stateRedirect, stateAccount, err := a.consumeState(ctx, projectID, cmd.Provider, cmd.State)
+	if err != nil {
+		return "", err
+	}
+	if stateAccount != "" && stateAccount != cmd.AccountID {
 		return "", domain.ErrForbidden
 	}
 
@@ -555,7 +577,7 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 	if err != nil {
 		return "", err
 	}
-	redirect := cmd.RedirectTo
+	redirect := stateRedirect
 	if redirect == "" {
 		redirect = d.RedirectURL
 	}
