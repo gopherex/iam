@@ -15,7 +15,7 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-type federationConnections interface {
+type FederationConnections interface {
 	CreateConnection(ctx context.Context, cmd domain.ConnectionCmd) (*domain.Connection, error)
 	GetConnection(ctx context.Context, projectID, id string) (*domain.Connection, error)
 	ListConnections(ctx context.Context, projectID string) ([]domain.Connection, error)
@@ -23,7 +23,7 @@ type federationConnections interface {
 	VerifyDomain(ctx context.Context, projectID, domainID string) (*domain.Domain, error)
 }
 
-type FederationDeps struct{ Connections federationConnections }
+type FederationDeps struct{ Connections FederationConnections }
 
 // FederationService implements the FederationHandler slice of oas.Handler.
 type FederationService struct {

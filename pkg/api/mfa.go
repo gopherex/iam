@@ -15,7 +15,7 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-type mfaAccounts interface {
+type MFAAccounts interface {
 	ListFactors(ctx context.Context, accountID string) ([]domain.Factor, error)
 	EnrollTOTP(ctx context.Context, accountID string) (*domain.Factor, error)
 	Challenge(ctx context.Context, accountID, factorID string) (*domain.Challenge, error)
@@ -24,7 +24,7 @@ type mfaAccounts interface {
 	RemoveFactor(ctx context.Context, accountID, factorID string) error
 }
 
-type MFADeps struct{ Accounts mfaAccounts }
+type MFADeps struct{ Accounts MFAAccounts }
 
 // MFAService implements the MFAHandler slice of oas.Handler.
 type MFAService struct {

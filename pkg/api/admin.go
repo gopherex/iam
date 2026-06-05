@@ -15,7 +15,7 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-type adminUsers interface {
+type AdminUsers interface {
 	List(ctx context.Context, projectID string) ([]domain.Account, error)
 	Get(ctx context.Context, projectID, accountID string) (*domain.Account, error)
 	Create(ctx context.Context, cmd domain.RegisterCmd) (*domain.Account, error)
@@ -23,7 +23,7 @@ type adminUsers interface {
 	Delete(ctx context.Context, projectID, accountID string) error
 }
 
-type adminApps interface {
+type AdminApps interface {
 	List(ctx context.Context, projectID string) ([]domain.AppClient, error)
 	Create(ctx context.Context, cmd domain.AppClientCmd) (*domain.AppClient, error)
 	Get(ctx context.Context, projectID, appID string) (*domain.AppClient, error)
@@ -33,8 +33,8 @@ type adminApps interface {
 // AdminDeps are the per-project administration ports. Config (auth/policy/
 // providers/webhooks/keys/risk/jobs) is added as those surfaces are implemented.
 type AdminDeps struct {
-	Users adminUsers
-	Apps  adminApps
+	Users AdminUsers
+	Apps  AdminApps
 }
 
 // AdminService implements the AdminHandler slice of oas.Handler.

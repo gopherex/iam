@@ -15,7 +15,7 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-type accountStore interface {
+type AccountStore interface {
 	Get(ctx context.Context, projectID, accountID string) (*domain.Account, error)
 	UpdateProfile(ctx context.Context, cmd domain.ProfileUpdateCmd) (*domain.Account, error)
 	Delete(ctx context.Context, projectID, accountID string) error
@@ -24,7 +24,7 @@ type accountStore interface {
 	ListIdentities(ctx context.Context, accountID string) ([]domain.Identity, error)
 }
 
-type AccountDeps struct{ Accounts accountStore }
+type AccountDeps struct{ Accounts AccountStore }
 
 // AccountService implements the AccountHandler slice of oas.Handler.
 type AccountService struct {

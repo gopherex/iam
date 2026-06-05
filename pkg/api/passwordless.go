@@ -15,14 +15,14 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-type passwordlessAccounts interface {
+type PasswordlessAccounts interface {
 	StartOTP(ctx context.Context, projectID, identifier, channel, purpose string) (*domain.Challenge, error)
 	VerifyOTP(ctx context.Context, challengeID, code string) (*domain.Account, *domain.Session, error)
 	StartMagicLink(ctx context.Context, projectID, email, redirectTo string) (*domain.Challenge, error)
 	VerifyMagicLink(ctx context.Context, token string) (*domain.Account, *domain.Session, error)
 }
 
-type PasswordlessDeps struct{ Accounts passwordlessAccounts }
+type PasswordlessDeps struct{ Accounts PasswordlessAccounts }
 
 // PasswordlessService implements the PasswordlessHandler slice of oas.Handler.
 type PasswordlessService struct {

@@ -15,14 +15,14 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-type oidcGrants interface {
+type OIDCGrants interface {
 	ResolveInteraction(ctx context.Context, interactionID string) (*domain.Interaction, error)
 	CompleteLogin(ctx context.Context, interactionID, accountID string) error
 	ListGrants(ctx context.Context, accountID string) ([]domain.Grant, error)
 	RevokeGrant(ctx context.Context, accountID, grantID string) error
 }
 
-type OIDCProviderDeps struct{ Grants oidcGrants }
+type OIDCProviderDeps struct{ Grants OIDCGrants }
 
 // OIDCProviderService implements the OIDCProviderHandler slice of oas.Handler.
 type OIDCProviderService struct {

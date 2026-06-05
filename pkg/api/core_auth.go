@@ -15,9 +15,9 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-// coreAuthAccounts is the Core Auth slice of the Account aggregate. Each method
+// CoreAuthAccounts is the Core Auth slice of the Account aggregate. Each method
 // is one atomic operation; the adapter owns its transaction.
-type coreAuthAccounts interface {
+type CoreAuthAccounts interface {
 	Register(ctx context.Context, cmd domain.RegisterCmd) (*domain.Account, *domain.Session, error)
 	AuthenticatePassword(ctx context.Context, projectID, email, password string) (*domain.Account, *domain.Session, error)
 	Refresh(ctx context.Context, refreshToken string) (*domain.Session, error)
@@ -28,7 +28,7 @@ type coreAuthAccounts interface {
 }
 
 // CoreAuthDeps are the ports the Core Auth service orchestrates.
-type CoreAuthDeps struct{ Accounts coreAuthAccounts }
+type CoreAuthDeps struct{ Accounts CoreAuthAccounts }
 
 // CoreAuthService implements the CoreAuthHandler slice of oas.Handler.
 type CoreAuthService struct {

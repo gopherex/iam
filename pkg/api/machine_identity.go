@@ -15,14 +15,14 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-type machineIdentities interface {
+type MachineIdentities interface {
 	CreateServiceAccount(ctx context.Context, cmd domain.ServiceAccountCmd) (*domain.ServiceAccount, error)
 	MintToken(ctx context.Context, projectID, serviceAccountID string) (string, error)
 	CreateAPIKey(ctx context.Context, cmd domain.APIKeyCmd) (*domain.APIKey, string, error)
 	RevokeAPIKey(ctx context.Context, projectID, keyID string) error
 }
 
-type MachineIdentityDeps struct{ Keys machineIdentities }
+type MachineIdentityDeps struct{ Keys MachineIdentities }
 
 // MachineIdentityService implements the MachineIdentityHandler slice of oas.Handler.
 type MachineIdentityService struct {

@@ -15,7 +15,7 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-type operatorProjects interface {
+type OperatorProjects interface {
 	CreateProject(ctx context.Context, cmd domain.ProjectCmd) (*domain.Project, error)
 	ListProjects(ctx context.Context) ([]domain.Project, error)
 	GetProject(ctx context.Context, projectID string) (*domain.Project, error)
@@ -23,7 +23,7 @@ type operatorProjects interface {
 	MintAdminToken(ctx context.Context, projectID string) (string, error)
 }
 
-type OperatorDeps struct{ Projects operatorProjects }
+type OperatorDeps struct{ Projects OperatorProjects }
 
 // OperatorService implements the OperatorHandler slice of oas.Handler.
 type OperatorService struct {

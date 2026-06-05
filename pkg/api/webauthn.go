@@ -15,7 +15,7 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-type webAuthnAccounts interface {
+type WebAuthnAccounts interface {
 	BeginLogin(ctx context.Context, projectID, email string) (*domain.Challenge, error)
 	FinishLogin(ctx context.Context, challengeID string, credential map[string]any) (*domain.Account, *domain.Session, error)
 	BeginRegistration(ctx context.Context, accountID string) (*domain.Challenge, error)
@@ -24,7 +24,7 @@ type webAuthnAccounts interface {
 	RemoveCredential(ctx context.Context, accountID, credentialID string) error
 }
 
-type WebAuthnDeps struct{ Accounts webAuthnAccounts }
+type WebAuthnDeps struct{ Accounts WebAuthnAccounts }
 
 // WebAuthnService implements the WebAuthnHandler slice of oas.Handler.
 type WebAuthnService struct {

@@ -15,13 +15,13 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-// platformConfig serves unauthenticated bootstrap config for a client.
-type platformConfig interface {
+// PlatformConfig serves unauthenticated bootstrap config for a client.
+type PlatformConfig interface {
 	PublicConfig(ctx context.Context, projectID, clientID string) (*domain.PublicConfig, error)
 }
 
 // PlatformDeps are the ports the Platform service orchestrates.
-type PlatformDeps struct{ Config platformConfig }
+type PlatformDeps struct{ Config PlatformConfig }
 
 // PlatformService implements the PlatformHandler slice of oas.Handler.
 type PlatformService struct {

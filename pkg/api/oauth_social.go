@@ -15,14 +15,14 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
-type oauthSocialAccounts interface {
+type OAuthSocialAccounts interface {
 	EnabledProviders(ctx context.Context, projectID string) ([]domain.OAuthProvider, error)
 	CompleteLogin(ctx context.Context, projectID, provider, code string) (*domain.Account, *domain.Session, error)
 	Link(ctx context.Context, accountID, provider, code string) error
 	Unlink(ctx context.Context, accountID, identityID string) error
 }
 
-type OAuthSocialDeps struct{ Accounts oauthSocialAccounts }
+type OAuthSocialDeps struct{ Accounts OAuthSocialAccounts }
 
 // OAuthSocialService implements the OAuthSocialHandler slice of oas.Handler.
 type OAuthSocialService struct {
