@@ -85,14 +85,74 @@ type AdminConnections interface {
 	VerifyDomain(ctx context.Context, projectID, domainID string) (*domain.Domain, error)
 }
 
-// AdminDeps are the per-project administration ports. Config (auth/policy/
-// providers/webhooks/keys/risk/jobs) is added as those surfaces are implemented.
+// AdminConfig is the project-configuration slice: auth / password-policy /
+// session-policy / consent documents plus feature flags and i18n bundles. Each
+// document is carried opaquely as a domain.AdminConfigDoc the adapter validates
+// and persists.
+type AdminConfig interface {
+	GetAuthConfig(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
+	UpdateAuthConfig(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
+	GetPasswordPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
+	UpdatePasswordPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
+	GetSessionPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
+	UpdateSessionPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
+	GetConsent(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
+	PutConsent(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
+
+	GetFeatures(ctx context.Context, cmd domain.AdminConfigGetCmd) (map[string]bool, error)
+	PutFeatures(ctx context.Context, cmd domain.AdminFeaturesUpdateCmd) (map[string]bool, error)
+
+	GetI18n(ctx context.Context, cmd domain.AdminConfigGetCmd, locale string) (map[string]jx.Raw, error)
+	PutI18n(ctx context.Context, cmd domain.AdminI18nUpdateCmd) (map[string]jx.Raw, error)
+
+	// Email / SMS providers.
+	ListEmailProviders(ctx context.Context, cmd domain.AdminConfigGetCmd) ([]domain.AdminProvider, error)
+	CreateEmailProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error)
+	UpdateEmailProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error)
+	DeleteEmailProvider(ctx context.Context, cmd domain.AdminProviderDeleteCmd) error
+	ListSmsProviders(ctx context.Context, cmd domain.AdminConfigGetCmd) ([]domain.AdminProvider, error)
+	CreateSmsProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error)
+	UpdateSmsProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error)
+	DeleteSmsProvider(ctx context.Context, cmd domain.AdminProviderDeleteCmd) error
+
+	// Email templates.
+	ListEmailTemplates(ctx context.Context, cmd domain.AdminConfigGetCmd) (map[string]jx.Raw, error)
+	UpdateEmailTemplate(ctx context.Context, cmd domain.AdminTemplateUpdateCmd) (map[string]jx.Raw, error)
+	PreviewEmailTemplate(ctx context.Context, cmd domain.AdminTemplatePreviewCmd) (*domain.AdminTemplatePreview, error)
+	SendTestEmail(ctx context.Context, cmd domain.AdminTemplateSendTestCmd) error
+}
+
+// AdminKeys is the signing-key (JWKS) + token-profile administration slice.
+type AdminKeys interface {
+	ListSigningKeys(ctx context.Context, cmd domain.AdminConfigGetCmd) ([]domain.AdminSigningKey, error)
+	DeleteSigningKey(ctx context.Context, cmd domain.AdminConfigGetCmd, kid string) error
+	RotateSigningKeys(ctx context.Context, cmd domain.AdminJWKSRotateCmd) (*domain.AdminSigningKey, error)
+	ActivateSigningKey(ctx context.Context, cmd domain.AdminConfigGetCmd, kid string) (*domain.AdminSigningKey, error)
+
+	ListTokenProfiles(ctx context.Context, cmd domain.AdminConfigGetCmd) ([]domain.AdminTokenProfile, error)
+	CreateTokenProfile(ctx context.Context, cmd domain.AdminTokenProfileCmd) (*domain.AdminTokenProfile, error)
+	UpdateTokenProfile(ctx context.Context, cmd domain.AdminTokenProfileCmd) (*domain.AdminTokenProfile, error)
+	DeleteTokenProfile(ctx context.Context, cmd domain.AdminConfigGetCmd, profileID string) error
+	PreviewTokenProfile(ctx context.Context, cmd domain.AdminTokenProfilePreviewCmd) (map[string]jx.Raw, error)
+}
+
+// AdminAccessRequests is the access-request moderation slice.
+type AdminAccessRequests interface {
+	List(ctx context.Context, cmd domain.AdminAccessRequestListCmd) (*domain.AdminAccessRequestPage, error)
+	Approve(ctx context.Context, cmd domain.AdminAccessRequestDecisionCmd) (map[string]jx.Raw, error)
+	Deny(ctx context.Context, cmd domain.AdminAccessRequestDecisionCmd) (*domain.CoreAuthAccessRequest, error)
+}
+
+// AdminDeps are the per-project administration ports.
 type AdminDeps struct {
 	Users           AdminUsers
 	Apps            AdminApps
 	ServiceAccounts AdminServiceAccounts
 	APIKeys         AdminAPIKeys
 	Connections     AdminConnections
+	Config          AdminConfig
+	Keys            AdminKeys
+	AccessRequests  AdminAccessRequests
 }
 
 // AdminService implements the AdminHandler slice of oas.Handler.
@@ -127,19 +187,51 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecre
 }
 
 func (s *AdminService) DeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams) (r *oas.Ok, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Config.DeleteEmailProvider(ctx, domain.AdminProviderDeleteCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		ID:          params.ID,
+	}); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *AdminService) DeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams) (r *oas.Ok, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Keys.DeleteSigningKey(ctx, adminCfg(params.ProjectID, params.XEnvironment), params.KeyID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *AdminService) DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams) (r *oas.Ok, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Config.DeleteSmsProvider(ctx, domain.AdminProviderDeleteCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		ID:          params.ID,
+	}); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *AdminService) DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams) (r *oas.Ok, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Keys.DeleteTokenProfile(ctx, adminCfg(params.ProjectID, params.XEnvironment), params.ID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams) (*oas.Ok, error) {
@@ -173,7 +265,30 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySe
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAccessRequestsParams) (r *oas.GetV1ProjectsByProjectIdAdminAccessRequestsOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	page, err := s.deps.AccessRequests.List(ctx, domain.AdminAccessRequestListCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Status:      params.Status.Or(""),
+		Cursor:      params.Cursor.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.AccessRequest, 0, len(page.Items))
+	for i := range page.Items {
+		data = append(data, oasAdminAccessRequest(&page.Items[i]))
+	}
+	out := &oas.GetV1ProjectsByProjectIdAdminAccessRequestsOK{
+		Data:    data,
+		HasMore: oas.NewOptBool(page.HasMore),
+	}
+	if page.NextCursor != "" {
+		out.NextCursor = oas.NewOptNilString(page.NextCursor)
+	}
+	return out, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminApps(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAppsParams) (*oas.GetV1ProjectsByProjectIdAdminAppsOK, error) {
@@ -205,47 +320,156 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Cont
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigAuthParams) (r *oas.AuthConfig, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.GetAuthConfig(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.AuthConfig{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams) (r *oas.PasswordPolicy, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.GetPasswordPolicy(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.PasswordPolicy{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams) (r *oas.SessionPolicy, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.GetSessionPolicy(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.SessionPolicy{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConsentsParams) (r *oas.ConsentConfig, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.GetConsent(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.ConsentConfig{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminEmailProvidersParams) (r *oas.GetV1ProjectsByProjectIdAdminEmailProvidersOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	provs, err := s.deps.Config.ListEmailProviders(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.EmailProvider, 0, len(provs))
+	for i := range provs {
+		data = append(data, oasAdminEmailProvider(&provs[i]))
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminEmailProvidersOK{Data: data}, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminEmailTemplatesParams) (r oas.GetV1ProjectsByProjectIdAdminEmailTemplatesOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	tmpls, err := s.deps.Config.ListEmailTemplates(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	return oas.GetV1ProjectsByProjectIdAdminEmailTemplatesOK(tmpls), nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminFeaturesParams) (r oas.GetV1ProjectsByProjectIdAdminFeaturesOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	features, err := s.deps.Config.GetFeatures(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	return oas.GetV1ProjectsByProjectIdAdminFeaturesOK(features), nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminI18nByLocaleParams) (r oas.GetV1ProjectsByProjectIdAdminI18nByLocaleOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	msgs, err := s.deps.Config.GetI18n(ctx, adminCfg(params.ProjectID, params.XEnvironment), params.Locale)
+	if err != nil {
+		return nil, err
+	}
+	return oas.GetV1ProjectsByProjectIdAdminI18nByLocaleOK(msgs), nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminJwks(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminJwksParams) (r *oas.GetV1ProjectsByProjectIdAdminJwksOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	keys, err := s.deps.Keys.ListSigningKeys(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.SigningKey, 0, len(keys))
+	for i := range keys {
+		data = append(data, oasAdminSigningKey(&keys[i]))
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminJwksOK{Data: data}, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminSmsProvidersParams) (r *oas.GetV1ProjectsByProjectIdAdminSmsProvidersOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	provs, err := s.deps.Config.ListSmsProviders(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.SmsProvider, 0, len(provs))
+	for i := range provs {
+		data = append(data, oasAdminSmsProvider(&provs[i]))
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminSmsProvidersOK{Data: data}, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminTokenProfilesParams) (r *oas.GetV1ProjectsByProjectIdAdminTokenProfilesOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	profiles, err := s.deps.Keys.ListTokenProfiles(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.TokenProfile, 0, len(profiles))
+	for i := range profiles {
+		data = append(data, oasAdminTokenProfile(&profiles[i]))
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminTokenProfilesOK{Data: data}, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersParams) (*oas.GetV1ProjectsByProjectIdAdminUsersOK, error) {
@@ -320,31 +544,132 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Co
 }
 
 func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, req *oas.AuthConfig, params oas.PatchV1ProjectsByProjectIdAdminConfigAuthParams) (r *oas.AuthConfig, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.UpdateAuthConfig(ctx, domain.AdminConfigUpdateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Doc:         oasEncodeConfig(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.AuthConfig{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, req *oas.PasswordPolicy, params oas.PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams) (r *oas.PasswordPolicy, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.UpdatePasswordPolicy(ctx, domain.AdminConfigUpdateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Doc:         oasEncodeConfig(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.PasswordPolicy{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, req *oas.SessionPolicy, params oas.PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams) (r *oas.SessionPolicy, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.UpdateSessionPolicy(ctx, domain.AdminConfigUpdateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Doc:         oasEncodeConfig(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.SessionPolicy{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (s *AdminService) PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, req *oas.EmailProvider, params oas.PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams) (r *oas.EmailProvider, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	prov, err := s.deps.Config.UpdateEmailProvider(ctx, domain.AdminProviderCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		ID:          params.ID,
+		Type:        req.Type,
+		Config:      map[string]jx.Raw(req.Config.Or(nil)),
+		Enabled:     req.Enabled.Or(false),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := oasAdminEmailProvider(prov)
+	return &out, nil
 }
 
 func (s *AdminService) PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq, params oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams) (r oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	tmpl, err := s.deps.Config.UpdateEmailTemplate(ctx, domain.AdminTemplateUpdateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		TemplateID:  params.ID,
+		Patch:       map[string]jx.Raw(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK(tmpl), nil
 }
 
 func (s *AdminService) PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, req *oas.SmsProvider, params oas.PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams) (r *oas.SmsProvider, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	prov, err := s.deps.Config.UpdateSmsProvider(ctx, domain.AdminProviderCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		ID:          params.ID,
+		Type:        req.Type,
+		Config:      map[string]jx.Raw(req.Config.Or(nil)),
+		Enabled:     req.Enabled.Or(false),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := oasAdminSmsProvider(prov)
+	return &out, nil
 }
 
 func (s *AdminService) PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params oas.PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams) (r *oas.PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	prof, err := s.deps.Keys.UpdateTokenProfile(ctx, domain.AdminTokenProfileCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		ID:          params.ID,
+		Profile:     domain.AdminConfigDoc(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK{
+		Profile: oas.NewOptTokenProfile(oasAdminTokenProfile(prof)),
+	}, nil
 }
 
 func (s *AdminService) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params oas.PatchV1ProjectsByProjectIdAdminUsersByUserIdParams) (*oas.PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, error) {
@@ -367,11 +692,43 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq, params oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams) (r oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK, _ error) {
-	panic("implement me")
+	p, err := requireProjectAdmin(ctx, params.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	res, err := s.deps.AccessRequests.Approve(ctx, domain.AdminAccessRequestDecisionCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		RequestID:   params.ID,
+		ActorID:     p.AccountID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK(res), nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams) (r *oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK, _ error) {
-	panic("implement me")
+	p, err := requireProjectAdmin(ctx, params.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	cmd := domain.AdminAccessRequestDecisionCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		RequestID:   params.ID,
+		ActorID:     p.AccountID,
+	}
+	if v, ok := req.Get(); ok {
+		cmd.Reason = v.Reason.Or("")
+	}
+	ar, err := s.deps.AccessRequests.Deny(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK{
+		Request: oas.NewOptAccessRequest(oasAdminAccessRequest(ar)),
+	}, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminAppsReq, params oas.PostV1ProjectsByProjectIdAdminAppsParams) (*oas.PostV1ProjectsByProjectIdAdminAppsCreated, error) {
@@ -408,35 +765,152 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx cont
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, req *oas.EmailProvider, params oas.PostV1ProjectsByProjectIdAdminEmailProvidersParams) (r *oas.EmailProvider, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	prov, err := s.deps.Config.CreateEmailProvider(ctx, domain.AdminProviderCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		ID:          req.ID.Or(""),
+		Type:        req.Type,
+		Config:      map[string]jx.Raw(req.Config.Or(nil)),
+		Enabled:     req.Enabled.Or(false),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := oasAdminEmailProvider(prov)
+	return &out, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams) (r *oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	cmd := domain.AdminTemplatePreviewCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		TemplateID:  params.ID,
+	}
+	if v, ok := req.Get(); ok {
+		cmd.Locale = v.Locale.Or("")
+		cmd.Data = map[string]jx.Raw(v.Data.Or(nil))
+	}
+	prev, err := s.deps.Config.PreviewEmailTemplate(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK{
+		Subject: oas.NewOptString(prev.Subject),
+		HTML:    oas.NewOptString(prev.HTML),
+		Text:    oas.NewOptString(prev.Text),
+	}, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams) (r *oas.Ok, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Config.SendTestEmail(ctx, domain.AdminTemplateSendTestCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		TemplateID:  params.ID,
+		To:          req.To,
+		Locale:      req.Locale.Or(""),
+		Data:        map[string]jx.Raw(req.Data.Or(nil)),
+	}); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams) (r *oas.PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	key, err := s.deps.Keys.ActivateSigningKey(ctx, adminCfg(params.ProjectID, params.XEnvironment), params.KeyID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK{
+		Key: oas.NewOptSigningKey(oasAdminSigningKey(key)),
+	}, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminJwksRotateReq, params oas.PostV1ProjectsByProjectIdAdminJwksRotateParams) (r *oas.PostV1ProjectsByProjectIdAdminJwksRotateOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	cmd := domain.AdminJWKSRotateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+	}
+	if v, ok := req.Get(); ok {
+		cmd.Activate = v.Activate.Or(false)
+	}
+	key, err := s.deps.Keys.RotateSigningKeys(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminJwksRotateOK{
+		Key: oas.NewOptSigningKey(oasAdminSigningKey(key)),
+	}, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, req *oas.SmsProvider, params oas.PostV1ProjectsByProjectIdAdminSmsProvidersParams) (r *oas.SmsProvider, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	prov, err := s.deps.Config.CreateSmsProvider(ctx, domain.AdminProviderCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		ID:          req.ID.Or(""),
+		Type:        req.Type,
+		Config:      map[string]jx.Raw(req.Config.Or(nil)),
+		Enabled:     req.Enabled.Or(false),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := oasAdminSmsProvider(prov)
+	return &out, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, req *oas.TokenProfile, params oas.PostV1ProjectsByProjectIdAdminTokenProfilesParams) (r *oas.PostV1ProjectsByProjectIdAdminTokenProfilesCreated, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	prof, err := s.deps.Keys.CreateTokenProfile(ctx, domain.AdminTokenProfileCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		ID:          req.ID.Or(""),
+		Profile:     oasEncodeConfig(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminTokenProfilesCreated{
+		Profile: oas.NewOptTokenProfile(oasAdminTokenProfile(prof)),
+	}, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams) (r *oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	claims, err := s.deps.Keys.PreviewTokenProfile(ctx, domain.AdminTokenProfilePreviewCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		ProfileID:   params.ID,
+		UserID:      req.UserID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK{
+		Claims: oas.NewOptPostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOKClaims(
+			oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOKClaims(claims)),
+	}, nil
 }
 
 func (s *AdminService) PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminUsersReq, params oas.PostV1ProjectsByProjectIdAdminUsersParams) (*oas.PostV1ProjectsByProjectIdAdminUsersCreated, error) {
@@ -618,15 +1092,53 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ct
 }
 
 func (s *AdminService) PutV1ProjectsByProjectIdAdminConsents(ctx context.Context, req *oas.ConsentConfig, params oas.PutV1ProjectsByProjectIdAdminConsentsParams) (r *oas.ConsentConfig, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.PutConsent(ctx, domain.AdminConfigUpdateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Doc:         oasEncodeConfig(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.ConsentConfig{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (s *AdminService) PutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, req oas.PutV1ProjectsByProjectIdAdminFeaturesReq, params oas.PutV1ProjectsByProjectIdAdminFeaturesParams) (r oas.PutV1ProjectsByProjectIdAdminFeaturesOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	features, err := s.deps.Config.PutFeatures(ctx, domain.AdminFeaturesUpdateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Features:    map[string]bool(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oas.PutV1ProjectsByProjectIdAdminFeaturesOK(features), nil
 }
 
 func (s *AdminService) PutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, req oas.PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params oas.PutV1ProjectsByProjectIdAdminI18nByLocaleParams) (r oas.PutV1ProjectsByProjectIdAdminI18nByLocaleOK, _ error) {
-	panic("implement me")
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	msgs, err := s.deps.Config.PutI18n(ctx, domain.AdminI18nUpdateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Locale:      params.Locale,
+		Messages:    map[string]jx.Raw(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oas.PutV1ProjectsByProjectIdAdminI18nByLocaleOK(msgs), nil
 }
 
 // ===== Service accounts =====
@@ -988,4 +1500,126 @@ func oasAppClient(a *domain.AppClient) oas.AppClient {
 		out.Type = oas.NewOptAppClientType(oas.AppClientType(a.Type))
 	}
 	return out
+}
+
+// ----- config document round-tripping -----
+
+// jxEncoder/jxDecoder are the two halves of the ogen JSON codec every generated
+// schema type implements. We use them to round-trip fully-typed configuration
+// objects through the opaque domain.AdminConfigDoc carried to the adapter.
+type jxEncoder interface{ Encode(e *jx.Encoder) }
+type jxDecoder interface{ Decode(d *jx.Decoder) error }
+
+// oasEncodeConfig encodes a typed oas value and re-parses it into a flat map of
+// raw JSON fields (the domain.AdminConfigDoc shape).
+func oasEncodeConfig(v jxEncoder) domain.AdminConfigDoc {
+	var e jx.Encoder
+	v.Encode(&e)
+	out := domain.AdminConfigDoc{}
+	d := jx.DecodeBytes(e.Bytes())
+	if err := d.Obj(func(d *jx.Decoder, key string) error {
+		raw, err := d.Raw()
+		if err != nil {
+			return err
+		}
+		out[key] = jx.Raw(raw)
+		return nil
+	}); err != nil {
+		return domain.AdminConfigDoc{}
+	}
+	return out
+}
+
+// oasDecodeConfig rebuilds a JSON object from a domain.AdminConfigDoc and
+// decodes it into the supplied typed oas value.
+func oasDecodeConfig(doc domain.AdminConfigDoc, dst jxDecoder) error {
+	var e jx.Encoder
+	e.ObjStart()
+	for k, raw := range doc {
+		e.FieldStart(k)
+		e.Raw(raw)
+	}
+	e.ObjEnd()
+	return dst.Decode(jx.DecodeBytes(e.Bytes()))
+}
+
+// oasAdminAccessRequest maps a domain access request to its wire form.
+func oasAdminAccessRequest(ar *domain.CoreAuthAccessRequest) oas.AccessRequest {
+	out := oas.AccessRequest{
+		ID:    oas.NewOptString(ar.ID),
+		Email: oas.NewOptString(ar.Email),
+	}
+	if ar.Reason != "" {
+		out.Reason = oas.NewOptNilString(ar.Reason)
+	}
+	if ar.Status != "" {
+		out.Status = oas.NewOptAccessRequestStatus(oas.AccessRequestStatus(ar.Status))
+	}
+	return out
+}
+
+// oasAdminProvider maps a domain notification provider onto oas.EmailProvider.
+func oasAdminEmailProvider(p *domain.AdminProvider) oas.EmailProvider {
+	out := oas.EmailProvider{
+		ID:      oas.NewOptString(p.ID),
+		Type:    p.Type,
+		Enabled: oas.NewOptBool(p.Enabled),
+	}
+	if len(p.Config) > 0 {
+		out.Config = oas.NewOptEmailProviderConfig(oas.EmailProviderConfig(p.Config))
+	}
+	return out
+}
+
+// oasAdminSmsProvider maps a domain notification provider onto oas.SmsProvider.
+func oasAdminSmsProvider(p *domain.AdminProvider) oas.SmsProvider {
+	out := oas.SmsProvider{
+		ID:      oas.NewOptString(p.ID),
+		Type:    p.Type,
+		Enabled: oas.NewOptBool(p.Enabled),
+	}
+	if len(p.Config) > 0 {
+		out.Config = oas.NewOptSmsProviderConfig(oas.SmsProviderConfig(p.Config))
+	}
+	return out
+}
+
+// oasAdminSigningKey maps a domain signing key onto oas.SigningKey.
+func oasAdminSigningKey(k *domain.AdminSigningKey) oas.SigningKey {
+	out := oas.SigningKey{
+		Kid: oas.NewOptString(k.Kid),
+		Alg: oas.NewOptString(k.Alg),
+		Use: oas.NewOptString(k.Use),
+	}
+	if k.Status != "" {
+		out.Status = oas.NewOptSigningKeyStatus(oas.SigningKeyStatus(k.Status))
+	}
+	if !k.CreatedAt.IsZero() {
+		out.CreatedAt = oas.NewOptTimestamp(oas.Timestamp(k.CreatedAt))
+	}
+	return out
+}
+
+// oasAdminTokenProfile maps a domain token profile onto oas.TokenProfile.
+func oasAdminTokenProfile(p *domain.AdminTokenProfile) oas.TokenProfile {
+	out := oas.TokenProfile{
+		ID:       oas.NewOptString(p.ID),
+		Name:     oas.NewOptString(p.Name),
+		Audience: oas.NewOptString(p.Audience),
+	}
+	if p.AccessTTL != 0 {
+		out.AccessTTL = oas.NewOptInt(p.AccessTTL)
+	}
+	if p.RefreshTTL != 0 {
+		out.RefreshTTL = oas.NewOptInt(p.RefreshTTL)
+	}
+	if len(p.ClaimsTemplate) > 0 {
+		out.ClaimsTemplate = oas.NewOptTokenProfileClaimsTemplate(oas.TokenProfileClaimsTemplate(p.ClaimsTemplate))
+	}
+	return out
+}
+
+// adminCfg builds the get-command shared by every config read.
+func adminCfg(projectID string, env oas.OptString) domain.AdminConfigGetCmd {
+	return domain.AdminConfigGetCmd{ProjectID: projectID, Environment: env.Or("")}
 }

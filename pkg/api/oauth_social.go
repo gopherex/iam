@@ -21,6 +21,15 @@ type OAuthSocialAccounts interface {
 	Link(ctx context.Context, accountID, provider, code string) error
 	Unlink(ctx context.Context, accountID, identityID string) error
 	Exchange(ctx context.Context, cmd domain.OAuthSocialExchangeCmd) (*domain.Account, *domain.Session, error)
+	// StartLogin builds the provider authorize URL for a browser redirect.
+	StartLogin(ctx context.Context, cmd domain.OAuthSocialStartCmd) (string, error)
+	// CompleteLoginRedirect handles the provider callback and returns the
+	// product redirect URL plus an optional Set-Cookie value (cookie mode).
+	CompleteLoginRedirect(ctx context.Context, cmd domain.OAuthSocialCallbackCmd) (domain.OAuthSocialCallbackResult, error)
+	// StartLink builds the provider authorize URL for an account-link flow.
+	StartLink(ctx context.Context, cmd domain.OAuthSocialLinkStartCmd) (string, error)
+	// CompleteLink handles the link callback and returns the product redirect URL.
+	CompleteLink(ctx context.Context, cmd domain.OAuthSocialLinkCallbackCmd) (string, error)
 }
 
 type OAuthSocialDeps struct{ Accounts OAuthSocialAccounts }
@@ -38,20 +47,72 @@ func NewOAuthSocialService(deps OAuthSocialDeps) *OAuthSocialService {
 
 var _ oas.Handler = (*OAuthSocialService)(nil)
 
+// GetV1AuthOauthByProviderCallback handles the provider callback (public,
+// security: []) and redirects the browser back to the product, optionally
+// setting session cookies in cookie mode.
 func (s *OAuthSocialService) GetV1AuthOauthByProviderCallback(ctx context.Context, params oas.GetV1AuthOauthByProviderCallbackParams) (r *oas.GetV1AuthOauthByProviderCallbackFound, _ error) {
-	panic("implement me")
+	res, err := s.deps.Accounts.CompleteLoginRedirect(ctx, domain.OAuthSocialCallbackCmd{
+		Provider: params.Provider,
+		Code:     params.Code.Or(""),
+		State:    params.State.Or(""),
+		Error:    params.Error.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.GetV1AuthOauthByProviderCallbackFound{Location: optURI(res.RedirectURL)}
+	if res.SetCookie != "" {
+		out.SetCookie = oas.NewOptString(res.SetCookie)
+	}
+	return out, nil
 }
 
+// GetV1AuthOauthByProviderLinkCallback handles the account-link callback
+// (public, security: []) and redirects the browser back to the product.
 func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkCallback(ctx context.Context, params oas.GetV1AuthOauthByProviderLinkCallbackParams) (r *oas.GetV1AuthOauthByProviderLinkCallbackFound, _ error) {
-	panic("implement me")
+	url, err := s.deps.Accounts.CompleteLink(ctx, domain.OAuthSocialLinkCallbackCmd{
+		Provider: params.Provider,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1AuthOauthByProviderLinkCallbackFound{Location: optURI(url)}, nil
 }
 
+// GetV1AuthOauthByProviderLinkStart begins linking a provider to the current
+// user; the account comes from the authenticated principal, never the request.
 func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkStart(ctx context.Context, params oas.GetV1AuthOauthByProviderLinkStartParams) (r *oas.GetV1AuthOauthByProviderLinkStartFound, _ error) {
-	panic("implement me")
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	url, err := s.deps.Accounts.StartLink(ctx, domain.OAuthSocialLinkStartCmd{
+		AccountID:  p.AccountID,
+		Provider:   params.Provider,
+		RedirectTo: params.RedirectTo,
+		State:      params.State.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1AuthOauthByProviderLinkStartFound{Location: optURI(url)}, nil
 }
 
+// GetV1AuthOauthByProviderStart begins a browser-driven social login (public,
+// security: []) and redirects to the provider's authorize endpoint.
 func (s *OAuthSocialService) GetV1AuthOauthByProviderStart(ctx context.Context, params oas.GetV1AuthOauthByProviderStartParams) (r *oas.GetV1AuthOauthByProviderStartFound, _ error) {
-	panic("implement me")
+	url, err := s.deps.Accounts.StartLogin(ctx, domain.OAuthSocialStartCmd{
+		Provider:      params.Provider,
+		RedirectTo:    params.RedirectTo,
+		State:         params.State.Or(""),
+		CodeChallenge: params.CodeChallenge.Or(""),
+		Prompt:        params.Prompt.Or(""),
+		LoginHint:     params.LoginHint.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1AuthOauthByProviderStartFound{Location: optURI(url)}, nil
 }
 
 func (s *OAuthSocialService) GetV1AuthOauthProviders(ctx context.Context, params oas.GetV1AuthOauthProvidersParams) (*oas.GetV1AuthOauthProvidersOK, error) {

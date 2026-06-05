@@ -1,9 +1,21 @@
 package api
 
 import (
+	"net/url"
+
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
 )
+
+// optURI wraps a redirect target string as an oas.OptURI for 302 Found
+// responses; an unparseable URL yields an unset value.
+func optURI(raw string) oas.OptURI {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return oas.OptURI{}
+	}
+	return oas.NewOptURI(*u)
+}
 
 // oas <-> domain mappers. The wire types (oas) stay at the edge; services map
 // to/from domain at the boundary so business logic never depends on the

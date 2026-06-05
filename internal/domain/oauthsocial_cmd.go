@@ -8,3 +8,49 @@ type OAuthSocialExchangeCmd struct {
 	Code         string
 	CodeVerifier string
 }
+
+// OAuthSocialStartCmd begins a browser-driven social login: the adapter builds
+// the provider authorize URL (carrying state/PKCE/prompt hints) and returns it
+// for a 302 redirect. RedirectTo is the product URL the provider callback will
+// ultimately bounce the user back to.
+type OAuthSocialStartCmd struct {
+	Provider      string
+	RedirectTo    string
+	State         string
+	CodeChallenge string
+	Prompt        string
+	LoginHint     string
+}
+
+// OAuthSocialCallbackCmd carries the provider callback query parameters back to
+// the adapter, which validates state, exchanges the code, mints a session, and
+// returns the product redirect URL (plus an optional Set-Cookie value in cookie
+// mode).
+type OAuthSocialCallbackCmd struct {
+	Provider string
+	Code     string
+	State    string
+	Error    string
+}
+
+// OAuthSocialCallbackResult is the outcome of a social-login callback: the URL
+// to redirect the browser to and, in cookie mode, the Set-Cookie header value.
+type OAuthSocialCallbackResult struct {
+	RedirectURL string
+	SetCookie   string
+}
+
+// OAuthSocialLinkStartCmd begins linking a provider identity to an already
+// authenticated account. AccountID comes from the principal, never the request.
+type OAuthSocialLinkStartCmd struct {
+	AccountID  string
+	Provider   string
+	RedirectTo string
+	State      string
+}
+
+// OAuthSocialLinkCallbackCmd carries the provider callback for an account-link
+// flow; the adapter attaches the identity and returns the product redirect URL.
+type OAuthSocialLinkCallbackCmd struct {
+	Provider string
+}

@@ -30,6 +30,8 @@ type CoreAuthAccounts interface {
 	// Email verification / change.
 	StartEmailVerification(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd) (*domain.Challenge, error)
 	VerifyEmail(ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd) (*domain.Account, *domain.Session, error)
+	VerifyEmailCallback(ctx context.Context, cmd domain.CoreAuthEmailVerificationCallbackCmd) (*domain.CoreAuthEmailVerificationCallbackResult, error)
+	VerifyCaptcha(ctx context.Context, projectID, provider, token, action string) (*domain.CoreAuthCaptchaVerifyResult, error)
 	StartEmailChange(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd) (*domain.Challenge, error)
 	VerifyEmailChange(ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd) (*domain.Account, error)
 	CancelEmailChange(ctx context.Context, token string) error
@@ -90,7 +92,21 @@ func (s *CoreAuthService) GetV1AuthEmailChangeCancel(ctx context.Context, params
 }
 
 func (s *CoreAuthService) GetV1AuthEmailVerificationCallback(ctx context.Context, params oas.GetV1AuthEmailVerificationCallbackParams) (r *oas.GetV1AuthEmailVerificationCallbackFound, _ error) {
-	panic("implement me")
+	// Public op (security: []): the opaque token identifies the pending
+	// verification. The port consumes it and returns where to redirect the
+	// browser plus an optional session cookie.
+	res, err := s.deps.Accounts.VerifyEmailCallback(ctx, domain.CoreAuthEmailVerificationCallbackCmd{
+		Token:      params.Token,
+		RedirectTo: params.RedirectTo.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.GetV1AuthEmailVerificationCallbackFound{Location: optURI(res.RedirectURL)}
+	if res.SetCookie != "" {
+		out.SetCookie = oas.NewOptString(res.SetCookie)
+	}
+	return out, nil
 }
 
 func (s *CoreAuthService) GetV1AuthSession(ctx context.Context) (*oas.GetV1AuthSessionOK, error) {
@@ -477,7 +493,16 @@ func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.Op
 }
 
 func (s *CoreAuthService) PostV1ChallengesCaptchaVerify(ctx context.Context, req *oas.PostV1ChallengesCaptchaVerifyReq) (r *oas.PostV1ChallengesCaptchaVerifyOK, _ error) {
-	panic("implement me")
+	// Public op (security: []): verify a CAPTCHA token against the configured
+	// provider. The adapter resolves the project from request context.
+	res, err := s.deps.Accounts.VerifyCaptcha(ctx, "", req.Provider, req.Token, req.Action.Or(""))
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ChallengesCaptchaVerifyOK{
+		Valid: oas.NewOptBool(res.Valid),
+		Score: oas.NewOptFloat64(res.Score),
+	}, nil
 }
 
 func (s *CoreAuthService) PostV1TokensIntrospect(ctx context.Context, req *oas.PostV1TokensIntrospectReq) (*oas.PostV1TokensIntrospectOK, error) {

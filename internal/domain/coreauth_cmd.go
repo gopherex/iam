@@ -122,3 +122,25 @@ type CoreAuthRevokeCmd struct {
 	SessionID string
 	Reason    string
 }
+
+// CoreAuthEmailVerificationCallbackCmd consumes an opaque email-verification
+// link token and resolves where to send the browser next.
+type CoreAuthEmailVerificationCallbackCmd struct {
+	Token      string
+	RedirectTo string
+}
+
+// CoreAuthEmailVerificationCallbackResult is the outcome of consuming an email
+// verification link: the absolute redirect URL and an optional Set-Cookie value
+// (e.g. a freshly issued session cookie) for the browser.
+type CoreAuthEmailVerificationCallbackResult struct {
+	RedirectURL string
+	SetCookie   string
+}
+
+// CoreAuthCaptchaVerifyResult is the outcome of verifying a CAPTCHA token with
+// the configured provider.
+type CoreAuthCaptchaVerifyResult struct {
+	Valid bool
+	Score float64
+}

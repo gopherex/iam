@@ -9,6 +9,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"time"
 
@@ -31,9 +32,49 @@ type FederationConnections interface {
 	CreateScimToken(ctx context.Context, cmd domain.FederationScimTokenCmd) (*domain.ScimToken, string, error)
 	ListScimTokens(ctx context.Context, projectID, connectionID string) ([]domain.ScimToken, error)
 	DeleteScimToken(ctx context.Context, projectID, connectionID, tokenID string) error
+
+	// Public / runtime resolution.
+	ResolveConnection(ctx context.Context, projectID, email string) (*domain.Connection, error)
 }
 
-type FederationDeps struct{ Connections FederationConnections }
+// FederationRuntime drives the outbound/inbound SSO authentication legs (OIDC
+// and SAML). The redirect-shaped methods return a port-computed redirect URL
+// (plus optional cookie); the adapter owns the protocol crypto.
+type FederationRuntime interface {
+	OidcStart(ctx context.Context, cmd domain.FederationSsoStartCmd) (*domain.FederationSsoRedirect, error)
+	OidcCallback(ctx context.Context, cmd domain.FederationSsoCallbackCmd) (*domain.FederationSsoRedirect, error)
+	SamlLogin(ctx context.Context, cmd domain.FederationSsoStartCmd) (*domain.FederationSsoRedirect, error)
+	SamlAcs(ctx context.Context, cmd domain.FederationSamlAcsCmd) (*domain.FederationSsoRedirect, error)
+	SamlSlo(ctx context.Context, connectionID string) (*domain.FederationSsoRedirect, error)
+	SamlMetadata(ctx context.Context, connectionID string) ([]byte, error)
+	// Exchange swaps a short-lived SSO exchange code for an authenticated session.
+	Exchange(ctx context.Context, projectID, code string) (*domain.Account, *domain.Session, error)
+}
+
+// FederationScim is the connection-scoped SCIM v2 provisioning port. Resources
+// (Users and Groups) are carried as free-form attribute maps; the adapter owns
+// the SCIM schema semantics.
+type FederationScim interface {
+	ListUsers(ctx context.Context, q domain.FederationScimListQuery) (map[string]any, error)
+	GetUser(ctx context.Context, connectionID, scimUserID string) (map[string]any, error)
+	CreateUser(ctx context.Context, cmd domain.FederationScimWriteCmd) (map[string]any, error)
+	ReplaceUser(ctx context.Context, cmd domain.FederationScimWriteCmd) (map[string]any, error)
+	PatchUser(ctx context.Context, cmd domain.FederationScimPatchCmd) (map[string]any, error)
+	DeleteUser(ctx context.Context, connectionID, scimUserID string) error
+
+	ListGroups(ctx context.Context, q domain.FederationScimListQuery) (map[string]any, error)
+	GetGroup(ctx context.Context, connectionID, groupID string) (map[string]any, error)
+	CreateGroup(ctx context.Context, cmd domain.FederationScimWriteCmd) (map[string]any, error)
+	ReplaceGroup(ctx context.Context, cmd domain.FederationScimWriteCmd) (map[string]any, error)
+	PatchGroup(ctx context.Context, cmd domain.FederationScimPatchCmd) (map[string]any, error)
+	DeleteGroup(ctx context.Context, connectionID, groupID string) error
+}
+
+type FederationDeps struct {
+	Connections FederationConnections
+	Runtime     FederationRuntime
+	Scim        FederationScim
+}
 
 // FederationService implements the FederationHandler slice of oas.Handler.
 type FederationService struct {
@@ -79,11 +120,17 @@ func (s *FederationService) DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdSc
 }
 
 func (s *FederationService) DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params oas.DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams) error {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return err
+	}
+	return s.deps.Scim.DeleteGroup(ctx, params.ConnectionID, params.GroupID)
 }
 
 func (s *FederationService) DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params oas.DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams) error {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return err
+	}
+	return s.deps.Scim.DeleteUser(ctx, params.ConnectionID, params.ScimUserID)
 }
 
 func (s *FederationService) GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminDomainsParams) (*oas.GetV1ProjectsByProjectIdAdminDomainsOK, error) {
@@ -152,39 +199,112 @@ func (s *FederationService) GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimT
 }
 
 func (s *FederationService) GetV1ScimV2ByConnectionIdGroups(ctx context.Context, params oas.GetV1ScimV2ByConnectionIdGroupsParams) (oas.GetV1ScimV2ByConnectionIdGroupsOK, error) {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return nil, err
+	}
+	m, err := s.deps.Scim.ListGroups(ctx, domain.FederationScimListQuery{ConnectionID: params.ConnectionID})
+	if err != nil {
+		return nil, err
+	}
+	return oasRawMap[oas.GetV1ScimV2ByConnectionIdGroupsOK](m), nil
 }
 
 func (s *FederationService) GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params oas.GetV1ScimV2ByConnectionIdGroupsByGroupIdParams) (oas.GetV1ScimV2ByConnectionIdGroupsByGroupIdOK, error) {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return nil, err
+	}
+	m, err := s.deps.Scim.GetGroup(ctx, params.ConnectionID, params.GroupID)
+	if err != nil {
+		return nil, err
+	}
+	return oasRawMap[oas.GetV1ScimV2ByConnectionIdGroupsByGroupIdOK](m), nil
 }
 
 func (s *FederationService) GetV1ScimV2ByConnectionIdUsers(ctx context.Context, params oas.GetV1ScimV2ByConnectionIdUsersParams) (oas.GetV1ScimV2ByConnectionIdUsersOK, error) {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return nil, err
+	}
+	m, err := s.deps.Scim.ListUsers(ctx, domain.FederationScimListQuery{
+		ConnectionID: params.ConnectionID,
+		Filter:       params.Filter.Or(""),
+		StartIndex:   params.StartIndex.Or(0),
+		Count:        params.Count.Or(0),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oasRawMap[oas.GetV1ScimV2ByConnectionIdUsersOK](m), nil
 }
 
 func (s *FederationService) GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params oas.GetV1ScimV2ByConnectionIdUsersByScimUserIdParams) (oas.GetV1ScimV2ByConnectionIdUsersByScimUserIdOK, error) {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return nil, err
+	}
+	m, err := s.deps.Scim.GetUser(ctx, params.ConnectionID, params.ScimUserID)
+	if err != nil {
+		return nil, err
+	}
+	return oasRawMap[oas.GetV1ScimV2ByConnectionIdUsersByScimUserIdOK](m), nil
 }
 
 func (s *FederationService) GetV1SsoConnectionsResolve(ctx context.Context, params oas.GetV1SsoConnectionsResolveParams) (*oas.GetV1SsoConnectionsResolveOK, error) {
-	panic("implement me")
+	// Public runtime resolution: project scope comes from X-Client-Id.
+	conn, err := s.deps.Connections.ResolveConnection(ctx, params.XClientID, params.Email)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1SsoConnectionsResolveOK{
+		Connection: oas.NewOptSSOConnection(oasConnection(conn)),
+	}, nil
 }
 
 func (s *FederationService) GetV1SsoOidcByConnectionIdCallback(ctx context.Context, params oas.GetV1SsoOidcByConnectionIdCallbackParams) (*oas.GetV1SsoOidcByConnectionIdCallbackFound, error) {
-	panic("implement me")
+	red, err := s.deps.Runtime.OidcCallback(ctx, domain.FederationSsoCallbackCmd{
+		ConnectionID: params.ConnectionID,
+		Code:         params.Code,
+		State:        params.State.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.GetV1SsoOidcByConnectionIdCallbackFound{Location: optURI(red.URL)}
+	if red.Cookie != "" {
+		out.SetCookie = oas.NewOptString(red.Cookie)
+	}
+	return out, nil
 }
 
 func (s *FederationService) GetV1SsoOidcByConnectionIdStart(ctx context.Context, params oas.GetV1SsoOidcByConnectionIdStartParams) (*oas.GetV1SsoOidcByConnectionIdStartFound, error) {
-	panic("implement me")
+	red, err := s.deps.Runtime.OidcStart(ctx, domain.FederationSsoStartCmd{
+		ConnectionID: params.ConnectionID,
+		RedirectTo:   params.RedirectTo,
+		State:        params.State.Or(""),
+		LoginHint:    params.LoginHint.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1SsoOidcByConnectionIdStartFound{Location: optURI(red.URL)}, nil
 }
 
 func (s *FederationService) GetV1SsoSamlByConnectionIdLogin(ctx context.Context, params oas.GetV1SsoSamlByConnectionIdLoginParams) (*oas.GetV1SsoSamlByConnectionIdLoginFound, error) {
-	panic("implement me")
+	red, err := s.deps.Runtime.SamlLogin(ctx, domain.FederationSsoStartCmd{
+		ConnectionID: params.ConnectionID,
+		RedirectTo:   params.RedirectTo,
+		State:        params.State.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1SsoSamlByConnectionIdLoginFound{Location: optURI(red.URL)}, nil
 }
 
 func (s *FederationService) GetV1SsoSamlByConnectionIdMetadata(ctx context.Context, params oas.GetV1SsoSamlByConnectionIdMetadataParams) (oas.GetV1SsoSamlByConnectionIdMetadataOK, error) {
-	panic("implement me")
+	xml, err := s.deps.Runtime.SamlMetadata(ctx, params.ConnectionID)
+	if err != nil {
+		return oas.GetV1SsoSamlByConnectionIdMetadataOK{}, err
+	}
+	return oas.GetV1SsoSamlByConnectionIdMetadataOK{Data: bytes.NewReader(xml)}, nil
 }
 
 func (s *FederationService) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (*oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error) {
@@ -205,11 +325,33 @@ func (s *FederationService) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ct
 }
 
 func (s *FederationService) PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, req oas.PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params oas.PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams) (oas.PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK, error) {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return nil, err
+	}
+	m, err := s.deps.Scim.PatchGroup(ctx, domain.FederationScimPatchCmd{
+		ConnectionID: params.ConnectionID,
+		ResourceID:   params.GroupID,
+		Patch:        anyMap(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oasRawMap[oas.PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK](m), nil
 }
 
 func (s *FederationService) PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, req *oas.ScimUser, params oas.PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams) (oas.PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK, error) {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return nil, err
+	}
+	m, err := s.deps.Scim.PatchUser(ctx, domain.FederationScimPatchCmd{
+		ConnectionID: params.ConnectionID,
+		ResourceID:   params.ScimUserID,
+		Patch:        oasFederationScimUserMap(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oasRawMap[oas.PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK](m), nil
 }
 
 func (s *FederationService) PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminDomainsReq, params oas.PostV1ProjectsByProjectIdAdminDomainsParams) (*oas.PostV1ProjectsByProjectIdAdminDomainsCreated, error) {
@@ -306,31 +448,95 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest
 }
 
 func (s *FederationService) PostV1ScimV2ByConnectionIdGroups(ctx context.Context, req oas.PostV1ScimV2ByConnectionIdGroupsReq, params oas.PostV1ScimV2ByConnectionIdGroupsParams) (oas.PostV1ScimV2ByConnectionIdGroupsCreated, error) {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return nil, err
+	}
+	m, err := s.deps.Scim.CreateGroup(ctx, domain.FederationScimWriteCmd{
+		ConnectionID: params.ConnectionID,
+		Attributes:   anyMap(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oasRawMap[oas.PostV1ScimV2ByConnectionIdGroupsCreated](m), nil
 }
 
 func (s *FederationService) PostV1ScimV2ByConnectionIdUsers(ctx context.Context, req *oas.ScimUser, params oas.PostV1ScimV2ByConnectionIdUsersParams) (oas.PostV1ScimV2ByConnectionIdUsersCreated, error) {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return nil, err
+	}
+	m, err := s.deps.Scim.CreateUser(ctx, domain.FederationScimWriteCmd{
+		ConnectionID: params.ConnectionID,
+		Attributes:   oasFederationScimUserMap(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oasRawMap[oas.PostV1ScimV2ByConnectionIdUsersCreated](m), nil
 }
 
 func (s *FederationService) PostV1SsoExchange(ctx context.Context, req *oas.PostV1SsoExchangeReq, params oas.PostV1SsoExchangeParams) (*oas.AuthResult, error) {
-	panic("implement me")
+	// Public runtime exchange: project scope comes from X-Client-Id.
+	acc, sess, err := s.deps.Runtime.Exchange(ctx, params.XClientID, req.Code)
+	if err != nil {
+		return nil, err
+	}
+	return authResult(acc, sess), nil
 }
 
 func (s *FederationService) PostV1SsoSamlByConnectionIdAcs(ctx context.Context, req oas.OptPostV1SsoSamlByConnectionIdAcsReq, params oas.PostV1SsoSamlByConnectionIdAcsParams) (*oas.PostV1SsoSamlByConnectionIdAcsFound, error) {
-	panic("implement me")
+	body := req.Or(oas.PostV1SsoSamlByConnectionIdAcsReq{})
+	red, err := s.deps.Runtime.SamlAcs(ctx, domain.FederationSamlAcsCmd{
+		ConnectionID: params.ConnectionID,
+		SAMLResponse: body.SAMLResponse.Or(""),
+		RelayState:   body.RelayState.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.PostV1SsoSamlByConnectionIdAcsFound{Location: optURI(red.URL)}
+	if red.Cookie != "" {
+		out.SetCookie = oas.NewOptString(red.Cookie)
+	}
+	return out, nil
 }
 
 func (s *FederationService) PostV1SsoSamlByConnectionIdSlo(ctx context.Context, params oas.PostV1SsoSamlByConnectionIdSloParams) (*oas.PostV1SsoSamlByConnectionIdSloFound, error) {
-	panic("implement me")
+	red, err := s.deps.Runtime.SamlSlo(ctx, params.ConnectionID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1SsoSamlByConnectionIdSloFound{Location: optURI(red.URL)}, nil
 }
 
 func (s *FederationService) PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, req oas.PutV1ScimV2ByConnectionIdGroupsByGroupIdReq, params oas.PutV1ScimV2ByConnectionIdGroupsByGroupIdParams) (oas.PutV1ScimV2ByConnectionIdGroupsByGroupIdOK, error) {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return nil, err
+	}
+	m, err := s.deps.Scim.ReplaceGroup(ctx, domain.FederationScimWriteCmd{
+		ConnectionID: params.ConnectionID,
+		ResourceID:   params.GroupID,
+		Attributes:   anyMap(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oasRawMap[oas.PutV1ScimV2ByConnectionIdGroupsByGroupIdOK](m), nil
 }
 
 func (s *FederationService) PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, req *oas.ScimUser, params oas.PutV1ScimV2ByConnectionIdUsersByScimUserIdParams) (oas.PutV1ScimV2ByConnectionIdUsersByScimUserIdOK, error) {
-	panic("implement me")
+	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
+		return nil, err
+	}
+	m, err := s.deps.Scim.ReplaceUser(ctx, domain.FederationScimWriteCmd{
+		ConnectionID: params.ConnectionID,
+		ResourceID:   params.ScimUserID,
+		Attributes:   oasFederationScimUserMap(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return oasRawMap[oas.PutV1ScimV2ByConnectionIdUsersByScimUserIdOK](m), nil
 }
 
 // oasConnection maps a domain Connection to its oas representation.
@@ -362,6 +568,59 @@ func oasFederationScimTokenMap(t *domain.ScimToken) map[string]any {
 	}
 	if !t.ExpiresAt.IsZero() {
 		m["expires_at"] = t.ExpiresAt.Format(time.RFC3339)
+	}
+	return m
+}
+
+// requireScimConnection enforces the connection scope on SCIM v2 operations: the
+// authenticated SCIM principal carries the connection its token was minted for,
+// and it may only provision that connection. A mismatch (or any non-SCIM caller)
+// is a cross-connection IDOR and is rejected.
+func requireScimConnection(ctx context.Context, connectionID string) error {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return err
+	}
+	if p.Kind != domain.PrincipalSCIM || p.ConnectionID == "" || p.ConnectionID != connectionID {
+		return domain.ErrForbidden
+	}
+	return nil
+}
+
+// oasFederationScimUserMap projects a generated SCIM User onto a free-form
+// attribute map the SCIM port consumes (the adapter owns schema semantics).
+func oasFederationScimUserMap(u *oas.ScimUser) map[string]any {
+	m := map[string]any{}
+	if u == nil {
+		return m
+	}
+	if len(u.Schemas) > 0 {
+		m["schemas"] = u.Schemas
+	}
+	if v, ok := u.ID.Get(); ok {
+		m["id"] = v
+	}
+	if v, ok := u.UserName.Get(); ok {
+		m["userName"] = v
+	}
+	if v, ok := u.ExternalId.Get(); ok {
+		m["externalId"] = v
+	}
+	if v, ok := u.Active.Get(); ok {
+		m["active"] = v
+	}
+	if name, ok := u.Name.Get(); ok {
+		m["name"] = anyMap(name)
+	}
+	if len(u.Emails) > 0 {
+		emails := make([]map[string]any, 0, len(u.Emails))
+		for i := range u.Emails {
+			emails = append(emails, anyMap(u.Emails[i]))
+		}
+		m["emails"] = emails
+	}
+	for k, raw := range u.AdditionalProps {
+		m[k] = raw
 	}
 	return m
 }
