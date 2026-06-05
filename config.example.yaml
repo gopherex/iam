@@ -1,0 +1,28 @@
+# IAM service configuration (config.yaml). Loaded from $CONFIG_PATH or ./.
+# Every key can be overridden by its UPPER_SNAKE_CASE env var, e.g.
+# INFRA_POSTGRES_PASSWORD, SERVICE_HTTP_ADDR. Defaults are shown.
+infra:
+  postgres:
+    host: localhost
+    port: 5432
+    username: iam
+    password: iam
+    database: iam
+    sslmode: disable          # disable | require | verify-ca | verify-full
+    log_level: info           # debug | info | warn | error
+
+service:
+  http:
+    addr: ":8080"
+    read_timeout_sec: 15
+    write_timeout_sec: 30
+    shutdown_sec: 15
+  logger:
+    level: info               # debug | info | warn | error
+    format: json              # json | text
+  cors:
+    allowed_origins: ["*"]
+  auth:
+    default_environment: live
+    access_ttl_sec: 1800      # 30m
+    refresh_ttl_sec: 2592000  # 30d
