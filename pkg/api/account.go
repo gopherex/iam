@@ -1,17 +1,39 @@
-// Code scaffolded for IAM handler groups. Each XxxService embeds
-// oas.UnimplementedHandler (so non-1.0.0 / unwritten ops auto-return
-// not-implemented) and panics on every v1.0.0 op until implemented.
+// Code scaffolded for IAM handler groups.
+//
+// AccountService is pure orchestration: it holds aggregate-port interfaces (deps) and
+// nothing else. It embeds oas.UnimplementedHandler so any operation it does not
+// override returns not-implemented, and panics on every v1.0.0 operation until
+// written. Each port method is atomic in its adapter — services never open a
+// transaction.
 
 package api
 
 import (
 	"context"
 
+	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
 )
 
+type accountStore interface {
+	Get(ctx context.Context, projectID, accountID string) (*domain.Account, error)
+	UpdateProfile(ctx context.Context, cmd domain.ProfileUpdateCmd) (*domain.Account, error)
+	Delete(ctx context.Context, projectID, accountID string) error
+	ListSessions(ctx context.Context, accountID string) ([]domain.Session, error)
+	RevokeSession(ctx context.Context, accountID, sessionID string) error
+	ListIdentities(ctx context.Context, accountID string) ([]domain.Identity, error)
+}
+
+type AccountDeps struct{ Accounts accountStore }
+
 // AccountService implements the AccountHandler slice of oas.Handler.
-type AccountService struct{ oas.UnimplementedHandler }
+type AccountService struct {
+	oas.UnimplementedHandler
+	deps AccountDeps
+}
+
+// NewAccountService builds the Account service from its dependencies.
+func NewAccountService(deps AccountDeps) *AccountService { return &AccountService{deps: deps} }
 
 var _ oas.Handler = (*AccountService)(nil)
 

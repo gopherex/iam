@@ -1,17 +1,50 @@
-// Code scaffolded for IAM handler groups. Each XxxService embeds
-// oas.UnimplementedHandler (so non-1.0.0 / unwritten ops auto-return
-// not-implemented) and panics on every v1.0.0 op until implemented.
+// Code scaffolded for IAM handler groups.
+//
+// AdminService is pure orchestration: it holds aggregate-port interfaces (deps) and
+// nothing else. It embeds oas.UnimplementedHandler so any operation it does not
+// override returns not-implemented, and panics on every v1.0.0 operation until
+// written. Each port method is atomic in its adapter — services never open a
+// transaction.
 
 package api
 
 import (
 	"context"
 
+	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
 )
 
+type adminUsers interface {
+	List(ctx context.Context, projectID string) ([]domain.Account, error)
+	Get(ctx context.Context, projectID, accountID string) (*domain.Account, error)
+	Create(ctx context.Context, cmd domain.RegisterCmd) (*domain.Account, error)
+	Ban(ctx context.Context, projectID, accountID string) error
+	Delete(ctx context.Context, projectID, accountID string) error
+}
+
+type adminApps interface {
+	List(ctx context.Context, projectID string) ([]domain.AppClient, error)
+	Create(ctx context.Context, cmd domain.AppClientCmd) (*domain.AppClient, error)
+	Get(ctx context.Context, projectID, appID string) (*domain.AppClient, error)
+	Delete(ctx context.Context, projectID, appID string) error
+}
+
+// AdminDeps are the per-project administration ports. Config (auth/policy/
+// providers/webhooks/keys/risk/jobs) is added as those surfaces are implemented.
+type AdminDeps struct {
+	Users adminUsers
+	Apps  adminApps
+}
+
 // AdminService implements the AdminHandler slice of oas.Handler.
-type AdminService struct{ oas.UnimplementedHandler }
+type AdminService struct {
+	oas.UnimplementedHandler
+	deps AdminDeps
+}
+
+// NewAdminService builds the Admin service from its dependencies.
+func NewAdminService(deps AdminDeps) *AdminService { return &AdminService{deps: deps} }
 
 var _ oas.Handler = (*AdminService)(nil)
 

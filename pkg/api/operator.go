@@ -1,17 +1,38 @@
-// Code scaffolded for IAM handler groups. Each XxxService embeds
-// oas.UnimplementedHandler (so non-1.0.0 / unwritten ops auto-return
-// not-implemented) and panics on every v1.0.0 op until implemented.
+// Code scaffolded for IAM handler groups.
+//
+// OperatorService is pure orchestration: it holds aggregate-port interfaces (deps) and
+// nothing else. It embeds oas.UnimplementedHandler so any operation it does not
+// override returns not-implemented, and panics on every v1.0.0 operation until
+// written. Each port method is atomic in its adapter — services never open a
+// transaction.
 
 package api
 
 import (
 	"context"
 
+	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
 )
 
+type operatorProjects interface {
+	CreateProject(ctx context.Context, cmd domain.ProjectCmd) (*domain.Project, error)
+	ListProjects(ctx context.Context) ([]domain.Project, error)
+	GetProject(ctx context.Context, projectID string) (*domain.Project, error)
+	CreateEnvironment(ctx context.Context, cmd domain.EnvironmentCmd) (*domain.Environment, error)
+	MintAdminToken(ctx context.Context, projectID string) (string, error)
+}
+
+type OperatorDeps struct{ Projects operatorProjects }
+
 // OperatorService implements the OperatorHandler slice of oas.Handler.
-type OperatorService struct{ oas.UnimplementedHandler }
+type OperatorService struct {
+	oas.UnimplementedHandler
+	deps OperatorDeps
+}
+
+// NewOperatorService builds the Operator service from its dependencies.
+func NewOperatorService(deps OperatorDeps) *OperatorService { return &OperatorService{deps: deps} }
 
 var _ oas.Handler = (*OperatorService)(nil)
 

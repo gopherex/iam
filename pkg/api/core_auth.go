@@ -1,17 +1,43 @@
-// Code scaffolded for IAM handler groups. Each XxxService embeds
-// oas.UnimplementedHandler (so non-1.0.0 / unwritten ops auto-return
-// not-implemented) and panics on every v1.0.0 op until implemented.
+// Code scaffolded for IAM handler groups.
+//
+// CoreAuthService is pure orchestration: it holds aggregate-port interfaces (deps) and
+// nothing else. It embeds oas.UnimplementedHandler so any operation it does not
+// override returns not-implemented, and panics on every v1.0.0 operation until
+// written. Each port method is atomic in its adapter — services never open a
+// transaction.
 
 package api
 
 import (
 	"context"
 
+	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
 )
 
+// coreAuthAccounts is the Core Auth slice of the Account aggregate. Each method
+// is one atomic operation; the adapter owns its transaction.
+type coreAuthAccounts interface {
+	Register(ctx context.Context, cmd domain.RegisterCmd) (*domain.Account, *domain.Session, error)
+	AuthenticatePassword(ctx context.Context, projectID, email, password string) (*domain.Account, *domain.Session, error)
+	Refresh(ctx context.Context, refreshToken string) (*domain.Session, error)
+	ExchangeCode(ctx context.Context, code, verifier string) (*domain.Account, *domain.Session, error)
+	CreateGuest(ctx context.Context, projectID string) (*domain.Account, *domain.Session, error)
+	GetSession(ctx context.Context, sessionID string) (*domain.Account, *domain.Session, error)
+	SignOut(ctx context.Context, sessionID string, everywhere bool) error
+}
+
+// CoreAuthDeps are the ports the Core Auth service orchestrates.
+type CoreAuthDeps struct{ Accounts coreAuthAccounts }
+
 // CoreAuthService implements the CoreAuthHandler slice of oas.Handler.
-type CoreAuthService struct{ oas.UnimplementedHandler }
+type CoreAuthService struct {
+	oas.UnimplementedHandler
+	deps CoreAuthDeps
+}
+
+// NewCoreAuthService builds the CoreAuth service from its dependencies.
+func NewCoreAuthService(deps CoreAuthDeps) *CoreAuthService { return &CoreAuthService{deps: deps} }
 
 var _ oas.Handler = (*CoreAuthService)(nil)
 

@@ -1,17 +1,36 @@
-// Code scaffolded for IAM handler groups. Each XxxService embeds
-// oas.UnimplementedHandler (so non-1.0.0 / unwritten ops auto-return
-// not-implemented) and panics on every v1.0.0 op until implemented.
+// Code scaffolded for IAM handler groups.
+//
+// PlatformService is pure orchestration: it holds aggregate-port interfaces (deps) and
+// nothing else. It embeds oas.UnimplementedHandler so any operation it does not
+// override returns not-implemented, and panics on every v1.0.0 operation until
+// written. Each port method is atomic in its adapter — services never open a
+// transaction.
 
 package api
 
 import (
 	"context"
 
+	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
 )
 
+// platformConfig serves unauthenticated bootstrap config for a client.
+type platformConfig interface {
+	PublicConfig(ctx context.Context, projectID, clientID string) (*domain.PublicConfig, error)
+}
+
+// PlatformDeps are the ports the Platform service orchestrates.
+type PlatformDeps struct{ Config platformConfig }
+
 // PlatformService implements the PlatformHandler slice of oas.Handler.
-type PlatformService struct{ oas.UnimplementedHandler }
+type PlatformService struct {
+	oas.UnimplementedHandler
+	deps PlatformDeps
+}
+
+// NewPlatformService builds the Platform service from its dependencies.
+func NewPlatformService(deps PlatformDeps) *PlatformService { return &PlatformService{deps: deps} }
 
 var _ oas.Handler = (*PlatformService)(nil)
 
