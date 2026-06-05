@@ -1,15 +1,37 @@
-# ogen configuration — https://ogen.dev/docs/configuration
-# Drives Go code generation from openapi/openapi.yaml into pkg/api.
-# Invoked via `make generate-go` (see Makefile / pkg/api/gen.go).
-
-generator:
-  # Vendor extensions used by our spec are informational only (x-audience,
-  # x-scopes, x-feature, x-tagGroups, x-features, x-filter-planes) and do not
-  # affect generation. Add feature toggles here when the server stack is fixed.
-  features:
-    enable: []
-    disable: []
+# ogen configuration — https://ogen.dev/docs/config/
+# Drives Go generation from openapi/openapi.yaml into pkg/api.
+# Invoked ONLY via `make generate-go` (no //go:generate directives in the tree).
 
 parser:
-  # The spec is self-contained; no remote $ref resolution.
-  allowRemote: false
+  # Infer schema types where the spec leaves them implicit.
+  infer_types: true
+  # The spec is self-contained; never resolve remote $refs.
+  allow_remote: false
+
+generator:
+  features:
+    # Enable every ogen feature (full list from gen/features.go).
+    enable:
+      - "paths/client"                 # generate the HTTP client
+      - "paths/server"                 # generate the server interfaces
+      - "webhooks/client"              # webhook client
+      - "webhooks/server"              # webhook server
+      - "client/security/reentrant"    # reentrant security source
+      - "client/request/options"       # per-request options
+      - "client/request/validation"    # validate requests client-side
+      - "client/editors"               # request editors
+      - "server/response/validation"   # validate responses server-side
+      - "ogen/otel"                    # OpenTelemetry instrumentation
+      - "ogen/unimplemented"           # default unimplemented handlers
+      - "debug/example_tests"          # generated example tests
+    disable: []
+    disable_all: false
+
+  # Spec constructs ogen cannot codegen yet. Listed explicitly (not "all") so
+  # the set of skipped operations is known. "complex form schema" covers the
+  # OAuth2 application/x-www-form-urlencoded bodies (token/par/introspect/...);
+  # those endpoints follow the OAuth RFCs and are handled outside the generated
+  # client/server.
+  ignore_not_implemented:
+    - "complex form schema"
+    - "complex anyOf"

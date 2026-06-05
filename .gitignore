@@ -33,6 +33,7 @@ go.work.sum
 
 # Build artifacts
 /bin/
+openapi/.build/
 
 # Node / TS
 node_modules/

@@ -7,6 +7,8 @@ API_PKG_DIR := pkg/api
 BIN_DIR     := bin
 SERVER_BIN  := $(BIN_DIR)/iam
 OGEN        := go run github.com/ogen-go/ogen/cmd/ogen@latest
+# ogen consumes OpenAPI 3.0; this is the down-projected build artifact.
+OPENAPI_30  := openapi/.build/openapi.3.0.yaml
 
 .DEFAULT_GOAL := help
 
@@ -32,7 +34,9 @@ generate: generate-go generate-ts
 ## generate-go: generate the Go API (ogen) into pkg/api
 .PHONY: generate-go
 generate-go:
-	$(OGEN) --config .ogen.yaml --target $(API_PKG_DIR) --package api --clean $(OPENAPI)
+	@mkdir -p $(dir $(OPENAPI_30))
+	python3 scripts/openapi_to_30.py $(OPENAPI) $(OPENAPI_30)
+	$(OGEN) --config .ogen.yaml --target $(API_PKG_DIR) --package api --clean $(OPENAPI_30)
 
 ## generate-ts: generate the TypeScript SDK from the spec
 .PHONY: generate-ts
