@@ -13,7 +13,13 @@
 // scaffolded XxxService.
 package api
 
-import "github.com/gopherex/iam/internal/oas"
+import (
+	"context"
+	"errors"
+
+	"github.com/gopherex/iam/internal/domain"
+	"github.com/gopherex/iam/internal/oas"
+)
 
 // Handler is the IAM server interface this package implements, re-exported from
 // the generated code so importers depend only on pkg/api.
@@ -38,6 +44,24 @@ type Service struct {
 }
 
 var _ oas.Handler = (*Service)(nil)
+
+// NewError is ogen's convenient-errors hook: every handler that returns a plain
+// Go error routes here, and we render it into the shared ErrorEnvelope. Domain
+// errors (internal/domain) carry the stable code + HTTP status; anything else
+// is masked as a 500 internal_error.
+func (s *Service) NewError(_ context.Context, err error) *oas.DefaultStatusCode {
+	de := domain.ErrInternal
+	var d *domain.Error
+	if errors.As(err, &d) {
+		de = d
+	}
+	return &oas.DefaultStatusCode{
+		StatusCode: de.Status,
+		Response: oas.ErrorEnvelope{
+			Error: oas.ErrorEnvelopeError{Code: de.Code, Message: de.Message},
+		},
+	}
+}
 
 // Option injects a group implementation into a Service.
 type Option func(*Service)

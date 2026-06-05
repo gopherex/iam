@@ -534,816 +534,6 @@ func (s *CoreProfile) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteMgmtV1ProjectsByProjectIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteMgmtV1ProjectsByProjectIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteMgmtV1ProjectsByProjectIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteMgmtV1ProjectsByProjectIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteMgmtV1ProjectsByProjectIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteMgmtV1ProjectsByProjectIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1AuthIdentitiesByIdentityIdConflict) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1AuthIdentitiesByIdentityIdConflict(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1AuthIdentitiesByIdentityIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1AuthIdentitiesByIdentityIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1AuthIdentitiesByIdentityIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1AuthIdentitiesByIdentityIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1AuthMfaFactorsByFactorIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1AuthMfaFactorsByFactorIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1AuthMfaFactorsByFactorIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1AuthMfaFactorsByFactorIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1AuthWebauthnCredentialsByCredentialIdConflict) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1AuthWebauthnCredentialsByCredentialIdConflict(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1AuthWebauthnCredentialsByCredentialIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1AuthWebauthnCredentialsByCredentialIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1AuthWebauthnCredentialsByCredentialIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1AuthWebauthnCredentialsByCredentialIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1OauthGrantsByGrantIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1OauthGrantsByGrantIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1OauthGrantsByGrantIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1OauthGrantsByGrantIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminAppsByAppIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminAppsByAppIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminAppsByAppIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminAppsByAppIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminHooksByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminHooksByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminHooksByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminHooksByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminHooksByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminHooksByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminJwksByKeyIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminJwksByKeyIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminJwksByKeyIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminJwksByKeyIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminJwksByKeyIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminJwksByKeyIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminWebhooksByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminWebhooksByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminWebhooksByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminWebhooksByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ScimV2ByConnectionIdGroupsByGroupIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ScimV2ByConnectionIdGroupsByGroupIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ScimV2ByConnectionIdUsersByScimUserIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ScimV2ByConnectionIdUsersByScimUserIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ScimV2ByConnectionIdUsersByScimUserIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ScimV2ByConnectionIdUsersByScimUserIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1SessionsBySessionIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1SessionsBySessionIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *DeleteV1SessionsBySessionIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1SessionsBySessionIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *DeleteV1SessionsOK) SetFake() {
 	{
 		{
@@ -1362,15 +552,6 @@ func (s *DeleteV1SessionsReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *DeleteV1UsersMeForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1UsersMeForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *DeleteV1UsersMeReq) SetFake() {
 	{
 		{
@@ -1382,15 +563,6 @@ func (s *DeleteV1UsersMeReq) SetFake() {
 			s.Reason.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *DeleteV1UsersMeUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = DeleteV1UsersMeUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -1610,15 +782,6 @@ func (s *FactorType) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdAdminTokensForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdAdminTokensForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetMgmtV1ProjectsByProjectIdAdminTokensOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -1627,24 +790,6 @@ func (s *GetMgmtV1ProjectsByProjectIdAdminTokensOK) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdAdminTokensUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdAdminTokensUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdConfigExportForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdConfigExportForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -1659,57 +804,12 @@ func (s *GetMgmtV1ProjectsByProjectIdConfigExportOKApplicationJSON) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdConfigExportUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdConfigExportUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK) SetFake() {
 	{
 		{
 			s.Environment.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdEnvironmentsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -1729,24 +829,6 @@ func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdEnvironmentsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdFeaturesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdFeaturesForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetMgmtV1ProjectsByProjectIdFeaturesOK) SetFake() {
 	var (
 		elem bool
@@ -1758,57 +840,12 @@ func (s *GetMgmtV1ProjectsByProjectIdFeaturesOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdFeaturesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdFeaturesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetMgmtV1ProjectsByProjectIdOK) SetFake() {
 	{
 		{
 			s.Project.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsByProjectIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsByProjectIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -1835,15 +872,6 @@ func (s *GetMgmtV1ProjectsOK) SetFake() {
 			s.HasMore.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetMgmtV1ProjectsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetMgmtV1ProjectsUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -2183,15 +1211,6 @@ func (s *GetV1OauthInteractionByInteractionIdOKStage) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAccessRequestsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAccessRequestsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminAccessRequestsOK) SetFake() {
 	{
 		{
@@ -2218,24 +1237,6 @@ func (s *GetV1ProjectsByProjectIdAdminAccessRequestsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAccessRequestsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAccessRequestsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminApiKeysForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminApiKeysForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminApiKeysOK) SetFake() {
 	{
 		{
@@ -2252,57 +1253,12 @@ func (s *GetV1ProjectsByProjectIdAdminApiKeysOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminApiKeysUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminApiKeysUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAppsByAppIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAppsByAppIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAppsByAppIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAppsByAppIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminAppsByAppIdOK) SetFake() {
 	{
 		{
 			s.App.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAppsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAppsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -2332,57 +1288,12 @@ func (s *GetV1ProjectsByProjectIdAdminAppsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAppsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAppsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK) SetFake() {
 	{
 		{
 			s.AuditLog.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAuditLogsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAuditLogsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -2412,132 +1323,6 @@ func (s *GetV1ProjectsByProjectIdAdminAuditLogsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminAuditLogsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminAuditLogsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConfigAuthForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConfigAuthForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConfigAuthUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConfigAuthUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConfigMfaPolicyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConfigMfaPolicyForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConfigMfaPolicyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConfigMfaPolicyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConfigPasswordPolicyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConfigPasswordPolicyForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConfigPasswordPolicyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConfigPasswordPolicyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConfigRateLimitsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConfigRateLimitsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConfigRateLimitsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConfigRateLimitsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConfigSessionPolicyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConfigSessionPolicyForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConfigSessionPolicyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConfigSessionPolicyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConsentsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConsentsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminConsentsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminConsentsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminDomainsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminDomainsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminDomainsOK) SetFake() {
 	{
 		{
@@ -2564,24 +1349,6 @@ func (s *GetV1ProjectsByProjectIdAdminDomainsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminDomainsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminDomainsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminEmailProvidersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminEmailProvidersForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminEmailProvidersOK) SetFake() {
 	{
 		{
@@ -2598,24 +1365,6 @@ func (s *GetV1ProjectsByProjectIdAdminEmailProvidersOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminEmailProvidersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminEmailProvidersUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminEmailTemplatesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminEmailTemplatesForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminEmailTemplatesOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -2624,24 +1373,6 @@ func (s *GetV1ProjectsByProjectIdAdminEmailTemplatesOK) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminEmailTemplatesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminEmailTemplatesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminEventsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminEventsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -2671,33 +1402,6 @@ func (s *GetV1ProjectsByProjectIdAdminEventsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminEventsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminEventsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminExportsByJobIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminExportsByJobIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminExportsByJobIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminExportsByJobIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminExportsByJobIdOK) SetFake() {
 	{
 		{
@@ -2712,24 +1416,6 @@ func (s *GetV1ProjectsByProjectIdAdminExportsByJobIdOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminExportsByJobIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminExportsByJobIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminFeaturesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminFeaturesForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminFeaturesOK) SetFake() {
 	var (
 		elem bool
@@ -2738,24 +1424,6 @@ func (s *GetV1ProjectsByProjectIdAdminFeaturesOK) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminFeaturesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminFeaturesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminHooksForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminHooksForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -2785,33 +1453,6 @@ func (s *GetV1ProjectsByProjectIdAdminHooksOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminHooksUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminHooksUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminI18nByLocaleForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminI18nByLocaleForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminI18nByLocaleNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminI18nByLocaleNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminI18nByLocaleOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -2823,57 +1464,12 @@ func (s *GetV1ProjectsByProjectIdAdminI18nByLocaleOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminI18nByLocaleUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminI18nByLocaleUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminJobsByJobIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminJobsByJobIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminJobsByJobIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminJobsByJobIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminJobsByJobIdOK) SetFake() {
 	{
 		{
 			s.Job.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminJobsByJobIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminJobsByJobIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminJobsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminJobsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -2903,24 +1499,6 @@ func (s *GetV1ProjectsByProjectIdAdminJobsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminJobsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminJobsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminJwksForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminJwksForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminJwksOK) SetFake() {
 	{
 		{
@@ -2934,24 +1512,6 @@ func (s *GetV1ProjectsByProjectIdAdminJwksOK) SetFake() {
 			}
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminJwksUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminJwksUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminOauthProvidersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminOauthProvidersForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -2971,42 +1531,6 @@ func (s *GetV1ProjectsByProjectIdAdminOauthProvidersOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminOauthProvidersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminOauthProvidersUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminRetentionPolicyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminRetentionPolicyForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminRetentionPolicyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminRetentionPolicyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminRiskEventsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminRiskEventsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminRiskEventsOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -3015,24 +1539,6 @@ func (s *GetV1ProjectsByProjectIdAdminRiskEventsOK) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminRiskEventsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminRiskEventsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminRiskRulesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminRiskRulesForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -3062,57 +1568,12 @@ func (s *GetV1ProjectsByProjectIdAdminRiskRulesOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminRiskRulesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminRiskRulesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK) SetFake() {
 	{
 		{
 			s.ServiceAccount.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminServiceAccountsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminServiceAccountsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -3142,24 +1603,6 @@ func (s *GetV1ProjectsByProjectIdAdminServiceAccountsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminServiceAccountsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminServiceAccountsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminSmsProvidersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminSmsProvidersForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminSmsProvidersOK) SetFake() {
 	{
 		{
@@ -3176,48 +1619,12 @@ func (s *GetV1ProjectsByProjectIdAdminSmsProvidersOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminSmsProvidersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminSmsProvidersUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK) SetFake() {
 	{
 		{
 			s.Connection.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -3248,33 +1655,6 @@ func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOKDataItem) Se
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminSsoConnectionsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsOK) SetFake() {
 	{
 		{
@@ -3298,24 +1678,6 @@ func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsOK) SetFake() {
 			s.HasMore.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminSsoConnectionsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminTokenProfilesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminTokenProfilesForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -3345,33 +1707,6 @@ func (s *GetV1ProjectsByProjectIdAdminTokenProfilesOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminTokenProfilesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminTokenProfilesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersByUserIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK) SetFake() {
 	{
 		{
@@ -3398,24 +1733,6 @@ func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK) SetFake() {
 	{
 		{
@@ -3432,39 +1749,12 @@ func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersByUserIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdOK) SetFake() {
 	{
 		{
 			s.User.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -3494,33 +1784,6 @@ func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminUsersOK) SetFake() {
 	{
 		{
@@ -3547,24 +1810,6 @@ func (s *GetV1ProjectsByProjectIdAdminUsersOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminUsersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminUsersUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminWebhookDeliveriesForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -3576,57 +1821,12 @@ func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminWebhookDeliveriesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminWebhooksByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminWebhooksByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminWebhooksByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminWebhooksByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminWebhooksByIdOK) SetFake() {
 	{
 		{
 			s.Webhook.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminWebhooksForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminWebhooksForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -3656,33 +1856,6 @@ func (s *GetV1ProjectsByProjectIdAdminWebhooksOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ProjectsByProjectIdAdminWebhooksUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ProjectsByProjectIdAdminWebhooksUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ScimV2ByConnectionIdGroupsByGroupIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ScimV2ByConnectionIdGroupsByGroupIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ScimV2ByConnectionIdGroupsByGroupIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ScimV2ByConnectionIdGroupsByGroupIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ScimV2ByConnectionIdGroupsByGroupIdOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -3691,24 +1864,6 @@ func (s *GetV1ScimV2ByConnectionIdGroupsByGroupIdOK) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ScimV2ByConnectionIdGroupsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ScimV2ByConnectionIdGroupsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -3723,33 +1878,6 @@ func (s *GetV1ScimV2ByConnectionIdGroupsOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ScimV2ByConnectionIdGroupsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ScimV2ByConnectionIdGroupsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ScimV2ByConnectionIdUsersByScimUserIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ScimV2ByConnectionIdUsersByScimUserIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ScimV2ByConnectionIdUsersByScimUserIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ScimV2ByConnectionIdUsersByScimUserIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ScimV2ByConnectionIdUsersByScimUserIdOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -3761,24 +1889,6 @@ func (s *GetV1ScimV2ByConnectionIdUsersByScimUserIdOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *GetV1ScimV2ByConnectionIdUsersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ScimV2ByConnectionIdUsersForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1ScimV2ByConnectionIdUsersOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -3787,15 +1897,6 @@ func (s *GetV1ScimV2ByConnectionIdUsersOK) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1ScimV2ByConnectionIdUsersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1ScimV2ByConnectionIdUsersUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -3833,15 +1934,6 @@ func (s *GetV1SsoConnectionsResolveOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1TestMessagesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1TestMessagesForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1TestMessagesOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -3850,15 +1942,6 @@ func (s *GetV1TestMessagesOK) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1TestMessagesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1TestMessagesUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -3953,15 +2036,6 @@ func (s *GetV1UsersMeConsentsOKConsentsItem) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *GetV1UsersMeExportByJobIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1UsersMeExportByJobIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *GetV1UsersMeExportByJobIdOK) SetFake() {
 	{
 		{
@@ -3973,15 +2047,6 @@ func (s *GetV1UsersMeExportByJobIdOK) SetFake() {
 			s.DownloadURL.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *GetV1UsersMeExportByJobIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = GetV1UsersMeExportByJobIdUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -5487,15 +3552,6 @@ func (s *PasswordSignInRequest) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PatchMgmtV1ProjectsByProjectIdFeaturesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchMgmtV1ProjectsByProjectIdFeaturesForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PatchMgmtV1ProjectsByProjectIdFeaturesOK) SetFake() {
 	var (
 		elem bool
@@ -5515,33 +3571,6 @@ func (s *PatchMgmtV1ProjectsByProjectIdFeaturesReq) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PatchMgmtV1ProjectsByProjectIdFeaturesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchMgmtV1ProjectsByProjectIdFeaturesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchMgmtV1ProjectsByProjectIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchMgmtV1ProjectsByProjectIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchMgmtV1ProjectsByProjectIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchMgmtV1ProjectsByProjectIdNotFound(unwrapped)
 }
 
 // SetFake set fake values.
@@ -5565,24 +3594,6 @@ func (s *PatchMgmtV1ProjectsByProjectIdReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PatchMgmtV1ProjectsByProjectIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchMgmtV1ProjectsByProjectIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1AuthWebauthnCredentialsByCredentialIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1AuthWebauthnCredentialsByCredentialIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PatchV1AuthWebauthnCredentialsByCredentialIdOK) SetFake() {
 	{
 		{
@@ -5598,33 +3609,6 @@ func (s *PatchV1AuthWebauthnCredentialsByCredentialIdReq) SetFake() {
 			s.Name = "string"
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PatchV1AuthWebauthnCredentialsByCredentialIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1AuthWebauthnCredentialsByCredentialIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdNotFound(unwrapped)
 }
 
 // SetFake set fake values.
@@ -5663,33 +3647,6 @@ func (s *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminAppsByAppIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminAppsByAppIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminAppsByAppIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminAppsByAppIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PatchV1ProjectsByProjectIdAdminAppsByAppIdOK) SetFake() {
 	{
 		{
@@ -5707,150 +3664,6 @@ func (s *PatchV1ProjectsByProjectIdAdminAppsByAppIdReq) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminConfigAuthForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminConfigAuthForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminConfigAuthUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminConfigAuthUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminConfigMfaPolicyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminConfigMfaPolicyForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminConfigMfaPolicyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminConfigMfaPolicyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminConfigRateLimitsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminConfigRateLimitsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminConfigRateLimitsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminConfigRateLimitsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminConfigSessionPolicyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminConfigSessionPolicyForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminConfigSessionPolicyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminConfigSessionPolicyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminEmailProvidersByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminEmailProvidersByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminEmailProvidersByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminEmailProvidersByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminEmailProvidersByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminEmailProvidersByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdNotFound(unwrapped)
 }
 
 // SetFake set fake values.
@@ -5876,33 +3689,6 @@ func (s *PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminHooksByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminHooksByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminHooksByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminHooksByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PatchV1ProjectsByProjectIdAdminHooksByIdOK) SetFake() {
 	{
 		{
@@ -5920,87 +3706,6 @@ func (s *PatchV1ProjectsByProjectIdAdminHooksByIdReq) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminHooksByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminHooksByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminOauthProvidersByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminOauthProvidersByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminOauthProvidersByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminOauthProvidersByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminOauthProvidersByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminOauthProvidersByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound(unwrapped)
 }
 
 // SetFake set fake values.
@@ -6034,60 +3739,6 @@ func (s *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminSmsProvidersByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminSmsProvidersByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminSmsProvidersByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminSmsProvidersByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminSmsProvidersByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminSmsProvidersByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK) SetFake() {
 	{
 		{
@@ -6105,33 +3756,6 @@ func (s *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminTokenProfilesByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminTokenProfilesByIdNotFound(unwrapped)
 }
 
 // SetFake set fake values.
@@ -6155,33 +3779,6 @@ func (s *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminTokenProfilesByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminUsersByUserIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminUsersByUserIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminUsersByUserIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminUsersByUserIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PatchV1ProjectsByProjectIdAdminUsersByUserIdOK) SetFake() {
 	{
 		{
@@ -6202,33 +3799,6 @@ func (s *PatchV1ProjectsByProjectIdAdminUsersByUserIdReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminWebhooksByIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminWebhooksByIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK) SetFake() {
 	{
 		{
@@ -6246,33 +3816,6 @@ func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ScimV2ByConnectionIdGroupsByGroupIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ScimV2ByConnectionIdGroupsByGroupIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ScimV2ByConnectionIdGroupsByGroupIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ScimV2ByConnectionIdGroupsByGroupIdNotFound(unwrapped)
 }
 
 // SetFake set fake values.
@@ -6298,33 +3841,6 @@ func (s *PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PatchV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ScimV2ByConnectionIdUsersByScimUserIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ScimV2ByConnectionIdUsersByScimUserIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1ScimV2ByConnectionIdUsersByScimUserIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ScimV2ByConnectionIdUsersByScimUserIdNotFound(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -6333,24 +3849,6 @@ func (s *PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PatchV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1SessionsBySessionIdNotFound) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1SessionsBySessionIdNotFound(unwrapped)
 }
 
 // SetFake set fake values.
@@ -6369,15 +3867,6 @@ func (s *PatchV1SessionsBySessionIdReq) SetFake() {
 			s.DeviceName = "string"
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PatchV1SessionsBySessionIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1SessionsBySessionIdUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -6425,24 +3914,6 @@ func (s *PatchV1UsersMeReqMetadata) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PatchV1UsersMeUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1UsersMeUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PatchV1UsersMeUnprocessableEntity) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PatchV1UsersMeUnprocessableEntity(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PhoneVerifyResult) SetFake() {
 	var variant AuthResult
 
@@ -6450,15 +3921,6 @@ func (s *PhoneVerifyResult) SetFake() {
 		variant.SetFake()
 	}
 	s.SetAuthResult(variant)
-}
-
-// SetFake set fake values.
-func (s *PostMgmtV1ProjectsByProjectIdAdminTokensForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostMgmtV1ProjectsByProjectIdAdminTokensForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -6502,24 +3964,6 @@ func (s *PostMgmtV1ProjectsByProjectIdAdminTokensReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostMgmtV1ProjectsByProjectIdAdminTokensUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostMgmtV1ProjectsByProjectIdAdminTokensUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostMgmtV1ProjectsByProjectIdConfigApplyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostMgmtV1ProjectsByProjectIdConfigApplyForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostMgmtV1ProjectsByProjectIdConfigApplyOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -6539,24 +3983,6 @@ func (s *PostMgmtV1ProjectsByProjectIdConfigApplyReq) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PostMgmtV1ProjectsByProjectIdConfigApplyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostMgmtV1ProjectsByProjectIdConfigApplyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostMgmtV1ProjectsByProjectIdConfigPlanForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostMgmtV1ProjectsByProjectIdConfigPlanForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -6582,30 +4008,12 @@ func (s *PostMgmtV1ProjectsByProjectIdConfigPlanReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostMgmtV1ProjectsByProjectIdConfigPlanUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostMgmtV1ProjectsByProjectIdConfigPlanUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostMgmtV1ProjectsByProjectIdEnvironmentsCreated) SetFake() {
 	{
 		{
 			s.Environment.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostMgmtV1ProjectsByProjectIdEnvironmentsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostMgmtV1ProjectsByProjectIdEnvironmentsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -6623,30 +4031,12 @@ func (s *PostMgmtV1ProjectsByProjectIdEnvironmentsReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostMgmtV1ProjectsByProjectIdEnvironmentsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostMgmtV1ProjectsByProjectIdEnvironmentsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostMgmtV1ProjectsCreated) SetFake() {
 	{
 		{
 			s.Project.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostMgmtV1ProjectsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostMgmtV1ProjectsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -6694,15 +4084,6 @@ func (s *PostMgmtV1ProjectsReqFeatureGates) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PostMgmtV1ProjectsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostMgmtV1ProjectsUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -6779,15 +4160,6 @@ func (s *PostOauth2ParCreated) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostOauth2TokenBadRequest) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostOauth2TokenBadRequest(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostOauth2TokenOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -6796,15 +4168,6 @@ func (s *PostOauth2TokenOK) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PostOauth2TokenUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostOauth2TokenUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -7267,30 +4630,12 @@ func (s *PostV1AuthMfaWebauthnEnrollVerifyReqCredential) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1AuthOauthByProviderUnlinkConflict) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1AuthOauthByProviderUnlinkConflict(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1AuthOauthByProviderUnlinkReq) SetFake() {
 	{
 		{
 			s.IdentityID = "string"
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1AuthOauthByProviderUnlinkUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1AuthOauthByProviderUnlinkUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -7340,24 +4685,6 @@ func (s *PostV1AuthPasswordCheckReq) SetFake() {
 			s.Password = "string"
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1AuthPasswordResetBadRequest) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1AuthPasswordResetBadRequest(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1AuthPasswordResetUnprocessableEntity) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1AuthPasswordResetUnprocessableEntity(unwrapped)
 }
 
 // SetFake set fake values.
@@ -7505,30 +4832,12 @@ func (s *PostV1AuthSessionStepUpReqRequiredAal) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1AuthSessionSwitchGroupForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1AuthSessionSwitchGroupForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1AuthSessionSwitchGroupReq) SetFake() {
 	{
 		{
 			s.GroupID = "string"
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1AuthSessionSwitchGroupUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1AuthSessionSwitchGroupUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -7556,33 +4865,6 @@ func (s *PostV1AuthSignOutReq) SetFake() {
 			s.Everywhere.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1AuthSignUpConflict) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1AuthSignUpConflict(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1AuthSignUpForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1AuthSignUpForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1AuthSignUpUnprocessableEntity) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1AuthSignUpUnprocessableEntity(unwrapped)
 }
 
 // SetFake set fake values.
@@ -7865,15 +5147,6 @@ func (s *PostV1OauthInteractionByInteractionIdRejectReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -7886,24 +5159,6 @@ func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK) SetFake() {
 
 // SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq) SetFake() {
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -7925,24 +5180,6 @@ func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK) SetFake() {
 	{
 		{
@@ -7957,15 +5194,6 @@ func (s *PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminApiKeysCreated) SetFake() {
 	{
 		{
@@ -7977,15 +5205,6 @@ func (s *PostV1ProjectsByProjectIdAdminApiKeysCreated) SetFake() {
 			s.Secret.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminApiKeysForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminApiKeysForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8015,15 +5234,6 @@ func (s *PostV1ProjectsByProjectIdAdminApiKeysReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminApiKeysUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminApiKeysUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated) SetFake() {
 	{
 		{
@@ -8035,15 +5245,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated) SetFake() {
 			s.ClientSecret.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8061,15 +5262,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminAppsCreated) SetFake() {
 	{
 		{
@@ -8081,15 +5273,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsCreated) SetFake() {
 			s.ClientSecret.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminAppsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminAppsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8176,24 +5359,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReqType) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminAppsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminAppsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminAuditExportForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminAuditExportForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminAuditExportOK) SetFake() {
 	{
 		{
@@ -8227,39 +5392,12 @@ func (s *PostV1ProjectsByProjectIdAdminAuditExportReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminAuditExportUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminAuditExportUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK) SetFake() {
 	{
 		{
 			s.Domain.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8296,15 +5434,6 @@ func (s *PostV1ProjectsByProjectIdAdminDomainsCreatedVerificationRecord) SetFake
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminDomainsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminDomainsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminDomainsReq) SetFake() {
 	{
 		{
@@ -8316,42 +5445,6 @@ func (s *PostV1ProjectsByProjectIdAdminDomainsReq) SetFake() {
 			s.ConnectionID.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminDomainsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminDomainsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminEmailProvidersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminEmailProvidersForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminEmailProvidersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminEmailProvidersUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8399,24 +5492,6 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReqData) SetFake
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq) SetFake() {
 	{
 		{
@@ -8447,24 +5522,6 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReqData) SetFak
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminEventsByEventIdReplayForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -8482,24 +5539,6 @@ func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq) SetFake() {
 			s.WebhookID.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminEventsByEventIdReplayUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminHooksByIdTestForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminHooksByIdTestForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8553,15 +5592,6 @@ func (s *PostV1ProjectsByProjectIdAdminHooksByIdTestReqPayload) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminHooksByIdTestUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminHooksByIdTestUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminHooksCreated) SetFake() {
 	{
 		{
@@ -8573,15 +5603,6 @@ func (s *PostV1ProjectsByProjectIdAdminHooksCreated) SetFake() {
 			s.SigningSecret.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminHooksForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminHooksForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8606,24 +5627,6 @@ func (s *PostV1ProjectsByProjectIdAdminHooksReq) SetFake() {
 			s.Enabled.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminHooksUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminHooksUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8668,24 +5671,6 @@ func (s *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReqParams) SetF
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminImportUsersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminImportUsersForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8740,24 +5725,6 @@ func (s *PostV1ProjectsByProjectIdAdminImportUsersReqUsersItem) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminImportUsersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminImportUsersUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminJobsByJobIdCancelForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminJobsByJobIdCancelForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK) SetFake() {
 	{
 		{
@@ -8767,48 +5734,12 @@ func (s *PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminJobsByJobIdCancelUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminJobsByJobIdCancelUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK) SetFake() {
 	{
 		{
 			s.Key.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminJwksRotateForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminJwksRotateForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8827,42 +5758,6 @@ func (s *PostV1ProjectsByProjectIdAdminJwksRotateReq) SetFake() {
 			s.Activate.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminJwksRotateUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminJwksRotateUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminOauthProvidersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminOauthProvidersForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminOauthProvidersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminOauthProvidersUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminRateLimitBlocksForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminRateLimitBlocksForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -8906,33 +5801,6 @@ func (s *PostV1ProjectsByProjectIdAdminRateLimitBlocksReqType) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminRateLimitBlocksUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminRateLimitBlocksUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminRiskRulesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminRiskRulesForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminRiskRulesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminRiskRulesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated) SetFake() {
 	{
 		{
@@ -8952,15 +5820,6 @@ func (s *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated) SetF
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq) SetFake() {
 	{
 		{
@@ -8975,30 +5834,12 @@ func (s *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq) SetFake(
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminServiceAccountsCreated) SetFake() {
 	{
 		{
 			s.ServiceAccount.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminServiceAccountsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminServiceAccountsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9023,57 +5864,12 @@ func (s *PostV1ProjectsByProjectIdAdminServiceAccountsReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminServiceAccountsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminServiceAccountsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminSmsProvidersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminSmsProvidersForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminSmsProvidersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminSmsProvidersUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK) SetFake() {
 	{
 		{
 			s.Certificate.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9105,15 +5901,6 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreatedToken)
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq) SetFake() {
 	{
 		{
@@ -9128,24 +5915,6 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq) SetFake(
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK) SetFake() {
 	{
 		{
@@ -9155,30 +5924,12 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsCreated) SetFake() {
 	{
 		{
 			s.Connection.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminSsoConnectionsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9250,24 +6001,6 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsReqType) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminSsoConnectionsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK) SetFake() {
 	{
 		{
@@ -9297,15 +6030,6 @@ func (s *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminTokenProfilesCreated) SetFake() {
 	{
 		{
@@ -9315,57 +6039,12 @@ func (s *PostV1ProjectsByProjectIdAdminTokenProfilesCreated) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminTokenProfilesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminTokenProfilesForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminTokenProfilesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminTokenProfilesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq) SetFake() {
 	{
 		{
 			s.Reason.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdBanForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdBanForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9392,48 +6071,12 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdBanUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdBanUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdExportForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdExportForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK) SetFake() {
 	{
 		{
 			s.JobID.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdExportUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdExportUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9465,24 +6108,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK) SetFake() {
 	{
 		{
@@ -9501,24 +6126,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq) SetFake() {
 	{
 		{
@@ -9530,24 +6137,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq) SetFake() {
 			s.RevokeSessions.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9574,48 +6163,12 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq) SetFake()
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK) SetFake() {
 	{
 		{
 			s.User.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9628,24 +6181,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK) SetFake() {
 	{
 		{
@@ -9655,30 +6190,12 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminUsersCreated) SetFake() {
 	{
 		{
 			s.User.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9732,24 +6249,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersReqMetadata) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminUsersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminUsersUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -9761,48 +6260,12 @@ func (s *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK) Set
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK) SetFake() {
 	{
 		{
 			s.SigningSecret.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminWebhooksByIdTestForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9826,15 +6289,6 @@ func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminWebhooksByIdTestUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminWebhooksCreated) SetFake() {
 	{
 		{
@@ -9846,15 +6300,6 @@ func (s *PostV1ProjectsByProjectIdAdminWebhooksCreated) SetFake() {
 			s.SigningSecret.SetFake()
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminWebhooksForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminWebhooksForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9889,15 +6334,6 @@ func (s *PostV1ProjectsByProjectIdAdminWebhooksReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ProjectsByProjectIdAdminWebhooksUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ProjectsByProjectIdAdminWebhooksUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ScimV2ByConnectionIdGroupsCreated) SetFake() {
 	var (
 		elem jx.Raw
@@ -9906,15 +6342,6 @@ func (s *PostV1ScimV2ByConnectionIdGroupsCreated) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ScimV2ByConnectionIdGroupsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ScimV2ByConnectionIdGroupsForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -9929,15 +6356,6 @@ func (s *PostV1ScimV2ByConnectionIdGroupsReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1ScimV2ByConnectionIdGroupsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ScimV2ByConnectionIdGroupsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1ScimV2ByConnectionIdUsersCreated) SetFake() {
 	var (
 		elem jx.Raw
@@ -9946,24 +6364,6 @@ func (s *PostV1ScimV2ByConnectionIdUsersCreated) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1ScimV2ByConnectionIdUsersForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ScimV2ByConnectionIdUsersForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1ScimV2ByConnectionIdUsersUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1ScimV2ByConnectionIdUsersUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -10034,15 +6434,6 @@ func (s *PostV1SsoExchangeReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1TestClockForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1TestClockForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1TestClockReq) SetFake() {
 	{
 		{
@@ -10057,24 +6448,6 @@ func (s *PostV1TestClockReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1TestClockUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1TestClockUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1TestResetForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1TestResetForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1TestResetOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -10086,24 +6459,6 @@ func (s *PostV1TestResetOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PostV1TestResetUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1TestResetUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PostV1TestSeedForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1TestSeedForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PostV1TestSeedReq) SetFake() {
 	var (
 		elem jx.Raw
@@ -10112,15 +6467,6 @@ func (s *PostV1TestSeedReq) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PostV1TestSeedUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PostV1TestSeedUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.
@@ -10484,33 +6830,6 @@ func (s *PublicConfigProvidersItem) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PutV1ProjectsByProjectIdAdminConsentsForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ProjectsByProjectIdAdminConsentsForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PutV1ProjectsByProjectIdAdminConsentsUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ProjectsByProjectIdAdminConsentsUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PutV1ProjectsByProjectIdAdminFeaturesForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ProjectsByProjectIdAdminFeaturesForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PutV1ProjectsByProjectIdAdminFeaturesOK) SetFake() {
 	var (
 		elem bool
@@ -10530,24 +6849,6 @@ func (s *PutV1ProjectsByProjectIdAdminFeaturesReq) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PutV1ProjectsByProjectIdAdminFeaturesUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ProjectsByProjectIdAdminFeaturesUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PutV1ProjectsByProjectIdAdminI18nByLocaleForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ProjectsByProjectIdAdminI18nByLocaleForbidden(unwrapped)
 }
 
 // SetFake set fake values.
@@ -10573,42 +6874,6 @@ func (s *PutV1ProjectsByProjectIdAdminI18nByLocaleReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PutV1ProjectsByProjectIdAdminI18nByLocaleUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ProjectsByProjectIdAdminI18nByLocaleUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PutV1ProjectsByProjectIdAdminRetentionPolicyForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ProjectsByProjectIdAdminRetentionPolicyForbidden(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PutV1ProjectsByProjectIdAdminRetentionPolicyUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ProjectsByProjectIdAdminRetentionPolicyUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PutV1ScimV2ByConnectionIdGroupsByGroupIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ScimV2ByConnectionIdGroupsByGroupIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PutV1ScimV2ByConnectionIdGroupsByGroupIdOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -10631,24 +6896,6 @@ func (s *PutV1ScimV2ByConnectionIdGroupsByGroupIdReq) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *PutV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized(unwrapped)
-}
-
-// SetFake set fake values.
-func (s *PutV1ScimV2ByConnectionIdUsersByScimUserIdForbidden) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ScimV2ByConnectionIdUsersByScimUserIdForbidden(unwrapped)
-}
-
-// SetFake set fake values.
 func (s *PutV1ScimV2ByConnectionIdUsersByScimUserIdOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -10657,15 +6904,6 @@ func (s *PutV1ScimV2ByConnectionIdUsersByScimUserIdOK) SetFake() {
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
 	}
-}
-
-// SetFake set fake values.
-func (s *PutV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized) SetFake() {
-	var unwrapped ErrorEnvelope
-	{
-		unwrapped.SetFake()
-	}
-	*s = PutV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized(unwrapped)
 }
 
 // SetFake set fake values.

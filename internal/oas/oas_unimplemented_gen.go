@@ -18,7 +18,7 @@ var _ Handler = UnimplementedHandler{}
 // Delete a project.
 //
 // DELETE /mgmt/v1/projects/{project_id}
-func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdParams) (r DeleteMgmtV1ProjectsByProjectIdRes, _ error) {
+func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -27,7 +27,7 @@ func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectId(ctx context.Context,
 // Revoke an admin token.
 //
 // DELETE /mgmt/v1/projects/{project_id}/admin-tokens/{token_id}
-func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams) (r DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes, _ error) {
+func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -36,7 +36,7 @@ func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(
 // Delete an environment.
 //
 // DELETE /mgmt/v1/projects/{project_id}/environments/{env}
-func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams) (r DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, _ error) {
+func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -45,7 +45,7 @@ func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx
 // Unlink an identity (step-up).
 //
 // DELETE /v1/auth/identities/{identity_id}
-func (UnimplementedHandler) DeleteV1AuthIdentitiesByIdentityId(ctx context.Context, params DeleteV1AuthIdentitiesByIdentityIdParams) (r DeleteV1AuthIdentitiesByIdentityIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1AuthIdentitiesByIdentityId(ctx context.Context, params DeleteV1AuthIdentitiesByIdentityIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -54,7 +54,7 @@ func (UnimplementedHandler) DeleteV1AuthIdentitiesByIdentityId(ctx context.Conte
 // Remove a factor (step-up).
 //
 // DELETE /v1/auth/mfa/factors/{factor_id}
-func (UnimplementedHandler) DeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params DeleteV1AuthMfaFactorsByFactorIdParams) (r DeleteV1AuthMfaFactorsByFactorIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params DeleteV1AuthMfaFactorsByFactorIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -63,7 +63,7 @@ func (UnimplementedHandler) DeleteV1AuthMfaFactorsByFactorId(ctx context.Context
 // Remove a passkey.
 //
 // DELETE /v1/auth/webauthn/credentials/{credential_id}
-func (UnimplementedHandler) DeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, params DeleteV1AuthWebauthnCredentialsByCredentialIdParams) (r DeleteV1AuthWebauthnCredentialsByCredentialIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, params DeleteV1AuthWebauthnCredentialsByCredentialIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -72,7 +72,7 @@ func (UnimplementedHandler) DeleteV1AuthWebauthnCredentialsByCredentialId(ctx co
 // Revoke an OAuth grant.
 //
 // DELETE /v1/oauth/grants/{grant_id}
-func (UnimplementedHandler) DeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams) (r DeleteV1OauthGrantsByGrantIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -81,7 +81,7 @@ func (UnimplementedHandler) DeleteV1OauthGrantsByGrantId(ctx context.Context, pa
 // Delete a key.
 //
 // DELETE /v1/projects/{project_id}/admin/api-keys/{key_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams) (r DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -90,7 +90,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx c
 // Delete an app client.
 //
 // DELETE /v1/projects/{project_id}/admin/apps/{app_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams) (r DeleteV1ProjectsByProjectIdAdminAppsByAppIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -99,7 +99,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx cont
 // Revoke a client secret.
 //
 // DELETE /v1/projects/{project_id}/admin/apps/{app_id}/secrets/{secret_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams) (r DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -108,7 +108,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBy
 // Remove a domain.
 //
 // DELETE /v1/projects/{project_id}/admin/domains/{domain_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams) (r DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -117,7 +117,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ct
 // Delete email provider.
 //
 // DELETE /v1/projects/{project_id}/admin/email-providers/{id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams) (r DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -126,7 +126,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminEmailProvidersById(c
 // Delete a hook.
 //
 // DELETE /v1/projects/{project_id}/admin/hooks/{id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminHooksByIdParams) (r DeleteV1ProjectsByProjectIdAdminHooksByIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminHooksByIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -135,7 +135,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminHooksById(ctx contex
 // Retire a signing key.
 //
 // DELETE /v1/projects/{project_id}/admin/jwks/{key_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams) (r DeleteV1ProjectsByProjectIdAdminJwksByKeyIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -144,7 +144,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx cont
 // Delete OAuth provider.
 //
 // DELETE /v1/projects/{project_id}/admin/oauth-providers/{id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams) (r DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -153,7 +153,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminOauthProvidersById(c
 // Remove a block.
 //
 // DELETE /v1/projects/{project_id}/admin/rate-limit/blocks/{block_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams) (r DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -162,7 +162,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlo
 // Delete a risk rule.
 //
 // DELETE /v1/projects/{project_id}/admin/risk/rules/{rule_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams) (r DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -171,7 +171,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ct
 // Delete a service account.
 //
 // DELETE /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (r DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -180,7 +180,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaI
 // Revoke a secret.
 //
 // DELETE /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets/{secret_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams) (r DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -189,7 +189,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaI
 // Delete SMS provider.
 //
 // DELETE /v1/projects/{project_id}/admin/sms-providers/{id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams) (r DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -198,7 +198,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx
 // Delete a connection.
 //
 // DELETE /v1/projects/{project_id}/admin/sso/connections/{id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (r DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -207,7 +207,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(c
 // Revoke a SCIM token.
 //
 // DELETE /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens/{token_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams) (r DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -216,7 +216,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdSc
 // Delete a token profile.
 //
 // DELETE /v1/projects/{project_id}/admin/token-profiles/{id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams) (r DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -225,7 +225,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ct
 // Delete a user.
 //
 // DELETE /v1/projects/{project_id}/admin/users/{user_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams) (r DeleteV1ProjectsByProjectIdAdminUsersByUserIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -234,7 +234,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx co
 // Revoke a user's OAuth grant.
 //
 // DELETE /v1/projects/{project_id}/admin/users/{user_id}/grants/{grant_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams) (r DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -243,7 +243,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsB
 // Remove a user identity.
 //
 // DELETE /v1/projects/{project_id}/admin/users/{user_id}/identities/{identity_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams) (r DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -252,7 +252,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentit
 // Revoke a specific user session.
 //
 // DELETE /v1/projects/{project_id}/admin/users/{user_id}/sessions/{session_id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams) (r DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -261,7 +261,7 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminUsersByUserIdSession
 // Delete a webhook.
 //
 // DELETE /v1/projects/{project_id}/admin/webhooks/{id}
-func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams) (r DeleteV1ProjectsByProjectIdAdminWebhooksByIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -270,8 +270,8 @@ func (UnimplementedHandler) DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx con
 // Delete a SCIM group (forwarded downstream).
 //
 // DELETE /v1/scim/v2/{connection_id}/Groups/{group_id}
-func (UnimplementedHandler) DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams) (r DeleteV1ScimV2ByConnectionIdGroupsByGroupIdRes, _ error) {
-	return r, ht.ErrNotImplemented
+func (UnimplementedHandler) DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams) error {
+	return ht.ErrNotImplemented
 }
 
 // DeleteV1ScimV2ByConnectionIdUsersByScimUserId implements deleteV1ScimV2ByConnectionIdUsersByScimUserId operation.
@@ -279,8 +279,8 @@ func (UnimplementedHandler) DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx cont
 // Deprovision a user.
 //
 // DELETE /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-func (UnimplementedHandler) DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams) (r DeleteV1ScimV2ByConnectionIdUsersByScimUserIdRes, _ error) {
-	return r, ht.ErrNotImplemented
+func (UnimplementedHandler) DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams) error {
+	return ht.ErrNotImplemented
 }
 
 // DeleteV1Sessions implements deleteV1Sessions operation.
@@ -288,7 +288,7 @@ func (UnimplementedHandler) DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx co
 // Revoke multiple own sessions.
 //
 // DELETE /v1/sessions
-func (UnimplementedHandler) DeleteV1Sessions(ctx context.Context, req OptDeleteV1SessionsReq) (r DeleteV1SessionsRes, _ error) {
+func (UnimplementedHandler) DeleteV1Sessions(ctx context.Context, req OptDeleteV1SessionsReq) (r *DeleteV1SessionsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -297,7 +297,7 @@ func (UnimplementedHandler) DeleteV1Sessions(ctx context.Context, req OptDeleteV
 // Revoke a session.
 //
 // DELETE /v1/sessions/{session_id}
-func (UnimplementedHandler) DeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams) (r DeleteV1SessionsBySessionIdRes, _ error) {
+func (UnimplementedHandler) DeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -306,7 +306,7 @@ func (UnimplementedHandler) DeleteV1SessionsBySessionId(ctx context.Context, par
 // Delete own account (step-up).
 //
 // DELETE /v1/users/me
-func (UnimplementedHandler) DeleteV1UsersMe(ctx context.Context, req OptDeleteV1UsersMeReq) (r DeleteV1UsersMeRes, _ error) {
+func (UnimplementedHandler) DeleteV1UsersMe(ctx context.Context, req OptDeleteV1UsersMeReq) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -315,7 +315,7 @@ func (UnimplementedHandler) DeleteV1UsersMe(ctx context.Context, req OptDeleteV1
 // List/search projects.
 //
 // GET /mgmt/v1/projects
-func (UnimplementedHandler) GetMgmtV1Projects(ctx context.Context, params GetMgmtV1ProjectsParams) (r GetMgmtV1ProjectsRes, _ error) {
+func (UnimplementedHandler) GetMgmtV1Projects(ctx context.Context, params GetMgmtV1ProjectsParams) (r *GetMgmtV1ProjectsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -324,7 +324,7 @@ func (UnimplementedHandler) GetMgmtV1Projects(ctx context.Context, params GetMgm
 // Get a project.
 //
 // GET /mgmt/v1/projects/{project_id}
-func (UnimplementedHandler) GetMgmtV1ProjectsByProjectId(ctx context.Context, params GetMgmtV1ProjectsByProjectIdParams) (r GetMgmtV1ProjectsByProjectIdRes, _ error) {
+func (UnimplementedHandler) GetMgmtV1ProjectsByProjectId(ctx context.Context, params GetMgmtV1ProjectsByProjectIdParams) (r *GetMgmtV1ProjectsByProjectIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -333,7 +333,7 @@ func (UnimplementedHandler) GetMgmtV1ProjectsByProjectId(ctx context.Context, pa
 // List admin tokens.
 //
 // GET /mgmt/v1/projects/{project_id}/admin-tokens
-func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params GetMgmtV1ProjectsByProjectIdAdminTokensParams) (r GetMgmtV1ProjectsByProjectIdAdminTokensRes, _ error) {
+func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params GetMgmtV1ProjectsByProjectIdAdminTokensParams) (r GetMgmtV1ProjectsByProjectIdAdminTokensOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -351,7 +351,7 @@ func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdConfigExport(ctx context
 // List environments.
 //
 // GET /mgmt/v1/projects/{project_id}/environments
-func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsParams) (r GetMgmtV1ProjectsByProjectIdEnvironmentsRes, _ error) {
+func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsParams) (r *GetMgmtV1ProjectsByProjectIdEnvironmentsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -360,7 +360,7 @@ func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdEnvironments(ctx context
 // Get an environment.
 //
 // GET /mgmt/v1/projects/{project_id}/environments/{env}
-func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams) (r GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, _ error) {
+func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams) (r *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -369,7 +369,7 @@ func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx co
 // Get operator feature gates.
 //
 // GET /mgmt/v1/projects/{project_id}/features
-func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params GetMgmtV1ProjectsByProjectIdFeaturesParams) (r GetMgmtV1ProjectsByProjectIdFeaturesRes, _ error) {
+func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params GetMgmtV1ProjectsByProjectIdFeaturesParams) (r GetMgmtV1ProjectsByProjectIdFeaturesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -396,7 +396,7 @@ func (UnimplementedHandler) GetOauth2Logout(ctx context.Context, params GetOauth
 // OIDC UserInfo.
 //
 // GET /oauth2/userinfo
-func (UnimplementedHandler) GetOauth2Userinfo(ctx context.Context) (r GetOauth2UserinfoRes, _ error) {
+func (UnimplementedHandler) GetOauth2Userinfo(ctx context.Context) (r GetOauth2UserinfoOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -423,7 +423,7 @@ func (UnimplementedHandler) GetPByProjectIdEByEnvWellKnownOpenidConfiguration(ct
 // What this user may self-manage.
 //
 // GET /v1/account/capabilities
-func (UnimplementedHandler) GetV1AccountCapabilities(ctx context.Context) (r GetV1AccountCapabilitiesRes, _ error) {
+func (UnimplementedHandler) GetV1AccountCapabilities(ctx context.Context) (r *GetV1AccountCapabilitiesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -450,7 +450,7 @@ func (UnimplementedHandler) GetV1AuthEmailVerificationCallback(ctx context.Conte
 // List linked identities.
 //
 // GET /v1/auth/identities
-func (UnimplementedHandler) GetV1AuthIdentities(ctx context.Context) (r GetV1AuthIdentitiesRes, _ error) {
+func (UnimplementedHandler) GetV1AuthIdentities(ctx context.Context) (r *GetV1AuthIdentitiesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -468,7 +468,7 @@ func (UnimplementedHandler) GetV1AuthMagicLinkCallback(ctx context.Context, para
 // List MFA factors.
 //
 // GET /v1/auth/mfa/factors
-func (UnimplementedHandler) GetV1AuthMfaFactors(ctx context.Context) (r GetV1AuthMfaFactorsRes, _ error) {
+func (UnimplementedHandler) GetV1AuthMfaFactors(ctx context.Context) (r *GetV1AuthMfaFactorsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -522,7 +522,7 @@ func (UnimplementedHandler) GetV1AuthOauthProviders(ctx context.Context, params 
 // Get current session and user.
 //
 // GET /v1/auth/session
-func (UnimplementedHandler) GetV1AuthSession(ctx context.Context) (r GetV1AuthSessionRes, _ error) {
+func (UnimplementedHandler) GetV1AuthSession(ctx context.Context) (r *GetV1AuthSessionOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -531,7 +531,7 @@ func (UnimplementedHandler) GetV1AuthSession(ctx context.Context) (r GetV1AuthSe
 // List the user's passkeys.
 //
 // GET /v1/auth/webauthn/credentials
-func (UnimplementedHandler) GetV1AuthWebauthnCredentials(ctx context.Context) (r GetV1AuthWebauthnCredentialsRes, _ error) {
+func (UnimplementedHandler) GetV1AuthWebauthnCredentials(ctx context.Context) (r *GetV1AuthWebauthnCredentialsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -585,7 +585,7 @@ func (UnimplementedHandler) GetV1HealthLive(ctx context.Context) (r *GetV1Health
 // Readiness probe.
 //
 // GET /v1/health/ready
-func (UnimplementedHandler) GetV1HealthReady(ctx context.Context) (r GetV1HealthReadyRes, _ error) {
+func (UnimplementedHandler) GetV1HealthReady(ctx context.Context) (r *GetV1HealthReadyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -594,7 +594,7 @@ func (UnimplementedHandler) GetV1HealthReady(ctx context.Context) (r GetV1Health
 // List the user's authorized apps.
 //
 // GET /v1/oauth/grants
-func (UnimplementedHandler) GetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams) (r GetV1OauthGrantsRes, _ error) {
+func (UnimplementedHandler) GetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams) (r *GetV1OauthGrantsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -603,7 +603,7 @@ func (UnimplementedHandler) GetV1OauthGrants(ctx context.Context, params GetV1Oa
 // Fetch interaction context.
 //
 // GET /v1/oauth/interaction/{interaction_id}
-func (UnimplementedHandler) GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams) (r GetV1OauthInteractionByInteractionIdRes, _ error) {
+func (UnimplementedHandler) GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams) (r *GetV1OauthInteractionByInteractionIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -612,7 +612,7 @@ func (UnimplementedHandler) GetV1OauthInteractionByInteractionId(ctx context.Con
 // List access requests.
 //
 // GET /v1/projects/{project_id}/admin/access-requests
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params GetV1ProjectsByProjectIdAdminAccessRequestsParams) (r GetV1ProjectsByProjectIdAdminAccessRequestsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params GetV1ProjectsByProjectIdAdminAccessRequestsParams) (r *GetV1ProjectsByProjectIdAdminAccessRequestsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -621,7 +621,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAccessRequests(ctx cont
 // List API keys.
 //
 // GET /v1/projects/{project_id}/admin/api-keys
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params GetV1ProjectsByProjectIdAdminApiKeysParams) (r GetV1ProjectsByProjectIdAdminApiKeysRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params GetV1ProjectsByProjectIdAdminApiKeysParams) (r *GetV1ProjectsByProjectIdAdminApiKeysOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -630,7 +630,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Con
 // List app clients.
 //
 // GET /v1/projects/{project_id}/admin/apps
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminApps(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsParams) (r GetV1ProjectsByProjectIdAdminAppsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminApps(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsParams) (r *GetV1ProjectsByProjectIdAdminAppsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -639,7 +639,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminApps(ctx context.Contex
 // Get an app client.
 //
 // GET /v1/projects/{project_id}/admin/apps/{app_id}
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsByAppIdParams) (r GetV1ProjectsByProjectIdAdminAppsByAppIdRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsByAppIdParams) (r *GetV1ProjectsByProjectIdAdminAppsByAppIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -648,7 +648,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context
 // List audit logs.
 //
 // GET /v1/projects/{project_id}/admin/audit-logs
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsParams) (r GetV1ProjectsByProjectIdAdminAuditLogsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsParams) (r *GetV1ProjectsByProjectIdAdminAuditLogsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -657,7 +657,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.C
 // Get an audit entry.
 //
 // GET /v1/projects/{project_id}/admin/audit-logs/{audit_id}
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams) (r GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams) (r *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -666,7 +666,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx 
 // Get auth config.
 //
 // GET /v1/projects/{project_id}/admin/config/auth
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigAuthParams) (r GetV1ProjectsByProjectIdAdminConfigAuthRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigAuthParams) (r *AuthConfig, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -675,7 +675,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.
 // Get MFA policy.
 //
 // GET /v1/projects/{project_id}/admin/config/mfa-policy
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams) (r GetV1ProjectsByProjectIdAdminConfigMfaPolicyRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams) (r *MfaPolicy, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -684,7 +684,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx con
 // Get password policy.
 //
 // GET /v1/projects/{project_id}/admin/config/password-policy
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams) (r GetV1ProjectsByProjectIdAdminConfigPasswordPolicyRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams) (r *PasswordPolicy, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -693,7 +693,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ct
 // Get rate limits.
 //
 // GET /v1/projects/{project_id}/admin/config/rate-limits
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigRateLimitsParams) (r GetV1ProjectsByProjectIdAdminConfigRateLimitsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigRateLimitsParams) (r *RateLimits, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -702,7 +702,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx co
 // Get session policy.
 //
 // GET /v1/projects/{project_id}/admin/config/session-policy
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams) (r GetV1ProjectsByProjectIdAdminConfigSessionPolicyRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams) (r *SessionPolicy, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -711,7 +711,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx
 // Get required consents.
 //
 // GET /v1/projects/{project_id}/admin/consents
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params GetV1ProjectsByProjectIdAdminConsentsParams) (r GetV1ProjectsByProjectIdAdminConsentsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params GetV1ProjectsByProjectIdAdminConsentsParams) (r *ConsentConfig, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -720,7 +720,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConsents(ctx context.Co
 // List domains.
 //
 // GET /v1/projects/{project_id}/admin/domains
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params GetV1ProjectsByProjectIdAdminDomainsParams) (r GetV1ProjectsByProjectIdAdminDomainsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params GetV1ProjectsByProjectIdAdminDomainsParams) (r *GetV1ProjectsByProjectIdAdminDomainsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -729,7 +729,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminDomains(ctx context.Con
 // List email providers.
 //
 // GET /v1/projects/{project_id}/admin/email-providers
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailProvidersParams) (r GetV1ProjectsByProjectIdAdminEmailProvidersRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailProvidersParams) (r *GetV1ProjectsByProjectIdAdminEmailProvidersOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -738,7 +738,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminEmailProviders(ctx cont
 // List email templates.
 //
 // GET /v1/projects/{project_id}/admin/email-templates
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailTemplatesParams) (r GetV1ProjectsByProjectIdAdminEmailTemplatesRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailTemplatesParams) (r GetV1ProjectsByProjectIdAdminEmailTemplatesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -747,7 +747,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminEmailTemplates(ctx cont
 // List events.
 //
 // GET /v1/projects/{project_id}/admin/events
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminEventsParams) (r GetV1ProjectsByProjectIdAdminEventsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminEventsParams) (r *GetV1ProjectsByProjectIdAdminEventsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -756,7 +756,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminEvents(ctx context.Cont
 // Download/check an export.
 //
 // GET /v1/projects/{project_id}/admin/exports/{job_id}
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminExportsByJobIdParams) (r GetV1ProjectsByProjectIdAdminExportsByJobIdRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminExportsByJobIdParams) (r *GetV1ProjectsByProjectIdAdminExportsByJobIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -765,7 +765,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminExportsByJobId(ctx cont
 // Get project feature toggles.
 //
 // GET /v1/projects/{project_id}/admin/features
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, params GetV1ProjectsByProjectIdAdminFeaturesParams) (r GetV1ProjectsByProjectIdAdminFeaturesRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, params GetV1ProjectsByProjectIdAdminFeaturesParams) (r GetV1ProjectsByProjectIdAdminFeaturesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -774,7 +774,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminFeatures(ctx context.Co
 // List hooks.
 //
 // GET /v1/projects/{project_id}/admin/hooks
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminHooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminHooksParams) (r GetV1ProjectsByProjectIdAdminHooksRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminHooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminHooksParams) (r *GetV1ProjectsByProjectIdAdminHooksOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -783,7 +783,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminHooks(ctx context.Conte
 // Get i18n catalogue.
 //
 // GET /v1/projects/{project_id}/admin/i18n/{locale}
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params GetV1ProjectsByProjectIdAdminI18nByLocaleParams) (r GetV1ProjectsByProjectIdAdminI18nByLocaleRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params GetV1ProjectsByProjectIdAdminI18nByLocaleParams) (r GetV1ProjectsByProjectIdAdminI18nByLocaleOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -792,7 +792,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminI18nByLocale(ctx contex
 // List background jobs.
 //
 // GET /v1/projects/{project_id}/admin/jobs
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminJobs(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsParams) (r GetV1ProjectsByProjectIdAdminJobsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminJobs(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsParams) (r *GetV1ProjectsByProjectIdAdminJobsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -801,7 +801,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminJobs(ctx context.Contex
 // Get a job.
 //
 // GET /v1/projects/{project_id}/admin/jobs/{job_id}
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsByJobIdParams) (r GetV1ProjectsByProjectIdAdminJobsByJobIdRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsByJobIdParams) (r *GetV1ProjectsByProjectIdAdminJobsByJobIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -810,7 +810,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminJobsByJobId(ctx context
 // List signing keys.
 //
 // GET /v1/projects/{project_id}/admin/jwks
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminJwks(ctx context.Context, params GetV1ProjectsByProjectIdAdminJwksParams) (r GetV1ProjectsByProjectIdAdminJwksRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminJwks(ctx context.Context, params GetV1ProjectsByProjectIdAdminJwksParams) (r *GetV1ProjectsByProjectIdAdminJwksOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -819,7 +819,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminJwks(ctx context.Contex
 // List OAuth providers.
 //
 // GET /v1/projects/{project_id}/admin/oauth-providers
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminOauthProvidersParams) (r GetV1ProjectsByProjectIdAdminOauthProvidersRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminOauthProvidersParams) (r *GetV1ProjectsByProjectIdAdminOauthProvidersOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -828,7 +828,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminOauthProviders(ctx cont
 // Get retention policy.
 //
 // GET /v1/projects/{project_id}/admin/retention-policy
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminRetentionPolicyParams) (r GetV1ProjectsByProjectIdAdminRetentionPolicyRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminRetentionPolicyParams) (r *RetentionPolicy, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -837,7 +837,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx con
 // List risk events.
 //
 // GET /v1/projects/{project_id}/admin/risk/events
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskEventsParams) (r GetV1ProjectsByProjectIdAdminRiskEventsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskEventsParams) (r GetV1ProjectsByProjectIdAdminRiskEventsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -846,7 +846,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminRiskEvents(ctx context.
 // List risk rules.
 //
 // GET /v1/projects/{project_id}/admin/risk/rules
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskRulesParams) (r GetV1ProjectsByProjectIdAdminRiskRulesRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskRulesParams) (r *GetV1ProjectsByProjectIdAdminRiskRulesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -855,7 +855,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminRiskRules(ctx context.C
 // List service accounts.
 //
 // GET /v1/projects/{project_id}/admin/service-accounts
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsParams) (r GetV1ProjectsByProjectIdAdminServiceAccountsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsParams) (r *GetV1ProjectsByProjectIdAdminServiceAccountsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -864,7 +864,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminServiceAccounts(ctx con
 // Get a service account.
 //
 // GET /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (r GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (r *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -873,7 +873,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(c
 // List SMS providers.
 //
 // GET /v1/projects/{project_id}/admin/sms-providers
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminSmsProvidersParams) (r GetV1ProjectsByProjectIdAdminSmsProvidersRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminSmsProvidersParams) (r *GetV1ProjectsByProjectIdAdminSmsProvidersOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -882,7 +882,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSmsProviders(ctx contex
 // List SSO connections.
 //
 // GET /v1/projects/{project_id}/admin/sso/connections
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsParams) (r GetV1ProjectsByProjectIdAdminSsoConnectionsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsParams) (r *GetV1ProjectsByProjectIdAdminSsoConnectionsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -891,7 +891,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSsoConnections(ctx cont
 // Get a connection.
 //
 // GET /v1/projects/{project_id}/admin/sso/connections/{id}
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (r GetV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (r *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -900,7 +900,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx 
 // List SCIM tokens.
 //
 // GET /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams) (r GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams) (r *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -909,7 +909,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimT
 // List token profiles.
 //
 // GET /v1/projects/{project_id}/admin/token-profiles
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, params GetV1ProjectsByProjectIdAdminTokenProfilesParams) (r GetV1ProjectsByProjectIdAdminTokenProfilesRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, params GetV1ProjectsByProjectIdAdminTokenProfilesParams) (r *GetV1ProjectsByProjectIdAdminTokenProfilesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -918,7 +918,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminTokenProfiles(ctx conte
 // Search/list users.
 //
 // GET /v1/projects/{project_id}/admin/users
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersParams) (r GetV1ProjectsByProjectIdAdminUsersRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersParams) (r *GetV1ProjectsByProjectIdAdminUsersOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -927,7 +927,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsers(ctx context.Conte
 // Get a user.
 //
 // GET /v1/projects/{project_id}/admin/users/{user_id}
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdParams) (r GetV1ProjectsByProjectIdAdminUsersByUserIdRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdParams) (r *GetV1ProjectsByProjectIdAdminUsersByUserIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -936,7 +936,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserId(ctx conte
 // List a user's OAuth grants.
 //
 // GET /v1/projects/{project_id}/admin/users/{user_id}/grants
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams) (r GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams) (r *GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -945,7 +945,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx
 // List a user's identities.
 //
 // GET /v1/projects/{project_id}/admin/users/{user_id}/identities
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams) (r GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams) (r *GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -954,7 +954,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities
 // List a user's sessions.
 //
 // GET /v1/projects/{project_id}/admin/users/{user_id}/sessions
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams) (r GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams) (r *GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -963,7 +963,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(c
 // List deliveries.
 //
 // GET /v1/projects/{project_id}/admin/webhook-deliveries
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams) (r GetV1ProjectsByProjectIdAdminWebhookDeliveriesRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams) (r GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -972,7 +972,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx c
 // List webhooks.
 //
 // GET /v1/projects/{project_id}/admin/webhooks
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksParams) (r GetV1ProjectsByProjectIdAdminWebhooksRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksParams) (r *GetV1ProjectsByProjectIdAdminWebhooksOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -981,7 +981,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Co
 // Get a webhook.
 //
 // GET /v1/projects/{project_id}/admin/webhooks/{id}
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksByIdParams) (r GetV1ProjectsByProjectIdAdminWebhooksByIdRes, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksByIdParams) (r *GetV1ProjectsByProjectIdAdminWebhooksByIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -990,7 +990,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhooksById(ctx contex
 // List SCIM groups (forwarded downstream).
 //
 // GET /v1/scim/v2/{connection_id}/Groups
-func (UnimplementedHandler) GetV1ScimV2ByConnectionIdGroups(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsParams) (r GetV1ScimV2ByConnectionIdGroupsRes, _ error) {
+func (UnimplementedHandler) GetV1ScimV2ByConnectionIdGroups(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsParams) (r GetV1ScimV2ByConnectionIdGroupsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -999,7 +999,7 @@ func (UnimplementedHandler) GetV1ScimV2ByConnectionIdGroups(ctx context.Context,
 // Get a SCIM group (forwarded downstream).
 //
 // GET /v1/scim/v2/{connection_id}/Groups/{group_id}
-func (UnimplementedHandler) GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsByGroupIdParams) (r GetV1ScimV2ByConnectionIdGroupsByGroupIdRes, _ error) {
+func (UnimplementedHandler) GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsByGroupIdParams) (r GetV1ScimV2ByConnectionIdGroupsByGroupIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1008,7 +1008,7 @@ func (UnimplementedHandler) GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context
 // List SCIM users.
 //
 // GET /v1/scim/v2/{connection_id}/Users
-func (UnimplementedHandler) GetV1ScimV2ByConnectionIdUsers(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersParams) (r GetV1ScimV2ByConnectionIdUsersRes, _ error) {
+func (UnimplementedHandler) GetV1ScimV2ByConnectionIdUsers(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersParams) (r GetV1ScimV2ByConnectionIdUsersOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1017,7 +1017,7 @@ func (UnimplementedHandler) GetV1ScimV2ByConnectionIdUsers(ctx context.Context, 
 // Get a SCIM user.
 //
 // GET /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-func (UnimplementedHandler) GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersByScimUserIdParams) (r GetV1ScimV2ByConnectionIdUsersByScimUserIdRes, _ error) {
+func (UnimplementedHandler) GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersByScimUserIdParams) (r GetV1ScimV2ByConnectionIdUsersByScimUserIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1026,7 +1026,7 @@ func (UnimplementedHandler) GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx conte
 // List own sessions.
 //
 // GET /v1/sessions
-func (UnimplementedHandler) GetV1Sessions(ctx context.Context) (r GetV1SessionsRes, _ error) {
+func (UnimplementedHandler) GetV1Sessions(ctx context.Context) (r *GetV1SessionsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1035,7 +1035,7 @@ func (UnimplementedHandler) GetV1Sessions(ctx context.Context) (r GetV1SessionsR
 // Current session details.
 //
 // GET /v1/sessions/current
-func (UnimplementedHandler) GetV1SessionsCurrent(ctx context.Context) (r GetV1SessionsCurrentRes, _ error) {
+func (UnimplementedHandler) GetV1SessionsCurrent(ctx context.Context) (r *GetV1SessionsCurrentOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1044,7 +1044,7 @@ func (UnimplementedHandler) GetV1SessionsCurrent(ctx context.Context) (r GetV1Se
 // Resolve an email to its SSO connection.
 //
 // GET /v1/sso/connections/resolve
-func (UnimplementedHandler) GetV1SsoConnectionsResolve(ctx context.Context, params GetV1SsoConnectionsResolveParams) (r GetV1SsoConnectionsResolveRes, _ error) {
+func (UnimplementedHandler) GetV1SsoConnectionsResolve(ctx context.Context, params GetV1SsoConnectionsResolveParams) (r *GetV1SsoConnectionsResolveOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1089,7 +1089,7 @@ func (UnimplementedHandler) GetV1SsoSamlByConnectionIdMetadata(ctx context.Conte
 // Read captured test-mode messages (inbox).
 //
 // GET /v1/test/messages
-func (UnimplementedHandler) GetV1TestMessages(ctx context.Context, params GetV1TestMessagesParams) (r GetV1TestMessagesRes, _ error) {
+func (UnimplementedHandler) GetV1TestMessages(ctx context.Context, params GetV1TestMessagesParams) (r GetV1TestMessagesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1098,7 +1098,7 @@ func (UnimplementedHandler) GetV1TestMessages(ctx context.Context, params GetV1T
 // Current token claims.
 //
 // GET /v1/tokens/current
-func (UnimplementedHandler) GetV1TokensCurrent(ctx context.Context) (r GetV1TokensCurrentRes, _ error) {
+func (UnimplementedHandler) GetV1TokensCurrent(ctx context.Context) (r *GetV1TokensCurrentOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1107,7 +1107,7 @@ func (UnimplementedHandler) GetV1TokensCurrent(ctx context.Context) (r GetV1Toke
 // Get the current user.
 //
 // GET /v1/users/me
-func (UnimplementedHandler) GetV1UsersMe(ctx context.Context) (r GetV1UsersMeRes, _ error) {
+func (UnimplementedHandler) GetV1UsersMe(ctx context.Context) (r *GetV1UsersMeOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1116,7 +1116,7 @@ func (UnimplementedHandler) GetV1UsersMe(ctx context.Context) (r GetV1UsersMeRes
 // Own security activity.
 //
 // GET /v1/users/me/activity
-func (UnimplementedHandler) GetV1UsersMeActivity(ctx context.Context, params GetV1UsersMeActivityParams) (r GetV1UsersMeActivityRes, _ error) {
+func (UnimplementedHandler) GetV1UsersMeActivity(ctx context.Context, params GetV1UsersMeActivityParams) (r *GetV1UsersMeActivityOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1125,7 +1125,7 @@ func (UnimplementedHandler) GetV1UsersMeActivity(ctx context.Context, params Get
 // Read own consents.
 //
 // GET /v1/users/me/consents
-func (UnimplementedHandler) GetV1UsersMeConsents(ctx context.Context) (r GetV1UsersMeConsentsRes, _ error) {
+func (UnimplementedHandler) GetV1UsersMeConsents(ctx context.Context) (r *GetV1UsersMeConsentsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1134,7 +1134,7 @@ func (UnimplementedHandler) GetV1UsersMeConsents(ctx context.Context) (r GetV1Us
 // Export status/download.
 //
 // GET /v1/users/me/export/{job_id}
-func (UnimplementedHandler) GetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams) (r GetV1UsersMeExportByJobIdRes, _ error) {
+func (UnimplementedHandler) GetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams) (r *GetV1UsersMeExportByJobIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1143,7 +1143,7 @@ func (UnimplementedHandler) GetV1UsersMeExportByJobId(ctx context.Context, param
 // Update a project.
 //
 // PATCH /mgmt/v1/projects/{project_id}
-func (UnimplementedHandler) PatchMgmtV1ProjectsByProjectId(ctx context.Context, req PatchMgmtV1ProjectsByProjectIdReq, params PatchMgmtV1ProjectsByProjectIdParams) (r PatchMgmtV1ProjectsByProjectIdRes, _ error) {
+func (UnimplementedHandler) PatchMgmtV1ProjectsByProjectId(ctx context.Context, req PatchMgmtV1ProjectsByProjectIdReq, params PatchMgmtV1ProjectsByProjectIdParams) (r *PatchMgmtV1ProjectsByProjectIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1152,7 +1152,7 @@ func (UnimplementedHandler) PatchMgmtV1ProjectsByProjectId(ctx context.Context, 
 // Set operator feature gates.
 //
 // PATCH /mgmt/v1/projects/{project_id}/features
-func (UnimplementedHandler) PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, req PatchMgmtV1ProjectsByProjectIdFeaturesReq, params PatchMgmtV1ProjectsByProjectIdFeaturesParams) (r PatchMgmtV1ProjectsByProjectIdFeaturesRes, _ error) {
+func (UnimplementedHandler) PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, req PatchMgmtV1ProjectsByProjectIdFeaturesReq, params PatchMgmtV1ProjectsByProjectIdFeaturesParams) (r PatchMgmtV1ProjectsByProjectIdFeaturesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1161,7 +1161,7 @@ func (UnimplementedHandler) PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.C
 // Rename a passkey.
 //
 // PATCH /v1/auth/webauthn/credentials/{credential_id}
-func (UnimplementedHandler) PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, req *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams) (r PatchV1AuthWebauthnCredentialsByCredentialIdRes, _ error) {
+func (UnimplementedHandler) PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, req *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams) (r *PatchV1AuthWebauthnCredentialsByCredentialIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1170,7 +1170,7 @@ func (UnimplementedHandler) PatchV1AuthWebauthnCredentialsByCredentialId(ctx con
 // Update key metadata/scopes.
 //
 // PATCH /v1/projects/{project_id}/admin/api-keys/{key_id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, req *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams) (r PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, req *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams) (r *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1179,7 +1179,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx co
 // Update an app client.
 //
 // PATCH /v1/projects/{project_id}/admin/apps/{app_id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, req PatchV1ProjectsByProjectIdAdminAppsByAppIdReq, params PatchV1ProjectsByProjectIdAdminAppsByAppIdParams) (r PatchV1ProjectsByProjectIdAdminAppsByAppIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, req PatchV1ProjectsByProjectIdAdminAppsByAppIdReq, params PatchV1ProjectsByProjectIdAdminAppsByAppIdParams) (r *PatchV1ProjectsByProjectIdAdminAppsByAppIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1188,7 +1188,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx conte
 // Update auth config.
 //
 // PATCH /v1/projects/{project_id}/admin/config/auth
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, req *AuthConfig, params PatchV1ProjectsByProjectIdAdminConfigAuthParams) (r PatchV1ProjectsByProjectIdAdminConfigAuthRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, req *AuthConfig, params PatchV1ProjectsByProjectIdAdminConfigAuthParams) (r *AuthConfig, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1197,7 +1197,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigAuth(ctx contex
 // Update MFA policy.
 //
 // PATCH /v1/projects/{project_id}/admin/config/mfa-policy
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, req *MfaPolicy, params PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams) (r PatchV1ProjectsByProjectIdAdminConfigMfaPolicyRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, req *MfaPolicy, params PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams) (r *MfaPolicy, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1206,7 +1206,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx c
 // Update password policy.
 //
 // PATCH /v1/projects/{project_id}/admin/config/password-policy
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, req *PasswordPolicy, params PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams) (r PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, req *PasswordPolicy, params PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams) (r *PasswordPolicy, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1215,7 +1215,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(
 // Update rate limits.
 //
 // PATCH /v1/projects/{project_id}/admin/config/rate-limits
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, req *RateLimits, params PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams) (r PatchV1ProjectsByProjectIdAdminConfigRateLimitsRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, req *RateLimits, params PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams) (r *RateLimits, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1224,7 +1224,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx 
 // Update session policy.
 //
 // PATCH /v1/projects/{project_id}/admin/config/session-policy
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, req *SessionPolicy, params PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams) (r PatchV1ProjectsByProjectIdAdminConfigSessionPolicyRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, req *SessionPolicy, params PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams) (r *SessionPolicy, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1233,7 +1233,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(c
 // Update email provider.
 //
 // PATCH /v1/projects/{project_id}/admin/email-providers/{id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, req *EmailProvider, params PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams) (r PatchV1ProjectsByProjectIdAdminEmailProvidersByIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, req *EmailProvider, params PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams) (r *EmailProvider, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1242,7 +1242,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminEmailProvidersById(ct
 // Update an email template.
 //
 // PATCH /v1/projects/{project_id}/admin/email-templates/{id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq, params PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams) (r PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq, params PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams) (r PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1251,7 +1251,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ct
 // Update a hook.
 //
 // PATCH /v1/projects/{project_id}/admin/hooks/{id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminHooksById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminHooksByIdReq, params PatchV1ProjectsByProjectIdAdminHooksByIdParams) (r PatchV1ProjectsByProjectIdAdminHooksByIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminHooksById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminHooksByIdReq, params PatchV1ProjectsByProjectIdAdminHooksByIdParams) (r *PatchV1ProjectsByProjectIdAdminHooksByIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1260,7 +1260,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminHooksById(ctx context
 // Update OAuth provider.
 //
 // PATCH /v1/projects/{project_id}/admin/oauth-providers/{id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, req *OAuthProviderConfig, params PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams) (r PatchV1ProjectsByProjectIdAdminOauthProvidersByIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, req *OAuthProviderConfig, params PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams) (r *OAuthProviderConfig, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1269,7 +1269,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminOauthProvidersById(ct
 // Update a risk rule.
 //
 // PATCH /v1/projects/{project_id}/admin/risk/rules/{rule_id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, req *RiskRule, params PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams) (r PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, req *RiskRule, params PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams) (r *RiskRule, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1278,7 +1278,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx
 // Update a service account.
 //
 // PATCH /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, req *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (r PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, req *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (r *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1287,7 +1287,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId
 // Update SMS provider.
 //
 // PATCH /v1/projects/{project_id}/admin/sms-providers/{id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, req *SmsProvider, params PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams) (r PatchV1ProjectsByProjectIdAdminSmsProvidersByIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, req *SmsProvider, params PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams) (r *SmsProvider, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1296,7 +1296,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx 
 // Update a connection.
 //
 // PATCH /v1/projects/{project_id}/admin/sso/connections/{id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (r PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (r *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1305,7 +1305,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ct
 // Update a token profile.
 //
 // PATCH /v1/projects/{project_id}/admin/token-profiles/{id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams) (r PatchV1ProjectsByProjectIdAdminTokenProfilesByIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams) (r *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1314,7 +1314,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx
 // Update a user.
 //
 // PATCH /v1/projects/{project_id}/admin/users/{user_id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, req PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams) (r PatchV1ProjectsByProjectIdAdminUsersByUserIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, req PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams) (r *PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1323,7 +1323,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx con
 // Update a webhook.
 //
 // PATCH /v1/projects/{project_id}/admin/webhooks/{id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams) (r PatchV1ProjectsByProjectIdAdminWebhooksByIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams) (r *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1332,7 +1332,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx cont
 // Patch a SCIM group (forwarded downstream).
 //
 // PATCH /v1/scim/v2/{connection_id}/Groups/{group_id}
-func (UnimplementedHandler) PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, req PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams) (r PatchV1ScimV2ByConnectionIdGroupsByGroupIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, req PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams) (r PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1341,7 +1341,7 @@ func (UnimplementedHandler) PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx conte
 // Patch a SCIM user.
 //
 // PATCH /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-func (UnimplementedHandler) PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, req *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams) (r PatchV1ScimV2ByConnectionIdUsersByScimUserIdRes, _ error) {
+func (UnimplementedHandler) PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, req *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams) (r PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1350,7 +1350,7 @@ func (UnimplementedHandler) PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx con
 // Rename a session/device.
 //
 // PATCH /v1/sessions/{session_id}
-func (UnimplementedHandler) PatchV1SessionsBySessionId(ctx context.Context, req *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams) (r PatchV1SessionsBySessionIdRes, _ error) {
+func (UnimplementedHandler) PatchV1SessionsBySessionId(ctx context.Context, req *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams) (r *PatchV1SessionsBySessionIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1359,7 +1359,7 @@ func (UnimplementedHandler) PatchV1SessionsBySessionId(ctx context.Context, req 
 // Update the core profile.
 //
 // PATCH /v1/users/me
-func (UnimplementedHandler) PatchV1UsersMe(ctx context.Context, req *PatchV1UsersMeReq) (r PatchV1UsersMeRes, _ error) {
+func (UnimplementedHandler) PatchV1UsersMe(ctx context.Context, req *PatchV1UsersMeReq) (r *PatchV1UsersMeOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1368,7 +1368,7 @@ func (UnimplementedHandler) PatchV1UsersMe(ctx context.Context, req *PatchV1User
 // Create a project.
 //
 // POST /mgmt/v1/projects
-func (UnimplementedHandler) PostMgmtV1Projects(ctx context.Context, req *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams) (r PostMgmtV1ProjectsRes, _ error) {
+func (UnimplementedHandler) PostMgmtV1Projects(ctx context.Context, req *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams) (r *PostMgmtV1ProjectsCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1377,7 +1377,7 @@ func (UnimplementedHandler) PostMgmtV1Projects(ctx context.Context, req *PostMgm
 // Mint a project-admin token.
 //
 // POST /mgmt/v1/projects/{project_id}/admin-tokens
-func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, req *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams) (r PostMgmtV1ProjectsByProjectIdAdminTokensRes, _ error) {
+func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, req *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams) (r *PostMgmtV1ProjectsByProjectIdAdminTokensOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1386,7 +1386,7 @@ func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context
 // Apply config (idempotent).
 //
 // POST /mgmt/v1/projects/{project_id}/config:apply
-func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, req PostMgmtV1ProjectsByProjectIdConfigApplyReq, params PostMgmtV1ProjectsByProjectIdConfigApplyParams) (r PostMgmtV1ProjectsByProjectIdConfigApplyRes, _ error) {
+func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, req PostMgmtV1ProjectsByProjectIdConfigApplyReq, params PostMgmtV1ProjectsByProjectIdConfigApplyParams) (r PostMgmtV1ProjectsByProjectIdConfigApplyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1395,7 +1395,7 @@ func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdConfigApply(ctx context
 // Plan a config apply (diff + drift).
 //
 // POST /mgmt/v1/projects/{project_id}/config:plan
-func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, req PostMgmtV1ProjectsByProjectIdConfigPlanReq, params PostMgmtV1ProjectsByProjectIdConfigPlanParams) (r PostMgmtV1ProjectsByProjectIdConfigPlanRes, _ error) {
+func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, req PostMgmtV1ProjectsByProjectIdConfigPlanReq, params PostMgmtV1ProjectsByProjectIdConfigPlanParams) (r PostMgmtV1ProjectsByProjectIdConfigPlanOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1404,7 +1404,7 @@ func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.
 // Create an environment.
 //
 // POST /mgmt/v1/projects/{project_id}/environments
-func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, req *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams) (r PostMgmtV1ProjectsByProjectIdEnvironmentsRes, _ error) {
+func (UnimplementedHandler) PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, req *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams) (r *PostMgmtV1ProjectsByProjectIdEnvironmentsCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1422,7 +1422,7 @@ func (UnimplementedHandler) PostOauth2BackchannelLogout(ctx context.Context, req
 // Start the device flow.
 //
 // POST /oauth2/device_authorization
-func (UnimplementedHandler) PostOauth2DeviceAuthorization(ctx context.Context, req *PostOauth2DeviceAuthorizationReq) (r PostOauth2DeviceAuthorizationRes, _ error) {
+func (UnimplementedHandler) PostOauth2DeviceAuthorization(ctx context.Context, req *PostOauth2DeviceAuthorizationReq) (r *PostOauth2DeviceAuthorizationOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1431,7 +1431,7 @@ func (UnimplementedHandler) PostOauth2DeviceAuthorization(ctx context.Context, r
 // RFC 7662 token introspection.
 //
 // POST /oauth2/introspect
-func (UnimplementedHandler) PostOauth2Introspect(ctx context.Context, req *PostOauth2IntrospectReq) (r PostOauth2IntrospectRes, _ error) {
+func (UnimplementedHandler) PostOauth2Introspect(ctx context.Context, req *PostOauth2IntrospectReq) (r *PostOauth2IntrospectOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1440,7 +1440,7 @@ func (UnimplementedHandler) PostOauth2Introspect(ctx context.Context, req *PostO
 // Pushed Authorization Request.
 //
 // POST /oauth2/par
-func (UnimplementedHandler) PostOauth2Par(ctx context.Context, req *PushedAuthorizationRequest) (r PostOauth2ParRes, _ error) {
+func (UnimplementedHandler) PostOauth2Par(ctx context.Context, req *PushedAuthorizationRequest) (r *PostOauth2ParCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1449,8 +1449,8 @@ func (UnimplementedHandler) PostOauth2Par(ctx context.Context, req *PushedAuthor
 // RFC 7009 token revocation.
 //
 // POST /oauth2/revoke
-func (UnimplementedHandler) PostOauth2Revoke(ctx context.Context, req *PostOauth2RevokeReq) (r PostOauth2RevokeRes, _ error) {
-	return r, ht.ErrNotImplemented
+func (UnimplementedHandler) PostOauth2Revoke(ctx context.Context, req *PostOauth2RevokeReq) error {
+	return ht.ErrNotImplemented
 }
 
 // PostOauth2Token implements postOauth2Token operation.
@@ -1458,7 +1458,7 @@ func (UnimplementedHandler) PostOauth2Revoke(ctx context.Context, req *PostOauth
 // Token endpoint.
 //
 // POST /oauth2/token
-func (UnimplementedHandler) PostOauth2Token(ctx context.Context, req *PostOauth2TokenReq) (r PostOauth2TokenRes, _ error) {
+func (UnimplementedHandler) PostOauth2Token(ctx context.Context, req *PostOauth2TokenReq) (r PostOauth2TokenOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1476,7 +1476,7 @@ func (UnimplementedHandler) PostV1AuthAccessRequests(ctx context.Context, req *P
 // Start an email change (step-up; notifies old address).
 //
 // POST /v1/auth/email/change/start
-func (UnimplementedHandler) PostV1AuthEmailChangeStart(ctx context.Context, req *PostV1AuthEmailChangeStartReq) (r PostV1AuthEmailChangeStartRes, _ error) {
+func (UnimplementedHandler) PostV1AuthEmailChangeStart(ctx context.Context, req *PostV1AuthEmailChangeStartReq) (r *Challenge, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1485,7 +1485,7 @@ func (UnimplementedHandler) PostV1AuthEmailChangeStart(ctx context.Context, req 
 // Confirm the new email.
 //
 // POST /v1/auth/email/change/verify
-func (UnimplementedHandler) PostV1AuthEmailChangeVerify(ctx context.Context, req *PostV1AuthEmailChangeVerifyReq) (r PostV1AuthEmailChangeVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthEmailChangeVerify(ctx context.Context, req *PostV1AuthEmailChangeVerifyReq) (r *PostV1AuthEmailChangeVerifyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1494,7 +1494,7 @@ func (UnimplementedHandler) PostV1AuthEmailChangeVerify(ctx context.Context, req
 // Send an email verification challenge.
 //
 // POST /v1/auth/email/verification/start
-func (UnimplementedHandler) PostV1AuthEmailVerificationStart(ctx context.Context, req *PostV1AuthEmailVerificationStartReq, params PostV1AuthEmailVerificationStartParams) (r PostV1AuthEmailVerificationStartRes, _ error) {
+func (UnimplementedHandler) PostV1AuthEmailVerificationStart(ctx context.Context, req *PostV1AuthEmailVerificationStartReq, params PostV1AuthEmailVerificationStartParams) (r *Challenge, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1503,7 +1503,7 @@ func (UnimplementedHandler) PostV1AuthEmailVerificationStart(ctx context.Context
 // Verify email by code or token.
 //
 // POST /v1/auth/email/verification/verify
-func (UnimplementedHandler) PostV1AuthEmailVerificationVerify(ctx context.Context, req *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams) (r PostV1AuthEmailVerificationVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthEmailVerificationVerify(ctx context.Context, req *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1512,7 +1512,7 @@ func (UnimplementedHandler) PostV1AuthEmailVerificationVerify(ctx context.Contex
 // Create an anonymous guest user and session.
 //
 // POST /v1/auth/guest
-func (UnimplementedHandler) PostV1AuthGuest(ctx context.Context, req *PostV1AuthGuestReq, params PostV1AuthGuestParams) (r PostV1AuthGuestRes, _ error) {
+func (UnimplementedHandler) PostV1AuthGuest(ctx context.Context, req *PostV1AuthGuestReq, params PostV1AuthGuestParams) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1521,7 +1521,7 @@ func (UnimplementedHandler) PostV1AuthGuest(ctx context.Context, req *PostV1Auth
 // Confirm a merge.
 //
 // POST /v1/auth/identities/merge/confirm
-func (UnimplementedHandler) PostV1AuthIdentitiesMergeConfirm(ctx context.Context, req *PostV1AuthIdentitiesMergeConfirmReq) (r PostV1AuthIdentitiesMergeConfirmRes, _ error) {
+func (UnimplementedHandler) PostV1AuthIdentitiesMergeConfirm(ctx context.Context, req *PostV1AuthIdentitiesMergeConfirmReq) (r *PostV1AuthIdentitiesMergeConfirmOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1530,7 +1530,7 @@ func (UnimplementedHandler) PostV1AuthIdentitiesMergeConfirm(ctx context.Context
 // Start an account merge.
 //
 // POST /v1/auth/identities/merge/start
-func (UnimplementedHandler) PostV1AuthIdentitiesMergeStart(ctx context.Context, req *PostV1AuthIdentitiesMergeStartReq) (r PostV1AuthIdentitiesMergeStartRes, _ error) {
+func (UnimplementedHandler) PostV1AuthIdentitiesMergeStart(ctx context.Context, req *PostV1AuthIdentitiesMergeStartReq) (r *PostV1AuthIdentitiesMergeStartOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1539,7 +1539,7 @@ func (UnimplementedHandler) PostV1AuthIdentitiesMergeStart(ctx context.Context, 
 // Send a magic link.
 //
 // POST /v1/auth/magic-link/start
-func (UnimplementedHandler) PostV1AuthMagicLinkStart(ctx context.Context, req *MagicLinkStartRequest, params PostV1AuthMagicLinkStartParams) (r PostV1AuthMagicLinkStartRes, _ error) {
+func (UnimplementedHandler) PostV1AuthMagicLinkStart(ctx context.Context, req *MagicLinkStartRequest, params PostV1AuthMagicLinkStartParams) (r *Challenge, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1548,7 +1548,7 @@ func (UnimplementedHandler) PostV1AuthMagicLinkStart(ctx context.Context, req *M
 // Headless verify of a magic-link token.
 //
 // POST /v1/auth/magic-link/verify
-func (UnimplementedHandler) PostV1AuthMagicLinkVerify(ctx context.Context, req *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams) (r PostV1AuthMagicLinkVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthMagicLinkVerify(ctx context.Context, req *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1566,7 +1566,7 @@ func (UnimplementedHandler) PostV1AuthMfaChallenge(ctx context.Context, req OptP
 // Enroll an email factor.
 //
 // POST /v1/auth/mfa/email/enroll
-func (UnimplementedHandler) PostV1AuthMfaEmailEnroll(ctx context.Context, req *PostV1AuthMfaEmailEnrollReq) (r PostV1AuthMfaEmailEnrollRes, _ error) {
+func (UnimplementedHandler) PostV1AuthMfaEmailEnroll(ctx context.Context, req *PostV1AuthMfaEmailEnrollReq) (r *PostV1AuthMfaEmailEnrollOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1575,7 +1575,7 @@ func (UnimplementedHandler) PostV1AuthMfaEmailEnroll(ctx context.Context, req *P
 // Generate recovery codes (AAL2).
 //
 // POST /v1/auth/mfa/recovery-codes/generate
-func (UnimplementedHandler) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, req OptPostV1AuthMfaRecoveryCodesGenerateReq) (r PostV1AuthMfaRecoveryCodesGenerateRes, _ error) {
+func (UnimplementedHandler) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, req OptPostV1AuthMfaRecoveryCodesGenerateReq) (r *PostV1AuthMfaRecoveryCodesGenerateOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1593,7 +1593,7 @@ func (UnimplementedHandler) PostV1AuthMfaRecoveryCodesVerify(ctx context.Context
 // Enroll an SMS factor.
 //
 // POST /v1/auth/mfa/sms/enroll
-func (UnimplementedHandler) PostV1AuthMfaSmsEnroll(ctx context.Context, req *PostV1AuthMfaSmsEnrollReq) (r PostV1AuthMfaSmsEnrollRes, _ error) {
+func (UnimplementedHandler) PostV1AuthMfaSmsEnroll(ctx context.Context, req *PostV1AuthMfaSmsEnrollReq) (r *PostV1AuthMfaSmsEnrollOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1602,7 +1602,7 @@ func (UnimplementedHandler) PostV1AuthMfaSmsEnroll(ctx context.Context, req *Pos
 // Start TOTP enrollment.
 //
 // POST /v1/auth/mfa/totp/enroll
-func (UnimplementedHandler) PostV1AuthMfaTotpEnroll(ctx context.Context, req OptPostV1AuthMfaTotpEnrollReq) (r PostV1AuthMfaTotpEnrollRes, _ error) {
+func (UnimplementedHandler) PostV1AuthMfaTotpEnroll(ctx context.Context, req OptPostV1AuthMfaTotpEnrollReq) (r *PostV1AuthMfaTotpEnrollOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1611,7 +1611,7 @@ func (UnimplementedHandler) PostV1AuthMfaTotpEnroll(ctx context.Context, req Opt
 // Confirm TOTP enrollment.
 //
 // POST /v1/auth/mfa/totp/verify
-func (UnimplementedHandler) PostV1AuthMfaTotpVerify(ctx context.Context, req *PostV1AuthMfaTotpVerifyReq) (r PostV1AuthMfaTotpVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthMfaTotpVerify(ctx context.Context, req *PostV1AuthMfaTotpVerifyReq) (r *PostV1AuthMfaTotpVerifyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1620,7 +1620,7 @@ func (UnimplementedHandler) PostV1AuthMfaTotpVerify(ctx context.Context, req *Po
 // Verify an MFA challenge.
 //
 // POST /v1/auth/mfa/verify
-func (UnimplementedHandler) PostV1AuthMfaVerify(ctx context.Context, req *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams) (r PostV1AuthMfaVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthMfaVerify(ctx context.Context, req *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1629,7 +1629,7 @@ func (UnimplementedHandler) PostV1AuthMfaVerify(ctx context.Context, req *PostV1
 // Start a WebAuthn MFA factor.
 //
 // POST /v1/auth/mfa/webauthn/enroll/options
-func (UnimplementedHandler) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, req OptPostV1AuthMfaWebauthnEnrollOptionsReq) (r PostV1AuthMfaWebauthnEnrollOptionsRes, _ error) {
+func (UnimplementedHandler) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, req OptPostV1AuthMfaWebauthnEnrollOptionsReq) (r *PostV1AuthMfaWebauthnEnrollOptionsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1638,7 +1638,7 @@ func (UnimplementedHandler) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Conte
 // Verify a WebAuthn MFA factor.
 //
 // POST /v1/auth/mfa/webauthn/enroll/verify
-func (UnimplementedHandler) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, req *PostV1AuthMfaWebauthnEnrollVerifyReq) (r PostV1AuthMfaWebauthnEnrollVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, req *PostV1AuthMfaWebauthnEnrollVerifyReq) (r *PostV1AuthMfaWebauthnEnrollVerifyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1647,7 +1647,7 @@ func (UnimplementedHandler) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Contex
 // Unlink a provider identity (step-up).
 //
 // POST /v1/auth/oauth/{provider}/unlink
-func (UnimplementedHandler) PostV1AuthOauthByProviderUnlink(ctx context.Context, req *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams) (r PostV1AuthOauthByProviderUnlinkRes, _ error) {
+func (UnimplementedHandler) PostV1AuthOauthByProviderUnlink(ctx context.Context, req *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1665,7 +1665,7 @@ func (UnimplementedHandler) PostV1AuthOauthExchange(ctx context.Context, req *Po
 // Start OTP login/signup/verify.
 //
 // POST /v1/auth/otp/start
-func (UnimplementedHandler) PostV1AuthOtpStart(ctx context.Context, req *OtpStartRequest, params PostV1AuthOtpStartParams) (r PostV1AuthOtpStartRes, _ error) {
+func (UnimplementedHandler) PostV1AuthOtpStart(ctx context.Context, req *OtpStartRequest, params PostV1AuthOtpStartParams) (r *Challenge, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1674,7 +1674,7 @@ func (UnimplementedHandler) PostV1AuthOtpStart(ctx context.Context, req *OtpStar
 // Verify OTP.
 //
 // POST /v1/auth/otp/verify
-func (UnimplementedHandler) PostV1AuthOtpVerify(ctx context.Context, req *OtpVerifyRequest, params PostV1AuthOtpVerifyParams) (r PostV1AuthOtpVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthOtpVerify(ctx context.Context, req *OtpVerifyRequest, params PostV1AuthOtpVerifyParams) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1683,7 +1683,7 @@ func (UnimplementedHandler) PostV1AuthOtpVerify(ctx context.Context, req *OtpVer
 // Change a known password.
 //
 // POST /v1/auth/password/change
-func (UnimplementedHandler) PostV1AuthPasswordChange(ctx context.Context, req *PasswordChangeRequest) (r PostV1AuthPasswordChangeRes, _ error) {
+func (UnimplementedHandler) PostV1AuthPasswordChange(ctx context.Context, req *PasswordChangeRequest) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1701,7 +1701,7 @@ func (UnimplementedHandler) PostV1AuthPasswordCheck(ctx context.Context, req *Po
 // Start a password reset.
 //
 // POST /v1/auth/password/forgot
-func (UnimplementedHandler) PostV1AuthPasswordForgot(ctx context.Context, req *PasswordForgotRequest, params PostV1AuthPasswordForgotParams) (r PostV1AuthPasswordForgotRes, _ error) {
+func (UnimplementedHandler) PostV1AuthPasswordForgot(ctx context.Context, req *PasswordForgotRequest, params PostV1AuthPasswordForgotParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1710,7 +1710,7 @@ func (UnimplementedHandler) PostV1AuthPasswordForgot(ctx context.Context, req *P
 // Reset by token or code.
 //
 // POST /v1/auth/password/reset
-func (UnimplementedHandler) PostV1AuthPasswordReset(ctx context.Context, req *PasswordResetRequest, params PostV1AuthPasswordResetParams) (r PostV1AuthPasswordResetRes, _ error) {
+func (UnimplementedHandler) PostV1AuthPasswordReset(ctx context.Context, req *PasswordResetRequest, params PostV1AuthPasswordResetParams) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1719,7 +1719,7 @@ func (UnimplementedHandler) PostV1AuthPasswordReset(ctx context.Context, req *Pa
 // Verify current password (step-up).
 //
 // POST /v1/auth/password/verify
-func (UnimplementedHandler) PostV1AuthPasswordVerify(ctx context.Context, req *PostV1AuthPasswordVerifyReq) (r PostV1AuthPasswordVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthPasswordVerify(ctx context.Context, req *PostV1AuthPasswordVerifyReq) (r *PostV1AuthPasswordVerifyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1728,7 +1728,7 @@ func (UnimplementedHandler) PostV1AuthPasswordVerify(ctx context.Context, req *P
 // Start a phone change.
 //
 // POST /v1/auth/phone/change/start
-func (UnimplementedHandler) PostV1AuthPhoneChangeStart(ctx context.Context, req *PostV1AuthPhoneChangeStartReq) (r PostV1AuthPhoneChangeStartRes, _ error) {
+func (UnimplementedHandler) PostV1AuthPhoneChangeStart(ctx context.Context, req *PostV1AuthPhoneChangeStartReq) (r *Challenge, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1737,7 +1737,7 @@ func (UnimplementedHandler) PostV1AuthPhoneChangeStart(ctx context.Context, req 
 // Confirm the new phone.
 //
 // POST /v1/auth/phone/change/verify
-func (UnimplementedHandler) PostV1AuthPhoneChangeVerify(ctx context.Context, req *PostV1AuthPhoneChangeVerifyReq) (r PostV1AuthPhoneChangeVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthPhoneChangeVerify(ctx context.Context, req *PostV1AuthPhoneChangeVerifyReq) (r *PostV1AuthPhoneChangeVerifyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1746,7 +1746,7 @@ func (UnimplementedHandler) PostV1AuthPhoneChangeVerify(ctx context.Context, req
 // Send an SMS/WhatsApp verification code.
 //
 // POST /v1/auth/phone/verification/start
-func (UnimplementedHandler) PostV1AuthPhoneVerificationStart(ctx context.Context, req *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams) (r PostV1AuthPhoneVerificationStartRes, _ error) {
+func (UnimplementedHandler) PostV1AuthPhoneVerificationStart(ctx context.Context, req *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams) (r *Challenge, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1755,7 +1755,7 @@ func (UnimplementedHandler) PostV1AuthPhoneVerificationStart(ctx context.Context
 // Verify a phone code.
 //
 // POST /v1/auth/phone/verification/verify
-func (UnimplementedHandler) PostV1AuthPhoneVerificationVerify(ctx context.Context, req *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams) (r PostV1AuthPhoneVerificationVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthPhoneVerificationVerify(ctx context.Context, req *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams) (r PhoneVerifyResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1764,7 +1764,7 @@ func (UnimplementedHandler) PostV1AuthPhoneVerificationVerify(ctx context.Contex
 // Begin step-up authentication.
 //
 // POST /v1/auth/session/step-up
-func (UnimplementedHandler) PostV1AuthSessionStepUp(ctx context.Context, req *PostV1AuthSessionStepUpReq) (r PostV1AuthSessionStepUpRes, _ error) {
+func (UnimplementedHandler) PostV1AuthSessionStepUp(ctx context.Context, req *PostV1AuthSessionStepUpReq) (r StepUpResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1773,7 +1773,7 @@ func (UnimplementedHandler) PostV1AuthSessionStepUp(ctx context.Context, req *Po
 // Re-issues a token with a new active-group claim. Membership is validated externally.
 //
 // POST /v1/auth/session/switch-group
-func (UnimplementedHandler) PostV1AuthSessionSwitchGroup(ctx context.Context, req *PostV1AuthSessionSwitchGroupReq) (r PostV1AuthSessionSwitchGroupRes, _ error) {
+func (UnimplementedHandler) PostV1AuthSessionSwitchGroup(ctx context.Context, req *PostV1AuthSessionSwitchGroupReq) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1782,7 +1782,7 @@ func (UnimplementedHandler) PostV1AuthSessionSwitchGroup(ctx context.Context, re
 // Sign in with password.
 //
 // POST /v1/auth/sign-in/password
-func (UnimplementedHandler) PostV1AuthSignInPassword(ctx context.Context, req *PasswordSignInRequest, params PostV1AuthSignInPasswordParams) (r PostV1AuthSignInPasswordRes, _ error) {
+func (UnimplementedHandler) PostV1AuthSignInPassword(ctx context.Context, req *PasswordSignInRequest, params PostV1AuthSignInPasswordParams) (r AuthResultOrNextStep, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1791,7 +1791,7 @@ func (UnimplementedHandler) PostV1AuthSignInPassword(ctx context.Context, req *P
 // Revoke the current session.
 //
 // POST /v1/auth/sign-out
-func (UnimplementedHandler) PostV1AuthSignOut(ctx context.Context, req OptPostV1AuthSignOutReq) (r PostV1AuthSignOutRes, _ error) {
+func (UnimplementedHandler) PostV1AuthSignOut(ctx context.Context, req OptPostV1AuthSignOutReq) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1800,7 +1800,7 @@ func (UnimplementedHandler) PostV1AuthSignOut(ctx context.Context, req OptPostV1
 // Revoke all of the user's sessions.
 //
 // POST /v1/auth/sign-out-all
-func (UnimplementedHandler) PostV1AuthSignOutAll(ctx context.Context, req OptPostV1AuthSignOutAllReq) (r PostV1AuthSignOutAllRes, _ error) {
+func (UnimplementedHandler) PostV1AuthSignOutAll(ctx context.Context, req OptPostV1AuthSignOutAllReq) (r *PostV1AuthSignOutAllOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1809,7 +1809,7 @@ func (UnimplementedHandler) PostV1AuthSignOutAll(ctx context.Context, req OptPos
 // Register a user.
 //
 // POST /v1/auth/sign-up
-func (UnimplementedHandler) PostV1AuthSignUp(ctx context.Context, req *SignUpRequest, params PostV1AuthSignUpParams) (r PostV1AuthSignUpRes, _ error) {
+func (UnimplementedHandler) PostV1AuthSignUp(ctx context.Context, req *SignUpRequest, params PostV1AuthSignUpParams) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1818,7 +1818,7 @@ func (UnimplementedHandler) PostV1AuthSignUp(ctx context.Context, req *SignUpReq
 // Exchange a browser-flow auth_code for a session.
 //
 // POST /v1/auth/token/exchange
-func (UnimplementedHandler) PostV1AuthTokenExchange(ctx context.Context, req *CodeExchangeRequest, params PostV1AuthTokenExchangeParams) (r PostV1AuthTokenExchangeRes, _ error) {
+func (UnimplementedHandler) PostV1AuthTokenExchange(ctx context.Context, req *CodeExchangeRequest, params PostV1AuthTokenExchangeParams) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1827,7 +1827,7 @@ func (UnimplementedHandler) PostV1AuthTokenExchange(ctx context.Context, req *Co
 // Rotate refresh token, issue new access token.
 //
 // POST /v1/auth/token/refresh
-func (UnimplementedHandler) PostV1AuthTokenRefresh(ctx context.Context, req OptRefreshRequest, params PostV1AuthTokenRefreshParams) (r PostV1AuthTokenRefreshRes, _ error) {
+func (UnimplementedHandler) PostV1AuthTokenRefresh(ctx context.Context, req OptRefreshRequest, params PostV1AuthTokenRefreshParams) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1845,7 +1845,7 @@ func (UnimplementedHandler) PostV1AuthWebauthnLoginOptions(ctx context.Context, 
 // Verify a passkey assertion.
 //
 // POST /v1/auth/webauthn/login/verify
-func (UnimplementedHandler) PostV1AuthWebauthnLoginVerify(ctx context.Context, req *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams) (r PostV1AuthWebauthnLoginVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthWebauthnLoginVerify(ctx context.Context, req *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams) (r *AuthResult, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1854,7 +1854,7 @@ func (UnimplementedHandler) PostV1AuthWebauthnLoginVerify(ctx context.Context, r
 // Create a passkey registration challenge.
 //
 // POST /v1/auth/webauthn/register/options
-func (UnimplementedHandler) PostV1AuthWebauthnRegisterOptions(ctx context.Context, req OptPostV1AuthWebauthnRegisterOptionsReq) (r PostV1AuthWebauthnRegisterOptionsRes, _ error) {
+func (UnimplementedHandler) PostV1AuthWebauthnRegisterOptions(ctx context.Context, req OptPostV1AuthWebauthnRegisterOptionsReq) (r *PostV1AuthWebauthnRegisterOptionsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1863,7 +1863,7 @@ func (UnimplementedHandler) PostV1AuthWebauthnRegisterOptions(ctx context.Contex
 // Verify a newly created passkey.
 //
 // POST /v1/auth/webauthn/register/verify
-func (UnimplementedHandler) PostV1AuthWebauthnRegisterVerify(ctx context.Context, req *PostV1AuthWebauthnRegisterVerifyReq) (r PostV1AuthWebauthnRegisterVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1AuthWebauthnRegisterVerify(ctx context.Context, req *PostV1AuthWebauthnRegisterVerifyReq) (r *PostV1AuthWebauthnRegisterVerifyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1881,7 +1881,7 @@ func (UnimplementedHandler) PostV1ChallengesCaptchaVerify(ctx context.Context, r
 // Approve a device code.
 //
 // POST /v1/device/approve
-func (UnimplementedHandler) PostV1DeviceApprove(ctx context.Context, req *PostV1DeviceApproveReq) (r PostV1DeviceApproveRes, _ error) {
+func (UnimplementedHandler) PostV1DeviceApprove(ctx context.Context, req *PostV1DeviceApproveReq) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1890,7 +1890,7 @@ func (UnimplementedHandler) PostV1DeviceApprove(ctx context.Context, req *PostV1
 // Deny a device code.
 //
 // POST /v1/device/deny
-func (UnimplementedHandler) PostV1DeviceDeny(ctx context.Context, req *PostV1DeviceDenyReq) (r PostV1DeviceDenyRes, _ error) {
+func (UnimplementedHandler) PostV1DeviceDeny(ctx context.Context, req *PostV1DeviceDenyReq) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1899,7 +1899,7 @@ func (UnimplementedHandler) PostV1DeviceDeny(ctx context.Context, req *PostV1Dev
 // Record consent.
 //
 // POST /v1/oauth/interaction/{interaction_id}/consent
-func (UnimplementedHandler) PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, req *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams) (r PostV1OauthInteractionByInteractionIdConsentRes, _ error) {
+func (UnimplementedHandler) PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, req *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams) (r *PostV1OauthInteractionByInteractionIdConsentOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1908,7 +1908,7 @@ func (UnimplementedHandler) PostV1OauthInteractionByInteractionIdConsent(ctx con
 // Attach the authenticated user to the interaction.
 //
 // POST /v1/oauth/interaction/{interaction_id}/login
-func (UnimplementedHandler) PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, req OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams) (r PostV1OauthInteractionByInteractionIdLoginRes, _ error) {
+func (UnimplementedHandler) PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, req OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams) (r *PostV1OauthInteractionByInteractionIdLoginOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1926,7 +1926,7 @@ func (UnimplementedHandler) PostV1OauthInteractionByInteractionIdReject(ctx cont
 // Approve an access request.
 //
 // POST /v1/projects/{project_id}/admin/access-requests/{id}/approve
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx context.Context, req *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams) (r PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx context.Context, req *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams) (r PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1935,7 +1935,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAccessRequestsByIdAppr
 // Deny an access request.
 //
 // POST /v1/projects/{project_id}/admin/access-requests/{id}/deny
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams) (r PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams) (r *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1944,7 +1944,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny
 // Create an API key.
 //
 // POST /v1/projects/{project_id}/admin/api-keys
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, req *PostV1ProjectsByProjectIdAdminApiKeysReq, params PostV1ProjectsByProjectIdAdminApiKeysParams) (r PostV1ProjectsByProjectIdAdminApiKeysRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, req *PostV1ProjectsByProjectIdAdminApiKeysReq, params PostV1ProjectsByProjectIdAdminApiKeysParams) (r *PostV1ProjectsByProjectIdAdminApiKeysCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1953,7 +1953,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Co
 // Rotate the key secret.
 //
 // POST /v1/projects/{project_id}/admin/api-keys/{key_id}/rotate
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams) (r PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams) (r *PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1962,7 +1962,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(c
 // Create an app client.
 //
 // POST /v1/projects/{project_id}/admin/apps
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, req *PostV1ProjectsByProjectIdAdminAppsReq, params PostV1ProjectsByProjectIdAdminAppsParams) (r PostV1ProjectsByProjectIdAdminAppsRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, req *PostV1ProjectsByProjectIdAdminAppsReq, params PostV1ProjectsByProjectIdAdminAppsParams) (r *PostV1ProjectsByProjectIdAdminAppsCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1971,7 +1971,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminApps(ctx context.Conte
 // Create a client secret.
 //
 // POST /v1/projects/{project_id}/admin/apps/{app_id}/secrets
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, req *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams) (r PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, req *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams) (r *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1980,7 +1980,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx
 // Export the audit log (signed).
 //
 // POST /v1/projects/{project_id}/admin/audit/export
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, req *PostV1ProjectsByProjectIdAdminAuditExportReq, params PostV1ProjectsByProjectIdAdminAuditExportParams) (r PostV1ProjectsByProjectIdAdminAuditExportRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, req *PostV1ProjectsByProjectIdAdminAuditExportReq, params PostV1ProjectsByProjectIdAdminAuditExportParams) (r *PostV1ProjectsByProjectIdAdminAuditExportOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1989,7 +1989,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminAuditExport(ctx contex
 // Add a domain.
 //
 // POST /v1/projects/{project_id}/admin/domains
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, req *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams) (r PostV1ProjectsByProjectIdAdminDomainsRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, req *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams) (r *PostV1ProjectsByProjectIdAdminDomainsCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1998,7 +1998,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminDomains(ctx context.Co
 // Verify a domain via DNS.
 //
 // POST /v1/projects/{project_id}/admin/domains/{domain_id}/verify
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams) (r PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams) (r *PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2007,7 +2007,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerif
 // Create email provider.
 //
 // POST /v1/projects/{project_id}/admin/email-providers
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, req *EmailProvider, params PostV1ProjectsByProjectIdAdminEmailProvidersParams) (r PostV1ProjectsByProjectIdAdminEmailProvidersRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, req *EmailProvider, params PostV1ProjectsByProjectIdAdminEmailProvidersParams) (r *EmailProvider, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2016,7 +2016,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEmailProviders(ctx con
 // Render a template preview.
 //
 // POST /v1/projects/{project_id}/admin/email-templates/{id}/preview
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams) (r PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams) (r *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2025,7 +2025,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPrev
 // Send a test email.
 //
 // POST /v1/projects/{project_id}/admin/email-templates/{id}/send-test
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, req *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams) (r PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, req *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2034,7 +2034,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSend
 // Replay an event to webhooks.
 //
 // POST /v1/projects/{project_id}/admin/events/{event_id}/replay
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams) (r PostV1ProjectsByProjectIdAdminEventsByEventIdReplayRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams) (r PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2043,7 +2043,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(
 // Create a hook.
 //
 // POST /v1/projects/{project_id}/admin/hooks
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminHooks(ctx context.Context, req *PostV1ProjectsByProjectIdAdminHooksReq, params PostV1ProjectsByProjectIdAdminHooksParams) (r PostV1ProjectsByProjectIdAdminHooksRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminHooks(ctx context.Context, req *PostV1ProjectsByProjectIdAdminHooksReq, params PostV1ProjectsByProjectIdAdminHooksParams) (r *PostV1ProjectsByProjectIdAdminHooksCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2052,7 +2052,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminHooks(ctx context.Cont
 // Test a hook.
 //
 // POST /v1/projects/{project_id}/admin/hooks/{id}/test
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq, params PostV1ProjectsByProjectIdAdminHooksByIdTestParams) (r PostV1ProjectsByProjectIdAdminHooksByIdTestRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq, params PostV1ProjectsByProjectIdAdminHooksByIdTestParams) (r *PostV1ProjectsByProjectIdAdminHooksByIdTestOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2061,7 +2061,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx cont
 // Verify an imported hash config.
 //
 // POST /v1/projects/{project_id}/admin/import/password-hashes/verify
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx context.Context, req *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq, params PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams) (r PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx context.Context, req *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq, params PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams) (r *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2070,7 +2070,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminImportPasswordHashesVe
 // Bulk-import users.
 //
 // POST /v1/projects/{project_id}/admin/import/users
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, req *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams) (r PostV1ProjectsByProjectIdAdminImportUsersRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, req *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams) (r *PostV1ProjectsByProjectIdAdminImportUsersOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2079,7 +2079,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminImportUsers(ctx contex
 // Cancel a job.
 //
 // POST /v1/projects/{project_id}/admin/jobs/{job_id}/cancel
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context.Context, params PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams) (r PostV1ProjectsByProjectIdAdminJobsByJobIdCancelRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context.Context, params PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams) (r *PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2088,7 +2088,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx 
 // Activate a signing key.
 //
 // POST /v1/projects/{project_id}/admin/jwks/{key_id}/activate
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx context.Context, params PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams) (r PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx context.Context, params PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams) (r *PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2097,7 +2097,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ct
 // Create a new signing key.
 //
 // POST /v1/projects/{project_id}/admin/jwks/rotate
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminJwksRotateReq, params PostV1ProjectsByProjectIdAdminJwksRotateParams) (r PostV1ProjectsByProjectIdAdminJwksRotateRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminJwksRotateReq, params PostV1ProjectsByProjectIdAdminJwksRotateParams) (r *PostV1ProjectsByProjectIdAdminJwksRotateOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2106,7 +2106,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminJwksRotate(ctx context
 // Create OAuth provider.
 //
 // POST /v1/projects/{project_id}/admin/oauth-providers
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, req *OAuthProviderConfig, params PostV1ProjectsByProjectIdAdminOauthProvidersParams) (r PostV1ProjectsByProjectIdAdminOauthProvidersRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, req *OAuthProviderConfig, params PostV1ProjectsByProjectIdAdminOauthProvidersParams) (r *OAuthProviderConfig, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2115,7 +2115,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminOauthProviders(ctx con
 // Block an identifier.
 //
 // POST /v1/projects/{project_id}/admin/rate-limit/blocks
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.Context, req *PostV1ProjectsByProjectIdAdminRateLimitBlocksReq, params PostV1ProjectsByProjectIdAdminRateLimitBlocksParams) (r PostV1ProjectsByProjectIdAdminRateLimitBlocksRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.Context, req *PostV1ProjectsByProjectIdAdminRateLimitBlocksReq, params PostV1ProjectsByProjectIdAdminRateLimitBlocksParams) (r PostV1ProjectsByProjectIdAdminRateLimitBlocksOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2124,7 +2124,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx co
 // Create a risk rule.
 //
 // POST /v1/projects/{project_id}/admin/risk/rules
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, req *RiskRule, params PostV1ProjectsByProjectIdAdminRiskRulesParams) (r PostV1ProjectsByProjectIdAdminRiskRulesRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, req *RiskRule, params PostV1ProjectsByProjectIdAdminRiskRulesParams) (r *RiskRule, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2133,7 +2133,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminRiskRules(ctx context.
 // Create a service account.
 //
 // POST /v1/projects/{project_id}/admin/service-accounts
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, req *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams) (r PostV1ProjectsByProjectIdAdminServiceAccountsRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, req *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams) (r *PostV1ProjectsByProjectIdAdminServiceAccountsCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2142,7 +2142,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx co
 // Create a client secret.
 //
 // POST /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, req *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams) (r PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, req *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams) (r *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2151,7 +2151,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdS
 // Create SMS provider.
 //
 // POST /v1/projects/{project_id}/admin/sms-providers
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, req *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams) (r PostV1ProjectsByProjectIdAdminSmsProvidersRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, req *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams) (r *SmsProvider, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2160,7 +2160,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSmsProviders(ctx conte
 // Create an SSO connection.
 //
 // POST /v1/projects/{project_id}/admin/sso/connections
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, req *PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsParams) (r PostV1ProjectsByProjectIdAdminSsoConnectionsRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, req *PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsParams) (r *PostV1ProjectsByProjectIdAdminSsoConnectionsCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2169,7 +2169,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnections(ctx con
 // Rotate the SP certificate.
 //
 // POST /v1/projects/{project_id}/admin/sso/connections/{id}/rotate-certificate
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams) (r PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams) (r *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2178,7 +2178,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRota
 // Create a SCIM token.
 //
 // POST /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, req *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams) (r PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, req *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams) (r *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2187,7 +2187,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScim
 // Test a connection.
 //
 // POST /v1/projects/{project_id}/admin/sso/connections/{id}/test
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams) (r PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams) (r *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2196,7 +2196,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest
 // Create a token profile.
 //
 // POST /v1/projects/{project_id}/admin/token-profiles
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, req *TokenProfile, params PostV1ProjectsByProjectIdAdminTokenProfilesParams) (r PostV1ProjectsByProjectIdAdminTokenProfilesRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, req *TokenProfile, params PostV1ProjectsByProjectIdAdminTokenProfilesParams) (r *PostV1ProjectsByProjectIdAdminTokenProfilesCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2205,7 +2205,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminTokenProfiles(ctx cont
 // Preview token claims.
 //
 // POST /v1/projects/{project_id}/admin/token-profiles/{id}/preview
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, req *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams) (r PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, req *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams) (r *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2214,7 +2214,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPrevi
 // Create a user.
 //
 // POST /v1/projects/{project_id}/admin/users
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, req *PostV1ProjectsByProjectIdAdminUsersReq, params PostV1ProjectsByProjectIdAdminUsersParams) (r PostV1ProjectsByProjectIdAdminUsersRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, req *PostV1ProjectsByProjectIdAdminUsersReq, params PostV1ProjectsByProjectIdAdminUsersParams) (r *PostV1ProjectsByProjectIdAdminUsersCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2223,7 +2223,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsers(ctx context.Cont
 // Anonymize a user.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/anonymize
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams) (r PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2232,7 +2232,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize
 // Ban a user.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/ban
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, req *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams) (r PostV1ProjectsByProjectIdAdminUsersByUserIdBanRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, req *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams) (r *PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2241,7 +2241,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx c
 // Start a user data export.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/export
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams) (r PostV1ProjectsByProjectIdAdminUsersByUserIdExportRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams) (r *PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2250,7 +2250,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ct
 // Create a support impersonation session.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/impersonate
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx context.Context, req *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams) (r PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx context.Context, req *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams) (r *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2259,7 +2259,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdImpersona
 // Remove MFA factors.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/mfa/reset
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams) (r PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams) (r *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2268,7 +2268,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(
 // Set a user's password.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/password
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx context.Context, req *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams) (r PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx context.Context, req *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2277,7 +2277,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(
 // Revoke a user's sessions.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/sessions/revoke
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams) (r PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams) (r *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2286,7 +2286,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsR
 // Unban a user.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/unban
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams) (r PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams) (r *PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2295,7 +2295,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx
 // Mark email verified.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/verify-email
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams) (r PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams) (r *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2304,7 +2304,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEma
 // Mark phone verified.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/verify-phone
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams) (r PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams) (r *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2313,7 +2313,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPho
 // Retry a delivery.
 //
 // POST /v1/projects/{project_id}/admin/webhook-deliveries/{delivery_id}/retry
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams) (r PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams) (r PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2322,7 +2322,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDel
 // Create a webhook.
 //
 // POST /v1/projects/{project_id}/admin/webhooks
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, req *PostV1ProjectsByProjectIdAdminWebhooksReq, params PostV1ProjectsByProjectIdAdminWebhooksParams) (r PostV1ProjectsByProjectIdAdminWebhooksRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, req *PostV1ProjectsByProjectIdAdminWebhooksReq, params PostV1ProjectsByProjectIdAdminWebhooksParams) (r *PostV1ProjectsByProjectIdAdminWebhooksCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2331,7 +2331,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooks(ctx context.C
 // Rotate webhook signing secret.
 //
 // POST /v1/projects/{project_id}/admin/webhooks/{id}/rotate-secret
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams) (r PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams) (r *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2340,7 +2340,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecr
 // Send a test event.
 //
 // POST /v1/projects/{project_id}/admin/webhooks/{id}/test
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, req *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams) (r PostV1ProjectsByProjectIdAdminWebhooksByIdTestRes, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, req *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams) (r PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2349,7 +2349,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx c
 // Create a SCIM group (forwarded downstream).
 //
 // POST /v1/scim/v2/{connection_id}/Groups
-func (UnimplementedHandler) PostV1ScimV2ByConnectionIdGroups(ctx context.Context, req PostV1ScimV2ByConnectionIdGroupsReq, params PostV1ScimV2ByConnectionIdGroupsParams) (r PostV1ScimV2ByConnectionIdGroupsRes, _ error) {
+func (UnimplementedHandler) PostV1ScimV2ByConnectionIdGroups(ctx context.Context, req PostV1ScimV2ByConnectionIdGroupsReq, params PostV1ScimV2ByConnectionIdGroupsParams) (r PostV1ScimV2ByConnectionIdGroupsCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2358,7 +2358,7 @@ func (UnimplementedHandler) PostV1ScimV2ByConnectionIdGroups(ctx context.Context
 // Create/provision a user identity.
 //
 // POST /v1/scim/v2/{connection_id}/Users
-func (UnimplementedHandler) PostV1ScimV2ByConnectionIdUsers(ctx context.Context, req *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams) (r PostV1ScimV2ByConnectionIdUsersRes, _ error) {
+func (UnimplementedHandler) PostV1ScimV2ByConnectionIdUsers(ctx context.Context, req *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams) (r PostV1ScimV2ByConnectionIdUsersCreated, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2367,7 +2367,7 @@ func (UnimplementedHandler) PostV1ScimV2ByConnectionIdUsers(ctx context.Context,
 // Authenticated with the service account's client secret or private_key_jwt.
 //
 // POST /v1/service-accounts/tokens
-func (UnimplementedHandler) PostV1ServiceAccountsTokens(ctx context.Context, req *PostV1ServiceAccountsTokensReq) (r PostV1ServiceAccountsTokensRes, _ error) {
+func (UnimplementedHandler) PostV1ServiceAccountsTokens(ctx context.Context, req *PostV1ServiceAccountsTokensReq) (r *PostV1ServiceAccountsTokensOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2376,7 +2376,7 @@ func (UnimplementedHandler) PostV1ServiceAccountsTokens(ctx context.Context, req
 // Mark a device trusted (MFA).
 //
 // POST /v1/sessions/{session_id}/trust
-func (UnimplementedHandler) PostV1SessionsBySessionIdTrust(ctx context.Context, req *PostV1SessionsBySessionIdTrustReq, params PostV1SessionsBySessionIdTrustParams) (r PostV1SessionsBySessionIdTrustRes, _ error) {
+func (UnimplementedHandler) PostV1SessionsBySessionIdTrust(ctx context.Context, req *PostV1SessionsBySessionIdTrustReq, params PostV1SessionsBySessionIdTrustParams) (r *PostV1SessionsBySessionIdTrustOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2412,7 +2412,7 @@ func (UnimplementedHandler) PostV1SsoSamlByConnectionIdSlo(ctx context.Context, 
 // Advance/reset the test clock.
 //
 // POST /v1/test/clock
-func (UnimplementedHandler) PostV1TestClock(ctx context.Context, req *PostV1TestClockReq, params PostV1TestClockParams) (r PostV1TestClockRes, _ error) {
+func (UnimplementedHandler) PostV1TestClock(ctx context.Context, req *PostV1TestClockReq, params PostV1TestClockParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2421,7 +2421,7 @@ func (UnimplementedHandler) PostV1TestClock(ctx context.Context, req *PostV1Test
 // Wipe test-environment data.
 //
 // POST /v1/test/reset
-func (UnimplementedHandler) PostV1TestReset(ctx context.Context, params PostV1TestResetParams) (r PostV1TestResetRes, _ error) {
+func (UnimplementedHandler) PostV1TestReset(ctx context.Context, params PostV1TestResetParams) (r PostV1TestResetOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2430,7 +2430,7 @@ func (UnimplementedHandler) PostV1TestReset(ctx context.Context, params PostV1Te
 // Seed test-environment fixtures.
 //
 // POST /v1/test/seed
-func (UnimplementedHandler) PostV1TestSeed(ctx context.Context, req PostV1TestSeedReq, params PostV1TestSeedParams) (r PostV1TestSeedRes, _ error) {
+func (UnimplementedHandler) PostV1TestSeed(ctx context.Context, req PostV1TestSeedReq, params PostV1TestSeedParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2439,7 +2439,7 @@ func (UnimplementedHandler) PostV1TestSeed(ctx context.Context, req PostV1TestSe
 // Live token introspection.
 //
 // POST /v1/tokens/introspect
-func (UnimplementedHandler) PostV1TokensIntrospect(ctx context.Context, req *PostV1TokensIntrospectReq) (r PostV1TokensIntrospectRes, _ error) {
+func (UnimplementedHandler) PostV1TokensIntrospect(ctx context.Context, req *PostV1TokensIntrospectReq) (r *PostV1TokensIntrospectOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2448,7 +2448,7 @@ func (UnimplementedHandler) PostV1TokensIntrospect(ctx context.Context, req *Pos
 // Revoke a token/session.
 //
 // POST /v1/tokens/revoke
-func (UnimplementedHandler) PostV1TokensRevoke(ctx context.Context, req *PostV1TokensRevokeReq) (r PostV1TokensRevokeRes, _ error) {
+func (UnimplementedHandler) PostV1TokensRevoke(ctx context.Context, req *PostV1TokensRevokeReq) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2457,7 +2457,7 @@ func (UnimplementedHandler) PostV1TokensRevoke(ctx context.Context, req *PostV1T
 // Verify a token via the server.
 //
 // POST /v1/tokens/verify
-func (UnimplementedHandler) PostV1TokensVerify(ctx context.Context, req *PostV1TokensVerifyReq) (r PostV1TokensVerifyRes, _ error) {
+func (UnimplementedHandler) PostV1TokensVerify(ctx context.Context, req *PostV1TokensVerifyReq) (r *PostV1TokensVerifyOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2466,7 +2466,7 @@ func (UnimplementedHandler) PostV1TokensVerify(ctx context.Context, req *PostV1T
 // Accept consents.
 //
 // POST /v1/users/me/consents
-func (UnimplementedHandler) PostV1UsersMeConsents(ctx context.Context, req *PostV1UsersMeConsentsReq) (r PostV1UsersMeConsentsRes, _ error) {
+func (UnimplementedHandler) PostV1UsersMeConsents(ctx context.Context, req *PostV1UsersMeConsentsReq) (r *PostV1UsersMeConsentsOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2475,7 +2475,7 @@ func (UnimplementedHandler) PostV1UsersMeConsents(ctx context.Context, req *Post
 // Start a GDPR export.
 //
 // POST /v1/users/me/export
-func (UnimplementedHandler) PostV1UsersMeExport(ctx context.Context) (r PostV1UsersMeExportRes, _ error) {
+func (UnimplementedHandler) PostV1UsersMeExport(ctx context.Context) (r *PostV1UsersMeExportOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2484,7 +2484,7 @@ func (UnimplementedHandler) PostV1UsersMeExport(ctx context.Context) (r PostV1Us
 // Set required consents.
 //
 // PUT /v1/projects/{project_id}/admin/consents
-func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminConsents(ctx context.Context, req *ConsentConfig, params PutV1ProjectsByProjectIdAdminConsentsParams) (r PutV1ProjectsByProjectIdAdminConsentsRes, _ error) {
+func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminConsents(ctx context.Context, req *ConsentConfig, params PutV1ProjectsByProjectIdAdminConsentsParams) (r *ConsentConfig, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2493,7 +2493,7 @@ func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminConsents(ctx context.Co
 // Set project feature toggles.
 //
 // PUT /v1/projects/{project_id}/admin/features
-func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, req PutV1ProjectsByProjectIdAdminFeaturesReq, params PutV1ProjectsByProjectIdAdminFeaturesParams) (r PutV1ProjectsByProjectIdAdminFeaturesRes, _ error) {
+func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, req PutV1ProjectsByProjectIdAdminFeaturesReq, params PutV1ProjectsByProjectIdAdminFeaturesParams) (r PutV1ProjectsByProjectIdAdminFeaturesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2502,7 +2502,7 @@ func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminFeatures(ctx context.Co
 // Set i18n catalogue overrides.
 //
 // PUT /v1/projects/{project_id}/admin/i18n/{locale}
-func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, req PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params PutV1ProjectsByProjectIdAdminI18nByLocaleParams) (r PutV1ProjectsByProjectIdAdminI18nByLocaleRes, _ error) {
+func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, req PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params PutV1ProjectsByProjectIdAdminI18nByLocaleParams) (r PutV1ProjectsByProjectIdAdminI18nByLocaleOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2511,7 +2511,7 @@ func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminI18nByLocale(ctx contex
 // Set retention policy.
 //
 // PUT /v1/projects/{project_id}/admin/retention-policy
-func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, req *RetentionPolicy, params PutV1ProjectsByProjectIdAdminRetentionPolicyParams) (r PutV1ProjectsByProjectIdAdminRetentionPolicyRes, _ error) {
+func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, req *RetentionPolicy, params PutV1ProjectsByProjectIdAdminRetentionPolicyParams) (r *RetentionPolicy, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2520,7 +2520,7 @@ func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx con
 // Replace a SCIM group (forwarded downstream).
 //
 // PUT /v1/scim/v2/{connection_id}/Groups/{group_id}
-func (UnimplementedHandler) PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, req PutV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PutV1ScimV2ByConnectionIdGroupsByGroupIdParams) (r PutV1ScimV2ByConnectionIdGroupsByGroupIdRes, _ error) {
+func (UnimplementedHandler) PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, req PutV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PutV1ScimV2ByConnectionIdGroupsByGroupIdParams) (r PutV1ScimV2ByConnectionIdGroupsByGroupIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2529,6 +2529,14 @@ func (UnimplementedHandler) PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context
 // Replace a SCIM user.
 //
 // PUT /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-func (UnimplementedHandler) PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, req *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams) (r PutV1ScimV2ByConnectionIdUsersByScimUserIdRes, _ error) {
+func (UnimplementedHandler) PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, req *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams) (r PutV1ScimV2ByConnectionIdUsersByScimUserIdOK, _ error) {
 	return r, ht.ErrNotImplemented
+}
+
+// NewError creates *DefaultStatusCode from error returned by handler.
+//
+// Used for common default response.
+func (UnimplementedHandler) NewError(ctx context.Context, err error) (r *DefaultStatusCode) {
+	r = new(DefaultStatusCode)
+	return r
 }

@@ -3,6 +3,7 @@
 package oas
 
 import (
+	"fmt"
 	"io"
 	"net/url"
 	"time"
@@ -10,6 +11,10 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
 )
+
+func (s *DefaultStatusCode) Error() string {
+	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
+}
 
 // Ref: #/components/schemas/AccessRequest
 type AccessRequest struct {
@@ -625,9 +630,6 @@ func (s *AuthConfig) SetAdditionalProps(val AuthConfigAdditional) {
 	s.AdditionalProps = val
 }
 
-func (*AuthConfig) getV1ProjectsByProjectIdAdminConfigAuthRes()   {}
-func (*AuthConfig) patchV1ProjectsByProjectIdAdminConfigAuthRes() {}
-
 type AuthConfigAdditional map[string]jx.Raw
 
 func (s *AuthConfigAdditional) init() AuthConfigAdditional {
@@ -783,18 +785,6 @@ func (s *AuthResult) SetNextStep(val OptNilNextStep) {
 	s.NextStep = val
 }
 
-func (*AuthResult) postV1AuthEmailVerificationVerifyRes() {}
-func (*AuthResult) postV1AuthGuestRes()                   {}
-func (*AuthResult) postV1AuthMagicLinkVerifyRes()         {}
-func (*AuthResult) postV1AuthMfaVerifyRes()               {}
-func (*AuthResult) postV1AuthOtpVerifyRes()               {}
-func (*AuthResult) postV1AuthPasswordResetRes()           {}
-func (*AuthResult) postV1AuthSessionSwitchGroupRes()      {}
-func (*AuthResult) postV1AuthSignUpRes()                  {}
-func (*AuthResult) postV1AuthTokenExchangeRes()           {}
-func (*AuthResult) postV1AuthTokenRefreshRes()            {}
-func (*AuthResult) postV1AuthWebauthnLoginVerifyRes()     {}
-
 // Ref: #/components/schemas/AuthResultOrNextStep
 // AuthResultOrNextStep represents sum type.
 type AuthResultOrNextStep struct {
@@ -861,8 +851,6 @@ func NewAuthNextStepAuthResultOrNextStep(v AuthNextStep) AuthResultOrNextStep {
 	s.SetAuthNextStep(v)
 	return s
 }
-
-func (*AuthResultOrNextStep) postV1AuthSignInPasswordRes() {}
 
 // Discriminates the auth response variant.
 type AuthResultResultType string
@@ -960,13 +948,6 @@ func (s *Challenge) SetExpiresAt(val Timestamp) {
 func (s *Challenge) SetType(val OptString) {
 	s.Type = val
 }
-
-func (*Challenge) postV1AuthEmailChangeStartRes()       {}
-func (*Challenge) postV1AuthEmailVerificationStartRes() {}
-func (*Challenge) postV1AuthMagicLinkStartRes()         {}
-func (*Challenge) postV1AuthOtpStartRes()               {}
-func (*Challenge) postV1AuthPhoneChangeStartRes()       {}
-func (*Challenge) postV1AuthPhoneVerificationStartRes() {}
 
 type ClientSecretBasic struct {
 	Username string
@@ -1116,9 +1097,6 @@ func (s *ConsentConfig) SetDocuments(val []ConsentDocument) {
 	s.Documents = val
 }
 
-func (*ConsentConfig) getV1ProjectsByProjectIdAdminConsentsRes() {}
-func (*ConsentConfig) putV1ProjectsByProjectIdAdminConsentsRes() {}
-
 // Ref: #/components/schemas/ConsentDocRef
 type ConsentDocRef struct {
 	Key     OptString    `json:"key"`
@@ -1241,455 +1219,37 @@ func (s *CoreProfile) SetLocale(val OptString) {
 	s.Locale = val
 }
 
-type DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdForbidden ErrorEnvelope
-
-func (*DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdForbidden) deleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes() {
-}
-
-type DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdNotFound ErrorEnvelope
-
-func (*DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdNotFound) deleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes() {
-}
-
-type DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdUnauthorized ErrorEnvelope
-
-func (*DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdUnauthorized) deleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes() {
-}
-
-type DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvForbidden ErrorEnvelope
-
-func (*DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvForbidden) deleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes() {
-}
-
-type DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvNotFound ErrorEnvelope
-
-func (*DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvNotFound) deleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes() {
-}
-
-type DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvUnauthorized ErrorEnvelope
-
-func (*DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvUnauthorized) deleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes() {
-}
-
-type DeleteMgmtV1ProjectsByProjectIdForbidden ErrorEnvelope
-
-func (*DeleteMgmtV1ProjectsByProjectIdForbidden) deleteMgmtV1ProjectsByProjectIdRes() {}
-
-type DeleteMgmtV1ProjectsByProjectIdNotFound ErrorEnvelope
-
-func (*DeleteMgmtV1ProjectsByProjectIdNotFound) deleteMgmtV1ProjectsByProjectIdRes() {}
-
-type DeleteMgmtV1ProjectsByProjectIdUnauthorized ErrorEnvelope
-
-func (*DeleteMgmtV1ProjectsByProjectIdUnauthorized) deleteMgmtV1ProjectsByProjectIdRes() {}
-
-type DeleteV1AuthIdentitiesByIdentityIdConflict ErrorEnvelope
-
-func (*DeleteV1AuthIdentitiesByIdentityIdConflict) deleteV1AuthIdentitiesByIdentityIdRes() {}
-
-type DeleteV1AuthIdentitiesByIdentityIdNotFound ErrorEnvelope
-
-func (*DeleteV1AuthIdentitiesByIdentityIdNotFound) deleteV1AuthIdentitiesByIdentityIdRes() {}
-
-type DeleteV1AuthIdentitiesByIdentityIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1AuthIdentitiesByIdentityIdUnauthorized) deleteV1AuthIdentitiesByIdentityIdRes() {}
-
-type DeleteV1AuthMfaFactorsByFactorIdNotFound ErrorEnvelope
-
-func (*DeleteV1AuthMfaFactorsByFactorIdNotFound) deleteV1AuthMfaFactorsByFactorIdRes() {}
-
-type DeleteV1AuthMfaFactorsByFactorIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1AuthMfaFactorsByFactorIdUnauthorized) deleteV1AuthMfaFactorsByFactorIdRes() {}
-
-type DeleteV1AuthWebauthnCredentialsByCredentialIdConflict ErrorEnvelope
-
-func (*DeleteV1AuthWebauthnCredentialsByCredentialIdConflict) deleteV1AuthWebauthnCredentialsByCredentialIdRes() {
-}
-
-type DeleteV1AuthWebauthnCredentialsByCredentialIdNotFound ErrorEnvelope
-
-func (*DeleteV1AuthWebauthnCredentialsByCredentialIdNotFound) deleteV1AuthWebauthnCredentialsByCredentialIdRes() {
-}
-
-type DeleteV1AuthWebauthnCredentialsByCredentialIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1AuthWebauthnCredentialsByCredentialIdUnauthorized) deleteV1AuthWebauthnCredentialsByCredentialIdRes() {
-}
-
-type DeleteV1OauthGrantsByGrantIdNotFound ErrorEnvelope
-
-func (*DeleteV1OauthGrantsByGrantIdNotFound) deleteV1OauthGrantsByGrantIdRes() {}
-
-type DeleteV1OauthGrantsByGrantIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1OauthGrantsByGrantIdUnauthorized) deleteV1OauthGrantsByGrantIdRes() {}
-
-type DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdForbidden) deleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdNotFound) deleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdUnauthorized) deleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminAppsByAppIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminAppsByAppIdForbidden) deleteV1ProjectsByProjectIdAdminAppsByAppIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminAppsByAppIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminAppsByAppIdNotFound) deleteV1ProjectsByProjectIdAdminAppsByAppIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdForbidden) deleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdNotFound) deleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdUnauthorized) deleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized) deleteV1ProjectsByProjectIdAdminAppsByAppIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdForbidden) deleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdNotFound) deleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdUnauthorized) deleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdForbidden) deleteV1ProjectsByProjectIdAdminEmailProvidersByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdNotFound) deleteV1ProjectsByProjectIdAdminEmailProvidersByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdUnauthorized) deleteV1ProjectsByProjectIdAdminEmailProvidersByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminHooksByIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminHooksByIdForbidden) deleteV1ProjectsByProjectIdAdminHooksByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminHooksByIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminHooksByIdNotFound) deleteV1ProjectsByProjectIdAdminHooksByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminHooksByIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminHooksByIdUnauthorized) deleteV1ProjectsByProjectIdAdminHooksByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminJwksByKeyIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminJwksByKeyIdForbidden) deleteV1ProjectsByProjectIdAdminJwksByKeyIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminJwksByKeyIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminJwksByKeyIdNotFound) deleteV1ProjectsByProjectIdAdminJwksByKeyIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminJwksByKeyIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminJwksByKeyIdUnauthorized) deleteV1ProjectsByProjectIdAdminJwksByKeyIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdForbidden) deleteV1ProjectsByProjectIdAdminOauthProvidersByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdNotFound) deleteV1ProjectsByProjectIdAdminOauthProvidersByIdRes() {
+// DefaultStatusCode wraps ErrorEnvelope with StatusCode.
+type DefaultStatusCode struct {
+	StatusCode int
+	Response   ErrorEnvelope
 }
 
-type DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdUnauthorized) deleteV1ProjectsByProjectIdAdminOauthProvidersByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdForbidden) deleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdNotFound) deleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdUnauthorized) deleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdForbidden) deleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdNotFound) deleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdUnauthorized) deleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden) deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound) deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdForbidden) deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdNotFound) deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdUnauthorized) deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized) deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdForbidden) deleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdNotFound) deleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdUnauthorized) deleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden) deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound) deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdForbidden) deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdNotFound) deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdUnauthorized) deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized) deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdForbidden) deleteV1ProjectsByProjectIdAdminTokenProfilesByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdNotFound) deleteV1ProjectsByProjectIdAdminTokenProfilesByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdUnauthorized) deleteV1ProjectsByProjectIdAdminTokenProfilesByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdForbidden) deleteV1ProjectsByProjectIdAdminUsersByUserIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdForbidden) deleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdNotFound) deleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdUnauthorized) deleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdForbidden) deleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdNotFound) deleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdUnauthorized) deleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdNotFound) deleteV1ProjectsByProjectIdAdminUsersByUserIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdForbidden) deleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRes() {
+// GetStatusCode returns the value of StatusCode.
+func (s *DefaultStatusCode) GetStatusCode() int {
+	return s.StatusCode
 }
 
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdNotFound) deleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdUnauthorized) deleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized) deleteV1ProjectsByProjectIdAdminUsersByUserIdRes() {
+// GetResponse returns the value of Response.
+func (s *DefaultStatusCode) GetResponse() ErrorEnvelope {
+	return s.Response
 }
 
-type DeleteV1ProjectsByProjectIdAdminWebhooksByIdForbidden ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminWebhooksByIdForbidden) deleteV1ProjectsByProjectIdAdminWebhooksByIdRes() {
-}
-
-type DeleteV1ProjectsByProjectIdAdminWebhooksByIdNotFound ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminWebhooksByIdNotFound) deleteV1ProjectsByProjectIdAdminWebhooksByIdRes() {
+// SetStatusCode sets the value of StatusCode.
+func (s *DefaultStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
 }
-
-type DeleteV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized) deleteV1ProjectsByProjectIdAdminWebhooksByIdRes() {
-}
-
-type DeleteV1ScimV2ByConnectionIdGroupsByGroupIdForbidden ErrorEnvelope
 
-func (*DeleteV1ScimV2ByConnectionIdGroupsByGroupIdForbidden) deleteV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
+// SetResponse sets the value of Response.
+func (s *DefaultStatusCode) SetResponse(val ErrorEnvelope) {
+	s.Response = val
 }
 
 // DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNoContent is response for DeleteV1ScimV2ByConnectionIdGroupsByGroupId operation.
 type DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNoContent struct{}
 
-func (*DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNoContent) deleteV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
-}
-
-type DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNotFound ErrorEnvelope
-
-func (*DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNotFound) deleteV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
-}
-
-type DeleteV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized) deleteV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
-}
-
-type DeleteV1ScimV2ByConnectionIdUsersByScimUserIdForbidden ErrorEnvelope
-
-func (*DeleteV1ScimV2ByConnectionIdUsersByScimUserIdForbidden) deleteV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
 // DeleteV1ScimV2ByConnectionIdUsersByScimUserIdNoContent is response for DeleteV1ScimV2ByConnectionIdUsersByScimUserId operation.
 type DeleteV1ScimV2ByConnectionIdUsersByScimUserIdNoContent struct{}
-
-func (*DeleteV1ScimV2ByConnectionIdUsersByScimUserIdNoContent) deleteV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
-type DeleteV1ScimV2ByConnectionIdUsersByScimUserIdNotFound ErrorEnvelope
-
-func (*DeleteV1ScimV2ByConnectionIdUsersByScimUserIdNotFound) deleteV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
-type DeleteV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized) deleteV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
-type DeleteV1SessionsBySessionIdNotFound ErrorEnvelope
-
-func (*DeleteV1SessionsBySessionIdNotFound) deleteV1SessionsBySessionIdRes() {}
-
-type DeleteV1SessionsBySessionIdUnauthorized ErrorEnvelope
-
-func (*DeleteV1SessionsBySessionIdUnauthorized) deleteV1SessionsBySessionIdRes() {}
 
 type DeleteV1SessionsOK struct {
 	RevokedCount OptInt `json:"revoked_count"`
@@ -1705,8 +1265,6 @@ func (s *DeleteV1SessionsOK) SetRevokedCount(val OptInt) {
 	s.RevokedCount = val
 }
 
-func (*DeleteV1SessionsOK) deleteV1SessionsRes() {}
-
 type DeleteV1SessionsReq struct {
 	ExceptCurrent OptBool `json:"except_current"`
 }
@@ -1720,10 +1278,6 @@ func (s *DeleteV1SessionsReq) GetExceptCurrent() OptBool {
 func (s *DeleteV1SessionsReq) SetExceptCurrent(val OptBool) {
 	s.ExceptCurrent = val
 }
-
-type DeleteV1UsersMeForbidden ErrorEnvelope
-
-func (*DeleteV1UsersMeForbidden) deleteV1UsersMeRes() {}
 
 type DeleteV1UsersMeReq struct {
 	Password OptString `json:"password"`
@@ -1749,10 +1303,6 @@ func (s *DeleteV1UsersMeReq) SetPassword(val OptString) {
 func (s *DeleteV1UsersMeReq) SetReason(val OptString) {
 	s.Reason = val
 }
-
-type DeleteV1UsersMeUnauthorized ErrorEnvelope
-
-func (*DeleteV1UsersMeUnauthorized) deleteV1UsersMeRes() {}
 
 // Ref: #/components/schemas/Domain
 type Domain struct {
@@ -1902,9 +1452,6 @@ func (s *EmailProvider) SetEnabled(val OptBool) {
 	s.Enabled = val
 }
 
-func (*EmailProvider) patchV1ProjectsByProjectIdAdminEmailProvidersByIdRes() {}
-func (*EmailProvider) postV1ProjectsByProjectIdAdminEmailProvidersRes()      {}
-
 type EmailProviderConfig map[string]jx.Raw
 
 func (s *EmailProviderConfig) init() EmailProviderConfig {
@@ -1978,68 +1525,6 @@ func (s *ErrorEnvelope) GetError() ErrorEnvelopeError {
 func (s *ErrorEnvelope) SetError(val ErrorEnvelopeError) {
 	s.Error = val
 }
-
-func (*ErrorEnvelope) deleteV1SessionsRes()                             {}
-func (*ErrorEnvelope) getOauth2UserinfoRes()                            {}
-func (*ErrorEnvelope) getV1AccountCapabilitiesRes()                     {}
-func (*ErrorEnvelope) getV1AuthIdentitiesRes()                          {}
-func (*ErrorEnvelope) getV1AuthMfaFactorsRes()                          {}
-func (*ErrorEnvelope) getV1AuthSessionRes()                             {}
-func (*ErrorEnvelope) getV1AuthWebauthnCredentialsRes()                 {}
-func (*ErrorEnvelope) getV1OauthGrantsRes()                             {}
-func (*ErrorEnvelope) getV1OauthInteractionByInteractionIdRes()         {}
-func (*ErrorEnvelope) getV1SessionsCurrentRes()                         {}
-func (*ErrorEnvelope) getV1SessionsRes()                                {}
-func (*ErrorEnvelope) getV1SsoConnectionsResolveRes()                   {}
-func (*ErrorEnvelope) getV1TokensCurrentRes()                           {}
-func (*ErrorEnvelope) getV1UsersMeActivityRes()                         {}
-func (*ErrorEnvelope) getV1UsersMeConsentsRes()                         {}
-func (*ErrorEnvelope) getV1UsersMeRes()                                 {}
-func (*ErrorEnvelope) postOauth2DeviceAuthorizationRes()                {}
-func (*ErrorEnvelope) postOauth2IntrospectRes()                         {}
-func (*ErrorEnvelope) postOauth2ParRes()                                {}
-func (*ErrorEnvelope) postOauth2RevokeRes()                             {}
-func (*ErrorEnvelope) postV1AuthEmailChangeStartRes()                   {}
-func (*ErrorEnvelope) postV1AuthEmailChangeVerifyRes()                  {}
-func (*ErrorEnvelope) postV1AuthEmailVerificationVerifyRes()            {}
-func (*ErrorEnvelope) postV1AuthGuestRes()                              {}
-func (*ErrorEnvelope) postV1AuthIdentitiesMergeConfirmRes()             {}
-func (*ErrorEnvelope) postV1AuthIdentitiesMergeStartRes()               {}
-func (*ErrorEnvelope) postV1AuthMagicLinkVerifyRes()                    {}
-func (*ErrorEnvelope) postV1AuthMfaEmailEnrollRes()                     {}
-func (*ErrorEnvelope) postV1AuthMfaRecoveryCodesGenerateRes()           {}
-func (*ErrorEnvelope) postV1AuthMfaSmsEnrollRes()                       {}
-func (*ErrorEnvelope) postV1AuthMfaTotpEnrollRes()                      {}
-func (*ErrorEnvelope) postV1AuthMfaTotpVerifyRes()                      {}
-func (*ErrorEnvelope) postV1AuthMfaVerifyRes()                          {}
-func (*ErrorEnvelope) postV1AuthMfaWebauthnEnrollOptionsRes()           {}
-func (*ErrorEnvelope) postV1AuthMfaWebauthnEnrollVerifyRes()            {}
-func (*ErrorEnvelope) postV1AuthOtpStartRes()                           {}
-func (*ErrorEnvelope) postV1AuthOtpVerifyRes()                          {}
-func (*ErrorEnvelope) postV1AuthPasswordChangeRes()                     {}
-func (*ErrorEnvelope) postV1AuthPasswordVerifyRes()                     {}
-func (*ErrorEnvelope) postV1AuthPhoneChangeStartRes()                   {}
-func (*ErrorEnvelope) postV1AuthPhoneChangeVerifyRes()                  {}
-func (*ErrorEnvelope) postV1AuthSessionStepUpRes()                      {}
-func (*ErrorEnvelope) postV1AuthSignInPasswordRes()                     {}
-func (*ErrorEnvelope) postV1AuthSignOutAllRes()                         {}
-func (*ErrorEnvelope) postV1AuthSignOutRes()                            {}
-func (*ErrorEnvelope) postV1AuthTokenExchangeRes()                      {}
-func (*ErrorEnvelope) postV1AuthTokenRefreshRes()                       {}
-func (*ErrorEnvelope) postV1AuthWebauthnLoginVerifyRes()                {}
-func (*ErrorEnvelope) postV1AuthWebauthnRegisterOptionsRes()            {}
-func (*ErrorEnvelope) postV1AuthWebauthnRegisterVerifyRes()             {}
-func (*ErrorEnvelope) postV1DeviceApproveRes()                          {}
-func (*ErrorEnvelope) postV1DeviceDenyRes()                             {}
-func (*ErrorEnvelope) postV1OauthInteractionByInteractionIdConsentRes() {}
-func (*ErrorEnvelope) postV1OauthInteractionByInteractionIdLoginRes()   {}
-func (*ErrorEnvelope) postV1ServiceAccountsTokensRes()                  {}
-func (*ErrorEnvelope) postV1SessionsBySessionIdTrustRes()               {}
-func (*ErrorEnvelope) postV1TokensIntrospectRes()                       {}
-func (*ErrorEnvelope) postV1TokensRevokeRes()                           {}
-func (*ErrorEnvelope) postV1TokensVerifyRes()                           {}
-func (*ErrorEnvelope) postV1UsersMeConsentsRes()                        {}
-func (*ErrorEnvelope) postV1UsersMeExportRes()                          {}
 
 type ErrorEnvelopeError struct {
 	// Stable machine-readable code. Branch on this.
@@ -2326,11 +1811,6 @@ func (s *FactorType) UnmarshalText(data []byte) error {
 	}
 }
 
-type GetMgmtV1ProjectsByProjectIdAdminTokensForbidden ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdAdminTokensForbidden) getMgmtV1ProjectsByProjectIdAdminTokensRes() {
-}
-
 type GetMgmtV1ProjectsByProjectIdAdminTokensOK map[string]jx.Raw
 
 func (s *GetMgmtV1ProjectsByProjectIdAdminTokensOK) init() GetMgmtV1ProjectsByProjectIdAdminTokensOK {
@@ -2340,18 +1820,6 @@ func (s *GetMgmtV1ProjectsByProjectIdAdminTokensOK) init() GetMgmtV1ProjectsByPr
 		*s = m
 	}
 	return m
-}
-
-func (*GetMgmtV1ProjectsByProjectIdAdminTokensOK) getMgmtV1ProjectsByProjectIdAdminTokensRes() {}
-
-type GetMgmtV1ProjectsByProjectIdAdminTokensUnauthorized ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdAdminTokensUnauthorized) getMgmtV1ProjectsByProjectIdAdminTokensRes() {
-}
-
-type GetMgmtV1ProjectsByProjectIdConfigExportForbidden ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdConfigExportForbidden) getMgmtV1ProjectsByProjectIdConfigExportRes() {
 }
 
 type GetMgmtV1ProjectsByProjectIdConfigExportOKApplicationJSON map[string]jx.Raw
@@ -2385,21 +1853,6 @@ func (s GetMgmtV1ProjectsByProjectIdConfigExportOKApplicationYaml) Read(p []byte
 func (*GetMgmtV1ProjectsByProjectIdConfigExportOKApplicationYaml) getMgmtV1ProjectsByProjectIdConfigExportRes() {
 }
 
-type GetMgmtV1ProjectsByProjectIdConfigExportUnauthorized ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdConfigExportUnauthorized) getMgmtV1ProjectsByProjectIdConfigExportRes() {
-}
-
-type GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvForbidden ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvForbidden) getMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes() {
-}
-
-type GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvNotFound ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvNotFound) getMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes() {
-}
-
 type GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK struct {
 	Environment OptEnvironment `json:"environment"`
 }
@@ -2412,19 +1865,6 @@ func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK) GetEnvironment() OptEn
 // SetEnvironment sets the value of Environment.
 func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK) SetEnvironment(val OptEnvironment) {
 	s.Environment = val
-}
-
-func (*GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK) getMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes() {
-}
-
-type GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvUnauthorized ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvUnauthorized) getMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes() {
-}
-
-type GetMgmtV1ProjectsByProjectIdEnvironmentsForbidden ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdEnvironmentsForbidden) getMgmtV1ProjectsByProjectIdEnvironmentsRes() {
 }
 
 type GetMgmtV1ProjectsByProjectIdEnvironmentsOK struct {
@@ -2441,17 +1881,6 @@ func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsOK) SetData(val []Environment) 
 	s.Data = val
 }
 
-func (*GetMgmtV1ProjectsByProjectIdEnvironmentsOK) getMgmtV1ProjectsByProjectIdEnvironmentsRes() {}
-
-type GetMgmtV1ProjectsByProjectIdEnvironmentsUnauthorized ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdEnvironmentsUnauthorized) getMgmtV1ProjectsByProjectIdEnvironmentsRes() {
-}
-
-type GetMgmtV1ProjectsByProjectIdFeaturesForbidden ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdFeaturesForbidden) getMgmtV1ProjectsByProjectIdFeaturesRes() {}
-
 type GetMgmtV1ProjectsByProjectIdFeaturesOK map[string]bool
 
 func (s *GetMgmtV1ProjectsByProjectIdFeaturesOK) init() GetMgmtV1ProjectsByProjectIdFeaturesOK {
@@ -2462,20 +1891,6 @@ func (s *GetMgmtV1ProjectsByProjectIdFeaturesOK) init() GetMgmtV1ProjectsByProje
 	}
 	return m
 }
-
-func (*GetMgmtV1ProjectsByProjectIdFeaturesOK) getMgmtV1ProjectsByProjectIdFeaturesRes() {}
-
-type GetMgmtV1ProjectsByProjectIdFeaturesUnauthorized ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdFeaturesUnauthorized) getMgmtV1ProjectsByProjectIdFeaturesRes() {}
-
-type GetMgmtV1ProjectsByProjectIdForbidden ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdForbidden) getMgmtV1ProjectsByProjectIdRes() {}
-
-type GetMgmtV1ProjectsByProjectIdNotFound ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdNotFound) getMgmtV1ProjectsByProjectIdRes() {}
 
 type GetMgmtV1ProjectsByProjectIdOK struct {
 	Project OptProject `json:"project"`
@@ -2490,16 +1905,6 @@ func (s *GetMgmtV1ProjectsByProjectIdOK) GetProject() OptProject {
 func (s *GetMgmtV1ProjectsByProjectIdOK) SetProject(val OptProject) {
 	s.Project = val
 }
-
-func (*GetMgmtV1ProjectsByProjectIdOK) getMgmtV1ProjectsByProjectIdRes() {}
-
-type GetMgmtV1ProjectsByProjectIdUnauthorized ErrorEnvelope
-
-func (*GetMgmtV1ProjectsByProjectIdUnauthorized) getMgmtV1ProjectsByProjectIdRes() {}
-
-type GetMgmtV1ProjectsForbidden ErrorEnvelope
-
-func (*GetMgmtV1ProjectsForbidden) getMgmtV1ProjectsRes() {}
 
 // Merged schema.
 type GetMgmtV1ProjectsOK struct {
@@ -2537,12 +1942,6 @@ func (s *GetMgmtV1ProjectsOK) SetNextCursor(val OptNilString) {
 func (s *GetMgmtV1ProjectsOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
-
-func (*GetMgmtV1ProjectsOK) getMgmtV1ProjectsRes() {}
-
-type GetMgmtV1ProjectsUnauthorized ErrorEnvelope
-
-func (*GetMgmtV1ProjectsUnauthorized) getMgmtV1ProjectsRes() {}
 
 // GetOauth2AuthorizeFound is response for GetOauth2Authorize operation.
 type GetOauth2AuthorizeFound struct {
@@ -2619,8 +2018,6 @@ func (s *GetOauth2UserinfoOK) init() GetOauth2UserinfoOK {
 	return m
 }
 
-func (*GetOauth2UserinfoOK) getOauth2UserinfoRes() {}
-
 type GetPByProjectIdEByEnvWellKnownJwksJsonOK map[string]jx.Raw
 
 func (s *GetPByProjectIdEByEnvWellKnownJwksJsonOK) init() GetPByProjectIdEByEnvWellKnownJwksJsonOK {
@@ -2656,8 +2053,6 @@ func (s *GetV1AccountCapabilitiesOK) GetCapabilities() OptGetV1AccountCapabiliti
 func (s *GetV1AccountCapabilitiesOK) SetCapabilities(val OptGetV1AccountCapabilitiesOKCapabilities) {
 	s.Capabilities = val
 }
-
-func (*GetV1AccountCapabilitiesOK) getV1AccountCapabilitiesRes() {}
 
 type GetV1AccountCapabilitiesOKCapabilities map[string]jx.Raw
 
@@ -2710,8 +2105,6 @@ func (s *GetV1AuthIdentitiesOK) SetData(val []Identity) {
 	s.Data = val
 }
 
-func (*GetV1AuthIdentitiesOK) getV1AuthIdentitiesRes() {}
-
 // GetV1AuthMagicLinkCallbackFound is response for GetV1AuthMagicLinkCallback operation.
 type GetV1AuthMagicLinkCallbackFound struct {
 	Location  OptURI
@@ -2751,8 +2144,6 @@ func (s *GetV1AuthMfaFactorsOK) GetData() []Factor {
 func (s *GetV1AuthMfaFactorsOK) SetData(val []Factor) {
 	s.Data = val
 }
-
-func (*GetV1AuthMfaFactorsOK) getV1AuthMfaFactorsRes() {}
 
 // GetV1AuthOauthByProviderCallbackFound is response for GetV1AuthOauthByProviderCallback operation.
 type GetV1AuthOauthByProviderCallbackFound struct {
@@ -2900,8 +2291,6 @@ func (s *GetV1AuthSessionOK) SetSession(val OptSession) {
 	s.Session = val
 }
 
-func (*GetV1AuthSessionOK) getV1AuthSessionRes() {}
-
 type GetV1AuthWebauthnCredentialsOK struct {
 	Data []WebAuthnCredential `json:"data"`
 }
@@ -2915,8 +2304,6 @@ func (s *GetV1AuthWebauthnCredentialsOK) GetData() []WebAuthnCredential {
 func (s *GetV1AuthWebauthnCredentialsOK) SetData(val []WebAuthnCredential) {
 	s.Data = val
 }
-
-func (*GetV1AuthWebauthnCredentialsOK) getV1AuthWebauthnCredentialsRes() {}
 
 type GetV1CsrfOK struct {
 	CsrfToken OptString `json:"csrf_token"`
@@ -3054,8 +2441,6 @@ func (s *GetV1HealthReadyOK) SetChecks(val []GetV1HealthReadyOKChecksItem) {
 	s.Checks = val
 }
 
-func (*GetV1HealthReadyOK) getV1HealthReadyRes() {}
-
 type GetV1HealthReadyOKChecksItem map[string]jx.Raw
 
 func (s *GetV1HealthReadyOKChecksItem) init() GetV1HealthReadyOKChecksItem {
@@ -3104,8 +2489,6 @@ func (s *GetV1OauthGrantsOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1OauthGrantsOK) getV1OauthGrantsRes() {}
-
 type GetV1OauthInteractionByInteractionIdOK struct {
 	Stage           OptGetV1OauthInteractionByInteractionIdOKStage  `json:"stage"`
 	Client          OptGetV1OauthInteractionByInteractionIdOKClient `json:"client"`
@@ -3152,8 +2535,6 @@ func (s *GetV1OauthInteractionByInteractionIdOK) SetRequestedScopes(val []string
 func (s *GetV1OauthInteractionByInteractionIdOK) SetPrompt(val OptNilString) {
 	s.Prompt = val
 }
-
-func (*GetV1OauthInteractionByInteractionIdOK) getV1OauthInteractionByInteractionIdRes() {}
 
 type GetV1OauthInteractionByInteractionIdOKClient map[string]jx.Raw
 
@@ -3207,11 +2588,6 @@ func (s *GetV1OauthInteractionByInteractionIdOKStage) UnmarshalText(data []byte)
 	}
 }
 
-type GetV1ProjectsByProjectIdAdminAccessRequestsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAccessRequestsForbidden) getV1ProjectsByProjectIdAdminAccessRequestsRes() {
-}
-
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminAccessRequestsOK struct {
 	Data       []AccessRequest `json:"data"`
@@ -3249,18 +2625,6 @@ func (s *GetV1ProjectsByProjectIdAdminAccessRequestsOK) SetHasMore(val OptBool) 
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminAccessRequestsOK) getV1ProjectsByProjectIdAdminAccessRequestsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminAccessRequestsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAccessRequestsUnauthorized) getV1ProjectsByProjectIdAdminAccessRequestsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminApiKeysForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminApiKeysForbidden) getV1ProjectsByProjectIdAdminApiKeysRes() {}
-
 type GetV1ProjectsByProjectIdAdminApiKeysOK struct {
 	Data []ApiKey `json:"data"`
 }
@@ -3273,22 +2637,6 @@ func (s *GetV1ProjectsByProjectIdAdminApiKeysOK) GetData() []ApiKey {
 // SetData sets the value of Data.
 func (s *GetV1ProjectsByProjectIdAdminApiKeysOK) SetData(val []ApiKey) {
 	s.Data = val
-}
-
-func (*GetV1ProjectsByProjectIdAdminApiKeysOK) getV1ProjectsByProjectIdAdminApiKeysRes() {}
-
-type GetV1ProjectsByProjectIdAdminApiKeysUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminApiKeysUnauthorized) getV1ProjectsByProjectIdAdminApiKeysRes() {}
-
-type GetV1ProjectsByProjectIdAdminAppsByAppIdForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAppsByAppIdForbidden) getV1ProjectsByProjectIdAdminAppsByAppIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminAppsByAppIdNotFound ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAppsByAppIdNotFound) getV1ProjectsByProjectIdAdminAppsByAppIdRes() {
 }
 
 type GetV1ProjectsByProjectIdAdminAppsByAppIdOK struct {
@@ -3304,17 +2652,6 @@ func (s *GetV1ProjectsByProjectIdAdminAppsByAppIdOK) GetApp() OptAppClient {
 func (s *GetV1ProjectsByProjectIdAdminAppsByAppIdOK) SetApp(val OptAppClient) {
 	s.App = val
 }
-
-func (*GetV1ProjectsByProjectIdAdminAppsByAppIdOK) getV1ProjectsByProjectIdAdminAppsByAppIdRes() {}
-
-type GetV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized) getV1ProjectsByProjectIdAdminAppsByAppIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminAppsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAppsForbidden) getV1ProjectsByProjectIdAdminAppsRes() {}
 
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminAppsOK struct {
@@ -3353,22 +2690,6 @@ func (s *GetV1ProjectsByProjectIdAdminAppsOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminAppsOK) getV1ProjectsByProjectIdAdminAppsRes() {}
-
-type GetV1ProjectsByProjectIdAdminAppsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAppsUnauthorized) getV1ProjectsByProjectIdAdminAppsRes() {}
-
-type GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdForbidden) getV1ProjectsByProjectIdAdminAuditLogsByAuditIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdNotFound ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdNotFound) getV1ProjectsByProjectIdAdminAuditLogsByAuditIdRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK struct {
 	AuditLog OptAuditLog `json:"audit_log"`
 }
@@ -3382,18 +2703,6 @@ func (s *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK) GetAuditLog() OptAud
 func (s *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK) SetAuditLog(val OptAuditLog) {
 	s.AuditLog = val
 }
-
-func (*GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK) getV1ProjectsByProjectIdAdminAuditLogsByAuditIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdUnauthorized) getV1ProjectsByProjectIdAdminAuditLogsByAuditIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminAuditLogsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAuditLogsForbidden) getV1ProjectsByProjectIdAdminAuditLogsRes() {}
 
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminAuditLogsOK struct {
@@ -3432,76 +2741,6 @@ func (s *GetV1ProjectsByProjectIdAdminAuditLogsOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminAuditLogsOK) getV1ProjectsByProjectIdAdminAuditLogsRes() {}
-
-type GetV1ProjectsByProjectIdAdminAuditLogsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminAuditLogsUnauthorized) getV1ProjectsByProjectIdAdminAuditLogsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConfigAuthForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConfigAuthForbidden) getV1ProjectsByProjectIdAdminConfigAuthRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConfigAuthUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConfigAuthUnauthorized) getV1ProjectsByProjectIdAdminConfigAuthRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConfigMfaPolicyForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConfigMfaPolicyForbidden) getV1ProjectsByProjectIdAdminConfigMfaPolicyRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConfigMfaPolicyUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConfigMfaPolicyUnauthorized) getV1ProjectsByProjectIdAdminConfigMfaPolicyRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConfigPasswordPolicyForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConfigPasswordPolicyForbidden) getV1ProjectsByProjectIdAdminConfigPasswordPolicyRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConfigPasswordPolicyUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConfigPasswordPolicyUnauthorized) getV1ProjectsByProjectIdAdminConfigPasswordPolicyRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConfigRateLimitsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConfigRateLimitsForbidden) getV1ProjectsByProjectIdAdminConfigRateLimitsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConfigRateLimitsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConfigRateLimitsUnauthorized) getV1ProjectsByProjectIdAdminConfigRateLimitsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConfigSessionPolicyForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConfigSessionPolicyForbidden) getV1ProjectsByProjectIdAdminConfigSessionPolicyRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConfigSessionPolicyUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConfigSessionPolicyUnauthorized) getV1ProjectsByProjectIdAdminConfigSessionPolicyRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminConsentsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConsentsForbidden) getV1ProjectsByProjectIdAdminConsentsRes() {}
-
-type GetV1ProjectsByProjectIdAdminConsentsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminConsentsUnauthorized) getV1ProjectsByProjectIdAdminConsentsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminDomainsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminDomainsForbidden) getV1ProjectsByProjectIdAdminDomainsRes() {}
-
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminDomainsOK struct {
 	Data       []Domain     `json:"data"`
@@ -3539,17 +2778,6 @@ func (s *GetV1ProjectsByProjectIdAdminDomainsOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminDomainsOK) getV1ProjectsByProjectIdAdminDomainsRes() {}
-
-type GetV1ProjectsByProjectIdAdminDomainsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminDomainsUnauthorized) getV1ProjectsByProjectIdAdminDomainsRes() {}
-
-type GetV1ProjectsByProjectIdAdminEmailProvidersForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminEmailProvidersForbidden) getV1ProjectsByProjectIdAdminEmailProvidersRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminEmailProvidersOK struct {
 	Data []EmailProvider `json:"data"`
 }
@@ -3564,19 +2792,6 @@ func (s *GetV1ProjectsByProjectIdAdminEmailProvidersOK) SetData(val []EmailProvi
 	s.Data = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminEmailProvidersOK) getV1ProjectsByProjectIdAdminEmailProvidersRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminEmailProvidersUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminEmailProvidersUnauthorized) getV1ProjectsByProjectIdAdminEmailProvidersRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminEmailTemplatesForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminEmailTemplatesForbidden) getV1ProjectsByProjectIdAdminEmailTemplatesRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminEmailTemplatesOK map[string]jx.Raw
 
 func (s *GetV1ProjectsByProjectIdAdminEmailTemplatesOK) init() GetV1ProjectsByProjectIdAdminEmailTemplatesOK {
@@ -3587,18 +2802,6 @@ func (s *GetV1ProjectsByProjectIdAdminEmailTemplatesOK) init() GetV1ProjectsByPr
 	}
 	return m
 }
-
-func (*GetV1ProjectsByProjectIdAdminEmailTemplatesOK) getV1ProjectsByProjectIdAdminEmailTemplatesRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminEmailTemplatesUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminEmailTemplatesUnauthorized) getV1ProjectsByProjectIdAdminEmailTemplatesRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminEventsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminEventsForbidden) getV1ProjectsByProjectIdAdminEventsRes() {}
 
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminEventsOK struct {
@@ -3637,22 +2840,6 @@ func (s *GetV1ProjectsByProjectIdAdminEventsOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminEventsOK) getV1ProjectsByProjectIdAdminEventsRes() {}
-
-type GetV1ProjectsByProjectIdAdminEventsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminEventsUnauthorized) getV1ProjectsByProjectIdAdminEventsRes() {}
-
-type GetV1ProjectsByProjectIdAdminExportsByJobIdForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminExportsByJobIdForbidden) getV1ProjectsByProjectIdAdminExportsByJobIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminExportsByJobIdNotFound ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminExportsByJobIdNotFound) getV1ProjectsByProjectIdAdminExportsByJobIdRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminExportsByJobIdOK struct {
 	Status      OptString    `json:"status"`
 	DownloadURL OptNilString `json:"download_url"`
@@ -3678,18 +2865,6 @@ func (s *GetV1ProjectsByProjectIdAdminExportsByJobIdOK) SetDownloadURL(val OptNi
 	s.DownloadURL = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminExportsByJobIdOK) getV1ProjectsByProjectIdAdminExportsByJobIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminExportsByJobIdUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminExportsByJobIdUnauthorized) getV1ProjectsByProjectIdAdminExportsByJobIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminFeaturesForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminFeaturesForbidden) getV1ProjectsByProjectIdAdminFeaturesRes() {}
-
 type GetV1ProjectsByProjectIdAdminFeaturesOK map[string]bool
 
 func (s *GetV1ProjectsByProjectIdAdminFeaturesOK) init() GetV1ProjectsByProjectIdAdminFeaturesOK {
@@ -3700,17 +2875,6 @@ func (s *GetV1ProjectsByProjectIdAdminFeaturesOK) init() GetV1ProjectsByProjectI
 	}
 	return m
 }
-
-func (*GetV1ProjectsByProjectIdAdminFeaturesOK) getV1ProjectsByProjectIdAdminFeaturesRes() {}
-
-type GetV1ProjectsByProjectIdAdminFeaturesUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminFeaturesUnauthorized) getV1ProjectsByProjectIdAdminFeaturesRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminHooksForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminHooksForbidden) getV1ProjectsByProjectIdAdminHooksRes() {}
 
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminHooksOK struct {
@@ -3749,22 +2913,6 @@ func (s *GetV1ProjectsByProjectIdAdminHooksOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminHooksOK) getV1ProjectsByProjectIdAdminHooksRes() {}
-
-type GetV1ProjectsByProjectIdAdminHooksUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminHooksUnauthorized) getV1ProjectsByProjectIdAdminHooksRes() {}
-
-type GetV1ProjectsByProjectIdAdminI18nByLocaleForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminI18nByLocaleForbidden) getV1ProjectsByProjectIdAdminI18nByLocaleRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminI18nByLocaleNotFound ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminI18nByLocaleNotFound) getV1ProjectsByProjectIdAdminI18nByLocaleRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminI18nByLocaleOK map[string]jx.Raw
 
 func (s *GetV1ProjectsByProjectIdAdminI18nByLocaleOK) init() GetV1ProjectsByProjectIdAdminI18nByLocaleOK {
@@ -3774,23 +2922,6 @@ func (s *GetV1ProjectsByProjectIdAdminI18nByLocaleOK) init() GetV1ProjectsByProj
 		*s = m
 	}
 	return m
-}
-
-func (*GetV1ProjectsByProjectIdAdminI18nByLocaleOK) getV1ProjectsByProjectIdAdminI18nByLocaleRes() {}
-
-type GetV1ProjectsByProjectIdAdminI18nByLocaleUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminI18nByLocaleUnauthorized) getV1ProjectsByProjectIdAdminI18nByLocaleRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminJobsByJobIdForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminJobsByJobIdForbidden) getV1ProjectsByProjectIdAdminJobsByJobIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminJobsByJobIdNotFound ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminJobsByJobIdNotFound) getV1ProjectsByProjectIdAdminJobsByJobIdRes() {
 }
 
 type GetV1ProjectsByProjectIdAdminJobsByJobIdOK struct {
@@ -3806,17 +2937,6 @@ func (s *GetV1ProjectsByProjectIdAdminJobsByJobIdOK) GetJob() OptJob {
 func (s *GetV1ProjectsByProjectIdAdminJobsByJobIdOK) SetJob(val OptJob) {
 	s.Job = val
 }
-
-func (*GetV1ProjectsByProjectIdAdminJobsByJobIdOK) getV1ProjectsByProjectIdAdminJobsByJobIdRes() {}
-
-type GetV1ProjectsByProjectIdAdminJobsByJobIdUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminJobsByJobIdUnauthorized) getV1ProjectsByProjectIdAdminJobsByJobIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminJobsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminJobsForbidden) getV1ProjectsByProjectIdAdminJobsRes() {}
 
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminJobsOK struct {
@@ -3855,16 +2975,6 @@ func (s *GetV1ProjectsByProjectIdAdminJobsOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminJobsOK) getV1ProjectsByProjectIdAdminJobsRes() {}
-
-type GetV1ProjectsByProjectIdAdminJobsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminJobsUnauthorized) getV1ProjectsByProjectIdAdminJobsRes() {}
-
-type GetV1ProjectsByProjectIdAdminJwksForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminJwksForbidden) getV1ProjectsByProjectIdAdminJwksRes() {}
-
 type GetV1ProjectsByProjectIdAdminJwksOK struct {
 	Data []SigningKey `json:"data"`
 }
@@ -3877,17 +2987,6 @@ func (s *GetV1ProjectsByProjectIdAdminJwksOK) GetData() []SigningKey {
 // SetData sets the value of Data.
 func (s *GetV1ProjectsByProjectIdAdminJwksOK) SetData(val []SigningKey) {
 	s.Data = val
-}
-
-func (*GetV1ProjectsByProjectIdAdminJwksOK) getV1ProjectsByProjectIdAdminJwksRes() {}
-
-type GetV1ProjectsByProjectIdAdminJwksUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminJwksUnauthorized) getV1ProjectsByProjectIdAdminJwksRes() {}
-
-type GetV1ProjectsByProjectIdAdminOauthProvidersForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminOauthProvidersForbidden) getV1ProjectsByProjectIdAdminOauthProvidersRes() {
 }
 
 type GetV1ProjectsByProjectIdAdminOauthProvidersOK struct {
@@ -3904,29 +3003,6 @@ func (s *GetV1ProjectsByProjectIdAdminOauthProvidersOK) SetData(val []OAuthProvi
 	s.Data = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminOauthProvidersOK) getV1ProjectsByProjectIdAdminOauthProvidersRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminOauthProvidersUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminOauthProvidersUnauthorized) getV1ProjectsByProjectIdAdminOauthProvidersRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminRetentionPolicyForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminRetentionPolicyForbidden) getV1ProjectsByProjectIdAdminRetentionPolicyRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminRetentionPolicyUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminRetentionPolicyUnauthorized) getV1ProjectsByProjectIdAdminRetentionPolicyRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminRiskEventsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminRiskEventsForbidden) getV1ProjectsByProjectIdAdminRiskEventsRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminRiskEventsOK map[string]jx.Raw
 
 func (s *GetV1ProjectsByProjectIdAdminRiskEventsOK) init() GetV1ProjectsByProjectIdAdminRiskEventsOK {
@@ -3937,17 +3013,6 @@ func (s *GetV1ProjectsByProjectIdAdminRiskEventsOK) init() GetV1ProjectsByProjec
 	}
 	return m
 }
-
-func (*GetV1ProjectsByProjectIdAdminRiskEventsOK) getV1ProjectsByProjectIdAdminRiskEventsRes() {}
-
-type GetV1ProjectsByProjectIdAdminRiskEventsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminRiskEventsUnauthorized) getV1ProjectsByProjectIdAdminRiskEventsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminRiskRulesForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminRiskRulesForbidden) getV1ProjectsByProjectIdAdminRiskRulesRes() {}
 
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminRiskRulesOK struct {
@@ -3986,23 +3051,6 @@ func (s *GetV1ProjectsByProjectIdAdminRiskRulesOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminRiskRulesOK) getV1ProjectsByProjectIdAdminRiskRulesRes() {}
-
-type GetV1ProjectsByProjectIdAdminRiskRulesUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminRiskRulesUnauthorized) getV1ProjectsByProjectIdAdminRiskRulesRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden) getV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound) getV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK struct {
 	ServiceAccount OptServiceAccount `json:"service_account"`
 }
@@ -4015,19 +3063,6 @@ func (s *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK) GetServiceAccount
 // SetServiceAccount sets the value of ServiceAccount.
 func (s *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK) SetServiceAccount(val OptServiceAccount) {
 	s.ServiceAccount = val
-}
-
-func (*GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK) getV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized) getV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminServiceAccountsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminServiceAccountsForbidden) getV1ProjectsByProjectIdAdminServiceAccountsRes() {
 }
 
 // Merged schema.
@@ -4067,19 +3102,6 @@ func (s *GetV1ProjectsByProjectIdAdminServiceAccountsOK) SetHasMore(val OptBool)
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminServiceAccountsOK) getV1ProjectsByProjectIdAdminServiceAccountsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminServiceAccountsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminServiceAccountsUnauthorized) getV1ProjectsByProjectIdAdminServiceAccountsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminSmsProvidersForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminSmsProvidersForbidden) getV1ProjectsByProjectIdAdminSmsProvidersRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminSmsProvidersOK struct {
 	Data []SmsProvider `json:"data"`
 }
@@ -4092,23 +3114,6 @@ func (s *GetV1ProjectsByProjectIdAdminSmsProvidersOK) GetData() []SmsProvider {
 // SetData sets the value of Data.
 func (s *GetV1ProjectsByProjectIdAdminSmsProvidersOK) SetData(val []SmsProvider) {
 	s.Data = val
-}
-
-func (*GetV1ProjectsByProjectIdAdminSmsProvidersOK) getV1ProjectsByProjectIdAdminSmsProvidersRes() {}
-
-type GetV1ProjectsByProjectIdAdminSmsProvidersUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminSmsProvidersUnauthorized) getV1ProjectsByProjectIdAdminSmsProvidersRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden) getV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound) getV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
 }
 
 type GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK struct {
@@ -4125,14 +3130,6 @@ func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK) SetConnection(val Op
 	s.Connection = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK) getV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensForbidden) getV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK struct {
 	Data []GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOKDataItem `json:"data"`
 }
@@ -4147,9 +3144,6 @@ func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK) SetData(va
 	s.Data = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK) getV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOKDataItem map[string]jx.Raw
 
 func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOKDataItem) init() GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOKDataItem {
@@ -4159,21 +3153,6 @@ func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOKDataItem) in
 		*s = m
 	}
 	return m
-}
-
-type GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensUnauthorized) getV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized) getV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminSsoConnectionsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminSsoConnectionsForbidden) getV1ProjectsByProjectIdAdminSsoConnectionsRes() {
 }
 
 // Merged schema.
@@ -4213,19 +3192,6 @@ func (s *GetV1ProjectsByProjectIdAdminSsoConnectionsOK) SetHasMore(val OptBool) 
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminSsoConnectionsOK) getV1ProjectsByProjectIdAdminSsoConnectionsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminSsoConnectionsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminSsoConnectionsUnauthorized) getV1ProjectsByProjectIdAdminSsoConnectionsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminTokenProfilesForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminTokenProfilesForbidden) getV1ProjectsByProjectIdAdminTokenProfilesRes() {
-}
-
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminTokenProfilesOK struct {
 	Data       []TokenProfile `json:"data"`
@@ -4261,24 +3227,6 @@ func (s *GetV1ProjectsByProjectIdAdminTokenProfilesOK) SetNextCursor(val OptNilS
 // SetHasMore sets the value of HasMore.
 func (s *GetV1ProjectsByProjectIdAdminTokenProfilesOK) SetHasMore(val OptBool) {
 	s.HasMore = val
-}
-
-func (*GetV1ProjectsByProjectIdAdminTokenProfilesOK) getV1ProjectsByProjectIdAdminTokenProfilesRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminTokenProfilesUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminTokenProfilesUnauthorized) getV1ProjectsByProjectIdAdminTokenProfilesRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminUsersByUserIdForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdForbidden) getV1ProjectsByProjectIdAdminUsersByUserIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsForbidden) getV1ProjectsByProjectIdAdminUsersByUserIdGrantsRes() {
 }
 
 // Merged schema.
@@ -4318,19 +3266,6 @@ func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK) SetHasMore(val OptB
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK) getV1ProjectsByProjectIdAdminUsersByUserIdGrantsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsUnauthorized) getV1ProjectsByProjectIdAdminUsersByUserIdGrantsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesForbidden) getV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK struct {
 	Data []Identity `json:"data"`
 }
@@ -4345,19 +3280,6 @@ func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK) SetData(val []I
 	s.Data = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK) getV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesUnauthorized) getV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminUsersByUserIdNotFound ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdNotFound) getV1ProjectsByProjectIdAdminUsersByUserIdRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminUsersByUserIdOK struct {
 	User OptUser `json:"user"`
 }
@@ -4370,14 +3292,6 @@ func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdOK) GetUser() OptUser {
 // SetUser sets the value of User.
 func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdOK) SetUser(val OptUser) {
 	s.User = val
-}
-
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdOK) getV1ProjectsByProjectIdAdminUsersByUserIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsForbidden) getV1ProjectsByProjectIdAdminUsersByUserIdSessionsRes() {
 }
 
 // Merged schema.
@@ -4417,23 +3331,6 @@ func (s *GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK) SetHasMore(val Op
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK) getV1ProjectsByProjectIdAdminUsersByUserIdSessionsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsUnauthorized) getV1ProjectsByProjectIdAdminUsersByUserIdSessionsRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized) getV1ProjectsByProjectIdAdminUsersByUserIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminUsersForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersForbidden) getV1ProjectsByProjectIdAdminUsersRes() {}
-
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminUsersOK struct {
 	Data       []User       `json:"data"`
@@ -4471,17 +3368,6 @@ func (s *GetV1ProjectsByProjectIdAdminUsersOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminUsersOK) getV1ProjectsByProjectIdAdminUsersRes() {}
-
-type GetV1ProjectsByProjectIdAdminUsersUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminUsersUnauthorized) getV1ProjectsByProjectIdAdminUsersRes() {}
-
-type GetV1ProjectsByProjectIdAdminWebhookDeliveriesForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminWebhookDeliveriesForbidden) getV1ProjectsByProjectIdAdminWebhookDeliveriesRes() {
-}
-
 type GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK map[string]jx.Raw
 
 func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK) init() GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK {
@@ -4491,24 +3377,6 @@ func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK) init() GetV1ProjectsB
 		*s = m
 	}
 	return m
-}
-
-func (*GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK) getV1ProjectsByProjectIdAdminWebhookDeliveriesRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminWebhookDeliveriesUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminWebhookDeliveriesUnauthorized) getV1ProjectsByProjectIdAdminWebhookDeliveriesRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminWebhooksByIdForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminWebhooksByIdForbidden) getV1ProjectsByProjectIdAdminWebhooksByIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminWebhooksByIdNotFound ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminWebhooksByIdNotFound) getV1ProjectsByProjectIdAdminWebhooksByIdRes() {
 }
 
 type GetV1ProjectsByProjectIdAdminWebhooksByIdOK struct {
@@ -4524,17 +3392,6 @@ func (s *GetV1ProjectsByProjectIdAdminWebhooksByIdOK) GetWebhook() OptWebhook {
 func (s *GetV1ProjectsByProjectIdAdminWebhooksByIdOK) SetWebhook(val OptWebhook) {
 	s.Webhook = val
 }
-
-func (*GetV1ProjectsByProjectIdAdminWebhooksByIdOK) getV1ProjectsByProjectIdAdminWebhooksByIdRes() {}
-
-type GetV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized) getV1ProjectsByProjectIdAdminWebhooksByIdRes() {
-}
-
-type GetV1ProjectsByProjectIdAdminWebhooksForbidden ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminWebhooksForbidden) getV1ProjectsByProjectIdAdminWebhooksRes() {}
 
 // Merged schema.
 type GetV1ProjectsByProjectIdAdminWebhooksOK struct {
@@ -4573,23 +3430,6 @@ func (s *GetV1ProjectsByProjectIdAdminWebhooksOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1ProjectsByProjectIdAdminWebhooksOK) getV1ProjectsByProjectIdAdminWebhooksRes() {}
-
-type GetV1ProjectsByProjectIdAdminWebhooksUnauthorized ErrorEnvelope
-
-func (*GetV1ProjectsByProjectIdAdminWebhooksUnauthorized) getV1ProjectsByProjectIdAdminWebhooksRes() {
-}
-
-type GetV1ScimV2ByConnectionIdGroupsByGroupIdForbidden ErrorEnvelope
-
-func (*GetV1ScimV2ByConnectionIdGroupsByGroupIdForbidden) getV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
-}
-
-type GetV1ScimV2ByConnectionIdGroupsByGroupIdNotFound ErrorEnvelope
-
-func (*GetV1ScimV2ByConnectionIdGroupsByGroupIdNotFound) getV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
-}
-
 type GetV1ScimV2ByConnectionIdGroupsByGroupIdOK map[string]jx.Raw
 
 func (s *GetV1ScimV2ByConnectionIdGroupsByGroupIdOK) init() GetV1ScimV2ByConnectionIdGroupsByGroupIdOK {
@@ -4601,17 +3441,6 @@ func (s *GetV1ScimV2ByConnectionIdGroupsByGroupIdOK) init() GetV1ScimV2ByConnect
 	return m
 }
 
-func (*GetV1ScimV2ByConnectionIdGroupsByGroupIdOK) getV1ScimV2ByConnectionIdGroupsByGroupIdRes() {}
-
-type GetV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized ErrorEnvelope
-
-func (*GetV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized) getV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
-}
-
-type GetV1ScimV2ByConnectionIdGroupsForbidden ErrorEnvelope
-
-func (*GetV1ScimV2ByConnectionIdGroupsForbidden) getV1ScimV2ByConnectionIdGroupsRes() {}
-
 type GetV1ScimV2ByConnectionIdGroupsOK map[string]jx.Raw
 
 func (s *GetV1ScimV2ByConnectionIdGroupsOK) init() GetV1ScimV2ByConnectionIdGroupsOK {
@@ -4621,22 +3450,6 @@ func (s *GetV1ScimV2ByConnectionIdGroupsOK) init() GetV1ScimV2ByConnectionIdGrou
 		*s = m
 	}
 	return m
-}
-
-func (*GetV1ScimV2ByConnectionIdGroupsOK) getV1ScimV2ByConnectionIdGroupsRes() {}
-
-type GetV1ScimV2ByConnectionIdGroupsUnauthorized ErrorEnvelope
-
-func (*GetV1ScimV2ByConnectionIdGroupsUnauthorized) getV1ScimV2ByConnectionIdGroupsRes() {}
-
-type GetV1ScimV2ByConnectionIdUsersByScimUserIdForbidden ErrorEnvelope
-
-func (*GetV1ScimV2ByConnectionIdUsersByScimUserIdForbidden) getV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
-type GetV1ScimV2ByConnectionIdUsersByScimUserIdNotFound ErrorEnvelope
-
-func (*GetV1ScimV2ByConnectionIdUsersByScimUserIdNotFound) getV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
 }
 
 type GetV1ScimV2ByConnectionIdUsersByScimUserIdOK map[string]jx.Raw
@@ -4650,18 +3463,6 @@ func (s *GetV1ScimV2ByConnectionIdUsersByScimUserIdOK) init() GetV1ScimV2ByConne
 	return m
 }
 
-func (*GetV1ScimV2ByConnectionIdUsersByScimUserIdOK) getV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
-type GetV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized ErrorEnvelope
-
-func (*GetV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized) getV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
-type GetV1ScimV2ByConnectionIdUsersForbidden ErrorEnvelope
-
-func (*GetV1ScimV2ByConnectionIdUsersForbidden) getV1ScimV2ByConnectionIdUsersRes() {}
-
 type GetV1ScimV2ByConnectionIdUsersOK map[string]jx.Raw
 
 func (s *GetV1ScimV2ByConnectionIdUsersOK) init() GetV1ScimV2ByConnectionIdUsersOK {
@@ -4672,12 +3473,6 @@ func (s *GetV1ScimV2ByConnectionIdUsersOK) init() GetV1ScimV2ByConnectionIdUsers
 	}
 	return m
 }
-
-func (*GetV1ScimV2ByConnectionIdUsersOK) getV1ScimV2ByConnectionIdUsersRes() {}
-
-type GetV1ScimV2ByConnectionIdUsersUnauthorized ErrorEnvelope
-
-func (*GetV1ScimV2ByConnectionIdUsersUnauthorized) getV1ScimV2ByConnectionIdUsersRes() {}
 
 type GetV1SessionsCurrentOK struct {
 	Session OptSession `json:"session"`
@@ -4693,8 +3488,6 @@ func (s *GetV1SessionsCurrentOK) SetSession(val OptSession) {
 	s.Session = val
 }
 
-func (*GetV1SessionsCurrentOK) getV1SessionsCurrentRes() {}
-
 type GetV1SessionsOK struct {
 	Data []Session `json:"data"`
 }
@@ -4709,8 +3502,6 @@ func (s *GetV1SessionsOK) SetData(val []Session) {
 	s.Data = val
 }
 
-func (*GetV1SessionsOK) getV1SessionsRes() {}
-
 type GetV1SsoConnectionsResolveOK struct {
 	Connection OptSSOConnection `json:"connection"`
 }
@@ -4724,8 +3515,6 @@ func (s *GetV1SsoConnectionsResolveOK) GetConnection() OptSSOConnection {
 func (s *GetV1SsoConnectionsResolveOK) SetConnection(val OptSSOConnection) {
 	s.Connection = val
 }
-
-func (*GetV1SsoConnectionsResolveOK) getV1SsoConnectionsResolveRes() {}
 
 // GetV1SsoOidcByConnectionIdCallbackFound is response for GetV1SsoOidcByConnectionIdCallback operation.
 type GetV1SsoOidcByConnectionIdCallbackFound struct {
@@ -4797,10 +3586,6 @@ func (s GetV1SsoSamlByConnectionIdMetadataOK) Read(p []byte) (n int, err error) 
 	return s.Data.Read(p)
 }
 
-type GetV1TestMessagesForbidden ErrorEnvelope
-
-func (*GetV1TestMessagesForbidden) getV1TestMessagesRes() {}
-
 type GetV1TestMessagesOK map[string]jx.Raw
 
 func (s *GetV1TestMessagesOK) init() GetV1TestMessagesOK {
@@ -4811,12 +3596,6 @@ func (s *GetV1TestMessagesOK) init() GetV1TestMessagesOK {
 	}
 	return m
 }
-
-func (*GetV1TestMessagesOK) getV1TestMessagesRes() {}
-
-type GetV1TestMessagesUnauthorized ErrorEnvelope
-
-func (*GetV1TestMessagesUnauthorized) getV1TestMessagesRes() {}
 
 type GetV1TokensCurrentOK struct {
 	Claims OptGetV1TokensCurrentOKClaims `json:"claims"`
@@ -4831,8 +3610,6 @@ func (s *GetV1TokensCurrentOK) GetClaims() OptGetV1TokensCurrentOKClaims {
 func (s *GetV1TokensCurrentOK) SetClaims(val OptGetV1TokensCurrentOKClaims) {
 	s.Claims = val
 }
-
-func (*GetV1TokensCurrentOK) getV1TokensCurrentRes() {}
 
 type GetV1TokensCurrentOKClaims map[string]jx.Raw
 
@@ -4882,8 +3659,6 @@ func (s *GetV1UsersMeActivityOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-func (*GetV1UsersMeActivityOK) getV1UsersMeActivityRes() {}
-
 type GetV1UsersMeConsentsOK struct {
 	Consents []GetV1UsersMeConsentsOKConsentsItem `json:"consents"`
 }
@@ -4897,8 +3672,6 @@ func (s *GetV1UsersMeConsentsOK) GetConsents() []GetV1UsersMeConsentsOKConsentsI
 func (s *GetV1UsersMeConsentsOK) SetConsents(val []GetV1UsersMeConsentsOKConsentsItem) {
 	s.Consents = val
 }
-
-func (*GetV1UsersMeConsentsOK) getV1UsersMeConsentsRes() {}
 
 // Merged schema.
 type GetV1UsersMeConsentsOKConsentsItem struct {
@@ -4959,10 +3732,6 @@ func (s *GetV1UsersMeConsentsOKConsentsItem) SetLocale(val OptString) {
 	s.Locale = val
 }
 
-type GetV1UsersMeExportByJobIdNotFound ErrorEnvelope
-
-func (*GetV1UsersMeExportByJobIdNotFound) getV1UsersMeExportByJobIdRes() {}
-
 type GetV1UsersMeExportByJobIdOK struct {
 	Status      OptString    `json:"status"`
 	DownloadURL OptNilString `json:"download_url"`
@@ -4988,12 +3757,6 @@ func (s *GetV1UsersMeExportByJobIdOK) SetDownloadURL(val OptNilString) {
 	s.DownloadURL = val
 }
 
-func (*GetV1UsersMeExportByJobIdOK) getV1UsersMeExportByJobIdRes() {}
-
-type GetV1UsersMeExportByJobIdUnauthorized ErrorEnvelope
-
-func (*GetV1UsersMeExportByJobIdUnauthorized) getV1UsersMeExportByJobIdRes() {}
-
 type GetV1UsersMeOK struct {
 	User OptUser `json:"user"`
 }
@@ -5007,8 +3770,6 @@ func (s *GetV1UsersMeOK) GetUser() OptUser {
 func (s *GetV1UsersMeOK) SetUser(val OptUser) {
 	s.User = val
 }
-
-func (*GetV1UsersMeOK) getV1UsersMeRes() {}
 
 // Ref: #/components/schemas/Hook
 type Hook struct {
@@ -5565,9 +4326,6 @@ func (s *MfaPolicy) SetRememberDevice(val OptBool) {
 	s.RememberDevice = val
 }
 
-func (*MfaPolicy) getV1ProjectsByProjectIdAdminConfigMfaPolicyRes()   {}
-func (*MfaPolicy) patchV1ProjectsByProjectIdAdminConfigMfaPolicyRes() {}
-
 // Ref: #/components/schemas/NextStep
 type NextStep string
 
@@ -5851,9 +4609,6 @@ func (s *OAuthProviderConfig) SetEnabled(val OptBool) {
 	s.Enabled = val
 }
 
-func (*OAuthProviderConfig) patchV1ProjectsByProjectIdAdminOauthProvidersByIdRes() {}
-func (*OAuthProviderConfig) postV1ProjectsByProjectIdAdminOauthProvidersRes()      {}
-
 // Ref: #/components/schemas/Ok
 type Ok struct {
 	Ok OptBool `json:"ok"`
@@ -5868,49 +4623,6 @@ func (s *Ok) GetOk() OptBool {
 func (s *Ok) SetOk(val OptBool) {
 	s.Ok = val
 }
-
-func (*Ok) deleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes()                    {}
-func (*Ok) deleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes()                       {}
-func (*Ok) deleteMgmtV1ProjectsByProjectIdRes()                                        {}
-func (*Ok) deleteV1AuthIdentitiesByIdentityIdRes()                                     {}
-func (*Ok) deleteV1AuthMfaFactorsByFactorIdRes()                                       {}
-func (*Ok) deleteV1AuthWebauthnCredentialsByCredentialIdRes()                          {}
-func (*Ok) deleteV1OauthGrantsByGrantIdRes()                                           {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes()                         {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminAppsByAppIdRes()                            {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes()           {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes()                      {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminEmailProvidersByIdRes()                     {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminHooksByIdRes()                              {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminJwksByKeyIdRes()                            {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminOauthProvidersByIdRes()                     {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdRes()               {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes()                      {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes()                  {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes() {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes()                       {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes()                     {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes()  {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminTokenProfilesByIdRes()                      {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdRes()           {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRes()    {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminUsersByUserIdRes()                          {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRes()       {}
-func (*Ok) deleteV1ProjectsByProjectIdAdminWebhooksByIdRes()                           {}
-func (*Ok) deleteV1SessionsBySessionIdRes()                                            {}
-func (*Ok) deleteV1UsersMeRes()                                                        {}
-func (*Ok) postV1AuthOauthByProviderUnlinkRes()                                        {}
-func (*Ok) postV1AuthPasswordChangeRes()                                               {}
-func (*Ok) postV1AuthPasswordForgotRes()                                               {}
-func (*Ok) postV1AuthSignOutRes()                                                      {}
-func (*Ok) postV1DeviceApproveRes()                                                    {}
-func (*Ok) postV1DeviceDenyRes()                                                       {}
-func (*Ok) postV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestRes()               {}
-func (*Ok) postV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeRes()                   {}
-func (*Ok) postV1ProjectsByProjectIdAdminUsersByUserIdPasswordRes()                    {}
-func (*Ok) postV1TestClockRes()                                                        {}
-func (*Ok) postV1TestSeedRes()                                                         {}
-func (*Ok) postV1TokensRevokeRes()                                                     {}
 
 // Merged schema.
 // Ref: #/components/schemas/OkResult
@@ -11859,9 +10571,6 @@ func (s *PasswordPolicy) SetZxcvbnMinScore(val OptInt) {
 	s.ZxcvbnMinScore = val
 }
 
-func (*PasswordPolicy) getV1ProjectsByProjectIdAdminConfigPasswordPolicyRes()   {}
-func (*PasswordPolicy) patchV1ProjectsByProjectIdAdminConfigPasswordPolicyRes() {}
-
 // Ref: #/components/schemas/PasswordResetRequest
 type PasswordResetRequest struct {
 	Token       OptNilString `json:"token"`
@@ -11958,10 +10667,6 @@ func (s *PasswordSignInRequest) SetCaptchaToken(val OptNilString) {
 	s.CaptchaToken = val
 }
 
-type PatchMgmtV1ProjectsByProjectIdFeaturesForbidden ErrorEnvelope
-
-func (*PatchMgmtV1ProjectsByProjectIdFeaturesForbidden) patchMgmtV1ProjectsByProjectIdFeaturesRes() {}
-
 type PatchMgmtV1ProjectsByProjectIdFeaturesOK map[string]bool
 
 func (s *PatchMgmtV1ProjectsByProjectIdFeaturesOK) init() PatchMgmtV1ProjectsByProjectIdFeaturesOK {
@@ -11973,8 +10678,6 @@ func (s *PatchMgmtV1ProjectsByProjectIdFeaturesOK) init() PatchMgmtV1ProjectsByP
 	return m
 }
 
-func (*PatchMgmtV1ProjectsByProjectIdFeaturesOK) patchMgmtV1ProjectsByProjectIdFeaturesRes() {}
-
 type PatchMgmtV1ProjectsByProjectIdFeaturesReq map[string]bool
 
 func (s *PatchMgmtV1ProjectsByProjectIdFeaturesReq) init() PatchMgmtV1ProjectsByProjectIdFeaturesReq {
@@ -11985,19 +10688,6 @@ func (s *PatchMgmtV1ProjectsByProjectIdFeaturesReq) init() PatchMgmtV1ProjectsBy
 	}
 	return m
 }
-
-type PatchMgmtV1ProjectsByProjectIdFeaturesUnauthorized ErrorEnvelope
-
-func (*PatchMgmtV1ProjectsByProjectIdFeaturesUnauthorized) patchMgmtV1ProjectsByProjectIdFeaturesRes() {
-}
-
-type PatchMgmtV1ProjectsByProjectIdForbidden ErrorEnvelope
-
-func (*PatchMgmtV1ProjectsByProjectIdForbidden) patchMgmtV1ProjectsByProjectIdRes() {}
-
-type PatchMgmtV1ProjectsByProjectIdNotFound ErrorEnvelope
-
-func (*PatchMgmtV1ProjectsByProjectIdNotFound) patchMgmtV1ProjectsByProjectIdRes() {}
 
 type PatchMgmtV1ProjectsByProjectIdOK struct {
 	Project OptProject `json:"project"`
@@ -12013,8 +10703,6 @@ func (s *PatchMgmtV1ProjectsByProjectIdOK) SetProject(val OptProject) {
 	s.Project = val
 }
 
-func (*PatchMgmtV1ProjectsByProjectIdOK) patchMgmtV1ProjectsByProjectIdRes() {}
-
 type PatchMgmtV1ProjectsByProjectIdReq map[string]jx.Raw
 
 func (s *PatchMgmtV1ProjectsByProjectIdReq) init() PatchMgmtV1ProjectsByProjectIdReq {
@@ -12024,15 +10712,6 @@ func (s *PatchMgmtV1ProjectsByProjectIdReq) init() PatchMgmtV1ProjectsByProjectI
 		*s = m
 	}
 	return m
-}
-
-type PatchMgmtV1ProjectsByProjectIdUnauthorized ErrorEnvelope
-
-func (*PatchMgmtV1ProjectsByProjectIdUnauthorized) patchMgmtV1ProjectsByProjectIdRes() {}
-
-type PatchV1AuthWebauthnCredentialsByCredentialIdNotFound ErrorEnvelope
-
-func (*PatchV1AuthWebauthnCredentialsByCredentialIdNotFound) patchV1AuthWebauthnCredentialsByCredentialIdRes() {
 }
 
 type PatchV1AuthWebauthnCredentialsByCredentialIdOK struct {
@@ -12049,9 +10728,6 @@ func (s *PatchV1AuthWebauthnCredentialsByCredentialIdOK) SetCredential(val OptWe
 	s.Credential = val
 }
 
-func (*PatchV1AuthWebauthnCredentialsByCredentialIdOK) patchV1AuthWebauthnCredentialsByCredentialIdRes() {
-}
-
 type PatchV1AuthWebauthnCredentialsByCredentialIdReq struct {
 	Name string `json:"name"`
 }
@@ -12066,21 +10742,6 @@ func (s *PatchV1AuthWebauthnCredentialsByCredentialIdReq) SetName(val string) {
 	s.Name = val
 }
 
-type PatchV1AuthWebauthnCredentialsByCredentialIdUnauthorized ErrorEnvelope
-
-func (*PatchV1AuthWebauthnCredentialsByCredentialIdUnauthorized) patchV1AuthWebauthnCredentialsByCredentialIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdForbidden) patchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdNotFound) patchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes() {
-}
-
 type PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK struct {
 	APIKey OptApiKey `json:"api_key"`
 }
@@ -12093,9 +10754,6 @@ func (s *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK) GetAPIKey() OptApiKey 
 // SetAPIKey sets the value of APIKey.
 func (s *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK) SetAPIKey(val OptApiKey) {
 	s.APIKey = val
-}
-
-func (*PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK) patchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes() {
 }
 
 type PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq struct {
@@ -12134,21 +10792,6 @@ func (s *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq) SetDisabled(val OptBo
 	s.Disabled = val
 }
 
-type PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdUnauthorized) patchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminAppsByAppIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminAppsByAppIdForbidden) patchV1ProjectsByProjectIdAdminAppsByAppIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminAppsByAppIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminAppsByAppIdNotFound) patchV1ProjectsByProjectIdAdminAppsByAppIdRes() {
-}
-
 type PatchV1ProjectsByProjectIdAdminAppsByAppIdOK struct {
 	App OptAppClient `json:"app"`
 }
@@ -12163,9 +10806,6 @@ func (s *PatchV1ProjectsByProjectIdAdminAppsByAppIdOK) SetApp(val OptAppClient) 
 	s.App = val
 }
 
-func (*PatchV1ProjectsByProjectIdAdminAppsByAppIdOK) patchV1ProjectsByProjectIdAdminAppsByAppIdRes() {
-}
-
 type PatchV1ProjectsByProjectIdAdminAppsByAppIdReq map[string]jx.Raw
 
 func (s *PatchV1ProjectsByProjectIdAdminAppsByAppIdReq) init() PatchV1ProjectsByProjectIdAdminAppsByAppIdReq {
@@ -12175,86 +10815,6 @@ func (s *PatchV1ProjectsByProjectIdAdminAppsByAppIdReq) init() PatchV1ProjectsBy
 		*s = m
 	}
 	return m
-}
-
-type PatchV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminAppsByAppIdUnauthorized) patchV1ProjectsByProjectIdAdminAppsByAppIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminConfigAuthForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminConfigAuthForbidden) patchV1ProjectsByProjectIdAdminConfigAuthRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminConfigAuthUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminConfigAuthUnauthorized) patchV1ProjectsByProjectIdAdminConfigAuthRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminConfigMfaPolicyForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminConfigMfaPolicyForbidden) patchV1ProjectsByProjectIdAdminConfigMfaPolicyRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminConfigMfaPolicyUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminConfigMfaPolicyUnauthorized) patchV1ProjectsByProjectIdAdminConfigMfaPolicyRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyForbidden) patchV1ProjectsByProjectIdAdminConfigPasswordPolicyRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyUnauthorized) patchV1ProjectsByProjectIdAdminConfigPasswordPolicyRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminConfigRateLimitsForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminConfigRateLimitsForbidden) patchV1ProjectsByProjectIdAdminConfigRateLimitsRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminConfigRateLimitsUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminConfigRateLimitsUnauthorized) patchV1ProjectsByProjectIdAdminConfigRateLimitsRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminConfigSessionPolicyForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminConfigSessionPolicyForbidden) patchV1ProjectsByProjectIdAdminConfigSessionPolicyRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminConfigSessionPolicyUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminConfigSessionPolicyUnauthorized) patchV1ProjectsByProjectIdAdminConfigSessionPolicyRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminEmailProvidersByIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminEmailProvidersByIdForbidden) patchV1ProjectsByProjectIdAdminEmailProvidersByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminEmailProvidersByIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminEmailProvidersByIdNotFound) patchV1ProjectsByProjectIdAdminEmailProvidersByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminEmailProvidersByIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminEmailProvidersByIdUnauthorized) patchV1ProjectsByProjectIdAdminEmailProvidersByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdForbidden) patchV1ProjectsByProjectIdAdminEmailTemplatesByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdNotFound) patchV1ProjectsByProjectIdAdminEmailTemplatesByIdRes() {
 }
 
 type PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK map[string]jx.Raw
@@ -12268,9 +10828,6 @@ func (s *PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK) init() PatchV1Proj
 	return m
 }
 
-func (*PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK) patchV1ProjectsByProjectIdAdminEmailTemplatesByIdRes() {
-}
-
 type PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq map[string]jx.Raw
 
 func (s *PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq) init() PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq {
@@ -12280,21 +10837,6 @@ func (s *PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq) init() PatchV1Pro
 		*s = m
 	}
 	return m
-}
-
-type PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdUnauthorized) patchV1ProjectsByProjectIdAdminEmailTemplatesByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminHooksByIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminHooksByIdForbidden) patchV1ProjectsByProjectIdAdminHooksByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminHooksByIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminHooksByIdNotFound) patchV1ProjectsByProjectIdAdminHooksByIdRes() {
 }
 
 type PatchV1ProjectsByProjectIdAdminHooksByIdOK struct {
@@ -12311,8 +10853,6 @@ func (s *PatchV1ProjectsByProjectIdAdminHooksByIdOK) SetHook(val OptHook) {
 	s.Hook = val
 }
 
-func (*PatchV1ProjectsByProjectIdAdminHooksByIdOK) patchV1ProjectsByProjectIdAdminHooksByIdRes() {}
-
 type PatchV1ProjectsByProjectIdAdminHooksByIdReq map[string]jx.Raw
 
 func (s *PatchV1ProjectsByProjectIdAdminHooksByIdReq) init() PatchV1ProjectsByProjectIdAdminHooksByIdReq {
@@ -12322,51 +10862,6 @@ func (s *PatchV1ProjectsByProjectIdAdminHooksByIdReq) init() PatchV1ProjectsByPr
 		*s = m
 	}
 	return m
-}
-
-type PatchV1ProjectsByProjectIdAdminHooksByIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminHooksByIdUnauthorized) patchV1ProjectsByProjectIdAdminHooksByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminOauthProvidersByIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminOauthProvidersByIdForbidden) patchV1ProjectsByProjectIdAdminOauthProvidersByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminOauthProvidersByIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminOauthProvidersByIdNotFound) patchV1ProjectsByProjectIdAdminOauthProvidersByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminOauthProvidersByIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminOauthProvidersByIdUnauthorized) patchV1ProjectsByProjectIdAdminOauthProvidersByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdForbidden) patchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdNotFound) patchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdUnauthorized) patchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdForbidden) patchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdNotFound) patchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
 }
 
 type PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK struct {
@@ -12381,9 +10876,6 @@ func (s *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK) GetServiceAccou
 // SetServiceAccount sets the value of ServiceAccount.
 func (s *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK) SetServiceAccount(val OptServiceAccount) {
 	s.ServiceAccount = val
-}
-
-func (*PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK) patchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
 }
 
 type PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq struct {
@@ -12411,36 +10903,6 @@ func (s *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq) SetDisabled(va
 	s.Disabled = val
 }
 
-type PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdUnauthorized) patchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminSmsProvidersByIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminSmsProvidersByIdForbidden) patchV1ProjectsByProjectIdAdminSmsProvidersByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminSmsProvidersByIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminSmsProvidersByIdNotFound) patchV1ProjectsByProjectIdAdminSmsProvidersByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminSmsProvidersByIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminSmsProvidersByIdUnauthorized) patchV1ProjectsByProjectIdAdminSmsProvidersByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdForbidden) patchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdNotFound) patchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
-}
-
 type PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK struct {
 	Connection OptSSOConnection `json:"connection"`
 }
@@ -12455,9 +10917,6 @@ func (s *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK) SetConnection(val 
 	s.Connection = val
 }
 
-func (*PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK) patchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
-}
-
 type PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq map[string]jx.Raw
 
 func (s *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq) init() PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq {
@@ -12467,21 +10926,6 @@ func (s *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq) init() PatchV1Pro
 		*s = m
 	}
 	return m
-}
-
-type PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdUnauthorized) patchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminTokenProfilesByIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminTokenProfilesByIdForbidden) patchV1ProjectsByProjectIdAdminTokenProfilesByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminTokenProfilesByIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminTokenProfilesByIdNotFound) patchV1ProjectsByProjectIdAdminTokenProfilesByIdRes() {
 }
 
 type PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK struct {
@@ -12498,9 +10942,6 @@ func (s *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK) SetProfile(val OptT
 	s.Profile = val
 }
 
-func (*PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK) patchV1ProjectsByProjectIdAdminTokenProfilesByIdRes() {
-}
-
 type PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq map[string]jx.Raw
 
 func (s *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq) init() PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq {
@@ -12510,21 +10951,6 @@ func (s *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq) init() PatchV1Proj
 		*s = m
 	}
 	return m
-}
-
-type PatchV1ProjectsByProjectIdAdminTokenProfilesByIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminTokenProfilesByIdUnauthorized) patchV1ProjectsByProjectIdAdminTokenProfilesByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminUsersByUserIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminUsersByUserIdForbidden) patchV1ProjectsByProjectIdAdminUsersByUserIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminUsersByUserIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminUsersByUserIdNotFound) patchV1ProjectsByProjectIdAdminUsersByUserIdRes() {
 }
 
 type PatchV1ProjectsByProjectIdAdminUsersByUserIdOK struct {
@@ -12541,9 +10967,6 @@ func (s *PatchV1ProjectsByProjectIdAdminUsersByUserIdOK) SetUser(val OptUser) {
 	s.User = val
 }
 
-func (*PatchV1ProjectsByProjectIdAdminUsersByUserIdOK) patchV1ProjectsByProjectIdAdminUsersByUserIdRes() {
-}
-
 type PatchV1ProjectsByProjectIdAdminUsersByUserIdReq map[string]jx.Raw
 
 func (s *PatchV1ProjectsByProjectIdAdminUsersByUserIdReq) init() PatchV1ProjectsByProjectIdAdminUsersByUserIdReq {
@@ -12553,21 +10976,6 @@ func (s *PatchV1ProjectsByProjectIdAdminUsersByUserIdReq) init() PatchV1Projects
 		*s = m
 	}
 	return m
-}
-
-type PatchV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminUsersByUserIdUnauthorized) patchV1ProjectsByProjectIdAdminUsersByUserIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminWebhooksByIdForbidden ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminWebhooksByIdForbidden) patchV1ProjectsByProjectIdAdminWebhooksByIdRes() {
-}
-
-type PatchV1ProjectsByProjectIdAdminWebhooksByIdNotFound ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminWebhooksByIdNotFound) patchV1ProjectsByProjectIdAdminWebhooksByIdRes() {
 }
 
 type PatchV1ProjectsByProjectIdAdminWebhooksByIdOK struct {
@@ -12584,9 +10992,6 @@ func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK) SetWebhook(val OptWebhoo
 	s.Webhook = val
 }
 
-func (*PatchV1ProjectsByProjectIdAdminWebhooksByIdOK) patchV1ProjectsByProjectIdAdminWebhooksByIdRes() {
-}
-
 type PatchV1ProjectsByProjectIdAdminWebhooksByIdReq map[string]jx.Raw
 
 func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) init() PatchV1ProjectsByProjectIdAdminWebhooksByIdReq {
@@ -12596,21 +11001,6 @@ func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) init() PatchV1ProjectsB
 		*s = m
 	}
 	return m
-}
-
-type PatchV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ProjectsByProjectIdAdminWebhooksByIdUnauthorized) patchV1ProjectsByProjectIdAdminWebhooksByIdRes() {
-}
-
-type PatchV1ScimV2ByConnectionIdGroupsByGroupIdForbidden ErrorEnvelope
-
-func (*PatchV1ScimV2ByConnectionIdGroupsByGroupIdForbidden) patchV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
-}
-
-type PatchV1ScimV2ByConnectionIdGroupsByGroupIdNotFound ErrorEnvelope
-
-func (*PatchV1ScimV2ByConnectionIdGroupsByGroupIdNotFound) patchV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
 }
 
 type PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK map[string]jx.Raw
@@ -12624,9 +11014,6 @@ func (s *PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK) init() PatchV1ScimV2ByCon
 	return m
 }
 
-func (*PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK) patchV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
-}
-
 type PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq map[string]jx.Raw
 
 func (s *PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq) init() PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq {
@@ -12636,21 +11023,6 @@ func (s *PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq) init() PatchV1ScimV2ByCo
 		*s = m
 	}
 	return m
-}
-
-type PatchV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized) patchV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
-}
-
-type PatchV1ScimV2ByConnectionIdUsersByScimUserIdForbidden ErrorEnvelope
-
-func (*PatchV1ScimV2ByConnectionIdUsersByScimUserIdForbidden) patchV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
-type PatchV1ScimV2ByConnectionIdUsersByScimUserIdNotFound ErrorEnvelope
-
-func (*PatchV1ScimV2ByConnectionIdUsersByScimUserIdNotFound) patchV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
 }
 
 type PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK map[string]jx.Raw
@@ -12663,18 +11035,6 @@ func (s *PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK) init() PatchV1ScimV2ByC
 	}
 	return m
 }
-
-func (*PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK) patchV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
-type PatchV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized ErrorEnvelope
-
-func (*PatchV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized) patchV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
-type PatchV1SessionsBySessionIdNotFound ErrorEnvelope
-
-func (*PatchV1SessionsBySessionIdNotFound) patchV1SessionsBySessionIdRes() {}
 
 type PatchV1SessionsBySessionIdOK struct {
 	Session OptSession `json:"session"`
@@ -12690,8 +11050,6 @@ func (s *PatchV1SessionsBySessionIdOK) SetSession(val OptSession) {
 	s.Session = val
 }
 
-func (*PatchV1SessionsBySessionIdOK) patchV1SessionsBySessionIdRes() {}
-
 type PatchV1SessionsBySessionIdReq struct {
 	DeviceName string `json:"device_name"`
 }
@@ -12706,10 +11064,6 @@ func (s *PatchV1SessionsBySessionIdReq) SetDeviceName(val string) {
 	s.DeviceName = val
 }
 
-type PatchV1SessionsBySessionIdUnauthorized ErrorEnvelope
-
-func (*PatchV1SessionsBySessionIdUnauthorized) patchV1SessionsBySessionIdRes() {}
-
 type PatchV1UsersMeOK struct {
 	User OptUser `json:"user"`
 }
@@ -12723,8 +11077,6 @@ func (s *PatchV1UsersMeOK) GetUser() OptUser {
 func (s *PatchV1UsersMeOK) SetUser(val OptUser) {
 	s.User = val
 }
-
-func (*PatchV1UsersMeOK) patchV1UsersMeRes() {}
 
 type PatchV1UsersMeReq struct {
 	Name      OptString                    `json:"name"`
@@ -12783,14 +11135,6 @@ func (s *PatchV1UsersMeReqMetadata) init() PatchV1UsersMeReqMetadata {
 	}
 	return m
 }
-
-type PatchV1UsersMeUnauthorized ErrorEnvelope
-
-func (*PatchV1UsersMeUnauthorized) patchV1UsersMeRes() {}
-
-type PatchV1UsersMeUnprocessableEntity ErrorEnvelope
-
-func (*PatchV1UsersMeUnprocessableEntity) patchV1UsersMeRes() {}
 
 // Ref: #/components/schemas/PhoneVerifyResult
 // PhoneVerifyResult represents sum type.
@@ -12859,13 +11203,6 @@ func NewUserUpdatedResultPhoneVerifyResult(v UserUpdatedResult) PhoneVerifyResul
 	return s
 }
 
-func (*PhoneVerifyResult) postV1AuthPhoneVerificationVerifyRes() {}
-
-type PostMgmtV1ProjectsByProjectIdAdminTokensForbidden ErrorEnvelope
-
-func (*PostMgmtV1ProjectsByProjectIdAdminTokensForbidden) postMgmtV1ProjectsByProjectIdAdminTokensRes() {
-}
-
 type PostMgmtV1ProjectsByProjectIdAdminTokensOK struct {
 	AdminToken OptString    `json:"admin_token"`
 	ExpiresAt  OptTimestamp `json:"expires_at"`
@@ -12890,8 +11227,6 @@ func (s *PostMgmtV1ProjectsByProjectIdAdminTokensOK) SetAdminToken(val OptString
 func (s *PostMgmtV1ProjectsByProjectIdAdminTokensOK) SetExpiresAt(val OptTimestamp) {
 	s.ExpiresAt = val
 }
-
-func (*PostMgmtV1ProjectsByProjectIdAdminTokensOK) postMgmtV1ProjectsByProjectIdAdminTokensRes() {}
 
 type PostMgmtV1ProjectsByProjectIdAdminTokensReq struct {
 	Name      string      `json:"name"`
@@ -12929,16 +11264,6 @@ func (s *PostMgmtV1ProjectsByProjectIdAdminTokensReq) SetExpiresAt(val OptDateTi
 	s.ExpiresAt = val
 }
 
-type PostMgmtV1ProjectsByProjectIdAdminTokensUnauthorized ErrorEnvelope
-
-func (*PostMgmtV1ProjectsByProjectIdAdminTokensUnauthorized) postMgmtV1ProjectsByProjectIdAdminTokensRes() {
-}
-
-type PostMgmtV1ProjectsByProjectIdConfigApplyForbidden ErrorEnvelope
-
-func (*PostMgmtV1ProjectsByProjectIdConfigApplyForbidden) postMgmtV1ProjectsByProjectIdConfigApplyRes() {
-}
-
 type PostMgmtV1ProjectsByProjectIdConfigApplyOK map[string]jx.Raw
 
 func (s *PostMgmtV1ProjectsByProjectIdConfigApplyOK) init() PostMgmtV1ProjectsByProjectIdConfigApplyOK {
@@ -12950,8 +11275,6 @@ func (s *PostMgmtV1ProjectsByProjectIdConfigApplyOK) init() PostMgmtV1ProjectsBy
 	return m
 }
 
-func (*PostMgmtV1ProjectsByProjectIdConfigApplyOK) postMgmtV1ProjectsByProjectIdConfigApplyRes() {}
-
 type PostMgmtV1ProjectsByProjectIdConfigApplyReq map[string]jx.Raw
 
 func (s *PostMgmtV1ProjectsByProjectIdConfigApplyReq) init() PostMgmtV1ProjectsByProjectIdConfigApplyReq {
@@ -12961,16 +11284,6 @@ func (s *PostMgmtV1ProjectsByProjectIdConfigApplyReq) init() PostMgmtV1ProjectsB
 		*s = m
 	}
 	return m
-}
-
-type PostMgmtV1ProjectsByProjectIdConfigApplyUnauthorized ErrorEnvelope
-
-func (*PostMgmtV1ProjectsByProjectIdConfigApplyUnauthorized) postMgmtV1ProjectsByProjectIdConfigApplyRes() {
-}
-
-type PostMgmtV1ProjectsByProjectIdConfigPlanForbidden ErrorEnvelope
-
-func (*PostMgmtV1ProjectsByProjectIdConfigPlanForbidden) postMgmtV1ProjectsByProjectIdConfigPlanRes() {
 }
 
 type PostMgmtV1ProjectsByProjectIdConfigPlanOK map[string]jx.Raw
@@ -12984,8 +11297,6 @@ func (s *PostMgmtV1ProjectsByProjectIdConfigPlanOK) init() PostMgmtV1ProjectsByP
 	return m
 }
 
-func (*PostMgmtV1ProjectsByProjectIdConfigPlanOK) postMgmtV1ProjectsByProjectIdConfigPlanRes() {}
-
 type PostMgmtV1ProjectsByProjectIdConfigPlanReq map[string]jx.Raw
 
 func (s *PostMgmtV1ProjectsByProjectIdConfigPlanReq) init() PostMgmtV1ProjectsByProjectIdConfigPlanReq {
@@ -12995,11 +11306,6 @@ func (s *PostMgmtV1ProjectsByProjectIdConfigPlanReq) init() PostMgmtV1ProjectsBy
 		*s = m
 	}
 	return m
-}
-
-type PostMgmtV1ProjectsByProjectIdConfigPlanUnauthorized ErrorEnvelope
-
-func (*PostMgmtV1ProjectsByProjectIdConfigPlanUnauthorized) postMgmtV1ProjectsByProjectIdConfigPlanRes() {
 }
 
 type PostMgmtV1ProjectsByProjectIdEnvironmentsCreated struct {
@@ -13014,14 +11320,6 @@ func (s *PostMgmtV1ProjectsByProjectIdEnvironmentsCreated) GetEnvironment() OptE
 // SetEnvironment sets the value of Environment.
 func (s *PostMgmtV1ProjectsByProjectIdEnvironmentsCreated) SetEnvironment(val OptEnvironment) {
 	s.Environment = val
-}
-
-func (*PostMgmtV1ProjectsByProjectIdEnvironmentsCreated) postMgmtV1ProjectsByProjectIdEnvironmentsRes() {
-}
-
-type PostMgmtV1ProjectsByProjectIdEnvironmentsForbidden ErrorEnvelope
-
-func (*PostMgmtV1ProjectsByProjectIdEnvironmentsForbidden) postMgmtV1ProjectsByProjectIdEnvironmentsRes() {
 }
 
 type PostMgmtV1ProjectsByProjectIdEnvironmentsReq struct {
@@ -13049,11 +11347,6 @@ func (s *PostMgmtV1ProjectsByProjectIdEnvironmentsReq) SetCloneConfigFrom(val Op
 	s.CloneConfigFrom = val
 }
 
-type PostMgmtV1ProjectsByProjectIdEnvironmentsUnauthorized ErrorEnvelope
-
-func (*PostMgmtV1ProjectsByProjectIdEnvironmentsUnauthorized) postMgmtV1ProjectsByProjectIdEnvironmentsRes() {
-}
-
 type PostMgmtV1ProjectsCreated struct {
 	Project OptProject `json:"project"`
 }
@@ -13067,12 +11360,6 @@ func (s *PostMgmtV1ProjectsCreated) GetProject() OptProject {
 func (s *PostMgmtV1ProjectsCreated) SetProject(val OptProject) {
 	s.Project = val
 }
-
-func (*PostMgmtV1ProjectsCreated) postMgmtV1ProjectsRes() {}
-
-type PostMgmtV1ProjectsForbidden ErrorEnvelope
-
-func (*PostMgmtV1ProjectsForbidden) postMgmtV1ProjectsRes() {}
 
 type PostMgmtV1ProjectsReq struct {
 	Name             string                               `json:"name"`
@@ -13142,10 +11429,6 @@ func (s *PostMgmtV1ProjectsReqFeatureGates) init() PostMgmtV1ProjectsReqFeatureG
 	}
 	return m
 }
-
-type PostMgmtV1ProjectsUnauthorized ErrorEnvelope
-
-func (*PostMgmtV1ProjectsUnauthorized) postMgmtV1ProjectsRes() {}
 
 // PostOauth2BackchannelLogoutOK is response for PostOauth2BackchannelLogout operation.
 type PostOauth2BackchannelLogoutOK struct{}
@@ -13233,8 +11516,6 @@ func (s *PostOauth2DeviceAuthorizationOK) SetInterval(val OptInt) {
 	s.Interval = val
 }
 
-func (*PostOauth2DeviceAuthorizationOK) postOauth2DeviceAuthorizationRes() {}
-
 type PostOauth2DeviceAuthorizationReq struct {
 	ClientID OptString `json:"client_id"`
 	Scope    OptString `json:"scope"`
@@ -13284,8 +11565,6 @@ func (s *PostOauth2IntrospectOK) SetActive(val OptBool) {
 func (s *PostOauth2IntrospectOK) SetAdditionalProps(val PostOauth2IntrospectOKAdditional) {
 	s.AdditionalProps = val
 }
-
-func (*PostOauth2IntrospectOK) postOauth2IntrospectRes() {}
 
 type PostOauth2IntrospectOKAdditional map[string]jx.Raw
 
@@ -13337,12 +11616,8 @@ func (s *PostOauth2ParCreated) SetExpiresIn(val OptInt) {
 	s.ExpiresIn = val
 }
 
-func (*PostOauth2ParCreated) postOauth2ParRes() {}
-
 // PostOauth2RevokeOK is response for PostOauth2Revoke operation.
 type PostOauth2RevokeOK struct{}
-
-func (*PostOauth2RevokeOK) postOauth2RevokeRes() {}
 
 type PostOauth2RevokeReq struct {
 	Token         OptString `json:"token"`
@@ -13369,10 +11644,6 @@ func (s *PostOauth2RevokeReq) SetTokenTypeHint(val OptString) {
 	s.TokenTypeHint = val
 }
 
-type PostOauth2TokenBadRequest ErrorEnvelope
-
-func (*PostOauth2TokenBadRequest) postOauth2TokenRes() {}
-
 type PostOauth2TokenOK map[string]jx.Raw
 
 func (s *PostOauth2TokenOK) init() PostOauth2TokenOK {
@@ -13383,8 +11654,6 @@ func (s *PostOauth2TokenOK) init() PostOauth2TokenOK {
 	}
 	return m
 }
-
-func (*PostOauth2TokenOK) postOauth2TokenRes() {}
 
 type PostOauth2TokenReq struct {
 	GrantType    OptString `json:"grant_type"`
@@ -13476,10 +11745,6 @@ func (s *PostOauth2TokenReq) SetClientSecret(val OptString) {
 func (s *PostOauth2TokenReq) SetDeviceCode(val OptString) {
 	s.DeviceCode = val
 }
-
-type PostOauth2TokenUnauthorized ErrorEnvelope
-
-func (*PostOauth2TokenUnauthorized) postOauth2TokenRes() {}
 
 type PostV1AuthAccessRequestsOK struct {
 	Request OptAccessRequest `json:"request"`
@@ -13602,8 +11867,6 @@ func (s *PostV1AuthEmailChangeVerifyOK) GetUser() OptUser {
 func (s *PostV1AuthEmailChangeVerifyOK) SetUser(val OptUser) {
 	s.User = val
 }
-
-func (*PostV1AuthEmailChangeVerifyOK) postV1AuthEmailChangeVerifyRes() {}
 
 type PostV1AuthEmailChangeVerifyReq struct {
 	ChallengeID OptNilString `json:"challenge_id"`
@@ -13740,8 +12003,6 @@ func (s *PostV1AuthIdentitiesMergeConfirmOK) SetIdentities(val []Identity) {
 	s.Identities = val
 }
 
-func (*PostV1AuthIdentitiesMergeConfirmOK) postV1AuthIdentitiesMergeConfirmRes() {}
-
 type PostV1AuthIdentitiesMergeConfirmReq struct {
 	ChallengeID string `json:"challenge_id"`
 	Code        string `json:"code"`
@@ -13780,8 +12041,6 @@ func (s *PostV1AuthIdentitiesMergeStartOK) GetChallengeID() OptString {
 func (s *PostV1AuthIdentitiesMergeStartOK) SetChallengeID(val OptString) {
 	s.ChallengeID = val
 }
-
-func (*PostV1AuthIdentitiesMergeStartOK) postV1AuthIdentitiesMergeStartRes() {}
 
 type PostV1AuthIdentitiesMergeStartReq struct {
 	TargetIdentifier string `json:"target_identifier"`
@@ -13858,8 +12117,6 @@ func (s *PostV1AuthMfaEmailEnrollOK) SetChallengeID(val OptString) {
 	s.ChallengeID = val
 }
 
-func (*PostV1AuthMfaEmailEnrollOK) postV1AuthMfaEmailEnrollRes() {}
-
 type PostV1AuthMfaEmailEnrollReq struct {
 	Email string `json:"email"`
 }
@@ -13887,8 +12144,6 @@ func (s *PostV1AuthMfaRecoveryCodesGenerateOK) GetCodes() []string {
 func (s *PostV1AuthMfaRecoveryCodesGenerateOK) SetCodes(val []string) {
 	s.Codes = val
 }
-
-func (*PostV1AuthMfaRecoveryCodesGenerateOK) postV1AuthMfaRecoveryCodesGenerateRes() {}
 
 type PostV1AuthMfaRecoveryCodesGenerateReq struct {
 	Regenerate OptBool `json:"regenerate"`
@@ -13954,8 +12209,6 @@ func (s *PostV1AuthMfaSmsEnrollOK) SetChallengeID(val OptString) {
 	s.ChallengeID = val
 }
 
-func (*PostV1AuthMfaSmsEnrollOK) postV1AuthMfaSmsEnrollRes() {}
-
 type PostV1AuthMfaSmsEnrollReq struct {
 	Phone string `json:"phone"`
 }
@@ -14017,8 +12270,6 @@ func (s *PostV1AuthMfaTotpEnrollOK) SetQrSvg(val OptNilString) {
 	s.QrSvg = val
 }
 
-func (*PostV1AuthMfaTotpEnrollOK) postV1AuthMfaTotpEnrollRes() {}
-
 type PostV1AuthMfaTotpEnrollReq struct {
 	Name OptNilString `json:"name"`
 }
@@ -14046,8 +12297,6 @@ func (s *PostV1AuthMfaTotpVerifyOK) GetFactor() OptFactor {
 func (s *PostV1AuthMfaTotpVerifyOK) SetFactor(val OptFactor) {
 	s.Factor = val
 }
-
-func (*PostV1AuthMfaTotpVerifyOK) postV1AuthMfaTotpVerifyRes() {}
 
 type PostV1AuthMfaTotpVerifyReq struct {
 	FactorID string `json:"factor_id"`
@@ -14179,8 +12428,6 @@ func (s *PostV1AuthMfaWebauthnEnrollOptionsOK) SetPublicKey(val OptPostV1AuthMfa
 	s.PublicKey = val
 }
 
-func (*PostV1AuthMfaWebauthnEnrollOptionsOK) postV1AuthMfaWebauthnEnrollOptionsRes() {}
-
 type PostV1AuthMfaWebauthnEnrollOptionsOKPublicKey map[string]jx.Raw
 
 func (s *PostV1AuthMfaWebauthnEnrollOptionsOKPublicKey) init() PostV1AuthMfaWebauthnEnrollOptionsOKPublicKey {
@@ -14220,8 +12467,6 @@ func (s *PostV1AuthMfaWebauthnEnrollVerifyOK) SetFactor(val OptFactor) {
 	s.Factor = val
 }
 
-func (*PostV1AuthMfaWebauthnEnrollVerifyOK) postV1AuthMfaWebauthnEnrollVerifyRes() {}
-
 type PostV1AuthMfaWebauthnEnrollVerifyReq struct {
 	ChallengeID string                                         `json:"challenge_id"`
 	Credential  PostV1AuthMfaWebauthnEnrollVerifyReqCredential `json:"credential"`
@@ -14258,10 +12503,6 @@ func (s *PostV1AuthMfaWebauthnEnrollVerifyReqCredential) init() PostV1AuthMfaWeb
 	return m
 }
 
-type PostV1AuthOauthByProviderUnlinkConflict ErrorEnvelope
-
-func (*PostV1AuthOauthByProviderUnlinkConflict) postV1AuthOauthByProviderUnlinkRes() {}
-
 type PostV1AuthOauthByProviderUnlinkReq struct {
 	IdentityID string `json:"identity_id"`
 }
@@ -14275,10 +12516,6 @@ func (s *PostV1AuthOauthByProviderUnlinkReq) GetIdentityID() string {
 func (s *PostV1AuthOauthByProviderUnlinkReq) SetIdentityID(val string) {
 	s.IdentityID = val
 }
-
-type PostV1AuthOauthByProviderUnlinkUnauthorized ErrorEnvelope
-
-func (*PostV1AuthOauthByProviderUnlinkUnauthorized) postV1AuthOauthByProviderUnlinkRes() {}
 
 type PostV1AuthOauthExchangeReq struct {
 	Code         string       `json:"code"`
@@ -14355,14 +12592,6 @@ func (s *PostV1AuthPasswordCheckReq) SetPassword(val string) {
 	s.Password = val
 }
 
-type PostV1AuthPasswordResetBadRequest ErrorEnvelope
-
-func (*PostV1AuthPasswordResetBadRequest) postV1AuthPasswordResetRes() {}
-
-type PostV1AuthPasswordResetUnprocessableEntity ErrorEnvelope
-
-func (*PostV1AuthPasswordResetUnprocessableEntity) postV1AuthPasswordResetRes() {}
-
 type PostV1AuthPasswordVerifyOK struct {
 	Ok  OptBool  `json:"ok"`
 	Aal OptInt   `json:"aal"`
@@ -14398,8 +12627,6 @@ func (s *PostV1AuthPasswordVerifyOK) SetAal(val OptInt) {
 func (s *PostV1AuthPasswordVerifyOK) SetAmr(val []string) {
 	s.Amr = val
 }
-
-func (*PostV1AuthPasswordVerifyOK) postV1AuthPasswordVerifyRes() {}
 
 type PostV1AuthPasswordVerifyReq struct {
 	Password    string       `json:"password"`
@@ -14505,8 +12732,6 @@ func (s *PostV1AuthPhoneChangeVerifyOK) GetUser() OptUser {
 func (s *PostV1AuthPhoneChangeVerifyOK) SetUser(val OptUser) {
 	s.User = val
 }
-
-func (*PostV1AuthPhoneChangeVerifyOK) postV1AuthPhoneChangeVerifyRes() {}
 
 type PostV1AuthPhoneChangeVerifyReq struct {
 	ChallengeID string `json:"challenge_id"`
@@ -14686,10 +12911,6 @@ func (PostV1AuthSessionStepUpReqRequiredAal) AllValues() []PostV1AuthSessionStep
 	}
 }
 
-type PostV1AuthSessionSwitchGroupForbidden ErrorEnvelope
-
-func (*PostV1AuthSessionSwitchGroupForbidden) postV1AuthSessionSwitchGroupRes() {}
-
 type PostV1AuthSessionSwitchGroupReq struct {
 	GroupID string `json:"group_id"`
 }
@@ -14704,10 +12925,6 @@ func (s *PostV1AuthSessionSwitchGroupReq) SetGroupID(val string) {
 	s.GroupID = val
 }
 
-type PostV1AuthSessionSwitchGroupUnauthorized ErrorEnvelope
-
-func (*PostV1AuthSessionSwitchGroupUnauthorized) postV1AuthSessionSwitchGroupRes() {}
-
 type PostV1AuthSignOutAllOK struct {
 	RevokedCount OptInt `json:"revoked_count"`
 }
@@ -14721,8 +12938,6 @@ func (s *PostV1AuthSignOutAllOK) GetRevokedCount() OptInt {
 func (s *PostV1AuthSignOutAllOK) SetRevokedCount(val OptInt) {
 	s.RevokedCount = val
 }
-
-func (*PostV1AuthSignOutAllOK) postV1AuthSignOutAllRes() {}
 
 type PostV1AuthSignOutAllReq struct {
 	ExceptCurrent OptBool `json:"except_current"`
@@ -14751,18 +12966,6 @@ func (s *PostV1AuthSignOutReq) GetEverywhere() OptBool {
 func (s *PostV1AuthSignOutReq) SetEverywhere(val OptBool) {
 	s.Everywhere = val
 }
-
-type PostV1AuthSignUpConflict ErrorEnvelope
-
-func (*PostV1AuthSignUpConflict) postV1AuthSignUpRes() {}
-
-type PostV1AuthSignUpForbidden ErrorEnvelope
-
-func (*PostV1AuthSignUpForbidden) postV1AuthSignUpRes() {}
-
-type PostV1AuthSignUpUnprocessableEntity ErrorEnvelope
-
-func (*PostV1AuthSignUpUnprocessableEntity) postV1AuthSignUpRes() {}
 
 type PostV1AuthWebauthnLoginOptionsOK struct {
 	ChallengeID OptString                                    `json:"challenge_id"`
@@ -14945,8 +13148,6 @@ func (s *PostV1AuthWebauthnRegisterOptionsOK) SetPublicKey(val OptPostV1AuthWeba
 	s.PublicKey = val
 }
 
-func (*PostV1AuthWebauthnRegisterOptionsOK) postV1AuthWebauthnRegisterOptionsRes() {}
-
 type PostV1AuthWebauthnRegisterOptionsOKPublicKey map[string]jx.Raw
 
 func (s *PostV1AuthWebauthnRegisterOptionsOKPublicKey) init() PostV1AuthWebauthnRegisterOptionsOKPublicKey {
@@ -15007,8 +13208,6 @@ func (s *PostV1AuthWebauthnRegisterVerifyOK) GetCredential() OptWebAuthnCredenti
 func (s *PostV1AuthWebauthnRegisterVerifyOK) SetCredential(val OptWebAuthnCredential) {
 	s.Credential = val
 }
-
-func (*PostV1AuthWebauthnRegisterVerifyOK) postV1AuthWebauthnRegisterVerifyRes() {}
 
 type PostV1AuthWebauthnRegisterVerifyReq struct {
 	ChallengeID string                                        `json:"challenge_id"`
@@ -15160,9 +13359,6 @@ func (s *PostV1OauthInteractionByInteractionIdConsentOK) SetRedirectTo(val OptSt
 	s.RedirectTo = val
 }
 
-func (*PostV1OauthInteractionByInteractionIdConsentOK) postV1OauthInteractionByInteractionIdConsentRes() {
-}
-
 type PostV1OauthInteractionByInteractionIdConsentReq struct {
 	GrantedScopes []string `json:"granted_scopes"`
 	Remember      OptBool  `json:"remember"`
@@ -15200,9 +13396,6 @@ func (s *PostV1OauthInteractionByInteractionIdLoginOK) GetRedirectTo() OptString
 // SetRedirectTo sets the value of RedirectTo.
 func (s *PostV1OauthInteractionByInteractionIdLoginOK) SetRedirectTo(val OptString) {
 	s.RedirectTo = val
-}
-
-func (*PostV1OauthInteractionByInteractionIdLoginOK) postV1OauthInteractionByInteractionIdLoginRes() {
 }
 
 type PostV1OauthInteractionByInteractionIdLoginReq struct {
@@ -15258,11 +13451,6 @@ func (s *PostV1OauthInteractionByInteractionIdRejectReq) SetErrorDescription(val
 	s.ErrorDescription = val
 }
 
-type PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveForbidden) postV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK map[string]jx.Raw
 
 func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK) init() PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK {
@@ -15274,20 +13462,7 @@ func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK) init() PostV
 	return m
 }
 
-func (*PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK) postV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq struct{}
-
-type PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveUnauthorized) postV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyForbidden) postV1ProjectsByProjectIdAdminAccessRequestsByIdDenyRes() {
-}
 
 type PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK struct {
 	Request OptAccessRequest `json:"request"`
@@ -15303,9 +13478,6 @@ func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK) SetRequest(val 
 	s.Request = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK) postV1ProjectsByProjectIdAdminAccessRequestsByIdDenyRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq struct {
 	Reason OptString `json:"reason"`
 }
@@ -15318,16 +13490,6 @@ func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq) GetReason() Op
 // SetReason sets the value of Reason.
 func (s *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq) SetReason(val OptString) {
 	s.Reason = val
-}
-
-type PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyUnauthorized) postV1ProjectsByProjectIdAdminAccessRequestsByIdDenyRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateForbidden) postV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK struct {
@@ -15355,14 +13517,6 @@ func (s *PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK) SetSecret(val Opt
 	s.Secret = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK) postV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateUnauthorized) postV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminApiKeysCreated struct {
 	APIKey OptApiKey `json:"api_key"`
 	Secret OptString `json:"secret"`
@@ -15387,12 +13541,6 @@ func (s *PostV1ProjectsByProjectIdAdminApiKeysCreated) SetAPIKey(val OptApiKey) 
 func (s *PostV1ProjectsByProjectIdAdminApiKeysCreated) SetSecret(val OptString) {
 	s.Secret = val
 }
-
-func (*PostV1ProjectsByProjectIdAdminApiKeysCreated) postV1ProjectsByProjectIdAdminApiKeysRes() {}
-
-type PostV1ProjectsByProjectIdAdminApiKeysForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminApiKeysForbidden) postV1ProjectsByProjectIdAdminApiKeysRes() {}
 
 type PostV1ProjectsByProjectIdAdminApiKeysReq struct {
 	Name      string      `json:"name"`
@@ -15430,11 +13578,6 @@ func (s *PostV1ProjectsByProjectIdAdminApiKeysReq) SetExpiresAt(val OptDateTime)
 	s.ExpiresAt = val
 }
 
-type PostV1ProjectsByProjectIdAdminApiKeysUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminApiKeysUnauthorized) postV1ProjectsByProjectIdAdminApiKeysRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated struct {
 	SecretID     OptString `json:"secret_id"`
 	ClientSecret OptString `json:"client_secret"`
@@ -15458,14 +13601,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated) SetSecretID(va
 // SetClientSecret sets the value of ClientSecret.
 func (s *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated) SetClientSecret(val OptString) {
 	s.ClientSecret = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated) postV1ProjectsByProjectIdAdminAppsByAppIdSecretsRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsForbidden) postV1ProjectsByProjectIdAdminAppsByAppIdSecretsRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq struct {
@@ -15493,11 +13628,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq) SetExpiresAt(val O
 	s.ExpiresAt = val
 }
 
-type PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsUnauthorized) postV1ProjectsByProjectIdAdminAppsByAppIdSecretsRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminAppsCreated struct {
 	App          OptAppClient `json:"app"`
 	ClientSecret OptNilString `json:"client_secret"`
@@ -15522,12 +13652,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsCreated) SetApp(val OptAppClient) {
 func (s *PostV1ProjectsByProjectIdAdminAppsCreated) SetClientSecret(val OptNilString) {
 	s.ClientSecret = val
 }
-
-func (*PostV1ProjectsByProjectIdAdminAppsCreated) postV1ProjectsByProjectIdAdminAppsRes() {}
-
-type PostV1ProjectsByProjectIdAdminAppsForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminAppsForbidden) postV1ProjectsByProjectIdAdminAppsRes() {}
 
 // Merged schema.
 type PostV1ProjectsByProjectIdAdminAppsReq struct {
@@ -15720,15 +13844,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReqType) UnmarshalText(data []byte) e
 	}
 }
 
-type PostV1ProjectsByProjectIdAdminAppsUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminAppsUnauthorized) postV1ProjectsByProjectIdAdminAppsRes() {}
-
-type PostV1ProjectsByProjectIdAdminAuditExportForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminAuditExportForbidden) postV1ProjectsByProjectIdAdminAuditExportRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminAuditExportOK struct {
 	JobID  OptString `json:"job_id"`
 	Status OptString `json:"status"`
@@ -15753,8 +13868,6 @@ func (s *PostV1ProjectsByProjectIdAdminAuditExportOK) SetJobID(val OptString) {
 func (s *PostV1ProjectsByProjectIdAdminAuditExportOK) SetStatus(val OptString) {
 	s.Status = val
 }
-
-func (*PostV1ProjectsByProjectIdAdminAuditExportOK) postV1ProjectsByProjectIdAdminAuditExportRes() {}
 
 type PostV1ProjectsByProjectIdAdminAuditExportReq struct {
 	From   OptDateTime `json:"from"`
@@ -15792,16 +13905,6 @@ func (s *PostV1ProjectsByProjectIdAdminAuditExportReq) SetFormat(val OptString) 
 	s.Format = val
 }
 
-type PostV1ProjectsByProjectIdAdminAuditExportUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminAuditExportUnauthorized) postV1ProjectsByProjectIdAdminAuditExportRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyForbidden) postV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK struct {
 	Domain OptDomain `json:"domain"`
 }
@@ -15814,14 +13917,6 @@ func (s *PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK) GetDomain() Op
 // SetDomain sets the value of Domain.
 func (s *PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK) SetDomain(val OptDomain) {
 	s.Domain = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK) postV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyUnauthorized) postV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminDomainsCreated struct {
@@ -15848,8 +13943,6 @@ func (s *PostV1ProjectsByProjectIdAdminDomainsCreated) SetDomain(val OptDomain) 
 func (s *PostV1ProjectsByProjectIdAdminDomainsCreated) SetVerificationRecord(val OptPostV1ProjectsByProjectIdAdminDomainsCreatedVerificationRecord) {
 	s.VerificationRecord = val
 }
-
-func (*PostV1ProjectsByProjectIdAdminDomainsCreated) postV1ProjectsByProjectIdAdminDomainsRes() {}
 
 type PostV1ProjectsByProjectIdAdminDomainsCreatedVerificationRecord struct {
 	Type  OptString `json:"type"`
@@ -15887,10 +13980,6 @@ func (s *PostV1ProjectsByProjectIdAdminDomainsCreatedVerificationRecord) SetValu
 	s.Value = val
 }
 
-type PostV1ProjectsByProjectIdAdminDomainsForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminDomainsForbidden) postV1ProjectsByProjectIdAdminDomainsRes() {}
-
 type PostV1ProjectsByProjectIdAdminDomainsReq struct {
 	Domain       string       `json:"domain"`
 	ConnectionID OptNilString `json:"connection_id"`
@@ -15914,26 +14003,6 @@ func (s *PostV1ProjectsByProjectIdAdminDomainsReq) SetDomain(val string) {
 // SetConnectionID sets the value of ConnectionID.
 func (s *PostV1ProjectsByProjectIdAdminDomainsReq) SetConnectionID(val OptNilString) {
 	s.ConnectionID = val
-}
-
-type PostV1ProjectsByProjectIdAdminDomainsUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminDomainsUnauthorized) postV1ProjectsByProjectIdAdminDomainsRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminEmailProvidersForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminEmailProvidersForbidden) postV1ProjectsByProjectIdAdminEmailProvidersRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminEmailProvidersUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminEmailProvidersUnauthorized) postV1ProjectsByProjectIdAdminEmailProvidersRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewForbidden) postV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK struct {
@@ -15972,9 +14041,6 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK) SetText(val 
 	s.Text = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK) postV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq struct {
 	Locale OptString                                                         `json:"locale"`
 	Data   OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReqData `json:"data"`
@@ -16009,16 +14075,6 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReqData) init() 
 		*s = m
 	}
 	return m
-}
-
-type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewUnauthorized) postV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestForbidden) postV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq struct {
@@ -16068,16 +14124,6 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReqData) init()
 	return m
 }
 
-type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestUnauthorized) postV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminEventsByEventIdReplayForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminEventsByEventIdReplayForbidden) postV1ProjectsByProjectIdAdminEventsByEventIdReplayRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK map[string]jx.Raw
 
 func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK) init() PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK {
@@ -16087,9 +14133,6 @@ func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK) init() PostV1Pro
 		*s = m
 	}
 	return m
-}
-
-func (*PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK) postV1ProjectsByProjectIdAdminEventsByEventIdReplayRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq struct {
@@ -16104,16 +14147,6 @@ func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq) GetWebhookID() 
 // SetWebhookID sets the value of WebhookID.
 func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq) SetWebhookID(val OptString) {
 	s.WebhookID = val
-}
-
-type PostV1ProjectsByProjectIdAdminEventsByEventIdReplayUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminEventsByEventIdReplayUnauthorized) postV1ProjectsByProjectIdAdminEventsByEventIdReplayRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminHooksByIdTestForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminHooksByIdTestForbidden) postV1ProjectsByProjectIdAdminHooksByIdTestRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminHooksByIdTestOK struct {
@@ -16152,9 +14185,6 @@ func (s *PostV1ProjectsByProjectIdAdminHooksByIdTestOK) SetDurationMs(val OptInt
 	s.DurationMs = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminHooksByIdTestOK) postV1ProjectsByProjectIdAdminHooksByIdTestRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminHooksByIdTestOKResponse map[string]jx.Raw
 
 func (s *PostV1ProjectsByProjectIdAdminHooksByIdTestOKResponse) init() PostV1ProjectsByProjectIdAdminHooksByIdTestOKResponse {
@@ -16191,11 +14221,6 @@ func (s *PostV1ProjectsByProjectIdAdminHooksByIdTestReqPayload) init() PostV1Pro
 	return m
 }
 
-type PostV1ProjectsByProjectIdAdminHooksByIdTestUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminHooksByIdTestUnauthorized) postV1ProjectsByProjectIdAdminHooksByIdTestRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminHooksCreated struct {
 	Hook          OptHook   `json:"hook"`
 	SigningSecret OptString `json:"signing_secret"`
@@ -16220,12 +14245,6 @@ func (s *PostV1ProjectsByProjectIdAdminHooksCreated) SetHook(val OptHook) {
 func (s *PostV1ProjectsByProjectIdAdminHooksCreated) SetSigningSecret(val OptString) {
 	s.SigningSecret = val
 }
-
-func (*PostV1ProjectsByProjectIdAdminHooksCreated) postV1ProjectsByProjectIdAdminHooksRes() {}
-
-type PostV1ProjectsByProjectIdAdminHooksForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminHooksForbidden) postV1ProjectsByProjectIdAdminHooksRes() {}
 
 type PostV1ProjectsByProjectIdAdminHooksReq struct {
 	Type      string  `json:"type"`
@@ -16274,15 +14293,6 @@ func (s *PostV1ProjectsByProjectIdAdminHooksReq) SetEnabled(val OptBool) {
 	s.Enabled = val
 }
 
-type PostV1ProjectsByProjectIdAdminHooksUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminHooksUnauthorized) postV1ProjectsByProjectIdAdminHooksRes() {}
-
-type PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyForbidden) postV1ProjectsByProjectIdAdminImportPasswordHashesVerifyRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK struct {
 	Valid OptBool `json:"valid"`
 }
@@ -16295,9 +14305,6 @@ func (s *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK) GetValid() 
 // SetValid sets the value of Valid.
 func (s *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK) SetValid(val OptBool) {
 	s.Valid = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK) postV1ProjectsByProjectIdAdminImportPasswordHashesVerifyRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq struct {
@@ -16358,16 +14365,6 @@ func (s *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReqParams) init
 	return m
 }
 
-type PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyUnauthorized) postV1ProjectsByProjectIdAdminImportPasswordHashesVerifyRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminImportUsersForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminImportUsersForbidden) postV1ProjectsByProjectIdAdminImportUsersRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminImportUsersOK struct {
 	JobID  OptString `json:"job_id"`
 	Status OptString `json:"status"`
@@ -16392,8 +14389,6 @@ func (s *PostV1ProjectsByProjectIdAdminImportUsersOK) SetJobID(val OptString) {
 func (s *PostV1ProjectsByProjectIdAdminImportUsersOK) SetStatus(val OptString) {
 	s.Status = val
 }
-
-func (*PostV1ProjectsByProjectIdAdminImportUsersOK) postV1ProjectsByProjectIdAdminImportUsersRes() {}
 
 type PostV1ProjectsByProjectIdAdminImportUsersReq struct {
 	Users              []PostV1ProjectsByProjectIdAdminImportUsersReqUsersItem `json:"users"`
@@ -16442,16 +14437,6 @@ func (s *PostV1ProjectsByProjectIdAdminImportUsersReqUsersItem) init() PostV1Pro
 	return m
 }
 
-type PostV1ProjectsByProjectIdAdminImportUsersUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminImportUsersUnauthorized) postV1ProjectsByProjectIdAdminImportUsersRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminJobsByJobIdCancelForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminJobsByJobIdCancelForbidden) postV1ProjectsByProjectIdAdminJobsByJobIdCancelRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK struct {
 	Job OptJob `json:"job"`
 }
@@ -16464,19 +14449,6 @@ func (s *PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK) GetJob() OptJob {
 // SetJob sets the value of Job.
 func (s *PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK) SetJob(val OptJob) {
 	s.Job = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK) postV1ProjectsByProjectIdAdminJobsByJobIdCancelRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminJobsByJobIdCancelUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminJobsByJobIdCancelUnauthorized) postV1ProjectsByProjectIdAdminJobsByJobIdCancelRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateForbidden) postV1ProjectsByProjectIdAdminJwksByKeyIdActivateRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK struct {
@@ -16493,19 +14465,6 @@ func (s *PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK) SetKey(val OptSign
 	s.Key = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK) postV1ProjectsByProjectIdAdminJwksByKeyIdActivateRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateUnauthorized) postV1ProjectsByProjectIdAdminJwksByKeyIdActivateRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminJwksRotateForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminJwksRotateForbidden) postV1ProjectsByProjectIdAdminJwksRotateRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminJwksRotateOK struct {
 	Key OptSigningKey `json:"key"`
 }
@@ -16519,8 +14478,6 @@ func (s *PostV1ProjectsByProjectIdAdminJwksRotateOK) GetKey() OptSigningKey {
 func (s *PostV1ProjectsByProjectIdAdminJwksRotateOK) SetKey(val OptSigningKey) {
 	s.Key = val
 }
-
-func (*PostV1ProjectsByProjectIdAdminJwksRotateOK) postV1ProjectsByProjectIdAdminJwksRotateRes() {}
 
 type PostV1ProjectsByProjectIdAdminJwksRotateReq struct {
 	Activate OptBool `json:"activate"`
@@ -16536,26 +14493,6 @@ func (s *PostV1ProjectsByProjectIdAdminJwksRotateReq) SetActivate(val OptBool) {
 	s.Activate = val
 }
 
-type PostV1ProjectsByProjectIdAdminJwksRotateUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminJwksRotateUnauthorized) postV1ProjectsByProjectIdAdminJwksRotateRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminOauthProvidersForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminOauthProvidersForbidden) postV1ProjectsByProjectIdAdminOauthProvidersRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminOauthProvidersUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminOauthProvidersUnauthorized) postV1ProjectsByProjectIdAdminOauthProvidersRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminRateLimitBlocksForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminRateLimitBlocksForbidden) postV1ProjectsByProjectIdAdminRateLimitBlocksRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminRateLimitBlocksOK map[string]jx.Raw
 
 func (s *PostV1ProjectsByProjectIdAdminRateLimitBlocksOK) init() PostV1ProjectsByProjectIdAdminRateLimitBlocksOK {
@@ -16565,9 +14502,6 @@ func (s *PostV1ProjectsByProjectIdAdminRateLimitBlocksOK) init() PostV1ProjectsB
 		*s = m
 	}
 	return m
-}
-
-func (*PostV1ProjectsByProjectIdAdminRateLimitBlocksOK) postV1ProjectsByProjectIdAdminRateLimitBlocksRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminRateLimitBlocksReq struct {
@@ -16672,21 +14606,6 @@ func (s *PostV1ProjectsByProjectIdAdminRateLimitBlocksReqType) UnmarshalText(dat
 	}
 }
 
-type PostV1ProjectsByProjectIdAdminRateLimitBlocksUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminRateLimitBlocksUnauthorized) postV1ProjectsByProjectIdAdminRateLimitBlocksRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminRiskRulesForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminRiskRulesForbidden) postV1ProjectsByProjectIdAdminRiskRulesRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminRiskRulesUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminRiskRulesUnauthorized) postV1ProjectsByProjectIdAdminRiskRulesRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated struct {
 	SecretID     OptString `json:"secret_id"`
 	ClientID     OptString `json:"client_id"`
@@ -16723,14 +14642,6 @@ func (s *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated) SetC
 	s.ClientSecret = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated) postV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsForbidden) postV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq struct {
 	Name      string      `json:"name"`
 	ExpiresAt OptDateTime `json:"expires_at"`
@@ -16756,11 +14667,6 @@ func (s *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq) SetExpir
 	s.ExpiresAt = val
 }
 
-type PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsUnauthorized) postV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminServiceAccountsCreated struct {
 	ServiceAccount OptServiceAccount `json:"service_account"`
 }
@@ -16773,14 +14679,6 @@ func (s *PostV1ProjectsByProjectIdAdminServiceAccountsCreated) GetServiceAccount
 // SetServiceAccount sets the value of ServiceAccount.
 func (s *PostV1ProjectsByProjectIdAdminServiceAccountsCreated) SetServiceAccount(val OptServiceAccount) {
 	s.ServiceAccount = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminServiceAccountsCreated) postV1ProjectsByProjectIdAdminServiceAccountsRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminServiceAccountsForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminServiceAccountsForbidden) postV1ProjectsByProjectIdAdminServiceAccountsRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminServiceAccountsReq struct {
@@ -16808,26 +14706,6 @@ func (s *PostV1ProjectsByProjectIdAdminServiceAccountsReq) SetScopes(val []strin
 	s.Scopes = val
 }
 
-type PostV1ProjectsByProjectIdAdminServiceAccountsUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminServiceAccountsUnauthorized) postV1ProjectsByProjectIdAdminServiceAccountsRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminSmsProvidersForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminSmsProvidersForbidden) postV1ProjectsByProjectIdAdminSmsProvidersRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminSmsProvidersUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminSmsProvidersUnauthorized) postV1ProjectsByProjectIdAdminSmsProvidersRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateForbidden) postV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK struct {
 	Certificate OptString `json:"certificate"`
 }
@@ -16840,14 +14718,6 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK) Ge
 // SetCertificate sets the value of Certificate.
 func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK) SetCertificate(val OptString) {
 	s.Certificate = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK) postV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateUnauthorized) postV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated struct {
@@ -16875,9 +14745,6 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated) SetS
 	s.Secret = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated) postV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreatedToken struct {
 	ID   OptString `json:"id"`
 	Name OptString `json:"name"`
@@ -16901,11 +14768,6 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreatedToken)
 // SetName sets the value of Name.
 func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreatedToken) SetName(val OptString) {
 	s.Name = val
-}
-
-type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensForbidden) postV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq struct {
@@ -16933,16 +14795,6 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq) SetExpir
 	s.ExpiresAt = val
 }
 
-type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensUnauthorized) postV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestForbidden) postV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK struct {
 	TestURL OptString `json:"test_url"`
 }
@@ -16957,14 +14809,6 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK) SetTestURL(val 
 	s.TestURL = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK) postV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestUnauthorized) postV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminSsoConnectionsCreated struct {
 	Connection OptSSOConnection `json:"connection"`
 }
@@ -16977,14 +14821,6 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsCreated) GetConnection() Op
 // SetConnection sets the value of Connection.
 func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsCreated) SetConnection(val OptSSOConnection) {
 	s.Connection = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsCreated) postV1ProjectsByProjectIdAdminSsoConnectionsRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminSsoConnectionsForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsForbidden) postV1ProjectsByProjectIdAdminSsoConnectionsRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminSsoConnectionsReq struct {
@@ -17119,16 +14955,6 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsReqType) UnmarshalText(data
 	}
 }
 
-type PostV1ProjectsByProjectIdAdminSsoConnectionsUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminSsoConnectionsUnauthorized) postV1ProjectsByProjectIdAdminSsoConnectionsRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewForbidden) postV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK struct {
 	Claims OptPostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOKClaims `json:"claims"`
 }
@@ -17141,9 +14967,6 @@ func (s *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK) GetClaims() O
 // SetClaims sets the value of Claims.
 func (s *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK) SetClaims(val OptPostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOKClaims) {
 	s.Claims = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK) postV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOKClaims map[string]jx.Raw
@@ -17171,11 +14994,6 @@ func (s *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq) SetUserID(va
 	s.UserID = val
 }
 
-type PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewUnauthorized) postV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminTokenProfilesCreated struct {
 	Profile OptTokenProfile `json:"profile"`
 }
@@ -17188,24 +15006,6 @@ func (s *PostV1ProjectsByProjectIdAdminTokenProfilesCreated) GetProfile() OptTok
 // SetProfile sets the value of Profile.
 func (s *PostV1ProjectsByProjectIdAdminTokenProfilesCreated) SetProfile(val OptTokenProfile) {
 	s.Profile = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminTokenProfilesCreated) postV1ProjectsByProjectIdAdminTokenProfilesRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminTokenProfilesForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminTokenProfilesForbidden) postV1ProjectsByProjectIdAdminTokenProfilesRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminTokenProfilesUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminTokenProfilesUnauthorized) postV1ProjectsByProjectIdAdminTokenProfilesRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeForbidden) postV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq struct {
@@ -17222,16 +15022,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq) SetReason(val 
 	s.Reason = val
 }
 
-type PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeUnauthorized) postV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdBanForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdBanForbidden) postV1ProjectsByProjectIdAdminUsersByUserIdBanRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK struct {
 	User OptUser `json:"user"`
 }
@@ -17244,9 +15034,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK) GetUser() OptUser {
 // SetUser sets the value of User.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK) SetUser(val OptUser) {
 	s.User = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK) postV1ProjectsByProjectIdAdminUsersByUserIdBanRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq struct {
@@ -17274,16 +15061,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq) SetUntil(val OptDate
 	s.Until = val
 }
 
-type PostV1ProjectsByProjectIdAdminUsersByUserIdBanUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdBanUnauthorized) postV1ProjectsByProjectIdAdminUsersByUserIdBanRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdExportForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdExportForbidden) postV1ProjectsByProjectIdAdminUsersByUserIdExportRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK struct {
 	JobID OptString `json:"job_id"`
 }
@@ -17296,19 +15073,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK) GetJobID() OptStri
 // SetJobID sets the value of JobID.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK) SetJobID(val OptString) {
 	s.JobID = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK) postV1ProjectsByProjectIdAdminUsersByUserIdExportRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdExportUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdExportUnauthorized) postV1ProjectsByProjectIdAdminUsersByUserIdExportRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateForbidden) postV1ProjectsByProjectIdAdminUsersByUserIdImpersonateRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK struct {
@@ -17336,9 +15100,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK) SetExpiresAt(
 	s.ExpiresAt = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK) postV1ProjectsByProjectIdAdminUsersByUserIdImpersonateRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq struct {
 	Reason          string `json:"reason"`
 	DurationSeconds int    `json:"duration_seconds"`
@@ -17364,16 +15125,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq) SetDurationS
 	s.DurationSeconds = val
 }
 
-type PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateUnauthorized) postV1ProjectsByProjectIdAdminUsersByUserIdImpersonateRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetForbidden) postV1ProjectsByProjectIdAdminUsersByUserIdMfaResetRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK struct {
 	RemovedCount OptInt `json:"removed_count"`
 }
@@ -17388,9 +15139,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK) SetRemovedCount(
 	s.RemovedCount = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK) postV1ProjectsByProjectIdAdminUsersByUserIdMfaResetRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq struct {
 	FactorIds OptNilStringArray `json:"factor_ids"`
 }
@@ -17403,16 +15151,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq) GetFactorIds() 
 // SetFactorIds sets the value of FactorIds.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq) SetFactorIds(val OptNilStringArray) {
 	s.FactorIds = val
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetUnauthorized) postV1ProjectsByProjectIdAdminUsersByUserIdMfaResetRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordForbidden) postV1ProjectsByProjectIdAdminUsersByUserIdPasswordRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq struct {
@@ -17440,16 +15178,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq) SetRevokeSessio
 	s.RevokeSessions = val
 }
 
-type PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordUnauthorized) postV1ProjectsByProjectIdAdminUsersByUserIdPasswordRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeForbidden) postV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK struct {
 	RevokedCount OptInt `json:"revoked_count"`
 }
@@ -17462,9 +15190,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK) GetRevoked
 // SetRevokedCount sets the value of RevokedCount.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK) SetRevokedCount(val OptInt) {
 	s.RevokedCount = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK) postV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq struct {
@@ -17492,16 +15217,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq) SetReason
 	s.Reason = val
 }
 
-type PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeUnauthorized) postV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanForbidden) postV1ProjectsByProjectIdAdminUsersByUserIdUnbanRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK struct {
 	User OptUser `json:"user"`
 }
@@ -17514,19 +15229,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK) GetUser() OptUser {
 // SetUser sets the value of User.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK) SetUser(val OptUser) {
 	s.User = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK) postV1ProjectsByProjectIdAdminUsersByUserIdUnbanRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanUnauthorized) postV1ProjectsByProjectIdAdminUsersByUserIdUnbanRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailForbidden) postV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK struct {
@@ -17543,19 +15245,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK) SetUser(val O
 	s.User = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK) postV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailUnauthorized) postV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneForbidden) postV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK struct {
 	User OptUser `json:"user"`
 }
@@ -17568,14 +15257,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK) GetUser() Opt
 // SetUser sets the value of User.
 func (s *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK) SetUser(val OptUser) {
 	s.User = val
-}
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK) postV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneUnauthorized) postV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminUsersCreated struct {
@@ -17591,12 +15272,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersCreated) GetUser() OptUser {
 func (s *PostV1ProjectsByProjectIdAdminUsersCreated) SetUser(val OptUser) {
 	s.User = val
 }
-
-func (*PostV1ProjectsByProjectIdAdminUsersCreated) postV1ProjectsByProjectIdAdminUsersRes() {}
-
-type PostV1ProjectsByProjectIdAdminUsersForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersForbidden) postV1ProjectsByProjectIdAdminUsersRes() {}
 
 type PostV1ProjectsByProjectIdAdminUsersReq struct {
 	Email         OptString                                         `json:"email"`
@@ -17689,15 +15364,6 @@ func (s *PostV1ProjectsByProjectIdAdminUsersReqMetadata) init() PostV1ProjectsBy
 	return m
 }
 
-type PostV1ProjectsByProjectIdAdminUsersUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminUsersUnauthorized) postV1ProjectsByProjectIdAdminUsersRes() {}
-
-type PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryForbidden) postV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK map[string]jx.Raw
 
 func (s *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK) init() PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK {
@@ -17707,19 +15373,6 @@ func (s *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK) ini
 		*s = m
 	}
 	return m
-}
-
-func (*PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK) postV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryUnauthorized) postV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretForbidden) postV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK struct {
@@ -17736,19 +15389,6 @@ func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK) SetSigningSec
 	s.SigningSecret = val
 }
 
-func (*PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK) postV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretUnauthorized) postV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretRes() {
-}
-
-type PostV1ProjectsByProjectIdAdminWebhooksByIdTestForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminWebhooksByIdTestForbidden) postV1ProjectsByProjectIdAdminWebhooksByIdTestRes() {
-}
-
 type PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK map[string]jx.Raw
 
 func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK) init() PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK {
@@ -17758,9 +15398,6 @@ func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK) init() PostV1Projects
 		*s = m
 	}
 	return m
-}
-
-func (*PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK) postV1ProjectsByProjectIdAdminWebhooksByIdTestRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq struct {
@@ -17775,11 +15412,6 @@ func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq) GetEventType() OptSt
 // SetEventType sets the value of EventType.
 func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq) SetEventType(val OptString) {
 	s.EventType = val
-}
-
-type PostV1ProjectsByProjectIdAdminWebhooksByIdTestUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminWebhooksByIdTestUnauthorized) postV1ProjectsByProjectIdAdminWebhooksByIdTestRes() {
 }
 
 type PostV1ProjectsByProjectIdAdminWebhooksCreated struct {
@@ -17806,12 +15438,6 @@ func (s *PostV1ProjectsByProjectIdAdminWebhooksCreated) SetWebhook(val OptWebhoo
 func (s *PostV1ProjectsByProjectIdAdminWebhooksCreated) SetSigningSecret(val OptString) {
 	s.SigningSecret = val
 }
-
-func (*PostV1ProjectsByProjectIdAdminWebhooksCreated) postV1ProjectsByProjectIdAdminWebhooksRes() {}
-
-type PostV1ProjectsByProjectIdAdminWebhooksForbidden ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminWebhooksForbidden) postV1ProjectsByProjectIdAdminWebhooksRes() {}
 
 type PostV1ProjectsByProjectIdAdminWebhooksReq struct {
 	URL         string    `json:"url"`
@@ -17860,11 +15486,6 @@ func (s *PostV1ProjectsByProjectIdAdminWebhooksReq) SetEnabled(val OptBool) {
 	s.Enabled = val
 }
 
-type PostV1ProjectsByProjectIdAdminWebhooksUnauthorized ErrorEnvelope
-
-func (*PostV1ProjectsByProjectIdAdminWebhooksUnauthorized) postV1ProjectsByProjectIdAdminWebhooksRes() {
-}
-
 type PostV1ScimV2ByConnectionIdGroupsCreated map[string]jx.Raw
 
 func (s *PostV1ScimV2ByConnectionIdGroupsCreated) init() PostV1ScimV2ByConnectionIdGroupsCreated {
@@ -17875,12 +15496,6 @@ func (s *PostV1ScimV2ByConnectionIdGroupsCreated) init() PostV1ScimV2ByConnectio
 	}
 	return m
 }
-
-func (*PostV1ScimV2ByConnectionIdGroupsCreated) postV1ScimV2ByConnectionIdGroupsRes() {}
-
-type PostV1ScimV2ByConnectionIdGroupsForbidden ErrorEnvelope
-
-func (*PostV1ScimV2ByConnectionIdGroupsForbidden) postV1ScimV2ByConnectionIdGroupsRes() {}
 
 type PostV1ScimV2ByConnectionIdGroupsReq map[string]jx.Raw
 
@@ -17893,10 +15508,6 @@ func (s *PostV1ScimV2ByConnectionIdGroupsReq) init() PostV1ScimV2ByConnectionIdG
 	return m
 }
 
-type PostV1ScimV2ByConnectionIdGroupsUnauthorized ErrorEnvelope
-
-func (*PostV1ScimV2ByConnectionIdGroupsUnauthorized) postV1ScimV2ByConnectionIdGroupsRes() {}
-
 type PostV1ScimV2ByConnectionIdUsersCreated map[string]jx.Raw
 
 func (s *PostV1ScimV2ByConnectionIdUsersCreated) init() PostV1ScimV2ByConnectionIdUsersCreated {
@@ -17907,16 +15518,6 @@ func (s *PostV1ScimV2ByConnectionIdUsersCreated) init() PostV1ScimV2ByConnection
 	}
 	return m
 }
-
-func (*PostV1ScimV2ByConnectionIdUsersCreated) postV1ScimV2ByConnectionIdUsersRes() {}
-
-type PostV1ScimV2ByConnectionIdUsersForbidden ErrorEnvelope
-
-func (*PostV1ScimV2ByConnectionIdUsersForbidden) postV1ScimV2ByConnectionIdUsersRes() {}
-
-type PostV1ScimV2ByConnectionIdUsersUnauthorized ErrorEnvelope
-
-func (*PostV1ScimV2ByConnectionIdUsersUnauthorized) postV1ScimV2ByConnectionIdUsersRes() {}
 
 type PostV1ServiceAccountsTokensOK struct {
 	AccessToken OptString `json:"access_token"`
@@ -17953,8 +15554,6 @@ func (s *PostV1ServiceAccountsTokensOK) SetExpiresIn(val OptInt) {
 func (s *PostV1ServiceAccountsTokensOK) SetTokenType(val OptString) {
 	s.TokenType = val
 }
-
-func (*PostV1ServiceAccountsTokensOK) postV1ServiceAccountsTokensRes() {}
 
 type PostV1ServiceAccountsTokensReq struct {
 	Scopes     []string `json:"scopes"`
@@ -17994,8 +15593,6 @@ func (s *PostV1SessionsBySessionIdTrustOK) GetSession() OptSession {
 func (s *PostV1SessionsBySessionIdTrustOK) SetSession(val OptSession) {
 	s.Session = val
 }
-
-func (*PostV1SessionsBySessionIdTrustOK) postV1SessionsBySessionIdTrustRes() {}
 
 type PostV1SessionsBySessionIdTrustReq struct {
 	DurationSeconds int `json:"duration_seconds"`
@@ -18091,10 +15688,6 @@ func (s *PostV1SsoSamlByConnectionIdSloFound) SetLocation(val OptURI) {
 	s.Location = val
 }
 
-type PostV1TestClockForbidden ErrorEnvelope
-
-func (*PostV1TestClockForbidden) postV1TestClockRes() {}
-
 type PostV1TestClockReq struct {
 	AdvanceSeconds OptInt  `json:"advance_seconds"`
 	Reset          OptBool `json:"reset"`
@@ -18120,14 +15713,6 @@ func (s *PostV1TestClockReq) SetReset(val OptBool) {
 	s.Reset = val
 }
 
-type PostV1TestClockUnauthorized ErrorEnvelope
-
-func (*PostV1TestClockUnauthorized) postV1TestClockRes() {}
-
-type PostV1TestResetForbidden ErrorEnvelope
-
-func (*PostV1TestResetForbidden) postV1TestResetRes() {}
-
 type PostV1TestResetOK map[string]jx.Raw
 
 func (s *PostV1TestResetOK) init() PostV1TestResetOK {
@@ -18139,16 +15724,6 @@ func (s *PostV1TestResetOK) init() PostV1TestResetOK {
 	return m
 }
 
-func (*PostV1TestResetOK) postV1TestResetRes() {}
-
-type PostV1TestResetUnauthorized ErrorEnvelope
-
-func (*PostV1TestResetUnauthorized) postV1TestResetRes() {}
-
-type PostV1TestSeedForbidden ErrorEnvelope
-
-func (*PostV1TestSeedForbidden) postV1TestSeedRes() {}
-
 type PostV1TestSeedReq map[string]jx.Raw
 
 func (s *PostV1TestSeedReq) init() PostV1TestSeedReq {
@@ -18159,10 +15734,6 @@ func (s *PostV1TestSeedReq) init() PostV1TestSeedReq {
 	}
 	return m
 }
-
-type PostV1TestSeedUnauthorized ErrorEnvelope
-
-func (*PostV1TestSeedUnauthorized) postV1TestSeedRes() {}
 
 type PostV1TokensIntrospectOK struct {
 	Active          OptBool `json:"active"`
@@ -18188,8 +15759,6 @@ func (s *PostV1TokensIntrospectOK) SetActive(val OptBool) {
 func (s *PostV1TokensIntrospectOK) SetAdditionalProps(val PostV1TokensIntrospectOKAdditional) {
 	s.AdditionalProps = val
 }
-
-func (*PostV1TokensIntrospectOK) postV1TokensIntrospectRes() {}
 
 type PostV1TokensIntrospectOKAdditional map[string]jx.Raw
 
@@ -18288,8 +15857,6 @@ func (s *PostV1TokensVerifyOK) SetError(val OptNilString) {
 	s.Error = val
 }
 
-func (*PostV1TokensVerifyOK) postV1TokensVerifyRes() {}
-
 type PostV1TokensVerifyOKClaims map[string]jx.Raw
 
 func (s *PostV1TokensVerifyOKClaims) init() PostV1TokensVerifyOKClaims {
@@ -18340,8 +15907,6 @@ func (s *PostV1UsersMeConsentsOK) SetConsents(val []PostV1UsersMeConsentsOKConse
 	s.Consents = val
 }
 
-func (*PostV1UsersMeConsentsOK) postV1UsersMeConsentsRes() {}
-
 type PostV1UsersMeConsentsOKConsentsItem map[string]jx.Raw
 
 func (s *PostV1UsersMeConsentsOKConsentsItem) init() PostV1UsersMeConsentsOKConsentsItem {
@@ -18380,8 +15945,6 @@ func (s *PostV1UsersMeExportOK) GetJobID() OptString {
 func (s *PostV1UsersMeExportOK) SetJobID(val OptString) {
 	s.JobID = val
 }
-
-func (*PostV1UsersMeExportOK) postV1UsersMeExportRes() {}
 
 // Ref: #/components/schemas/Project
 type Project struct {
@@ -18883,19 +16446,6 @@ func (s *PushedAuthorizationRequestCodeChallengeMethod) UnmarshalText(data []byt
 	}
 }
 
-type PutV1ProjectsByProjectIdAdminConsentsForbidden ErrorEnvelope
-
-func (*PutV1ProjectsByProjectIdAdminConsentsForbidden) putV1ProjectsByProjectIdAdminConsentsRes() {}
-
-type PutV1ProjectsByProjectIdAdminConsentsUnauthorized ErrorEnvelope
-
-func (*PutV1ProjectsByProjectIdAdminConsentsUnauthorized) putV1ProjectsByProjectIdAdminConsentsRes() {
-}
-
-type PutV1ProjectsByProjectIdAdminFeaturesForbidden ErrorEnvelope
-
-func (*PutV1ProjectsByProjectIdAdminFeaturesForbidden) putV1ProjectsByProjectIdAdminFeaturesRes() {}
-
 type PutV1ProjectsByProjectIdAdminFeaturesOK map[string]bool
 
 func (s *PutV1ProjectsByProjectIdAdminFeaturesOK) init() PutV1ProjectsByProjectIdAdminFeaturesOK {
@@ -18907,8 +16457,6 @@ func (s *PutV1ProjectsByProjectIdAdminFeaturesOK) init() PutV1ProjectsByProjectI
 	return m
 }
 
-func (*PutV1ProjectsByProjectIdAdminFeaturesOK) putV1ProjectsByProjectIdAdminFeaturesRes() {}
-
 type PutV1ProjectsByProjectIdAdminFeaturesReq map[string]bool
 
 func (s *PutV1ProjectsByProjectIdAdminFeaturesReq) init() PutV1ProjectsByProjectIdAdminFeaturesReq {
@@ -18918,16 +16466,6 @@ func (s *PutV1ProjectsByProjectIdAdminFeaturesReq) init() PutV1ProjectsByProject
 		*s = m
 	}
 	return m
-}
-
-type PutV1ProjectsByProjectIdAdminFeaturesUnauthorized ErrorEnvelope
-
-func (*PutV1ProjectsByProjectIdAdminFeaturesUnauthorized) putV1ProjectsByProjectIdAdminFeaturesRes() {
-}
-
-type PutV1ProjectsByProjectIdAdminI18nByLocaleForbidden ErrorEnvelope
-
-func (*PutV1ProjectsByProjectIdAdminI18nByLocaleForbidden) putV1ProjectsByProjectIdAdminI18nByLocaleRes() {
 }
 
 type PutV1ProjectsByProjectIdAdminI18nByLocaleOK map[string]jx.Raw
@@ -18941,8 +16479,6 @@ func (s *PutV1ProjectsByProjectIdAdminI18nByLocaleOK) init() PutV1ProjectsByProj
 	return m
 }
 
-func (*PutV1ProjectsByProjectIdAdminI18nByLocaleOK) putV1ProjectsByProjectIdAdminI18nByLocaleRes() {}
-
 type PutV1ProjectsByProjectIdAdminI18nByLocaleReq map[string]jx.Raw
 
 func (s *PutV1ProjectsByProjectIdAdminI18nByLocaleReq) init() PutV1ProjectsByProjectIdAdminI18nByLocaleReq {
@@ -18952,26 +16488,6 @@ func (s *PutV1ProjectsByProjectIdAdminI18nByLocaleReq) init() PutV1ProjectsByPro
 		*s = m
 	}
 	return m
-}
-
-type PutV1ProjectsByProjectIdAdminI18nByLocaleUnauthorized ErrorEnvelope
-
-func (*PutV1ProjectsByProjectIdAdminI18nByLocaleUnauthorized) putV1ProjectsByProjectIdAdminI18nByLocaleRes() {
-}
-
-type PutV1ProjectsByProjectIdAdminRetentionPolicyForbidden ErrorEnvelope
-
-func (*PutV1ProjectsByProjectIdAdminRetentionPolicyForbidden) putV1ProjectsByProjectIdAdminRetentionPolicyRes() {
-}
-
-type PutV1ProjectsByProjectIdAdminRetentionPolicyUnauthorized ErrorEnvelope
-
-func (*PutV1ProjectsByProjectIdAdminRetentionPolicyUnauthorized) putV1ProjectsByProjectIdAdminRetentionPolicyRes() {
-}
-
-type PutV1ScimV2ByConnectionIdGroupsByGroupIdForbidden ErrorEnvelope
-
-func (*PutV1ScimV2ByConnectionIdGroupsByGroupIdForbidden) putV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
 }
 
 type PutV1ScimV2ByConnectionIdGroupsByGroupIdOK map[string]jx.Raw
@@ -18985,8 +16501,6 @@ func (s *PutV1ScimV2ByConnectionIdGroupsByGroupIdOK) init() PutV1ScimV2ByConnect
 	return m
 }
 
-func (*PutV1ScimV2ByConnectionIdGroupsByGroupIdOK) putV1ScimV2ByConnectionIdGroupsByGroupIdRes() {}
-
 type PutV1ScimV2ByConnectionIdGroupsByGroupIdReq map[string]jx.Raw
 
 func (s *PutV1ScimV2ByConnectionIdGroupsByGroupIdReq) init() PutV1ScimV2ByConnectionIdGroupsByGroupIdReq {
@@ -18998,16 +16512,6 @@ func (s *PutV1ScimV2ByConnectionIdGroupsByGroupIdReq) init() PutV1ScimV2ByConnec
 	return m
 }
 
-type PutV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized ErrorEnvelope
-
-func (*PutV1ScimV2ByConnectionIdGroupsByGroupIdUnauthorized) putV1ScimV2ByConnectionIdGroupsByGroupIdRes() {
-}
-
-type PutV1ScimV2ByConnectionIdUsersByScimUserIdForbidden ErrorEnvelope
-
-func (*PutV1ScimV2ByConnectionIdUsersByScimUserIdForbidden) putV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
 type PutV1ScimV2ByConnectionIdUsersByScimUserIdOK map[string]jx.Raw
 
 func (s *PutV1ScimV2ByConnectionIdUsersByScimUserIdOK) init() PutV1ScimV2ByConnectionIdUsersByScimUserIdOK {
@@ -19017,14 +16521,6 @@ func (s *PutV1ScimV2ByConnectionIdUsersByScimUserIdOK) init() PutV1ScimV2ByConne
 		*s = m
 	}
 	return m
-}
-
-func (*PutV1ScimV2ByConnectionIdUsersByScimUserIdOK) putV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
-}
-
-type PutV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized ErrorEnvelope
-
-func (*PutV1ScimV2ByConnectionIdUsersByScimUserIdUnauthorized) putV1ScimV2ByConnectionIdUsersByScimUserIdRes() {
 }
 
 // Ref: #/components/schemas/RateLimitRule
@@ -19100,9 +16596,6 @@ func (s *RateLimits) GetRules() []RateLimitRule {
 func (s *RateLimits) SetRules(val []RateLimitRule) {
 	s.Rules = val
 }
-
-func (*RateLimits) getV1ProjectsByProjectIdAdminConfigRateLimitsRes()   {}
-func (*RateLimits) patchV1ProjectsByProjectIdAdminConfigRateLimitsRes() {}
 
 // Ref: #/components/schemas/RefreshRequest
 type RefreshRequest struct {
@@ -19248,9 +16741,6 @@ func (s *RetentionPolicy) SetPurgeDeletedAfterDays(val OptInt) {
 	s.PurgeDeletedAfterDays = val
 }
 
-func (*RetentionPolicy) getV1ProjectsByProjectIdAdminRetentionPolicyRes() {}
-func (*RetentionPolicy) putV1ProjectsByProjectIdAdminRetentionPolicyRes() {}
-
 type RetentionPolicyInactiveUser struct {
 	AfterDays        OptInt                               `json:"after_days"`
 	Action           OptRetentionPolicyInactiveUserAction `json:"action"`
@@ -19393,9 +16883,6 @@ func (s *RiskRule) SetAction(val OptRiskRuleAction) {
 func (s *RiskRule) SetEnabled(val OptBool) {
 	s.Enabled = val
 }
-
-func (*RiskRule) patchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes() {}
-func (*RiskRule) postV1ProjectsByProjectIdAdminRiskRulesRes()          {}
 
 type RiskRuleAction string
 
@@ -19841,34 +17328,6 @@ func (s *ServiceToken) SetRoles(val []string) {
 	s.Roles = val
 }
 
-// ServiceUnavailableHeaders wraps ErrorEnvelope with response headers.
-type ServiceUnavailableHeaders struct {
-	RetryAfter OptInt
-	Response   ErrorEnvelope
-}
-
-// GetRetryAfter returns the value of RetryAfter.
-func (s *ServiceUnavailableHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
-}
-
-// GetResponse returns the value of Response.
-func (s *ServiceUnavailableHeaders) GetResponse() ErrorEnvelope {
-	return s.Response
-}
-
-// SetRetryAfter sets the value of RetryAfter.
-func (s *ServiceUnavailableHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ServiceUnavailableHeaders) SetResponse(val ErrorEnvelope) {
-	s.Response = val
-}
-
-func (*ServiceUnavailableHeaders) getV1HealthReadyRes() {}
-
 // Ref: #/components/schemas/Session
 type Session struct {
 	ID           string        `json:"id"`
@@ -20056,9 +17515,6 @@ func (s *SessionPolicy) SetAbsoluteTimeout(val OptInt) {
 func (s *SessionPolicy) SetReuseDetection(val OptBool) {
 	s.ReuseDetection = val
 }
-
-func (*SessionPolicy) getV1ProjectsByProjectIdAdminConfigSessionPolicyRes()   {}
-func (*SessionPolicy) patchV1ProjectsByProjectIdAdminConfigSessionPolicyRes() {}
 
 // Ref: #/components/schemas/SessionTokens
 type SessionTokens struct {
@@ -20377,9 +17833,6 @@ func (s *SmsProvider) SetEnabled(val OptBool) {
 	s.Enabled = val
 }
 
-func (*SmsProvider) patchV1ProjectsByProjectIdAdminSmsProvidersByIdRes() {}
-func (*SmsProvider) postV1ProjectsByProjectIdAdminSmsProvidersRes()      {}
-
 type SmsProviderConfig map[string]jx.Raw
 
 func (s *SmsProviderConfig) init() SmsProviderConfig {
@@ -20455,8 +17908,6 @@ func NewOkResultStepUpResult(v OkResult) StepUpResult {
 	s.SetOkResult(v)
 	return s
 }
-
-func (*StepUpResult) postV1AuthSessionStepUpRes() {}
 
 type Timestamp time.Time
 
@@ -20540,78 +17991,6 @@ func (s *TokenProfileClaimsTemplate) init() TokenProfileClaimsTemplate {
 	}
 	return m
 }
-
-// TooManyRequestsHeaders wraps ErrorEnvelope with response headers.
-type TooManyRequestsHeaders struct {
-	RateLimitLimit     OptInt
-	RateLimitRemaining OptInt
-	RateLimitReset     OptInt
-	RetryAfter         OptInt
-	Response           ErrorEnvelope
-}
-
-// GetRateLimitLimit returns the value of RateLimitLimit.
-func (s *TooManyRequestsHeaders) GetRateLimitLimit() OptInt {
-	return s.RateLimitLimit
-}
-
-// GetRateLimitRemaining returns the value of RateLimitRemaining.
-func (s *TooManyRequestsHeaders) GetRateLimitRemaining() OptInt {
-	return s.RateLimitRemaining
-}
-
-// GetRateLimitReset returns the value of RateLimitReset.
-func (s *TooManyRequestsHeaders) GetRateLimitReset() OptInt {
-	return s.RateLimitReset
-}
-
-// GetRetryAfter returns the value of RetryAfter.
-func (s *TooManyRequestsHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
-}
-
-// GetResponse returns the value of Response.
-func (s *TooManyRequestsHeaders) GetResponse() ErrorEnvelope {
-	return s.Response
-}
-
-// SetRateLimitLimit sets the value of RateLimitLimit.
-func (s *TooManyRequestsHeaders) SetRateLimitLimit(val OptInt) {
-	s.RateLimitLimit = val
-}
-
-// SetRateLimitRemaining sets the value of RateLimitRemaining.
-func (s *TooManyRequestsHeaders) SetRateLimitRemaining(val OptInt) {
-	s.RateLimitRemaining = val
-}
-
-// SetRateLimitReset sets the value of RateLimitReset.
-func (s *TooManyRequestsHeaders) SetRateLimitReset(val OptInt) {
-	s.RateLimitReset = val
-}
-
-// SetRetryAfter sets the value of RetryAfter.
-func (s *TooManyRequestsHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
-}
-
-// SetResponse sets the value of Response.
-func (s *TooManyRequestsHeaders) SetResponse(val ErrorEnvelope) {
-	s.Response = val
-}
-
-func (*TooManyRequestsHeaders) postV1AuthEmailVerificationStartRes()  {}
-func (*TooManyRequestsHeaders) postV1AuthEmailVerificationVerifyRes() {}
-func (*TooManyRequestsHeaders) postV1AuthMagicLinkStartRes()          {}
-func (*TooManyRequestsHeaders) postV1AuthMagicLinkVerifyRes()         {}
-func (*TooManyRequestsHeaders) postV1AuthOtpStartRes()                {}
-func (*TooManyRequestsHeaders) postV1AuthOtpVerifyRes()               {}
-func (*TooManyRequestsHeaders) postV1AuthPasswordForgotRes()          {}
-func (*TooManyRequestsHeaders) postV1AuthPasswordResetRes()           {}
-func (*TooManyRequestsHeaders) postV1AuthPhoneVerificationStartRes()  {}
-func (*TooManyRequestsHeaders) postV1AuthPhoneVerificationVerifyRes() {}
-func (*TooManyRequestsHeaders) postV1AuthSignInPasswordRes()          {}
-func (*TooManyRequestsHeaders) postV1AuthSignUpRes()                  {}
 
 // Ref: #/components/schemas/User
 type User struct {

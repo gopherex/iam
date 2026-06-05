@@ -120,8 +120,9 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdRequest(args [1]string, ar
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -148,8 +149,9 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdRequest(args [1]string, ar
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -166,7 +168,7 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdRequest(args [1]string, ar
 
 	var rawBody []byte
 
-	var response DeleteMgmtV1ProjectsByProjectIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -191,7 +193,7 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdRequest(args [1]string, ar
 		type (
 			Request  = struct{}
 			Params   = DeleteMgmtV1ProjectsByProjectIdParams
-			Response = DeleteMgmtV1ProjectsByProjectIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -210,8 +212,19 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdRequest(args [1]string, ar
 		response, err = s.h.DeleteMgmtV1ProjectsByProjectId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -311,8 +324,9 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdReques
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -339,8 +353,9 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdReques
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -357,7 +372,7 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdReques
 
 	var rawBody []byte
 
-	var response DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -382,7 +397,7 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdReques
 		type (
 			Request  = struct{}
 			Params   = DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams
-			Response = DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -401,8 +416,19 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdReques
 		response, err = s.h.DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -502,8 +528,9 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRequest(a
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -530,8 +557,9 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRequest(a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -548,7 +576,7 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRequest(a
 
 	var rawBody []byte
 
-	var response DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -573,7 +601,7 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRequest(a
 		type (
 			Request  = struct{}
 			Params   = DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams
-			Response = DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -592,8 +620,19 @@ func (s *Server) handleDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRequest(a
 		response, err = s.h.DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -693,8 +732,9 @@ func (s *Server) handleDeleteV1AuthIdentitiesByIdentityIdRequest(args [1]string,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -721,8 +761,9 @@ func (s *Server) handleDeleteV1AuthIdentitiesByIdentityIdRequest(args [1]string,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -739,7 +780,7 @@ func (s *Server) handleDeleteV1AuthIdentitiesByIdentityIdRequest(args [1]string,
 
 	var rawBody []byte
 
-	var response DeleteV1AuthIdentitiesByIdentityIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -760,7 +801,7 @@ func (s *Server) handleDeleteV1AuthIdentitiesByIdentityIdRequest(args [1]string,
 		type (
 			Request  = struct{}
 			Params   = DeleteV1AuthIdentitiesByIdentityIdParams
-			Response = DeleteV1AuthIdentitiesByIdentityIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -779,8 +820,19 @@ func (s *Server) handleDeleteV1AuthIdentitiesByIdentityIdRequest(args [1]string,
 		response, err = s.h.DeleteV1AuthIdentitiesByIdentityId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -880,8 +932,9 @@ func (s *Server) handleDeleteV1AuthMfaFactorsByFactorIdRequest(args [1]string, a
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -908,8 +961,9 @@ func (s *Server) handleDeleteV1AuthMfaFactorsByFactorIdRequest(args [1]string, a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -926,7 +980,7 @@ func (s *Server) handleDeleteV1AuthMfaFactorsByFactorIdRequest(args [1]string, a
 
 	var rawBody []byte
 
-	var response DeleteV1AuthMfaFactorsByFactorIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -947,7 +1001,7 @@ func (s *Server) handleDeleteV1AuthMfaFactorsByFactorIdRequest(args [1]string, a
 		type (
 			Request  = struct{}
 			Params   = DeleteV1AuthMfaFactorsByFactorIdParams
-			Response = DeleteV1AuthMfaFactorsByFactorIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -966,8 +1020,19 @@ func (s *Server) handleDeleteV1AuthMfaFactorsByFactorIdRequest(args [1]string, a
 		response, err = s.h.DeleteV1AuthMfaFactorsByFactorId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -1067,8 +1132,9 @@ func (s *Server) handleDeleteV1AuthWebauthnCredentialsByCredentialIdRequest(args
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -1095,8 +1161,9 @@ func (s *Server) handleDeleteV1AuthWebauthnCredentialsByCredentialIdRequest(args
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -1113,7 +1180,7 @@ func (s *Server) handleDeleteV1AuthWebauthnCredentialsByCredentialIdRequest(args
 
 	var rawBody []byte
 
-	var response DeleteV1AuthWebauthnCredentialsByCredentialIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -1134,7 +1201,7 @@ func (s *Server) handleDeleteV1AuthWebauthnCredentialsByCredentialIdRequest(args
 		type (
 			Request  = struct{}
 			Params   = DeleteV1AuthWebauthnCredentialsByCredentialIdParams
-			Response = DeleteV1AuthWebauthnCredentialsByCredentialIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -1153,8 +1220,19 @@ func (s *Server) handleDeleteV1AuthWebauthnCredentialsByCredentialIdRequest(args
 		response, err = s.h.DeleteV1AuthWebauthnCredentialsByCredentialId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -1254,8 +1332,9 @@ func (s *Server) handleDeleteV1OauthGrantsByGrantIdRequest(args [1]string, argsE
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -1282,8 +1361,9 @@ func (s *Server) handleDeleteV1OauthGrantsByGrantIdRequest(args [1]string, argsE
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -1300,7 +1380,7 @@ func (s *Server) handleDeleteV1OauthGrantsByGrantIdRequest(args [1]string, argsE
 
 	var rawBody []byte
 
-	var response DeleteV1OauthGrantsByGrantIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -1321,7 +1401,7 @@ func (s *Server) handleDeleteV1OauthGrantsByGrantIdRequest(args [1]string, argsE
 		type (
 			Request  = struct{}
 			Params   = DeleteV1OauthGrantsByGrantIdParams
-			Response = DeleteV1OauthGrantsByGrantIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -1340,8 +1420,19 @@ func (s *Server) handleDeleteV1OauthGrantsByGrantIdRequest(args [1]string, argsE
 		response, err = s.h.DeleteV1OauthGrantsByGrantId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -1441,8 +1532,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(arg
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -1469,8 +1561,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(arg
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -1487,7 +1580,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(arg
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -1516,7 +1609,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(arg
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -1535,8 +1628,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(arg
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -1636,8 +1740,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -1664,8 +1769,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -1682,7 +1788,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminAppsByAppIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -1711,7 +1817,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminAppsByAppIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -1730,8 +1836,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -1831,8 +1948,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecre
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -1859,8 +1977,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecre
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -1877,7 +1996,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecre
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -1910,7 +2029,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecre
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -1929,8 +2048,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecre
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -2030,8 +2160,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRequest(
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -2058,8 +2189,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRequest(
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -2076,7 +2208,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRequest(
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -2105,7 +2237,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRequest(
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -2124,8 +2256,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRequest(
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -2225,8 +2368,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRequest
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -2253,8 +2397,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRequest
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -2271,7 +2416,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRequest
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -2300,7 +2445,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRequest
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -2319,8 +2464,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRequest
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -2420,8 +2576,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminHooksByIdRequest(args [2]
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -2448,8 +2605,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminHooksByIdRequest(args [2]
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -2466,7 +2624,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminHooksByIdRequest(args [2]
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminHooksByIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -2495,7 +2653,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminHooksByIdRequest(args [2]
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminHooksByIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminHooksByIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -2514,8 +2672,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminHooksByIdRequest(args [2]
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminHooksById(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -2615,8 +2784,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminJwksByKeyIdRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -2643,8 +2813,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminJwksByKeyIdRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -2661,7 +2832,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminJwksByKeyIdRequest(args [
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminJwksByKeyIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -2690,7 +2861,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminJwksByKeyIdRequest(args [
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminJwksByKeyIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -2709,8 +2880,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminJwksByKeyIdRequest(args [
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -2810,8 +2992,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRequest
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -2838,8 +3021,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRequest
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -2856,7 +3040,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRequest
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -2885,7 +3069,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRequest
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -2904,8 +3088,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRequest
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -3005,8 +3200,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdR
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -3033,8 +3229,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdR
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -3051,7 +3248,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdR
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -3080,7 +3277,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdR
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -3099,8 +3296,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdR
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -3200,8 +3408,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRequest(
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -3228,8 +3437,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRequest(
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -3246,7 +3456,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRequest(
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -3275,7 +3485,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRequest(
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -3294,8 +3504,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRequest(
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -3395,8 +3616,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRequ
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -3423,8 +3645,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRequ
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -3441,7 +3664,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRequ
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -3470,7 +3693,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRequ
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -3489,8 +3712,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRequ
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -3590,8 +3824,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecr
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -3618,8 +3853,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecr
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -3636,7 +3872,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecr
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -3669,7 +3905,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecr
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -3688,8 +3924,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecr
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -3789,8 +4036,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(a
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -3817,8 +4065,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -3835,7 +4084,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(a
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -3864,7 +4113,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(a
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -3883,8 +4132,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(a
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -3984,8 +4244,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -4012,8 +4273,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -4030,7 +4292,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -4059,7 +4321,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -4078,8 +4340,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -4179,8 +4452,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTok
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -4207,8 +4481,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTok
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -4225,7 +4500,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTok
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -4258,7 +4533,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTok
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -4277,8 +4552,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTok
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -4378,8 +4664,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRequest(
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -4406,8 +4693,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRequest(
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -4424,7 +4712,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRequest(
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -4453,7 +4741,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRequest(
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -4472,8 +4760,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRequest(
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -4573,8 +4872,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdRequest(args
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -4601,8 +4901,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdRequest(args
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -4619,7 +4920,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdRequest(args
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminUsersByUserIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -4652,7 +4953,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdRequest(args
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminUsersByUserIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -4671,8 +4972,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdRequest(args
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -4772,8 +5084,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGran
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -4800,8 +5113,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGran
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -4818,7 +5132,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGran
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -4851,7 +5165,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGran
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -4870,8 +5184,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGran
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -4971,8 +5296,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesBy
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -4999,8 +5325,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesBy
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -5017,7 +5344,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesBy
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -5050,7 +5377,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesBy
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -5069,8 +5396,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesBy
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -5170,8 +5508,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySe
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -5198,8 +5537,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySe
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -5216,7 +5556,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySe
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -5249,7 +5589,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySe
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -5268,8 +5608,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySe
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -5369,8 +5720,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminWebhooksByIdRequest(args 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -5397,8 +5749,9 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminWebhooksByIdRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -5415,7 +5768,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminWebhooksByIdRequest(args 
 
 	var rawBody []byte
 
-	var response DeleteV1ProjectsByProjectIdAdminWebhooksByIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -5444,7 +5797,7 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminWebhooksByIdRequest(args 
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams
-			Response = DeleteV1ProjectsByProjectIdAdminWebhooksByIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -5463,8 +5816,19 @@ func (s *Server) handleDeleteV1ProjectsByProjectIdAdminWebhooksByIdRequest(args 
 		response, err = s.h.DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -5564,8 +5928,9 @@ func (s *Server) handleDeleteV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -5592,8 +5957,9 @@ func (s *Server) handleDeleteV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -5610,7 +5976,7 @@ func (s *Server) handleDeleteV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [
 
 	var rawBody []byte
 
-	var response DeleteV1ScimV2ByConnectionIdGroupsByGroupIdRes
+	var response *DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNoContent
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -5635,7 +6001,7 @@ func (s *Server) handleDeleteV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams
-			Response = DeleteV1ScimV2ByConnectionIdGroupsByGroupIdRes
+			Response = *DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNoContent
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -5646,16 +6012,27 @@ func (s *Server) handleDeleteV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [
 			mreq,
 			unpackDeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx, params)
+				err = s.h.DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx, params)
+		err = s.h.DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -5755,8 +6132,9 @@ func (s *Server) handleDeleteV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -5783,8 +6161,9 @@ func (s *Server) handleDeleteV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -5801,7 +6180,7 @@ func (s *Server) handleDeleteV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args
 
 	var rawBody []byte
 
-	var response DeleteV1ScimV2ByConnectionIdUsersByScimUserIdRes
+	var response *DeleteV1ScimV2ByConnectionIdUsersByScimUserIdNoContent
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -5826,7 +6205,7 @@ func (s *Server) handleDeleteV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args
 		type (
 			Request  = struct{}
 			Params   = DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams
-			Response = DeleteV1ScimV2ByConnectionIdUsersByScimUserIdRes
+			Response = *DeleteV1ScimV2ByConnectionIdUsersByScimUserIdNoContent
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -5837,16 +6216,27 @@ func (s *Server) handleDeleteV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args
 			mreq,
 			unpackDeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx, params)
+				err = s.h.DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx, params)
+		err = s.h.DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -5946,8 +6336,9 @@ func (s *Server) handleDeleteV1SessionsRequest(args [0]string, argsEscaped bool,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -5974,8 +6365,9 @@ func (s *Server) handleDeleteV1SessionsRequest(args [0]string, argsEscaped bool,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -5997,7 +6389,7 @@ func (s *Server) handleDeleteV1SessionsRequest(args [0]string, argsEscaped bool,
 		}
 	}()
 
-	var response DeleteV1SessionsRes
+	var response *DeleteV1SessionsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -6013,7 +6405,7 @@ func (s *Server) handleDeleteV1SessionsRequest(args [0]string, argsEscaped bool,
 		type (
 			Request  = OptDeleteV1SessionsReq
 			Params   = struct{}
-			Response = DeleteV1SessionsRes
+			Response = *DeleteV1SessionsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -6032,8 +6424,19 @@ func (s *Server) handleDeleteV1SessionsRequest(args [0]string, argsEscaped bool,
 		response, err = s.h.DeleteV1Sessions(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -6133,8 +6536,9 @@ func (s *Server) handleDeleteV1SessionsBySessionIdRequest(args [1]string, argsEs
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -6161,8 +6565,9 @@ func (s *Server) handleDeleteV1SessionsBySessionIdRequest(args [1]string, argsEs
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -6179,7 +6584,7 @@ func (s *Server) handleDeleteV1SessionsBySessionIdRequest(args [1]string, argsEs
 
 	var rawBody []byte
 
-	var response DeleteV1SessionsBySessionIdRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -6200,7 +6605,7 @@ func (s *Server) handleDeleteV1SessionsBySessionIdRequest(args [1]string, argsEs
 		type (
 			Request  = struct{}
 			Params   = DeleteV1SessionsBySessionIdParams
-			Response = DeleteV1SessionsBySessionIdRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -6219,8 +6624,19 @@ func (s *Server) handleDeleteV1SessionsBySessionIdRequest(args [1]string, argsEs
 		response, err = s.h.DeleteV1SessionsBySessionId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -6320,8 +6736,9 @@ func (s *Server) handleDeleteV1UsersMeRequest(args [0]string, argsEscaped bool, 
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -6348,8 +6765,9 @@ func (s *Server) handleDeleteV1UsersMeRequest(args [0]string, argsEscaped bool, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -6371,7 +6789,7 @@ func (s *Server) handleDeleteV1UsersMeRequest(args [0]string, argsEscaped bool, 
 		}
 	}()
 
-	var response DeleteV1UsersMeRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -6387,7 +6805,7 @@ func (s *Server) handleDeleteV1UsersMeRequest(args [0]string, argsEscaped bool, 
 		type (
 			Request  = OptDeleteV1UsersMeReq
 			Params   = struct{}
-			Response = DeleteV1UsersMeRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -6406,8 +6824,19 @@ func (s *Server) handleDeleteV1UsersMeRequest(args [0]string, argsEscaped bool, 
 		response, err = s.h.DeleteV1UsersMe(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -6507,8 +6936,9 @@ func (s *Server) handleGetMgmtV1ProjectsRequest(args [0]string, argsEscaped bool
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -6535,8 +6965,9 @@ func (s *Server) handleGetMgmtV1ProjectsRequest(args [0]string, argsEscaped bool
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -6553,7 +6984,7 @@ func (s *Server) handleGetMgmtV1ProjectsRequest(args [0]string, argsEscaped bool
 
 	var rawBody []byte
 
-	var response GetMgmtV1ProjectsRes
+	var response *GetMgmtV1ProjectsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -6578,7 +7009,7 @@ func (s *Server) handleGetMgmtV1ProjectsRequest(args [0]string, argsEscaped bool
 		type (
 			Request  = struct{}
 			Params   = GetMgmtV1ProjectsParams
-			Response = GetMgmtV1ProjectsRes
+			Response = *GetMgmtV1ProjectsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -6597,8 +7028,19 @@ func (s *Server) handleGetMgmtV1ProjectsRequest(args [0]string, argsEscaped bool
 		response, err = s.h.GetMgmtV1Projects(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -6698,8 +7140,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdRequest(args [1]string, argsE
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -6726,8 +7169,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdRequest(args [1]string, argsE
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -6744,7 +7188,7 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdRequest(args [1]string, argsE
 
 	var rawBody []byte
 
-	var response GetMgmtV1ProjectsByProjectIdRes
+	var response *GetMgmtV1ProjectsByProjectIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -6765,7 +7209,7 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdRequest(args [1]string, argsE
 		type (
 			Request  = struct{}
 			Params   = GetMgmtV1ProjectsByProjectIdParams
-			Response = GetMgmtV1ProjectsByProjectIdRes
+			Response = *GetMgmtV1ProjectsByProjectIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -6784,8 +7228,19 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdRequest(args [1]string, argsE
 		response, err = s.h.GetMgmtV1ProjectsByProjectId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -6885,8 +7340,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdAdminTokensRequest(args [1]st
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -6913,8 +7369,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdAdminTokensRequest(args [1]st
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -6931,7 +7388,7 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdAdminTokensRequest(args [1]st
 
 	var rawBody []byte
 
-	var response GetMgmtV1ProjectsByProjectIdAdminTokensRes
+	var response GetMgmtV1ProjectsByProjectIdAdminTokensOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -6952,7 +7409,7 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdAdminTokensRequest(args [1]st
 		type (
 			Request  = struct{}
 			Params   = GetMgmtV1ProjectsByProjectIdAdminTokensParams
-			Response = GetMgmtV1ProjectsByProjectIdAdminTokensRes
+			Response = GetMgmtV1ProjectsByProjectIdAdminTokensOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -6971,8 +7428,19 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdAdminTokensRequest(args [1]st
 		response, err = s.h.GetMgmtV1ProjectsByProjectIdAdminTokens(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -7072,8 +7540,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdConfigExportRequest(args [1]s
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -7100,8 +7569,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdConfigExportRequest(args [1]s
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -7158,8 +7628,19 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdConfigExportRequest(args [1]s
 		response, err = s.h.GetMgmtV1ProjectsByProjectIdConfigExport(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -7259,8 +7740,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdEnvironmentsRequest(args [1]s
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -7287,8 +7769,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdEnvironmentsRequest(args [1]s
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -7305,7 +7788,7 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdEnvironmentsRequest(args [1]s
 
 	var rawBody []byte
 
-	var response GetMgmtV1ProjectsByProjectIdEnvironmentsRes
+	var response *GetMgmtV1ProjectsByProjectIdEnvironmentsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -7326,7 +7809,7 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdEnvironmentsRequest(args [1]s
 		type (
 			Request  = struct{}
 			Params   = GetMgmtV1ProjectsByProjectIdEnvironmentsParams
-			Response = GetMgmtV1ProjectsByProjectIdEnvironmentsRes
+			Response = *GetMgmtV1ProjectsByProjectIdEnvironmentsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -7345,8 +7828,19 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdEnvironmentsRequest(args [1]s
 		response, err = s.h.GetMgmtV1ProjectsByProjectIdEnvironments(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -7446,8 +7940,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRequest(args
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -7474,8 +7969,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRequest(args
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -7492,7 +7988,7 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRequest(args
 
 	var rawBody []byte
 
-	var response GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes
+	var response *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -7517,7 +8013,7 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRequest(args
 		type (
 			Request  = struct{}
 			Params   = GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams
-			Response = GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes
+			Response = *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -7536,8 +8032,19 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRequest(args
 		response, err = s.h.GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -7637,8 +8144,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]strin
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -7665,8 +8173,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]strin
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -7683,7 +8192,7 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]strin
 
 	var rawBody []byte
 
-	var response GetMgmtV1ProjectsByProjectIdFeaturesRes
+	var response GetMgmtV1ProjectsByProjectIdFeaturesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -7704,7 +8213,7 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]strin
 		type (
 			Request  = struct{}
 			Params   = GetMgmtV1ProjectsByProjectIdFeaturesParams
-			Response = GetMgmtV1ProjectsByProjectIdFeaturesRes
+			Response = GetMgmtV1ProjectsByProjectIdFeaturesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -7723,8 +8232,19 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]strin
 		response, err = s.h.GetMgmtV1ProjectsByProjectIdFeatures(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -7898,8 +8418,19 @@ func (s *Server) handleGetOauth2AuthorizeRequest(args [0]string, argsEscaped boo
 		response, err = s.h.GetOauth2Authorize(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -8049,8 +8580,19 @@ func (s *Server) handleGetOauth2LogoutRequest(args [0]string, argsEscaped bool, 
 		response, err = s.h.GetOauth2Logout(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -8150,8 +8692,9 @@ func (s *Server) handleGetOauth2UserinfoRequest(args [0]string, argsEscaped bool
 					Security:         "OAuth2",
 					Err:              err,
 				}
-				defer recordError("Security:OAuth2", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:OAuth2", err)
+				}
 				return
 			}
 			if ok {
@@ -8167,8 +8710,9 @@ func (s *Server) handleGetOauth2UserinfoRequest(args [0]string, argsEscaped bool
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -8196,15 +8740,16 @@ func (s *Server) handleGetOauth2UserinfoRequest(args [0]string, argsEscaped bool
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetOauth2UserinfoRes
+	var response GetOauth2UserinfoOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -8220,7 +8765,7 @@ func (s *Server) handleGetOauth2UserinfoRequest(args [0]string, argsEscaped bool
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetOauth2UserinfoRes
+			Response = GetOauth2UserinfoOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -8239,8 +8784,19 @@ func (s *Server) handleGetOauth2UserinfoRequest(args [0]string, argsEscaped bool
 		response, err = s.h.GetOauth2Userinfo(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -8386,8 +8942,19 @@ func (s *Server) handleGetPByProjectIdEByEnvWellKnownJwksJsonRequest(args [2]str
 		response, err = s.h.GetPByProjectIdEByEnvWellKnownJwksJson(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -8533,8 +9100,19 @@ func (s *Server) handleGetPByProjectIdEByEnvWellKnownOpenidConfigurationRequest(
 		response, err = s.h.GetPByProjectIdEByEnvWellKnownOpenidConfiguration(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -8634,8 +9212,9 @@ func (s *Server) handleGetV1AccountCapabilitiesRequest(args [0]string, argsEscap
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -8662,15 +9241,16 @@ func (s *Server) handleGetV1AccountCapabilitiesRequest(args [0]string, argsEscap
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetV1AccountCapabilitiesRes
+	var response *GetV1AccountCapabilitiesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -8686,7 +9266,7 @@ func (s *Server) handleGetV1AccountCapabilitiesRequest(args [0]string, argsEscap
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1AccountCapabilitiesRes
+			Response = *GetV1AccountCapabilitiesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -8705,8 +9285,19 @@ func (s *Server) handleGetV1AccountCapabilitiesRequest(args [0]string, argsEscap
 		response, err = s.h.GetV1AccountCapabilities(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -8848,8 +9439,19 @@ func (s *Server) handleGetV1AuthEmailChangeCancelRequest(args [0]string, argsEsc
 		response, err = s.h.GetV1AuthEmailChangeCancel(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -8995,8 +9597,19 @@ func (s *Server) handleGetV1AuthEmailVerificationCallbackRequest(args [0]string,
 		response, err = s.h.GetV1AuthEmailVerificationCallback(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -9096,8 +9709,9 @@ func (s *Server) handleGetV1AuthIdentitiesRequest(args [0]string, argsEscaped bo
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -9124,15 +9738,16 @@ func (s *Server) handleGetV1AuthIdentitiesRequest(args [0]string, argsEscaped bo
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetV1AuthIdentitiesRes
+	var response *GetV1AuthIdentitiesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -9148,7 +9763,7 @@ func (s *Server) handleGetV1AuthIdentitiesRequest(args [0]string, argsEscaped bo
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1AuthIdentitiesRes
+			Response = *GetV1AuthIdentitiesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -9167,8 +9782,19 @@ func (s *Server) handleGetV1AuthIdentitiesRequest(args [0]string, argsEscaped bo
 		response, err = s.h.GetV1AuthIdentities(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -9314,8 +9940,19 @@ func (s *Server) handleGetV1AuthMagicLinkCallbackRequest(args [0]string, argsEsc
 		response, err = s.h.GetV1AuthMagicLinkCallback(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -9415,8 +10052,9 @@ func (s *Server) handleGetV1AuthMfaFactorsRequest(args [0]string, argsEscaped bo
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -9443,15 +10081,16 @@ func (s *Server) handleGetV1AuthMfaFactorsRequest(args [0]string, argsEscaped bo
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetV1AuthMfaFactorsRes
+	var response *GetV1AuthMfaFactorsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -9467,7 +10106,7 @@ func (s *Server) handleGetV1AuthMfaFactorsRequest(args [0]string, argsEscaped bo
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1AuthMfaFactorsRes
+			Response = *GetV1AuthMfaFactorsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -9486,8 +10125,19 @@ func (s *Server) handleGetV1AuthMfaFactorsRequest(args [0]string, argsEscaped bo
 		response, err = s.h.GetV1AuthMfaFactors(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -9641,8 +10291,19 @@ func (s *Server) handleGetV1AuthOauthByProviderCallbackRequest(args [1]string, a
 		response, err = s.h.GetV1AuthOauthByProviderCallback(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -9784,8 +10445,19 @@ func (s *Server) handleGetV1AuthOauthByProviderLinkCallbackRequest(args [1]strin
 		response, err = s.h.GetV1AuthOauthByProviderLinkCallback(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -9885,8 +10557,9 @@ func (s *Server) handleGetV1AuthOauthByProviderLinkStartRequest(args [1]string, 
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -9913,8 +10586,9 @@ func (s *Server) handleGetV1AuthOauthByProviderLinkStartRequest(args [1]string, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -9979,8 +10653,19 @@ func (s *Server) handleGetV1AuthOauthByProviderLinkStartRequest(args [1]string, 
 		response, err = s.h.GetV1AuthOauthByProviderLinkStart(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -10142,8 +10827,19 @@ func (s *Server) handleGetV1AuthOauthByProviderStartRequest(args [1]string, args
 		response, err = s.h.GetV1AuthOauthByProviderStart(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -10285,8 +10981,19 @@ func (s *Server) handleGetV1AuthOauthProvidersRequest(args [0]string, argsEscape
 		response, err = s.h.GetV1AuthOauthProviders(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -10386,8 +11093,9 @@ func (s *Server) handleGetV1AuthSessionRequest(args [0]string, argsEscaped bool,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -10414,15 +11122,16 @@ func (s *Server) handleGetV1AuthSessionRequest(args [0]string, argsEscaped bool,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetV1AuthSessionRes
+	var response *GetV1AuthSessionOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -10438,7 +11147,7 @@ func (s *Server) handleGetV1AuthSessionRequest(args [0]string, argsEscaped bool,
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1AuthSessionRes
+			Response = *GetV1AuthSessionOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -10457,8 +11166,19 @@ func (s *Server) handleGetV1AuthSessionRequest(args [0]string, argsEscaped bool,
 		response, err = s.h.GetV1AuthSession(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -10558,8 +11278,9 @@ func (s *Server) handleGetV1AuthWebauthnCredentialsRequest(args [0]string, argsE
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -10586,15 +11307,16 @@ func (s *Server) handleGetV1AuthWebauthnCredentialsRequest(args [0]string, argsE
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetV1AuthWebauthnCredentialsRes
+	var response *GetV1AuthWebauthnCredentialsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -10610,7 +11332,7 @@ func (s *Server) handleGetV1AuthWebauthnCredentialsRequest(args [0]string, argsE
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1AuthWebauthnCredentialsRes
+			Response = *GetV1AuthWebauthnCredentialsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -10629,8 +11351,19 @@ func (s *Server) handleGetV1AuthWebauthnCredentialsRequest(args [0]string, argsE
 		response, err = s.h.GetV1AuthWebauthnCredentials(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -10772,8 +11505,19 @@ func (s *Server) handleGetV1ConfigPublicRequest(args [0]string, argsEscaped bool
 		response, err = s.h.GetV1ConfigPublic(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -10915,8 +11659,19 @@ func (s *Server) handleGetV1CsrfRequest(args [0]string, argsEscaped bool, w http
 		response, err = s.h.GetV1Csrf(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -11062,8 +11817,19 @@ func (s *Server) handleGetV1DeviceRequest(args [0]string, argsEscaped bool, w ht
 		response, err = s.h.GetV1Device(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -11186,8 +11952,19 @@ func (s *Server) handleGetV1HealthRequest(args [0]string, argsEscaped bool, w ht
 		response, err = s.h.GetV1Health(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -11310,8 +12087,19 @@ func (s *Server) handleGetV1HealthLiveRequest(args [0]string, argsEscaped bool, 
 		response, err = s.h.GetV1HealthLive(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -11399,7 +12187,7 @@ func (s *Server) handleGetV1HealthReadyRequest(args [0]string, argsEscaped bool,
 
 	var rawBody []byte
 
-	var response GetV1HealthReadyRes
+	var response *GetV1HealthReadyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -11415,7 +12203,7 @@ func (s *Server) handleGetV1HealthReadyRequest(args [0]string, argsEscaped bool,
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1HealthReadyRes
+			Response = *GetV1HealthReadyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -11434,8 +12222,19 @@ func (s *Server) handleGetV1HealthReadyRequest(args [0]string, argsEscaped bool,
 		response, err = s.h.GetV1HealthReady(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -11535,8 +12334,9 @@ func (s *Server) handleGetV1OauthGrantsRequest(args [0]string, argsEscaped bool,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -11563,8 +12363,9 @@ func (s *Server) handleGetV1OauthGrantsRequest(args [0]string, argsEscaped bool,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -11581,7 +12382,7 @@ func (s *Server) handleGetV1OauthGrantsRequest(args [0]string, argsEscaped bool,
 
 	var rawBody []byte
 
-	var response GetV1OauthGrantsRes
+	var response *GetV1OauthGrantsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -11606,7 +12407,7 @@ func (s *Server) handleGetV1OauthGrantsRequest(args [0]string, argsEscaped bool,
 		type (
 			Request  = struct{}
 			Params   = GetV1OauthGrantsParams
-			Response = GetV1OauthGrantsRes
+			Response = *GetV1OauthGrantsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -11625,8 +12426,19 @@ func (s *Server) handleGetV1OauthGrantsRequest(args [0]string, argsEscaped bool,
 		response, err = s.h.GetV1OauthGrants(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -11728,7 +12540,7 @@ func (s *Server) handleGetV1OauthInteractionByInteractionIdRequest(args [1]strin
 
 	var rawBody []byte
 
-	var response GetV1OauthInteractionByInteractionIdRes
+	var response *GetV1OauthInteractionByInteractionIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -11753,7 +12565,7 @@ func (s *Server) handleGetV1OauthInteractionByInteractionIdRequest(args [1]strin
 		type (
 			Request  = struct{}
 			Params   = GetV1OauthInteractionByInteractionIdParams
-			Response = GetV1OauthInteractionByInteractionIdRes
+			Response = *GetV1OauthInteractionByInteractionIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -11772,8 +12584,19 @@ func (s *Server) handleGetV1OauthInteractionByInteractionIdRequest(args [1]strin
 		response, err = s.h.GetV1OauthInteractionByInteractionId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -11873,8 +12696,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAccessRequestsRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -11901,8 +12725,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAccessRequestsRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -11919,7 +12744,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAccessRequestsRequest(args [
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminAccessRequestsRes
+	var response *GetV1ProjectsByProjectIdAdminAccessRequestsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -11952,7 +12777,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAccessRequestsRequest(args [
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminAccessRequestsParams
-			Response = GetV1ProjectsByProjectIdAdminAccessRequestsRes
+			Response = *GetV1ProjectsByProjectIdAdminAccessRequestsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -11971,8 +12796,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAccessRequestsRequest(args [
 		response, err = s.h.GetV1ProjectsByProjectIdAdminAccessRequests(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -12072,8 +12908,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminApiKeysRequest(args [1]strin
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -12100,8 +12937,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminApiKeysRequest(args [1]strin
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -12118,7 +12956,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminApiKeysRequest(args [1]strin
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminApiKeysRes
+	var response *GetV1ProjectsByProjectIdAdminApiKeysOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -12143,7 +12981,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminApiKeysRequest(args [1]strin
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminApiKeysParams
-			Response = GetV1ProjectsByProjectIdAdminApiKeysRes
+			Response = *GetV1ProjectsByProjectIdAdminApiKeysOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -12162,8 +13000,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminApiKeysRequest(args [1]strin
 		response, err = s.h.GetV1ProjectsByProjectIdAdminApiKeys(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -12263,8 +13112,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAppsRequest(args [1]string, 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -12291,8 +13141,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAppsRequest(args [1]string, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -12309,7 +13160,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAppsRequest(args [1]string, 
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminAppsRes
+	var response *GetV1ProjectsByProjectIdAdminAppsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -12342,7 +13193,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAppsRequest(args [1]string, 
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminAppsParams
-			Response = GetV1ProjectsByProjectIdAdminAppsRes
+			Response = *GetV1ProjectsByProjectIdAdminAppsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -12361,8 +13212,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAppsRequest(args [1]string, 
 		response, err = s.h.GetV1ProjectsByProjectIdAdminApps(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -12462,8 +13324,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [2]s
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -12490,8 +13353,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [2]s
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -12508,7 +13372,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [2]s
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminAppsByAppIdRes
+	var response *GetV1ProjectsByProjectIdAdminAppsByAppIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -12537,7 +13401,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [2]s
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminAppsByAppIdParams
-			Response = GetV1ProjectsByProjectIdAdminAppsByAppIdRes
+			Response = *GetV1ProjectsByProjectIdAdminAppsByAppIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -12556,8 +13420,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [2]s
 		response, err = s.h.GetV1ProjectsByProjectIdAdminAppsByAppId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -12657,8 +13532,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAuditLogsRequest(args [1]str
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -12685,8 +13561,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAuditLogsRequest(args [1]str
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -12703,7 +13580,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAuditLogsRequest(args [1]str
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminAuditLogsRes
+	var response *GetV1ProjectsByProjectIdAdminAuditLogsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -12748,7 +13625,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAuditLogsRequest(args [1]str
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminAuditLogsParams
-			Response = GetV1ProjectsByProjectIdAdminAuditLogsRes
+			Response = *GetV1ProjectsByProjectIdAdminAuditLogsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -12767,8 +13644,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAuditLogsRequest(args [1]str
 		response, err = s.h.GetV1ProjectsByProjectIdAdminAuditLogs(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -12868,8 +13756,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRequest(ar
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -12896,8 +13785,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRequest(ar
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -12914,7 +13804,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRequest(ar
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRes
+	var response *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -12943,7 +13833,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRequest(ar
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams
-			Response = GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRes
+			Response = *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -12962,8 +13852,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRequest(ar
 		response, err = s.h.GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -13063,8 +13964,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigAuthRequest(args [1]st
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -13091,8 +13993,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigAuthRequest(args [1]st
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -13109,7 +14012,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigAuthRequest(args [1]st
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminConfigAuthRes
+	var response *AuthConfig
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -13134,7 +14037,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigAuthRequest(args [1]st
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminConfigAuthParams
-			Response = GetV1ProjectsByProjectIdAdminConfigAuthRes
+			Response = *AuthConfig
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -13153,8 +14056,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigAuthRequest(args [1]st
 		response, err = s.h.GetV1ProjectsByProjectIdAdminConfigAuth(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -13254,8 +14168,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(args 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -13282,8 +14197,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -13300,7 +14216,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(args 
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminConfigMfaPolicyRes
+	var response *MfaPolicy
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -13325,7 +14241,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(args 
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams
-			Response = GetV1ProjectsByProjectIdAdminConfigMfaPolicyRes
+			Response = *MfaPolicy
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -13344,8 +14260,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(args 
 		response, err = s.h.GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -13445,8 +14372,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigPasswordPolicyRequest(
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -13473,8 +14401,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigPasswordPolicyRequest(
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -13491,7 +14420,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigPasswordPolicyRequest(
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminConfigPasswordPolicyRes
+	var response *PasswordPolicy
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -13516,7 +14445,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigPasswordPolicyRequest(
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams
-			Response = GetV1ProjectsByProjectIdAdminConfigPasswordPolicyRes
+			Response = *PasswordPolicy
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -13535,8 +14464,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigPasswordPolicyRequest(
 		response, err = s.h.GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -13636,8 +14576,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigRateLimitsRequest(args
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -13664,8 +14605,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigRateLimitsRequest(args
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -13682,7 +14624,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigRateLimitsRequest(args
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminConfigRateLimitsRes
+	var response *RateLimits
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -13707,7 +14649,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigRateLimitsRequest(args
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminConfigRateLimitsParams
-			Response = GetV1ProjectsByProjectIdAdminConfigRateLimitsRes
+			Response = *RateLimits
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -13726,8 +14668,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigRateLimitsRequest(args
 		response, err = s.h.GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -13827,8 +14780,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigSessionPolicyRequest(a
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -13855,8 +14809,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigSessionPolicyRequest(a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -13873,7 +14828,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigSessionPolicyRequest(a
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminConfigSessionPolicyRes
+	var response *SessionPolicy
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -13898,7 +14853,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigSessionPolicyRequest(a
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams
-			Response = GetV1ProjectsByProjectIdAdminConfigSessionPolicyRes
+			Response = *SessionPolicy
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -13917,8 +14872,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConfigSessionPolicyRequest(a
 		response, err = s.h.GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -14018,8 +14984,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConsentsRequest(args [1]stri
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -14046,8 +15013,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConsentsRequest(args [1]stri
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -14064,7 +15032,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConsentsRequest(args [1]stri
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminConsentsRes
+	var response *ConsentConfig
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -14089,7 +15057,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConsentsRequest(args [1]stri
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminConsentsParams
-			Response = GetV1ProjectsByProjectIdAdminConsentsRes
+			Response = *ConsentConfig
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -14108,8 +15076,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminConsentsRequest(args [1]stri
 		response, err = s.h.GetV1ProjectsByProjectIdAdminConsents(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -14209,8 +15188,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminDomainsRequest(args [1]strin
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -14237,8 +15217,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminDomainsRequest(args [1]strin
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -14255,7 +15236,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminDomainsRequest(args [1]strin
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminDomainsRes
+	var response *GetV1ProjectsByProjectIdAdminDomainsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -14288,7 +15269,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminDomainsRequest(args [1]strin
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminDomainsParams
-			Response = GetV1ProjectsByProjectIdAdminDomainsRes
+			Response = *GetV1ProjectsByProjectIdAdminDomainsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -14307,8 +15288,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminDomainsRequest(args [1]strin
 		response, err = s.h.GetV1ProjectsByProjectIdAdminDomains(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -14408,8 +15400,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEmailProvidersRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -14436,8 +15429,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEmailProvidersRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -14454,7 +15448,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEmailProvidersRequest(args [
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminEmailProvidersRes
+	var response *GetV1ProjectsByProjectIdAdminEmailProvidersOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -14479,7 +15473,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEmailProvidersRequest(args [
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminEmailProvidersParams
-			Response = GetV1ProjectsByProjectIdAdminEmailProvidersRes
+			Response = *GetV1ProjectsByProjectIdAdminEmailProvidersOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -14498,8 +15492,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEmailProvidersRequest(args [
 		response, err = s.h.GetV1ProjectsByProjectIdAdminEmailProviders(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -14599,8 +15604,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEmailTemplatesRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -14627,8 +15633,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEmailTemplatesRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -14645,7 +15652,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEmailTemplatesRequest(args [
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminEmailTemplatesRes
+	var response GetV1ProjectsByProjectIdAdminEmailTemplatesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -14670,7 +15677,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEmailTemplatesRequest(args [
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminEmailTemplatesParams
-			Response = GetV1ProjectsByProjectIdAdminEmailTemplatesRes
+			Response = GetV1ProjectsByProjectIdAdminEmailTemplatesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -14689,8 +15696,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEmailTemplatesRequest(args [
 		response, err = s.h.GetV1ProjectsByProjectIdAdminEmailTemplates(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -14790,8 +15808,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEventsRequest(args [1]string
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -14818,8 +15837,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEventsRequest(args [1]string
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -14836,7 +15856,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEventsRequest(args [1]string
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminEventsRes
+	var response *GetV1ProjectsByProjectIdAdminEventsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -14877,7 +15897,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEventsRequest(args [1]string
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminEventsParams
-			Response = GetV1ProjectsByProjectIdAdminEventsRes
+			Response = *GetV1ProjectsByProjectIdAdminEventsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -14896,8 +15916,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminEventsRequest(args [1]string
 		response, err = s.h.GetV1ProjectsByProjectIdAdminEvents(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -14997,8 +16028,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminExportsByJobIdRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -15025,8 +16057,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminExportsByJobIdRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -15043,7 +16076,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminExportsByJobIdRequest(args [
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminExportsByJobIdRes
+	var response *GetV1ProjectsByProjectIdAdminExportsByJobIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -15072,7 +16105,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminExportsByJobIdRequest(args [
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminExportsByJobIdParams
-			Response = GetV1ProjectsByProjectIdAdminExportsByJobIdRes
+			Response = *GetV1ProjectsByProjectIdAdminExportsByJobIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -15091,8 +16124,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminExportsByJobIdRequest(args [
 		response, err = s.h.GetV1ProjectsByProjectIdAdminExportsByJobId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -15192,8 +16236,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminFeaturesRequest(args [1]stri
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -15220,8 +16265,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminFeaturesRequest(args [1]stri
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -15238,7 +16284,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminFeaturesRequest(args [1]stri
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminFeaturesRes
+	var response GetV1ProjectsByProjectIdAdminFeaturesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -15263,7 +16309,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminFeaturesRequest(args [1]stri
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminFeaturesParams
-			Response = GetV1ProjectsByProjectIdAdminFeaturesRes
+			Response = GetV1ProjectsByProjectIdAdminFeaturesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -15282,8 +16328,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminFeaturesRequest(args [1]stri
 		response, err = s.h.GetV1ProjectsByProjectIdAdminFeatures(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -15383,8 +16440,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminHooksRequest(args [1]string,
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -15411,8 +16469,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminHooksRequest(args [1]string,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -15429,7 +16488,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminHooksRequest(args [1]string,
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminHooksRes
+	var response *GetV1ProjectsByProjectIdAdminHooksOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -15462,7 +16521,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminHooksRequest(args [1]string,
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminHooksParams
-			Response = GetV1ProjectsByProjectIdAdminHooksRes
+			Response = *GetV1ProjectsByProjectIdAdminHooksOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -15481,8 +16540,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminHooksRequest(args [1]string,
 		response, err = s.h.GetV1ProjectsByProjectIdAdminHooks(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -15582,8 +16652,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminI18nByLocaleRequest(args [2]
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -15610,8 +16681,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminI18nByLocaleRequest(args [2]
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -15628,7 +16700,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminI18nByLocaleRequest(args [2]
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminI18nByLocaleRes
+	var response GetV1ProjectsByProjectIdAdminI18nByLocaleOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -15657,7 +16729,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminI18nByLocaleRequest(args [2]
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminI18nByLocaleParams
-			Response = GetV1ProjectsByProjectIdAdminI18nByLocaleRes
+			Response = GetV1ProjectsByProjectIdAdminI18nByLocaleOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -15676,8 +16748,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminI18nByLocaleRequest(args [2]
 		response, err = s.h.GetV1ProjectsByProjectIdAdminI18nByLocale(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -15777,8 +16860,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJobsRequest(args [1]string, 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -15805,8 +16889,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJobsRequest(args [1]string, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -15823,7 +16908,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJobsRequest(args [1]string, 
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminJobsRes
+	var response *GetV1ProjectsByProjectIdAdminJobsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -15864,7 +16949,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJobsRequest(args [1]string, 
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminJobsParams
-			Response = GetV1ProjectsByProjectIdAdminJobsRes
+			Response = *GetV1ProjectsByProjectIdAdminJobsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -15883,8 +16968,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJobsRequest(args [1]string, 
 		response, err = s.h.GetV1ProjectsByProjectIdAdminJobs(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -15984,8 +17080,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJobsByJobIdRequest(args [2]s
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -16012,8 +17109,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJobsByJobIdRequest(args [2]s
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -16030,7 +17128,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJobsByJobIdRequest(args [2]s
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminJobsByJobIdRes
+	var response *GetV1ProjectsByProjectIdAdminJobsByJobIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -16059,7 +17157,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJobsByJobIdRequest(args [2]s
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminJobsByJobIdParams
-			Response = GetV1ProjectsByProjectIdAdminJobsByJobIdRes
+			Response = *GetV1ProjectsByProjectIdAdminJobsByJobIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -16078,8 +17176,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJobsByJobIdRequest(args [2]s
 		response, err = s.h.GetV1ProjectsByProjectIdAdminJobsByJobId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -16179,8 +17288,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJwksRequest(args [1]string, 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -16207,8 +17317,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJwksRequest(args [1]string, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -16225,7 +17336,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJwksRequest(args [1]string, 
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminJwksRes
+	var response *GetV1ProjectsByProjectIdAdminJwksOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -16250,7 +17361,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJwksRequest(args [1]string, 
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminJwksParams
-			Response = GetV1ProjectsByProjectIdAdminJwksRes
+			Response = *GetV1ProjectsByProjectIdAdminJwksOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -16269,8 +17380,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminJwksRequest(args [1]string, 
 		response, err = s.h.GetV1ProjectsByProjectIdAdminJwks(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -16370,8 +17492,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminOauthProvidersRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -16398,8 +17521,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminOauthProvidersRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -16416,7 +17540,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminOauthProvidersRequest(args [
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminOauthProvidersRes
+	var response *GetV1ProjectsByProjectIdAdminOauthProvidersOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -16441,7 +17565,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminOauthProvidersRequest(args [
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminOauthProvidersParams
-			Response = GetV1ProjectsByProjectIdAdminOauthProvidersRes
+			Response = *GetV1ProjectsByProjectIdAdminOauthProvidersOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -16460,8 +17584,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminOauthProvidersRequest(args [
 		response, err = s.h.GetV1ProjectsByProjectIdAdminOauthProviders(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -16561,8 +17696,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRetentionPolicyRequest(args 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -16589,8 +17725,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRetentionPolicyRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -16607,7 +17744,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRetentionPolicyRequest(args 
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminRetentionPolicyRes
+	var response *RetentionPolicy
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -16632,7 +17769,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRetentionPolicyRequest(args 
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminRetentionPolicyParams
-			Response = GetV1ProjectsByProjectIdAdminRetentionPolicyRes
+			Response = *RetentionPolicy
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -16651,8 +17788,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRetentionPolicyRequest(args 
 		response, err = s.h.GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -16752,8 +17900,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRiskEventsRequest(args [1]st
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -16780,8 +17929,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRiskEventsRequest(args [1]st
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -16798,7 +17948,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRiskEventsRequest(args [1]st
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminRiskEventsRes
+	var response GetV1ProjectsByProjectIdAdminRiskEventsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -16843,7 +17993,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRiskEventsRequest(args [1]st
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminRiskEventsParams
-			Response = GetV1ProjectsByProjectIdAdminRiskEventsRes
+			Response = GetV1ProjectsByProjectIdAdminRiskEventsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -16862,8 +18012,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRiskEventsRequest(args [1]st
 		response, err = s.h.GetV1ProjectsByProjectIdAdminRiskEvents(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -16963,8 +18124,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRiskRulesRequest(args [1]str
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -16991,8 +18153,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRiskRulesRequest(args [1]str
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -17009,7 +18172,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRiskRulesRequest(args [1]str
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminRiskRulesRes
+	var response *GetV1ProjectsByProjectIdAdminRiskRulesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -17042,7 +18205,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRiskRulesRequest(args [1]str
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminRiskRulesParams
-			Response = GetV1ProjectsByProjectIdAdminRiskRulesRes
+			Response = *GetV1ProjectsByProjectIdAdminRiskRulesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -17061,8 +18224,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminRiskRulesRequest(args [1]str
 		response, err = s.h.GetV1ProjectsByProjectIdAdminRiskRules(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -17162,8 +18336,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminServiceAccountsRequest(args 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -17190,8 +18365,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminServiceAccountsRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -17208,7 +18384,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminServiceAccountsRequest(args 
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminServiceAccountsRes
+	var response *GetV1ProjectsByProjectIdAdminServiceAccountsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -17241,7 +18417,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminServiceAccountsRequest(args 
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminServiceAccountsParams
-			Response = GetV1ProjectsByProjectIdAdminServiceAccountsRes
+			Response = *GetV1ProjectsByProjectIdAdminServiceAccountsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -17260,8 +18436,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminServiceAccountsRequest(args 
 		response, err = s.h.GetV1ProjectsByProjectIdAdminServiceAccounts(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -17361,8 +18548,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRequest
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -17389,8 +18577,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRequest
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -17407,7 +18596,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRequest
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes
+	var response *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -17436,7 +18625,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRequest
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams
-			Response = GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes
+			Response = *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -17455,8 +18644,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRequest
 		response, err = s.h.GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -17556,8 +18756,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSmsProvidersRequest(args [1]
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -17584,8 +18785,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSmsProvidersRequest(args [1]
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -17602,7 +18804,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSmsProvidersRequest(args [1]
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminSmsProvidersRes
+	var response *GetV1ProjectsByProjectIdAdminSmsProvidersOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -17627,7 +18829,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSmsProvidersRequest(args [1]
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminSmsProvidersParams
-			Response = GetV1ProjectsByProjectIdAdminSmsProvidersRes
+			Response = *GetV1ProjectsByProjectIdAdminSmsProvidersOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -17646,8 +18848,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSmsProvidersRequest(args [1]
 		response, err = s.h.GetV1ProjectsByProjectIdAdminSmsProviders(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -17747,8 +18960,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -17775,8 +18989,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -17793,7 +19008,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsRequest(args [
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminSsoConnectionsRes
+	var response *GetV1ProjectsByProjectIdAdminSsoConnectionsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -17826,7 +19041,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsRequest(args [
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminSsoConnectionsParams
-			Response = GetV1ProjectsByProjectIdAdminSsoConnectionsRes
+			Response = *GetV1ProjectsByProjectIdAdminSsoConnectionsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -17845,8 +19060,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsRequest(args [
 		response, err = s.h.GetV1ProjectsByProjectIdAdminSsoConnections(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -17946,8 +19172,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest(ar
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -17974,8 +19201,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest(ar
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -17992,7 +19220,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest(ar
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminSsoConnectionsByIdRes
+	var response *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -18021,7 +19249,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest(ar
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams
-			Response = GetV1ProjectsByProjectIdAdminSsoConnectionsByIdRes
+			Response = *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -18040,8 +19268,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest(ar
 		response, err = s.h.GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -18141,8 +19380,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -18169,8 +19409,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -18187,7 +19428,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes
+	var response *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -18216,7 +19457,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams
-			Response = GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes
+			Response = *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -18235,8 +19476,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens
 		response, err = s.h.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -18336,8 +19588,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminTokenProfilesRequest(args [1
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -18364,8 +19617,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminTokenProfilesRequest(args [1
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -18382,7 +19636,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminTokenProfilesRequest(args [1
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminTokenProfilesRes
+	var response *GetV1ProjectsByProjectIdAdminTokenProfilesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -18415,7 +19669,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminTokenProfilesRequest(args [1
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminTokenProfilesParams
-			Response = GetV1ProjectsByProjectIdAdminTokenProfilesRes
+			Response = *GetV1ProjectsByProjectIdAdminTokenProfilesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -18434,8 +19688,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminTokenProfilesRequest(args [1
 		response, err = s.h.GetV1ProjectsByProjectIdAdminTokenProfiles(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -18535,8 +19800,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersRequest(args [1]string,
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -18563,8 +19829,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersRequest(args [1]string,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -18581,7 +19848,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersRequest(args [1]string,
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminUsersRes
+	var response *GetV1ProjectsByProjectIdAdminUsersOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -18630,7 +19897,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersRequest(args [1]string,
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminUsersParams
-			Response = GetV1ProjectsByProjectIdAdminUsersRes
+			Response = *GetV1ProjectsByProjectIdAdminUsersOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -18649,8 +19916,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersRequest(args [1]string,
 		response, err = s.h.GetV1ProjectsByProjectIdAdminUsers(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -18750,8 +20028,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdRequest(args [2
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -18778,8 +20057,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdRequest(args [2
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -18796,7 +20076,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdRequest(args [2
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminUsersByUserIdRes
+	var response *GetV1ProjectsByProjectIdAdminUsersByUserIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -18825,7 +20105,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdRequest(args [2
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminUsersByUserIdParams
-			Response = GetV1ProjectsByProjectIdAdminUsersByUserIdRes
+			Response = *GetV1ProjectsByProjectIdAdminUsersByUserIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -18844,8 +20124,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdRequest(args [2
 		response, err = s.h.GetV1ProjectsByProjectIdAdminUsersByUserId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -18945,8 +20236,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRequest(a
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -18973,8 +20265,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRequest(a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -18991,7 +20284,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRequest(a
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRes
+	var response *GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -19028,7 +20321,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRequest(a
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams
-			Response = GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRes
+			Response = *GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -19047,8 +20340,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRequest(a
 		response, err = s.h.GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -19148,8 +20452,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesReque
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -19176,8 +20481,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesReque
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -19194,7 +20500,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesReque
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesRes
+	var response *GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -19223,7 +20529,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesReque
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams
-			Response = GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesRes
+			Response = *GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -19242,8 +20548,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesReque
 		response, err = s.h.GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -19343,8 +20660,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRequest
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -19371,8 +20689,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRequest
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -19389,7 +20708,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRequest
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRes
+	var response *GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -19426,7 +20745,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRequest
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams
-			Response = GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRes
+			Response = *GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -19445,8 +20764,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRequest
 		response, err = s.h.GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -19546,8 +20876,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhookDeliveriesRequest(arg
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -19574,8 +20905,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhookDeliveriesRequest(arg
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -19592,7 +20924,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhookDeliveriesRequest(arg
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminWebhookDeliveriesRes
+	var response GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -19625,7 +20957,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhookDeliveriesRequest(arg
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams
-			Response = GetV1ProjectsByProjectIdAdminWebhookDeliveriesRes
+			Response = GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -19644,8 +20976,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhookDeliveriesRequest(arg
 		response, err = s.h.GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -19745,8 +21088,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhooksRequest(args [1]stri
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -19773,8 +21117,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhooksRequest(args [1]stri
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -19791,7 +21136,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhooksRequest(args [1]stri
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminWebhooksRes
+	var response *GetV1ProjectsByProjectIdAdminWebhooksOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -19824,7 +21169,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhooksRequest(args [1]stri
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminWebhooksParams
-			Response = GetV1ProjectsByProjectIdAdminWebhooksRes
+			Response = *GetV1ProjectsByProjectIdAdminWebhooksOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -19843,8 +21188,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhooksRequest(args [1]stri
 		response, err = s.h.GetV1ProjectsByProjectIdAdminWebhooks(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -19944,8 +21300,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [2]
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -19972,8 +21329,9 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [2]
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -19990,7 +21348,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [2]
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminWebhooksByIdRes
+	var response *GetV1ProjectsByProjectIdAdminWebhooksByIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -20019,7 +21377,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [2]
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminWebhooksByIdParams
-			Response = GetV1ProjectsByProjectIdAdminWebhooksByIdRes
+			Response = *GetV1ProjectsByProjectIdAdminWebhooksByIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -20038,8 +21396,19 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [2]
 		response, err = s.h.GetV1ProjectsByProjectIdAdminWebhooksById(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -20139,8 +21508,9 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdGroupsRequest(args [1]string, ar
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -20167,8 +21537,9 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdGroupsRequest(args [1]string, ar
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -20185,7 +21556,7 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdGroupsRequest(args [1]string, ar
 
 	var rawBody []byte
 
-	var response GetV1ScimV2ByConnectionIdGroupsRes
+	var response GetV1ScimV2ByConnectionIdGroupsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -20206,7 +21577,7 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdGroupsRequest(args [1]string, ar
 		type (
 			Request  = struct{}
 			Params   = GetV1ScimV2ByConnectionIdGroupsParams
-			Response = GetV1ScimV2ByConnectionIdGroupsRes
+			Response = GetV1ScimV2ByConnectionIdGroupsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -20225,8 +21596,19 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdGroupsRequest(args [1]string, ar
 		response, err = s.h.GetV1ScimV2ByConnectionIdGroups(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -20326,8 +21708,9 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2]s
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -20354,8 +21737,9 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2]s
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -20372,7 +21756,7 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2]s
 
 	var rawBody []byte
 
-	var response GetV1ScimV2ByConnectionIdGroupsByGroupIdRes
+	var response GetV1ScimV2ByConnectionIdGroupsByGroupIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -20397,7 +21781,7 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2]s
 		type (
 			Request  = struct{}
 			Params   = GetV1ScimV2ByConnectionIdGroupsByGroupIdParams
-			Response = GetV1ScimV2ByConnectionIdGroupsByGroupIdRes
+			Response = GetV1ScimV2ByConnectionIdGroupsByGroupIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -20416,8 +21800,19 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2]s
 		response, err = s.h.GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -20517,8 +21912,9 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdUsersRequest(args [1]string, arg
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -20545,8 +21941,9 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdUsersRequest(args [1]string, arg
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -20563,7 +21960,7 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdUsersRequest(args [1]string, arg
 
 	var rawBody []byte
 
-	var response GetV1ScimV2ByConnectionIdUsersRes
+	var response GetV1ScimV2ByConnectionIdUsersOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -20596,7 +21993,7 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdUsersRequest(args [1]string, arg
 		type (
 			Request  = struct{}
 			Params   = GetV1ScimV2ByConnectionIdUsersParams
-			Response = GetV1ScimV2ByConnectionIdUsersRes
+			Response = GetV1ScimV2ByConnectionIdUsersOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -20615,8 +22012,19 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdUsersRequest(args [1]string, arg
 		response, err = s.h.GetV1ScimV2ByConnectionIdUsers(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -20716,8 +22124,9 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args [2
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -20744,8 +22153,9 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args [2
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -20762,7 +22172,7 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args [2
 
 	var rawBody []byte
 
-	var response GetV1ScimV2ByConnectionIdUsersByScimUserIdRes
+	var response GetV1ScimV2ByConnectionIdUsersByScimUserIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -20787,7 +22197,7 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args [2
 		type (
 			Request  = struct{}
 			Params   = GetV1ScimV2ByConnectionIdUsersByScimUserIdParams
-			Response = GetV1ScimV2ByConnectionIdUsersByScimUserIdRes
+			Response = GetV1ScimV2ByConnectionIdUsersByScimUserIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -20806,8 +22216,19 @@ func (s *Server) handleGetV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args [2
 		response, err = s.h.GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -20907,8 +22328,9 @@ func (s *Server) handleGetV1SessionsRequest(args [0]string, argsEscaped bool, w 
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -20935,15 +22357,16 @@ func (s *Server) handleGetV1SessionsRequest(args [0]string, argsEscaped bool, w 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetV1SessionsRes
+	var response *GetV1SessionsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -20959,7 +22382,7 @@ func (s *Server) handleGetV1SessionsRequest(args [0]string, argsEscaped bool, w 
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1SessionsRes
+			Response = *GetV1SessionsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -20978,8 +22401,19 @@ func (s *Server) handleGetV1SessionsRequest(args [0]string, argsEscaped bool, w 
 		response, err = s.h.GetV1Sessions(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -21079,8 +22513,9 @@ func (s *Server) handleGetV1SessionsCurrentRequest(args [0]string, argsEscaped b
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -21107,15 +22542,16 @@ func (s *Server) handleGetV1SessionsCurrentRequest(args [0]string, argsEscaped b
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetV1SessionsCurrentRes
+	var response *GetV1SessionsCurrentOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -21131,7 +22567,7 @@ func (s *Server) handleGetV1SessionsCurrentRequest(args [0]string, argsEscaped b
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1SessionsCurrentRes
+			Response = *GetV1SessionsCurrentOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -21150,8 +22586,19 @@ func (s *Server) handleGetV1SessionsCurrentRequest(args [0]string, argsEscaped b
 		response, err = s.h.GetV1SessionsCurrent(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -21253,7 +22700,7 @@ func (s *Server) handleGetV1SsoConnectionsResolveRequest(args [0]string, argsEsc
 
 	var rawBody []byte
 
-	var response GetV1SsoConnectionsResolveRes
+	var response *GetV1SsoConnectionsResolveOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -21278,7 +22725,7 @@ func (s *Server) handleGetV1SsoConnectionsResolveRequest(args [0]string, argsEsc
 		type (
 			Request  = struct{}
 			Params   = GetV1SsoConnectionsResolveParams
-			Response = GetV1SsoConnectionsResolveRes
+			Response = *GetV1SsoConnectionsResolveOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -21297,8 +22744,19 @@ func (s *Server) handleGetV1SsoConnectionsResolveRequest(args [0]string, argsEsc
 		response, err = s.h.GetV1SsoConnectionsResolve(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -21448,8 +22906,19 @@ func (s *Server) handleGetV1SsoOidcByConnectionIdCallbackRequest(args [1]string,
 		response, err = s.h.GetV1SsoOidcByConnectionIdCallback(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -21603,8 +23072,19 @@ func (s *Server) handleGetV1SsoOidcByConnectionIdStartRequest(args [1]string, ar
 		response, err = s.h.GetV1SsoOidcByConnectionIdStart(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -21754,8 +23234,19 @@ func (s *Server) handleGetV1SsoSamlByConnectionIdLoginRequest(args [1]string, ar
 		response, err = s.h.GetV1SsoSamlByConnectionIdLogin(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -21897,8 +23388,19 @@ func (s *Server) handleGetV1SsoSamlByConnectionIdMetadataRequest(args [1]string,
 		response, err = s.h.GetV1SsoSamlByConnectionIdMetadata(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -21998,8 +23500,9 @@ func (s *Server) handleGetV1TestMessagesRequest(args [0]string, argsEscaped bool
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -22026,8 +23529,9 @@ func (s *Server) handleGetV1TestMessagesRequest(args [0]string, argsEscaped bool
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -22044,7 +23548,7 @@ func (s *Server) handleGetV1TestMessagesRequest(args [0]string, argsEscaped bool
 
 	var rawBody []byte
 
-	var response GetV1TestMessagesRes
+	var response GetV1TestMessagesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -22073,7 +23577,7 @@ func (s *Server) handleGetV1TestMessagesRequest(args [0]string, argsEscaped bool
 		type (
 			Request  = struct{}
 			Params   = GetV1TestMessagesParams
-			Response = GetV1TestMessagesRes
+			Response = GetV1TestMessagesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -22092,8 +23596,19 @@ func (s *Server) handleGetV1TestMessagesRequest(args [0]string, argsEscaped bool
 		response, err = s.h.GetV1TestMessages(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -22193,8 +23708,9 @@ func (s *Server) handleGetV1TokensCurrentRequest(args [0]string, argsEscaped boo
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -22221,15 +23737,16 @@ func (s *Server) handleGetV1TokensCurrentRequest(args [0]string, argsEscaped boo
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetV1TokensCurrentRes
+	var response *GetV1TokensCurrentOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -22245,7 +23762,7 @@ func (s *Server) handleGetV1TokensCurrentRequest(args [0]string, argsEscaped boo
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1TokensCurrentRes
+			Response = *GetV1TokensCurrentOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -22264,8 +23781,19 @@ func (s *Server) handleGetV1TokensCurrentRequest(args [0]string, argsEscaped boo
 		response, err = s.h.GetV1TokensCurrent(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -22365,8 +23893,9 @@ func (s *Server) handleGetV1UsersMeRequest(args [0]string, argsEscaped bool, w h
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -22393,15 +23922,16 @@ func (s *Server) handleGetV1UsersMeRequest(args [0]string, argsEscaped bool, w h
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetV1UsersMeRes
+	var response *GetV1UsersMeOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -22417,7 +23947,7 @@ func (s *Server) handleGetV1UsersMeRequest(args [0]string, argsEscaped bool, w h
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1UsersMeRes
+			Response = *GetV1UsersMeOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -22436,8 +23966,19 @@ func (s *Server) handleGetV1UsersMeRequest(args [0]string, argsEscaped bool, w h
 		response, err = s.h.GetV1UsersMe(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -22537,8 +24078,9 @@ func (s *Server) handleGetV1UsersMeActivityRequest(args [0]string, argsEscaped b
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -22565,8 +24107,9 @@ func (s *Server) handleGetV1UsersMeActivityRequest(args [0]string, argsEscaped b
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -22583,7 +24126,7 @@ func (s *Server) handleGetV1UsersMeActivityRequest(args [0]string, argsEscaped b
 
 	var rawBody []byte
 
-	var response GetV1UsersMeActivityRes
+	var response *GetV1UsersMeActivityOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -22612,7 +24155,7 @@ func (s *Server) handleGetV1UsersMeActivityRequest(args [0]string, argsEscaped b
 		type (
 			Request  = struct{}
 			Params   = GetV1UsersMeActivityParams
-			Response = GetV1UsersMeActivityRes
+			Response = *GetV1UsersMeActivityOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -22631,8 +24174,19 @@ func (s *Server) handleGetV1UsersMeActivityRequest(args [0]string, argsEscaped b
 		response, err = s.h.GetV1UsersMeActivity(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -22732,8 +24286,9 @@ func (s *Server) handleGetV1UsersMeConsentsRequest(args [0]string, argsEscaped b
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -22760,15 +24315,16 @@ func (s *Server) handleGetV1UsersMeConsentsRequest(args [0]string, argsEscaped b
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response GetV1UsersMeConsentsRes
+	var response *GetV1UsersMeConsentsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -22784,7 +24340,7 @@ func (s *Server) handleGetV1UsersMeConsentsRequest(args [0]string, argsEscaped b
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = GetV1UsersMeConsentsRes
+			Response = *GetV1UsersMeConsentsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -22803,8 +24359,19 @@ func (s *Server) handleGetV1UsersMeConsentsRequest(args [0]string, argsEscaped b
 		response, err = s.h.GetV1UsersMeConsents(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -22904,8 +24471,9 @@ func (s *Server) handleGetV1UsersMeExportByJobIdRequest(args [1]string, argsEsca
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -22932,8 +24500,9 @@ func (s *Server) handleGetV1UsersMeExportByJobIdRequest(args [1]string, argsEsca
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -22950,7 +24519,7 @@ func (s *Server) handleGetV1UsersMeExportByJobIdRequest(args [1]string, argsEsca
 
 	var rawBody []byte
 
-	var response GetV1UsersMeExportByJobIdRes
+	var response *GetV1UsersMeExportByJobIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -22971,7 +24540,7 @@ func (s *Server) handleGetV1UsersMeExportByJobIdRequest(args [1]string, argsEsca
 		type (
 			Request  = struct{}
 			Params   = GetV1UsersMeExportByJobIdParams
-			Response = GetV1UsersMeExportByJobIdRes
+			Response = *GetV1UsersMeExportByJobIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -22990,8 +24559,19 @@ func (s *Server) handleGetV1UsersMeExportByJobIdRequest(args [1]string, argsEsca
 		response, err = s.h.GetV1UsersMeExportByJobId(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -23091,8 +24671,9 @@ func (s *Server) handlePatchMgmtV1ProjectsByProjectIdRequest(args [1]string, arg
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -23119,8 +24700,9 @@ func (s *Server) handlePatchMgmtV1ProjectsByProjectIdRequest(args [1]string, arg
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -23152,7 +24734,7 @@ func (s *Server) handlePatchMgmtV1ProjectsByProjectIdRequest(args [1]string, arg
 		}
 	}()
 
-	var response PatchMgmtV1ProjectsByProjectIdRes
+	var response *PatchMgmtV1ProjectsByProjectIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -23173,7 +24755,7 @@ func (s *Server) handlePatchMgmtV1ProjectsByProjectIdRequest(args [1]string, arg
 		type (
 			Request  = PatchMgmtV1ProjectsByProjectIdReq
 			Params   = PatchMgmtV1ProjectsByProjectIdParams
-			Response = PatchMgmtV1ProjectsByProjectIdRes
+			Response = *PatchMgmtV1ProjectsByProjectIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -23192,8 +24774,19 @@ func (s *Server) handlePatchMgmtV1ProjectsByProjectIdRequest(args [1]string, arg
 		response, err = s.h.PatchMgmtV1ProjectsByProjectId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -23293,8 +24886,9 @@ func (s *Server) handlePatchMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]str
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -23321,8 +24915,9 @@ func (s *Server) handlePatchMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]str
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -23354,7 +24949,7 @@ func (s *Server) handlePatchMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]str
 		}
 	}()
 
-	var response PatchMgmtV1ProjectsByProjectIdFeaturesRes
+	var response PatchMgmtV1ProjectsByProjectIdFeaturesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -23375,7 +24970,7 @@ func (s *Server) handlePatchMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]str
 		type (
 			Request  = PatchMgmtV1ProjectsByProjectIdFeaturesReq
 			Params   = PatchMgmtV1ProjectsByProjectIdFeaturesParams
-			Response = PatchMgmtV1ProjectsByProjectIdFeaturesRes
+			Response = PatchMgmtV1ProjectsByProjectIdFeaturesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -23394,8 +24989,19 @@ func (s *Server) handlePatchMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]str
 		response, err = s.h.PatchMgmtV1ProjectsByProjectIdFeatures(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -23495,8 +25101,9 @@ func (s *Server) handlePatchV1AuthWebauthnCredentialsByCredentialIdRequest(args 
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -23523,8 +25130,9 @@ func (s *Server) handlePatchV1AuthWebauthnCredentialsByCredentialIdRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -23556,7 +25164,7 @@ func (s *Server) handlePatchV1AuthWebauthnCredentialsByCredentialIdRequest(args 
 		}
 	}()
 
-	var response PatchV1AuthWebauthnCredentialsByCredentialIdRes
+	var response *PatchV1AuthWebauthnCredentialsByCredentialIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -23577,7 +25185,7 @@ func (s *Server) handlePatchV1AuthWebauthnCredentialsByCredentialIdRequest(args 
 		type (
 			Request  = *PatchV1AuthWebauthnCredentialsByCredentialIdReq
 			Params   = PatchV1AuthWebauthnCredentialsByCredentialIdParams
-			Response = PatchV1AuthWebauthnCredentialsByCredentialIdRes
+			Response = *PatchV1AuthWebauthnCredentialsByCredentialIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -23596,8 +25204,19 @@ func (s *Server) handlePatchV1AuthWebauthnCredentialsByCredentialIdRequest(args 
 		response, err = s.h.PatchV1AuthWebauthnCredentialsByCredentialId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -23697,8 +25316,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(args
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -23725,8 +25345,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(args
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -23758,7 +25379,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(args
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes
+	var response *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -23787,7 +25408,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(args
 		type (
 			Request  = *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq
 			Params   = PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams
-			Response = PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes
+			Response = *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -23806,8 +25427,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRequest(args
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -23907,8 +25539,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [2
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -23935,8 +25568,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [2
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -23968,7 +25602,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [2
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminAppsByAppIdRes
+	var response *PatchV1ProjectsByProjectIdAdminAppsByAppIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -23997,7 +25631,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [2
 		type (
 			Request  = PatchV1ProjectsByProjectIdAdminAppsByAppIdReq
 			Params   = PatchV1ProjectsByProjectIdAdminAppsByAppIdParams
-			Response = PatchV1ProjectsByProjectIdAdminAppsByAppIdRes
+			Response = *PatchV1ProjectsByProjectIdAdminAppsByAppIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -24016,8 +25650,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminAppsByAppIdRequest(args [2
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -24117,8 +25762,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigAuthRequest(args [1]
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -24145,8 +25791,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigAuthRequest(args [1]
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -24178,7 +25825,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigAuthRequest(args [1]
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminConfigAuthRes
+	var response *AuthConfig
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -24203,7 +25850,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigAuthRequest(args [1]
 		type (
 			Request  = *AuthConfig
 			Params   = PatchV1ProjectsByProjectIdAdminConfigAuthParams
-			Response = PatchV1ProjectsByProjectIdAdminConfigAuthRes
+			Response = *AuthConfig
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -24222,8 +25869,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigAuthRequest(args [1]
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminConfigAuth(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -24323,8 +25981,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(arg
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -24351,8 +26010,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(arg
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -24384,7 +26044,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(arg
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminConfigMfaPolicyRes
+	var response *MfaPolicy
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -24409,7 +26069,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(arg
 		type (
 			Request  = *MfaPolicy
 			Params   = PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams
-			Response = PatchV1ProjectsByProjectIdAdminConfigMfaPolicyRes
+			Response = *MfaPolicy
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -24428,8 +26088,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigMfaPolicyRequest(arg
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -24529,8 +26200,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigPasswordPolicyReques
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -24557,8 +26229,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigPasswordPolicyReques
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -24590,7 +26263,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigPasswordPolicyReques
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyRes
+	var response *PasswordPolicy
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -24615,7 +26288,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigPasswordPolicyReques
 		type (
 			Request  = *PasswordPolicy
 			Params   = PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams
-			Response = PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyRes
+			Response = *PasswordPolicy
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -24634,8 +26307,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigPasswordPolicyReques
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -24735,8 +26419,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigRateLimitsRequest(ar
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -24763,8 +26448,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigRateLimitsRequest(ar
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -24796,7 +26482,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigRateLimitsRequest(ar
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminConfigRateLimitsRes
+	var response *RateLimits
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -24821,7 +26507,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigRateLimitsRequest(ar
 		type (
 			Request  = *RateLimits
 			Params   = PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams
-			Response = PatchV1ProjectsByProjectIdAdminConfigRateLimitsRes
+			Response = *RateLimits
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -24840,8 +26526,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigRateLimitsRequest(ar
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -24941,8 +26638,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigSessionPolicyRequest
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -24969,8 +26667,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigSessionPolicyRequest
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -25002,7 +26701,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigSessionPolicyRequest
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminConfigSessionPolicyRes
+	var response *SessionPolicy
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -25027,7 +26726,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigSessionPolicyRequest
 		type (
 			Request  = *SessionPolicy
 			Params   = PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams
-			Response = PatchV1ProjectsByProjectIdAdminConfigSessionPolicyRes
+			Response = *SessionPolicy
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -25046,8 +26745,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminConfigSessionPolicyRequest
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -25147,8 +26857,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminEmailProvidersByIdRequest(
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -25175,8 +26886,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminEmailProvidersByIdRequest(
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -25208,7 +26920,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminEmailProvidersByIdRequest(
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminEmailProvidersByIdRes
+	var response *EmailProvider
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -25237,7 +26949,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminEmailProvidersByIdRequest(
 		type (
 			Request  = *EmailProvider
 			Params   = PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams
-			Response = PatchV1ProjectsByProjectIdAdminEmailProvidersByIdRes
+			Response = *EmailProvider
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -25256,8 +26968,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminEmailProvidersByIdRequest(
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -25357,8 +27080,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRequest(
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -25385,8 +27109,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRequest(
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -25418,7 +27143,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRequest(
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRes
+	var response PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -25447,7 +27172,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRequest(
 		type (
 			Request  = PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq
 			Params   = PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams
-			Response = PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRes
+			Response = PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -25466,8 +27191,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRequest(
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -25567,8 +27303,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminHooksByIdRequest(args [2]s
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -25595,8 +27332,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminHooksByIdRequest(args [2]s
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -25628,7 +27366,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminHooksByIdRequest(args [2]s
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminHooksByIdRes
+	var response *PatchV1ProjectsByProjectIdAdminHooksByIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -25657,7 +27395,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminHooksByIdRequest(args [2]s
 		type (
 			Request  = PatchV1ProjectsByProjectIdAdminHooksByIdReq
 			Params   = PatchV1ProjectsByProjectIdAdminHooksByIdParams
-			Response = PatchV1ProjectsByProjectIdAdminHooksByIdRes
+			Response = *PatchV1ProjectsByProjectIdAdminHooksByIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -25676,8 +27414,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminHooksByIdRequest(args [2]s
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminHooksById(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -25777,8 +27526,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminOauthProvidersByIdRequest(
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -25805,8 +27555,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminOauthProvidersByIdRequest(
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -25838,7 +27589,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminOauthProvidersByIdRequest(
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminOauthProvidersByIdRes
+	var response *OAuthProviderConfig
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -25867,7 +27618,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminOauthProvidersByIdRequest(
 		type (
 			Request  = *OAuthProviderConfig
 			Params   = PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams
-			Response = PatchV1ProjectsByProjectIdAdminOauthProvidersByIdRes
+			Response = *OAuthProviderConfig
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -25886,8 +27637,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminOauthProvidersByIdRequest(
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -25987,8 +27749,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRequest(a
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -26015,8 +27778,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRequest(a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -26048,7 +27812,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRequest(a
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes
+	var response *RiskRule
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -26077,7 +27841,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRequest(a
 		type (
 			Request  = *RiskRule
 			Params   = PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams
-			Response = PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes
+			Response = *RiskRule
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -26096,8 +27860,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRequest(a
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -26197,8 +27972,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReque
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -26225,8 +28001,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReque
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -26258,7 +28035,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReque
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes
+	var response *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -26287,7 +28064,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReque
 		type (
 			Request  = *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq
 			Params   = PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams
-			Response = PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes
+			Response = *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -26306,8 +28083,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReque
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -26407,8 +28195,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(ar
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -26435,8 +28224,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(ar
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -26468,7 +28258,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(ar
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminSmsProvidersByIdRes
+	var response *SmsProvider
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -26497,7 +28287,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(ar
 		type (
 			Request  = *SmsProvider
 			Params   = PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams
-			Response = PatchV1ProjectsByProjectIdAdminSmsProvidersByIdRes
+			Response = *SmsProvider
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -26516,8 +28306,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminSmsProvidersByIdRequest(ar
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -26617,8 +28418,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest(
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -26645,8 +28447,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest(
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -26678,7 +28481,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest(
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes
+	var response *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -26707,7 +28510,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest(
 		type (
 			Request  = PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq
 			Params   = PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams
-			Response = PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes
+			Response = *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -26726,8 +28529,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRequest(
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -26827,8 +28641,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminTokenProfilesByIdRequest(a
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -26855,8 +28670,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminTokenProfilesByIdRequest(a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -26888,7 +28704,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminTokenProfilesByIdRequest(a
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminTokenProfilesByIdRes
+	var response *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -26917,7 +28733,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminTokenProfilesByIdRequest(a
 		type (
 			Request  = PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq
 			Params   = PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams
-			Response = PatchV1ProjectsByProjectIdAdminTokenProfilesByIdRes
+			Response = *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -26936,8 +28752,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminTokenProfilesByIdRequest(a
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -27037,8 +28864,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminUsersByUserIdRequest(args 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -27065,8 +28893,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminUsersByUserIdRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -27098,7 +28927,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminUsersByUserIdRequest(args 
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminUsersByUserIdRes
+	var response *PatchV1ProjectsByProjectIdAdminUsersByUserIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -27127,7 +28956,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminUsersByUserIdRequest(args 
 		type (
 			Request  = PatchV1ProjectsByProjectIdAdminUsersByUserIdReq
 			Params   = PatchV1ProjectsByProjectIdAdminUsersByUserIdParams
-			Response = PatchV1ProjectsByProjectIdAdminUsersByUserIdRes
+			Response = *PatchV1ProjectsByProjectIdAdminUsersByUserIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -27146,8 +28975,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminUsersByUserIdRequest(args 
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -27247,8 +29087,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -27275,8 +29116,9 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -27308,7 +29150,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [
 		}
 	}()
 
-	var response PatchV1ProjectsByProjectIdAdminWebhooksByIdRes
+	var response *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -27337,7 +29179,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [
 		type (
 			Request  = PatchV1ProjectsByProjectIdAdminWebhooksByIdReq
 			Params   = PatchV1ProjectsByProjectIdAdminWebhooksByIdParams
-			Response = PatchV1ProjectsByProjectIdAdminWebhooksByIdRes
+			Response = *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -27356,8 +29198,19 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [
 		response, err = s.h.PatchV1ProjectsByProjectIdAdminWebhooksById(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -27457,8 +29310,9 @@ func (s *Server) handlePatchV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -27485,8 +29339,9 @@ func (s *Server) handlePatchV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -27518,7 +29373,7 @@ func (s *Server) handlePatchV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2
 		}
 	}()
 
-	var response PatchV1ScimV2ByConnectionIdGroupsByGroupIdRes
+	var response PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -27543,7 +29398,7 @@ func (s *Server) handlePatchV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2
 		type (
 			Request  = PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq
 			Params   = PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams
-			Response = PatchV1ScimV2ByConnectionIdGroupsByGroupIdRes
+			Response = PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -27562,8 +29417,19 @@ func (s *Server) handlePatchV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2
 		response, err = s.h.PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -27663,8 +29529,9 @@ func (s *Server) handlePatchV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args 
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -27691,8 +29558,9 @@ func (s *Server) handlePatchV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -27724,7 +29592,7 @@ func (s *Server) handlePatchV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args 
 		}
 	}()
 
-	var response PatchV1ScimV2ByConnectionIdUsersByScimUserIdRes
+	var response PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -27749,7 +29617,7 @@ func (s *Server) handlePatchV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args 
 		type (
 			Request  = *ScimUser
 			Params   = PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams
-			Response = PatchV1ScimV2ByConnectionIdUsersByScimUserIdRes
+			Response = PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -27768,8 +29636,19 @@ func (s *Server) handlePatchV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args 
 		response, err = s.h.PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -27869,8 +29748,9 @@ func (s *Server) handlePatchV1SessionsBySessionIdRequest(args [1]string, argsEsc
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -27897,8 +29777,9 @@ func (s *Server) handlePatchV1SessionsBySessionIdRequest(args [1]string, argsEsc
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -27930,7 +29811,7 @@ func (s *Server) handlePatchV1SessionsBySessionIdRequest(args [1]string, argsEsc
 		}
 	}()
 
-	var response PatchV1SessionsBySessionIdRes
+	var response *PatchV1SessionsBySessionIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -27951,7 +29832,7 @@ func (s *Server) handlePatchV1SessionsBySessionIdRequest(args [1]string, argsEsc
 		type (
 			Request  = *PatchV1SessionsBySessionIdReq
 			Params   = PatchV1SessionsBySessionIdParams
-			Response = PatchV1SessionsBySessionIdRes
+			Response = *PatchV1SessionsBySessionIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -27970,8 +29851,19 @@ func (s *Server) handlePatchV1SessionsBySessionIdRequest(args [1]string, argsEsc
 		response, err = s.h.PatchV1SessionsBySessionId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -28071,8 +29963,9 @@ func (s *Server) handlePatchV1UsersMeRequest(args [0]string, argsEscaped bool, w
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -28099,8 +29992,9 @@ func (s *Server) handlePatchV1UsersMeRequest(args [0]string, argsEscaped bool, w
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -28122,7 +30016,7 @@ func (s *Server) handlePatchV1UsersMeRequest(args [0]string, argsEscaped bool, w
 		}
 	}()
 
-	var response PatchV1UsersMeRes
+	var response *PatchV1UsersMeOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -28138,7 +30032,7 @@ func (s *Server) handlePatchV1UsersMeRequest(args [0]string, argsEscaped bool, w
 		type (
 			Request  = *PatchV1UsersMeReq
 			Params   = struct{}
-			Response = PatchV1UsersMeRes
+			Response = *PatchV1UsersMeOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -28157,8 +30051,19 @@ func (s *Server) handlePatchV1UsersMeRequest(args [0]string, argsEscaped bool, w
 		response, err = s.h.PatchV1UsersMe(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -28258,8 +30163,9 @@ func (s *Server) handlePostMgmtV1ProjectsRequest(args [0]string, argsEscaped boo
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -28286,8 +30192,9 @@ func (s *Server) handlePostMgmtV1ProjectsRequest(args [0]string, argsEscaped boo
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -28319,7 +30226,7 @@ func (s *Server) handlePostMgmtV1ProjectsRequest(args [0]string, argsEscaped boo
 		}
 	}()
 
-	var response PostMgmtV1ProjectsRes
+	var response *PostMgmtV1ProjectsCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -28340,7 +30247,7 @@ func (s *Server) handlePostMgmtV1ProjectsRequest(args [0]string, argsEscaped boo
 		type (
 			Request  = *PostMgmtV1ProjectsReq
 			Params   = PostMgmtV1ProjectsParams
-			Response = PostMgmtV1ProjectsRes
+			Response = *PostMgmtV1ProjectsCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -28359,8 +30266,19 @@ func (s *Server) handlePostMgmtV1ProjectsRequest(args [0]string, argsEscaped boo
 		response, err = s.h.PostMgmtV1Projects(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -28460,8 +30378,9 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdAdminTokensRequest(args [1]s
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -28488,8 +30407,9 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdAdminTokensRequest(args [1]s
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -28521,7 +30441,7 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdAdminTokensRequest(args [1]s
 		}
 	}()
 
-	var response PostMgmtV1ProjectsByProjectIdAdminTokensRes
+	var response *PostMgmtV1ProjectsByProjectIdAdminTokensOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -28546,7 +30466,7 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdAdminTokensRequest(args [1]s
 		type (
 			Request  = *PostMgmtV1ProjectsByProjectIdAdminTokensReq
 			Params   = PostMgmtV1ProjectsByProjectIdAdminTokensParams
-			Response = PostMgmtV1ProjectsByProjectIdAdminTokensRes
+			Response = *PostMgmtV1ProjectsByProjectIdAdminTokensOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -28565,8 +30485,19 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdAdminTokensRequest(args [1]s
 		response, err = s.h.PostMgmtV1ProjectsByProjectIdAdminTokens(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -28666,8 +30597,9 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdConfigApplyRequest(args [1]s
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -28694,8 +30626,9 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdConfigApplyRequest(args [1]s
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -28727,7 +30660,7 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdConfigApplyRequest(args [1]s
 		}
 	}()
 
-	var response PostMgmtV1ProjectsByProjectIdConfigApplyRes
+	var response PostMgmtV1ProjectsByProjectIdConfigApplyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -28748,7 +30681,7 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdConfigApplyRequest(args [1]s
 		type (
 			Request  = PostMgmtV1ProjectsByProjectIdConfigApplyReq
 			Params   = PostMgmtV1ProjectsByProjectIdConfigApplyParams
-			Response = PostMgmtV1ProjectsByProjectIdConfigApplyRes
+			Response = PostMgmtV1ProjectsByProjectIdConfigApplyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -28767,8 +30700,19 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdConfigApplyRequest(args [1]s
 		response, err = s.h.PostMgmtV1ProjectsByProjectIdConfigApply(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -28868,8 +30812,9 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdConfigPlanRequest(args [1]st
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -28896,8 +30841,9 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdConfigPlanRequest(args [1]st
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -28929,7 +30875,7 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdConfigPlanRequest(args [1]st
 		}
 	}()
 
-	var response PostMgmtV1ProjectsByProjectIdConfigPlanRes
+	var response PostMgmtV1ProjectsByProjectIdConfigPlanOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -28950,7 +30896,7 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdConfigPlanRequest(args [1]st
 		type (
 			Request  = PostMgmtV1ProjectsByProjectIdConfigPlanReq
 			Params   = PostMgmtV1ProjectsByProjectIdConfigPlanParams
-			Response = PostMgmtV1ProjectsByProjectIdConfigPlanRes
+			Response = PostMgmtV1ProjectsByProjectIdConfigPlanOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -28969,8 +30915,19 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdConfigPlanRequest(args [1]st
 		response, err = s.h.PostMgmtV1ProjectsByProjectIdConfigPlan(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -29070,8 +31027,9 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdEnvironmentsRequest(args [1]
 					Security:         "MasterKey",
 					Err:              err,
 				}
-				defer recordError("Security:MasterKey", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:MasterKey", err)
+				}
 				return
 			}
 			if ok {
@@ -29098,8 +31056,9 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdEnvironmentsRequest(args [1]
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -29131,7 +31090,7 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdEnvironmentsRequest(args [1]
 		}
 	}()
 
-	var response PostMgmtV1ProjectsByProjectIdEnvironmentsRes
+	var response *PostMgmtV1ProjectsByProjectIdEnvironmentsCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -29156,7 +31115,7 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdEnvironmentsRequest(args [1]
 		type (
 			Request  = *PostMgmtV1ProjectsByProjectIdEnvironmentsReq
 			Params   = PostMgmtV1ProjectsByProjectIdEnvironmentsParams
-			Response = PostMgmtV1ProjectsByProjectIdEnvironmentsRes
+			Response = *PostMgmtV1ProjectsByProjectIdEnvironmentsCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -29175,8 +31134,19 @@ func (s *Server) handlePostMgmtV1ProjectsByProjectIdEnvironmentsRequest(args [1]
 		response, err = s.h.PostMgmtV1ProjectsByProjectIdEnvironments(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -29318,8 +31288,19 @@ func (s *Server) handlePostOauth2BackchannelLogoutRequest(args [0]string, argsEs
 		err = s.h.PostOauth2BackchannelLogout(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -29419,8 +31400,9 @@ func (s *Server) handlePostOauth2DeviceAuthorizationRequest(args [0]string, args
 					Security:         "ClientSecretBasic",
 					Err:              err,
 				}
-				defer recordError("Security:ClientSecretBasic", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ClientSecretBasic", err)
+				}
 				return
 			}
 			if ok {
@@ -29447,8 +31429,9 @@ func (s *Server) handlePostOauth2DeviceAuthorizationRequest(args [0]string, args
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -29470,7 +31453,7 @@ func (s *Server) handlePostOauth2DeviceAuthorizationRequest(args [0]string, args
 		}
 	}()
 
-	var response PostOauth2DeviceAuthorizationRes
+	var response *PostOauth2DeviceAuthorizationOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -29486,7 +31469,7 @@ func (s *Server) handlePostOauth2DeviceAuthorizationRequest(args [0]string, args
 		type (
 			Request  = *PostOauth2DeviceAuthorizationReq
 			Params   = struct{}
-			Response = PostOauth2DeviceAuthorizationRes
+			Response = *PostOauth2DeviceAuthorizationOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -29505,8 +31488,19 @@ func (s *Server) handlePostOauth2DeviceAuthorizationRequest(args [0]string, args
 		response, err = s.h.PostOauth2DeviceAuthorization(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -29606,8 +31600,9 @@ func (s *Server) handlePostOauth2IntrospectRequest(args [0]string, argsEscaped b
 					Security:         "ClientSecretBasic",
 					Err:              err,
 				}
-				defer recordError("Security:ClientSecretBasic", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ClientSecretBasic", err)
+				}
 				return
 			}
 			if ok {
@@ -29634,8 +31629,9 @@ func (s *Server) handlePostOauth2IntrospectRequest(args [0]string, argsEscaped b
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -29657,7 +31653,7 @@ func (s *Server) handlePostOauth2IntrospectRequest(args [0]string, argsEscaped b
 		}
 	}()
 
-	var response PostOauth2IntrospectRes
+	var response *PostOauth2IntrospectOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -29673,7 +31669,7 @@ func (s *Server) handlePostOauth2IntrospectRequest(args [0]string, argsEscaped b
 		type (
 			Request  = *PostOauth2IntrospectReq
 			Params   = struct{}
-			Response = PostOauth2IntrospectRes
+			Response = *PostOauth2IntrospectOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -29692,8 +31688,19 @@ func (s *Server) handlePostOauth2IntrospectRequest(args [0]string, argsEscaped b
 		response, err = s.h.PostOauth2Introspect(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -29793,8 +31800,9 @@ func (s *Server) handlePostOauth2ParRequest(args [0]string, argsEscaped bool, w 
 					Security:         "ClientSecretBasic",
 					Err:              err,
 				}
-				defer recordError("Security:ClientSecretBasic", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ClientSecretBasic", err)
+				}
 				return
 			}
 			if ok {
@@ -29821,8 +31829,9 @@ func (s *Server) handlePostOauth2ParRequest(args [0]string, argsEscaped bool, w 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -29844,7 +31853,7 @@ func (s *Server) handlePostOauth2ParRequest(args [0]string, argsEscaped bool, w 
 		}
 	}()
 
-	var response PostOauth2ParRes
+	var response *PostOauth2ParCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -29860,7 +31869,7 @@ func (s *Server) handlePostOauth2ParRequest(args [0]string, argsEscaped bool, w 
 		type (
 			Request  = *PushedAuthorizationRequest
 			Params   = struct{}
-			Response = PostOauth2ParRes
+			Response = *PostOauth2ParCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -29879,8 +31888,19 @@ func (s *Server) handlePostOauth2ParRequest(args [0]string, argsEscaped bool, w 
 		response, err = s.h.PostOauth2Par(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -29980,8 +32000,9 @@ func (s *Server) handlePostOauth2RevokeRequest(args [0]string, argsEscaped bool,
 					Security:         "ClientSecretBasic",
 					Err:              err,
 				}
-				defer recordError("Security:ClientSecretBasic", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ClientSecretBasic", err)
+				}
 				return
 			}
 			if ok {
@@ -30008,8 +32029,9 @@ func (s *Server) handlePostOauth2RevokeRequest(args [0]string, argsEscaped bool,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -30031,7 +32053,7 @@ func (s *Server) handlePostOauth2RevokeRequest(args [0]string, argsEscaped bool,
 		}
 	}()
 
-	var response PostOauth2RevokeRes
+	var response *PostOauth2RevokeOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -30047,7 +32069,7 @@ func (s *Server) handlePostOauth2RevokeRequest(args [0]string, argsEscaped bool,
 		type (
 			Request  = *PostOauth2RevokeReq
 			Params   = struct{}
-			Response = PostOauth2RevokeRes
+			Response = *PostOauth2RevokeOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -30058,16 +32080,27 @@ func (s *Server) handlePostOauth2RevokeRequest(args [0]string, argsEscaped bool,
 			mreq,
 			nil,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.PostOauth2Revoke(ctx, request)
+				err = s.h.PostOauth2Revoke(ctx, request)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.PostOauth2Revoke(ctx, request)
+		err = s.h.PostOauth2Revoke(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -30167,8 +32200,9 @@ func (s *Server) handlePostOauth2TokenRequest(args [0]string, argsEscaped bool, 
 					Security:         "ClientSecretBasic",
 					Err:              err,
 				}
-				defer recordError("Security:ClientSecretBasic", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ClientSecretBasic", err)
+				}
 				return
 			}
 			if ok {
@@ -30195,8 +32229,9 @@ func (s *Server) handlePostOauth2TokenRequest(args [0]string, argsEscaped bool, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -30218,7 +32253,7 @@ func (s *Server) handlePostOauth2TokenRequest(args [0]string, argsEscaped bool, 
 		}
 	}()
 
-	var response PostOauth2TokenRes
+	var response PostOauth2TokenOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -30234,7 +32269,7 @@ func (s *Server) handlePostOauth2TokenRequest(args [0]string, argsEscaped bool, 
 		type (
 			Request  = *PostOauth2TokenReq
 			Params   = struct{}
-			Response = PostOauth2TokenRes
+			Response = PostOauth2TokenOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -30253,8 +32288,19 @@ func (s *Server) handlePostOauth2TokenRequest(args [0]string, argsEscaped bool, 
 		response, err = s.h.PostOauth2Token(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -30411,8 +32457,19 @@ func (s *Server) handlePostV1AuthAccessRequestsRequest(args [0]string, argsEscap
 		response, err = s.h.PostV1AuthAccessRequests(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -30512,8 +32569,9 @@ func (s *Server) handlePostV1AuthEmailChangeStartRequest(args [0]string, argsEsc
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -30540,8 +32598,9 @@ func (s *Server) handlePostV1AuthEmailChangeStartRequest(args [0]string, argsEsc
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -30563,7 +32622,7 @@ func (s *Server) handlePostV1AuthEmailChangeStartRequest(args [0]string, argsEsc
 		}
 	}()
 
-	var response PostV1AuthEmailChangeStartRes
+	var response *Challenge
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -30579,7 +32638,7 @@ func (s *Server) handlePostV1AuthEmailChangeStartRequest(args [0]string, argsEsc
 		type (
 			Request  = *PostV1AuthEmailChangeStartReq
 			Params   = struct{}
-			Response = PostV1AuthEmailChangeStartRes
+			Response = *Challenge
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -30598,8 +32657,19 @@ func (s *Server) handlePostV1AuthEmailChangeStartRequest(args [0]string, argsEsc
 		response, err = s.h.PostV1AuthEmailChangeStart(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -30699,8 +32769,9 @@ func (s *Server) handlePostV1AuthEmailChangeVerifyRequest(args [0]string, argsEs
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -30727,8 +32798,9 @@ func (s *Server) handlePostV1AuthEmailChangeVerifyRequest(args [0]string, argsEs
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -30750,7 +32822,7 @@ func (s *Server) handlePostV1AuthEmailChangeVerifyRequest(args [0]string, argsEs
 		}
 	}()
 
-	var response PostV1AuthEmailChangeVerifyRes
+	var response *PostV1AuthEmailChangeVerifyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -30766,7 +32838,7 @@ func (s *Server) handlePostV1AuthEmailChangeVerifyRequest(args [0]string, argsEs
 		type (
 			Request  = *PostV1AuthEmailChangeVerifyReq
 			Params   = struct{}
-			Response = PostV1AuthEmailChangeVerifyRes
+			Response = *PostV1AuthEmailChangeVerifyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -30785,8 +32857,19 @@ func (s *Server) handlePostV1AuthEmailChangeVerifyRequest(args [0]string, argsEs
 		response, err = s.h.PostV1AuthEmailChangeVerify(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -30903,7 +32986,7 @@ func (s *Server) handlePostV1AuthEmailVerificationStartRequest(args [0]string, a
 		}
 	}()
 
-	var response PostV1AuthEmailVerificationStartRes
+	var response *Challenge
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -30924,7 +33007,7 @@ func (s *Server) handlePostV1AuthEmailVerificationStartRequest(args [0]string, a
 		type (
 			Request  = *PostV1AuthEmailVerificationStartReq
 			Params   = PostV1AuthEmailVerificationStartParams
-			Response = PostV1AuthEmailVerificationStartRes
+			Response = *Challenge
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -30943,8 +33026,19 @@ func (s *Server) handlePostV1AuthEmailVerificationStartRequest(args [0]string, a
 		response, err = s.h.PostV1AuthEmailVerificationStart(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -31061,7 +33155,7 @@ func (s *Server) handlePostV1AuthEmailVerificationVerifyRequest(args [0]string, 
 		}
 	}()
 
-	var response PostV1AuthEmailVerificationVerifyRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -31082,7 +33176,7 @@ func (s *Server) handlePostV1AuthEmailVerificationVerifyRequest(args [0]string, 
 		type (
 			Request  = *PostV1AuthEmailVerificationVerifyReq
 			Params   = PostV1AuthEmailVerificationVerifyParams
-			Response = PostV1AuthEmailVerificationVerifyRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -31101,8 +33195,19 @@ func (s *Server) handlePostV1AuthEmailVerificationVerifyRequest(args [0]string, 
 		response, err = s.h.PostV1AuthEmailVerificationVerify(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -31219,7 +33324,7 @@ func (s *Server) handlePostV1AuthGuestRequest(args [0]string, argsEscaped bool, 
 		}
 	}()
 
-	var response PostV1AuthGuestRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -31240,7 +33345,7 @@ func (s *Server) handlePostV1AuthGuestRequest(args [0]string, argsEscaped bool, 
 		type (
 			Request  = *PostV1AuthGuestReq
 			Params   = PostV1AuthGuestParams
-			Response = PostV1AuthGuestRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -31259,8 +33364,19 @@ func (s *Server) handlePostV1AuthGuestRequest(args [0]string, argsEscaped bool, 
 		response, err = s.h.PostV1AuthGuest(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -31360,8 +33476,9 @@ func (s *Server) handlePostV1AuthIdentitiesMergeConfirmRequest(args [0]string, a
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -31388,8 +33505,9 @@ func (s *Server) handlePostV1AuthIdentitiesMergeConfirmRequest(args [0]string, a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -31411,7 +33529,7 @@ func (s *Server) handlePostV1AuthIdentitiesMergeConfirmRequest(args [0]string, a
 		}
 	}()
 
-	var response PostV1AuthIdentitiesMergeConfirmRes
+	var response *PostV1AuthIdentitiesMergeConfirmOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -31427,7 +33545,7 @@ func (s *Server) handlePostV1AuthIdentitiesMergeConfirmRequest(args [0]string, a
 		type (
 			Request  = *PostV1AuthIdentitiesMergeConfirmReq
 			Params   = struct{}
-			Response = PostV1AuthIdentitiesMergeConfirmRes
+			Response = *PostV1AuthIdentitiesMergeConfirmOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -31446,8 +33564,19 @@ func (s *Server) handlePostV1AuthIdentitiesMergeConfirmRequest(args [0]string, a
 		response, err = s.h.PostV1AuthIdentitiesMergeConfirm(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -31547,8 +33676,9 @@ func (s *Server) handlePostV1AuthIdentitiesMergeStartRequest(args [0]string, arg
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -31575,8 +33705,9 @@ func (s *Server) handlePostV1AuthIdentitiesMergeStartRequest(args [0]string, arg
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -31598,7 +33729,7 @@ func (s *Server) handlePostV1AuthIdentitiesMergeStartRequest(args [0]string, arg
 		}
 	}()
 
-	var response PostV1AuthIdentitiesMergeStartRes
+	var response *PostV1AuthIdentitiesMergeStartOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -31614,7 +33745,7 @@ func (s *Server) handlePostV1AuthIdentitiesMergeStartRequest(args [0]string, arg
 		type (
 			Request  = *PostV1AuthIdentitiesMergeStartReq
 			Params   = struct{}
-			Response = PostV1AuthIdentitiesMergeStartRes
+			Response = *PostV1AuthIdentitiesMergeStartOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -31633,8 +33764,19 @@ func (s *Server) handlePostV1AuthIdentitiesMergeStartRequest(args [0]string, arg
 		response, err = s.h.PostV1AuthIdentitiesMergeStart(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -31751,7 +33893,7 @@ func (s *Server) handlePostV1AuthMagicLinkStartRequest(args [0]string, argsEscap
 		}
 	}()
 
-	var response PostV1AuthMagicLinkStartRes
+	var response *Challenge
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -31772,7 +33914,7 @@ func (s *Server) handlePostV1AuthMagicLinkStartRequest(args [0]string, argsEscap
 		type (
 			Request  = *MagicLinkStartRequest
 			Params   = PostV1AuthMagicLinkStartParams
-			Response = PostV1AuthMagicLinkStartRes
+			Response = *Challenge
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -31791,8 +33933,19 @@ func (s *Server) handlePostV1AuthMagicLinkStartRequest(args [0]string, argsEscap
 		response, err = s.h.PostV1AuthMagicLinkStart(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -31909,7 +34062,7 @@ func (s *Server) handlePostV1AuthMagicLinkVerifyRequest(args [0]string, argsEsca
 		}
 	}()
 
-	var response PostV1AuthMagicLinkVerifyRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -31930,7 +34083,7 @@ func (s *Server) handlePostV1AuthMagicLinkVerifyRequest(args [0]string, argsEsca
 		type (
 			Request  = *MagicLinkVerifyRequest
 			Params   = PostV1AuthMagicLinkVerifyParams
-			Response = PostV1AuthMagicLinkVerifyRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -31949,8 +34102,19 @@ func (s *Server) handlePostV1AuthMagicLinkVerifyRequest(args [0]string, argsEsca
 		response, err = s.h.PostV1AuthMagicLinkVerify(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -32107,8 +34271,19 @@ func (s *Server) handlePostV1AuthMfaChallengeRequest(args [0]string, argsEscaped
 		response, err = s.h.PostV1AuthMfaChallenge(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -32208,8 +34383,9 @@ func (s *Server) handlePostV1AuthMfaEmailEnrollRequest(args [0]string, argsEscap
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -32236,8 +34412,9 @@ func (s *Server) handlePostV1AuthMfaEmailEnrollRequest(args [0]string, argsEscap
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -32259,7 +34436,7 @@ func (s *Server) handlePostV1AuthMfaEmailEnrollRequest(args [0]string, argsEscap
 		}
 	}()
 
-	var response PostV1AuthMfaEmailEnrollRes
+	var response *PostV1AuthMfaEmailEnrollOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -32275,7 +34452,7 @@ func (s *Server) handlePostV1AuthMfaEmailEnrollRequest(args [0]string, argsEscap
 		type (
 			Request  = *PostV1AuthMfaEmailEnrollReq
 			Params   = struct{}
-			Response = PostV1AuthMfaEmailEnrollRes
+			Response = *PostV1AuthMfaEmailEnrollOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -32294,8 +34471,19 @@ func (s *Server) handlePostV1AuthMfaEmailEnrollRequest(args [0]string, argsEscap
 		response, err = s.h.PostV1AuthMfaEmailEnroll(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -32395,8 +34583,9 @@ func (s *Server) handlePostV1AuthMfaRecoveryCodesGenerateRequest(args [0]string,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -32423,8 +34612,9 @@ func (s *Server) handlePostV1AuthMfaRecoveryCodesGenerateRequest(args [0]string,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -32446,7 +34636,7 @@ func (s *Server) handlePostV1AuthMfaRecoveryCodesGenerateRequest(args [0]string,
 		}
 	}()
 
-	var response PostV1AuthMfaRecoveryCodesGenerateRes
+	var response *PostV1AuthMfaRecoveryCodesGenerateOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -32462,7 +34652,7 @@ func (s *Server) handlePostV1AuthMfaRecoveryCodesGenerateRequest(args [0]string,
 		type (
 			Request  = OptPostV1AuthMfaRecoveryCodesGenerateReq
 			Params   = struct{}
-			Response = PostV1AuthMfaRecoveryCodesGenerateRes
+			Response = *PostV1AuthMfaRecoveryCodesGenerateOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -32481,8 +34671,19 @@ func (s *Server) handlePostV1AuthMfaRecoveryCodesGenerateRequest(args [0]string,
 		response, err = s.h.PostV1AuthMfaRecoveryCodesGenerate(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -32639,8 +34840,19 @@ func (s *Server) handlePostV1AuthMfaRecoveryCodesVerifyRequest(args [0]string, a
 		response, err = s.h.PostV1AuthMfaRecoveryCodesVerify(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -32740,8 +34952,9 @@ func (s *Server) handlePostV1AuthMfaSmsEnrollRequest(args [0]string, argsEscaped
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -32768,8 +34981,9 @@ func (s *Server) handlePostV1AuthMfaSmsEnrollRequest(args [0]string, argsEscaped
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -32791,7 +35005,7 @@ func (s *Server) handlePostV1AuthMfaSmsEnrollRequest(args [0]string, argsEscaped
 		}
 	}()
 
-	var response PostV1AuthMfaSmsEnrollRes
+	var response *PostV1AuthMfaSmsEnrollOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -32807,7 +35021,7 @@ func (s *Server) handlePostV1AuthMfaSmsEnrollRequest(args [0]string, argsEscaped
 		type (
 			Request  = *PostV1AuthMfaSmsEnrollReq
 			Params   = struct{}
-			Response = PostV1AuthMfaSmsEnrollRes
+			Response = *PostV1AuthMfaSmsEnrollOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -32826,8 +35040,19 @@ func (s *Server) handlePostV1AuthMfaSmsEnrollRequest(args [0]string, argsEscaped
 		response, err = s.h.PostV1AuthMfaSmsEnroll(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -32927,8 +35152,9 @@ func (s *Server) handlePostV1AuthMfaTotpEnrollRequest(args [0]string, argsEscape
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -32955,8 +35181,9 @@ func (s *Server) handlePostV1AuthMfaTotpEnrollRequest(args [0]string, argsEscape
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -32978,7 +35205,7 @@ func (s *Server) handlePostV1AuthMfaTotpEnrollRequest(args [0]string, argsEscape
 		}
 	}()
 
-	var response PostV1AuthMfaTotpEnrollRes
+	var response *PostV1AuthMfaTotpEnrollOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -32994,7 +35221,7 @@ func (s *Server) handlePostV1AuthMfaTotpEnrollRequest(args [0]string, argsEscape
 		type (
 			Request  = OptPostV1AuthMfaTotpEnrollReq
 			Params   = struct{}
-			Response = PostV1AuthMfaTotpEnrollRes
+			Response = *PostV1AuthMfaTotpEnrollOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -33013,8 +35240,19 @@ func (s *Server) handlePostV1AuthMfaTotpEnrollRequest(args [0]string, argsEscape
 		response, err = s.h.PostV1AuthMfaTotpEnroll(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -33114,8 +35352,9 @@ func (s *Server) handlePostV1AuthMfaTotpVerifyRequest(args [0]string, argsEscape
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -33142,8 +35381,9 @@ func (s *Server) handlePostV1AuthMfaTotpVerifyRequest(args [0]string, argsEscape
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -33165,7 +35405,7 @@ func (s *Server) handlePostV1AuthMfaTotpVerifyRequest(args [0]string, argsEscape
 		}
 	}()
 
-	var response PostV1AuthMfaTotpVerifyRes
+	var response *PostV1AuthMfaTotpVerifyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -33181,7 +35421,7 @@ func (s *Server) handlePostV1AuthMfaTotpVerifyRequest(args [0]string, argsEscape
 		type (
 			Request  = *PostV1AuthMfaTotpVerifyReq
 			Params   = struct{}
-			Response = PostV1AuthMfaTotpVerifyRes
+			Response = *PostV1AuthMfaTotpVerifyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -33200,8 +35440,19 @@ func (s *Server) handlePostV1AuthMfaTotpVerifyRequest(args [0]string, argsEscape
 		response, err = s.h.PostV1AuthMfaTotpVerify(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -33318,7 +35569,7 @@ func (s *Server) handlePostV1AuthMfaVerifyRequest(args [0]string, argsEscaped bo
 		}
 	}()
 
-	var response PostV1AuthMfaVerifyRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -33339,7 +35590,7 @@ func (s *Server) handlePostV1AuthMfaVerifyRequest(args [0]string, argsEscaped bo
 		type (
 			Request  = *PostV1AuthMfaVerifyReq
 			Params   = PostV1AuthMfaVerifyParams
-			Response = PostV1AuthMfaVerifyRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -33358,8 +35609,19 @@ func (s *Server) handlePostV1AuthMfaVerifyRequest(args [0]string, argsEscaped bo
 		response, err = s.h.PostV1AuthMfaVerify(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -33459,8 +35721,9 @@ func (s *Server) handlePostV1AuthMfaWebauthnEnrollOptionsRequest(args [0]string,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -33487,8 +35750,9 @@ func (s *Server) handlePostV1AuthMfaWebauthnEnrollOptionsRequest(args [0]string,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -33510,7 +35774,7 @@ func (s *Server) handlePostV1AuthMfaWebauthnEnrollOptionsRequest(args [0]string,
 		}
 	}()
 
-	var response PostV1AuthMfaWebauthnEnrollOptionsRes
+	var response *PostV1AuthMfaWebauthnEnrollOptionsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -33526,7 +35790,7 @@ func (s *Server) handlePostV1AuthMfaWebauthnEnrollOptionsRequest(args [0]string,
 		type (
 			Request  = OptPostV1AuthMfaWebauthnEnrollOptionsReq
 			Params   = struct{}
-			Response = PostV1AuthMfaWebauthnEnrollOptionsRes
+			Response = *PostV1AuthMfaWebauthnEnrollOptionsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -33545,8 +35809,19 @@ func (s *Server) handlePostV1AuthMfaWebauthnEnrollOptionsRequest(args [0]string,
 		response, err = s.h.PostV1AuthMfaWebauthnEnrollOptions(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -33646,8 +35921,9 @@ func (s *Server) handlePostV1AuthMfaWebauthnEnrollVerifyRequest(args [0]string, 
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -33674,8 +35950,9 @@ func (s *Server) handlePostV1AuthMfaWebauthnEnrollVerifyRequest(args [0]string, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -33697,7 +35974,7 @@ func (s *Server) handlePostV1AuthMfaWebauthnEnrollVerifyRequest(args [0]string, 
 		}
 	}()
 
-	var response PostV1AuthMfaWebauthnEnrollVerifyRes
+	var response *PostV1AuthMfaWebauthnEnrollVerifyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -33713,7 +35990,7 @@ func (s *Server) handlePostV1AuthMfaWebauthnEnrollVerifyRequest(args [0]string, 
 		type (
 			Request  = *PostV1AuthMfaWebauthnEnrollVerifyReq
 			Params   = struct{}
-			Response = PostV1AuthMfaWebauthnEnrollVerifyRes
+			Response = *PostV1AuthMfaWebauthnEnrollVerifyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -33732,8 +36009,19 @@ func (s *Server) handlePostV1AuthMfaWebauthnEnrollVerifyRequest(args [0]string, 
 		response, err = s.h.PostV1AuthMfaWebauthnEnrollVerify(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -33833,8 +36121,9 @@ func (s *Server) handlePostV1AuthOauthByProviderUnlinkRequest(args [1]string, ar
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -33861,8 +36150,9 @@ func (s *Server) handlePostV1AuthOauthByProviderUnlinkRequest(args [1]string, ar
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -33894,7 +36184,7 @@ func (s *Server) handlePostV1AuthOauthByProviderUnlinkRequest(args [1]string, ar
 		}
 	}()
 
-	var response PostV1AuthOauthByProviderUnlinkRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -33915,7 +36205,7 @@ func (s *Server) handlePostV1AuthOauthByProviderUnlinkRequest(args [1]string, ar
 		type (
 			Request  = *PostV1AuthOauthByProviderUnlinkReq
 			Params   = PostV1AuthOauthByProviderUnlinkParams
-			Response = PostV1AuthOauthByProviderUnlinkRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -33934,8 +36224,19 @@ func (s *Server) handlePostV1AuthOauthByProviderUnlinkRequest(args [1]string, ar
 		response, err = s.h.PostV1AuthOauthByProviderUnlink(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -34092,8 +36393,19 @@ func (s *Server) handlePostV1AuthOauthExchangeRequest(args [0]string, argsEscape
 		response, err = s.h.PostV1AuthOauthExchange(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -34210,7 +36522,7 @@ func (s *Server) handlePostV1AuthOtpStartRequest(args [0]string, argsEscaped boo
 		}
 	}()
 
-	var response PostV1AuthOtpStartRes
+	var response *Challenge
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -34231,7 +36543,7 @@ func (s *Server) handlePostV1AuthOtpStartRequest(args [0]string, argsEscaped boo
 		type (
 			Request  = *OtpStartRequest
 			Params   = PostV1AuthOtpStartParams
-			Response = PostV1AuthOtpStartRes
+			Response = *Challenge
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -34250,8 +36562,19 @@ func (s *Server) handlePostV1AuthOtpStartRequest(args [0]string, argsEscaped boo
 		response, err = s.h.PostV1AuthOtpStart(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -34368,7 +36691,7 @@ func (s *Server) handlePostV1AuthOtpVerifyRequest(args [0]string, argsEscaped bo
 		}
 	}()
 
-	var response PostV1AuthOtpVerifyRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -34389,7 +36712,7 @@ func (s *Server) handlePostV1AuthOtpVerifyRequest(args [0]string, argsEscaped bo
 		type (
 			Request  = *OtpVerifyRequest
 			Params   = PostV1AuthOtpVerifyParams
-			Response = PostV1AuthOtpVerifyRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -34408,8 +36731,19 @@ func (s *Server) handlePostV1AuthOtpVerifyRequest(args [0]string, argsEscaped bo
 		response, err = s.h.PostV1AuthOtpVerify(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -34509,8 +36843,9 @@ func (s *Server) handlePostV1AuthPasswordChangeRequest(args [0]string, argsEscap
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -34537,8 +36872,9 @@ func (s *Server) handlePostV1AuthPasswordChangeRequest(args [0]string, argsEscap
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -34560,7 +36896,7 @@ func (s *Server) handlePostV1AuthPasswordChangeRequest(args [0]string, argsEscap
 		}
 	}()
 
-	var response PostV1AuthPasswordChangeRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -34576,7 +36912,7 @@ func (s *Server) handlePostV1AuthPasswordChangeRequest(args [0]string, argsEscap
 		type (
 			Request  = *PasswordChangeRequest
 			Params   = struct{}
-			Response = PostV1AuthPasswordChangeRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -34595,8 +36931,19 @@ func (s *Server) handlePostV1AuthPasswordChangeRequest(args [0]string, argsEscap
 		response, err = s.h.PostV1AuthPasswordChange(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -34753,8 +37100,19 @@ func (s *Server) handlePostV1AuthPasswordCheckRequest(args [0]string, argsEscape
 		response, err = s.h.PostV1AuthPasswordCheck(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -34871,7 +37229,7 @@ func (s *Server) handlePostV1AuthPasswordForgotRequest(args [0]string, argsEscap
 		}
 	}()
 
-	var response PostV1AuthPasswordForgotRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -34892,7 +37250,7 @@ func (s *Server) handlePostV1AuthPasswordForgotRequest(args [0]string, argsEscap
 		type (
 			Request  = *PasswordForgotRequest
 			Params   = PostV1AuthPasswordForgotParams
-			Response = PostV1AuthPasswordForgotRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -34911,8 +37269,19 @@ func (s *Server) handlePostV1AuthPasswordForgotRequest(args [0]string, argsEscap
 		response, err = s.h.PostV1AuthPasswordForgot(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -35029,7 +37398,7 @@ func (s *Server) handlePostV1AuthPasswordResetRequest(args [0]string, argsEscape
 		}
 	}()
 
-	var response PostV1AuthPasswordResetRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -35050,7 +37419,7 @@ func (s *Server) handlePostV1AuthPasswordResetRequest(args [0]string, argsEscape
 		type (
 			Request  = *PasswordResetRequest
 			Params   = PostV1AuthPasswordResetParams
-			Response = PostV1AuthPasswordResetRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -35069,8 +37438,19 @@ func (s *Server) handlePostV1AuthPasswordResetRequest(args [0]string, argsEscape
 		response, err = s.h.PostV1AuthPasswordReset(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -35170,8 +37550,9 @@ func (s *Server) handlePostV1AuthPasswordVerifyRequest(args [0]string, argsEscap
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -35198,8 +37579,9 @@ func (s *Server) handlePostV1AuthPasswordVerifyRequest(args [0]string, argsEscap
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -35221,7 +37603,7 @@ func (s *Server) handlePostV1AuthPasswordVerifyRequest(args [0]string, argsEscap
 		}
 	}()
 
-	var response PostV1AuthPasswordVerifyRes
+	var response *PostV1AuthPasswordVerifyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -35237,7 +37619,7 @@ func (s *Server) handlePostV1AuthPasswordVerifyRequest(args [0]string, argsEscap
 		type (
 			Request  = *PostV1AuthPasswordVerifyReq
 			Params   = struct{}
-			Response = PostV1AuthPasswordVerifyRes
+			Response = *PostV1AuthPasswordVerifyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -35256,8 +37638,19 @@ func (s *Server) handlePostV1AuthPasswordVerifyRequest(args [0]string, argsEscap
 		response, err = s.h.PostV1AuthPasswordVerify(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -35357,8 +37750,9 @@ func (s *Server) handlePostV1AuthPhoneChangeStartRequest(args [0]string, argsEsc
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -35385,8 +37779,9 @@ func (s *Server) handlePostV1AuthPhoneChangeStartRequest(args [0]string, argsEsc
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -35408,7 +37803,7 @@ func (s *Server) handlePostV1AuthPhoneChangeStartRequest(args [0]string, argsEsc
 		}
 	}()
 
-	var response PostV1AuthPhoneChangeStartRes
+	var response *Challenge
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -35424,7 +37819,7 @@ func (s *Server) handlePostV1AuthPhoneChangeStartRequest(args [0]string, argsEsc
 		type (
 			Request  = *PostV1AuthPhoneChangeStartReq
 			Params   = struct{}
-			Response = PostV1AuthPhoneChangeStartRes
+			Response = *Challenge
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -35443,8 +37838,19 @@ func (s *Server) handlePostV1AuthPhoneChangeStartRequest(args [0]string, argsEsc
 		response, err = s.h.PostV1AuthPhoneChangeStart(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -35544,8 +37950,9 @@ func (s *Server) handlePostV1AuthPhoneChangeVerifyRequest(args [0]string, argsEs
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -35572,8 +37979,9 @@ func (s *Server) handlePostV1AuthPhoneChangeVerifyRequest(args [0]string, argsEs
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -35595,7 +38003,7 @@ func (s *Server) handlePostV1AuthPhoneChangeVerifyRequest(args [0]string, argsEs
 		}
 	}()
 
-	var response PostV1AuthPhoneChangeVerifyRes
+	var response *PostV1AuthPhoneChangeVerifyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -35611,7 +38019,7 @@ func (s *Server) handlePostV1AuthPhoneChangeVerifyRequest(args [0]string, argsEs
 		type (
 			Request  = *PostV1AuthPhoneChangeVerifyReq
 			Params   = struct{}
-			Response = PostV1AuthPhoneChangeVerifyRes
+			Response = *PostV1AuthPhoneChangeVerifyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -35630,8 +38038,19 @@ func (s *Server) handlePostV1AuthPhoneChangeVerifyRequest(args [0]string, argsEs
 		response, err = s.h.PostV1AuthPhoneChangeVerify(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -35748,7 +38167,7 @@ func (s *Server) handlePostV1AuthPhoneVerificationStartRequest(args [0]string, a
 		}
 	}()
 
-	var response PostV1AuthPhoneVerificationStartRes
+	var response *Challenge
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -35769,7 +38188,7 @@ func (s *Server) handlePostV1AuthPhoneVerificationStartRequest(args [0]string, a
 		type (
 			Request  = *PostV1AuthPhoneVerificationStartReq
 			Params   = PostV1AuthPhoneVerificationStartParams
-			Response = PostV1AuthPhoneVerificationStartRes
+			Response = *Challenge
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -35788,8 +38207,19 @@ func (s *Server) handlePostV1AuthPhoneVerificationStartRequest(args [0]string, a
 		response, err = s.h.PostV1AuthPhoneVerificationStart(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -35906,7 +38336,7 @@ func (s *Server) handlePostV1AuthPhoneVerificationVerifyRequest(args [0]string, 
 		}
 	}()
 
-	var response PostV1AuthPhoneVerificationVerifyRes
+	var response PhoneVerifyResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -35927,7 +38357,7 @@ func (s *Server) handlePostV1AuthPhoneVerificationVerifyRequest(args [0]string, 
 		type (
 			Request  = *PostV1AuthPhoneVerificationVerifyReq
 			Params   = PostV1AuthPhoneVerificationVerifyParams
-			Response = PostV1AuthPhoneVerificationVerifyRes
+			Response = PhoneVerifyResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -35946,8 +38376,19 @@ func (s *Server) handlePostV1AuthPhoneVerificationVerifyRequest(args [0]string, 
 		response, err = s.h.PostV1AuthPhoneVerificationVerify(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -36047,8 +38488,9 @@ func (s *Server) handlePostV1AuthSessionStepUpRequest(args [0]string, argsEscape
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -36075,8 +38517,9 @@ func (s *Server) handlePostV1AuthSessionStepUpRequest(args [0]string, argsEscape
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -36098,7 +38541,7 @@ func (s *Server) handlePostV1AuthSessionStepUpRequest(args [0]string, argsEscape
 		}
 	}()
 
-	var response PostV1AuthSessionStepUpRes
+	var response StepUpResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -36114,7 +38557,7 @@ func (s *Server) handlePostV1AuthSessionStepUpRequest(args [0]string, argsEscape
 		type (
 			Request  = *PostV1AuthSessionStepUpReq
 			Params   = struct{}
-			Response = PostV1AuthSessionStepUpRes
+			Response = StepUpResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -36133,8 +38576,19 @@ func (s *Server) handlePostV1AuthSessionStepUpRequest(args [0]string, argsEscape
 		response, err = s.h.PostV1AuthSessionStepUp(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -36234,8 +38688,9 @@ func (s *Server) handlePostV1AuthSessionSwitchGroupRequest(args [0]string, argsE
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -36262,8 +38717,9 @@ func (s *Server) handlePostV1AuthSessionSwitchGroupRequest(args [0]string, argsE
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -36285,7 +38741,7 @@ func (s *Server) handlePostV1AuthSessionSwitchGroupRequest(args [0]string, argsE
 		}
 	}()
 
-	var response PostV1AuthSessionSwitchGroupRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -36301,7 +38757,7 @@ func (s *Server) handlePostV1AuthSessionSwitchGroupRequest(args [0]string, argsE
 		type (
 			Request  = *PostV1AuthSessionSwitchGroupReq
 			Params   = struct{}
-			Response = PostV1AuthSessionSwitchGroupRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -36320,8 +38776,19 @@ func (s *Server) handlePostV1AuthSessionSwitchGroupRequest(args [0]string, argsE
 		response, err = s.h.PostV1AuthSessionSwitchGroup(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -36438,7 +38905,7 @@ func (s *Server) handlePostV1AuthSignInPasswordRequest(args [0]string, argsEscap
 		}
 	}()
 
-	var response PostV1AuthSignInPasswordRes
+	var response AuthResultOrNextStep
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -36459,7 +38926,7 @@ func (s *Server) handlePostV1AuthSignInPasswordRequest(args [0]string, argsEscap
 		type (
 			Request  = *PasswordSignInRequest
 			Params   = PostV1AuthSignInPasswordParams
-			Response = PostV1AuthSignInPasswordRes
+			Response = AuthResultOrNextStep
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -36478,8 +38945,19 @@ func (s *Server) handlePostV1AuthSignInPasswordRequest(args [0]string, argsEscap
 		response, err = s.h.PostV1AuthSignInPassword(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -36579,8 +39057,9 @@ func (s *Server) handlePostV1AuthSignOutRequest(args [0]string, argsEscaped bool
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -36607,8 +39086,9 @@ func (s *Server) handlePostV1AuthSignOutRequest(args [0]string, argsEscaped bool
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -36630,7 +39110,7 @@ func (s *Server) handlePostV1AuthSignOutRequest(args [0]string, argsEscaped bool
 		}
 	}()
 
-	var response PostV1AuthSignOutRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -36646,7 +39126,7 @@ func (s *Server) handlePostV1AuthSignOutRequest(args [0]string, argsEscaped bool
 		type (
 			Request  = OptPostV1AuthSignOutReq
 			Params   = struct{}
-			Response = PostV1AuthSignOutRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -36665,8 +39145,19 @@ func (s *Server) handlePostV1AuthSignOutRequest(args [0]string, argsEscaped bool
 		response, err = s.h.PostV1AuthSignOut(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -36766,8 +39257,9 @@ func (s *Server) handlePostV1AuthSignOutAllRequest(args [0]string, argsEscaped b
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -36794,8 +39286,9 @@ func (s *Server) handlePostV1AuthSignOutAllRequest(args [0]string, argsEscaped b
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -36817,7 +39310,7 @@ func (s *Server) handlePostV1AuthSignOutAllRequest(args [0]string, argsEscaped b
 		}
 	}()
 
-	var response PostV1AuthSignOutAllRes
+	var response *PostV1AuthSignOutAllOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -36833,7 +39326,7 @@ func (s *Server) handlePostV1AuthSignOutAllRequest(args [0]string, argsEscaped b
 		type (
 			Request  = OptPostV1AuthSignOutAllReq
 			Params   = struct{}
-			Response = PostV1AuthSignOutAllRes
+			Response = *PostV1AuthSignOutAllOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -36852,8 +39345,19 @@ func (s *Server) handlePostV1AuthSignOutAllRequest(args [0]string, argsEscaped b
 		response, err = s.h.PostV1AuthSignOutAll(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -36970,7 +39474,7 @@ func (s *Server) handlePostV1AuthSignUpRequest(args [0]string, argsEscaped bool,
 		}
 	}()
 
-	var response PostV1AuthSignUpRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -36991,7 +39495,7 @@ func (s *Server) handlePostV1AuthSignUpRequest(args [0]string, argsEscaped bool,
 		type (
 			Request  = *SignUpRequest
 			Params   = PostV1AuthSignUpParams
-			Response = PostV1AuthSignUpRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -37010,8 +39514,19 @@ func (s *Server) handlePostV1AuthSignUpRequest(args [0]string, argsEscaped bool,
 		response, err = s.h.PostV1AuthSignUp(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -37128,7 +39643,7 @@ func (s *Server) handlePostV1AuthTokenExchangeRequest(args [0]string, argsEscape
 		}
 	}()
 
-	var response PostV1AuthTokenExchangeRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -37149,7 +39664,7 @@ func (s *Server) handlePostV1AuthTokenExchangeRequest(args [0]string, argsEscape
 		type (
 			Request  = *CodeExchangeRequest
 			Params   = PostV1AuthTokenExchangeParams
-			Response = PostV1AuthTokenExchangeRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -37168,8 +39683,19 @@ func (s *Server) handlePostV1AuthTokenExchangeRequest(args [0]string, argsEscape
 		response, err = s.h.PostV1AuthTokenExchange(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -37286,7 +39812,7 @@ func (s *Server) handlePostV1AuthTokenRefreshRequest(args [0]string, argsEscaped
 		}
 	}()
 
-	var response PostV1AuthTokenRefreshRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -37307,7 +39833,7 @@ func (s *Server) handlePostV1AuthTokenRefreshRequest(args [0]string, argsEscaped
 		type (
 			Request  = OptRefreshRequest
 			Params   = PostV1AuthTokenRefreshParams
-			Response = PostV1AuthTokenRefreshRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -37326,8 +39852,19 @@ func (s *Server) handlePostV1AuthTokenRefreshRequest(args [0]string, argsEscaped
 		response, err = s.h.PostV1AuthTokenRefresh(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -37484,8 +40021,19 @@ func (s *Server) handlePostV1AuthWebauthnLoginOptionsRequest(args [0]string, arg
 		response, err = s.h.PostV1AuthWebauthnLoginOptions(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -37602,7 +40150,7 @@ func (s *Server) handlePostV1AuthWebauthnLoginVerifyRequest(args [0]string, args
 		}
 	}()
 
-	var response PostV1AuthWebauthnLoginVerifyRes
+	var response *AuthResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -37623,7 +40171,7 @@ func (s *Server) handlePostV1AuthWebauthnLoginVerifyRequest(args [0]string, args
 		type (
 			Request  = *PostV1AuthWebauthnLoginVerifyReq
 			Params   = PostV1AuthWebauthnLoginVerifyParams
-			Response = PostV1AuthWebauthnLoginVerifyRes
+			Response = *AuthResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -37642,8 +40190,19 @@ func (s *Server) handlePostV1AuthWebauthnLoginVerifyRequest(args [0]string, args
 		response, err = s.h.PostV1AuthWebauthnLoginVerify(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -37743,8 +40302,9 @@ func (s *Server) handlePostV1AuthWebauthnRegisterOptionsRequest(args [0]string, 
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -37771,8 +40331,9 @@ func (s *Server) handlePostV1AuthWebauthnRegisterOptionsRequest(args [0]string, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -37794,7 +40355,7 @@ func (s *Server) handlePostV1AuthWebauthnRegisterOptionsRequest(args [0]string, 
 		}
 	}()
 
-	var response PostV1AuthWebauthnRegisterOptionsRes
+	var response *PostV1AuthWebauthnRegisterOptionsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -37810,7 +40371,7 @@ func (s *Server) handlePostV1AuthWebauthnRegisterOptionsRequest(args [0]string, 
 		type (
 			Request  = OptPostV1AuthWebauthnRegisterOptionsReq
 			Params   = struct{}
-			Response = PostV1AuthWebauthnRegisterOptionsRes
+			Response = *PostV1AuthWebauthnRegisterOptionsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -37829,8 +40390,19 @@ func (s *Server) handlePostV1AuthWebauthnRegisterOptionsRequest(args [0]string, 
 		response, err = s.h.PostV1AuthWebauthnRegisterOptions(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -37930,8 +40502,9 @@ func (s *Server) handlePostV1AuthWebauthnRegisterVerifyRequest(args [0]string, a
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -37958,8 +40531,9 @@ func (s *Server) handlePostV1AuthWebauthnRegisterVerifyRequest(args [0]string, a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -37981,7 +40555,7 @@ func (s *Server) handlePostV1AuthWebauthnRegisterVerifyRequest(args [0]string, a
 		}
 	}()
 
-	var response PostV1AuthWebauthnRegisterVerifyRes
+	var response *PostV1AuthWebauthnRegisterVerifyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -37997,7 +40571,7 @@ func (s *Server) handlePostV1AuthWebauthnRegisterVerifyRequest(args [0]string, a
 		type (
 			Request  = *PostV1AuthWebauthnRegisterVerifyReq
 			Params   = struct{}
-			Response = PostV1AuthWebauthnRegisterVerifyRes
+			Response = *PostV1AuthWebauthnRegisterVerifyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -38016,8 +40590,19 @@ func (s *Server) handlePostV1AuthWebauthnRegisterVerifyRequest(args [0]string, a
 		response, err = s.h.PostV1AuthWebauthnRegisterVerify(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -38159,8 +40744,19 @@ func (s *Server) handlePostV1ChallengesCaptchaVerifyRequest(args [0]string, args
 		response, err = s.h.PostV1ChallengesCaptchaVerify(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -38260,8 +40856,9 @@ func (s *Server) handlePostV1DeviceApproveRequest(args [0]string, argsEscaped bo
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -38288,8 +40885,9 @@ func (s *Server) handlePostV1DeviceApproveRequest(args [0]string, argsEscaped bo
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -38311,7 +40909,7 @@ func (s *Server) handlePostV1DeviceApproveRequest(args [0]string, argsEscaped bo
 		}
 	}()
 
-	var response PostV1DeviceApproveRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -38327,7 +40925,7 @@ func (s *Server) handlePostV1DeviceApproveRequest(args [0]string, argsEscaped bo
 		type (
 			Request  = *PostV1DeviceApproveReq
 			Params   = struct{}
-			Response = PostV1DeviceApproveRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -38346,8 +40944,19 @@ func (s *Server) handlePostV1DeviceApproveRequest(args [0]string, argsEscaped bo
 		response, err = s.h.PostV1DeviceApprove(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -38447,8 +41056,9 @@ func (s *Server) handlePostV1DeviceDenyRequest(args [0]string, argsEscaped bool,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -38475,8 +41085,9 @@ func (s *Server) handlePostV1DeviceDenyRequest(args [0]string, argsEscaped bool,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -38498,7 +41109,7 @@ func (s *Server) handlePostV1DeviceDenyRequest(args [0]string, argsEscaped bool,
 		}
 	}()
 
-	var response PostV1DeviceDenyRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -38514,7 +41125,7 @@ func (s *Server) handlePostV1DeviceDenyRequest(args [0]string, argsEscaped bool,
 		type (
 			Request  = *PostV1DeviceDenyReq
 			Params   = struct{}
-			Response = PostV1DeviceDenyRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -38533,8 +41144,19 @@ func (s *Server) handlePostV1DeviceDenyRequest(args [0]string, argsEscaped bool,
 		response, err = s.h.PostV1DeviceDeny(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -38634,8 +41256,9 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdConsentRequest(args 
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -38662,8 +41285,9 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdConsentRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -38695,7 +41319,7 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdConsentRequest(args 
 		}
 	}()
 
-	var response PostV1OauthInteractionByInteractionIdConsentRes
+	var response *PostV1OauthInteractionByInteractionIdConsentOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -38716,7 +41340,7 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdConsentRequest(args 
 		type (
 			Request  = *PostV1OauthInteractionByInteractionIdConsentReq
 			Params   = PostV1OauthInteractionByInteractionIdConsentParams
-			Response = PostV1OauthInteractionByInteractionIdConsentRes
+			Response = *PostV1OauthInteractionByInteractionIdConsentOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -38735,8 +41359,19 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdConsentRequest(args 
 		response, err = s.h.PostV1OauthInteractionByInteractionIdConsent(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -38836,8 +41471,9 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdLoginRequest(args [1
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -38864,8 +41500,9 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdLoginRequest(args [1
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -38897,7 +41534,7 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdLoginRequest(args [1
 		}
 	}()
 
-	var response PostV1OauthInteractionByInteractionIdLoginRes
+	var response *PostV1OauthInteractionByInteractionIdLoginOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -38918,7 +41555,7 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdLoginRequest(args [1
 		type (
 			Request  = OptPostV1OauthInteractionByInteractionIdLoginReq
 			Params   = PostV1OauthInteractionByInteractionIdLoginParams
-			Response = PostV1OauthInteractionByInteractionIdLoginRes
+			Response = *PostV1OauthInteractionByInteractionIdLoginOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -38937,8 +41574,19 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdLoginRequest(args [1
 		response, err = s.h.PostV1OauthInteractionByInteractionIdLogin(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -39095,8 +41743,19 @@ func (s *Server) handlePostV1OauthInteractionByInteractionIdRejectRequest(args [
 		response, err = s.h.PostV1OauthInteractionByInteractionIdReject(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -39196,8 +41855,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRe
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -39224,8 +41884,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRe
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -39257,7 +41918,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRe
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRes
+	var response PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -39286,7 +41947,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRe
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq
 			Params   = PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams
-			Response = PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRes
+			Response = PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -39305,8 +41966,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRe
 		response, err = s.h.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -39406,8 +42078,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReque
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -39434,8 +42107,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReque
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -39467,7 +42141,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReque
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyRes
+	var response *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -39496,7 +42170,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReque
 		type (
 			Request  = OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq
 			Params   = PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams
-			Response = PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyRes
+			Response = *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -39515,8 +42189,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReque
 		response, err = s.h.PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -39616,8 +42301,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminApiKeysRequest(args [1]stri
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -39644,8 +42330,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminApiKeysRequest(args [1]stri
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -39677,7 +42364,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminApiKeysRequest(args [1]stri
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminApiKeysRes
+	var response *PostV1ProjectsByProjectIdAdminApiKeysCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -39706,7 +42393,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminApiKeysRequest(args [1]stri
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminApiKeysReq
 			Params   = PostV1ProjectsByProjectIdAdminApiKeysParams
-			Response = PostV1ProjectsByProjectIdAdminApiKeysRes
+			Response = *PostV1ProjectsByProjectIdAdminApiKeysCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -39725,8 +42412,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminApiKeysRequest(args [1]stri
 		response, err = s.h.PostV1ProjectsByProjectIdAdminApiKeys(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -39826,8 +42524,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRequest
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -39854,8 +42553,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRequest
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -39872,7 +42572,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRequest
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes
+	var response *PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -39901,7 +42601,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRequest
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams
-			Response = PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes
+			Response = *PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -39920,8 +42620,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRequest
 		response, err = s.h.PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -40021,8 +42732,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAppsRequest(args [1]string,
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -40049,8 +42761,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAppsRequest(args [1]string,
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -40082,7 +42795,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAppsRequest(args [1]string,
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminAppsRes
+	var response *PostV1ProjectsByProjectIdAdminAppsCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -40111,7 +42824,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAppsRequest(args [1]string,
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminAppsReq
 			Params   = PostV1ProjectsByProjectIdAdminAppsParams
-			Response = PostV1ProjectsByProjectIdAdminAppsRes
+			Response = *PostV1ProjectsByProjectIdAdminAppsCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -40130,8 +42843,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAppsRequest(args [1]string,
 		response, err = s.h.PostV1ProjectsByProjectIdAdminApps(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -40231,8 +42955,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRequest(a
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -40259,8 +42984,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRequest(a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -40292,7 +43018,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRequest(a
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRes
+	var response *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -40325,7 +43051,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRequest(a
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq
 			Params   = PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams
-			Response = PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRes
+			Response = *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -40344,8 +43070,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRequest(a
 		response, err = s.h.PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -40445,8 +43182,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAuditExportRequest(args [1]
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -40473,8 +43211,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAuditExportRequest(args [1]
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -40506,7 +43245,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAuditExportRequest(args [1]
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminAuditExportRes
+	var response *PostV1ProjectsByProjectIdAdminAuditExportOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -40531,7 +43270,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAuditExportRequest(args [1]
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminAuditExportReq
 			Params   = PostV1ProjectsByProjectIdAdminAuditExportParams
-			Response = PostV1ProjectsByProjectIdAdminAuditExportRes
+			Response = *PostV1ProjectsByProjectIdAdminAuditExportOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -40550,8 +43289,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminAuditExportRequest(args [1]
 		response, err = s.h.PostV1ProjectsByProjectIdAdminAuditExport(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -40651,8 +43401,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminDomainsRequest(args [1]stri
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -40679,8 +43430,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminDomainsRequest(args [1]stri
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -40712,7 +43464,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminDomainsRequest(args [1]stri
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminDomainsRes
+	var response *PostV1ProjectsByProjectIdAdminDomainsCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -40741,7 +43493,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminDomainsRequest(args [1]stri
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminDomainsReq
 			Params   = PostV1ProjectsByProjectIdAdminDomainsParams
-			Response = PostV1ProjectsByProjectIdAdminDomainsRes
+			Response = *PostV1ProjectsByProjectIdAdminDomainsCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -40760,8 +43512,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminDomainsRequest(args [1]stri
 		response, err = s.h.PostV1ProjectsByProjectIdAdminDomains(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -40861,8 +43624,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRequ
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -40889,8 +43653,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRequ
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -40907,7 +43672,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRequ
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes
+	var response *PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -40936,7 +43701,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRequ
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams
-			Response = PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes
+			Response = *PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -40955,8 +43720,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRequ
 		response, err = s.h.PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -41056,8 +43832,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailProvidersRequest(args 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -41084,8 +43861,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailProvidersRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -41117,7 +43895,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailProvidersRequest(args 
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminEmailProvidersRes
+	var response *EmailProvider
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -41146,7 +43924,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailProvidersRequest(args 
 		type (
 			Request  = *EmailProvider
 			Params   = PostV1ProjectsByProjectIdAdminEmailProvidersParams
-			Response = PostV1ProjectsByProjectIdAdminEmailProvidersRes
+			Response = *EmailProvider
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -41165,8 +43943,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailProvidersRequest(args 
 		response, err = s.h.PostV1ProjectsByProjectIdAdminEmailProviders(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -41266,8 +44055,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRe
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -41294,8 +44084,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRe
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -41327,7 +44118,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRe
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRes
+	var response *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -41356,7 +44147,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRe
 		type (
 			Request  = OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq
 			Params   = PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams
-			Response = PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRes
+			Response = *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -41375,8 +44166,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRe
 		response, err = s.h.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -41476,8 +44278,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestR
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -41504,8 +44307,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestR
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -41537,7 +44341,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestR
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -41566,7 +44370,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestR
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq
 			Params   = PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams
-			Response = PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -41585,8 +44389,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestR
 		response, err = s.h.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -41686,8 +44501,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEventsByEventIdReplayReques
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -41714,8 +44530,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEventsByEventIdReplayReques
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -41747,7 +44564,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEventsByEventIdReplayReques
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminEventsByEventIdReplayRes
+	var response PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -41776,7 +44593,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEventsByEventIdReplayReques
 		type (
 			Request  = OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq
 			Params   = PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams
-			Response = PostV1ProjectsByProjectIdAdminEventsByEventIdReplayRes
+			Response = PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -41795,8 +44612,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEventsByEventIdReplayReques
 		response, err = s.h.PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -41896,8 +44724,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminHooksRequest(args [1]string
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -41924,8 +44753,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminHooksRequest(args [1]string
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -41957,7 +44787,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminHooksRequest(args [1]string
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminHooksRes
+	var response *PostV1ProjectsByProjectIdAdminHooksCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -41986,7 +44816,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminHooksRequest(args [1]string
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminHooksReq
 			Params   = PostV1ProjectsByProjectIdAdminHooksParams
-			Response = PostV1ProjectsByProjectIdAdminHooksRes
+			Response = *PostV1ProjectsByProjectIdAdminHooksCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -42005,8 +44835,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminHooksRequest(args [1]string
 		response, err = s.h.PostV1ProjectsByProjectIdAdminHooks(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -42106,8 +44947,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminHooksByIdTestRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -42134,8 +44976,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminHooksByIdTestRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -42167,7 +45010,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminHooksByIdTestRequest(args [
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminHooksByIdTestRes
+	var response *PostV1ProjectsByProjectIdAdminHooksByIdTestOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -42196,7 +45039,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminHooksByIdTestRequest(args [
 		type (
 			Request  = OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq
 			Params   = PostV1ProjectsByProjectIdAdminHooksByIdTestParams
-			Response = PostV1ProjectsByProjectIdAdminHooksByIdTestRes
+			Response = *PostV1ProjectsByProjectIdAdminHooksByIdTestOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -42215,8 +45058,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminHooksByIdTestRequest(args [
 		response, err = s.h.PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -42316,8 +45170,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyR
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -42344,8 +45199,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyR
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -42377,7 +45233,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyR
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyRes
+	var response *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -42402,7 +45258,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyR
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq
 			Params   = PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams
-			Response = PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyRes
+			Response = *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -42421,8 +45277,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyR
 		response, err = s.h.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -42522,8 +45389,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminImportUsersRequest(args [1]
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -42550,8 +45418,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminImportUsersRequest(args [1]
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -42583,7 +45452,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminImportUsersRequest(args [1]
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminImportUsersRes
+	var response *PostV1ProjectsByProjectIdAdminImportUsersOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -42608,7 +45477,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminImportUsersRequest(args [1]
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminImportUsersReq
 			Params   = PostV1ProjectsByProjectIdAdminImportUsersParams
-			Response = PostV1ProjectsByProjectIdAdminImportUsersRes
+			Response = *PostV1ProjectsByProjectIdAdminImportUsersOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -42627,8 +45496,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminImportUsersRequest(args [1]
 		response, err = s.h.PostV1ProjectsByProjectIdAdminImportUsers(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -42728,8 +45608,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJobsByJobIdCancelRequest(ar
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -42756,8 +45637,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJobsByJobIdCancelRequest(ar
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -42774,7 +45656,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJobsByJobIdCancelRequest(ar
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminJobsByJobIdCancelRes
+	var response *PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -42803,7 +45685,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJobsByJobIdCancelRequest(ar
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams
-			Response = PostV1ProjectsByProjectIdAdminJobsByJobIdCancelRes
+			Response = *PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -42822,8 +45704,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJobsByJobIdCancelRequest(ar
 		response, err = s.h.PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -42923,8 +45816,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRequest(
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -42951,8 +45845,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRequest(
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -42969,7 +45864,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRequest(
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRes
+	var response *PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -42998,7 +45893,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRequest(
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams
-			Response = PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRes
+			Response = *PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -43017,8 +45912,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRequest(
 		response, err = s.h.PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -43118,8 +46024,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJwksRotateRequest(args [1]s
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -43146,8 +46053,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJwksRotateRequest(args [1]s
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -43179,7 +46087,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJwksRotateRequest(args [1]s
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminJwksRotateRes
+	var response *PostV1ProjectsByProjectIdAdminJwksRotateOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -43204,7 +46112,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJwksRotateRequest(args [1]s
 		type (
 			Request  = OptPostV1ProjectsByProjectIdAdminJwksRotateReq
 			Params   = PostV1ProjectsByProjectIdAdminJwksRotateParams
-			Response = PostV1ProjectsByProjectIdAdminJwksRotateRes
+			Response = *PostV1ProjectsByProjectIdAdminJwksRotateOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -43223,8 +46131,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminJwksRotateRequest(args [1]s
 		response, err = s.h.PostV1ProjectsByProjectIdAdminJwksRotate(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -43324,8 +46243,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminOauthProvidersRequest(args 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -43352,8 +46272,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminOauthProvidersRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -43385,7 +46306,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminOauthProvidersRequest(args 
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminOauthProvidersRes
+	var response *OAuthProviderConfig
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -43414,7 +46335,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminOauthProvidersRequest(args 
 		type (
 			Request  = *OAuthProviderConfig
 			Params   = PostV1ProjectsByProjectIdAdminOauthProvidersParams
-			Response = PostV1ProjectsByProjectIdAdminOauthProvidersRes
+			Response = *OAuthProviderConfig
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -43433,8 +46354,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminOauthProvidersRequest(args 
 		response, err = s.h.PostV1ProjectsByProjectIdAdminOauthProviders(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -43534,8 +46466,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminRateLimitBlocksRequest(args
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -43562,8 +46495,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminRateLimitBlocksRequest(args
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -43595,7 +46529,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminRateLimitBlocksRequest(args
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminRateLimitBlocksRes
+	var response PostV1ProjectsByProjectIdAdminRateLimitBlocksOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -43620,7 +46554,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminRateLimitBlocksRequest(args
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminRateLimitBlocksReq
 			Params   = PostV1ProjectsByProjectIdAdminRateLimitBlocksParams
-			Response = PostV1ProjectsByProjectIdAdminRateLimitBlocksRes
+			Response = PostV1ProjectsByProjectIdAdminRateLimitBlocksOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -43639,8 +46573,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminRateLimitBlocksRequest(args
 		response, err = s.h.PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -43740,8 +46685,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminRiskRulesRequest(args [1]st
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -43768,8 +46714,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminRiskRulesRequest(args [1]st
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -43801,7 +46748,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminRiskRulesRequest(args [1]st
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminRiskRulesRes
+	var response *RiskRule
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -43830,7 +46777,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminRiskRulesRequest(args [1]st
 		type (
 			Request  = *RiskRule
 			Params   = PostV1ProjectsByProjectIdAdminRiskRulesParams
-			Response = PostV1ProjectsByProjectIdAdminRiskRulesRes
+			Response = *RiskRule
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -43849,8 +46796,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminRiskRulesRequest(args [1]st
 		response, err = s.h.PostV1ProjectsByProjectIdAdminRiskRules(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -43950,8 +46908,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminServiceAccountsRequest(args
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -43978,8 +46937,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminServiceAccountsRequest(args
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -44011,7 +46971,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminServiceAccountsRequest(args
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminServiceAccountsRes
+	var response *PostV1ProjectsByProjectIdAdminServiceAccountsCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -44040,7 +47000,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminServiceAccountsRequest(args
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminServiceAccountsReq
 			Params   = PostV1ProjectsByProjectIdAdminServiceAccountsParams
-			Response = PostV1ProjectsByProjectIdAdminServiceAccountsRes
+			Response = *PostV1ProjectsByProjectIdAdminServiceAccountsCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -44059,8 +47019,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminServiceAccountsRequest(args
 		response, err = s.h.PostV1ProjectsByProjectIdAdminServiceAccounts(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -44160,8 +47131,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecret
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -44188,8 +47160,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecret
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -44221,7 +47194,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecret
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes
+	var response *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -44254,7 +47227,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecret
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq
 			Params   = PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams
-			Response = PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes
+			Response = *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -44273,8 +47246,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecret
 		response, err = s.h.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -44374,8 +47358,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSmsProvidersRequest(args [1
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -44402,8 +47387,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSmsProvidersRequest(args [1
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -44435,7 +47421,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSmsProvidersRequest(args [1
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminSmsProvidersRes
+	var response *SmsProvider
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -44464,7 +47450,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSmsProvidersRequest(args [1
 		type (
 			Request  = *SmsProvider
 			Params   = PostV1ProjectsByProjectIdAdminSmsProvidersParams
-			Response = PostV1ProjectsByProjectIdAdminSmsProvidersRes
+			Response = *SmsProvider
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -44483,8 +47469,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSmsProvidersRequest(args [1
 		response, err = s.h.PostV1ProjectsByProjectIdAdminSmsProviders(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -44584,8 +47581,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsRequest(args 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -44612,8 +47610,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -44645,7 +47644,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsRequest(args 
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminSsoConnectionsRes
+	var response *PostV1ProjectsByProjectIdAdminSsoConnectionsCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -44674,7 +47673,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsRequest(args 
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminSsoConnectionsReq
 			Params   = PostV1ProjectsByProjectIdAdminSsoConnectionsParams
-			Response = PostV1ProjectsByProjectIdAdminSsoConnectionsRes
+			Response = *PostV1ProjectsByProjectIdAdminSsoConnectionsCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -44693,8 +47692,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsRequest(args 
 		response, err = s.h.PostV1ProjectsByProjectIdAdminSsoConnections(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -44794,8 +47804,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCer
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -44822,8 +47833,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCer
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -44840,7 +47852,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCer
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes
+	var response *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -44869,7 +47881,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCer
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams
-			Response = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes
+			Response = *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -44888,8 +47900,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCer
 		response, err = s.h.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -44989,8 +48012,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimToken
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -45017,8 +48041,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimToken
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -45050,7 +48075,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimToken
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes
+	var response *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -45083,7 +48108,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimToken
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq
 			Params   = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams
-			Response = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes
+			Response = *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -45102,8 +48127,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimToken
 		response, err = s.h.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -45203,8 +48239,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestReque
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -45231,8 +48268,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestReque
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -45249,7 +48287,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestReque
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes
+	var response *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -45278,7 +48316,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestReque
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams
-			Response = PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes
+			Response = *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -45297,8 +48335,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestReque
 		response, err = s.h.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -45398,8 +48447,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminTokenProfilesRequest(args [
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -45426,8 +48476,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminTokenProfilesRequest(args [
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -45459,7 +48510,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminTokenProfilesRequest(args [
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminTokenProfilesRes
+	var response *PostV1ProjectsByProjectIdAdminTokenProfilesCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -45488,7 +48539,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminTokenProfilesRequest(args [
 		type (
 			Request  = *TokenProfile
 			Params   = PostV1ProjectsByProjectIdAdminTokenProfilesParams
-			Response = PostV1ProjectsByProjectIdAdminTokenProfilesRes
+			Response = *PostV1ProjectsByProjectIdAdminTokenProfilesCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -45507,8 +48558,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminTokenProfilesRequest(args [
 		response, err = s.h.PostV1ProjectsByProjectIdAdminTokenProfiles(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -45608,8 +48670,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -45636,8 +48699,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -45669,7 +48733,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewRes
+	var response *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -45698,7 +48762,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq
 			Params   = PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams
-			Response = PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewRes
+			Response = *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -45717,8 +48781,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq
 		response, err = s.h.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -45818,8 +48893,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersRequest(args [1]string
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -45846,8 +48922,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersRequest(args [1]string
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -45879,7 +48956,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersRequest(args [1]string
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminUsersRes
+	var response *PostV1ProjectsByProjectIdAdminUsersCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -45908,7 +48985,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersRequest(args [1]string
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminUsersReq
 			Params   = PostV1ProjectsByProjectIdAdminUsersParams
-			Response = PostV1ProjectsByProjectIdAdminUsersRes
+			Response = *PostV1ProjectsByProjectIdAdminUsersCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -45927,8 +49004,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersRequest(args [1]string
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsers(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -46028,8 +49116,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReque
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -46056,8 +49145,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReque
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -46089,7 +49179,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReque
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -46118,7 +49208,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReque
 		type (
 			Request  = OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq
 			Params   = PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams
-			Response = PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -46137,8 +49227,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReque
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -46238,8 +49339,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdBanRequest(arg
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -46266,8 +49368,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdBanRequest(arg
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -46299,7 +49402,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdBanRequest(arg
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminUsersByUserIdBanRes
+	var response *PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -46328,7 +49431,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdBanRequest(arg
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq
 			Params   = PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams
-			Response = PostV1ProjectsByProjectIdAdminUsersByUserIdBanRes
+			Response = *PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -46347,8 +49450,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdBanRequest(arg
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -46448,8 +49562,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdExportRequest(
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -46476,8 +49591,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdExportRequest(
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -46494,7 +49610,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdExportRequest(
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminUsersByUserIdExportRes
+	var response *PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -46523,7 +49639,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdExportRequest(
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams
-			Response = PostV1ProjectsByProjectIdAdminUsersByUserIdExportRes
+			Response = *PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -46542,8 +49658,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdExportRequest(
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -46643,8 +49770,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -46671,8 +49799,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -46704,7 +49833,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateRes
+	var response *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -46733,7 +49862,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq
 			Params   = PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams
-			Response = PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateRes
+			Response = *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -46752,8 +49881,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -46853,8 +49993,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReques
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -46881,8 +50022,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReques
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -46914,7 +50056,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReques
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetRes
+	var response *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -46943,7 +50085,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReques
 		type (
 			Request  = OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq
 			Params   = PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams
-			Response = PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetRes
+			Response = *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -46962,8 +50104,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReques
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -47063,8 +50216,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReques
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -47091,8 +50245,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReques
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -47124,7 +50279,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReques
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -47153,7 +50308,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReques
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq
 			Params   = PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams
-			Response = PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -47172,8 +50327,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReques
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -47273,8 +50439,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -47301,8 +50468,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -47334,7 +50502,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeRes
+	var response *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -47363,7 +50531,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke
 		type (
 			Request  = OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq
 			Params   = PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams
-			Response = PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeRes
+			Response = *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -47382,8 +50550,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -47483,8 +50662,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRequest(a
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -47511,8 +50691,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRequest(a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -47529,7 +50710,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRequest(a
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRes
+	var response *PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -47558,7 +50739,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRequest(a
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams
-			Response = PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRes
+			Response = *PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -47577,8 +50758,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRequest(a
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -47678,8 +50870,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailReq
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -47706,8 +50899,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailReq
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -47724,7 +50918,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailReq
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailRes
+	var response *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -47753,7 +50947,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailReq
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams
-			Response = PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailRes
+			Response = *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -47772,8 +50966,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailReq
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -47873,8 +51078,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneReq
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -47901,8 +51107,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneReq
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -47919,7 +51126,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneReq
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneRes
+	var response *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -47948,7 +51155,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneReq
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams
-			Response = PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneRes
+			Response = *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -47967,8 +51174,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneReq
 		response, err = s.h.PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -48068,8 +51286,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDelivery
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -48096,8 +51315,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDelivery
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -48114,7 +51334,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDelivery
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRes
+	var response PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -48143,7 +51363,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDelivery
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams
-			Response = PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRes
+			Response = PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -48162,8 +51382,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDelivery
 		response, err = s.h.PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -48263,8 +51494,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksRequest(args [1]str
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -48291,8 +51523,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksRequest(args [1]str
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -48324,7 +51557,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksRequest(args [1]str
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminWebhooksRes
+	var response *PostV1ProjectsByProjectIdAdminWebhooksCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -48353,7 +51586,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksRequest(args [1]str
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminWebhooksReq
 			Params   = PostV1ProjectsByProjectIdAdminWebhooksParams
-			Response = PostV1ProjectsByProjectIdAdminWebhooksRes
+			Response = *PostV1ProjectsByProjectIdAdminWebhooksCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -48372,8 +51605,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksRequest(args [1]str
 		response, err = s.h.PostV1ProjectsByProjectIdAdminWebhooks(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -48473,8 +51717,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretReq
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -48501,8 +51746,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretReq
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -48519,7 +51765,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretReq
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretRes
+	var response *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -48548,7 +51794,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretReq
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams
-			Response = PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretRes
+			Response = *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -48567,8 +51813,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretReq
 		response, err = s.h.PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -48668,8 +51925,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdTestRequest(arg
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -48696,8 +51954,9 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdTestRequest(arg
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -48729,7 +51988,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdTestRequest(arg
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminWebhooksByIdTestRes
+	var response PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -48758,7 +52017,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdTestRequest(arg
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq
 			Params   = PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams
-			Response = PostV1ProjectsByProjectIdAdminWebhooksByIdTestRes
+			Response = PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -48777,8 +52036,19 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdTestRequest(arg
 		response, err = s.h.PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -48878,8 +52148,9 @@ func (s *Server) handlePostV1ScimV2ByConnectionIdGroupsRequest(args [1]string, a
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -48906,8 +52177,9 @@ func (s *Server) handlePostV1ScimV2ByConnectionIdGroupsRequest(args [1]string, a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -48939,7 +52211,7 @@ func (s *Server) handlePostV1ScimV2ByConnectionIdGroupsRequest(args [1]string, a
 		}
 	}()
 
-	var response PostV1ScimV2ByConnectionIdGroupsRes
+	var response PostV1ScimV2ByConnectionIdGroupsCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -48960,7 +52232,7 @@ func (s *Server) handlePostV1ScimV2ByConnectionIdGroupsRequest(args [1]string, a
 		type (
 			Request  = PostV1ScimV2ByConnectionIdGroupsReq
 			Params   = PostV1ScimV2ByConnectionIdGroupsParams
-			Response = PostV1ScimV2ByConnectionIdGroupsRes
+			Response = PostV1ScimV2ByConnectionIdGroupsCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -48979,8 +52251,19 @@ func (s *Server) handlePostV1ScimV2ByConnectionIdGroupsRequest(args [1]string, a
 		response, err = s.h.PostV1ScimV2ByConnectionIdGroups(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -49080,8 +52363,9 @@ func (s *Server) handlePostV1ScimV2ByConnectionIdUsersRequest(args [1]string, ar
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -49108,8 +52392,9 @@ func (s *Server) handlePostV1ScimV2ByConnectionIdUsersRequest(args [1]string, ar
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -49141,7 +52426,7 @@ func (s *Server) handlePostV1ScimV2ByConnectionIdUsersRequest(args [1]string, ar
 		}
 	}()
 
-	var response PostV1ScimV2ByConnectionIdUsersRes
+	var response PostV1ScimV2ByConnectionIdUsersCreated
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -49162,7 +52447,7 @@ func (s *Server) handlePostV1ScimV2ByConnectionIdUsersRequest(args [1]string, ar
 		type (
 			Request  = *ScimUser
 			Params   = PostV1ScimV2ByConnectionIdUsersParams
-			Response = PostV1ScimV2ByConnectionIdUsersRes
+			Response = PostV1ScimV2ByConnectionIdUsersCreated
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -49181,8 +52466,19 @@ func (s *Server) handlePostV1ScimV2ByConnectionIdUsersRequest(args [1]string, ar
 		response, err = s.h.PostV1ScimV2ByConnectionIdUsers(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -49282,8 +52578,9 @@ func (s *Server) handlePostV1ServiceAccountsTokensRequest(args [0]string, argsEs
 					Security:         "ServiceToken",
 					Err:              err,
 				}
-				defer recordError("Security:ServiceToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ServiceToken", err)
+				}
 				return
 			}
 			if ok {
@@ -49310,8 +52607,9 @@ func (s *Server) handlePostV1ServiceAccountsTokensRequest(args [0]string, argsEs
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -49333,7 +52631,7 @@ func (s *Server) handlePostV1ServiceAccountsTokensRequest(args [0]string, argsEs
 		}
 	}()
 
-	var response PostV1ServiceAccountsTokensRes
+	var response *PostV1ServiceAccountsTokensOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -49349,7 +52647,7 @@ func (s *Server) handlePostV1ServiceAccountsTokensRequest(args [0]string, argsEs
 		type (
 			Request  = *PostV1ServiceAccountsTokensReq
 			Params   = struct{}
-			Response = PostV1ServiceAccountsTokensRes
+			Response = *PostV1ServiceAccountsTokensOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -49368,8 +52666,19 @@ func (s *Server) handlePostV1ServiceAccountsTokensRequest(args [0]string, argsEs
 		response, err = s.h.PostV1ServiceAccountsTokens(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -49469,8 +52778,9 @@ func (s *Server) handlePostV1SessionsBySessionIdTrustRequest(args [1]string, arg
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -49497,8 +52807,9 @@ func (s *Server) handlePostV1SessionsBySessionIdTrustRequest(args [1]string, arg
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -49530,7 +52841,7 @@ func (s *Server) handlePostV1SessionsBySessionIdTrustRequest(args [1]string, arg
 		}
 	}()
 
-	var response PostV1SessionsBySessionIdTrustRes
+	var response *PostV1SessionsBySessionIdTrustOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -49551,7 +52862,7 @@ func (s *Server) handlePostV1SessionsBySessionIdTrustRequest(args [1]string, arg
 		type (
 			Request  = *PostV1SessionsBySessionIdTrustReq
 			Params   = PostV1SessionsBySessionIdTrustParams
-			Response = PostV1SessionsBySessionIdTrustRes
+			Response = *PostV1SessionsBySessionIdTrustOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -49570,8 +52881,19 @@ func (s *Server) handlePostV1SessionsBySessionIdTrustRequest(args [1]string, arg
 		response, err = s.h.PostV1SessionsBySessionIdTrust(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -49728,8 +53050,19 @@ func (s *Server) handlePostV1SsoExchangeRequest(args [0]string, argsEscaped bool
 		response, err = s.h.PostV1SsoExchange(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -49886,8 +53219,19 @@ func (s *Server) handlePostV1SsoSamlByConnectionIdAcsRequest(args [1]string, arg
 		response, err = s.h.PostV1SsoSamlByConnectionIdAcs(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -50029,8 +53373,19 @@ func (s *Server) handlePostV1SsoSamlByConnectionIdSloRequest(args [1]string, arg
 		response, err = s.h.PostV1SsoSamlByConnectionIdSlo(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -50130,8 +53485,9 @@ func (s *Server) handlePostV1TestClockRequest(args [0]string, argsEscaped bool, 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -50158,8 +53514,9 @@ func (s *Server) handlePostV1TestClockRequest(args [0]string, argsEscaped bool, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -50191,7 +53548,7 @@ func (s *Server) handlePostV1TestClockRequest(args [0]string, argsEscaped bool, 
 		}
 	}()
 
-	var response PostV1TestClockRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -50212,7 +53569,7 @@ func (s *Server) handlePostV1TestClockRequest(args [0]string, argsEscaped bool, 
 		type (
 			Request  = *PostV1TestClockReq
 			Params   = PostV1TestClockParams
-			Response = PostV1TestClockRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -50231,8 +53588,19 @@ func (s *Server) handlePostV1TestClockRequest(args [0]string, argsEscaped bool, 
 		response, err = s.h.PostV1TestClock(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -50332,8 +53700,9 @@ func (s *Server) handlePostV1TestResetRequest(args [0]string, argsEscaped bool, 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -50360,8 +53729,9 @@ func (s *Server) handlePostV1TestResetRequest(args [0]string, argsEscaped bool, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -50378,7 +53748,7 @@ func (s *Server) handlePostV1TestResetRequest(args [0]string, argsEscaped bool, 
 
 	var rawBody []byte
 
-	var response PostV1TestResetRes
+	var response PostV1TestResetOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -50399,7 +53769,7 @@ func (s *Server) handlePostV1TestResetRequest(args [0]string, argsEscaped bool, 
 		type (
 			Request  = struct{}
 			Params   = PostV1TestResetParams
-			Response = PostV1TestResetRes
+			Response = PostV1TestResetOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -50418,8 +53788,19 @@ func (s *Server) handlePostV1TestResetRequest(args [0]string, argsEscaped bool, 
 		response, err = s.h.PostV1TestReset(ctx, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -50519,8 +53900,9 @@ func (s *Server) handlePostV1TestSeedRequest(args [0]string, argsEscaped bool, w
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -50547,8 +53929,9 @@ func (s *Server) handlePostV1TestSeedRequest(args [0]string, argsEscaped bool, w
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -50580,7 +53963,7 @@ func (s *Server) handlePostV1TestSeedRequest(args [0]string, argsEscaped bool, w
 		}
 	}()
 
-	var response PostV1TestSeedRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -50601,7 +53984,7 @@ func (s *Server) handlePostV1TestSeedRequest(args [0]string, argsEscaped bool, w
 		type (
 			Request  = PostV1TestSeedReq
 			Params   = PostV1TestSeedParams
-			Response = PostV1TestSeedRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -50620,8 +54003,19 @@ func (s *Server) handlePostV1TestSeedRequest(args [0]string, argsEscaped bool, w
 		response, err = s.h.PostV1TestSeed(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -50721,8 +54115,9 @@ func (s *Server) handlePostV1TokensIntrospectRequest(args [0]string, argsEscaped
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -50749,8 +54144,9 @@ func (s *Server) handlePostV1TokensIntrospectRequest(args [0]string, argsEscaped
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -50772,7 +54168,7 @@ func (s *Server) handlePostV1TokensIntrospectRequest(args [0]string, argsEscaped
 		}
 	}()
 
-	var response PostV1TokensIntrospectRes
+	var response *PostV1TokensIntrospectOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -50788,7 +54184,7 @@ func (s *Server) handlePostV1TokensIntrospectRequest(args [0]string, argsEscaped
 		type (
 			Request  = *PostV1TokensIntrospectReq
 			Params   = struct{}
-			Response = PostV1TokensIntrospectRes
+			Response = *PostV1TokensIntrospectOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -50807,8 +54203,19 @@ func (s *Server) handlePostV1TokensIntrospectRequest(args [0]string, argsEscaped
 		response, err = s.h.PostV1TokensIntrospect(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -50908,8 +54315,9 @@ func (s *Server) handlePostV1TokensRevokeRequest(args [0]string, argsEscaped boo
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -50936,8 +54344,9 @@ func (s *Server) handlePostV1TokensRevokeRequest(args [0]string, argsEscaped boo
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -50959,7 +54368,7 @@ func (s *Server) handlePostV1TokensRevokeRequest(args [0]string, argsEscaped boo
 		}
 	}()
 
-	var response PostV1TokensRevokeRes
+	var response *Ok
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -50975,7 +54384,7 @@ func (s *Server) handlePostV1TokensRevokeRequest(args [0]string, argsEscaped boo
 		type (
 			Request  = *PostV1TokensRevokeReq
 			Params   = struct{}
-			Response = PostV1TokensRevokeRes
+			Response = *Ok
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -50994,8 +54403,19 @@ func (s *Server) handlePostV1TokensRevokeRequest(args [0]string, argsEscaped boo
 		response, err = s.h.PostV1TokensRevoke(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -51095,8 +54515,9 @@ func (s *Server) handlePostV1TokensVerifyRequest(args [0]string, argsEscaped boo
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -51123,8 +54544,9 @@ func (s *Server) handlePostV1TokensVerifyRequest(args [0]string, argsEscaped boo
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -51146,7 +54568,7 @@ func (s *Server) handlePostV1TokensVerifyRequest(args [0]string, argsEscaped boo
 		}
 	}()
 
-	var response PostV1TokensVerifyRes
+	var response *PostV1TokensVerifyOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -51162,7 +54584,7 @@ func (s *Server) handlePostV1TokensVerifyRequest(args [0]string, argsEscaped boo
 		type (
 			Request  = *PostV1TokensVerifyReq
 			Params   = struct{}
-			Response = PostV1TokensVerifyRes
+			Response = *PostV1TokensVerifyOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -51181,8 +54603,19 @@ func (s *Server) handlePostV1TokensVerifyRequest(args [0]string, argsEscaped boo
 		response, err = s.h.PostV1TokensVerify(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -51282,8 +54715,9 @@ func (s *Server) handlePostV1UsersMeConsentsRequest(args [0]string, argsEscaped 
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -51310,8 +54744,9 @@ func (s *Server) handlePostV1UsersMeConsentsRequest(args [0]string, argsEscaped 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -51333,7 +54768,7 @@ func (s *Server) handlePostV1UsersMeConsentsRequest(args [0]string, argsEscaped 
 		}
 	}()
 
-	var response PostV1UsersMeConsentsRes
+	var response *PostV1UsersMeConsentsOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -51349,7 +54784,7 @@ func (s *Server) handlePostV1UsersMeConsentsRequest(args [0]string, argsEscaped 
 		type (
 			Request  = *PostV1UsersMeConsentsReq
 			Params   = struct{}
-			Response = PostV1UsersMeConsentsRes
+			Response = *PostV1UsersMeConsentsOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -51368,8 +54803,19 @@ func (s *Server) handlePostV1UsersMeConsentsRequest(args [0]string, argsEscaped 
 		response, err = s.h.PostV1UsersMeConsents(ctx, request)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -51469,8 +54915,9 @@ func (s *Server) handlePostV1UsersMeExportRequest(args [0]string, argsEscaped bo
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
 				return
 			}
 			if ok {
@@ -51497,15 +54944,16 @@ func (s *Server) handlePostV1UsersMeExportRequest(args [0]string, argsEscaped bo
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
 
 	var rawBody []byte
 
-	var response PostV1UsersMeExportRes
+	var response *PostV1UsersMeExportOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -51521,7 +54969,7 @@ func (s *Server) handlePostV1UsersMeExportRequest(args [0]string, argsEscaped bo
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = PostV1UsersMeExportRes
+			Response = *PostV1UsersMeExportOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -51540,8 +54988,19 @@ func (s *Server) handlePostV1UsersMeExportRequest(args [0]string, argsEscaped bo
 		response, err = s.h.PostV1UsersMeExport(ctx)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -51641,8 +55100,9 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminConsentsRequest(args [1]stri
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -51669,8 +55129,9 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminConsentsRequest(args [1]stri
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -51702,7 +55163,7 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminConsentsRequest(args [1]stri
 		}
 	}()
 
-	var response PutV1ProjectsByProjectIdAdminConsentsRes
+	var response *ConsentConfig
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -51727,7 +55188,7 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminConsentsRequest(args [1]stri
 		type (
 			Request  = *ConsentConfig
 			Params   = PutV1ProjectsByProjectIdAdminConsentsParams
-			Response = PutV1ProjectsByProjectIdAdminConsentsRes
+			Response = *ConsentConfig
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -51746,8 +55207,19 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminConsentsRequest(args [1]stri
 		response, err = s.h.PutV1ProjectsByProjectIdAdminConsents(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -51847,8 +55319,9 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminFeaturesRequest(args [1]stri
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -51875,8 +55348,9 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminFeaturesRequest(args [1]stri
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -51908,7 +55382,7 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminFeaturesRequest(args [1]stri
 		}
 	}()
 
-	var response PutV1ProjectsByProjectIdAdminFeaturesRes
+	var response PutV1ProjectsByProjectIdAdminFeaturesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -51933,7 +55407,7 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminFeaturesRequest(args [1]stri
 		type (
 			Request  = PutV1ProjectsByProjectIdAdminFeaturesReq
 			Params   = PutV1ProjectsByProjectIdAdminFeaturesParams
-			Response = PutV1ProjectsByProjectIdAdminFeaturesRes
+			Response = PutV1ProjectsByProjectIdAdminFeaturesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -51952,8 +55426,19 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminFeaturesRequest(args [1]stri
 		response, err = s.h.PutV1ProjectsByProjectIdAdminFeatures(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -52053,8 +55538,9 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminI18nByLocaleRequest(args [2]
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -52081,8 +55567,9 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminI18nByLocaleRequest(args [2]
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -52114,7 +55601,7 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminI18nByLocaleRequest(args [2]
 		}
 	}()
 
-	var response PutV1ProjectsByProjectIdAdminI18nByLocaleRes
+	var response PutV1ProjectsByProjectIdAdminI18nByLocaleOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -52143,7 +55630,7 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminI18nByLocaleRequest(args [2]
 		type (
 			Request  = PutV1ProjectsByProjectIdAdminI18nByLocaleReq
 			Params   = PutV1ProjectsByProjectIdAdminI18nByLocaleParams
-			Response = PutV1ProjectsByProjectIdAdminI18nByLocaleRes
+			Response = PutV1ProjectsByProjectIdAdminI18nByLocaleOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -52162,8 +55649,19 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminI18nByLocaleRequest(args [2]
 		response, err = s.h.PutV1ProjectsByProjectIdAdminI18nByLocale(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -52263,8 +55761,9 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminRetentionPolicyRequest(args 
 					Security:         "AdminToken",
 					Err:              err,
 				}
-				defer recordError("Security:AdminToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:AdminToken", err)
+				}
 				return
 			}
 			if ok {
@@ -52291,8 +55790,9 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminRetentionPolicyRequest(args 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -52324,7 +55824,7 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminRetentionPolicyRequest(args 
 		}
 	}()
 
-	var response PutV1ProjectsByProjectIdAdminRetentionPolicyRes
+	var response *RetentionPolicy
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -52349,7 +55849,7 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminRetentionPolicyRequest(args 
 		type (
 			Request  = *RetentionPolicy
 			Params   = PutV1ProjectsByProjectIdAdminRetentionPolicyParams
-			Response = PutV1ProjectsByProjectIdAdminRetentionPolicyRes
+			Response = *RetentionPolicy
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -52368,8 +55868,19 @@ func (s *Server) handlePutV1ProjectsByProjectIdAdminRetentionPolicyRequest(args 
 		response, err = s.h.PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -52469,8 +55980,9 @@ func (s *Server) handlePutV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2]s
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -52497,8 +56009,9 @@ func (s *Server) handlePutV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2]s
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -52530,7 +56043,7 @@ func (s *Server) handlePutV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2]s
 		}
 	}()
 
-	var response PutV1ScimV2ByConnectionIdGroupsByGroupIdRes
+	var response PutV1ScimV2ByConnectionIdGroupsByGroupIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -52555,7 +56068,7 @@ func (s *Server) handlePutV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2]s
 		type (
 			Request  = PutV1ScimV2ByConnectionIdGroupsByGroupIdReq
 			Params   = PutV1ScimV2ByConnectionIdGroupsByGroupIdParams
-			Response = PutV1ScimV2ByConnectionIdGroupsByGroupIdRes
+			Response = PutV1ScimV2ByConnectionIdGroupsByGroupIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -52574,8 +56087,19 @@ func (s *Server) handlePutV1ScimV2ByConnectionIdGroupsByGroupIdRequest(args [2]s
 		response, err = s.h.PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 
@@ -52675,8 +56199,9 @@ func (s *Server) handlePutV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args [2
 					Security:         "ScimToken",
 					Err:              err,
 				}
-				defer recordError("Security:ScimToken", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:ScimToken", err)
+				}
 				return
 			}
 			if ok {
@@ -52703,8 +56228,9 @@ func (s *Server) handlePutV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args [2
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
 			return
 		}
 	}
@@ -52736,7 +56262,7 @@ func (s *Server) handlePutV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args [2
 		}
 	}()
 
-	var response PutV1ScimV2ByConnectionIdUsersByScimUserIdRes
+	var response PutV1ScimV2ByConnectionIdUsersByScimUserIdOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -52761,7 +56287,7 @@ func (s *Server) handlePutV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args [2
 		type (
 			Request  = *ScimUser
 			Params   = PutV1ScimV2ByConnectionIdUsersByScimUserIdParams
-			Response = PutV1ScimV2ByConnectionIdUsersByScimUserIdRes
+			Response = PutV1ScimV2ByConnectionIdUsersByScimUserIdOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -52780,8 +56306,19 @@ func (s *Server) handlePutV1ScimV2ByConnectionIdUsersByScimUserIdRequest(args [2
 		response, err = s.h.PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx, request, params)
 	}
 	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if errRes, ok := errors.Into[*DefaultStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
 		return
 	}
 

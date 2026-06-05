@@ -30,3 +30,8 @@ generator:
   # Generate everything: union responses use oneOf+discriminator and the PAR
   # form body is typed, so no operations are skipped.
   ignore_not_implemented: []
+
+  # Every operation shares one `default` error response, so ogen generates a
+  # NewError(ctx, err) ErrorStatusCode method: handlers return plain Go errors
+  # and NewError renders them (see pkg/api error interpretation).
+  convenient_errors: "on"

@@ -110,115 +110,115 @@ type AccountInvoker interface {
 	// Unlink an identity (step-up).
 	//
 	// DELETE /v1/auth/identities/{identity_id}
-	DeleteV1AuthIdentitiesByIdentityId(ctx context.Context, params DeleteV1AuthIdentitiesByIdentityIdParams, options ...RequestOption) (DeleteV1AuthIdentitiesByIdentityIdRes, error)
+	DeleteV1AuthIdentitiesByIdentityId(ctx context.Context, params DeleteV1AuthIdentitiesByIdentityIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1Sessions invokes deleteV1Sessions operation.
 	//
 	// Revoke multiple own sessions.
 	//
 	// DELETE /v1/sessions
-	DeleteV1Sessions(ctx context.Context, request OptDeleteV1SessionsReq, options ...RequestOption) (DeleteV1SessionsRes, error)
+	DeleteV1Sessions(ctx context.Context, request OptDeleteV1SessionsReq, options ...RequestOption) (*DeleteV1SessionsOK, error)
 	// DeleteV1SessionsBySessionId invokes deleteV1SessionsBySessionId operation.
 	//
 	// Revoke a session.
 	//
 	// DELETE /v1/sessions/{session_id}
-	DeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams, options ...RequestOption) (DeleteV1SessionsBySessionIdRes, error)
+	DeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1UsersMe invokes deleteV1UsersMe operation.
 	//
 	// Delete own account (step-up).
 	//
 	// DELETE /v1/users/me
-	DeleteV1UsersMe(ctx context.Context, request OptDeleteV1UsersMeReq, options ...RequestOption) (DeleteV1UsersMeRes, error)
+	DeleteV1UsersMe(ctx context.Context, request OptDeleteV1UsersMeReq, options ...RequestOption) (*Ok, error)
 	// GetV1AccountCapabilities invokes getV1AccountCapabilities operation.
 	//
 	// What this user may self-manage.
 	//
 	// GET /v1/account/capabilities
-	GetV1AccountCapabilities(ctx context.Context, options ...RequestOption) (GetV1AccountCapabilitiesRes, error)
+	GetV1AccountCapabilities(ctx context.Context, options ...RequestOption) (*GetV1AccountCapabilitiesOK, error)
 	// GetV1AuthIdentities invokes getV1AuthIdentities operation.
 	//
 	// List linked identities.
 	//
 	// GET /v1/auth/identities
-	GetV1AuthIdentities(ctx context.Context, options ...RequestOption) (GetV1AuthIdentitiesRes, error)
+	GetV1AuthIdentities(ctx context.Context, options ...RequestOption) (*GetV1AuthIdentitiesOK, error)
 	// GetV1Sessions invokes getV1Sessions operation.
 	//
 	// List own sessions.
 	//
 	// GET /v1/sessions
-	GetV1Sessions(ctx context.Context, options ...RequestOption) (GetV1SessionsRes, error)
+	GetV1Sessions(ctx context.Context, options ...RequestOption) (*GetV1SessionsOK, error)
 	// GetV1SessionsCurrent invokes getV1SessionsCurrent operation.
 	//
 	// Current session details.
 	//
 	// GET /v1/sessions/current
-	GetV1SessionsCurrent(ctx context.Context, options ...RequestOption) (GetV1SessionsCurrentRes, error)
+	GetV1SessionsCurrent(ctx context.Context, options ...RequestOption) (*GetV1SessionsCurrentOK, error)
 	// GetV1UsersMe invokes getV1UsersMe operation.
 	//
 	// Get the current user.
 	//
 	// GET /v1/users/me
-	GetV1UsersMe(ctx context.Context, options ...RequestOption) (GetV1UsersMeRes, error)
+	GetV1UsersMe(ctx context.Context, options ...RequestOption) (*GetV1UsersMeOK, error)
 	// GetV1UsersMeActivity invokes getV1UsersMeActivity operation.
 	//
 	// Own security activity.
 	//
 	// GET /v1/users/me/activity
-	GetV1UsersMeActivity(ctx context.Context, params GetV1UsersMeActivityParams, options ...RequestOption) (GetV1UsersMeActivityRes, error)
+	GetV1UsersMeActivity(ctx context.Context, params GetV1UsersMeActivityParams, options ...RequestOption) (*GetV1UsersMeActivityOK, error)
 	// GetV1UsersMeConsents invokes getV1UsersMeConsents operation.
 	//
 	// Read own consents.
 	//
 	// GET /v1/users/me/consents
-	GetV1UsersMeConsents(ctx context.Context, options ...RequestOption) (GetV1UsersMeConsentsRes, error)
+	GetV1UsersMeConsents(ctx context.Context, options ...RequestOption) (*GetV1UsersMeConsentsOK, error)
 	// GetV1UsersMeExportByJobId invokes getV1UsersMeExportByJobId operation.
 	//
 	// Export status/download.
 	//
 	// GET /v1/users/me/export/{job_id}
-	GetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams, options ...RequestOption) (GetV1UsersMeExportByJobIdRes, error)
+	GetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams, options ...RequestOption) (*GetV1UsersMeExportByJobIdOK, error)
 	// PatchV1SessionsBySessionId invokes patchV1SessionsBySessionId operation.
 	//
 	// Rename a session/device.
 	//
 	// PATCH /v1/sessions/{session_id}
-	PatchV1SessionsBySessionId(ctx context.Context, request *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams, options ...RequestOption) (PatchV1SessionsBySessionIdRes, error)
+	PatchV1SessionsBySessionId(ctx context.Context, request *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams, options ...RequestOption) (*PatchV1SessionsBySessionIdOK, error)
 	// PatchV1UsersMe invokes patchV1UsersMe operation.
 	//
 	// Update the core profile.
 	//
 	// PATCH /v1/users/me
-	PatchV1UsersMe(ctx context.Context, request *PatchV1UsersMeReq, options ...RequestOption) (PatchV1UsersMeRes, error)
+	PatchV1UsersMe(ctx context.Context, request *PatchV1UsersMeReq, options ...RequestOption) (*PatchV1UsersMeOK, error)
 	// PostV1AuthIdentitiesMergeConfirm invokes postV1AuthIdentitiesMergeConfirm operation.
 	//
 	// Confirm a merge.
 	//
 	// POST /v1/auth/identities/merge/confirm
-	PostV1AuthIdentitiesMergeConfirm(ctx context.Context, request *PostV1AuthIdentitiesMergeConfirmReq, options ...RequestOption) (PostV1AuthIdentitiesMergeConfirmRes, error)
+	PostV1AuthIdentitiesMergeConfirm(ctx context.Context, request *PostV1AuthIdentitiesMergeConfirmReq, options ...RequestOption) (*PostV1AuthIdentitiesMergeConfirmOK, error)
 	// PostV1AuthIdentitiesMergeStart invokes postV1AuthIdentitiesMergeStart operation.
 	//
 	// Start an account merge.
 	//
 	// POST /v1/auth/identities/merge/start
-	PostV1AuthIdentitiesMergeStart(ctx context.Context, request *PostV1AuthIdentitiesMergeStartReq, options ...RequestOption) (PostV1AuthIdentitiesMergeStartRes, error)
+	PostV1AuthIdentitiesMergeStart(ctx context.Context, request *PostV1AuthIdentitiesMergeStartReq, options ...RequestOption) (*PostV1AuthIdentitiesMergeStartOK, error)
 	// PostV1SessionsBySessionIdTrust invokes postV1SessionsBySessionIdTrust operation.
 	//
 	// Mark a device trusted (MFA).
 	//
 	// POST /v1/sessions/{session_id}/trust
-	PostV1SessionsBySessionIdTrust(ctx context.Context, request *PostV1SessionsBySessionIdTrustReq, params PostV1SessionsBySessionIdTrustParams, options ...RequestOption) (PostV1SessionsBySessionIdTrustRes, error)
+	PostV1SessionsBySessionIdTrust(ctx context.Context, request *PostV1SessionsBySessionIdTrustReq, params PostV1SessionsBySessionIdTrustParams, options ...RequestOption) (*PostV1SessionsBySessionIdTrustOK, error)
 	// PostV1UsersMeConsents invokes postV1UsersMeConsents operation.
 	//
 	// Accept consents.
 	//
 	// POST /v1/users/me/consents
-	PostV1UsersMeConsents(ctx context.Context, request *PostV1UsersMeConsentsReq, options ...RequestOption) (PostV1UsersMeConsentsRes, error)
+	PostV1UsersMeConsents(ctx context.Context, request *PostV1UsersMeConsentsReq, options ...RequestOption) (*PostV1UsersMeConsentsOK, error)
 	// PostV1UsersMeExport invokes postV1UsersMeExport operation.
 	//
 	// Start a GDPR export.
 	//
 	// POST /v1/users/me/export
-	PostV1UsersMeExport(ctx context.Context, options ...RequestOption) (PostV1UsersMeExportRes, error)
+	PostV1UsersMeExport(ctx context.Context, options ...RequestOption) (*PostV1UsersMeExportOK, error)
 }
 
 // AdminInvoker invokes operations described by OpenAPI v3 specification.
@@ -230,661 +230,661 @@ type AdminInvoker interface {
 	// Delete an app client.
 	//
 	// DELETE /v1/projects/{project_id}/admin/apps/{app_id}
-	DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminAppsByAppIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId invokes deleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId operation.
 	//
 	// Revoke a client secret.
 	//
 	// DELETE /v1/projects/{project_id}/admin/apps/{app_id}/secrets/{secret_id}
-	DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminEmailProvidersById invokes deleteV1ProjectsByProjectIdAdminEmailProvidersById operation.
 	//
 	// Delete email provider.
 	//
 	// DELETE /v1/projects/{project_id}/admin/email-providers/{id}
-	DeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminHooksById invokes deleteV1ProjectsByProjectIdAdminHooksById operation.
 	//
 	// Delete a hook.
 	//
 	// DELETE /v1/projects/{project_id}/admin/hooks/{id}
-	DeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminHooksByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminHooksByIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminHooksByIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminJwksByKeyId invokes deleteV1ProjectsByProjectIdAdminJwksByKeyId operation.
 	//
 	// Retire a signing key.
 	//
 	// DELETE /v1/projects/{project_id}/admin/jwks/{key_id}
-	DeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminJwksByKeyIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminOauthProvidersById invokes deleteV1ProjectsByProjectIdAdminOauthProvidersById operation.
 	//
 	// Delete OAuth provider.
 	//
 	// DELETE /v1/projects/{project_id}/admin/oauth-providers/{id}
-	DeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId invokes deleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId operation.
 	//
 	// Remove a block.
 	//
 	// DELETE /v1/projects/{project_id}/admin/rate-limit/blocks/{block_id}
-	DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId invokes deleteV1ProjectsByProjectIdAdminRiskRulesByRuleId operation.
 	//
 	// Delete a risk rule.
 	//
 	// DELETE /v1/projects/{project_id}/admin/risk/rules/{rule_id}
-	DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminSmsProvidersById invokes deleteV1ProjectsByProjectIdAdminSmsProvidersById operation.
 	//
 	// Delete SMS provider.
 	//
 	// DELETE /v1/projects/{project_id}/admin/sms-providers/{id}
-	DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminTokenProfilesById invokes deleteV1ProjectsByProjectIdAdminTokenProfilesById operation.
 	//
 	// Delete a token profile.
 	//
 	// DELETE /v1/projects/{project_id}/admin/token-profiles/{id}
-	DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminUsersByUserId invokes deleteV1ProjectsByProjectIdAdminUsersByUserId operation.
 	//
 	// Delete a user.
 	//
 	// DELETE /v1/projects/{project_id}/admin/users/{user_id}
-	DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminUsersByUserIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId invokes deleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId operation.
 	//
 	// Revoke a user's OAuth grant.
 	//
 	// DELETE /v1/projects/{project_id}/admin/users/{user_id}/grants/{grant_id}
-	DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId invokes deleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId operation.
 	//
 	// Remove a user identity.
 	//
 	// DELETE /v1/projects/{project_id}/admin/users/{user_id}/identities/{identity_id}
-	DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId invokes deleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId operation.
 	//
 	// Revoke a specific user session.
 	//
 	// DELETE /v1/projects/{project_id}/admin/users/{user_id}/sessions/{session_id}
-	DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminWebhooksById invokes deleteV1ProjectsByProjectIdAdminWebhooksById operation.
 	//
 	// Delete a webhook.
 	//
 	// DELETE /v1/projects/{project_id}/admin/webhooks/{id}
-	DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminWebhooksByIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (*Ok, error)
 	// GetV1ProjectsByProjectIdAdminAccessRequests invokes getV1ProjectsByProjectIdAdminAccessRequests operation.
 	//
 	// List access requests.
 	//
 	// GET /v1/projects/{project_id}/admin/access-requests
-	GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params GetV1ProjectsByProjectIdAdminAccessRequestsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAccessRequestsRes, error)
+	GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params GetV1ProjectsByProjectIdAdminAccessRequestsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAccessRequestsOK, error)
 	// GetV1ProjectsByProjectIdAdminApps invokes getV1ProjectsByProjectIdAdminApps operation.
 	//
 	// List app clients.
 	//
 	// GET /v1/projects/{project_id}/admin/apps
-	GetV1ProjectsByProjectIdAdminApps(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAppsRes, error)
+	GetV1ProjectsByProjectIdAdminApps(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAppsOK, error)
 	// GetV1ProjectsByProjectIdAdminAppsByAppId invokes getV1ProjectsByProjectIdAdminAppsByAppId operation.
 	//
 	// Get an app client.
 	//
 	// GET /v1/projects/{project_id}/admin/apps/{app_id}
-	GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAppsByAppIdRes, error)
+	GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAppsByAppIdOK, error)
 	// GetV1ProjectsByProjectIdAdminAuditLogs invokes getV1ProjectsByProjectIdAdminAuditLogs operation.
 	//
 	// List audit logs.
 	//
 	// GET /v1/projects/{project_id}/admin/audit-logs
-	GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAuditLogsRes, error)
+	GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAuditLogsOK, error)
 	// GetV1ProjectsByProjectIdAdminAuditLogsByAuditId invokes getV1ProjectsByProjectIdAdminAuditLogsByAuditId operation.
 	//
 	// Get an audit entry.
 	//
 	// GET /v1/projects/{project_id}/admin/audit-logs/{audit_id}
-	GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRes, error)
+	GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK, error)
 	// GetV1ProjectsByProjectIdAdminConfigAuth invokes getV1ProjectsByProjectIdAdminConfigAuth operation.
 	//
 	// Get auth config.
 	//
 	// GET /v1/projects/{project_id}/admin/config/auth
-	GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigAuthParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConfigAuthRes, error)
+	GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigAuthParams, options ...RequestOption) (*AuthConfig, error)
 	// GetV1ProjectsByProjectIdAdminConfigMfaPolicy invokes getV1ProjectsByProjectIdAdminConfigMfaPolicy operation.
 	//
 	// Get MFA policy.
 	//
 	// GET /v1/projects/{project_id}/admin/config/mfa-policy
-	GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConfigMfaPolicyRes, error)
+	GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams, options ...RequestOption) (*MfaPolicy, error)
 	// GetV1ProjectsByProjectIdAdminConfigPasswordPolicy invokes getV1ProjectsByProjectIdAdminConfigPasswordPolicy operation.
 	//
 	// Get password policy.
 	//
 	// GET /v1/projects/{project_id}/admin/config/password-policy
-	GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConfigPasswordPolicyRes, error)
+	GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, options ...RequestOption) (*PasswordPolicy, error)
 	// GetV1ProjectsByProjectIdAdminConfigRateLimits invokes getV1ProjectsByProjectIdAdminConfigRateLimits operation.
 	//
 	// Get rate limits.
 	//
 	// GET /v1/projects/{project_id}/admin/config/rate-limits
-	GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigRateLimitsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConfigRateLimitsRes, error)
+	GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigRateLimitsParams, options ...RequestOption) (*RateLimits, error)
 	// GetV1ProjectsByProjectIdAdminConfigSessionPolicy invokes getV1ProjectsByProjectIdAdminConfigSessionPolicy operation.
 	//
 	// Get session policy.
 	//
 	// GET /v1/projects/{project_id}/admin/config/session-policy
-	GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConfigSessionPolicyRes, error)
+	GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams, options ...RequestOption) (*SessionPolicy, error)
 	// GetV1ProjectsByProjectIdAdminConsents invokes getV1ProjectsByProjectIdAdminConsents operation.
 	//
 	// Get required consents.
 	//
 	// GET /v1/projects/{project_id}/admin/consents
-	GetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params GetV1ProjectsByProjectIdAdminConsentsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConsentsRes, error)
+	GetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params GetV1ProjectsByProjectIdAdminConsentsParams, options ...RequestOption) (*ConsentConfig, error)
 	// GetV1ProjectsByProjectIdAdminEmailProviders invokes getV1ProjectsByProjectIdAdminEmailProviders operation.
 	//
 	// List email providers.
 	//
 	// GET /v1/projects/{project_id}/admin/email-providers
-	GetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailProvidersParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminEmailProvidersRes, error)
+	GetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailProvidersParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminEmailProvidersOK, error)
 	// GetV1ProjectsByProjectIdAdminEmailTemplates invokes getV1ProjectsByProjectIdAdminEmailTemplates operation.
 	//
 	// List email templates.
 	//
 	// GET /v1/projects/{project_id}/admin/email-templates
-	GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailTemplatesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminEmailTemplatesRes, error)
+	GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailTemplatesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminEmailTemplatesOK, error)
 	// GetV1ProjectsByProjectIdAdminEvents invokes getV1ProjectsByProjectIdAdminEvents operation.
 	//
 	// List events.
 	//
 	// GET /v1/projects/{project_id}/admin/events
-	GetV1ProjectsByProjectIdAdminEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminEventsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminEventsRes, error)
+	GetV1ProjectsByProjectIdAdminEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminEventsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminEventsOK, error)
 	// GetV1ProjectsByProjectIdAdminExportsByJobId invokes getV1ProjectsByProjectIdAdminExportsByJobId operation.
 	//
 	// Download/check an export.
 	//
 	// GET /v1/projects/{project_id}/admin/exports/{job_id}
-	GetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminExportsByJobIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminExportsByJobIdRes, error)
+	GetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminExportsByJobIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminExportsByJobIdOK, error)
 	// GetV1ProjectsByProjectIdAdminFeatures invokes getV1ProjectsByProjectIdAdminFeatures operation.
 	//
 	// Get project feature toggles.
 	//
 	// GET /v1/projects/{project_id}/admin/features
-	GetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, params GetV1ProjectsByProjectIdAdminFeaturesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminFeaturesRes, error)
+	GetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, params GetV1ProjectsByProjectIdAdminFeaturesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminFeaturesOK, error)
 	// GetV1ProjectsByProjectIdAdminHooks invokes getV1ProjectsByProjectIdAdminHooks operation.
 	//
 	// List hooks.
 	//
 	// GET /v1/projects/{project_id}/admin/hooks
-	GetV1ProjectsByProjectIdAdminHooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminHooksParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminHooksRes, error)
+	GetV1ProjectsByProjectIdAdminHooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminHooksParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminHooksOK, error)
 	// GetV1ProjectsByProjectIdAdminI18nByLocale invokes getV1ProjectsByProjectIdAdminI18nByLocale operation.
 	//
 	// Get i18n catalogue.
 	//
 	// GET /v1/projects/{project_id}/admin/i18n/{locale}
-	GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params GetV1ProjectsByProjectIdAdminI18nByLocaleParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminI18nByLocaleRes, error)
+	GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params GetV1ProjectsByProjectIdAdminI18nByLocaleParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminI18nByLocaleOK, error)
 	// GetV1ProjectsByProjectIdAdminJobs invokes getV1ProjectsByProjectIdAdminJobs operation.
 	//
 	// List background jobs.
 	//
 	// GET /v1/projects/{project_id}/admin/jobs
-	GetV1ProjectsByProjectIdAdminJobs(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminJobsRes, error)
+	GetV1ProjectsByProjectIdAdminJobs(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminJobsOK, error)
 	// GetV1ProjectsByProjectIdAdminJobsByJobId invokes getV1ProjectsByProjectIdAdminJobsByJobId operation.
 	//
 	// Get a job.
 	//
 	// GET /v1/projects/{project_id}/admin/jobs/{job_id}
-	GetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsByJobIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminJobsByJobIdRes, error)
+	GetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsByJobIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminJobsByJobIdOK, error)
 	// GetV1ProjectsByProjectIdAdminJwks invokes getV1ProjectsByProjectIdAdminJwks operation.
 	//
 	// List signing keys.
 	//
 	// GET /v1/projects/{project_id}/admin/jwks
-	GetV1ProjectsByProjectIdAdminJwks(ctx context.Context, params GetV1ProjectsByProjectIdAdminJwksParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminJwksRes, error)
+	GetV1ProjectsByProjectIdAdminJwks(ctx context.Context, params GetV1ProjectsByProjectIdAdminJwksParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminJwksOK, error)
 	// GetV1ProjectsByProjectIdAdminOauthProviders invokes getV1ProjectsByProjectIdAdminOauthProviders operation.
 	//
 	// List OAuth providers.
 	//
 	// GET /v1/projects/{project_id}/admin/oauth-providers
-	GetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminOauthProvidersParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminOauthProvidersRes, error)
+	GetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminOauthProvidersParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminOauthProvidersOK, error)
 	// GetV1ProjectsByProjectIdAdminRetentionPolicy invokes getV1ProjectsByProjectIdAdminRetentionPolicy operation.
 	//
 	// Get retention policy.
 	//
 	// GET /v1/projects/{project_id}/admin/retention-policy
-	GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminRetentionPolicyParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminRetentionPolicyRes, error)
+	GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminRetentionPolicyParams, options ...RequestOption) (*RetentionPolicy, error)
 	// GetV1ProjectsByProjectIdAdminRiskEvents invokes getV1ProjectsByProjectIdAdminRiskEvents operation.
 	//
 	// List risk events.
 	//
 	// GET /v1/projects/{project_id}/admin/risk/events
-	GetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskEventsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminRiskEventsRes, error)
+	GetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskEventsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminRiskEventsOK, error)
 	// GetV1ProjectsByProjectIdAdminRiskRules invokes getV1ProjectsByProjectIdAdminRiskRules operation.
 	//
 	// List risk rules.
 	//
 	// GET /v1/projects/{project_id}/admin/risk/rules
-	GetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskRulesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminRiskRulesRes, error)
+	GetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskRulesParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminRiskRulesOK, error)
 	// GetV1ProjectsByProjectIdAdminSmsProviders invokes getV1ProjectsByProjectIdAdminSmsProviders operation.
 	//
 	// List SMS providers.
 	//
 	// GET /v1/projects/{project_id}/admin/sms-providers
-	GetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminSmsProvidersParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSmsProvidersRes, error)
+	GetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminSmsProvidersParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminSmsProvidersOK, error)
 	// GetV1ProjectsByProjectIdAdminTokenProfiles invokes getV1ProjectsByProjectIdAdminTokenProfiles operation.
 	//
 	// List token profiles.
 	//
 	// GET /v1/projects/{project_id}/admin/token-profiles
-	GetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, params GetV1ProjectsByProjectIdAdminTokenProfilesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminTokenProfilesRes, error)
+	GetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, params GetV1ProjectsByProjectIdAdminTokenProfilesParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminTokenProfilesOK, error)
 	// GetV1ProjectsByProjectIdAdminUsers invokes getV1ProjectsByProjectIdAdminUsers operation.
 	//
 	// Search/list users.
 	//
 	// GET /v1/projects/{project_id}/admin/users
-	GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminUsersRes, error)
+	GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminUsersOK, error)
 	// GetV1ProjectsByProjectIdAdminUsersByUserId invokes getV1ProjectsByProjectIdAdminUsersByUserId operation.
 	//
 	// Get a user.
 	//
 	// GET /v1/projects/{project_id}/admin/users/{user_id}
-	GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminUsersByUserIdRes, error)
+	GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminUsersByUserIdOK, error)
 	// GetV1ProjectsByProjectIdAdminUsersByUserIdGrants invokes getV1ProjectsByProjectIdAdminUsersByUserIdGrants operation.
 	//
 	// List a user's OAuth grants.
 	//
 	// GET /v1/projects/{project_id}/admin/users/{user_id}/grants
-	GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRes, error)
+	GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK, error)
 	// GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities invokes getV1ProjectsByProjectIdAdminUsersByUserIdIdentities operation.
 	//
 	// List a user's identities.
 	//
 	// GET /v1/projects/{project_id}/admin/users/{user_id}/identities
-	GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesRes, error)
+	GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK, error)
 	// GetV1ProjectsByProjectIdAdminUsersByUserIdSessions invokes getV1ProjectsByProjectIdAdminUsersByUserIdSessions operation.
 	//
 	// List a user's sessions.
 	//
 	// GET /v1/projects/{project_id}/admin/users/{user_id}/sessions
-	GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRes, error)
+	GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK, error)
 	// GetV1ProjectsByProjectIdAdminWebhookDeliveries invokes getV1ProjectsByProjectIdAdminWebhookDeliveries operation.
 	//
 	// List deliveries.
 	//
 	// GET /v1/projects/{project_id}/admin/webhook-deliveries
-	GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhookDeliveriesRes, error)
+	GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error)
 	// GetV1ProjectsByProjectIdAdminWebhooks invokes getV1ProjectsByProjectIdAdminWebhooks operation.
 	//
 	// List webhooks.
 	//
 	// GET /v1/projects/{project_id}/admin/webhooks
-	GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhooksRes, error)
+	GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminWebhooksOK, error)
 	// GetV1ProjectsByProjectIdAdminWebhooksById invokes getV1ProjectsByProjectIdAdminWebhooksById operation.
 	//
 	// Get a webhook.
 	//
 	// GET /v1/projects/{project_id}/admin/webhooks/{id}
-	GetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhooksByIdRes, error)
+	GetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminWebhooksByIdOK, error)
 	// GetV1TestMessages invokes getV1TestMessages operation.
 	//
 	// Read captured test-mode messages (inbox).
 	//
 	// GET /v1/test/messages
-	GetV1TestMessages(ctx context.Context, params GetV1TestMessagesParams, options ...RequestOption) (GetV1TestMessagesRes, error)
+	GetV1TestMessages(ctx context.Context, params GetV1TestMessagesParams, options ...RequestOption) (GetV1TestMessagesOK, error)
 	// PatchV1ProjectsByProjectIdAdminAppsByAppId invokes patchV1ProjectsByProjectIdAdminAppsByAppId operation.
 	//
 	// Update an app client.
 	//
 	// PATCH /v1/projects/{project_id}/admin/apps/{app_id}
-	PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminAppsByAppIdReq, params PatchV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminAppsByAppIdRes, error)
+	PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminAppsByAppIdReq, params PatchV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminAppsByAppIdOK, error)
 	// PatchV1ProjectsByProjectIdAdminConfigAuth invokes patchV1ProjectsByProjectIdAdminConfigAuth operation.
 	//
 	// Update auth config.
 	//
 	// PATCH /v1/projects/{project_id}/admin/config/auth
-	PatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, request *AuthConfig, params PatchV1ProjectsByProjectIdAdminConfigAuthParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminConfigAuthRes, error)
+	PatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, request *AuthConfig, params PatchV1ProjectsByProjectIdAdminConfigAuthParams, options ...RequestOption) (*AuthConfig, error)
 	// PatchV1ProjectsByProjectIdAdminConfigMfaPolicy invokes patchV1ProjectsByProjectIdAdminConfigMfaPolicy operation.
 	//
 	// Update MFA policy.
 	//
 	// PATCH /v1/projects/{project_id}/admin/config/mfa-policy
-	PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, request *MfaPolicy, params PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminConfigMfaPolicyRes, error)
+	PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, request *MfaPolicy, params PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams, options ...RequestOption) (*MfaPolicy, error)
 	// PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy invokes patchV1ProjectsByProjectIdAdminConfigPasswordPolicy operation.
 	//
 	// Update password policy.
 	//
 	// PATCH /v1/projects/{project_id}/admin/config/password-policy
-	PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, request *PasswordPolicy, params PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyRes, error)
+	PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, request *PasswordPolicy, params PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, options ...RequestOption) (*PasswordPolicy, error)
 	// PatchV1ProjectsByProjectIdAdminConfigRateLimits invokes patchV1ProjectsByProjectIdAdminConfigRateLimits operation.
 	//
 	// Update rate limits.
 	//
 	// PATCH /v1/projects/{project_id}/admin/config/rate-limits
-	PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, request *RateLimits, params PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminConfigRateLimitsRes, error)
+	PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, request *RateLimits, params PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams, options ...RequestOption) (*RateLimits, error)
 	// PatchV1ProjectsByProjectIdAdminConfigSessionPolicy invokes patchV1ProjectsByProjectIdAdminConfigSessionPolicy operation.
 	//
 	// Update session policy.
 	//
 	// PATCH /v1/projects/{project_id}/admin/config/session-policy
-	PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, request *SessionPolicy, params PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminConfigSessionPolicyRes, error)
+	PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, request *SessionPolicy, params PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams, options ...RequestOption) (*SessionPolicy, error)
 	// PatchV1ProjectsByProjectIdAdminEmailProvidersById invokes patchV1ProjectsByProjectIdAdminEmailProvidersById operation.
 	//
 	// Update email provider.
 	//
 	// PATCH /v1/projects/{project_id}/admin/email-providers/{id}
-	PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, request *EmailProvider, params PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminEmailProvidersByIdRes, error)
+	PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, request *EmailProvider, params PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams, options ...RequestOption) (*EmailProvider, error)
 	// PatchV1ProjectsByProjectIdAdminEmailTemplatesById invokes patchV1ProjectsByProjectIdAdminEmailTemplatesById operation.
 	//
 	// Update an email template.
 	//
 	// PATCH /v1/projects/{project_id}/admin/email-templates/{id}
-	PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq, params PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRes, error)
+	PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq, params PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK, error)
 	// PatchV1ProjectsByProjectIdAdminHooksById invokes patchV1ProjectsByProjectIdAdminHooksById operation.
 	//
 	// Update a hook.
 	//
 	// PATCH /v1/projects/{project_id}/admin/hooks/{id}
-	PatchV1ProjectsByProjectIdAdminHooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminHooksByIdReq, params PatchV1ProjectsByProjectIdAdminHooksByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminHooksByIdRes, error)
+	PatchV1ProjectsByProjectIdAdminHooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminHooksByIdReq, params PatchV1ProjectsByProjectIdAdminHooksByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminHooksByIdOK, error)
 	// PatchV1ProjectsByProjectIdAdminOauthProvidersById invokes patchV1ProjectsByProjectIdAdminOauthProvidersById operation.
 	//
 	// Update OAuth provider.
 	//
 	// PATCH /v1/projects/{project_id}/admin/oauth-providers/{id}
-	PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, request *OAuthProviderConfig, params PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminOauthProvidersByIdRes, error)
+	PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, request *OAuthProviderConfig, params PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams, options ...RequestOption) (*OAuthProviderConfig, error)
 	// PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId invokes patchV1ProjectsByProjectIdAdminRiskRulesByRuleId operation.
 	//
 	// Update a risk rule.
 	//
 	// PATCH /v1/projects/{project_id}/admin/risk/rules/{rule_id}
-	PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, request *RiskRule, params PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes, error)
+	PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, request *RiskRule, params PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, options ...RequestOption) (*RiskRule, error)
 	// PatchV1ProjectsByProjectIdAdminSmsProvidersById invokes patchV1ProjectsByProjectIdAdminSmsProvidersById operation.
 	//
 	// Update SMS provider.
 	//
 	// PATCH /v1/projects/{project_id}/admin/sms-providers/{id}
-	PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, request *SmsProvider, params PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminSmsProvidersByIdRes, error)
+	PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, request *SmsProvider, params PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams, options ...RequestOption) (*SmsProvider, error)
 	// PatchV1ProjectsByProjectIdAdminTokenProfilesById invokes patchV1ProjectsByProjectIdAdminTokenProfilesById operation.
 	//
 	// Update a token profile.
 	//
 	// PATCH /v1/projects/{project_id}/admin/token-profiles/{id}
-	PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminTokenProfilesByIdRes, error)
+	PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK, error)
 	// PatchV1ProjectsByProjectIdAdminUsersByUserId invokes patchV1ProjectsByProjectIdAdminUsersByUserId operation.
 	//
 	// Update a user.
 	//
 	// PATCH /v1/projects/{project_id}/admin/users/{user_id}
-	PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminUsersByUserIdRes, error)
+	PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, error)
 	// PatchV1ProjectsByProjectIdAdminWebhooksById invokes patchV1ProjectsByProjectIdAdminWebhooksById operation.
 	//
 	// Update a webhook.
 	//
 	// PATCH /v1/projects/{project_id}/admin/webhooks/{id}
-	PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminWebhooksByIdRes, error)
+	PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error)
 	// PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove invokes postV1ProjectsByProjectIdAdminAccessRequestsByIdApprove operation.
 	//
 	// Approve an access request.
 	//
 	// POST /v1/projects/{project_id}/admin/access-requests/{id}/approve
-	PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRes, error)
+	PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK, error)
 	// PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny invokes postV1ProjectsByProjectIdAdminAccessRequestsByIdDeny operation.
 	//
 	// Deny an access request.
 	//
 	// POST /v1/projects/{project_id}/admin/access-requests/{id}/deny
-	PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyRes, error)
+	PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK, error)
 	// PostV1ProjectsByProjectIdAdminApps invokes postV1ProjectsByProjectIdAdminApps operation.
 	//
 	// Create an app client.
 	//
 	// POST /v1/projects/{project_id}/admin/apps
-	PostV1ProjectsByProjectIdAdminApps(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsReq, params PostV1ProjectsByProjectIdAdminAppsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAppsRes, error)
+	PostV1ProjectsByProjectIdAdminApps(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsReq, params PostV1ProjectsByProjectIdAdminAppsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminAppsCreated, error)
 	// PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets invokes postV1ProjectsByProjectIdAdminAppsByAppIdSecrets operation.
 	//
 	// Create a client secret.
 	//
 	// POST /v1/projects/{project_id}/admin/apps/{app_id}/secrets
-	PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRes, error)
+	PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated, error)
 	// PostV1ProjectsByProjectIdAdminAuditExport invokes postV1ProjectsByProjectIdAdminAuditExport operation.
 	//
 	// Export the audit log (signed).
 	//
 	// POST /v1/projects/{project_id}/admin/audit/export
-	PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAuditExportReq, params PostV1ProjectsByProjectIdAdminAuditExportParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAuditExportRes, error)
+	PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAuditExportReq, params PostV1ProjectsByProjectIdAdminAuditExportParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminAuditExportOK, error)
 	// PostV1ProjectsByProjectIdAdminEmailProviders invokes postV1ProjectsByProjectIdAdminEmailProviders operation.
 	//
 	// Create email provider.
 	//
 	// POST /v1/projects/{project_id}/admin/email-providers
-	PostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, request *EmailProvider, params PostV1ProjectsByProjectIdAdminEmailProvidersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEmailProvidersRes, error)
+	PostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, request *EmailProvider, params PostV1ProjectsByProjectIdAdminEmailProvidersParams, options ...RequestOption) (*EmailProvider, error)
 	// PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview invokes postV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview operation.
 	//
 	// Render a template preview.
 	//
 	// POST /v1/projects/{project_id}/admin/email-templates/{id}/preview
-	PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRes, error)
+	PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK, error)
 	// PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest invokes postV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest operation.
 	//
 	// Send a test email.
 	//
 	// POST /v1/projects/{project_id}/admin/email-templates/{id}/send-test
-	PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestRes, error)
+	PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams, options ...RequestOption) (*Ok, error)
 	// PostV1ProjectsByProjectIdAdminEventsByEventIdReplay invokes postV1ProjectsByProjectIdAdminEventsByEventIdReplay operation.
 	//
 	// Replay an event to webhooks.
 	//
 	// POST /v1/projects/{project_id}/admin/events/{event_id}/replay
-	PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEventsByEventIdReplayRes, error)
+	PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error)
 	// PostV1ProjectsByProjectIdAdminHooks invokes postV1ProjectsByProjectIdAdminHooks operation.
 	//
 	// Create a hook.
 	//
 	// POST /v1/projects/{project_id}/admin/hooks
-	PostV1ProjectsByProjectIdAdminHooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminHooksReq, params PostV1ProjectsByProjectIdAdminHooksParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminHooksRes, error)
+	PostV1ProjectsByProjectIdAdminHooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminHooksReq, params PostV1ProjectsByProjectIdAdminHooksParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminHooksCreated, error)
 	// PostV1ProjectsByProjectIdAdminHooksByIdTest invokes postV1ProjectsByProjectIdAdminHooksByIdTest operation.
 	//
 	// Test a hook.
 	//
 	// POST /v1/projects/{project_id}/admin/hooks/{id}/test
-	PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq, params PostV1ProjectsByProjectIdAdminHooksByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminHooksByIdTestRes, error)
+	PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq, params PostV1ProjectsByProjectIdAdminHooksByIdTestParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminHooksByIdTestOK, error)
 	// PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify invokes postV1ProjectsByProjectIdAdminImportPasswordHashesVerify operation.
 	//
 	// Verify an imported hash config.
 	//
 	// POST /v1/projects/{project_id}/admin/import/password-hashes/verify
-	PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq, params PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyRes, error)
+	PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq, params PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK, error)
 	// PostV1ProjectsByProjectIdAdminImportUsers invokes postV1ProjectsByProjectIdAdminImportUsers operation.
 	//
 	// Bulk-import users.
 	//
 	// POST /v1/projects/{project_id}/admin/import/users
-	PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminImportUsersRes, error)
+	PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminImportUsersOK, error)
 	// PostV1ProjectsByProjectIdAdminJobsByJobIdCancel invokes postV1ProjectsByProjectIdAdminJobsByJobIdCancel operation.
 	//
 	// Cancel a job.
 	//
 	// POST /v1/projects/{project_id}/admin/jobs/{job_id}/cancel
-	PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context.Context, params PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminJobsByJobIdCancelRes, error)
+	PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context.Context, params PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK, error)
 	// PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate invokes postV1ProjectsByProjectIdAdminJwksByKeyIdActivate operation.
 	//
 	// Activate a signing key.
 	//
 	// POST /v1/projects/{project_id}/admin/jwks/{key_id}/activate
-	PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx context.Context, params PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRes, error)
+	PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx context.Context, params PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK, error)
 	// PostV1ProjectsByProjectIdAdminJwksRotate invokes postV1ProjectsByProjectIdAdminJwksRotate operation.
 	//
 	// Create a new signing key.
 	//
 	// POST /v1/projects/{project_id}/admin/jwks/rotate
-	PostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminJwksRotateReq, params PostV1ProjectsByProjectIdAdminJwksRotateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminJwksRotateRes, error)
+	PostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminJwksRotateReq, params PostV1ProjectsByProjectIdAdminJwksRotateParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminJwksRotateOK, error)
 	// PostV1ProjectsByProjectIdAdminOauthProviders invokes postV1ProjectsByProjectIdAdminOauthProviders operation.
 	//
 	// Create OAuth provider.
 	//
 	// POST /v1/projects/{project_id}/admin/oauth-providers
-	PostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, request *OAuthProviderConfig, params PostV1ProjectsByProjectIdAdminOauthProvidersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminOauthProvidersRes, error)
+	PostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, request *OAuthProviderConfig, params PostV1ProjectsByProjectIdAdminOauthProvidersParams, options ...RequestOption) (*OAuthProviderConfig, error)
 	// PostV1ProjectsByProjectIdAdminRateLimitBlocks invokes postV1ProjectsByProjectIdAdminRateLimitBlocks operation.
 	//
 	// Block an identifier.
 	//
 	// POST /v1/projects/{project_id}/admin/rate-limit/blocks
-	PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminRateLimitBlocksReq, params PostV1ProjectsByProjectIdAdminRateLimitBlocksParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminRateLimitBlocksRes, error)
+	PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminRateLimitBlocksReq, params PostV1ProjectsByProjectIdAdminRateLimitBlocksParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminRateLimitBlocksOK, error)
 	// PostV1ProjectsByProjectIdAdminRiskRules invokes postV1ProjectsByProjectIdAdminRiskRules operation.
 	//
 	// Create a risk rule.
 	//
 	// POST /v1/projects/{project_id}/admin/risk/rules
-	PostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, request *RiskRule, params PostV1ProjectsByProjectIdAdminRiskRulesParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminRiskRulesRes, error)
+	PostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, request *RiskRule, params PostV1ProjectsByProjectIdAdminRiskRulesParams, options ...RequestOption) (*RiskRule, error)
 	// PostV1ProjectsByProjectIdAdminSmsProviders invokes postV1ProjectsByProjectIdAdminSmsProviders operation.
 	//
 	// Create SMS provider.
 	//
 	// POST /v1/projects/{project_id}/admin/sms-providers
-	PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, request *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSmsProvidersRes, error)
+	PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, request *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams, options ...RequestOption) (*SmsProvider, error)
 	// PostV1ProjectsByProjectIdAdminTokenProfiles invokes postV1ProjectsByProjectIdAdminTokenProfiles operation.
 	//
 	// Create a token profile.
 	//
 	// POST /v1/projects/{project_id}/admin/token-profiles
-	PostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, request *TokenProfile, params PostV1ProjectsByProjectIdAdminTokenProfilesParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminTokenProfilesRes, error)
+	PostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, request *TokenProfile, params PostV1ProjectsByProjectIdAdminTokenProfilesParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminTokenProfilesCreated, error)
 	// PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview invokes postV1ProjectsByProjectIdAdminTokenProfilesByIdPreview operation.
 	//
 	// Preview token claims.
 	//
 	// POST /v1/projects/{project_id}/admin/token-profiles/{id}/preview
-	PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, request *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewRes, error)
+	PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, request *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK, error)
 	// PostV1ProjectsByProjectIdAdminUsers invokes postV1ProjectsByProjectIdAdminUsers operation.
 	//
 	// Create a user.
 	//
 	// POST /v1/projects/{project_id}/admin/users
-	PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersReq, params PostV1ProjectsByProjectIdAdminUsersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersRes, error)
+	PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersReq, params PostV1ProjectsByProjectIdAdminUsersParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersCreated, error)
 	// PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize invokes postV1ProjectsByProjectIdAdminUsersByUserIdAnonymize operation.
 	//
 	// Anonymize a user.
 	//
 	// POST /v1/projects/{project_id}/admin/users/{user_id}/anonymize
-	PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeRes, error)
+	PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams, options ...RequestOption) (*Ok, error)
 	// PostV1ProjectsByProjectIdAdminUsersByUserIdBan invokes postV1ProjectsByProjectIdAdminUsersByUserIdBan operation.
 	//
 	// Ban a user.
 	//
 	// POST /v1/projects/{project_id}/admin/users/{user_id}/ban
-	PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdBanRes, error)
+	PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK, error)
 	// PostV1ProjectsByProjectIdAdminUsersByUserIdExport invokes postV1ProjectsByProjectIdAdminUsersByUserIdExport operation.
 	//
 	// Start a user data export.
 	//
 	// POST /v1/projects/{project_id}/admin/users/{user_id}/export
-	PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdExportRes, error)
+	PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK, error)
 	// PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate invokes postV1ProjectsByProjectIdAdminUsersByUserIdImpersonate operation.
 	//
 	// Create a support impersonation session.
 	//
 	// POST /v1/projects/{project_id}/admin/users/{user_id}/impersonate
-	PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateRes, error)
+	PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK, error)
 	// PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset invokes postV1ProjectsByProjectIdAdminUsersByUserIdMfaReset operation.
 	//
 	// Remove MFA factors.
 	//
 	// POST /v1/projects/{project_id}/admin/users/{user_id}/mfa/reset
-	PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetRes, error)
+	PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK, error)
 	// PostV1ProjectsByProjectIdAdminUsersByUserIdPassword invokes postV1ProjectsByProjectIdAdminUsersByUserIdPassword operation.
 	//
 	// Set a user's password.
 	//
 	// POST /v1/projects/{project_id}/admin/users/{user_id}/password
-	PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordRes, error)
+	PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams, options ...RequestOption) (*Ok, error)
 	// PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke invokes postV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke operation.
 	//
 	// Revoke a user's sessions.
 	//
 	// POST /v1/projects/{project_id}/admin/users/{user_id}/sessions/revoke
-	PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeRes, error)
+	PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK, error)
 	// PostV1ProjectsByProjectIdAdminUsersByUserIdUnban invokes postV1ProjectsByProjectIdAdminUsersByUserIdUnban operation.
 	//
 	// Unban a user.
 	//
 	// POST /v1/projects/{project_id}/admin/users/{user_id}/unban
-	PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRes, error)
+	PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK, error)
 	// PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail invokes postV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail operation.
 	//
 	// Mark email verified.
 	//
 	// POST /v1/projects/{project_id}/admin/users/{user_id}/verify-email
-	PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailRes, error)
+	PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK, error)
 	// PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone invokes postV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone operation.
 	//
 	// Mark phone verified.
 	//
 	// POST /v1/projects/{project_id}/admin/users/{user_id}/verify-phone
-	PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneRes, error)
+	PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK, error)
 	// PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry invokes postV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry operation.
 	//
 	// Retry a delivery.
 	//
 	// POST /v1/projects/{project_id}/admin/webhook-deliveries/{delivery_id}/retry
-	PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRes, error)
+	PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error)
 	// PostV1ProjectsByProjectIdAdminWebhooks invokes postV1ProjectsByProjectIdAdminWebhooks operation.
 	//
 	// Create a webhook.
 	//
 	// POST /v1/projects/{project_id}/admin/webhooks
-	PostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksReq, params PostV1ProjectsByProjectIdAdminWebhooksParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksRes, error)
+	PostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksReq, params PostV1ProjectsByProjectIdAdminWebhooksParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminWebhooksCreated, error)
 	// PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret invokes postV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret operation.
 	//
 	// Rotate webhook signing secret.
 	//
 	// POST /v1/projects/{project_id}/admin/webhooks/{id}/rotate-secret
-	PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretRes, error)
+	PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK, error)
 	// PostV1ProjectsByProjectIdAdminWebhooksByIdTest invokes postV1ProjectsByProjectIdAdminWebhooksByIdTest operation.
 	//
 	// Send a test event.
 	//
 	// POST /v1/projects/{project_id}/admin/webhooks/{id}/test
-	PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksByIdTestRes, error)
+	PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error)
 	// PostV1TestClock invokes postV1TestClock operation.
 	//
 	// Advance/reset the test clock.
 	//
 	// POST /v1/test/clock
-	PostV1TestClock(ctx context.Context, request *PostV1TestClockReq, params PostV1TestClockParams, options ...RequestOption) (PostV1TestClockRes, error)
+	PostV1TestClock(ctx context.Context, request *PostV1TestClockReq, params PostV1TestClockParams, options ...RequestOption) (*Ok, error)
 	// PostV1TestReset invokes postV1TestReset operation.
 	//
 	// Wipe test-environment data.
 	//
 	// POST /v1/test/reset
-	PostV1TestReset(ctx context.Context, params PostV1TestResetParams, options ...RequestOption) (PostV1TestResetRes, error)
+	PostV1TestReset(ctx context.Context, params PostV1TestResetParams, options ...RequestOption) (PostV1TestResetOK, error)
 	// PostV1TestSeed invokes postV1TestSeed operation.
 	//
 	// Seed test-environment fixtures.
 	//
 	// POST /v1/test/seed
-	PostV1TestSeed(ctx context.Context, request PostV1TestSeedReq, params PostV1TestSeedParams, options ...RequestOption) (PostV1TestSeedRes, error)
+	PostV1TestSeed(ctx context.Context, request PostV1TestSeedReq, params PostV1TestSeedParams, options ...RequestOption) (*Ok, error)
 	// PutV1ProjectsByProjectIdAdminConsents invokes putV1ProjectsByProjectIdAdminConsents operation.
 	//
 	// Set required consents.
 	//
 	// PUT /v1/projects/{project_id}/admin/consents
-	PutV1ProjectsByProjectIdAdminConsents(ctx context.Context, request *ConsentConfig, params PutV1ProjectsByProjectIdAdminConsentsParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminConsentsRes, error)
+	PutV1ProjectsByProjectIdAdminConsents(ctx context.Context, request *ConsentConfig, params PutV1ProjectsByProjectIdAdminConsentsParams, options ...RequestOption) (*ConsentConfig, error)
 	// PutV1ProjectsByProjectIdAdminFeatures invokes putV1ProjectsByProjectIdAdminFeatures operation.
 	//
 	// Set project feature toggles.
 	//
 	// PUT /v1/projects/{project_id}/admin/features
-	PutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, request PutV1ProjectsByProjectIdAdminFeaturesReq, params PutV1ProjectsByProjectIdAdminFeaturesParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminFeaturesRes, error)
+	PutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, request PutV1ProjectsByProjectIdAdminFeaturesReq, params PutV1ProjectsByProjectIdAdminFeaturesParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminFeaturesOK, error)
 	// PutV1ProjectsByProjectIdAdminI18nByLocale invokes putV1ProjectsByProjectIdAdminI18nByLocale operation.
 	//
 	// Set i18n catalogue overrides.
 	//
 	// PUT /v1/projects/{project_id}/admin/i18n/{locale}
-	PutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, request PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params PutV1ProjectsByProjectIdAdminI18nByLocaleParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminI18nByLocaleRes, error)
+	PutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, request PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params PutV1ProjectsByProjectIdAdminI18nByLocaleParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminI18nByLocaleOK, error)
 	// PutV1ProjectsByProjectIdAdminRetentionPolicy invokes putV1ProjectsByProjectIdAdminRetentionPolicy operation.
 	//
 	// Set retention policy.
 	//
 	// PUT /v1/projects/{project_id}/admin/retention-policy
-	PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, request *RetentionPolicy, params PutV1ProjectsByProjectIdAdminRetentionPolicyParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminRetentionPolicyRes, error)
+	PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, request *RetentionPolicy, params PutV1ProjectsByProjectIdAdminRetentionPolicyParams, options ...RequestOption) (*RetentionPolicy, error)
 }
 
 // CoreAuthInvoker invokes operations described by OpenAPI v3 specification.
@@ -908,13 +908,13 @@ type CoreAuthInvoker interface {
 	// Get current session and user.
 	//
 	// GET /v1/auth/session
-	GetV1AuthSession(ctx context.Context, options ...RequestOption) (GetV1AuthSessionRes, error)
+	GetV1AuthSession(ctx context.Context, options ...RequestOption) (*GetV1AuthSessionOK, error)
 	// GetV1TokensCurrent invokes getV1TokensCurrent operation.
 	//
 	// Current token claims.
 	//
 	// GET /v1/tokens/current
-	GetV1TokensCurrent(ctx context.Context, options ...RequestOption) (GetV1TokensCurrentRes, error)
+	GetV1TokensCurrent(ctx context.Context, options ...RequestOption) (*GetV1TokensCurrentOK, error)
 	// PostV1AuthAccessRequests invokes postV1AuthAccessRequests operation.
 	//
 	// Submit an access request (request-access mode).
@@ -926,37 +926,37 @@ type CoreAuthInvoker interface {
 	// Start an email change (step-up; notifies old address).
 	//
 	// POST /v1/auth/email/change/start
-	PostV1AuthEmailChangeStart(ctx context.Context, request *PostV1AuthEmailChangeStartReq, options ...RequestOption) (PostV1AuthEmailChangeStartRes, error)
+	PostV1AuthEmailChangeStart(ctx context.Context, request *PostV1AuthEmailChangeStartReq, options ...RequestOption) (*Challenge, error)
 	// PostV1AuthEmailChangeVerify invokes postV1AuthEmailChangeVerify operation.
 	//
 	// Confirm the new email.
 	//
 	// POST /v1/auth/email/change/verify
-	PostV1AuthEmailChangeVerify(ctx context.Context, request *PostV1AuthEmailChangeVerifyReq, options ...RequestOption) (PostV1AuthEmailChangeVerifyRes, error)
+	PostV1AuthEmailChangeVerify(ctx context.Context, request *PostV1AuthEmailChangeVerifyReq, options ...RequestOption) (*PostV1AuthEmailChangeVerifyOK, error)
 	// PostV1AuthEmailVerificationStart invokes postV1AuthEmailVerificationStart operation.
 	//
 	// Send an email verification challenge.
 	//
 	// POST /v1/auth/email/verification/start
-	PostV1AuthEmailVerificationStart(ctx context.Context, request *PostV1AuthEmailVerificationStartReq, params PostV1AuthEmailVerificationStartParams, options ...RequestOption) (PostV1AuthEmailVerificationStartRes, error)
+	PostV1AuthEmailVerificationStart(ctx context.Context, request *PostV1AuthEmailVerificationStartReq, params PostV1AuthEmailVerificationStartParams, options ...RequestOption) (*Challenge, error)
 	// PostV1AuthEmailVerificationVerify invokes postV1AuthEmailVerificationVerify operation.
 	//
 	// Verify email by code or token.
 	//
 	// POST /v1/auth/email/verification/verify
-	PostV1AuthEmailVerificationVerify(ctx context.Context, request *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams, options ...RequestOption) (PostV1AuthEmailVerificationVerifyRes, error)
+	PostV1AuthEmailVerificationVerify(ctx context.Context, request *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams, options ...RequestOption) (*AuthResult, error)
 	// PostV1AuthGuest invokes postV1AuthGuest operation.
 	//
 	// Create an anonymous guest user and session.
 	//
 	// POST /v1/auth/guest
-	PostV1AuthGuest(ctx context.Context, request *PostV1AuthGuestReq, params PostV1AuthGuestParams, options ...RequestOption) (PostV1AuthGuestRes, error)
+	PostV1AuthGuest(ctx context.Context, request *PostV1AuthGuestReq, params PostV1AuthGuestParams, options ...RequestOption) (*AuthResult, error)
 	// PostV1AuthPasswordChange invokes postV1AuthPasswordChange operation.
 	//
 	// Change a known password.
 	//
 	// POST /v1/auth/password/change
-	PostV1AuthPasswordChange(ctx context.Context, request *PasswordChangeRequest, options ...RequestOption) (PostV1AuthPasswordChangeRes, error)
+	PostV1AuthPasswordChange(ctx context.Context, request *PasswordChangeRequest, options ...RequestOption) (*Ok, error)
 	// PostV1AuthPasswordCheck invokes postV1AuthPasswordCheck operation.
 	//
 	// Check a candidate password against policy.
@@ -968,91 +968,91 @@ type CoreAuthInvoker interface {
 	// Start a password reset.
 	//
 	// POST /v1/auth/password/forgot
-	PostV1AuthPasswordForgot(ctx context.Context, request *PasswordForgotRequest, params PostV1AuthPasswordForgotParams, options ...RequestOption) (PostV1AuthPasswordForgotRes, error)
+	PostV1AuthPasswordForgot(ctx context.Context, request *PasswordForgotRequest, params PostV1AuthPasswordForgotParams, options ...RequestOption) (*Ok, error)
 	// PostV1AuthPasswordReset invokes postV1AuthPasswordReset operation.
 	//
 	// Reset by token or code.
 	//
 	// POST /v1/auth/password/reset
-	PostV1AuthPasswordReset(ctx context.Context, request *PasswordResetRequest, params PostV1AuthPasswordResetParams, options ...RequestOption) (PostV1AuthPasswordResetRes, error)
+	PostV1AuthPasswordReset(ctx context.Context, request *PasswordResetRequest, params PostV1AuthPasswordResetParams, options ...RequestOption) (*AuthResult, error)
 	// PostV1AuthPasswordVerify invokes postV1AuthPasswordVerify operation.
 	//
 	// Verify current password (step-up).
 	//
 	// POST /v1/auth/password/verify
-	PostV1AuthPasswordVerify(ctx context.Context, request *PostV1AuthPasswordVerifyReq, options ...RequestOption) (PostV1AuthPasswordVerifyRes, error)
+	PostV1AuthPasswordVerify(ctx context.Context, request *PostV1AuthPasswordVerifyReq, options ...RequestOption) (*PostV1AuthPasswordVerifyOK, error)
 	// PostV1AuthPhoneChangeStart invokes postV1AuthPhoneChangeStart operation.
 	//
 	// Start a phone change.
 	//
 	// POST /v1/auth/phone/change/start
-	PostV1AuthPhoneChangeStart(ctx context.Context, request *PostV1AuthPhoneChangeStartReq, options ...RequestOption) (PostV1AuthPhoneChangeStartRes, error)
+	PostV1AuthPhoneChangeStart(ctx context.Context, request *PostV1AuthPhoneChangeStartReq, options ...RequestOption) (*Challenge, error)
 	// PostV1AuthPhoneChangeVerify invokes postV1AuthPhoneChangeVerify operation.
 	//
 	// Confirm the new phone.
 	//
 	// POST /v1/auth/phone/change/verify
-	PostV1AuthPhoneChangeVerify(ctx context.Context, request *PostV1AuthPhoneChangeVerifyReq, options ...RequestOption) (PostV1AuthPhoneChangeVerifyRes, error)
+	PostV1AuthPhoneChangeVerify(ctx context.Context, request *PostV1AuthPhoneChangeVerifyReq, options ...RequestOption) (*PostV1AuthPhoneChangeVerifyOK, error)
 	// PostV1AuthPhoneVerificationStart invokes postV1AuthPhoneVerificationStart operation.
 	//
 	// Send an SMS/WhatsApp verification code.
 	//
 	// POST /v1/auth/phone/verification/start
-	PostV1AuthPhoneVerificationStart(ctx context.Context, request *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams, options ...RequestOption) (PostV1AuthPhoneVerificationStartRes, error)
+	PostV1AuthPhoneVerificationStart(ctx context.Context, request *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams, options ...RequestOption) (*Challenge, error)
 	// PostV1AuthPhoneVerificationVerify invokes postV1AuthPhoneVerificationVerify operation.
 	//
 	// Verify a phone code.
 	//
 	// POST /v1/auth/phone/verification/verify
-	PostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, options ...RequestOption) (PostV1AuthPhoneVerificationVerifyRes, error)
+	PostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, options ...RequestOption) (PhoneVerifyResult, error)
 	// PostV1AuthSessionStepUp invokes postV1AuthSessionStepUp operation.
 	//
 	// Begin step-up authentication.
 	//
 	// POST /v1/auth/session/step-up
-	PostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, options ...RequestOption) (PostV1AuthSessionStepUpRes, error)
+	PostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, options ...RequestOption) (StepUpResult, error)
 	// PostV1AuthSessionSwitchGroup invokes postV1AuthSessionSwitchGroup operation.
 	//
 	// Re-issues a token with a new active-group claim. Membership is validated externally.
 	//
 	// POST /v1/auth/session/switch-group
-	PostV1AuthSessionSwitchGroup(ctx context.Context, request *PostV1AuthSessionSwitchGroupReq, options ...RequestOption) (PostV1AuthSessionSwitchGroupRes, error)
+	PostV1AuthSessionSwitchGroup(ctx context.Context, request *PostV1AuthSessionSwitchGroupReq, options ...RequestOption) (*AuthResult, error)
 	// PostV1AuthSignInPassword invokes postV1AuthSignInPassword operation.
 	//
 	// Sign in with password.
 	//
 	// POST /v1/auth/sign-in/password
-	PostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, options ...RequestOption) (PostV1AuthSignInPasswordRes, error)
+	PostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, options ...RequestOption) (AuthResultOrNextStep, error)
 	// PostV1AuthSignOut invokes postV1AuthSignOut operation.
 	//
 	// Revoke the current session.
 	//
 	// POST /v1/auth/sign-out
-	PostV1AuthSignOut(ctx context.Context, request OptPostV1AuthSignOutReq, options ...RequestOption) (PostV1AuthSignOutRes, error)
+	PostV1AuthSignOut(ctx context.Context, request OptPostV1AuthSignOutReq, options ...RequestOption) (*Ok, error)
 	// PostV1AuthSignOutAll invokes postV1AuthSignOutAll operation.
 	//
 	// Revoke all of the user's sessions.
 	//
 	// POST /v1/auth/sign-out-all
-	PostV1AuthSignOutAll(ctx context.Context, request OptPostV1AuthSignOutAllReq, options ...RequestOption) (PostV1AuthSignOutAllRes, error)
+	PostV1AuthSignOutAll(ctx context.Context, request OptPostV1AuthSignOutAllReq, options ...RequestOption) (*PostV1AuthSignOutAllOK, error)
 	// PostV1AuthSignUp invokes postV1AuthSignUp operation.
 	//
 	// Register a user.
 	//
 	// POST /v1/auth/sign-up
-	PostV1AuthSignUp(ctx context.Context, request *SignUpRequest, params PostV1AuthSignUpParams, options ...RequestOption) (PostV1AuthSignUpRes, error)
+	PostV1AuthSignUp(ctx context.Context, request *SignUpRequest, params PostV1AuthSignUpParams, options ...RequestOption) (*AuthResult, error)
 	// PostV1AuthTokenExchange invokes postV1AuthTokenExchange operation.
 	//
 	// Exchange a browser-flow auth_code for a session.
 	//
 	// POST /v1/auth/token/exchange
-	PostV1AuthTokenExchange(ctx context.Context, request *CodeExchangeRequest, params PostV1AuthTokenExchangeParams, options ...RequestOption) (PostV1AuthTokenExchangeRes, error)
+	PostV1AuthTokenExchange(ctx context.Context, request *CodeExchangeRequest, params PostV1AuthTokenExchangeParams, options ...RequestOption) (*AuthResult, error)
 	// PostV1AuthTokenRefresh invokes postV1AuthTokenRefresh operation.
 	//
 	// Rotate refresh token, issue new access token.
 	//
 	// POST /v1/auth/token/refresh
-	PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, options ...RequestOption) (PostV1AuthTokenRefreshRes, error)
+	PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, options ...RequestOption) (*AuthResult, error)
 	// PostV1ChallengesCaptchaVerify invokes postV1ChallengesCaptchaVerify operation.
 	//
 	// Verify a captcha token.
@@ -1064,19 +1064,19 @@ type CoreAuthInvoker interface {
 	// Live token introspection.
 	//
 	// POST /v1/tokens/introspect
-	PostV1TokensIntrospect(ctx context.Context, request *PostV1TokensIntrospectReq, options ...RequestOption) (PostV1TokensIntrospectRes, error)
+	PostV1TokensIntrospect(ctx context.Context, request *PostV1TokensIntrospectReq, options ...RequestOption) (*PostV1TokensIntrospectOK, error)
 	// PostV1TokensRevoke invokes postV1TokensRevoke operation.
 	//
 	// Revoke a token/session.
 	//
 	// POST /v1/tokens/revoke
-	PostV1TokensRevoke(ctx context.Context, request *PostV1TokensRevokeReq, options ...RequestOption) (PostV1TokensRevokeRes, error)
+	PostV1TokensRevoke(ctx context.Context, request *PostV1TokensRevokeReq, options ...RequestOption) (*Ok, error)
 	// PostV1TokensVerify invokes postV1TokensVerify operation.
 	//
 	// Verify a token via the server.
 	//
 	// POST /v1/tokens/verify
-	PostV1TokensVerify(ctx context.Context, request *PostV1TokensVerifyReq, options ...RequestOption) (PostV1TokensVerifyRes, error)
+	PostV1TokensVerify(ctx context.Context, request *PostV1TokensVerifyReq, options ...RequestOption) (*PostV1TokensVerifyOK, error)
 }
 
 // FederationInvoker invokes operations described by OpenAPI v3 specification.
@@ -1088,85 +1088,85 @@ type FederationInvoker interface {
 	// Remove a domain.
 	//
 	// DELETE /v1/projects/{project_id}/admin/domains/{domain_id}
-	DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminSsoConnectionsById invokes deleteV1ProjectsByProjectIdAdminSsoConnectionsById operation.
 	//
 	// Delete a connection.
 	//
 	// DELETE /v1/projects/{project_id}/admin/sso/connections/{id}
-	DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId invokes deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId operation.
 	//
 	// Revoke a SCIM token.
 	//
 	// DELETE /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens/{token_id}
-	DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ScimV2ByConnectionIdGroupsByGroupId invokes deleteV1ScimV2ByConnectionIdGroupsByGroupId operation.
 	//
 	// Delete a SCIM group (forwarded downstream).
 	//
 	// DELETE /v1/scim/v2/{connection_id}/Groups/{group_id}
-	DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (DeleteV1ScimV2ByConnectionIdGroupsByGroupIdRes, error)
+	DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) error
 	// DeleteV1ScimV2ByConnectionIdUsersByScimUserId invokes deleteV1ScimV2ByConnectionIdUsersByScimUserId operation.
 	//
 	// Deprovision a user.
 	//
 	// DELETE /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-	DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (DeleteV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
+	DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) error
 	// GetV1ProjectsByProjectIdAdminDomains invokes getV1ProjectsByProjectIdAdminDomains operation.
 	//
 	// List domains.
 	//
 	// GET /v1/projects/{project_id}/admin/domains
-	GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params GetV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminDomainsRes, error)
+	GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params GetV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminDomainsOK, error)
 	// GetV1ProjectsByProjectIdAdminSsoConnections invokes getV1ProjectsByProjectIdAdminSsoConnections operation.
 	//
 	// List SSO connections.
 	//
 	// GET /v1/projects/{project_id}/admin/sso/connections
-	GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsRes, error)
+	GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminSsoConnectionsOK, error)
 	// GetV1ProjectsByProjectIdAdminSsoConnectionsById invokes getV1ProjectsByProjectIdAdminSsoConnectionsById operation.
 	//
 	// Get a connection.
 	//
 	// GET /v1/projects/{project_id}/admin/sso/connections/{id}
-	GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error)
+	GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error)
 	// GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens invokes getV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens operation.
 	//
 	// List SCIM tokens.
 	//
 	// GET /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens
-	GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, error)
+	GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK, error)
 	// GetV1ScimV2ByConnectionIdGroups invokes getV1ScimV2ByConnectionIdGroups operation.
 	//
 	// List SCIM groups (forwarded downstream).
 	//
 	// GET /v1/scim/v2/{connection_id}/Groups
-	GetV1ScimV2ByConnectionIdGroups(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsRes, error)
+	GetV1ScimV2ByConnectionIdGroups(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsOK, error)
 	// GetV1ScimV2ByConnectionIdGroupsByGroupId invokes getV1ScimV2ByConnectionIdGroupsByGroupId operation.
 	//
 	// Get a SCIM group (forwarded downstream).
 	//
 	// GET /v1/scim/v2/{connection_id}/Groups/{group_id}
-	GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsByGroupIdRes, error)
+	GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsByGroupIdOK, error)
 	// GetV1ScimV2ByConnectionIdUsers invokes getV1ScimV2ByConnectionIdUsers operation.
 	//
 	// List SCIM users.
 	//
 	// GET /v1/scim/v2/{connection_id}/Users
-	GetV1ScimV2ByConnectionIdUsers(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersRes, error)
+	GetV1ScimV2ByConnectionIdUsers(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersOK, error)
 	// GetV1ScimV2ByConnectionIdUsersByScimUserId invokes getV1ScimV2ByConnectionIdUsersByScimUserId operation.
 	//
 	// Get a SCIM user.
 	//
 	// GET /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-	GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
+	GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersByScimUserIdOK, error)
 	// GetV1SsoConnectionsResolve invokes getV1SsoConnectionsResolve operation.
 	//
 	// Resolve an email to its SSO connection.
 	//
 	// GET /v1/sso/connections/resolve
-	GetV1SsoConnectionsResolve(ctx context.Context, params GetV1SsoConnectionsResolveParams, options ...RequestOption) (GetV1SsoConnectionsResolveRes, error)
+	GetV1SsoConnectionsResolve(ctx context.Context, params GetV1SsoConnectionsResolveParams, options ...RequestOption) (*GetV1SsoConnectionsResolveOK, error)
 	// GetV1SsoOidcByConnectionIdCallback invokes getV1SsoOidcByConnectionIdCallback operation.
 	//
 	// OIDC IdP callback.
@@ -1196,67 +1196,67 @@ type FederationInvoker interface {
 	// Update a connection.
 	//
 	// PATCH /v1/projects/{project_id}/admin/sso/connections/{id}
-	PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error)
+	PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error)
 	// PatchV1ScimV2ByConnectionIdGroupsByGroupId invokes patchV1ScimV2ByConnectionIdGroupsByGroupId operation.
 	//
 	// Patch a SCIM group (forwarded downstream).
 	//
 	// PATCH /v1/scim/v2/{connection_id}/Groups/{group_id}
-	PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdGroupsByGroupIdRes, error)
+	PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK, error)
 	// PatchV1ScimV2ByConnectionIdUsersByScimUserId invokes patchV1ScimV2ByConnectionIdUsersByScimUserId operation.
 	//
 	// Patch a SCIM user.
 	//
 	// PATCH /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-	PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
+	PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK, error)
 	// PostV1ProjectsByProjectIdAdminDomains invokes postV1ProjectsByProjectIdAdminDomains operation.
 	//
 	// Add a domain.
 	//
 	// POST /v1/projects/{project_id}/admin/domains
-	PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, request *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminDomainsRes, error)
+	PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, request *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminDomainsCreated, error)
 	// PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify invokes postV1ProjectsByProjectIdAdminDomainsByDomainIdVerify operation.
 	//
 	// Verify a domain via DNS.
 	//
 	// POST /v1/projects/{project_id}/admin/domains/{domain_id}/verify
-	PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes, error)
+	PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK, error)
 	// PostV1ProjectsByProjectIdAdminSsoConnections invokes postV1ProjectsByProjectIdAdminSsoConnections operation.
 	//
 	// Create an SSO connection.
 	//
 	// POST /v1/projects/{project_id}/admin/sso/connections
-	PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsRes, error)
+	PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminSsoConnectionsCreated, error)
 	// PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate invokes postV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate operation.
 	//
 	// Rotate the SP certificate.
 	//
 	// POST /v1/projects/{project_id}/admin/sso/connections/{id}/rotate-certificate
-	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes, error)
+	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK, error)
 	// PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens invokes postV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens operation.
 	//
 	// Create a SCIM token.
 	//
 	// POST /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens
-	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, error)
+	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated, error)
 	// PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest invokes postV1ProjectsByProjectIdAdminSsoConnectionsByIdTest operation.
 	//
 	// Test a connection.
 	//
 	// POST /v1/projects/{project_id}/admin/sso/connections/{id}/test
-	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes, error)
+	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK, error)
 	// PostV1ScimV2ByConnectionIdGroups invokes postV1ScimV2ByConnectionIdGroups operation.
 	//
 	// Create a SCIM group (forwarded downstream).
 	//
 	// POST /v1/scim/v2/{connection_id}/Groups
-	PostV1ScimV2ByConnectionIdGroups(ctx context.Context, request PostV1ScimV2ByConnectionIdGroupsReq, params PostV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdGroupsRes, error)
+	PostV1ScimV2ByConnectionIdGroups(ctx context.Context, request PostV1ScimV2ByConnectionIdGroupsReq, params PostV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdGroupsCreated, error)
 	// PostV1ScimV2ByConnectionIdUsers invokes postV1ScimV2ByConnectionIdUsers operation.
 	//
 	// Create/provision a user identity.
 	//
 	// POST /v1/scim/v2/{connection_id}/Users
-	PostV1ScimV2ByConnectionIdUsers(ctx context.Context, request *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdUsersRes, error)
+	PostV1ScimV2ByConnectionIdUsers(ctx context.Context, request *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdUsersCreated, error)
 	// PostV1SsoExchange invokes postV1SsoExchange operation.
 	//
 	// Exchange SSO code (alias of token/exchange).
@@ -1280,13 +1280,13 @@ type FederationInvoker interface {
 	// Replace a SCIM group (forwarded downstream).
 	//
 	// PUT /v1/scim/v2/{connection_id}/Groups/{group_id}
-	PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PutV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PutV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (PutV1ScimV2ByConnectionIdGroupsByGroupIdRes, error)
+	PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PutV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PutV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (PutV1ScimV2ByConnectionIdGroupsByGroupIdOK, error)
 	// PutV1ScimV2ByConnectionIdUsersByScimUserId invokes putV1ScimV2ByConnectionIdUsersByScimUserId operation.
 	//
 	// Replace a SCIM user.
 	//
 	// PUT /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-	PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PutV1ScimV2ByConnectionIdUsersByScimUserIdRes, error)
+	PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PutV1ScimV2ByConnectionIdUsersByScimUserIdOK, error)
 }
 
 // MFAInvoker invokes operations described by OpenAPI v3 specification.
@@ -1298,13 +1298,13 @@ type MFAInvoker interface {
 	// Remove a factor (step-up).
 	//
 	// DELETE /v1/auth/mfa/factors/{factor_id}
-	DeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params DeleteV1AuthMfaFactorsByFactorIdParams, options ...RequestOption) (DeleteV1AuthMfaFactorsByFactorIdRes, error)
+	DeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params DeleteV1AuthMfaFactorsByFactorIdParams, options ...RequestOption) (*Ok, error)
 	// GetV1AuthMfaFactors invokes getV1AuthMfaFactors operation.
 	//
 	// List MFA factors.
 	//
 	// GET /v1/auth/mfa/factors
-	GetV1AuthMfaFactors(ctx context.Context, options ...RequestOption) (GetV1AuthMfaFactorsRes, error)
+	GetV1AuthMfaFactors(ctx context.Context, options ...RequestOption) (*GetV1AuthMfaFactorsOK, error)
 	// PostV1AuthMfaChallenge invokes postV1AuthMfaChallenge operation.
 	//
 	// Create an MFA challenge.
@@ -1316,13 +1316,13 @@ type MFAInvoker interface {
 	// Enroll an email factor.
 	//
 	// POST /v1/auth/mfa/email/enroll
-	PostV1AuthMfaEmailEnroll(ctx context.Context, request *PostV1AuthMfaEmailEnrollReq, options ...RequestOption) (PostV1AuthMfaEmailEnrollRes, error)
+	PostV1AuthMfaEmailEnroll(ctx context.Context, request *PostV1AuthMfaEmailEnrollReq, options ...RequestOption) (*PostV1AuthMfaEmailEnrollOK, error)
 	// PostV1AuthMfaRecoveryCodesGenerate invokes postV1AuthMfaRecoveryCodesGenerate operation.
 	//
 	// Generate recovery codes (AAL2).
 	//
 	// POST /v1/auth/mfa/recovery-codes/generate
-	PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, request OptPostV1AuthMfaRecoveryCodesGenerateReq, options ...RequestOption) (PostV1AuthMfaRecoveryCodesGenerateRes, error)
+	PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, request OptPostV1AuthMfaRecoveryCodesGenerateReq, options ...RequestOption) (*PostV1AuthMfaRecoveryCodesGenerateOK, error)
 	// PostV1AuthMfaRecoveryCodesVerify invokes postV1AuthMfaRecoveryCodesVerify operation.
 	//
 	// Use a recovery code.
@@ -1334,37 +1334,37 @@ type MFAInvoker interface {
 	// Enroll an SMS factor.
 	//
 	// POST /v1/auth/mfa/sms/enroll
-	PostV1AuthMfaSmsEnroll(ctx context.Context, request *PostV1AuthMfaSmsEnrollReq, options ...RequestOption) (PostV1AuthMfaSmsEnrollRes, error)
+	PostV1AuthMfaSmsEnroll(ctx context.Context, request *PostV1AuthMfaSmsEnrollReq, options ...RequestOption) (*PostV1AuthMfaSmsEnrollOK, error)
 	// PostV1AuthMfaTotpEnroll invokes postV1AuthMfaTotpEnroll operation.
 	//
 	// Start TOTP enrollment.
 	//
 	// POST /v1/auth/mfa/totp/enroll
-	PostV1AuthMfaTotpEnroll(ctx context.Context, request OptPostV1AuthMfaTotpEnrollReq, options ...RequestOption) (PostV1AuthMfaTotpEnrollRes, error)
+	PostV1AuthMfaTotpEnroll(ctx context.Context, request OptPostV1AuthMfaTotpEnrollReq, options ...RequestOption) (*PostV1AuthMfaTotpEnrollOK, error)
 	// PostV1AuthMfaTotpVerify invokes postV1AuthMfaTotpVerify operation.
 	//
 	// Confirm TOTP enrollment.
 	//
 	// POST /v1/auth/mfa/totp/verify
-	PostV1AuthMfaTotpVerify(ctx context.Context, request *PostV1AuthMfaTotpVerifyReq, options ...RequestOption) (PostV1AuthMfaTotpVerifyRes, error)
+	PostV1AuthMfaTotpVerify(ctx context.Context, request *PostV1AuthMfaTotpVerifyReq, options ...RequestOption) (*PostV1AuthMfaTotpVerifyOK, error)
 	// PostV1AuthMfaVerify invokes postV1AuthMfaVerify operation.
 	//
 	// Verify an MFA challenge.
 	//
 	// POST /v1/auth/mfa/verify
-	PostV1AuthMfaVerify(ctx context.Context, request *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams, options ...RequestOption) (PostV1AuthMfaVerifyRes, error)
+	PostV1AuthMfaVerify(ctx context.Context, request *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams, options ...RequestOption) (*AuthResult, error)
 	// PostV1AuthMfaWebauthnEnrollOptions invokes postV1AuthMfaWebauthnEnrollOptions operation.
 	//
 	// Start a WebAuthn MFA factor.
 	//
 	// POST /v1/auth/mfa/webauthn/enroll/options
-	PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, request OptPostV1AuthMfaWebauthnEnrollOptionsReq, options ...RequestOption) (PostV1AuthMfaWebauthnEnrollOptionsRes, error)
+	PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, request OptPostV1AuthMfaWebauthnEnrollOptionsReq, options ...RequestOption) (*PostV1AuthMfaWebauthnEnrollOptionsOK, error)
 	// PostV1AuthMfaWebauthnEnrollVerify invokes postV1AuthMfaWebauthnEnrollVerify operation.
 	//
 	// Verify a WebAuthn MFA factor.
 	//
 	// POST /v1/auth/mfa/webauthn/enroll/verify
-	PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, request *PostV1AuthMfaWebauthnEnrollVerifyReq, options ...RequestOption) (PostV1AuthMfaWebauthnEnrollVerifyRes, error)
+	PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, request *PostV1AuthMfaWebauthnEnrollVerifyReq, options ...RequestOption) (*PostV1AuthMfaWebauthnEnrollVerifyOK, error)
 }
 
 // MachineIdentityInvoker invokes operations described by OpenAPI v3 specification.
@@ -1376,79 +1376,79 @@ type MachineIdentityInvoker interface {
 	// Delete a key.
 	//
 	// DELETE /v1/projects/{project_id}/admin/api-keys/{key_id}
-	DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId invokes deleteV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
 	//
 	// Delete a service account.
 	//
 	// DELETE /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-	DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId invokes deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId operation.
 	//
 	// Revoke a secret.
 	//
 	// DELETE /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets/{secret_id}
-	DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes, error)
+	DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams, options ...RequestOption) (*Ok, error)
 	// GetV1ProjectsByProjectIdAdminApiKeys invokes getV1ProjectsByProjectIdAdminApiKeys operation.
 	//
 	// List API keys.
 	//
 	// GET /v1/projects/{project_id}/admin/api-keys
-	GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params GetV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminApiKeysRes, error)
+	GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params GetV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminApiKeysOK, error)
 	// GetV1ProjectsByProjectIdAdminServiceAccounts invokes getV1ProjectsByProjectIdAdminServiceAccounts operation.
 	//
 	// List service accounts.
 	//
 	// GET /v1/projects/{project_id}/admin/service-accounts
-	GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminServiceAccountsRes, error)
+	GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminServiceAccountsOK, error)
 	// GetV1ProjectsByProjectIdAdminServiceAccountsBySaId invokes getV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
 	//
 	// Get a service account.
 	//
 	// GET /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-	GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error)
+	GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error)
 	// PatchV1ProjectsByProjectIdAdminApiKeysByKeyId invokes patchV1ProjectsByProjectIdAdminApiKeysByKeyId operation.
 	//
 	// Update key metadata/scopes.
 	//
 	// PATCH /v1/projects/{project_id}/admin/api-keys/{key_id}
-	PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, error)
+	PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK, error)
 	// PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId invokes patchV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
 	//
 	// Update a service account.
 	//
 	// PATCH /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-	PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error)
+	PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error)
 	// PostV1ProjectsByProjectIdAdminApiKeys invokes postV1ProjectsByProjectIdAdminApiKeys operation.
 	//
 	// Create an API key.
 	//
 	// POST /v1/projects/{project_id}/admin/api-keys
-	PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, request *PostV1ProjectsByProjectIdAdminApiKeysReq, params PostV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminApiKeysRes, error)
+	PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, request *PostV1ProjectsByProjectIdAdminApiKeysReq, params PostV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminApiKeysCreated, error)
 	// PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate invokes postV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate operation.
 	//
 	// Rotate the key secret.
 	//
 	// POST /v1/projects/{project_id}/admin/api-keys/{key_id}/rotate
-	PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes, error)
+	PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK, error)
 	// PostV1ProjectsByProjectIdAdminServiceAccounts invokes postV1ProjectsByProjectIdAdminServiceAccounts operation.
 	//
 	// Create a service account.
 	//
 	// POST /v1/projects/{project_id}/admin/service-accounts
-	PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminServiceAccountsRes, error)
+	PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminServiceAccountsCreated, error)
 	// PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets invokes postV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets operation.
 	//
 	// Create a client secret.
 	//
 	// POST /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets
-	PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes, error)
+	PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated, error)
 	// PostV1ServiceAccountsTokens invokes postV1ServiceAccountsTokens operation.
 	//
 	// Authenticated with the service account's client secret or private_key_jwt.
 	//
 	// POST /v1/service-accounts/tokens
-	PostV1ServiceAccountsTokens(ctx context.Context, request *PostV1ServiceAccountsTokensReq, options ...RequestOption) (PostV1ServiceAccountsTokensRes, error)
+	PostV1ServiceAccountsTokens(ctx context.Context, request *PostV1ServiceAccountsTokensReq, options ...RequestOption) (*PostV1ServiceAccountsTokensOK, error)
 }
 
 // OAuthSocialInvoker invokes operations described by OpenAPI v3 specification.
@@ -1490,7 +1490,7 @@ type OAuthSocialInvoker interface {
 	// Unlink a provider identity (step-up).
 	//
 	// POST /v1/auth/oauth/{provider}/unlink
-	PostV1AuthOauthByProviderUnlink(ctx context.Context, request *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams, options ...RequestOption) (PostV1AuthOauthByProviderUnlinkRes, error)
+	PostV1AuthOauthByProviderUnlink(ctx context.Context, request *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams, options ...RequestOption) (*Ok, error)
 	// PostV1AuthOauthExchange invokes postV1AuthOauthExchange operation.
 	//
 	// Exchange OAuth code (alias of token/exchange).
@@ -1508,7 +1508,7 @@ type OIDCProviderInvoker interface {
 	// Revoke an OAuth grant.
 	//
 	// DELETE /v1/oauth/grants/{grant_id}
-	DeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams, options ...RequestOption) (DeleteV1OauthGrantsByGrantIdRes, error)
+	DeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams, options ...RequestOption) (*Ok, error)
 	// GetOauth2Authorize invokes getOauth2Authorize operation.
 	//
 	// Authorization endpoint (headless; may redirect to interaction).
@@ -1526,7 +1526,7 @@ type OIDCProviderInvoker interface {
 	// OIDC UserInfo.
 	//
 	// GET /oauth2/userinfo
-	GetOauth2Userinfo(ctx context.Context, options ...RequestOption) (GetOauth2UserinfoRes, error)
+	GetOauth2Userinfo(ctx context.Context, options ...RequestOption) (GetOauth2UserinfoOK, error)
 	// GetPByProjectIdEByEnvWellKnownJwksJson invokes getPByProjectIdEByEnvWellKnownJwksJson operation.
 	//
 	// JWKS public keys.
@@ -1550,13 +1550,13 @@ type OIDCProviderInvoker interface {
 	// List the user's authorized apps.
 	//
 	// GET /v1/oauth/grants
-	GetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams, options ...RequestOption) (GetV1OauthGrantsRes, error)
+	GetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams, options ...RequestOption) (*GetV1OauthGrantsOK, error)
 	// GetV1OauthInteractionByInteractionId invokes getV1OauthInteractionByInteractionId operation.
 	//
 	// Fetch interaction context.
 	//
 	// GET /v1/oauth/interaction/{interaction_id}
-	GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams, options ...RequestOption) (GetV1OauthInteractionByInteractionIdRes, error)
+	GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams, options ...RequestOption) (*GetV1OauthInteractionByInteractionIdOK, error)
 	// PostOauth2BackchannelLogout invokes postOauth2BackchannelLogout operation.
 	//
 	// OIDC back-channel logout.
@@ -1568,55 +1568,55 @@ type OIDCProviderInvoker interface {
 	// Start the device flow.
 	//
 	// POST /oauth2/device_authorization
-	PostOauth2DeviceAuthorization(ctx context.Context, request *PostOauth2DeviceAuthorizationReq, options ...RequestOption) (PostOauth2DeviceAuthorizationRes, error)
+	PostOauth2DeviceAuthorization(ctx context.Context, request *PostOauth2DeviceAuthorizationReq, options ...RequestOption) (*PostOauth2DeviceAuthorizationOK, error)
 	// PostOauth2Introspect invokes postOauth2Introspect operation.
 	//
 	// RFC 7662 token introspection.
 	//
 	// POST /oauth2/introspect
-	PostOauth2Introspect(ctx context.Context, request *PostOauth2IntrospectReq, options ...RequestOption) (PostOauth2IntrospectRes, error)
+	PostOauth2Introspect(ctx context.Context, request *PostOauth2IntrospectReq, options ...RequestOption) (*PostOauth2IntrospectOK, error)
 	// PostOauth2Par invokes postOauth2Par operation.
 	//
 	// Pushed Authorization Request.
 	//
 	// POST /oauth2/par
-	PostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, options ...RequestOption) (PostOauth2ParRes, error)
+	PostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, options ...RequestOption) (*PostOauth2ParCreated, error)
 	// PostOauth2Revoke invokes postOauth2Revoke operation.
 	//
 	// RFC 7009 token revocation.
 	//
 	// POST /oauth2/revoke
-	PostOauth2Revoke(ctx context.Context, request *PostOauth2RevokeReq, options ...RequestOption) (PostOauth2RevokeRes, error)
+	PostOauth2Revoke(ctx context.Context, request *PostOauth2RevokeReq, options ...RequestOption) error
 	// PostOauth2Token invokes postOauth2Token operation.
 	//
 	// Token endpoint.
 	//
 	// POST /oauth2/token
-	PostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, options ...RequestOption) (PostOauth2TokenRes, error)
+	PostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, options ...RequestOption) (PostOauth2TokenOK, error)
 	// PostV1DeviceApprove invokes postV1DeviceApprove operation.
 	//
 	// Approve a device code.
 	//
 	// POST /v1/device/approve
-	PostV1DeviceApprove(ctx context.Context, request *PostV1DeviceApproveReq, options ...RequestOption) (PostV1DeviceApproveRes, error)
+	PostV1DeviceApprove(ctx context.Context, request *PostV1DeviceApproveReq, options ...RequestOption) (*Ok, error)
 	// PostV1DeviceDeny invokes postV1DeviceDeny operation.
 	//
 	// Deny a device code.
 	//
 	// POST /v1/device/deny
-	PostV1DeviceDeny(ctx context.Context, request *PostV1DeviceDenyReq, options ...RequestOption) (PostV1DeviceDenyRes, error)
+	PostV1DeviceDeny(ctx context.Context, request *PostV1DeviceDenyReq, options ...RequestOption) (*Ok, error)
 	// PostV1OauthInteractionByInteractionIdConsent invokes postV1OauthInteractionByInteractionIdConsent operation.
 	//
 	// Record consent.
 	//
 	// POST /v1/oauth/interaction/{interaction_id}/consent
-	PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, request *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams, options ...RequestOption) (PostV1OauthInteractionByInteractionIdConsentRes, error)
+	PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, request *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams, options ...RequestOption) (*PostV1OauthInteractionByInteractionIdConsentOK, error)
 	// PostV1OauthInteractionByInteractionIdLogin invokes postV1OauthInteractionByInteractionIdLogin operation.
 	//
 	// Attach the authenticated user to the interaction.
 	//
 	// POST /v1/oauth/interaction/{interaction_id}/login
-	PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams, options ...RequestOption) (PostV1OauthInteractionByInteractionIdLoginRes, error)
+	PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams, options ...RequestOption) (*PostV1OauthInteractionByInteractionIdLoginOK, error)
 	// PostV1OauthInteractionByInteractionIdReject invokes postV1OauthInteractionByInteractionIdReject operation.
 	//
 	// Cancel the interaction.
@@ -1634,37 +1634,37 @@ type OperatorInvoker interface {
 	// Delete a project.
 	//
 	// DELETE /mgmt/v1/projects/{project_id}
-	DeleteMgmtV1ProjectsByProjectId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdRes, error)
+	DeleteMgmtV1ProjectsByProjectId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId invokes deleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId operation.
 	//
 	// Revoke an admin token.
 	//
 	// DELETE /mgmt/v1/projects/{project_id}/admin-tokens/{token_id}
-	DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes, error)
+	DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv invokes deleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv operation.
 	//
 	// Delete an environment.
 	//
 	// DELETE /mgmt/v1/projects/{project_id}/environments/{env}
-	DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, error)
+	DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (*Ok, error)
 	// GetMgmtV1Projects invokes getMgmtV1Projects operation.
 	//
 	// List/search projects.
 	//
 	// GET /mgmt/v1/projects
-	GetMgmtV1Projects(ctx context.Context, params GetMgmtV1ProjectsParams, options ...RequestOption) (GetMgmtV1ProjectsRes, error)
+	GetMgmtV1Projects(ctx context.Context, params GetMgmtV1ProjectsParams, options ...RequestOption) (*GetMgmtV1ProjectsOK, error)
 	// GetMgmtV1ProjectsByProjectId invokes getMgmtV1ProjectsByProjectId operation.
 	//
 	// Get a project.
 	//
 	// GET /mgmt/v1/projects/{project_id}
-	GetMgmtV1ProjectsByProjectId(ctx context.Context, params GetMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdRes, error)
+	GetMgmtV1ProjectsByProjectId(ctx context.Context, params GetMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (*GetMgmtV1ProjectsByProjectIdOK, error)
 	// GetMgmtV1ProjectsByProjectIdAdminTokens invokes getMgmtV1ProjectsByProjectIdAdminTokens operation.
 	//
 	// List admin tokens.
 	//
 	// GET /mgmt/v1/projects/{project_id}/admin-tokens
-	GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params GetMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdAdminTokensRes, error)
+	GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params GetMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdAdminTokensOK, error)
 	// GetMgmtV1ProjectsByProjectIdConfigExport invokes getMgmtV1ProjectsByProjectIdConfigExport operation.
 	//
 	// Export project config (IaC; secrets redacted).
@@ -1676,61 +1676,61 @@ type OperatorInvoker interface {
 	// List environments.
 	//
 	// GET /mgmt/v1/projects/{project_id}/environments
-	GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdEnvironmentsRes, error)
+	GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (*GetMgmtV1ProjectsByProjectIdEnvironmentsOK, error)
 	// GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv invokes getMgmtV1ProjectsByProjectIdEnvironmentsByEnv operation.
 	//
 	// Get an environment.
 	//
 	// GET /mgmt/v1/projects/{project_id}/environments/{env}
-	GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, error)
+	GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (*GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK, error)
 	// GetMgmtV1ProjectsByProjectIdFeatures invokes getMgmtV1ProjectsByProjectIdFeatures operation.
 	//
 	// Get operator feature gates.
 	//
 	// GET /mgmt/v1/projects/{project_id}/features
-	GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params GetMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdFeaturesRes, error)
+	GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params GetMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdFeaturesOK, error)
 	// PatchMgmtV1ProjectsByProjectId invokes patchMgmtV1ProjectsByProjectId operation.
 	//
 	// Update a project.
 	//
 	// PATCH /mgmt/v1/projects/{project_id}
-	PatchMgmtV1ProjectsByProjectId(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdReq, params PatchMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (PatchMgmtV1ProjectsByProjectIdRes, error)
+	PatchMgmtV1ProjectsByProjectId(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdReq, params PatchMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (*PatchMgmtV1ProjectsByProjectIdOK, error)
 	// PatchMgmtV1ProjectsByProjectIdFeatures invokes patchMgmtV1ProjectsByProjectIdFeatures operation.
 	//
 	// Set operator feature gates.
 	//
 	// PATCH /mgmt/v1/projects/{project_id}/features
-	PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdFeaturesReq, params PatchMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (PatchMgmtV1ProjectsByProjectIdFeaturesRes, error)
+	PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdFeaturesReq, params PatchMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (PatchMgmtV1ProjectsByProjectIdFeaturesOK, error)
 	// PostMgmtV1Projects invokes postMgmtV1Projects operation.
 	//
 	// Create a project.
 	//
 	// POST /mgmt/v1/projects
-	PostMgmtV1Projects(ctx context.Context, request *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams, options ...RequestOption) (PostMgmtV1ProjectsRes, error)
+	PostMgmtV1Projects(ctx context.Context, request *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams, options ...RequestOption) (*PostMgmtV1ProjectsCreated, error)
 	// PostMgmtV1ProjectsByProjectIdAdminTokens invokes postMgmtV1ProjectsByProjectIdAdminTokens operation.
 	//
 	// Mint a project-admin token.
 	//
 	// POST /mgmt/v1/projects/{project_id}/admin-tokens
-	PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdAdminTokensRes, error)
+	PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (*PostMgmtV1ProjectsByProjectIdAdminTokensOK, error)
 	// PostMgmtV1ProjectsByProjectIdConfigApply invokes postMgmtV1ProjectsByProjectIdConfigApply operation.
 	//
 	// Apply config (idempotent).
 	//
 	// POST /mgmt/v1/projects/{project_id}/config:apply
-	PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigApplyReq, params PostMgmtV1ProjectsByProjectIdConfigApplyParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigApplyRes, error)
+	PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigApplyReq, params PostMgmtV1ProjectsByProjectIdConfigApplyParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigApplyOK, error)
 	// PostMgmtV1ProjectsByProjectIdConfigPlan invokes postMgmtV1ProjectsByProjectIdConfigPlan operation.
 	//
 	// Plan a config apply (diff + drift).
 	//
 	// POST /mgmt/v1/projects/{project_id}/config:plan
-	PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigPlanReq, params PostMgmtV1ProjectsByProjectIdConfigPlanParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigPlanRes, error)
+	PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigPlanReq, params PostMgmtV1ProjectsByProjectIdConfigPlanParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigPlanOK, error)
 	// PostMgmtV1ProjectsByProjectIdEnvironments invokes postMgmtV1ProjectsByProjectIdEnvironments operation.
 	//
 	// Create an environment.
 	//
 	// POST /mgmt/v1/projects/{project_id}/environments
-	PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdEnvironmentsRes, error)
+	PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (*PostMgmtV1ProjectsByProjectIdEnvironmentsCreated, error)
 }
 
 // PasswordlessInvoker invokes operations described by OpenAPI v3 specification.
@@ -1748,25 +1748,25 @@ type PasswordlessInvoker interface {
 	// Send a magic link.
 	//
 	// POST /v1/auth/magic-link/start
-	PostV1AuthMagicLinkStart(ctx context.Context, request *MagicLinkStartRequest, params PostV1AuthMagicLinkStartParams, options ...RequestOption) (PostV1AuthMagicLinkStartRes, error)
+	PostV1AuthMagicLinkStart(ctx context.Context, request *MagicLinkStartRequest, params PostV1AuthMagicLinkStartParams, options ...RequestOption) (*Challenge, error)
 	// PostV1AuthMagicLinkVerify invokes postV1AuthMagicLinkVerify operation.
 	//
 	// Headless verify of a magic-link token.
 	//
 	// POST /v1/auth/magic-link/verify
-	PostV1AuthMagicLinkVerify(ctx context.Context, request *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams, options ...RequestOption) (PostV1AuthMagicLinkVerifyRes, error)
+	PostV1AuthMagicLinkVerify(ctx context.Context, request *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams, options ...RequestOption) (*AuthResult, error)
 	// PostV1AuthOtpStart invokes postV1AuthOtpStart operation.
 	//
 	// Start OTP login/signup/verify.
 	//
 	// POST /v1/auth/otp/start
-	PostV1AuthOtpStart(ctx context.Context, request *OtpStartRequest, params PostV1AuthOtpStartParams, options ...RequestOption) (PostV1AuthOtpStartRes, error)
+	PostV1AuthOtpStart(ctx context.Context, request *OtpStartRequest, params PostV1AuthOtpStartParams, options ...RequestOption) (*Challenge, error)
 	// PostV1AuthOtpVerify invokes postV1AuthOtpVerify operation.
 	//
 	// Verify OTP.
 	//
 	// POST /v1/auth/otp/verify
-	PostV1AuthOtpVerify(ctx context.Context, request *OtpVerifyRequest, params PostV1AuthOtpVerifyParams, options ...RequestOption) (PostV1AuthOtpVerifyRes, error)
+	PostV1AuthOtpVerify(ctx context.Context, request *OtpVerifyRequest, params PostV1AuthOtpVerifyParams, options ...RequestOption) (*AuthResult, error)
 }
 
 // PlatformInvoker invokes operations described by OpenAPI v3 specification.
@@ -1802,7 +1802,7 @@ type PlatformInvoker interface {
 	// Readiness probe.
 	//
 	// GET /v1/health/ready
-	GetV1HealthReady(ctx context.Context, options ...RequestOption) (GetV1HealthReadyRes, error)
+	GetV1HealthReady(ctx context.Context, options ...RequestOption) (*GetV1HealthReadyOK, error)
 }
 
 // WebAuthnInvoker invokes operations described by OpenAPI v3 specification.
@@ -1814,19 +1814,19 @@ type WebAuthnInvoker interface {
 	// Remove a passkey.
 	//
 	// DELETE /v1/auth/webauthn/credentials/{credential_id}
-	DeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, params DeleteV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (DeleteV1AuthWebauthnCredentialsByCredentialIdRes, error)
+	DeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, params DeleteV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (*Ok, error)
 	// GetV1AuthWebauthnCredentials invokes getV1AuthWebauthnCredentials operation.
 	//
 	// List the user's passkeys.
 	//
 	// GET /v1/auth/webauthn/credentials
-	GetV1AuthWebauthnCredentials(ctx context.Context, options ...RequestOption) (GetV1AuthWebauthnCredentialsRes, error)
+	GetV1AuthWebauthnCredentials(ctx context.Context, options ...RequestOption) (*GetV1AuthWebauthnCredentialsOK, error)
 	// PatchV1AuthWebauthnCredentialsByCredentialId invokes patchV1AuthWebauthnCredentialsByCredentialId operation.
 	//
 	// Rename a passkey.
 	//
 	// PATCH /v1/auth/webauthn/credentials/{credential_id}
-	PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, request *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (PatchV1AuthWebauthnCredentialsByCredentialIdRes, error)
+	PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, request *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (*PatchV1AuthWebauthnCredentialsByCredentialIdOK, error)
 	// PostV1AuthWebauthnLoginOptions invokes postV1AuthWebauthnLoginOptions operation.
 	//
 	// Create a passkey login challenge.
@@ -1838,19 +1838,19 @@ type WebAuthnInvoker interface {
 	// Verify a passkey assertion.
 	//
 	// POST /v1/auth/webauthn/login/verify
-	PostV1AuthWebauthnLoginVerify(ctx context.Context, request *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams, options ...RequestOption) (PostV1AuthWebauthnLoginVerifyRes, error)
+	PostV1AuthWebauthnLoginVerify(ctx context.Context, request *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams, options ...RequestOption) (*AuthResult, error)
 	// PostV1AuthWebauthnRegisterOptions invokes postV1AuthWebauthnRegisterOptions operation.
 	//
 	// Create a passkey registration challenge.
 	//
 	// POST /v1/auth/webauthn/register/options
-	PostV1AuthWebauthnRegisterOptions(ctx context.Context, request OptPostV1AuthWebauthnRegisterOptionsReq, options ...RequestOption) (PostV1AuthWebauthnRegisterOptionsRes, error)
+	PostV1AuthWebauthnRegisterOptions(ctx context.Context, request OptPostV1AuthWebauthnRegisterOptionsReq, options ...RequestOption) (*PostV1AuthWebauthnRegisterOptionsOK, error)
 	// PostV1AuthWebauthnRegisterVerify invokes postV1AuthWebauthnRegisterVerify operation.
 	//
 	// Verify a newly created passkey.
 	//
 	// POST /v1/auth/webauthn/register/verify
-	PostV1AuthWebauthnRegisterVerify(ctx context.Context, request *PostV1AuthWebauthnRegisterVerifyReq, options ...RequestOption) (PostV1AuthWebauthnRegisterVerifyRes, error)
+	PostV1AuthWebauthnRegisterVerify(ctx context.Context, request *PostV1AuthWebauthnRegisterVerifyReq, options ...RequestOption) (*PostV1AuthWebauthnRegisterVerifyOK, error)
 }
 
 // Client implements OAS client.
@@ -1901,12 +1901,12 @@ func (c *Client) onResponse(ctx context.Context, resp *http.Response) error {
 // Delete a project.
 //
 // DELETE /mgmt/v1/projects/{project_id}
-func (c *Client) DeleteMgmtV1ProjectsByProjectId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdRes, error) {
+func (c *Client) DeleteMgmtV1ProjectsByProjectId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteMgmtV1ProjectsByProjectId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteMgmtV1ProjectsByProjectId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdParams, requestOptions ...RequestOption) (res DeleteMgmtV1ProjectsByProjectIdRes, err error) {
+func (c *Client) sendDeleteMgmtV1ProjectsByProjectId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteMgmtV1ProjectsByProjectId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -2073,12 +2073,12 @@ func (c *Client) sendDeleteMgmtV1ProjectsByProjectId(ctx context.Context, params
 // Revoke an admin token.
 //
 // DELETE /mgmt/v1/projects/{project_id}/admin-tokens/{token_id}
-func (c *Client) DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes, error) {
+func (c *Client) DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams, requestOptions ...RequestOption) (res DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdRes, err error) {
+func (c *Client) sendDeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -2243,12 +2243,12 @@ func (c *Client) sendDeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx con
 // Delete an environment.
 //
 // DELETE /mgmt/v1/projects/{project_id}/environments/{env}
-func (c *Client) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, error) {
+func (c *Client) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, requestOptions ...RequestOption) (res DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, err error) {
+func (c *Client) sendDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -2413,12 +2413,12 @@ func (c *Client) sendDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx contex
 // Unlink an identity (step-up).
 //
 // DELETE /v1/auth/identities/{identity_id}
-func (c *Client) DeleteV1AuthIdentitiesByIdentityId(ctx context.Context, params DeleteV1AuthIdentitiesByIdentityIdParams, options ...RequestOption) (DeleteV1AuthIdentitiesByIdentityIdRes, error) {
+func (c *Client) DeleteV1AuthIdentitiesByIdentityId(ctx context.Context, params DeleteV1AuthIdentitiesByIdentityIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1AuthIdentitiesByIdentityId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1AuthIdentitiesByIdentityId(ctx context.Context, params DeleteV1AuthIdentitiesByIdentityIdParams, requestOptions ...RequestOption) (res DeleteV1AuthIdentitiesByIdentityIdRes, err error) {
+func (c *Client) sendDeleteV1AuthIdentitiesByIdentityId(ctx context.Context, params DeleteV1AuthIdentitiesByIdentityIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1AuthIdentitiesByIdentityId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -2564,12 +2564,12 @@ func (c *Client) sendDeleteV1AuthIdentitiesByIdentityId(ctx context.Context, par
 // Remove a factor (step-up).
 //
 // DELETE /v1/auth/mfa/factors/{factor_id}
-func (c *Client) DeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params DeleteV1AuthMfaFactorsByFactorIdParams, options ...RequestOption) (DeleteV1AuthMfaFactorsByFactorIdRes, error) {
+func (c *Client) DeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params DeleteV1AuthMfaFactorsByFactorIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1AuthMfaFactorsByFactorId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params DeleteV1AuthMfaFactorsByFactorIdParams, requestOptions ...RequestOption) (res DeleteV1AuthMfaFactorsByFactorIdRes, err error) {
+func (c *Client) sendDeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params DeleteV1AuthMfaFactorsByFactorIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1AuthMfaFactorsByFactorId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -2715,12 +2715,12 @@ func (c *Client) sendDeleteV1AuthMfaFactorsByFactorId(ctx context.Context, param
 // Remove a passkey.
 //
 // DELETE /v1/auth/webauthn/credentials/{credential_id}
-func (c *Client) DeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, params DeleteV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (DeleteV1AuthWebauthnCredentialsByCredentialIdRes, error) {
+func (c *Client) DeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, params DeleteV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1AuthWebauthnCredentialsByCredentialId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, params DeleteV1AuthWebauthnCredentialsByCredentialIdParams, requestOptions ...RequestOption) (res DeleteV1AuthWebauthnCredentialsByCredentialIdRes, err error) {
+func (c *Client) sendDeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, params DeleteV1AuthWebauthnCredentialsByCredentialIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1AuthWebauthnCredentialsByCredentialId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -2866,12 +2866,12 @@ func (c *Client) sendDeleteV1AuthWebauthnCredentialsByCredentialId(ctx context.C
 // Revoke an OAuth grant.
 //
 // DELETE /v1/oauth/grants/{grant_id}
-func (c *Client) DeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams, options ...RequestOption) (DeleteV1OauthGrantsByGrantIdRes, error) {
+func (c *Client) DeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1OauthGrantsByGrantId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams, requestOptions ...RequestOption) (res DeleteV1OauthGrantsByGrantIdRes, err error) {
+func (c *Client) sendDeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1OauthGrantsByGrantId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -3017,12 +3017,12 @@ func (c *Client) sendDeleteV1OauthGrantsByGrantId(ctx context.Context, params De
 // Delete a key.
 //
 // DELETE /v1/projects/{project_id}/admin/api-keys/{key_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminApiKeysByKeyId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -3204,12 +3204,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.
 // Delete an app client.
 //
 // DELETE /v1/projects/{project_id}/admin/apps/{app_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminAppsByAppIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminAppsByAppIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminAppsByAppId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -3391,12 +3391,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Con
 // Revoke a client secret.
 //
 // DELETE /v1/projects/{project_id}/admin/apps/{app_id}/secrets/{secret_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -3597,12 +3597,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretI
 // Remove a domain.
 //
 // DELETE /v1/projects/{project_id}/admin/domains/{domain_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminDomainsByDomainId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -3784,12 +3784,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx conte
 // Delete email provider.
 //
 // DELETE /v1/projects/{project_id}/admin/email-providers/{id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminEmailProvidersById"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -3971,12 +3971,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx cont
 // Delete a hook.
 //
 // DELETE /v1/projects/{project_id}/admin/hooks/{id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminHooksByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminHooksByIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminHooksByIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminHooksById(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminHooksByIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminHooksByIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminHooksByIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminHooksById"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -4158,12 +4158,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Conte
 // Retire a signing key.
 //
 // DELETE /v1/projects/{project_id}/admin/jwks/{key_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminJwksByKeyIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminJwksByKeyIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminJwksByKeyId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -4345,12 +4345,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Con
 // Delete OAuth provider.
 //
 // DELETE /v1/projects/{project_id}/admin/oauth-providers/{id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminOauthProvidersById"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -4532,12 +4532,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx cont
 // Remove a block.
 //
 // DELETE /v1/projects/{project_id}/admin/rate-limit/blocks/{block_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -4719,12 +4719,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ct
 // Delete a risk rule.
 //
 // DELETE /v1/projects/{project_id}/admin/risk/rules/{rule_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminRiskRulesByRuleId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -4906,12 +4906,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx conte
 // Delete a service account.
 //
 // DELETE /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminServiceAccountsBySaId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -5093,12 +5093,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx c
 // Revoke a secret.
 //
 // DELETE /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets/{secret_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -5299,12 +5299,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecret
 // Delete SMS provider.
 //
 // DELETE /v1/projects/{project_id}/admin/sms-providers/{id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminSmsProvidersById"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -5486,12 +5486,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx contex
 // Delete a connection.
 //
 // DELETE /v1/projects/{project_id}/admin/sso/connections/{id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminSsoConnectionsById"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -5673,12 +5673,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx cont
 // Revoke a SCIM token.
 //
 // DELETE /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens/{token_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -5879,12 +5879,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimToken
 // Delete a token profile.
 //
 // DELETE /v1/projects/{project_id}/admin/token-profiles/{id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminTokenProfilesById"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -6066,12 +6066,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx conte
 // Delete a user.
 //
 // DELETE /v1/projects/{project_id}/admin/users/{user_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminUsersByUserIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminUsersByUserIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminUsersByUserId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -6274,12 +6274,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.C
 // Revoke a user's OAuth grant.
 //
 // DELETE /v1/projects/{project_id}/admin/users/{user_id}/grants/{grant_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -6480,12 +6480,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantI
 // Remove a user identity.
 //
 // DELETE /v1/projects/{project_id}/admin/users/{user_id}/identities/{identity_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -6686,12 +6686,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesById
 // Revoke a specific user session.
 //
 // DELETE /v1/projects/{project_id}/admin/users/{user_id}/sessions/{session_id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -6892,12 +6892,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySess
 // Delete a webhook.
 //
 // DELETE /v1/projects/{project_id}/admin/webhooks/{id}
-func (c *Client) DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (DeleteV1ProjectsByProjectIdAdminWebhooksByIdRes, error) {
+func (c *Client) DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1ProjectsByProjectIdAdminWebhooksById(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams, requestOptions ...RequestOption) (res DeleteV1ProjectsByProjectIdAdminWebhooksByIdRes, err error) {
+func (c *Client) sendDeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ProjectsByProjectIdAdminWebhooksById"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -7079,12 +7079,12 @@ func (c *Client) sendDeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Co
 // Delete a SCIM group (forwarded downstream).
 //
 // DELETE /v1/scim/v2/{connection_id}/Groups/{group_id}
-func (c *Client) DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (DeleteV1ScimV2ByConnectionIdGroupsByGroupIdRes, error) {
-	res, err := c.sendDeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx, params, options...)
-	return res, err
+func (c *Client) DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) error {
+	_, err := c.sendDeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx, params, options...)
+	return err
 }
 
-func (c *Client) sendDeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams, requestOptions ...RequestOption) (res DeleteV1ScimV2ByConnectionIdGroupsByGroupIdRes, err error) {
+func (c *Client) sendDeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdGroupsByGroupIdParams, requestOptions ...RequestOption) (res *DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNoContent, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ScimV2ByConnectionIdGroupsByGroupId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -7249,12 +7249,12 @@ func (c *Client) sendDeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Con
 // Deprovision a user.
 //
 // DELETE /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-func (c *Client) DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (DeleteV1ScimV2ByConnectionIdUsersByScimUserIdRes, error) {
-	res, err := c.sendDeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx, params, options...)
-	return res, err
+func (c *Client) DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) error {
+	_, err := c.sendDeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx, params, options...)
+	return err
 }
 
-func (c *Client) sendDeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams, requestOptions ...RequestOption) (res DeleteV1ScimV2ByConnectionIdUsersByScimUserIdRes, err error) {
+func (c *Client) sendDeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params DeleteV1ScimV2ByConnectionIdUsersByScimUserIdParams, requestOptions ...RequestOption) (res *DeleteV1ScimV2ByConnectionIdUsersByScimUserIdNoContent, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1ScimV2ByConnectionIdUsersByScimUserId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -7419,12 +7419,12 @@ func (c *Client) sendDeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.C
 // Revoke multiple own sessions.
 //
 // DELETE /v1/sessions
-func (c *Client) DeleteV1Sessions(ctx context.Context, request OptDeleteV1SessionsReq, options ...RequestOption) (DeleteV1SessionsRes, error) {
+func (c *Client) DeleteV1Sessions(ctx context.Context, request OptDeleteV1SessionsReq, options ...RequestOption) (*DeleteV1SessionsOK, error) {
 	res, err := c.sendDeleteV1Sessions(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1Sessions(ctx context.Context, request OptDeleteV1SessionsReq, requestOptions ...RequestOption) (res DeleteV1SessionsRes, err error) {
+func (c *Client) sendDeleteV1Sessions(ctx context.Context, request OptDeleteV1SessionsReq, requestOptions ...RequestOption) (res *DeleteV1SessionsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1Sessions"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -7555,12 +7555,12 @@ func (c *Client) sendDeleteV1Sessions(ctx context.Context, request OptDeleteV1Se
 // Revoke a session.
 //
 // DELETE /v1/sessions/{session_id}
-func (c *Client) DeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams, options ...RequestOption) (DeleteV1SessionsBySessionIdRes, error) {
+func (c *Client) DeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1SessionsBySessionId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams, requestOptions ...RequestOption) (res DeleteV1SessionsBySessionIdRes, err error) {
+func (c *Client) sendDeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1SessionsBySessionId"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -7706,12 +7706,28 @@ func (c *Client) sendDeleteV1SessionsBySessionId(ctx context.Context, params Del
 // Delete own account (step-up).
 //
 // DELETE /v1/users/me
-func (c *Client) DeleteV1UsersMe(ctx context.Context, request OptDeleteV1UsersMeReq, options ...RequestOption) (DeleteV1UsersMeRes, error) {
+func (c *Client) DeleteV1UsersMe(ctx context.Context, request OptDeleteV1UsersMeReq, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendDeleteV1UsersMe(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendDeleteV1UsersMe(ctx context.Context, request OptDeleteV1UsersMeReq, requestOptions ...RequestOption) (res DeleteV1UsersMeRes, err error) {
+func (c *Client) sendDeleteV1UsersMe(ctx context.Context, request OptDeleteV1UsersMeReq, requestOptions ...RequestOption) (res *Ok, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if value, ok := request.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteV1UsersMe"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
@@ -7842,12 +7858,12 @@ func (c *Client) sendDeleteV1UsersMe(ctx context.Context, request OptDeleteV1Use
 // List/search projects.
 //
 // GET /mgmt/v1/projects
-func (c *Client) GetMgmtV1Projects(ctx context.Context, params GetMgmtV1ProjectsParams, options ...RequestOption) (GetMgmtV1ProjectsRes, error) {
+func (c *Client) GetMgmtV1Projects(ctx context.Context, params GetMgmtV1ProjectsParams, options ...RequestOption) (*GetMgmtV1ProjectsOK, error) {
 	res, err := c.sendGetMgmtV1Projects(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetMgmtV1Projects(ctx context.Context, params GetMgmtV1ProjectsParams, requestOptions ...RequestOption) (res GetMgmtV1ProjectsRes, err error) {
+func (c *Client) sendGetMgmtV1Projects(ctx context.Context, params GetMgmtV1ProjectsParams, requestOptions ...RequestOption) (res *GetMgmtV1ProjectsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getMgmtV1Projects"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -8013,12 +8029,12 @@ func (c *Client) sendGetMgmtV1Projects(ctx context.Context, params GetMgmtV1Proj
 // Get a project.
 //
 // GET /mgmt/v1/projects/{project_id}
-func (c *Client) GetMgmtV1ProjectsByProjectId(ctx context.Context, params GetMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdRes, error) {
+func (c *Client) GetMgmtV1ProjectsByProjectId(ctx context.Context, params GetMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (*GetMgmtV1ProjectsByProjectIdOK, error) {
 	res, err := c.sendGetMgmtV1ProjectsByProjectId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetMgmtV1ProjectsByProjectId(ctx context.Context, params GetMgmtV1ProjectsByProjectIdParams, requestOptions ...RequestOption) (res GetMgmtV1ProjectsByProjectIdRes, err error) {
+func (c *Client) sendGetMgmtV1ProjectsByProjectId(ctx context.Context, params GetMgmtV1ProjectsByProjectIdParams, requestOptions ...RequestOption) (res *GetMgmtV1ProjectsByProjectIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getMgmtV1ProjectsByProjectId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -8164,12 +8180,12 @@ func (c *Client) sendGetMgmtV1ProjectsByProjectId(ctx context.Context, params Ge
 // List admin tokens.
 //
 // GET /mgmt/v1/projects/{project_id}/admin-tokens
-func (c *Client) GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params GetMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdAdminTokensRes, error) {
+func (c *Client) GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params GetMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdAdminTokensOK, error) {
 	res, err := c.sendGetMgmtV1ProjectsByProjectIdAdminTokens(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params GetMgmtV1ProjectsByProjectIdAdminTokensParams, requestOptions ...RequestOption) (res GetMgmtV1ProjectsByProjectIdAdminTokensRes, err error) {
+func (c *Client) sendGetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params GetMgmtV1ProjectsByProjectIdAdminTokensParams, requestOptions ...RequestOption) (res GetMgmtV1ProjectsByProjectIdAdminTokensOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getMgmtV1ProjectsByProjectIdAdminTokens"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -8468,12 +8484,12 @@ func (c *Client) sendGetMgmtV1ProjectsByProjectIdConfigExport(ctx context.Contex
 // List environments.
 //
 // GET /mgmt/v1/projects/{project_id}/environments
-func (c *Client) GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdEnvironmentsRes, error) {
+func (c *Client) GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (*GetMgmtV1ProjectsByProjectIdEnvironmentsOK, error) {
 	res, err := c.sendGetMgmtV1ProjectsByProjectIdEnvironments(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsParams, requestOptions ...RequestOption) (res GetMgmtV1ProjectsByProjectIdEnvironmentsRes, err error) {
+func (c *Client) sendGetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsParams, requestOptions ...RequestOption) (res *GetMgmtV1ProjectsByProjectIdEnvironmentsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getMgmtV1ProjectsByProjectIdEnvironments"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -8620,12 +8636,12 @@ func (c *Client) sendGetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Contex
 // Get an environment.
 //
 // GET /mgmt/v1/projects/{project_id}/environments/{env}
-func (c *Client) GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, error) {
+func (c *Client) GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, options ...RequestOption) (*GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK, error) {
 	res, err := c.sendGetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, requestOptions ...RequestOption) (res GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvRes, err error) {
+func (c *Client) sendGetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams, requestOptions ...RequestOption) (res *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getMgmtV1ProjectsByProjectIdEnvironmentsByEnv"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -8790,12 +8806,12 @@ func (c *Client) sendGetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.C
 // Get operator feature gates.
 //
 // GET /mgmt/v1/projects/{project_id}/features
-func (c *Client) GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params GetMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdFeaturesRes, error) {
+func (c *Client) GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params GetMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (GetMgmtV1ProjectsByProjectIdFeaturesOK, error) {
 	res, err := c.sendGetMgmtV1ProjectsByProjectIdFeatures(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params GetMgmtV1ProjectsByProjectIdFeaturesParams, requestOptions ...RequestOption) (res GetMgmtV1ProjectsByProjectIdFeaturesRes, err error) {
+func (c *Client) sendGetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params GetMgmtV1ProjectsByProjectIdFeaturesParams, requestOptions ...RequestOption) (res GetMgmtV1ProjectsByProjectIdFeaturesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getMgmtV1ProjectsByProjectIdFeatures"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -9342,12 +9358,12 @@ func (c *Client) sendGetOauth2Logout(ctx context.Context, params GetOauth2Logout
 // OIDC UserInfo.
 //
 // GET /oauth2/userinfo
-func (c *Client) GetOauth2Userinfo(ctx context.Context, options ...RequestOption) (GetOauth2UserinfoRes, error) {
+func (c *Client) GetOauth2Userinfo(ctx context.Context, options ...RequestOption) (GetOauth2UserinfoOK, error) {
 	res, err := c.sendGetOauth2Userinfo(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetOauth2Userinfo(ctx context.Context, requestOptions ...RequestOption) (res GetOauth2UserinfoRes, err error) {
+func (c *Client) sendGetOauth2Userinfo(ctx context.Context, requestOptions ...RequestOption) (res GetOauth2UserinfoOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getOauth2Userinfo"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -9763,12 +9779,12 @@ func (c *Client) sendGetPByProjectIdEByEnvWellKnownOpenidConfiguration(ctx conte
 // What this user may self-manage.
 //
 // GET /v1/account/capabilities
-func (c *Client) GetV1AccountCapabilities(ctx context.Context, options ...RequestOption) (GetV1AccountCapabilitiesRes, error) {
+func (c *Client) GetV1AccountCapabilities(ctx context.Context, options ...RequestOption) (*GetV1AccountCapabilitiesOK, error) {
 	res, err := c.sendGetV1AccountCapabilities(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1AccountCapabilities(ctx context.Context, requestOptions ...RequestOption) (res GetV1AccountCapabilitiesRes, err error) {
+func (c *Client) sendGetV1AccountCapabilities(ctx context.Context, requestOptions ...RequestOption) (res *GetV1AccountCapabilitiesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1AccountCapabilities"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -10149,12 +10165,12 @@ func (c *Client) sendGetV1AuthEmailVerificationCallback(ctx context.Context, par
 // List linked identities.
 //
 // GET /v1/auth/identities
-func (c *Client) GetV1AuthIdentities(ctx context.Context, options ...RequestOption) (GetV1AuthIdentitiesRes, error) {
+func (c *Client) GetV1AuthIdentities(ctx context.Context, options ...RequestOption) (*GetV1AuthIdentitiesOK, error) {
 	res, err := c.sendGetV1AuthIdentities(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1AuthIdentities(ctx context.Context, requestOptions ...RequestOption) (res GetV1AuthIdentitiesRes, err error) {
+func (c *Client) sendGetV1AuthIdentities(ctx context.Context, requestOptions ...RequestOption) (res *GetV1AuthIdentitiesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1AuthIdentities"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -10417,12 +10433,12 @@ func (c *Client) sendGetV1AuthMagicLinkCallback(ctx context.Context, params GetV
 // List MFA factors.
 //
 // GET /v1/auth/mfa/factors
-func (c *Client) GetV1AuthMfaFactors(ctx context.Context, options ...RequestOption) (GetV1AuthMfaFactorsRes, error) {
+func (c *Client) GetV1AuthMfaFactors(ctx context.Context, options ...RequestOption) (*GetV1AuthMfaFactorsOK, error) {
 	res, err := c.sendGetV1AuthMfaFactors(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1AuthMfaFactors(ctx context.Context, requestOptions ...RequestOption) (res GetV1AuthMfaFactorsRes, err error) {
+func (c *Client) sendGetV1AuthMfaFactors(ctx context.Context, requestOptions ...RequestOption) (res *GetV1AuthMfaFactorsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1AuthMfaFactors"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -11349,12 +11365,12 @@ func (c *Client) sendGetV1AuthOauthProviders(ctx context.Context, params GetV1Au
 // Get current session and user.
 //
 // GET /v1/auth/session
-func (c *Client) GetV1AuthSession(ctx context.Context, options ...RequestOption) (GetV1AuthSessionRes, error) {
+func (c *Client) GetV1AuthSession(ctx context.Context, options ...RequestOption) (*GetV1AuthSessionOK, error) {
 	res, err := c.sendGetV1AuthSession(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1AuthSession(ctx context.Context, requestOptions ...RequestOption) (res GetV1AuthSessionRes, err error) {
+func (c *Client) sendGetV1AuthSession(ctx context.Context, requestOptions ...RequestOption) (res *GetV1AuthSessionOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1AuthSession"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -11482,12 +11498,12 @@ func (c *Client) sendGetV1AuthSession(ctx context.Context, requestOptions ...Req
 // List the user's passkeys.
 //
 // GET /v1/auth/webauthn/credentials
-func (c *Client) GetV1AuthWebauthnCredentials(ctx context.Context, options ...RequestOption) (GetV1AuthWebauthnCredentialsRes, error) {
+func (c *Client) GetV1AuthWebauthnCredentials(ctx context.Context, options ...RequestOption) (*GetV1AuthWebauthnCredentialsOK, error) {
 	res, err := c.sendGetV1AuthWebauthnCredentials(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1AuthWebauthnCredentials(ctx context.Context, requestOptions ...RequestOption) (res GetV1AuthWebauthnCredentialsRes, err error) {
+func (c *Client) sendGetV1AuthWebauthnCredentials(ctx context.Context, requestOptions ...RequestOption) (res *GetV1AuthWebauthnCredentialsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1AuthWebauthnCredentials"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -12175,12 +12191,12 @@ func (c *Client) sendGetV1HealthLive(ctx context.Context, requestOptions ...Requ
 // Readiness probe.
 //
 // GET /v1/health/ready
-func (c *Client) GetV1HealthReady(ctx context.Context, options ...RequestOption) (GetV1HealthReadyRes, error) {
+func (c *Client) GetV1HealthReady(ctx context.Context, options ...RequestOption) (*GetV1HealthReadyOK, error) {
 	res, err := c.sendGetV1HealthReady(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1HealthReady(ctx context.Context, requestOptions ...RequestOption) (res GetV1HealthReadyRes, err error) {
+func (c *Client) sendGetV1HealthReady(ctx context.Context, requestOptions ...RequestOption) (res *GetV1HealthReadyOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1HealthReady"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -12275,12 +12291,12 @@ func (c *Client) sendGetV1HealthReady(ctx context.Context, requestOptions ...Req
 // List the user's authorized apps.
 //
 // GET /v1/oauth/grants
-func (c *Client) GetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams, options ...RequestOption) (GetV1OauthGrantsRes, error) {
+func (c *Client) GetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams, options ...RequestOption) (*GetV1OauthGrantsOK, error) {
 	res, err := c.sendGetV1OauthGrants(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams, requestOptions ...RequestOption) (res GetV1OauthGrantsRes, err error) {
+func (c *Client) sendGetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams, requestOptions ...RequestOption) (res *GetV1OauthGrantsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1OauthGrants"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -12446,12 +12462,12 @@ func (c *Client) sendGetV1OauthGrants(ctx context.Context, params GetV1OauthGran
 // Fetch interaction context.
 //
 // GET /v1/oauth/interaction/{interaction_id}
-func (c *Client) GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams, options ...RequestOption) (GetV1OauthInteractionByInteractionIdRes, error) {
+func (c *Client) GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams, options ...RequestOption) (*GetV1OauthInteractionByInteractionIdOK, error) {
 	res, err := c.sendGetV1OauthInteractionByInteractionId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams, requestOptions ...RequestOption) (res GetV1OauthInteractionByInteractionIdRes, err error) {
+func (c *Client) sendGetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams, requestOptions ...RequestOption) (res *GetV1OauthInteractionByInteractionIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1OauthInteractionByInteractionId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -12578,12 +12594,12 @@ func (c *Client) sendGetV1OauthInteractionByInteractionId(ctx context.Context, p
 // List access requests.
 //
 // GET /v1/projects/{project_id}/admin/access-requests
-func (c *Client) GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params GetV1ProjectsByProjectIdAdminAccessRequestsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAccessRequestsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params GetV1ProjectsByProjectIdAdminAccessRequestsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAccessRequestsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminAccessRequests(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params GetV1ProjectsByProjectIdAdminAccessRequestsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminAccessRequestsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params GetV1ProjectsByProjectIdAdminAccessRequestsParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminAccessRequestsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminAccessRequests"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -12785,12 +12801,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Con
 // List API keys.
 //
 // GET /v1/projects/{project_id}/admin/api-keys
-func (c *Client) GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params GetV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminApiKeysRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params GetV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminApiKeysOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminApiKeys(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params GetV1ProjectsByProjectIdAdminApiKeysParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminApiKeysRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params GetV1ProjectsByProjectIdAdminApiKeysParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminApiKeysOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminApiKeys"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -12954,12 +12970,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, p
 // List app clients.
 //
 // GET /v1/projects/{project_id}/admin/apps
-func (c *Client) GetV1ProjectsByProjectIdAdminApps(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAppsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminApps(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAppsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminApps(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminApps(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminAppsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminApps(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminAppsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminApps"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -13161,12 +13177,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminApps(ctx context.Context, para
 // Get an app client.
 //
 // GET /v1/projects/{project_id}/admin/apps/{app_id}
-func (c *Client) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAppsByAppIdRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAppsByAppIdOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminAppsByAppId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsByAppIdParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminAppsByAppIdRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAppsByAppIdParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminAppsByAppIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminAppsByAppId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -13348,12 +13364,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Contex
 // List audit logs.
 //
 // GET /v1/projects/{project_id}/admin/audit-logs
-func (c *Client) GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAuditLogsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAuditLogsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminAuditLogs(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminAuditLogsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminAuditLogsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminAuditLogs"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -13606,12 +13622,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context,
 // Get an audit entry.
 //
 // GET /v1/projects/{project_id}/admin/audit-logs/{audit_id}
-func (c *Client) GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminAuditLogsByAuditId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -13793,12 +13809,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context
 // Get auth config.
 //
 // GET /v1/projects/{project_id}/admin/config/auth
-func (c *Client) GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigAuthParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConfigAuthRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigAuthParams, options ...RequestOption) (*AuthConfig, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminConfigAuth(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigAuthParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminConfigAuthRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigAuthParams, requestOptions ...RequestOption) (res *AuthConfig, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminConfigAuth"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -13962,12 +13978,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context
 // Get MFA policy.
 //
 // GET /v1/projects/{project_id}/admin/config/mfa-policy
-func (c *Client) GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConfigMfaPolicyRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams, options ...RequestOption) (*MfaPolicy, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminConfigMfaPolicyRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams, requestOptions ...RequestOption) (res *MfaPolicy, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminConfigMfaPolicy"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -14131,12 +14147,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Co
 // Get password policy.
 //
 // GET /v1/projects/{project_id}/admin/config/password-policy
-func (c *Client) GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConfigPasswordPolicyRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, options ...RequestOption) (*PasswordPolicy, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminConfigPasswordPolicyRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, requestOptions ...RequestOption) (res *PasswordPolicy, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminConfigPasswordPolicy"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -14300,12 +14316,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx conte
 // Get rate limits.
 //
 // GET /v1/projects/{project_id}/admin/config/rate-limits
-func (c *Client) GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigRateLimitsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConfigRateLimitsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigRateLimitsParams, options ...RequestOption) (*RateLimits, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminConfigRateLimits(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigRateLimitsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminConfigRateLimitsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigRateLimitsParams, requestOptions ...RequestOption) (res *RateLimits, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminConfigRateLimits"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -14469,12 +14485,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.C
 // Get session policy.
 //
 // GET /v1/projects/{project_id}/admin/config/session-policy
-func (c *Client) GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConfigSessionPolicyRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams, options ...RequestOption) (*SessionPolicy, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminConfigSessionPolicyRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams, requestOptions ...RequestOption) (res *SessionPolicy, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminConfigSessionPolicy"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -14638,12 +14654,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx contex
 // Get required consents.
 //
 // GET /v1/projects/{project_id}/admin/consents
-func (c *Client) GetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params GetV1ProjectsByProjectIdAdminConsentsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminConsentsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params GetV1ProjectsByProjectIdAdminConsentsParams, options ...RequestOption) (*ConsentConfig, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminConsents(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params GetV1ProjectsByProjectIdAdminConsentsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminConsentsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params GetV1ProjectsByProjectIdAdminConsentsParams, requestOptions ...RequestOption) (res *ConsentConfig, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminConsents"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -14807,12 +14823,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminConsents(ctx context.Context, 
 // List domains.
 //
 // GET /v1/projects/{project_id}/admin/domains
-func (c *Client) GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params GetV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminDomainsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params GetV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminDomainsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminDomains(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params GetV1ProjectsByProjectIdAdminDomainsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminDomainsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params GetV1ProjectsByProjectIdAdminDomainsParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminDomainsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminDomains"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -15014,12 +15030,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminDomains(ctx context.Context, p
 // List email providers.
 //
 // GET /v1/projects/{project_id}/admin/email-providers
-func (c *Client) GetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailProvidersParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminEmailProvidersRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailProvidersParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminEmailProvidersOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminEmailProviders(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailProvidersParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminEmailProvidersRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailProvidersParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminEmailProvidersOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminEmailProviders"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -15183,12 +15199,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Con
 // List email templates.
 //
 // GET /v1/projects/{project_id}/admin/email-templates
-func (c *Client) GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailTemplatesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminEmailTemplatesRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailTemplatesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminEmailTemplatesOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminEmailTemplates(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailTemplatesParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminEmailTemplatesRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params GetV1ProjectsByProjectIdAdminEmailTemplatesParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminEmailTemplatesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminEmailTemplates"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -15352,12 +15368,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Con
 // List events.
 //
 // GET /v1/projects/{project_id}/admin/events
-func (c *Client) GetV1ProjectsByProjectIdAdminEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminEventsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminEventsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminEventsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminEventsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminEvents(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminEventsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminEventsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminEventsParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminEventsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminEvents"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -15593,12 +15609,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminEvents(ctx context.Context, pa
 // Download/check an export.
 //
 // GET /v1/projects/{project_id}/admin/exports/{job_id}
-func (c *Client) GetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminExportsByJobIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminExportsByJobIdRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminExportsByJobIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminExportsByJobIdOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminExportsByJobId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminExportsByJobIdParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminExportsByJobIdRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminExportsByJobIdParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminExportsByJobIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminExportsByJobId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -15780,12 +15796,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Con
 // Get project feature toggles.
 //
 // GET /v1/projects/{project_id}/admin/features
-func (c *Client) GetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, params GetV1ProjectsByProjectIdAdminFeaturesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminFeaturesRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, params GetV1ProjectsByProjectIdAdminFeaturesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminFeaturesOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminFeatures(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, params GetV1ProjectsByProjectIdAdminFeaturesParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminFeaturesRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, params GetV1ProjectsByProjectIdAdminFeaturesParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminFeaturesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminFeatures"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -15949,12 +15965,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, 
 // List hooks.
 //
 // GET /v1/projects/{project_id}/admin/hooks
-func (c *Client) GetV1ProjectsByProjectIdAdminHooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminHooksParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminHooksRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminHooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminHooksParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminHooksOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminHooks(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminHooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminHooksParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminHooksRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminHooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminHooksParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminHooksOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminHooks"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -16156,12 +16172,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminHooks(ctx context.Context, par
 // Get i18n catalogue.
 //
 // GET /v1/projects/{project_id}/admin/i18n/{locale}
-func (c *Client) GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params GetV1ProjectsByProjectIdAdminI18nByLocaleParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminI18nByLocaleRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params GetV1ProjectsByProjectIdAdminI18nByLocaleParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminI18nByLocaleOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminI18nByLocale(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params GetV1ProjectsByProjectIdAdminI18nByLocaleParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminI18nByLocaleRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params GetV1ProjectsByProjectIdAdminI18nByLocaleParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminI18nByLocaleOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminI18nByLocale"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -16343,12 +16359,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Conte
 // List background jobs.
 //
 // GET /v1/projects/{project_id}/admin/jobs
-func (c *Client) GetV1ProjectsByProjectIdAdminJobs(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminJobsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminJobs(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminJobsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminJobs(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminJobs(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminJobsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminJobs(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminJobsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminJobs"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -16584,12 +16600,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminJobs(ctx context.Context, para
 // Get a job.
 //
 // GET /v1/projects/{project_id}/admin/jobs/{job_id}
-func (c *Client) GetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsByJobIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminJobsByJobIdRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsByJobIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminJobsByJobIdOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminJobsByJobId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsByJobIdParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminJobsByJobIdRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Context, params GetV1ProjectsByProjectIdAdminJobsByJobIdParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminJobsByJobIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminJobsByJobId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -16771,12 +16787,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Contex
 // List signing keys.
 //
 // GET /v1/projects/{project_id}/admin/jwks
-func (c *Client) GetV1ProjectsByProjectIdAdminJwks(ctx context.Context, params GetV1ProjectsByProjectIdAdminJwksParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminJwksRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminJwks(ctx context.Context, params GetV1ProjectsByProjectIdAdminJwksParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminJwksOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminJwks(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminJwks(ctx context.Context, params GetV1ProjectsByProjectIdAdminJwksParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminJwksRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminJwks(ctx context.Context, params GetV1ProjectsByProjectIdAdminJwksParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminJwksOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminJwks"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -16940,12 +16956,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminJwks(ctx context.Context, para
 // List OAuth providers.
 //
 // GET /v1/projects/{project_id}/admin/oauth-providers
-func (c *Client) GetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminOauthProvidersParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminOauthProvidersRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminOauthProvidersParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminOauthProvidersOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminOauthProviders(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminOauthProvidersParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminOauthProvidersRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminOauthProvidersParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminOauthProvidersOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminOauthProviders"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -17109,12 +17125,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Con
 // Get retention policy.
 //
 // GET /v1/projects/{project_id}/admin/retention-policy
-func (c *Client) GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminRetentionPolicyParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminRetentionPolicyRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminRetentionPolicyParams, options ...RequestOption) (*RetentionPolicy, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminRetentionPolicy(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminRetentionPolicyParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminRetentionPolicyRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminRetentionPolicyParams, requestOptions ...RequestOption) (res *RetentionPolicy, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminRetentionPolicy"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -17278,12 +17294,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Co
 // List risk events.
 //
 // GET /v1/projects/{project_id}/admin/risk/events
-func (c *Client) GetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskEventsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminRiskEventsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskEventsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminRiskEventsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminRiskEvents(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskEventsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminRiskEventsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskEventsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminRiskEventsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminRiskEvents"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -17536,12 +17552,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context
 // List risk rules.
 //
 // GET /v1/projects/{project_id}/admin/risk/rules
-func (c *Client) GetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskRulesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminRiskRulesRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskRulesParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminRiskRulesOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminRiskRules(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskRulesParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminRiskRulesRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params GetV1ProjectsByProjectIdAdminRiskRulesParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminRiskRulesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminRiskRules"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -17743,12 +17759,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context,
 // List service accounts.
 //
 // GET /v1/projects/{project_id}/admin/service-accounts
-func (c *Client) GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminServiceAccountsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminServiceAccountsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminServiceAccounts(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminServiceAccountsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminServiceAccountsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminServiceAccounts"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -17950,12 +17966,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Co
 // Get a service account.
 //
 // GET /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-func (c *Client) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminServiceAccountsBySaId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -18137,12 +18153,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx cont
 // List SMS providers.
 //
 // GET /v1/projects/{project_id}/admin/sms-providers
-func (c *Client) GetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminSmsProvidersParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSmsProvidersRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminSmsProvidersParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminSmsProvidersOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminSmsProviders(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminSmsProvidersParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminSmsProvidersRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params GetV1ProjectsByProjectIdAdminSmsProvidersParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminSmsProvidersOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminSmsProviders"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -18306,12 +18322,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Conte
 // List SSO connections.
 //
 // GET /v1/projects/{project_id}/admin/sso/connections
-func (c *Client) GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminSsoConnectionsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminSsoConnections(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminSsoConnectionsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminSsoConnectionsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminSsoConnections"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -18513,12 +18529,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Con
 // Get a connection.
 //
 // GET /v1/projects/{project_id}/admin/sso/connections/{id}
-func (c *Client) GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminSsoConnectionsById"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -18700,12 +18716,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context
 // List SCIM tokens.
 //
 // GET /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens
-func (c *Client) GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, params GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -18888,12 +18904,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(c
 // List token profiles.
 //
 // GET /v1/projects/{project_id}/admin/token-profiles
-func (c *Client) GetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, params GetV1ProjectsByProjectIdAdminTokenProfilesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminTokenProfilesRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, params GetV1ProjectsByProjectIdAdminTokenProfilesParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminTokenProfilesOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminTokenProfiles(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, params GetV1ProjectsByProjectIdAdminTokenProfilesParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminTokenProfilesRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, params GetV1ProjectsByProjectIdAdminTokenProfilesParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminTokenProfilesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminTokenProfiles"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -19095,12 +19111,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Cont
 // Search/list users.
 //
 // GET /v1/projects/{project_id}/admin/users
-func (c *Client) GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminUsersRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminUsersOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminUsers(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminUsersRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminUsersOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminUsers"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -19370,12 +19386,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminUsers(ctx context.Context, par
 // Get a user.
 //
 // GET /v1/projects/{project_id}/admin/users/{user_id}
-func (c *Client) GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminUsersByUserIdRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminUsersByUserIdOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminUsersByUserId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminUsersByUserIdRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminUsersByUserIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminUsersByUserId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -19557,12 +19573,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Cont
 // List a user's OAuth grants.
 //
 // GET /v1/projects/{project_id}/admin/users/{user_id}/grants
-func (c *Client) GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminUsersByUserIdGrants"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -19783,12 +19799,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx contex
 // List a user's identities.
 //
 // GET /v1/projects/{project_id}/admin/users/{user_id}/identities
-func (c *Client) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminUsersByUserIdIdentities"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -19971,12 +19987,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx co
 // List a user's sessions.
 //
 // GET /v1/projects/{project_id}/admin/users/{user_id}/sessions
-func (c *Client) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminUsersByUserIdSessions"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -20197,12 +20213,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx cont
 // List deliveries.
 //
 // GET /v1/projects/{project_id}/admin/webhook-deliveries
-func (c *Client) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhookDeliveriesRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminWebhookDeliveriesRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminWebhookDeliveries"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -20404,12 +20420,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.
 // List webhooks.
 //
 // GET /v1/projects/{project_id}/admin/webhooks
-func (c *Client) GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhooksRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminWebhooksOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminWebhooks(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminWebhooksRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminWebhooksOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminWebhooks"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -20611,12 +20627,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, 
 // Get a webhook.
 //
 // GET /v1/projects/{project_id}/admin/webhooks/{id}
-func (c *Client) GetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhooksByIdRes, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminWebhooksByIdOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminWebhooksById(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksByIdParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminWebhooksByIdRes, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhooksByIdParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminWebhooksByIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminWebhooksById"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -20798,12 +20814,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Conte
 // List SCIM groups (forwarded downstream).
 //
 // GET /v1/scim/v2/{connection_id}/Groups
-func (c *Client) GetV1ScimV2ByConnectionIdGroups(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsRes, error) {
+func (c *Client) GetV1ScimV2ByConnectionIdGroups(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsOK, error) {
 	res, err := c.sendGetV1ScimV2ByConnectionIdGroups(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ScimV2ByConnectionIdGroups(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsParams, requestOptions ...RequestOption) (res GetV1ScimV2ByConnectionIdGroupsRes, err error) {
+func (c *Client) sendGetV1ScimV2ByConnectionIdGroups(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsParams, requestOptions ...RequestOption) (res GetV1ScimV2ByConnectionIdGroupsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ScimV2ByConnectionIdGroups"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -20950,12 +20966,12 @@ func (c *Client) sendGetV1ScimV2ByConnectionIdGroups(ctx context.Context, params
 // Get a SCIM group (forwarded downstream).
 //
 // GET /v1/scim/v2/{connection_id}/Groups/{group_id}
-func (c *Client) GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsByGroupIdRes, error) {
+func (c *Client) GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdGroupsByGroupIdOK, error) {
 	res, err := c.sendGetV1ScimV2ByConnectionIdGroupsByGroupId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsByGroupIdParams, requestOptions ...RequestOption) (res GetV1ScimV2ByConnectionIdGroupsByGroupIdRes, err error) {
+func (c *Client) sendGetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, params GetV1ScimV2ByConnectionIdGroupsByGroupIdParams, requestOptions ...RequestOption) (res GetV1ScimV2ByConnectionIdGroupsByGroupIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ScimV2ByConnectionIdGroupsByGroupId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -21120,12 +21136,12 @@ func (c *Client) sendGetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Contex
 // List SCIM users.
 //
 // GET /v1/scim/v2/{connection_id}/Users
-func (c *Client) GetV1ScimV2ByConnectionIdUsers(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersRes, error) {
+func (c *Client) GetV1ScimV2ByConnectionIdUsers(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersOK, error) {
 	res, err := c.sendGetV1ScimV2ByConnectionIdUsers(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ScimV2ByConnectionIdUsers(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersParams, requestOptions ...RequestOption) (res GetV1ScimV2ByConnectionIdUsersRes, err error) {
+func (c *Client) sendGetV1ScimV2ByConnectionIdUsers(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersParams, requestOptions ...RequestOption) (res GetV1ScimV2ByConnectionIdUsersOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ScimV2ByConnectionIdUsers"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -21327,12 +21343,12 @@ func (c *Client) sendGetV1ScimV2ByConnectionIdUsers(ctx context.Context, params 
 // Get a SCIM user.
 //
 // GET /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-func (c *Client) GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersByScimUserIdRes, error) {
+func (c *Client) GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (GetV1ScimV2ByConnectionIdUsersByScimUserIdOK, error) {
 	res, err := c.sendGetV1ScimV2ByConnectionIdUsersByScimUserId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersByScimUserIdParams, requestOptions ...RequestOption) (res GetV1ScimV2ByConnectionIdUsersByScimUserIdRes, err error) {
+func (c *Client) sendGetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, params GetV1ScimV2ByConnectionIdUsersByScimUserIdParams, requestOptions ...RequestOption) (res GetV1ScimV2ByConnectionIdUsersByScimUserIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ScimV2ByConnectionIdUsersByScimUserId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -21497,12 +21513,12 @@ func (c *Client) sendGetV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Cont
 // List own sessions.
 //
 // GET /v1/sessions
-func (c *Client) GetV1Sessions(ctx context.Context, options ...RequestOption) (GetV1SessionsRes, error) {
+func (c *Client) GetV1Sessions(ctx context.Context, options ...RequestOption) (*GetV1SessionsOK, error) {
 	res, err := c.sendGetV1Sessions(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1Sessions(ctx context.Context, requestOptions ...RequestOption) (res GetV1SessionsRes, err error) {
+func (c *Client) sendGetV1Sessions(ctx context.Context, requestOptions ...RequestOption) (res *GetV1SessionsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1Sessions"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -21630,12 +21646,12 @@ func (c *Client) sendGetV1Sessions(ctx context.Context, requestOptions ...Reques
 // Current session details.
 //
 // GET /v1/sessions/current
-func (c *Client) GetV1SessionsCurrent(ctx context.Context, options ...RequestOption) (GetV1SessionsCurrentRes, error) {
+func (c *Client) GetV1SessionsCurrent(ctx context.Context, options ...RequestOption) (*GetV1SessionsCurrentOK, error) {
 	res, err := c.sendGetV1SessionsCurrent(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1SessionsCurrent(ctx context.Context, requestOptions ...RequestOption) (res GetV1SessionsCurrentRes, err error) {
+func (c *Client) sendGetV1SessionsCurrent(ctx context.Context, requestOptions ...RequestOption) (res *GetV1SessionsCurrentOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1SessionsCurrent"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -21763,12 +21779,12 @@ func (c *Client) sendGetV1SessionsCurrent(ctx context.Context, requestOptions ..
 // Resolve an email to its SSO connection.
 //
 // GET /v1/sso/connections/resolve
-func (c *Client) GetV1SsoConnectionsResolve(ctx context.Context, params GetV1SsoConnectionsResolveParams, options ...RequestOption) (GetV1SsoConnectionsResolveRes, error) {
+func (c *Client) GetV1SsoConnectionsResolve(ctx context.Context, params GetV1SsoConnectionsResolveParams, options ...RequestOption) (*GetV1SsoConnectionsResolveOK, error) {
 	res, err := c.sendGetV1SsoConnectionsResolve(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1SsoConnectionsResolve(ctx context.Context, params GetV1SsoConnectionsResolveParams, requestOptions ...RequestOption) (res GetV1SsoConnectionsResolveRes, err error) {
+func (c *Client) sendGetV1SsoConnectionsResolve(ctx context.Context, params GetV1SsoConnectionsResolveParams, requestOptions ...RequestOption) (res *GetV1SsoConnectionsResolveOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1SsoConnectionsResolve"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -22493,12 +22509,12 @@ func (c *Client) sendGetV1SsoSamlByConnectionIdMetadata(ctx context.Context, par
 // Read captured test-mode messages (inbox).
 //
 // GET /v1/test/messages
-func (c *Client) GetV1TestMessages(ctx context.Context, params GetV1TestMessagesParams, options ...RequestOption) (GetV1TestMessagesRes, error) {
+func (c *Client) GetV1TestMessages(ctx context.Context, params GetV1TestMessagesParams, options ...RequestOption) (GetV1TestMessagesOK, error) {
 	res, err := c.sendGetV1TestMessages(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1TestMessages(ctx context.Context, params GetV1TestMessagesParams, requestOptions ...RequestOption) (res GetV1TestMessagesRes, err error) {
+func (c *Client) sendGetV1TestMessages(ctx context.Context, params GetV1TestMessagesParams, requestOptions ...RequestOption) (res GetV1TestMessagesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1TestMessages"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -22681,12 +22697,12 @@ func (c *Client) sendGetV1TestMessages(ctx context.Context, params GetV1TestMess
 // Current token claims.
 //
 // GET /v1/tokens/current
-func (c *Client) GetV1TokensCurrent(ctx context.Context, options ...RequestOption) (GetV1TokensCurrentRes, error) {
+func (c *Client) GetV1TokensCurrent(ctx context.Context, options ...RequestOption) (*GetV1TokensCurrentOK, error) {
 	res, err := c.sendGetV1TokensCurrent(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1TokensCurrent(ctx context.Context, requestOptions ...RequestOption) (res GetV1TokensCurrentRes, err error) {
+func (c *Client) sendGetV1TokensCurrent(ctx context.Context, requestOptions ...RequestOption) (res *GetV1TokensCurrentOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1TokensCurrent"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -22814,12 +22830,12 @@ func (c *Client) sendGetV1TokensCurrent(ctx context.Context, requestOptions ...R
 // Get the current user.
 //
 // GET /v1/users/me
-func (c *Client) GetV1UsersMe(ctx context.Context, options ...RequestOption) (GetV1UsersMeRes, error) {
+func (c *Client) GetV1UsersMe(ctx context.Context, options ...RequestOption) (*GetV1UsersMeOK, error) {
 	res, err := c.sendGetV1UsersMe(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1UsersMe(ctx context.Context, requestOptions ...RequestOption) (res GetV1UsersMeRes, err error) {
+func (c *Client) sendGetV1UsersMe(ctx context.Context, requestOptions ...RequestOption) (res *GetV1UsersMeOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1UsersMe"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -22947,12 +22963,12 @@ func (c *Client) sendGetV1UsersMe(ctx context.Context, requestOptions ...Request
 // Own security activity.
 //
 // GET /v1/users/me/activity
-func (c *Client) GetV1UsersMeActivity(ctx context.Context, params GetV1UsersMeActivityParams, options ...RequestOption) (GetV1UsersMeActivityRes, error) {
+func (c *Client) GetV1UsersMeActivity(ctx context.Context, params GetV1UsersMeActivityParams, options ...RequestOption) (*GetV1UsersMeActivityOK, error) {
 	res, err := c.sendGetV1UsersMeActivity(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1UsersMeActivity(ctx context.Context, params GetV1UsersMeActivityParams, requestOptions ...RequestOption) (res GetV1UsersMeActivityRes, err error) {
+func (c *Client) sendGetV1UsersMeActivity(ctx context.Context, params GetV1UsersMeActivityParams, requestOptions ...RequestOption) (res *GetV1UsersMeActivityOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1UsersMeActivity"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -23135,12 +23151,12 @@ func (c *Client) sendGetV1UsersMeActivity(ctx context.Context, params GetV1Users
 // Read own consents.
 //
 // GET /v1/users/me/consents
-func (c *Client) GetV1UsersMeConsents(ctx context.Context, options ...RequestOption) (GetV1UsersMeConsentsRes, error) {
+func (c *Client) GetV1UsersMeConsents(ctx context.Context, options ...RequestOption) (*GetV1UsersMeConsentsOK, error) {
 	res, err := c.sendGetV1UsersMeConsents(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1UsersMeConsents(ctx context.Context, requestOptions ...RequestOption) (res GetV1UsersMeConsentsRes, err error) {
+func (c *Client) sendGetV1UsersMeConsents(ctx context.Context, requestOptions ...RequestOption) (res *GetV1UsersMeConsentsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1UsersMeConsents"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -23268,12 +23284,12 @@ func (c *Client) sendGetV1UsersMeConsents(ctx context.Context, requestOptions ..
 // Export status/download.
 //
 // GET /v1/users/me/export/{job_id}
-func (c *Client) GetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams, options ...RequestOption) (GetV1UsersMeExportByJobIdRes, error) {
+func (c *Client) GetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams, options ...RequestOption) (*GetV1UsersMeExportByJobIdOK, error) {
 	res, err := c.sendGetV1UsersMeExportByJobId(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams, requestOptions ...RequestOption) (res GetV1UsersMeExportByJobIdRes, err error) {
+func (c *Client) sendGetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams, requestOptions ...RequestOption) (res *GetV1UsersMeExportByJobIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1UsersMeExportByJobId"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -23419,12 +23435,12 @@ func (c *Client) sendGetV1UsersMeExportByJobId(ctx context.Context, params GetV1
 // Update a project.
 //
 // PATCH /mgmt/v1/projects/{project_id}
-func (c *Client) PatchMgmtV1ProjectsByProjectId(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdReq, params PatchMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (PatchMgmtV1ProjectsByProjectIdRes, error) {
+func (c *Client) PatchMgmtV1ProjectsByProjectId(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdReq, params PatchMgmtV1ProjectsByProjectIdParams, options ...RequestOption) (*PatchMgmtV1ProjectsByProjectIdOK, error) {
 	res, err := c.sendPatchMgmtV1ProjectsByProjectId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchMgmtV1ProjectsByProjectId(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdReq, params PatchMgmtV1ProjectsByProjectIdParams, requestOptions ...RequestOption) (res PatchMgmtV1ProjectsByProjectIdRes, err error) {
+func (c *Client) sendPatchMgmtV1ProjectsByProjectId(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdReq, params PatchMgmtV1ProjectsByProjectIdParams, requestOptions ...RequestOption) (res *PatchMgmtV1ProjectsByProjectIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchMgmtV1ProjectsByProjectId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -23573,12 +23589,12 @@ func (c *Client) sendPatchMgmtV1ProjectsByProjectId(ctx context.Context, request
 // Set operator feature gates.
 //
 // PATCH /mgmt/v1/projects/{project_id}/features
-func (c *Client) PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdFeaturesReq, params PatchMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (PatchMgmtV1ProjectsByProjectIdFeaturesRes, error) {
+func (c *Client) PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdFeaturesReq, params PatchMgmtV1ProjectsByProjectIdFeaturesParams, options ...RequestOption) (PatchMgmtV1ProjectsByProjectIdFeaturesOK, error) {
 	res, err := c.sendPatchMgmtV1ProjectsByProjectIdFeatures(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdFeaturesReq, params PatchMgmtV1ProjectsByProjectIdFeaturesParams, requestOptions ...RequestOption) (res PatchMgmtV1ProjectsByProjectIdFeaturesRes, err error) {
+func (c *Client) sendPatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, request PatchMgmtV1ProjectsByProjectIdFeaturesReq, params PatchMgmtV1ProjectsByProjectIdFeaturesParams, requestOptions ...RequestOption) (res PatchMgmtV1ProjectsByProjectIdFeaturesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchMgmtV1ProjectsByProjectIdFeatures"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -23728,12 +23744,12 @@ func (c *Client) sendPatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context,
 // Rename a passkey.
 //
 // PATCH /v1/auth/webauthn/credentials/{credential_id}
-func (c *Client) PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, request *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (PatchV1AuthWebauthnCredentialsByCredentialIdRes, error) {
+func (c *Client) PatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, request *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams, options ...RequestOption) (*PatchV1AuthWebauthnCredentialsByCredentialIdOK, error) {
 	res, err := c.sendPatchV1AuthWebauthnCredentialsByCredentialId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, request *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams, requestOptions ...RequestOption) (res PatchV1AuthWebauthnCredentialsByCredentialIdRes, err error) {
+func (c *Client) sendPatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Context, request *PatchV1AuthWebauthnCredentialsByCredentialIdReq, params PatchV1AuthWebauthnCredentialsByCredentialIdParams, requestOptions ...RequestOption) (res *PatchV1AuthWebauthnCredentialsByCredentialIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1AuthWebauthnCredentialsByCredentialId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -23882,12 +23898,12 @@ func (c *Client) sendPatchV1AuthWebauthnCredentialsByCredentialId(ctx context.Co
 // Update key metadata/scopes.
 //
 // PATCH /v1/projects/{project_id}/admin/api-keys/{key_id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminApiKeysByKeyId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -24072,12 +24088,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.C
 // Update an app client.
 //
 // PATCH /v1/projects/{project_id}/admin/apps/{app_id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminAppsByAppIdReq, params PatchV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminAppsByAppIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminAppsByAppIdReq, params PatchV1ProjectsByProjectIdAdminAppsByAppIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminAppsByAppIdOK, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminAppsByAppId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminAppsByAppIdReq, params PatchV1ProjectsByProjectIdAdminAppsByAppIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminAppsByAppIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminAppsByAppIdReq, params PatchV1ProjectsByProjectIdAdminAppsByAppIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminAppsByAppIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminAppsByAppId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -24262,12 +24278,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Cont
 // Update auth config.
 //
 // PATCH /v1/projects/{project_id}/admin/config/auth
-func (c *Client) PatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, request *AuthConfig, params PatchV1ProjectsByProjectIdAdminConfigAuthParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminConfigAuthRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, request *AuthConfig, params PatchV1ProjectsByProjectIdAdminConfigAuthParams, options ...RequestOption) (*AuthConfig, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminConfigAuth(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, request *AuthConfig, params PatchV1ProjectsByProjectIdAdminConfigAuthParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminConfigAuthRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, request *AuthConfig, params PatchV1ProjectsByProjectIdAdminConfigAuthParams, requestOptions ...RequestOption) (res *AuthConfig, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -24443,12 +24459,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Conte
 // Update MFA policy.
 //
 // PATCH /v1/projects/{project_id}/admin/config/mfa-policy
-func (c *Client) PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, request *MfaPolicy, params PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminConfigMfaPolicyRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, request *MfaPolicy, params PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams, options ...RequestOption) (*MfaPolicy, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, request *MfaPolicy, params PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminConfigMfaPolicyRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, request *MfaPolicy, params PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams, requestOptions ...RequestOption) (res *MfaPolicy, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminConfigMfaPolicy"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -24615,12 +24631,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.
 // Update password policy.
 //
 // PATCH /v1/projects/{project_id}/admin/config/password-policy
-func (c *Client) PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, request *PasswordPolicy, params PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, request *PasswordPolicy, params PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, options ...RequestOption) (*PasswordPolicy, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, request *PasswordPolicy, params PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, request *PasswordPolicy, params PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, requestOptions ...RequestOption) (res *PasswordPolicy, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminConfigPasswordPolicy"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -24787,12 +24803,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx con
 // Update rate limits.
 //
 // PATCH /v1/projects/{project_id}/admin/config/rate-limits
-func (c *Client) PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, request *RateLimits, params PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminConfigRateLimitsRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, request *RateLimits, params PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams, options ...RequestOption) (*RateLimits, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, request *RateLimits, params PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminConfigRateLimitsRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, request *RateLimits, params PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams, requestOptions ...RequestOption) (res *RateLimits, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminConfigRateLimits"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -24959,12 +24975,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context
 // Update session policy.
 //
 // PATCH /v1/projects/{project_id}/admin/config/session-policy
-func (c *Client) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, request *SessionPolicy, params PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminConfigSessionPolicyRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, request *SessionPolicy, params PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams, options ...RequestOption) (*SessionPolicy, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, request *SessionPolicy, params PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminConfigSessionPolicyRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, request *SessionPolicy, params PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams, requestOptions ...RequestOption) (res *SessionPolicy, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminConfigSessionPolicy"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -25131,12 +25147,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx cont
 // Update email provider.
 //
 // PATCH /v1/projects/{project_id}/admin/email-providers/{id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, request *EmailProvider, params PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminEmailProvidersByIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, request *EmailProvider, params PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams, options ...RequestOption) (*EmailProvider, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, request *EmailProvider, params PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminEmailProvidersByIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, request *EmailProvider, params PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams, requestOptions ...RequestOption) (res *EmailProvider, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminEmailProvidersById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -25321,12 +25337,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx conte
 // Update an email template.
 //
 // PATCH /v1/projects/{project_id}/admin/email-templates/{id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq, params PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq, params PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq, params PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq, params PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminEmailTemplatesById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -25511,12 +25527,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx conte
 // Update a hook.
 //
 // PATCH /v1/projects/{project_id}/admin/hooks/{id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminHooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminHooksByIdReq, params PatchV1ProjectsByProjectIdAdminHooksByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminHooksByIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminHooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminHooksByIdReq, params PatchV1ProjectsByProjectIdAdminHooksByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminHooksByIdOK, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminHooksById(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminHooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminHooksByIdReq, params PatchV1ProjectsByProjectIdAdminHooksByIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminHooksByIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminHooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminHooksByIdReq, params PatchV1ProjectsByProjectIdAdminHooksByIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminHooksByIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminHooksById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -25701,12 +25717,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminHooksById(ctx context.Contex
 // Update OAuth provider.
 //
 // PATCH /v1/projects/{project_id}/admin/oauth-providers/{id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, request *OAuthProviderConfig, params PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminOauthProvidersByIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, request *OAuthProviderConfig, params PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams, options ...RequestOption) (*OAuthProviderConfig, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, request *OAuthProviderConfig, params PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminOauthProvidersByIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, request *OAuthProviderConfig, params PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams, requestOptions ...RequestOption) (res *OAuthProviderConfig, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminOauthProvidersById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -25891,12 +25907,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx conte
 // Update a risk rule.
 //
 // PATCH /v1/projects/{project_id}/admin/risk/rules/{rule_id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, request *RiskRule, params PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, request *RiskRule, params PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, options ...RequestOption) (*RiskRule, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, request *RiskRule, params PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, request *RiskRule, params PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams, requestOptions ...RequestOption) (res *RiskRule, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -26090,12 +26106,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx contex
 // Update a service account.
 //
 // PATCH /v1/projects/{project_id}/admin/service-accounts/{sa_id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminServiceAccountsBySaId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -26280,12 +26296,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx co
 // Update SMS provider.
 //
 // PATCH /v1/projects/{project_id}/admin/sms-providers/{id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, request *SmsProvider, params PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminSmsProvidersByIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, request *SmsProvider, params PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams, options ...RequestOption) (*SmsProvider, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, request *SmsProvider, params PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminSmsProvidersByIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, request *SmsProvider, params PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams, requestOptions ...RequestOption) (res *SmsProvider, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminSmsProvidersById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -26470,12 +26486,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context
 // Update a connection.
 //
 // PATCH /v1/projects/{project_id}/admin/sso/connections/{id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminSsoConnectionsById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -26660,12 +26676,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx conte
 // Update a token profile.
 //
 // PATCH /v1/projects/{project_id}/admin/token-profiles/{id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminTokenProfilesByIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminTokenProfilesByIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminTokenProfilesById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -26850,12 +26866,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx contex
 // Update a user.
 //
 // PATCH /v1/projects/{project_id}/admin/users/{user_id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminUsersByUserIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminUsersByUserId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminUsersByUserIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminUsersByUserId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -27040,12 +27056,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Co
 // Update a webhook.
 //
 // PATCH /v1/projects/{project_id}/admin/webhooks/{id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (PatchV1ProjectsByProjectIdAdminWebhooksByIdRes, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminWebhooksById(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, requestOptions ...RequestOption) (res PatchV1ProjectsByProjectIdAdminWebhooksByIdRes, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminWebhooksById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -27230,12 +27246,12 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Con
 // Patch a SCIM group (forwarded downstream).
 //
 // PATCH /v1/scim/v2/{connection_id}/Groups/{group_id}
-func (c *Client) PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdGroupsByGroupIdRes, error) {
+func (c *Client) PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK, error) {
 	res, err := c.sendPatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams, requestOptions ...RequestOption) (res PatchV1ScimV2ByConnectionIdGroupsByGroupIdRes, err error) {
+func (c *Client) sendPatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PatchV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PatchV1ScimV2ByConnectionIdGroupsByGroupIdParams, requestOptions ...RequestOption) (res PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ScimV2ByConnectionIdGroupsByGroupId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -27403,12 +27419,12 @@ func (c *Client) sendPatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Cont
 // Patch a SCIM user.
 //
 // PATCH /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-func (c *Client) PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdUsersByScimUserIdRes, error) {
+func (c *Client) PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK, error) {
 	res, err := c.sendPatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams, requestOptions ...RequestOption) (res PatchV1ScimV2ByConnectionIdUsersByScimUserIdRes, err error) {
+func (c *Client) sendPatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PatchV1ScimV2ByConnectionIdUsersByScimUserIdParams, requestOptions ...RequestOption) (res PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ScimV2ByConnectionIdUsersByScimUserId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -27576,12 +27592,12 @@ func (c *Client) sendPatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Co
 // Rename a session/device.
 //
 // PATCH /v1/sessions/{session_id}
-func (c *Client) PatchV1SessionsBySessionId(ctx context.Context, request *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams, options ...RequestOption) (PatchV1SessionsBySessionIdRes, error) {
+func (c *Client) PatchV1SessionsBySessionId(ctx context.Context, request *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams, options ...RequestOption) (*PatchV1SessionsBySessionIdOK, error) {
 	res, err := c.sendPatchV1SessionsBySessionId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1SessionsBySessionId(ctx context.Context, request *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams, requestOptions ...RequestOption) (res PatchV1SessionsBySessionIdRes, err error) {
+func (c *Client) sendPatchV1SessionsBySessionId(ctx context.Context, request *PatchV1SessionsBySessionIdReq, params PatchV1SessionsBySessionIdParams, requestOptions ...RequestOption) (res *PatchV1SessionsBySessionIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1SessionsBySessionId"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -27730,12 +27746,12 @@ func (c *Client) sendPatchV1SessionsBySessionId(ctx context.Context, request *Pa
 // Update the core profile.
 //
 // PATCH /v1/users/me
-func (c *Client) PatchV1UsersMe(ctx context.Context, request *PatchV1UsersMeReq, options ...RequestOption) (PatchV1UsersMeRes, error) {
+func (c *Client) PatchV1UsersMe(ctx context.Context, request *PatchV1UsersMeReq, options ...RequestOption) (*PatchV1UsersMeOK, error) {
 	res, err := c.sendPatchV1UsersMe(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1UsersMe(ctx context.Context, request *PatchV1UsersMeReq, requestOptions ...RequestOption) (res PatchV1UsersMeRes, err error) {
+func (c *Client) sendPatchV1UsersMe(ctx context.Context, request *PatchV1UsersMeReq, requestOptions ...RequestOption) (res *PatchV1UsersMeOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1UsersMe"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -27866,12 +27882,12 @@ func (c *Client) sendPatchV1UsersMe(ctx context.Context, request *PatchV1UsersMe
 // Create a project.
 //
 // POST /mgmt/v1/projects
-func (c *Client) PostMgmtV1Projects(ctx context.Context, request *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams, options ...RequestOption) (PostMgmtV1ProjectsRes, error) {
+func (c *Client) PostMgmtV1Projects(ctx context.Context, request *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams, options ...RequestOption) (*PostMgmtV1ProjectsCreated, error) {
 	res, err := c.sendPostMgmtV1Projects(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostMgmtV1Projects(ctx context.Context, request *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams, requestOptions ...RequestOption) (res PostMgmtV1ProjectsRes, err error) {
+func (c *Client) sendPostMgmtV1Projects(ctx context.Context, request *PostMgmtV1ProjectsReq, params PostMgmtV1ProjectsParams, requestOptions ...RequestOption) (res *PostMgmtV1ProjectsCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postMgmtV1Projects"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28019,12 +28035,12 @@ func (c *Client) sendPostMgmtV1Projects(ctx context.Context, request *PostMgmtV1
 // Mint a project-admin token.
 //
 // POST /mgmt/v1/projects/{project_id}/admin-tokens
-func (c *Client) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdAdminTokensRes, error) {
+func (c *Client) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams, options ...RequestOption) (*PostMgmtV1ProjectsByProjectIdAdminTokensOK, error) {
 	res, err := c.sendPostMgmtV1ProjectsByProjectIdAdminTokens(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams, requestOptions ...RequestOption) (res PostMgmtV1ProjectsByProjectIdAdminTokensRes, err error) {
+func (c *Client) sendPostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdAdminTokensReq, params PostMgmtV1ProjectsByProjectIdAdminTokensParams, requestOptions ...RequestOption) (res *PostMgmtV1ProjectsByProjectIdAdminTokensOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postMgmtV1ProjectsByProjectIdAdminTokens"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28191,12 +28207,12 @@ func (c *Client) sendPostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Contex
 // Apply config (idempotent).
 //
 // POST /mgmt/v1/projects/{project_id}/config:apply
-func (c *Client) PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigApplyReq, params PostMgmtV1ProjectsByProjectIdConfigApplyParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigApplyRes, error) {
+func (c *Client) PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigApplyReq, params PostMgmtV1ProjectsByProjectIdConfigApplyParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigApplyOK, error) {
 	res, err := c.sendPostMgmtV1ProjectsByProjectIdConfigApply(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigApplyReq, params PostMgmtV1ProjectsByProjectIdConfigApplyParams, requestOptions ...RequestOption) (res PostMgmtV1ProjectsByProjectIdConfigApplyRes, err error) {
+func (c *Client) sendPostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigApplyReq, params PostMgmtV1ProjectsByProjectIdConfigApplyParams, requestOptions ...RequestOption) (res PostMgmtV1ProjectsByProjectIdConfigApplyOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postMgmtV1ProjectsByProjectIdConfigApply"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28346,12 +28362,12 @@ func (c *Client) sendPostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Contex
 // Plan a config apply (diff + drift).
 //
 // POST /mgmt/v1/projects/{project_id}/config:plan
-func (c *Client) PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigPlanReq, params PostMgmtV1ProjectsByProjectIdConfigPlanParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigPlanRes, error) {
+func (c *Client) PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigPlanReq, params PostMgmtV1ProjectsByProjectIdConfigPlanParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdConfigPlanOK, error) {
 	res, err := c.sendPostMgmtV1ProjectsByProjectIdConfigPlan(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigPlanReq, params PostMgmtV1ProjectsByProjectIdConfigPlanParams, requestOptions ...RequestOption) (res PostMgmtV1ProjectsByProjectIdConfigPlanRes, err error) {
+func (c *Client) sendPostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, request PostMgmtV1ProjectsByProjectIdConfigPlanReq, params PostMgmtV1ProjectsByProjectIdConfigPlanParams, requestOptions ...RequestOption) (res PostMgmtV1ProjectsByProjectIdConfigPlanOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postMgmtV1ProjectsByProjectIdConfigPlan"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28501,12 +28517,12 @@ func (c *Client) sendPostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context
 // Create an environment.
 //
 // POST /mgmt/v1/projects/{project_id}/environments
-func (c *Client) PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (PostMgmtV1ProjectsByProjectIdEnvironmentsRes, error) {
+func (c *Client) PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams, options ...RequestOption) (*PostMgmtV1ProjectsByProjectIdEnvironmentsCreated, error) {
 	res, err := c.sendPostMgmtV1ProjectsByProjectIdEnvironments(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams, requestOptions ...RequestOption) (res PostMgmtV1ProjectsByProjectIdEnvironmentsRes, err error) {
+func (c *Client) sendPostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, request *PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params PostMgmtV1ProjectsByProjectIdEnvironmentsParams, requestOptions ...RequestOption) (res *PostMgmtV1ProjectsByProjectIdEnvironmentsCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postMgmtV1ProjectsByProjectIdEnvironments"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28776,12 +28792,12 @@ func (c *Client) sendPostOauth2BackchannelLogout(ctx context.Context, request *P
 // Start the device flow.
 //
 // POST /oauth2/device_authorization
-func (c *Client) PostOauth2DeviceAuthorization(ctx context.Context, request *PostOauth2DeviceAuthorizationReq, options ...RequestOption) (PostOauth2DeviceAuthorizationRes, error) {
+func (c *Client) PostOauth2DeviceAuthorization(ctx context.Context, request *PostOauth2DeviceAuthorizationReq, options ...RequestOption) (*PostOauth2DeviceAuthorizationOK, error) {
 	res, err := c.sendPostOauth2DeviceAuthorization(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostOauth2DeviceAuthorization(ctx context.Context, request *PostOauth2DeviceAuthorizationReq, requestOptions ...RequestOption) (res PostOauth2DeviceAuthorizationRes, err error) {
+func (c *Client) sendPostOauth2DeviceAuthorization(ctx context.Context, request *PostOauth2DeviceAuthorizationReq, requestOptions ...RequestOption) (res *PostOauth2DeviceAuthorizationOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postOauth2DeviceAuthorization"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -28912,12 +28928,12 @@ func (c *Client) sendPostOauth2DeviceAuthorization(ctx context.Context, request 
 // RFC 7662 token introspection.
 //
 // POST /oauth2/introspect
-func (c *Client) PostOauth2Introspect(ctx context.Context, request *PostOauth2IntrospectReq, options ...RequestOption) (PostOauth2IntrospectRes, error) {
+func (c *Client) PostOauth2Introspect(ctx context.Context, request *PostOauth2IntrospectReq, options ...RequestOption) (*PostOauth2IntrospectOK, error) {
 	res, err := c.sendPostOauth2Introspect(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostOauth2Introspect(ctx context.Context, request *PostOauth2IntrospectReq, requestOptions ...RequestOption) (res PostOauth2IntrospectRes, err error) {
+func (c *Client) sendPostOauth2Introspect(ctx context.Context, request *PostOauth2IntrospectReq, requestOptions ...RequestOption) (res *PostOauth2IntrospectOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postOauth2Introspect"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -29048,12 +29064,12 @@ func (c *Client) sendPostOauth2Introspect(ctx context.Context, request *PostOaut
 // Pushed Authorization Request.
 //
 // POST /oauth2/par
-func (c *Client) PostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, options ...RequestOption) (PostOauth2ParRes, error) {
+func (c *Client) PostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, options ...RequestOption) (*PostOauth2ParCreated, error) {
 	res, err := c.sendPostOauth2Par(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, requestOptions ...RequestOption) (res PostOauth2ParRes, err error) {
+func (c *Client) sendPostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, requestOptions ...RequestOption) (res *PostOauth2ParCreated, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -29193,12 +29209,12 @@ func (c *Client) sendPostOauth2Par(ctx context.Context, request *PushedAuthoriza
 // RFC 7009 token revocation.
 //
 // POST /oauth2/revoke
-func (c *Client) PostOauth2Revoke(ctx context.Context, request *PostOauth2RevokeReq, options ...RequestOption) (PostOauth2RevokeRes, error) {
-	res, err := c.sendPostOauth2Revoke(ctx, request, options...)
-	return res, err
+func (c *Client) PostOauth2Revoke(ctx context.Context, request *PostOauth2RevokeReq, options ...RequestOption) error {
+	_, err := c.sendPostOauth2Revoke(ctx, request, options...)
+	return err
 }
 
-func (c *Client) sendPostOauth2Revoke(ctx context.Context, request *PostOauth2RevokeReq, requestOptions ...RequestOption) (res PostOauth2RevokeRes, err error) {
+func (c *Client) sendPostOauth2Revoke(ctx context.Context, request *PostOauth2RevokeReq, requestOptions ...RequestOption) (res *PostOauth2RevokeOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postOauth2Revoke"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -29329,12 +29345,12 @@ func (c *Client) sendPostOauth2Revoke(ctx context.Context, request *PostOauth2Re
 // Token endpoint.
 //
 // POST /oauth2/token
-func (c *Client) PostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, options ...RequestOption) (PostOauth2TokenRes, error) {
+func (c *Client) PostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, options ...RequestOption) (PostOauth2TokenOK, error) {
 	res, err := c.sendPostOauth2Token(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, requestOptions ...RequestOption) (res PostOauth2TokenRes, err error) {
+func (c *Client) sendPostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, requestOptions ...RequestOption) (res PostOauth2TokenOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postOauth2Token"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -29471,6 +29487,15 @@ func (c *Client) PostV1AuthAccessRequests(ctx context.Context, request *PostV1Au
 }
 
 func (c *Client) sendPostV1AuthAccessRequests(ctx context.Context, request *PostV1AuthAccessRequestsReq, params PostV1AuthAccessRequestsParams, requestOptions ...RequestOption) (res *PostV1AuthAccessRequestsOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthAccessRequests"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -29582,12 +29607,21 @@ func (c *Client) sendPostV1AuthAccessRequests(ctx context.Context, request *Post
 // Start an email change (step-up; notifies old address).
 //
 // POST /v1/auth/email/change/start
-func (c *Client) PostV1AuthEmailChangeStart(ctx context.Context, request *PostV1AuthEmailChangeStartReq, options ...RequestOption) (PostV1AuthEmailChangeStartRes, error) {
+func (c *Client) PostV1AuthEmailChangeStart(ctx context.Context, request *PostV1AuthEmailChangeStartReq, options ...RequestOption) (*Challenge, error) {
 	res, err := c.sendPostV1AuthEmailChangeStart(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthEmailChangeStart(ctx context.Context, request *PostV1AuthEmailChangeStartReq, requestOptions ...RequestOption) (res PostV1AuthEmailChangeStartRes, err error) {
+func (c *Client) sendPostV1AuthEmailChangeStart(ctx context.Context, request *PostV1AuthEmailChangeStartReq, requestOptions ...RequestOption) (res *Challenge, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthEmailChangeStart"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -29718,12 +29752,12 @@ func (c *Client) sendPostV1AuthEmailChangeStart(ctx context.Context, request *Po
 // Confirm the new email.
 //
 // POST /v1/auth/email/change/verify
-func (c *Client) PostV1AuthEmailChangeVerify(ctx context.Context, request *PostV1AuthEmailChangeVerifyReq, options ...RequestOption) (PostV1AuthEmailChangeVerifyRes, error) {
+func (c *Client) PostV1AuthEmailChangeVerify(ctx context.Context, request *PostV1AuthEmailChangeVerifyReq, options ...RequestOption) (*PostV1AuthEmailChangeVerifyOK, error) {
 	res, err := c.sendPostV1AuthEmailChangeVerify(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthEmailChangeVerify(ctx context.Context, request *PostV1AuthEmailChangeVerifyReq, requestOptions ...RequestOption) (res PostV1AuthEmailChangeVerifyRes, err error) {
+func (c *Client) sendPostV1AuthEmailChangeVerify(ctx context.Context, request *PostV1AuthEmailChangeVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthEmailChangeVerifyOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthEmailChangeVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -29854,12 +29888,21 @@ func (c *Client) sendPostV1AuthEmailChangeVerify(ctx context.Context, request *P
 // Send an email verification challenge.
 //
 // POST /v1/auth/email/verification/start
-func (c *Client) PostV1AuthEmailVerificationStart(ctx context.Context, request *PostV1AuthEmailVerificationStartReq, params PostV1AuthEmailVerificationStartParams, options ...RequestOption) (PostV1AuthEmailVerificationStartRes, error) {
+func (c *Client) PostV1AuthEmailVerificationStart(ctx context.Context, request *PostV1AuthEmailVerificationStartReq, params PostV1AuthEmailVerificationStartParams, options ...RequestOption) (*Challenge, error) {
 	res, err := c.sendPostV1AuthEmailVerificationStart(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthEmailVerificationStart(ctx context.Context, request *PostV1AuthEmailVerificationStartReq, params PostV1AuthEmailVerificationStartParams, requestOptions ...RequestOption) (res PostV1AuthEmailVerificationStartRes, err error) {
+func (c *Client) sendPostV1AuthEmailVerificationStart(ctx context.Context, request *PostV1AuthEmailVerificationStartReq, params PostV1AuthEmailVerificationStartParams, requestOptions ...RequestOption) (res *Challenge, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthEmailVerificationStart"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -29971,12 +30014,12 @@ func (c *Client) sendPostV1AuthEmailVerificationStart(ctx context.Context, reque
 // Verify email by code or token.
 //
 // POST /v1/auth/email/verification/verify
-func (c *Client) PostV1AuthEmailVerificationVerify(ctx context.Context, request *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams, options ...RequestOption) (PostV1AuthEmailVerificationVerifyRes, error) {
+func (c *Client) PostV1AuthEmailVerificationVerify(ctx context.Context, request *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthEmailVerificationVerify(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthEmailVerificationVerify(ctx context.Context, request *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams, requestOptions ...RequestOption) (res PostV1AuthEmailVerificationVerifyRes, err error) {
+func (c *Client) sendPostV1AuthEmailVerificationVerify(ctx context.Context, request *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthEmailVerificationVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30088,12 +30131,12 @@ func (c *Client) sendPostV1AuthEmailVerificationVerify(ctx context.Context, requ
 // Create an anonymous guest user and session.
 //
 // POST /v1/auth/guest
-func (c *Client) PostV1AuthGuest(ctx context.Context, request *PostV1AuthGuestReq, params PostV1AuthGuestParams, options ...RequestOption) (PostV1AuthGuestRes, error) {
+func (c *Client) PostV1AuthGuest(ctx context.Context, request *PostV1AuthGuestReq, params PostV1AuthGuestParams, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthGuest(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthGuest(ctx context.Context, request *PostV1AuthGuestReq, params PostV1AuthGuestParams, requestOptions ...RequestOption) (res PostV1AuthGuestRes, err error) {
+func (c *Client) sendPostV1AuthGuest(ctx context.Context, request *PostV1AuthGuestReq, params PostV1AuthGuestParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthGuest"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30205,12 +30248,12 @@ func (c *Client) sendPostV1AuthGuest(ctx context.Context, request *PostV1AuthGue
 // Confirm a merge.
 //
 // POST /v1/auth/identities/merge/confirm
-func (c *Client) PostV1AuthIdentitiesMergeConfirm(ctx context.Context, request *PostV1AuthIdentitiesMergeConfirmReq, options ...RequestOption) (PostV1AuthIdentitiesMergeConfirmRes, error) {
+func (c *Client) PostV1AuthIdentitiesMergeConfirm(ctx context.Context, request *PostV1AuthIdentitiesMergeConfirmReq, options ...RequestOption) (*PostV1AuthIdentitiesMergeConfirmOK, error) {
 	res, err := c.sendPostV1AuthIdentitiesMergeConfirm(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthIdentitiesMergeConfirm(ctx context.Context, request *PostV1AuthIdentitiesMergeConfirmReq, requestOptions ...RequestOption) (res PostV1AuthIdentitiesMergeConfirmRes, err error) {
+func (c *Client) sendPostV1AuthIdentitiesMergeConfirm(ctx context.Context, request *PostV1AuthIdentitiesMergeConfirmReq, requestOptions ...RequestOption) (res *PostV1AuthIdentitiesMergeConfirmOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthIdentitiesMergeConfirm"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30341,12 +30384,12 @@ func (c *Client) sendPostV1AuthIdentitiesMergeConfirm(ctx context.Context, reque
 // Start an account merge.
 //
 // POST /v1/auth/identities/merge/start
-func (c *Client) PostV1AuthIdentitiesMergeStart(ctx context.Context, request *PostV1AuthIdentitiesMergeStartReq, options ...RequestOption) (PostV1AuthIdentitiesMergeStartRes, error) {
+func (c *Client) PostV1AuthIdentitiesMergeStart(ctx context.Context, request *PostV1AuthIdentitiesMergeStartReq, options ...RequestOption) (*PostV1AuthIdentitiesMergeStartOK, error) {
 	res, err := c.sendPostV1AuthIdentitiesMergeStart(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthIdentitiesMergeStart(ctx context.Context, request *PostV1AuthIdentitiesMergeStartReq, requestOptions ...RequestOption) (res PostV1AuthIdentitiesMergeStartRes, err error) {
+func (c *Client) sendPostV1AuthIdentitiesMergeStart(ctx context.Context, request *PostV1AuthIdentitiesMergeStartReq, requestOptions ...RequestOption) (res *PostV1AuthIdentitiesMergeStartOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthIdentitiesMergeStart"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30477,12 +30520,12 @@ func (c *Client) sendPostV1AuthIdentitiesMergeStart(ctx context.Context, request
 // Send a magic link.
 //
 // POST /v1/auth/magic-link/start
-func (c *Client) PostV1AuthMagicLinkStart(ctx context.Context, request *MagicLinkStartRequest, params PostV1AuthMagicLinkStartParams, options ...RequestOption) (PostV1AuthMagicLinkStartRes, error) {
+func (c *Client) PostV1AuthMagicLinkStart(ctx context.Context, request *MagicLinkStartRequest, params PostV1AuthMagicLinkStartParams, options ...RequestOption) (*Challenge, error) {
 	res, err := c.sendPostV1AuthMagicLinkStart(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthMagicLinkStart(ctx context.Context, request *MagicLinkStartRequest, params PostV1AuthMagicLinkStartParams, requestOptions ...RequestOption) (res PostV1AuthMagicLinkStartRes, err error) {
+func (c *Client) sendPostV1AuthMagicLinkStart(ctx context.Context, request *MagicLinkStartRequest, params PostV1AuthMagicLinkStartParams, requestOptions ...RequestOption) (res *Challenge, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -30603,12 +30646,12 @@ func (c *Client) sendPostV1AuthMagicLinkStart(ctx context.Context, request *Magi
 // Headless verify of a magic-link token.
 //
 // POST /v1/auth/magic-link/verify
-func (c *Client) PostV1AuthMagicLinkVerify(ctx context.Context, request *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams, options ...RequestOption) (PostV1AuthMagicLinkVerifyRes, error) {
+func (c *Client) PostV1AuthMagicLinkVerify(ctx context.Context, request *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthMagicLinkVerify(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthMagicLinkVerify(ctx context.Context, request *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams, requestOptions ...RequestOption) (res PostV1AuthMagicLinkVerifyRes, err error) {
+func (c *Client) sendPostV1AuthMagicLinkVerify(ctx context.Context, request *MagicLinkVerifyRequest, params PostV1AuthMagicLinkVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMagicLinkVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30837,12 +30880,21 @@ func (c *Client) sendPostV1AuthMfaChallenge(ctx context.Context, request OptPost
 // Enroll an email factor.
 //
 // POST /v1/auth/mfa/email/enroll
-func (c *Client) PostV1AuthMfaEmailEnroll(ctx context.Context, request *PostV1AuthMfaEmailEnrollReq, options ...RequestOption) (PostV1AuthMfaEmailEnrollRes, error) {
+func (c *Client) PostV1AuthMfaEmailEnroll(ctx context.Context, request *PostV1AuthMfaEmailEnrollReq, options ...RequestOption) (*PostV1AuthMfaEmailEnrollOK, error) {
 	res, err := c.sendPostV1AuthMfaEmailEnroll(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthMfaEmailEnroll(ctx context.Context, request *PostV1AuthMfaEmailEnrollReq, requestOptions ...RequestOption) (res PostV1AuthMfaEmailEnrollRes, err error) {
+func (c *Client) sendPostV1AuthMfaEmailEnroll(ctx context.Context, request *PostV1AuthMfaEmailEnrollReq, requestOptions ...RequestOption) (res *PostV1AuthMfaEmailEnrollOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaEmailEnroll"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -30973,12 +31025,12 @@ func (c *Client) sendPostV1AuthMfaEmailEnroll(ctx context.Context, request *Post
 // Generate recovery codes (AAL2).
 //
 // POST /v1/auth/mfa/recovery-codes/generate
-func (c *Client) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, request OptPostV1AuthMfaRecoveryCodesGenerateReq, options ...RequestOption) (PostV1AuthMfaRecoveryCodesGenerateRes, error) {
+func (c *Client) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, request OptPostV1AuthMfaRecoveryCodesGenerateReq, options ...RequestOption) (*PostV1AuthMfaRecoveryCodesGenerateOK, error) {
 	res, err := c.sendPostV1AuthMfaRecoveryCodesGenerate(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, request OptPostV1AuthMfaRecoveryCodesGenerateReq, requestOptions ...RequestOption) (res PostV1AuthMfaRecoveryCodesGenerateRes, err error) {
+func (c *Client) sendPostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, request OptPostV1AuthMfaRecoveryCodesGenerateReq, requestOptions ...RequestOption) (res *PostV1AuthMfaRecoveryCodesGenerateOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaRecoveryCodesGenerate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31226,12 +31278,21 @@ func (c *Client) sendPostV1AuthMfaRecoveryCodesVerify(ctx context.Context, reque
 // Enroll an SMS factor.
 //
 // POST /v1/auth/mfa/sms/enroll
-func (c *Client) PostV1AuthMfaSmsEnroll(ctx context.Context, request *PostV1AuthMfaSmsEnrollReq, options ...RequestOption) (PostV1AuthMfaSmsEnrollRes, error) {
+func (c *Client) PostV1AuthMfaSmsEnroll(ctx context.Context, request *PostV1AuthMfaSmsEnrollReq, options ...RequestOption) (*PostV1AuthMfaSmsEnrollOK, error) {
 	res, err := c.sendPostV1AuthMfaSmsEnroll(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthMfaSmsEnroll(ctx context.Context, request *PostV1AuthMfaSmsEnrollReq, requestOptions ...RequestOption) (res PostV1AuthMfaSmsEnrollRes, err error) {
+func (c *Client) sendPostV1AuthMfaSmsEnroll(ctx context.Context, request *PostV1AuthMfaSmsEnrollReq, requestOptions ...RequestOption) (res *PostV1AuthMfaSmsEnrollOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaSmsEnroll"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31362,12 +31423,12 @@ func (c *Client) sendPostV1AuthMfaSmsEnroll(ctx context.Context, request *PostV1
 // Start TOTP enrollment.
 //
 // POST /v1/auth/mfa/totp/enroll
-func (c *Client) PostV1AuthMfaTotpEnroll(ctx context.Context, request OptPostV1AuthMfaTotpEnrollReq, options ...RequestOption) (PostV1AuthMfaTotpEnrollRes, error) {
+func (c *Client) PostV1AuthMfaTotpEnroll(ctx context.Context, request OptPostV1AuthMfaTotpEnrollReq, options ...RequestOption) (*PostV1AuthMfaTotpEnrollOK, error) {
 	res, err := c.sendPostV1AuthMfaTotpEnroll(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthMfaTotpEnroll(ctx context.Context, request OptPostV1AuthMfaTotpEnrollReq, requestOptions ...RequestOption) (res PostV1AuthMfaTotpEnrollRes, err error) {
+func (c *Client) sendPostV1AuthMfaTotpEnroll(ctx context.Context, request OptPostV1AuthMfaTotpEnrollReq, requestOptions ...RequestOption) (res *PostV1AuthMfaTotpEnrollOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaTotpEnroll"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31498,12 +31559,12 @@ func (c *Client) sendPostV1AuthMfaTotpEnroll(ctx context.Context, request OptPos
 // Confirm TOTP enrollment.
 //
 // POST /v1/auth/mfa/totp/verify
-func (c *Client) PostV1AuthMfaTotpVerify(ctx context.Context, request *PostV1AuthMfaTotpVerifyReq, options ...RequestOption) (PostV1AuthMfaTotpVerifyRes, error) {
+func (c *Client) PostV1AuthMfaTotpVerify(ctx context.Context, request *PostV1AuthMfaTotpVerifyReq, options ...RequestOption) (*PostV1AuthMfaTotpVerifyOK, error) {
 	res, err := c.sendPostV1AuthMfaTotpVerify(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthMfaTotpVerify(ctx context.Context, request *PostV1AuthMfaTotpVerifyReq, requestOptions ...RequestOption) (res PostV1AuthMfaTotpVerifyRes, err error) {
+func (c *Client) sendPostV1AuthMfaTotpVerify(ctx context.Context, request *PostV1AuthMfaTotpVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthMfaTotpVerifyOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaTotpVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31634,12 +31695,12 @@ func (c *Client) sendPostV1AuthMfaTotpVerify(ctx context.Context, request *PostV
 // Verify an MFA challenge.
 //
 // POST /v1/auth/mfa/verify
-func (c *Client) PostV1AuthMfaVerify(ctx context.Context, request *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams, options ...RequestOption) (PostV1AuthMfaVerifyRes, error) {
+func (c *Client) PostV1AuthMfaVerify(ctx context.Context, request *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthMfaVerify(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthMfaVerify(ctx context.Context, request *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams, requestOptions ...RequestOption) (res PostV1AuthMfaVerifyRes, err error) {
+func (c *Client) sendPostV1AuthMfaVerify(ctx context.Context, request *PostV1AuthMfaVerifyReq, params PostV1AuthMfaVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31751,12 +31812,12 @@ func (c *Client) sendPostV1AuthMfaVerify(ctx context.Context, request *PostV1Aut
 // Start a WebAuthn MFA factor.
 //
 // POST /v1/auth/mfa/webauthn/enroll/options
-func (c *Client) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, request OptPostV1AuthMfaWebauthnEnrollOptionsReq, options ...RequestOption) (PostV1AuthMfaWebauthnEnrollOptionsRes, error) {
+func (c *Client) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, request OptPostV1AuthMfaWebauthnEnrollOptionsReq, options ...RequestOption) (*PostV1AuthMfaWebauthnEnrollOptionsOK, error) {
 	res, err := c.sendPostV1AuthMfaWebauthnEnrollOptions(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, request OptPostV1AuthMfaWebauthnEnrollOptionsReq, requestOptions ...RequestOption) (res PostV1AuthMfaWebauthnEnrollOptionsRes, err error) {
+func (c *Client) sendPostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, request OptPostV1AuthMfaWebauthnEnrollOptionsReq, requestOptions ...RequestOption) (res *PostV1AuthMfaWebauthnEnrollOptionsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaWebauthnEnrollOptions"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31887,12 +31948,12 @@ func (c *Client) sendPostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, req
 // Verify a WebAuthn MFA factor.
 //
 // POST /v1/auth/mfa/webauthn/enroll/verify
-func (c *Client) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, request *PostV1AuthMfaWebauthnEnrollVerifyReq, options ...RequestOption) (PostV1AuthMfaWebauthnEnrollVerifyRes, error) {
+func (c *Client) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, request *PostV1AuthMfaWebauthnEnrollVerifyReq, options ...RequestOption) (*PostV1AuthMfaWebauthnEnrollVerifyOK, error) {
 	res, err := c.sendPostV1AuthMfaWebauthnEnrollVerify(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, request *PostV1AuthMfaWebauthnEnrollVerifyReq, requestOptions ...RequestOption) (res PostV1AuthMfaWebauthnEnrollVerifyRes, err error) {
+func (c *Client) sendPostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, request *PostV1AuthMfaWebauthnEnrollVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthMfaWebauthnEnrollVerifyOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthMfaWebauthnEnrollVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -32023,12 +32084,12 @@ func (c *Client) sendPostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, requ
 // Unlink a provider identity (step-up).
 //
 // POST /v1/auth/oauth/{provider}/unlink
-func (c *Client) PostV1AuthOauthByProviderUnlink(ctx context.Context, request *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams, options ...RequestOption) (PostV1AuthOauthByProviderUnlinkRes, error) {
+func (c *Client) PostV1AuthOauthByProviderUnlink(ctx context.Context, request *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1AuthOauthByProviderUnlink(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthOauthByProviderUnlink(ctx context.Context, request *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams, requestOptions ...RequestOption) (res PostV1AuthOauthByProviderUnlinkRes, err error) {
+func (c *Client) sendPostV1AuthOauthByProviderUnlink(ctx context.Context, request *PostV1AuthOauthByProviderUnlinkReq, params PostV1AuthOauthByProviderUnlinkParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthOauthByProviderUnlink"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -32295,12 +32356,12 @@ func (c *Client) sendPostV1AuthOauthExchange(ctx context.Context, request *PostV
 // Start OTP login/signup/verify.
 //
 // POST /v1/auth/otp/start
-func (c *Client) PostV1AuthOtpStart(ctx context.Context, request *OtpStartRequest, params PostV1AuthOtpStartParams, options ...RequestOption) (PostV1AuthOtpStartRes, error) {
+func (c *Client) PostV1AuthOtpStart(ctx context.Context, request *OtpStartRequest, params PostV1AuthOtpStartParams, options ...RequestOption) (*Challenge, error) {
 	res, err := c.sendPostV1AuthOtpStart(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthOtpStart(ctx context.Context, request *OtpStartRequest, params PostV1AuthOtpStartParams, requestOptions ...RequestOption) (res PostV1AuthOtpStartRes, err error) {
+func (c *Client) sendPostV1AuthOtpStart(ctx context.Context, request *OtpStartRequest, params PostV1AuthOtpStartParams, requestOptions ...RequestOption) (res *Challenge, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -32421,12 +32482,12 @@ func (c *Client) sendPostV1AuthOtpStart(ctx context.Context, request *OtpStartRe
 // Verify OTP.
 //
 // POST /v1/auth/otp/verify
-func (c *Client) PostV1AuthOtpVerify(ctx context.Context, request *OtpVerifyRequest, params PostV1AuthOtpVerifyParams, options ...RequestOption) (PostV1AuthOtpVerifyRes, error) {
+func (c *Client) PostV1AuthOtpVerify(ctx context.Context, request *OtpVerifyRequest, params PostV1AuthOtpVerifyParams, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthOtpVerify(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthOtpVerify(ctx context.Context, request *OtpVerifyRequest, params PostV1AuthOtpVerifyParams, requestOptions ...RequestOption) (res PostV1AuthOtpVerifyRes, err error) {
+func (c *Client) sendPostV1AuthOtpVerify(ctx context.Context, request *OtpVerifyRequest, params PostV1AuthOtpVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthOtpVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -32538,12 +32599,21 @@ func (c *Client) sendPostV1AuthOtpVerify(ctx context.Context, request *OtpVerify
 // Change a known password.
 //
 // POST /v1/auth/password/change
-func (c *Client) PostV1AuthPasswordChange(ctx context.Context, request *PasswordChangeRequest, options ...RequestOption) (PostV1AuthPasswordChangeRes, error) {
+func (c *Client) PostV1AuthPasswordChange(ctx context.Context, request *PasswordChangeRequest, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1AuthPasswordChange(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthPasswordChange(ctx context.Context, request *PasswordChangeRequest, requestOptions ...RequestOption) (res PostV1AuthPasswordChangeRes, err error) {
+func (c *Client) sendPostV1AuthPasswordChange(ctx context.Context, request *PasswordChangeRequest, requestOptions ...RequestOption) (res *Ok, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthPasswordChange"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -32680,6 +32750,15 @@ func (c *Client) PostV1AuthPasswordCheck(ctx context.Context, request *PostV1Aut
 }
 
 func (c *Client) sendPostV1AuthPasswordCheck(ctx context.Context, request *PostV1AuthPasswordCheckReq, params PostV1AuthPasswordCheckParams, requestOptions ...RequestOption) (res *PostV1AuthPasswordCheckOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthPasswordCheck"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -32791,12 +32870,21 @@ func (c *Client) sendPostV1AuthPasswordCheck(ctx context.Context, request *PostV
 // Start a password reset.
 //
 // POST /v1/auth/password/forgot
-func (c *Client) PostV1AuthPasswordForgot(ctx context.Context, request *PasswordForgotRequest, params PostV1AuthPasswordForgotParams, options ...RequestOption) (PostV1AuthPasswordForgotRes, error) {
+func (c *Client) PostV1AuthPasswordForgot(ctx context.Context, request *PasswordForgotRequest, params PostV1AuthPasswordForgotParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1AuthPasswordForgot(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthPasswordForgot(ctx context.Context, request *PasswordForgotRequest, params PostV1AuthPasswordForgotParams, requestOptions ...RequestOption) (res PostV1AuthPasswordForgotRes, err error) {
+func (c *Client) sendPostV1AuthPasswordForgot(ctx context.Context, request *PasswordForgotRequest, params PostV1AuthPasswordForgotParams, requestOptions ...RequestOption) (res *Ok, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthPasswordForgot"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -32908,12 +32996,21 @@ func (c *Client) sendPostV1AuthPasswordForgot(ctx context.Context, request *Pass
 // Reset by token or code.
 //
 // POST /v1/auth/password/reset
-func (c *Client) PostV1AuthPasswordReset(ctx context.Context, request *PasswordResetRequest, params PostV1AuthPasswordResetParams, options ...RequestOption) (PostV1AuthPasswordResetRes, error) {
+func (c *Client) PostV1AuthPasswordReset(ctx context.Context, request *PasswordResetRequest, params PostV1AuthPasswordResetParams, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthPasswordReset(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthPasswordReset(ctx context.Context, request *PasswordResetRequest, params PostV1AuthPasswordResetParams, requestOptions ...RequestOption) (res PostV1AuthPasswordResetRes, err error) {
+func (c *Client) sendPostV1AuthPasswordReset(ctx context.Context, request *PasswordResetRequest, params PostV1AuthPasswordResetParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthPasswordReset"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -33025,12 +33122,21 @@ func (c *Client) sendPostV1AuthPasswordReset(ctx context.Context, request *Passw
 // Verify current password (step-up).
 //
 // POST /v1/auth/password/verify
-func (c *Client) PostV1AuthPasswordVerify(ctx context.Context, request *PostV1AuthPasswordVerifyReq, options ...RequestOption) (PostV1AuthPasswordVerifyRes, error) {
+func (c *Client) PostV1AuthPasswordVerify(ctx context.Context, request *PostV1AuthPasswordVerifyReq, options ...RequestOption) (*PostV1AuthPasswordVerifyOK, error) {
 	res, err := c.sendPostV1AuthPasswordVerify(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthPasswordVerify(ctx context.Context, request *PostV1AuthPasswordVerifyReq, requestOptions ...RequestOption) (res PostV1AuthPasswordVerifyRes, err error) {
+func (c *Client) sendPostV1AuthPasswordVerify(ctx context.Context, request *PostV1AuthPasswordVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthPasswordVerifyOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthPasswordVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -33161,12 +33267,12 @@ func (c *Client) sendPostV1AuthPasswordVerify(ctx context.Context, request *Post
 // Start a phone change.
 //
 // POST /v1/auth/phone/change/start
-func (c *Client) PostV1AuthPhoneChangeStart(ctx context.Context, request *PostV1AuthPhoneChangeStartReq, options ...RequestOption) (PostV1AuthPhoneChangeStartRes, error) {
+func (c *Client) PostV1AuthPhoneChangeStart(ctx context.Context, request *PostV1AuthPhoneChangeStartReq, options ...RequestOption) (*Challenge, error) {
 	res, err := c.sendPostV1AuthPhoneChangeStart(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthPhoneChangeStart(ctx context.Context, request *PostV1AuthPhoneChangeStartReq, requestOptions ...RequestOption) (res PostV1AuthPhoneChangeStartRes, err error) {
+func (c *Client) sendPostV1AuthPhoneChangeStart(ctx context.Context, request *PostV1AuthPhoneChangeStartReq, requestOptions ...RequestOption) (res *Challenge, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -33306,12 +33412,12 @@ func (c *Client) sendPostV1AuthPhoneChangeStart(ctx context.Context, request *Po
 // Confirm the new phone.
 //
 // POST /v1/auth/phone/change/verify
-func (c *Client) PostV1AuthPhoneChangeVerify(ctx context.Context, request *PostV1AuthPhoneChangeVerifyReq, options ...RequestOption) (PostV1AuthPhoneChangeVerifyRes, error) {
+func (c *Client) PostV1AuthPhoneChangeVerify(ctx context.Context, request *PostV1AuthPhoneChangeVerifyReq, options ...RequestOption) (*PostV1AuthPhoneChangeVerifyOK, error) {
 	res, err := c.sendPostV1AuthPhoneChangeVerify(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthPhoneChangeVerify(ctx context.Context, request *PostV1AuthPhoneChangeVerifyReq, requestOptions ...RequestOption) (res PostV1AuthPhoneChangeVerifyRes, err error) {
+func (c *Client) sendPostV1AuthPhoneChangeVerify(ctx context.Context, request *PostV1AuthPhoneChangeVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthPhoneChangeVerifyOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthPhoneChangeVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -33442,12 +33548,12 @@ func (c *Client) sendPostV1AuthPhoneChangeVerify(ctx context.Context, request *P
 // Send an SMS/WhatsApp verification code.
 //
 // POST /v1/auth/phone/verification/start
-func (c *Client) PostV1AuthPhoneVerificationStart(ctx context.Context, request *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams, options ...RequestOption) (PostV1AuthPhoneVerificationStartRes, error) {
+func (c *Client) PostV1AuthPhoneVerificationStart(ctx context.Context, request *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams, options ...RequestOption) (*Challenge, error) {
 	res, err := c.sendPostV1AuthPhoneVerificationStart(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthPhoneVerificationStart(ctx context.Context, request *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams, requestOptions ...RequestOption) (res PostV1AuthPhoneVerificationStartRes, err error) {
+func (c *Client) sendPostV1AuthPhoneVerificationStart(ctx context.Context, request *PostV1AuthPhoneVerificationStartReq, params PostV1AuthPhoneVerificationStartParams, requestOptions ...RequestOption) (res *Challenge, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -33568,12 +33674,12 @@ func (c *Client) sendPostV1AuthPhoneVerificationStart(ctx context.Context, reque
 // Verify a phone code.
 //
 // POST /v1/auth/phone/verification/verify
-func (c *Client) PostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, options ...RequestOption) (PostV1AuthPhoneVerificationVerifyRes, error) {
+func (c *Client) PostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, options ...RequestOption) (PhoneVerifyResult, error) {
 	res, err := c.sendPostV1AuthPhoneVerificationVerify(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, requestOptions ...RequestOption) (res PostV1AuthPhoneVerificationVerifyRes, err error) {
+func (c *Client) sendPostV1AuthPhoneVerificationVerify(ctx context.Context, request *PostV1AuthPhoneVerificationVerifyReq, params PostV1AuthPhoneVerificationVerifyParams, requestOptions ...RequestOption) (res PhoneVerifyResult, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthPhoneVerificationVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -33685,12 +33791,12 @@ func (c *Client) sendPostV1AuthPhoneVerificationVerify(ctx context.Context, requ
 // Begin step-up authentication.
 //
 // POST /v1/auth/session/step-up
-func (c *Client) PostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, options ...RequestOption) (PostV1AuthSessionStepUpRes, error) {
+func (c *Client) PostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, options ...RequestOption) (StepUpResult, error) {
 	res, err := c.sendPostV1AuthSessionStepUp(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, requestOptions ...RequestOption) (res PostV1AuthSessionStepUpRes, err error) {
+func (c *Client) sendPostV1AuthSessionStepUp(ctx context.Context, request *PostV1AuthSessionStepUpReq, requestOptions ...RequestOption) (res StepUpResult, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -33830,12 +33936,12 @@ func (c *Client) sendPostV1AuthSessionStepUp(ctx context.Context, request *PostV
 // Re-issues a token with a new active-group claim. Membership is validated externally.
 //
 // POST /v1/auth/session/switch-group
-func (c *Client) PostV1AuthSessionSwitchGroup(ctx context.Context, request *PostV1AuthSessionSwitchGroupReq, options ...RequestOption) (PostV1AuthSessionSwitchGroupRes, error) {
+func (c *Client) PostV1AuthSessionSwitchGroup(ctx context.Context, request *PostV1AuthSessionSwitchGroupReq, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthSessionSwitchGroup(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthSessionSwitchGroup(ctx context.Context, request *PostV1AuthSessionSwitchGroupReq, requestOptions ...RequestOption) (res PostV1AuthSessionSwitchGroupRes, err error) {
+func (c *Client) sendPostV1AuthSessionSwitchGroup(ctx context.Context, request *PostV1AuthSessionSwitchGroupReq, requestOptions ...RequestOption) (res *AuthResult, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthSessionSwitchGroup"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -33966,12 +34072,21 @@ func (c *Client) sendPostV1AuthSessionSwitchGroup(ctx context.Context, request *
 // Sign in with password.
 //
 // POST /v1/auth/sign-in/password
-func (c *Client) PostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, options ...RequestOption) (PostV1AuthSignInPasswordRes, error) {
+func (c *Client) PostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, options ...RequestOption) (AuthResultOrNextStep, error) {
 	res, err := c.sendPostV1AuthSignInPassword(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, requestOptions ...RequestOption) (res PostV1AuthSignInPasswordRes, err error) {
+func (c *Client) sendPostV1AuthSignInPassword(ctx context.Context, request *PasswordSignInRequest, params PostV1AuthSignInPasswordParams, requestOptions ...RequestOption) (res AuthResultOrNextStep, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthSignInPassword"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -34083,12 +34198,12 @@ func (c *Client) sendPostV1AuthSignInPassword(ctx context.Context, request *Pass
 // Revoke the current session.
 //
 // POST /v1/auth/sign-out
-func (c *Client) PostV1AuthSignOut(ctx context.Context, request OptPostV1AuthSignOutReq, options ...RequestOption) (PostV1AuthSignOutRes, error) {
+func (c *Client) PostV1AuthSignOut(ctx context.Context, request OptPostV1AuthSignOutReq, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1AuthSignOut(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthSignOut(ctx context.Context, request OptPostV1AuthSignOutReq, requestOptions ...RequestOption) (res PostV1AuthSignOutRes, err error) {
+func (c *Client) sendPostV1AuthSignOut(ctx context.Context, request OptPostV1AuthSignOutReq, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthSignOut"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -34219,12 +34334,12 @@ func (c *Client) sendPostV1AuthSignOut(ctx context.Context, request OptPostV1Aut
 // Revoke all of the user's sessions.
 //
 // POST /v1/auth/sign-out-all
-func (c *Client) PostV1AuthSignOutAll(ctx context.Context, request OptPostV1AuthSignOutAllReq, options ...RequestOption) (PostV1AuthSignOutAllRes, error) {
+func (c *Client) PostV1AuthSignOutAll(ctx context.Context, request OptPostV1AuthSignOutAllReq, options ...RequestOption) (*PostV1AuthSignOutAllOK, error) {
 	res, err := c.sendPostV1AuthSignOutAll(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthSignOutAll(ctx context.Context, request OptPostV1AuthSignOutAllReq, requestOptions ...RequestOption) (res PostV1AuthSignOutAllRes, err error) {
+func (c *Client) sendPostV1AuthSignOutAll(ctx context.Context, request OptPostV1AuthSignOutAllReq, requestOptions ...RequestOption) (res *PostV1AuthSignOutAllOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthSignOutAll"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -34355,12 +34470,21 @@ func (c *Client) sendPostV1AuthSignOutAll(ctx context.Context, request OptPostV1
 // Register a user.
 //
 // POST /v1/auth/sign-up
-func (c *Client) PostV1AuthSignUp(ctx context.Context, request *SignUpRequest, params PostV1AuthSignUpParams, options ...RequestOption) (PostV1AuthSignUpRes, error) {
+func (c *Client) PostV1AuthSignUp(ctx context.Context, request *SignUpRequest, params PostV1AuthSignUpParams, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthSignUp(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthSignUp(ctx context.Context, request *SignUpRequest, params PostV1AuthSignUpParams, requestOptions ...RequestOption) (res PostV1AuthSignUpRes, err error) {
+func (c *Client) sendPostV1AuthSignUp(ctx context.Context, request *SignUpRequest, params PostV1AuthSignUpParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthSignUp"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -34472,12 +34596,12 @@ func (c *Client) sendPostV1AuthSignUp(ctx context.Context, request *SignUpReques
 // Exchange a browser-flow auth_code for a session.
 //
 // POST /v1/auth/token/exchange
-func (c *Client) PostV1AuthTokenExchange(ctx context.Context, request *CodeExchangeRequest, params PostV1AuthTokenExchangeParams, options ...RequestOption) (PostV1AuthTokenExchangeRes, error) {
+func (c *Client) PostV1AuthTokenExchange(ctx context.Context, request *CodeExchangeRequest, params PostV1AuthTokenExchangeParams, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthTokenExchange(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthTokenExchange(ctx context.Context, request *CodeExchangeRequest, params PostV1AuthTokenExchangeParams, requestOptions ...RequestOption) (res PostV1AuthTokenExchangeRes, err error) {
+func (c *Client) sendPostV1AuthTokenExchange(ctx context.Context, request *CodeExchangeRequest, params PostV1AuthTokenExchangeParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -34598,12 +34722,12 @@ func (c *Client) sendPostV1AuthTokenExchange(ctx context.Context, request *CodeE
 // Rotate refresh token, issue new access token.
 //
 // POST /v1/auth/token/refresh
-func (c *Client) PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, options ...RequestOption) (PostV1AuthTokenRefreshRes, error) {
+func (c *Client) PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthTokenRefresh(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, requestOptions ...RequestOption) (res PostV1AuthTokenRefreshRes, err error) {
+func (c *Client) sendPostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthTokenRefresh"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -34848,12 +34972,12 @@ func (c *Client) sendPostV1AuthWebauthnLoginOptions(ctx context.Context, request
 // Verify a passkey assertion.
 //
 // POST /v1/auth/webauthn/login/verify
-func (c *Client) PostV1AuthWebauthnLoginVerify(ctx context.Context, request *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams, options ...RequestOption) (PostV1AuthWebauthnLoginVerifyRes, error) {
+func (c *Client) PostV1AuthWebauthnLoginVerify(ctx context.Context, request *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams, options ...RequestOption) (*AuthResult, error) {
 	res, err := c.sendPostV1AuthWebauthnLoginVerify(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthWebauthnLoginVerify(ctx context.Context, request *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams, requestOptions ...RequestOption) (res PostV1AuthWebauthnLoginVerifyRes, err error) {
+func (c *Client) sendPostV1AuthWebauthnLoginVerify(ctx context.Context, request *PostV1AuthWebauthnLoginVerifyReq, params PostV1AuthWebauthnLoginVerifyParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthWebauthnLoginVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -34965,12 +35089,12 @@ func (c *Client) sendPostV1AuthWebauthnLoginVerify(ctx context.Context, request 
 // Create a passkey registration challenge.
 //
 // POST /v1/auth/webauthn/register/options
-func (c *Client) PostV1AuthWebauthnRegisterOptions(ctx context.Context, request OptPostV1AuthWebauthnRegisterOptionsReq, options ...RequestOption) (PostV1AuthWebauthnRegisterOptionsRes, error) {
+func (c *Client) PostV1AuthWebauthnRegisterOptions(ctx context.Context, request OptPostV1AuthWebauthnRegisterOptionsReq, options ...RequestOption) (*PostV1AuthWebauthnRegisterOptionsOK, error) {
 	res, err := c.sendPostV1AuthWebauthnRegisterOptions(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthWebauthnRegisterOptions(ctx context.Context, request OptPostV1AuthWebauthnRegisterOptionsReq, requestOptions ...RequestOption) (res PostV1AuthWebauthnRegisterOptionsRes, err error) {
+func (c *Client) sendPostV1AuthWebauthnRegisterOptions(ctx context.Context, request OptPostV1AuthWebauthnRegisterOptionsReq, requestOptions ...RequestOption) (res *PostV1AuthWebauthnRegisterOptionsOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthWebauthnRegisterOptions"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35101,12 +35225,12 @@ func (c *Client) sendPostV1AuthWebauthnRegisterOptions(ctx context.Context, requ
 // Verify a newly created passkey.
 //
 // POST /v1/auth/webauthn/register/verify
-func (c *Client) PostV1AuthWebauthnRegisterVerify(ctx context.Context, request *PostV1AuthWebauthnRegisterVerifyReq, options ...RequestOption) (PostV1AuthWebauthnRegisterVerifyRes, error) {
+func (c *Client) PostV1AuthWebauthnRegisterVerify(ctx context.Context, request *PostV1AuthWebauthnRegisterVerifyReq, options ...RequestOption) (*PostV1AuthWebauthnRegisterVerifyOK, error) {
 	res, err := c.sendPostV1AuthWebauthnRegisterVerify(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthWebauthnRegisterVerify(ctx context.Context, request *PostV1AuthWebauthnRegisterVerifyReq, requestOptions ...RequestOption) (res PostV1AuthWebauthnRegisterVerifyRes, err error) {
+func (c *Client) sendPostV1AuthWebauthnRegisterVerify(ctx context.Context, request *PostV1AuthWebauthnRegisterVerifyReq, requestOptions ...RequestOption) (res *PostV1AuthWebauthnRegisterVerifyOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthWebauthnRegisterVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35340,12 +35464,12 @@ func (c *Client) sendPostV1ChallengesCaptchaVerify(ctx context.Context, request 
 // Approve a device code.
 //
 // POST /v1/device/approve
-func (c *Client) PostV1DeviceApprove(ctx context.Context, request *PostV1DeviceApproveReq, options ...RequestOption) (PostV1DeviceApproveRes, error) {
+func (c *Client) PostV1DeviceApprove(ctx context.Context, request *PostV1DeviceApproveReq, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1DeviceApprove(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1DeviceApprove(ctx context.Context, request *PostV1DeviceApproveReq, requestOptions ...RequestOption) (res PostV1DeviceApproveRes, err error) {
+func (c *Client) sendPostV1DeviceApprove(ctx context.Context, request *PostV1DeviceApproveReq, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1DeviceApprove"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35476,12 +35600,12 @@ func (c *Client) sendPostV1DeviceApprove(ctx context.Context, request *PostV1Dev
 // Deny a device code.
 //
 // POST /v1/device/deny
-func (c *Client) PostV1DeviceDeny(ctx context.Context, request *PostV1DeviceDenyReq, options ...RequestOption) (PostV1DeviceDenyRes, error) {
+func (c *Client) PostV1DeviceDeny(ctx context.Context, request *PostV1DeviceDenyReq, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1DeviceDeny(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1DeviceDeny(ctx context.Context, request *PostV1DeviceDenyReq, requestOptions ...RequestOption) (res PostV1DeviceDenyRes, err error) {
+func (c *Client) sendPostV1DeviceDeny(ctx context.Context, request *PostV1DeviceDenyReq, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1DeviceDeny"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35612,12 +35736,12 @@ func (c *Client) sendPostV1DeviceDeny(ctx context.Context, request *PostV1Device
 // Record consent.
 //
 // POST /v1/oauth/interaction/{interaction_id}/consent
-func (c *Client) PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, request *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams, options ...RequestOption) (PostV1OauthInteractionByInteractionIdConsentRes, error) {
+func (c *Client) PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, request *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams, options ...RequestOption) (*PostV1OauthInteractionByInteractionIdConsentOK, error) {
 	res, err := c.sendPostV1OauthInteractionByInteractionIdConsent(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1OauthInteractionByInteractionIdConsent(ctx context.Context, request *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams, requestOptions ...RequestOption) (res PostV1OauthInteractionByInteractionIdConsentRes, err error) {
+func (c *Client) sendPostV1OauthInteractionByInteractionIdConsent(ctx context.Context, request *PostV1OauthInteractionByInteractionIdConsentReq, params PostV1OauthInteractionByInteractionIdConsentParams, requestOptions ...RequestOption) (res *PostV1OauthInteractionByInteractionIdConsentOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1OauthInteractionByInteractionIdConsent"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -35767,12 +35891,12 @@ func (c *Client) sendPostV1OauthInteractionByInteractionIdConsent(ctx context.Co
 // Attach the authenticated user to the interaction.
 //
 // POST /v1/oauth/interaction/{interaction_id}/login
-func (c *Client) PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams, options ...RequestOption) (PostV1OauthInteractionByInteractionIdLoginRes, error) {
+func (c *Client) PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams, options ...RequestOption) (*PostV1OauthInteractionByInteractionIdLoginOK, error) {
 	res, err := c.sendPostV1OauthInteractionByInteractionIdLogin(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1OauthInteractionByInteractionIdLogin(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams, requestOptions ...RequestOption) (res PostV1OauthInteractionByInteractionIdLoginRes, err error) {
+func (c *Client) sendPostV1OauthInteractionByInteractionIdLogin(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdLoginReq, params PostV1OauthInteractionByInteractionIdLoginParams, requestOptions ...RequestOption) (res *PostV1OauthInteractionByInteractionIdLoginOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1OauthInteractionByInteractionIdLogin"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -36044,12 +36168,12 @@ func (c *Client) sendPostV1OauthInteractionByInteractionIdReject(ctx context.Con
 // Approve an access request.
 //
 // POST /v1/projects/{project_id}/admin/access-requests/{id}/approve
-func (c *Client) PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminAccessRequestsByIdApprove"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -36235,12 +36359,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx
 // Deny an access request.
 //
 // POST /v1/projects/{project_id}/admin/access-requests/{id}/deny
-func (c *Client) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminAccessRequestsByIdDeny"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -36426,12 +36550,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx co
 // Create an API key.
 //
 // POST /v1/projects/{project_id}/admin/api-keys
-func (c *Client) PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, request *PostV1ProjectsByProjectIdAdminApiKeysReq, params PostV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminApiKeysRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, request *PostV1ProjectsByProjectIdAdminApiKeysReq, params PostV1ProjectsByProjectIdAdminApiKeysParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminApiKeysCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminApiKeys(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, request *PostV1ProjectsByProjectIdAdminApiKeysReq, params PostV1ProjectsByProjectIdAdminApiKeysParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminApiKeysRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, request *PostV1ProjectsByProjectIdAdminApiKeysReq, params PostV1ProjectsByProjectIdAdminApiKeysParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminApiKeysCreated, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -36621,12 +36745,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, 
 // Rotate the key secret.
 //
 // POST /v1/projects/{project_id}/admin/api-keys/{key_id}/rotate
-func (c *Client) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -36809,12 +36933,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx cont
 // Create an app client.
 //
 // POST /v1/projects/{project_id}/admin/apps
-func (c *Client) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsReq, params PostV1ProjectsByProjectIdAdminAppsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAppsRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsReq, params PostV1ProjectsByProjectIdAdminAppsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminAppsCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminApps(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminApps(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsReq, params PostV1ProjectsByProjectIdAdminAppsParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminAppsRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminApps(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsReq, params PostV1ProjectsByProjectIdAdminAppsParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminAppsCreated, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -37004,12 +37128,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminApps(ctx context.Context, req
 // Create a client secret.
 //
 // POST /v1/projects/{project_id}/admin/apps/{app_id}/secrets
-func (c *Client) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminAppsByAppIdSecrets"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -37209,12 +37333,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx contex
 // Export the audit log (signed).
 //
 // POST /v1/projects/{project_id}/admin/audit/export
-func (c *Client) PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAuditExportReq, params PostV1ProjectsByProjectIdAdminAuditExportParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminAuditExportRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAuditExportReq, params PostV1ProjectsByProjectIdAdminAuditExportParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminAuditExportOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminAuditExport(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAuditExportReq, params PostV1ProjectsByProjectIdAdminAuditExportParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminAuditExportRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, request *PostV1ProjectsByProjectIdAdminAuditExportReq, params PostV1ProjectsByProjectIdAdminAuditExportParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminAuditExportOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminAuditExport"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -37381,12 +37505,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminAuditExport(ctx context.Conte
 // Add a domain.
 //
 // POST /v1/projects/{project_id}/admin/domains
-func (c *Client) PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, request *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminDomainsRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, request *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminDomainsCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminDomains(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminDomains(ctx context.Context, request *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminDomainsRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminDomains(ctx context.Context, request *PostV1ProjectsByProjectIdAdminDomainsReq, params PostV1ProjectsByProjectIdAdminDomainsParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminDomainsCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminDomains"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -37567,12 +37691,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminDomains(ctx context.Context, 
 // Verify a domain via DNS.
 //
 // POST /v1/projects/{project_id}/admin/domains/{domain_id}/verify
-func (c *Client) PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminDomainsByDomainIdVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -37755,12 +37879,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx c
 // Create email provider.
 //
 // POST /v1/projects/{project_id}/admin/email-providers
-func (c *Client) PostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, request *EmailProvider, params PostV1ProjectsByProjectIdAdminEmailProvidersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEmailProvidersRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, request *EmailProvider, params PostV1ProjectsByProjectIdAdminEmailProvidersParams, options ...RequestOption) (*EmailProvider, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminEmailProviders(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, request *EmailProvider, params PostV1ProjectsByProjectIdAdminEmailProvidersParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminEmailProvidersRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, request *EmailProvider, params PostV1ProjectsByProjectIdAdminEmailProvidersParams, requestOptions ...RequestOption) (res *EmailProvider, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminEmailProviders"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -37941,12 +38065,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Co
 // Render a template preview.
 //
 // POST /v1/projects/{project_id}/admin/email-templates/{id}/preview
-func (c *Client) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -38132,12 +38256,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx
 // Send a test email.
 //
 // POST /v1/projects/{project_id}/admin/email-templates/{id}/send-test
-func (c *Client) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -38323,12 +38447,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ct
 // Replay an event to webhooks.
 //
 // POST /v1/projects/{project_id}/admin/events/{event_id}/replay
-func (c *Client) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEventsByEventIdReplayRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminEventsByEventIdReplayRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminEventsByEventIdReplay"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -38514,12 +38638,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx con
 // Create a hook.
 //
 // POST /v1/projects/{project_id}/admin/hooks
-func (c *Client) PostV1ProjectsByProjectIdAdminHooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminHooksReq, params PostV1ProjectsByProjectIdAdminHooksParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminHooksRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminHooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminHooksReq, params PostV1ProjectsByProjectIdAdminHooksParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminHooksCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminHooks(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminHooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminHooksReq, params PostV1ProjectsByProjectIdAdminHooksParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminHooksRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminHooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminHooksReq, params PostV1ProjectsByProjectIdAdminHooksParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminHooksCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminHooks"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -38700,12 +38824,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminHooks(ctx context.Context, re
 // Test a hook.
 //
 // POST /v1/projects/{project_id}/admin/hooks/{id}/test
-func (c *Client) PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq, params PostV1ProjectsByProjectIdAdminHooksByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminHooksByIdTestRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq, params PostV1ProjectsByProjectIdAdminHooksByIdTestParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminHooksByIdTestOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminHooksByIdTest(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq, params PostV1ProjectsByProjectIdAdminHooksByIdTestParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminHooksByIdTestRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq, params PostV1ProjectsByProjectIdAdminHooksByIdTestParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminHooksByIdTestOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminHooksByIdTest"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -38891,12 +39015,21 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Con
 // Verify an imported hash config.
 //
 // POST /v1/projects/{project_id}/admin/import/password-hashes/verify
-func (c *Client) PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq, params PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq, params PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq, params PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq, params PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminImportPasswordHashesVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -39063,12 +39196,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ct
 // Bulk-import users.
 //
 // POST /v1/projects/{project_id}/admin/import/users
-func (c *Client) PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminImportUsersRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminImportUsersOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminImportUsers(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminImportUsersRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminImportUsersOK, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -39244,12 +39377,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminImportUsers(ctx context.Conte
 // Cancel a job.
 //
 // POST /v1/projects/{project_id}/admin/jobs/{job_id}/cancel
-func (c *Client) PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context.Context, params PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminJobsByJobIdCancelRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context.Context, params PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context.Context, params PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminJobsByJobIdCancelRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context.Context, params PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminJobsByJobIdCancel"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -39432,12 +39565,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context
 // Activate a signing key.
 //
 // POST /v1/projects/{project_id}/admin/jwks/{key_id}/activate
-func (c *Client) PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx context.Context, params PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx context.Context, params PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx context.Context, params PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx context.Context, params PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminJwksByKeyIdActivate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -39620,12 +39753,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx conte
 // Create a new signing key.
 //
 // POST /v1/projects/{project_id}/admin/jwks/rotate
-func (c *Client) PostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminJwksRotateReq, params PostV1ProjectsByProjectIdAdminJwksRotateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminJwksRotateRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminJwksRotateReq, params PostV1ProjectsByProjectIdAdminJwksRotateParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminJwksRotateOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminJwksRotate(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminJwksRotateReq, params PostV1ProjectsByProjectIdAdminJwksRotateParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminJwksRotateRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminJwksRotateReq, params PostV1ProjectsByProjectIdAdminJwksRotateParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminJwksRotateOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminJwksRotate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -39792,12 +39925,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Contex
 // Create OAuth provider.
 //
 // POST /v1/projects/{project_id}/admin/oauth-providers
-func (c *Client) PostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, request *OAuthProviderConfig, params PostV1ProjectsByProjectIdAdminOauthProvidersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminOauthProvidersRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, request *OAuthProviderConfig, params PostV1ProjectsByProjectIdAdminOauthProvidersParams, options ...RequestOption) (*OAuthProviderConfig, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminOauthProviders(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, request *OAuthProviderConfig, params PostV1ProjectsByProjectIdAdminOauthProvidersParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminOauthProvidersRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, request *OAuthProviderConfig, params PostV1ProjectsByProjectIdAdminOauthProvidersParams, requestOptions ...RequestOption) (res *OAuthProviderConfig, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminOauthProviders"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -39978,12 +40111,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Co
 // Block an identifier.
 //
 // POST /v1/projects/{project_id}/admin/rate-limit/blocks
-func (c *Client) PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminRateLimitBlocksReq, params PostV1ProjectsByProjectIdAdminRateLimitBlocksParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminRateLimitBlocksRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminRateLimitBlocksReq, params PostV1ProjectsByProjectIdAdminRateLimitBlocksParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminRateLimitBlocksOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminRateLimitBlocksReq, params PostV1ProjectsByProjectIdAdminRateLimitBlocksParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminRateLimitBlocksRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminRateLimitBlocksReq, params PostV1ProjectsByProjectIdAdminRateLimitBlocksParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminRateLimitBlocksOK, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -40159,12 +40292,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.C
 // Create a risk rule.
 //
 // POST /v1/projects/{project_id}/admin/risk/rules
-func (c *Client) PostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, request *RiskRule, params PostV1ProjectsByProjectIdAdminRiskRulesParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminRiskRulesRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, request *RiskRule, params PostV1ProjectsByProjectIdAdminRiskRulesParams, options ...RequestOption) (*RiskRule, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminRiskRules(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, request *RiskRule, params PostV1ProjectsByProjectIdAdminRiskRulesParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminRiskRulesRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, request *RiskRule, params PostV1ProjectsByProjectIdAdminRiskRulesParams, requestOptions ...RequestOption) (res *RiskRule, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -40354,12 +40487,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context
 // Create a service account.
 //
 // POST /v1/projects/{project_id}/admin/service-accounts
-func (c *Client) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminServiceAccountsRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminServiceAccountsCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminServiceAccounts(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminServiceAccountsRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminServiceAccountsCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminServiceAccounts"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -40540,12 +40673,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.C
 // Create a client secret.
 //
 // POST /v1/projects/{project_id}/admin/service-accounts/{sa_id}/secrets
-func (c *Client) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, request *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -40745,12 +40878,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(
 // Create SMS provider.
 //
 // POST /v1/projects/{project_id}/admin/sms-providers
-func (c *Client) PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, request *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSmsProvidersRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, request *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams, options ...RequestOption) (*SmsProvider, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminSmsProviders(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, request *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminSmsProvidersRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, request *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams, requestOptions ...RequestOption) (res *SmsProvider, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminSmsProviders"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -40931,12 +41064,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Cont
 // Create an SSO connection.
 //
 // POST /v1/projects/{project_id}/admin/sso/connections
-func (c *Client) PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminSsoConnectionsCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminSsoConnections(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminSsoConnectionsRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminSsoConnectionsCreated, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -41126,12 +41259,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Co
 // Rotate the SP certificate.
 //
 // POST /v1/projects/{project_id}/admin/sso/connections/{id}/rotate-certificate
-func (c *Client) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -41314,12 +41447,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCerti
 // Create a SCIM token.
 //
 // POST /v1/projects/{project_id}/admin/sso/connections/{id}/scim/tokens
-func (c *Client) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(ctx context.Context, request *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensReq, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -41519,12 +41652,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens(
 // Test a connection.
 //
 // POST /v1/projects/{project_id}/admin/sso/connections/{id}/test
-func (c *Client) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx context.Context, params PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminSsoConnectionsByIdTest"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -41707,12 +41840,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest(ctx co
 // Create a token profile.
 //
 // POST /v1/projects/{project_id}/admin/token-profiles
-func (c *Client) PostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, request *TokenProfile, params PostV1ProjectsByProjectIdAdminTokenProfilesParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminTokenProfilesRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, request *TokenProfile, params PostV1ProjectsByProjectIdAdminTokenProfilesParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminTokenProfilesCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminTokenProfiles(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, request *TokenProfile, params PostV1ProjectsByProjectIdAdminTokenProfilesParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminTokenProfilesRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, request *TokenProfile, params PostV1ProjectsByProjectIdAdminTokenProfilesParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminTokenProfilesCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminTokenProfiles"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -41893,12 +42026,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Con
 // Preview token claims.
 //
 // POST /v1/projects/{project_id}/admin/token-profiles/{id}/preview
-func (c *Client) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, request *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, request *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, request *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, request *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminTokenProfilesByIdPreview"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -42084,12 +42217,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx 
 // Create a user.
 //
 // POST /v1/projects/{project_id}/admin/users
-func (c *Client) PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersReq, params PostV1ProjectsByProjectIdAdminUsersParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersReq, params PostV1ProjectsByProjectIdAdminUsersParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsers(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersReq, params PostV1ProjectsByProjectIdAdminUsersParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersReq, params PostV1ProjectsByProjectIdAdminUsersParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersCreated, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -42279,12 +42412,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsers(ctx context.Context, re
 // Anonymize a user.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/anonymize
-func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdAnonymize"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -42470,12 +42603,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx co
 // Ban a user.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/ban
-func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdBanRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersByUserIdBanRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdBan"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -42661,12 +42794,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.
 // Start a user data export.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/export
-func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdExportRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersByUserIdExportRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdExport"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -42849,12 +42982,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx conte
 // Create a support impersonation session.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/impersonate
-func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdImpersonate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -43040,12 +43173,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx 
 // Remove MFA factors.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/mfa/reset
-func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if value, ok := request.Get(); ok {
@@ -43247,12 +43380,21 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx con
 // Set a user's password.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/password
-func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx context.Context, request *PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams, requestOptions ...RequestOption) (res *Ok, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdPassword"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -43438,12 +43580,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx con
 // Revoke a user's sessions.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/sessions/revoke
-func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq, params PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -43629,12 +43771,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(c
 // Unban a user.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/unban
-func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdUnban"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -43817,12 +43959,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx contex
 // Mark email verified.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/verify-email
-func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -44005,12 +44147,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx 
 // Mark phone verified.
 //
 // POST /v1/projects/{project_id}/admin/users/{user_id}/verify-phone
-func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx context.Context, params PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -44193,12 +44335,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx 
 // Retry a delivery.
 //
 // POST /v1/projects/{project_id}/admin/webhook-deliveries/{delivery_id}/retry
-func (c *Client) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -44381,12 +44523,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryId
 // Create a webhook.
 //
 // POST /v1/projects/{project_id}/admin/webhooks
-func (c *Client) PostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksReq, params PostV1ProjectsByProjectIdAdminWebhooksParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksReq, params PostV1ProjectsByProjectIdAdminWebhooksParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminWebhooksCreated, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminWebhooks(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksReq, params PostV1ProjectsByProjectIdAdminWebhooksParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminWebhooksRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksReq, params PostV1ProjectsByProjectIdAdminWebhooksParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminWebhooksCreated, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -44576,12 +44718,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context,
 // Rotate webhook signing secret.
 //
 // POST /v1/projects/{project_id}/admin/webhooks/{id}/rotate-secret
-func (c *Client) PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -44764,12 +44906,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx 
 // Send a test event.
 //
 // POST /v1/projects/{project_id}/admin/webhooks/{id}/test
-func (c *Client) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksByIdTestRes, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminWebhooksByIdTestRes, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminWebhooksByIdTest"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -44955,12 +45097,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.
 // Create a SCIM group (forwarded downstream).
 //
 // POST /v1/scim/v2/{connection_id}/Groups
-func (c *Client) PostV1ScimV2ByConnectionIdGroups(ctx context.Context, request PostV1ScimV2ByConnectionIdGroupsReq, params PostV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdGroupsRes, error) {
+func (c *Client) PostV1ScimV2ByConnectionIdGroups(ctx context.Context, request PostV1ScimV2ByConnectionIdGroupsReq, params PostV1ScimV2ByConnectionIdGroupsParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdGroupsCreated, error) {
 	res, err := c.sendPostV1ScimV2ByConnectionIdGroups(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ScimV2ByConnectionIdGroups(ctx context.Context, request PostV1ScimV2ByConnectionIdGroupsReq, params PostV1ScimV2ByConnectionIdGroupsParams, requestOptions ...RequestOption) (res PostV1ScimV2ByConnectionIdGroupsRes, err error) {
+func (c *Client) sendPostV1ScimV2ByConnectionIdGroups(ctx context.Context, request PostV1ScimV2ByConnectionIdGroupsReq, params PostV1ScimV2ByConnectionIdGroupsParams, requestOptions ...RequestOption) (res PostV1ScimV2ByConnectionIdGroupsCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ScimV2ByConnectionIdGroups"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -45110,12 +45252,12 @@ func (c *Client) sendPostV1ScimV2ByConnectionIdGroups(ctx context.Context, reque
 // Create/provision a user identity.
 //
 // POST /v1/scim/v2/{connection_id}/Users
-func (c *Client) PostV1ScimV2ByConnectionIdUsers(ctx context.Context, request *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdUsersRes, error) {
+func (c *Client) PostV1ScimV2ByConnectionIdUsers(ctx context.Context, request *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams, options ...RequestOption) (PostV1ScimV2ByConnectionIdUsersCreated, error) {
 	res, err := c.sendPostV1ScimV2ByConnectionIdUsers(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ScimV2ByConnectionIdUsers(ctx context.Context, request *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams, requestOptions ...RequestOption) (res PostV1ScimV2ByConnectionIdUsersRes, err error) {
+func (c *Client) sendPostV1ScimV2ByConnectionIdUsers(ctx context.Context, request *ScimUser, params PostV1ScimV2ByConnectionIdUsersParams, requestOptions ...RequestOption) (res PostV1ScimV2ByConnectionIdUsersCreated, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ScimV2ByConnectionIdUsers"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -45265,12 +45407,12 @@ func (c *Client) sendPostV1ScimV2ByConnectionIdUsers(ctx context.Context, reques
 // Authenticated with the service account's client secret or private_key_jwt.
 //
 // POST /v1/service-accounts/tokens
-func (c *Client) PostV1ServiceAccountsTokens(ctx context.Context, request *PostV1ServiceAccountsTokensReq, options ...RequestOption) (PostV1ServiceAccountsTokensRes, error) {
+func (c *Client) PostV1ServiceAccountsTokens(ctx context.Context, request *PostV1ServiceAccountsTokensReq, options ...RequestOption) (*PostV1ServiceAccountsTokensOK, error) {
 	res, err := c.sendPostV1ServiceAccountsTokens(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ServiceAccountsTokens(ctx context.Context, request *PostV1ServiceAccountsTokensReq, requestOptions ...RequestOption) (res PostV1ServiceAccountsTokensRes, err error) {
+func (c *Client) sendPostV1ServiceAccountsTokens(ctx context.Context, request *PostV1ServiceAccountsTokensReq, requestOptions ...RequestOption) (res *PostV1ServiceAccountsTokensOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ServiceAccountsTokens"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -45401,12 +45543,12 @@ func (c *Client) sendPostV1ServiceAccountsTokens(ctx context.Context, request *P
 // Mark a device trusted (MFA).
 //
 // POST /v1/sessions/{session_id}/trust
-func (c *Client) PostV1SessionsBySessionIdTrust(ctx context.Context, request *PostV1SessionsBySessionIdTrustReq, params PostV1SessionsBySessionIdTrustParams, options ...RequestOption) (PostV1SessionsBySessionIdTrustRes, error) {
+func (c *Client) PostV1SessionsBySessionIdTrust(ctx context.Context, request *PostV1SessionsBySessionIdTrustReq, params PostV1SessionsBySessionIdTrustParams, options ...RequestOption) (*PostV1SessionsBySessionIdTrustOK, error) {
 	res, err := c.sendPostV1SessionsBySessionIdTrust(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1SessionsBySessionIdTrust(ctx context.Context, request *PostV1SessionsBySessionIdTrustReq, params PostV1SessionsBySessionIdTrustParams, requestOptions ...RequestOption) (res PostV1SessionsBySessionIdTrustRes, err error) {
+func (c *Client) sendPostV1SessionsBySessionIdTrust(ctx context.Context, request *PostV1SessionsBySessionIdTrustReq, params PostV1SessionsBySessionIdTrustParams, requestOptions ...RequestOption) (res *PostV1SessionsBySessionIdTrustOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1SessionsBySessionIdTrust"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -45914,12 +46056,12 @@ func (c *Client) sendPostV1SsoSamlByConnectionIdSlo(ctx context.Context, params 
 // Advance/reset the test clock.
 //
 // POST /v1/test/clock
-func (c *Client) PostV1TestClock(ctx context.Context, request *PostV1TestClockReq, params PostV1TestClockParams, options ...RequestOption) (PostV1TestClockRes, error) {
+func (c *Client) PostV1TestClock(ctx context.Context, request *PostV1TestClockReq, params PostV1TestClockParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1TestClock(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1TestClock(ctx context.Context, request *PostV1TestClockReq, params PostV1TestClockParams, requestOptions ...RequestOption) (res PostV1TestClockRes, err error) {
+func (c *Client) sendPostV1TestClock(ctx context.Context, request *PostV1TestClockReq, params PostV1TestClockParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1TestClock"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -46067,12 +46209,12 @@ func (c *Client) sendPostV1TestClock(ctx context.Context, request *PostV1TestClo
 // Wipe test-environment data.
 //
 // POST /v1/test/reset
-func (c *Client) PostV1TestReset(ctx context.Context, params PostV1TestResetParams, options ...RequestOption) (PostV1TestResetRes, error) {
+func (c *Client) PostV1TestReset(ctx context.Context, params PostV1TestResetParams, options ...RequestOption) (PostV1TestResetOK, error) {
 	res, err := c.sendPostV1TestReset(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1TestReset(ctx context.Context, params PostV1TestResetParams, requestOptions ...RequestOption) (res PostV1TestResetRes, err error) {
+func (c *Client) sendPostV1TestReset(ctx context.Context, params PostV1TestResetParams, requestOptions ...RequestOption) (res PostV1TestResetOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1TestReset"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -46217,12 +46359,12 @@ func (c *Client) sendPostV1TestReset(ctx context.Context, params PostV1TestReset
 // Seed test-environment fixtures.
 //
 // POST /v1/test/seed
-func (c *Client) PostV1TestSeed(ctx context.Context, request PostV1TestSeedReq, params PostV1TestSeedParams, options ...RequestOption) (PostV1TestSeedRes, error) {
+func (c *Client) PostV1TestSeed(ctx context.Context, request PostV1TestSeedReq, params PostV1TestSeedParams, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1TestSeed(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1TestSeed(ctx context.Context, request PostV1TestSeedReq, params PostV1TestSeedParams, requestOptions ...RequestOption) (res PostV1TestSeedRes, err error) {
+func (c *Client) sendPostV1TestSeed(ctx context.Context, request PostV1TestSeedReq, params PostV1TestSeedParams, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1TestSeed"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -46370,12 +46512,12 @@ func (c *Client) sendPostV1TestSeed(ctx context.Context, request PostV1TestSeedR
 // Live token introspection.
 //
 // POST /v1/tokens/introspect
-func (c *Client) PostV1TokensIntrospect(ctx context.Context, request *PostV1TokensIntrospectReq, options ...RequestOption) (PostV1TokensIntrospectRes, error) {
+func (c *Client) PostV1TokensIntrospect(ctx context.Context, request *PostV1TokensIntrospectReq, options ...RequestOption) (*PostV1TokensIntrospectOK, error) {
 	res, err := c.sendPostV1TokensIntrospect(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1TokensIntrospect(ctx context.Context, request *PostV1TokensIntrospectReq, requestOptions ...RequestOption) (res PostV1TokensIntrospectRes, err error) {
+func (c *Client) sendPostV1TokensIntrospect(ctx context.Context, request *PostV1TokensIntrospectReq, requestOptions ...RequestOption) (res *PostV1TokensIntrospectOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1TokensIntrospect"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -46506,12 +46648,12 @@ func (c *Client) sendPostV1TokensIntrospect(ctx context.Context, request *PostV1
 // Revoke a token/session.
 //
 // POST /v1/tokens/revoke
-func (c *Client) PostV1TokensRevoke(ctx context.Context, request *PostV1TokensRevokeReq, options ...RequestOption) (PostV1TokensRevokeRes, error) {
+func (c *Client) PostV1TokensRevoke(ctx context.Context, request *PostV1TokensRevokeReq, options ...RequestOption) (*Ok, error) {
 	res, err := c.sendPostV1TokensRevoke(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1TokensRevoke(ctx context.Context, request *PostV1TokensRevokeReq, requestOptions ...RequestOption) (res PostV1TokensRevokeRes, err error) {
+func (c *Client) sendPostV1TokensRevoke(ctx context.Context, request *PostV1TokensRevokeReq, requestOptions ...RequestOption) (res *Ok, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1TokensRevoke"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -46642,12 +46784,12 @@ func (c *Client) sendPostV1TokensRevoke(ctx context.Context, request *PostV1Toke
 // Verify a token via the server.
 //
 // POST /v1/tokens/verify
-func (c *Client) PostV1TokensVerify(ctx context.Context, request *PostV1TokensVerifyReq, options ...RequestOption) (PostV1TokensVerifyRes, error) {
+func (c *Client) PostV1TokensVerify(ctx context.Context, request *PostV1TokensVerifyReq, options ...RequestOption) (*PostV1TokensVerifyOK, error) {
 	res, err := c.sendPostV1TokensVerify(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1TokensVerify(ctx context.Context, request *PostV1TokensVerifyReq, requestOptions ...RequestOption) (res PostV1TokensVerifyRes, err error) {
+func (c *Client) sendPostV1TokensVerify(ctx context.Context, request *PostV1TokensVerifyReq, requestOptions ...RequestOption) (res *PostV1TokensVerifyOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1TokensVerify"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -46778,12 +46920,12 @@ func (c *Client) sendPostV1TokensVerify(ctx context.Context, request *PostV1Toke
 // Accept consents.
 //
 // POST /v1/users/me/consents
-func (c *Client) PostV1UsersMeConsents(ctx context.Context, request *PostV1UsersMeConsentsReq, options ...RequestOption) (PostV1UsersMeConsentsRes, error) {
+func (c *Client) PostV1UsersMeConsents(ctx context.Context, request *PostV1UsersMeConsentsReq, options ...RequestOption) (*PostV1UsersMeConsentsOK, error) {
 	res, err := c.sendPostV1UsersMeConsents(ctx, request, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1UsersMeConsents(ctx context.Context, request *PostV1UsersMeConsentsReq, requestOptions ...RequestOption) (res PostV1UsersMeConsentsRes, err error) {
+func (c *Client) sendPostV1UsersMeConsents(ctx context.Context, request *PostV1UsersMeConsentsReq, requestOptions ...RequestOption) (res *PostV1UsersMeConsentsOK, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -46923,12 +47065,12 @@ func (c *Client) sendPostV1UsersMeConsents(ctx context.Context, request *PostV1U
 // Start a GDPR export.
 //
 // POST /v1/users/me/export
-func (c *Client) PostV1UsersMeExport(ctx context.Context, options ...RequestOption) (PostV1UsersMeExportRes, error) {
+func (c *Client) PostV1UsersMeExport(ctx context.Context, options ...RequestOption) (*PostV1UsersMeExportOK, error) {
 	res, err := c.sendPostV1UsersMeExport(ctx, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1UsersMeExport(ctx context.Context, requestOptions ...RequestOption) (res PostV1UsersMeExportRes, err error) {
+func (c *Client) sendPostV1UsersMeExport(ctx context.Context, requestOptions ...RequestOption) (res *PostV1UsersMeExportOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1UsersMeExport"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -47056,12 +47198,12 @@ func (c *Client) sendPostV1UsersMeExport(ctx context.Context, requestOptions ...
 // Set required consents.
 //
 // PUT /v1/projects/{project_id}/admin/consents
-func (c *Client) PutV1ProjectsByProjectIdAdminConsents(ctx context.Context, request *ConsentConfig, params PutV1ProjectsByProjectIdAdminConsentsParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminConsentsRes, error) {
+func (c *Client) PutV1ProjectsByProjectIdAdminConsents(ctx context.Context, request *ConsentConfig, params PutV1ProjectsByProjectIdAdminConsentsParams, options ...RequestOption) (*ConsentConfig, error) {
 	res, err := c.sendPutV1ProjectsByProjectIdAdminConsents(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPutV1ProjectsByProjectIdAdminConsents(ctx context.Context, request *ConsentConfig, params PutV1ProjectsByProjectIdAdminConsentsParams, requestOptions ...RequestOption) (res PutV1ProjectsByProjectIdAdminConsentsRes, err error) {
+func (c *Client) sendPutV1ProjectsByProjectIdAdminConsents(ctx context.Context, request *ConsentConfig, params PutV1ProjectsByProjectIdAdminConsentsParams, requestOptions ...RequestOption) (res *ConsentConfig, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("putV1ProjectsByProjectIdAdminConsents"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
@@ -47228,12 +47370,12 @@ func (c *Client) sendPutV1ProjectsByProjectIdAdminConsents(ctx context.Context, 
 // Set project feature toggles.
 //
 // PUT /v1/projects/{project_id}/admin/features
-func (c *Client) PutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, request PutV1ProjectsByProjectIdAdminFeaturesReq, params PutV1ProjectsByProjectIdAdminFeaturesParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminFeaturesRes, error) {
+func (c *Client) PutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, request PutV1ProjectsByProjectIdAdminFeaturesReq, params PutV1ProjectsByProjectIdAdminFeaturesParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminFeaturesOK, error) {
 	res, err := c.sendPutV1ProjectsByProjectIdAdminFeatures(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, request PutV1ProjectsByProjectIdAdminFeaturesReq, params PutV1ProjectsByProjectIdAdminFeaturesParams, requestOptions ...RequestOption) (res PutV1ProjectsByProjectIdAdminFeaturesRes, err error) {
+func (c *Client) sendPutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, request PutV1ProjectsByProjectIdAdminFeaturesReq, params PutV1ProjectsByProjectIdAdminFeaturesParams, requestOptions ...RequestOption) (res PutV1ProjectsByProjectIdAdminFeaturesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("putV1ProjectsByProjectIdAdminFeatures"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
@@ -47400,12 +47542,12 @@ func (c *Client) sendPutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, 
 // Set i18n catalogue overrides.
 //
 // PUT /v1/projects/{project_id}/admin/i18n/{locale}
-func (c *Client) PutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, request PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params PutV1ProjectsByProjectIdAdminI18nByLocaleParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminI18nByLocaleRes, error) {
+func (c *Client) PutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, request PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params PutV1ProjectsByProjectIdAdminI18nByLocaleParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminI18nByLocaleOK, error) {
 	res, err := c.sendPutV1ProjectsByProjectIdAdminI18nByLocale(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, request PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params PutV1ProjectsByProjectIdAdminI18nByLocaleParams, requestOptions ...RequestOption) (res PutV1ProjectsByProjectIdAdminI18nByLocaleRes, err error) {
+func (c *Client) sendPutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, request PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params PutV1ProjectsByProjectIdAdminI18nByLocaleParams, requestOptions ...RequestOption) (res PutV1ProjectsByProjectIdAdminI18nByLocaleOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("putV1ProjectsByProjectIdAdminI18nByLocale"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
@@ -47590,12 +47732,12 @@ func (c *Client) sendPutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Conte
 // Set retention policy.
 //
 // PUT /v1/projects/{project_id}/admin/retention-policy
-func (c *Client) PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, request *RetentionPolicy, params PutV1ProjectsByProjectIdAdminRetentionPolicyParams, options ...RequestOption) (PutV1ProjectsByProjectIdAdminRetentionPolicyRes, error) {
+func (c *Client) PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, request *RetentionPolicy, params PutV1ProjectsByProjectIdAdminRetentionPolicyParams, options ...RequestOption) (*RetentionPolicy, error) {
 	res, err := c.sendPutV1ProjectsByProjectIdAdminRetentionPolicy(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, request *RetentionPolicy, params PutV1ProjectsByProjectIdAdminRetentionPolicyParams, requestOptions ...RequestOption) (res PutV1ProjectsByProjectIdAdminRetentionPolicyRes, err error) {
+func (c *Client) sendPutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, request *RetentionPolicy, params PutV1ProjectsByProjectIdAdminRetentionPolicyParams, requestOptions ...RequestOption) (res *RetentionPolicy, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -47771,12 +47913,12 @@ func (c *Client) sendPutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Co
 // Replace a SCIM group (forwarded downstream).
 //
 // PUT /v1/scim/v2/{connection_id}/Groups/{group_id}
-func (c *Client) PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PutV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PutV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (PutV1ScimV2ByConnectionIdGroupsByGroupIdRes, error) {
+func (c *Client) PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PutV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PutV1ScimV2ByConnectionIdGroupsByGroupIdParams, options ...RequestOption) (PutV1ScimV2ByConnectionIdGroupsByGroupIdOK, error) {
 	res, err := c.sendPutV1ScimV2ByConnectionIdGroupsByGroupId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PutV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PutV1ScimV2ByConnectionIdGroupsByGroupIdParams, requestOptions ...RequestOption) (res PutV1ScimV2ByConnectionIdGroupsByGroupIdRes, err error) {
+func (c *Client) sendPutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Context, request PutV1ScimV2ByConnectionIdGroupsByGroupIdReq, params PutV1ScimV2ByConnectionIdGroupsByGroupIdParams, requestOptions ...RequestOption) (res PutV1ScimV2ByConnectionIdGroupsByGroupIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("putV1ScimV2ByConnectionIdGroupsByGroupId"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
@@ -47944,12 +48086,12 @@ func (c *Client) sendPutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context.Contex
 // Replace a SCIM user.
 //
 // PUT /v1/scim/v2/{connection_id}/Users/{scim_user_id}
-func (c *Client) PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PutV1ScimV2ByConnectionIdUsersByScimUserIdRes, error) {
+func (c *Client) PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams, options ...RequestOption) (PutV1ScimV2ByConnectionIdUsersByScimUserIdOK, error) {
 	res, err := c.sendPutV1ScimV2ByConnectionIdUsersByScimUserId(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams, requestOptions ...RequestOption) (res PutV1ScimV2ByConnectionIdUsersByScimUserIdRes, err error) {
+func (c *Client) sendPutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, request *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams, requestOptions ...RequestOption) (res PutV1ScimV2ByConnectionIdUsersByScimUserIdOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("putV1ScimV2ByConnectionIdUsersByScimUserId"),
 		semconv.HTTPRequestMethodKey.String("PUT"),

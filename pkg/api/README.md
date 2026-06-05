@@ -12,6 +12,26 @@ fakers) is **module-private** under [`../../internal/oas`](../../internal/oas)
 and regenerated with `make generate-go`. Do not edit generated code; put logic
 here.
 
+## Errors & validation
+
+Two layers, both rendering the shared `ErrorEnvelope` (`{ error: { code, message } }`):
+
+- **Handler errors → `Service.NewError`** (ogen *convenient errors*). Every
+  operation shares one `default` error response, so ogen generates
+  `NewError(ctx, err) *oas.DefaultStatusCode`. Handlers just `return …, err`;
+  `NewError` maps a `domain.Error` (stable `code` + HTTP status, see
+  [`internal/domain/errors.go`](../../internal/domain/errors.go)) into the
+  envelope; anything else becomes `500 internal_error`.
+- **Request-level errors → `ErrorHandler`**. ogen runs **code-generated schema
+  validation** on decode (the spec's `minLength`/`maxLength`/`pattern`/`format`/
+  `required`/`enum` constraints). Validation, parameter/body decode and security
+  failures are raised *before* the handler, so they bypass `NewError`; wire
+  `oas.WithErrorHandler(api.ErrorHandler)` to render them into the same
+  envelope (`validation_failed` / `unauthorized` / `bad_request`).
+
+Add constraints to the OpenAPI schemas to get more validation for free — no
+handler code.
+
 ## Dependencies & transaction boundary
 
 Each `XxxService` is **pure orchestration**: it holds aggregate-port interfaces

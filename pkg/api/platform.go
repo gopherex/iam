@@ -50,6 +50,6 @@ func (s *PlatformService) GetV1HealthLive(ctx context.Context) (r *oas.GetV1Heal
 	panic("implement me")
 }
 
-func (s *PlatformService) GetV1HealthReady(ctx context.Context) (r oas.GetV1HealthReadyRes, _ error) {
+func (s *PlatformService) GetV1HealthReady(ctx context.Context) (r *oas.GetV1HealthReadyOK, _ error) {
 	panic("implement me")
 }
