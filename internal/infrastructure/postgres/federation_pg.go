@@ -1206,14 +1206,15 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	}
 	// Provision + emit atomically: the callback event is recorded iff the
 	// exchange code commits (nested withTx joins fedProvisionAndStoreCode's tx).
-	var exchangeCode, cookie string
+	var exchangeCode string
+	var cookie []string
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
-		code, accessToken, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, provider, "oidc", subject, email)
+		code, accessToken, refreshToken, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, provider, "oidc", subject, email)
 		if err != nil {
 			return err
 		}
 		exchangeCode = code
-		cookie = sessionCookieHeader(accessToken, fedAccessTTL)
+		cookie = sessionCookies(accessToken, refreshToken, fedAccessTTL, fedRefreshTTL)
 		return a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.sso.oidc_callback",
 			ProjectID:   row.ProjectID,
@@ -1312,14 +1313,15 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	// single-use exchange code (code -> minted session) for the provisioning leg
 	// to resolve. The provider key is the connection id (no issuer for SAML).
 	// Provision + emit atomically (nested withTx joins fedProvisionAndStoreCode's tx).
-	var exchangeCode, cookie string
+	var exchangeCode string
+	var cookie []string
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
-		code, accessToken, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, cmd.ConnectionID, "saml", subject, email)
+		code, accessToken, refreshToken, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, cmd.ConnectionID, "saml", subject, email)
 		if err != nil {
 			return err
 		}
 		exchangeCode = code
-		cookie = sessionCookieHeader(accessToken, fedAccessTTL)
+		cookie = sessionCookies(accessToken, refreshToken, fedAccessTTL, fedRefreshTTL)
 		return a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.sso.saml_acs",
 			ProjectID:   row.ProjectID,
@@ -1469,18 +1471,19 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 // persists a single-use exchange code (sha256(code) -> minted session JSON,
 // user_id = account id, expires_at = now+5m). The opaque code is returned for the
 // /v1/sso/exchange redirect; only its hash is stored.
-func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, projectID, connectionID, provider, idType, providerAccountID, email string) (string, string, error) {
+func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, projectID, connectionID, provider, idType, providerAccountID, email string) (string, string, string, error) {
 	code, err := fedRandomToken()
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
-	var accessToken string
+	var accessToken, refreshToken string
 	err = a.db.withTx(ctx, func(ctx context.Context) error {
 		acct, sess, err := a.fedProvisionSubject(ctx, projectID, connectionID, provider, idType, providerAccountID, email)
 		if err != nil {
 			return err
 		}
 		accessToken = sess.AccessToken
+		refreshToken = sess.RefreshToken
 		raw, err := marshal(sess)
 		if err != nil {
 			return err
@@ -1513,9 +1516,9 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, proj
 		return nil
 	})
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
-	return code, accessToken, nil
+	return code, accessToken, refreshToken, nil
 }
 
 // fedProvisionSubject mirrors oauthsocial.resolveLoginAndMint for SSO: it finds an

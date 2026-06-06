@@ -39983,7 +39983,7 @@ func (s *Server) handlePostV1AuthTokenRefreshRequest(args [0]string, argsEscaped
 		}
 	}()
 
-	var response *AuthResult
+	var response *AuthResultHeaders
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -39997,6 +39997,10 @@ func (s *Server) handlePostV1AuthTokenRefreshRequest(args [0]string, argsEscaped
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "iam_refresh",
+					In:   "cookie",
+				}: params.IamRefresh,
 			},
 			Raw: r,
 		}
@@ -40004,7 +40008,7 @@ func (s *Server) handlePostV1AuthTokenRefreshRequest(args [0]string, argsEscaped
 		type (
 			Request  = OptRefreshRequest
 			Params   = PostV1AuthTokenRefreshParams
-			Response = *AuthResult
+			Response = *AuthResultHeaders
 		)
 		response, err = middleware.HookMiddleware[
 			Request,

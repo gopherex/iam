@@ -2060,6 +2060,13 @@ paths:
       security: []
       parameters:
       - $ref: '#/components/parameters/XClientId'
+      - name: iam_refresh
+        in: cookie
+        required: false
+        description: Refresh token in cookie mode (used when the body omits it).
+        schema:
+          type: string
+          maxLength: 4096
       requestBody:
         content:
           application/json:
@@ -2068,6 +2075,13 @@ paths:
       responses:
         '200':
           description: New AuthResult.
+          headers:
+            Set-Cookie:
+              schema:
+                type: array
+                items:
+                  type: string
+              description: Rotated session cookies (access + refresh), in cookie mode.
           content:
             application/json:
               schema:
@@ -2469,8 +2483,10 @@ paths:
               description: Redirect target.
             Set-Cookie:
               schema:
-                type: string
-              description: Session cookies, in cookie mode.
+                type: array
+                items:
+                  type: string
+              description: Session cookies (access + refresh), in cookie mode.
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -2920,8 +2936,10 @@ paths:
               description: Redirect target.
             Set-Cookie:
               schema:
-                type: string
-              description: Session cookies, in cookie mode.
+                type: array
+                items:
+                  type: string
+              description: Session cookies (access + refresh), in cookie mode.
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -3076,8 +3094,10 @@ paths:
               description: Redirect target.
             Set-Cookie:
               schema:
-                type: string
-              description: Session cookies, in cookie mode.
+                type: array
+                items:
+                  type: string
+              description: Session cookies (access + refresh), in cookie mode.
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -5769,8 +5789,10 @@ paths:
               description: Redirect target.
             Set-Cookie:
               schema:
-                type: string
-              description: Session cookies, in cookie mode.
+                type: array
+                items:
+                  type: string
+              description: Session cookies (access + refresh), in cookie mode.
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -5896,8 +5918,10 @@ paths:
               description: Redirect target.
             Set-Cookie:
               schema:
-                type: string
-              description: Session cookies, in cookie mode.
+                type: array
+                items:
+                  type: string
+              description: Session cookies (access + refresh), in cookie mode.
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime

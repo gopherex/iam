@@ -61,8 +61,8 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderCallback(ctx context.Contex
 		return nil, err
 	}
 	out := &oas.GetV1AuthOauthByProviderCallbackFound{Location: optURI(res.RedirectURL)}
-	if res.SetCookie != "" {
-		out.SetCookie = oas.NewOptString(res.SetCookie)
+	if len(res.SetCookie) > 0 {
+		out.SetCookie = res.SetCookie
 	}
 	return out, nil
 }

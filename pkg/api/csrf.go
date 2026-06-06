@@ -12,6 +12,10 @@ import (
 // presence to decide whether a request is cookie-authenticated.
 const SessionCookieName = "iam_session"
 
+// RefreshCookieName carries the refresh token in cookie mode so a cookie session
+// can be refreshed past the access token's TTL (see PostV1AuthTokenRefresh).
+const RefreshCookieName = "iam_refresh"
+
 // csrfVerifier is the subset of PlatformCsrf the middleware needs.
 type csrfVerifier interface {
 	VerifyCsrfToken(ctx context.Context, clientID, token string) error

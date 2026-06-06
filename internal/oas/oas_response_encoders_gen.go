@@ -765,8 +765,17 @@ func encodeGetV1AuthEmailVerificationCallbackResponse(response *GetV1AuthEmailVe
 				Explode: false,
 			}
 			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-				if val, ok := response.SetCookie.Get(); ok {
-					return e.EncodeValue(conv.StringToString(val))
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
 				}
 				return nil
 			}); err != nil {
@@ -829,8 +838,17 @@ func encodeGetV1AuthMagicLinkCallbackResponse(response *GetV1AuthMagicLinkCallba
 				Explode: false,
 			}
 			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-				if val, ok := response.SetCookie.Get(); ok {
-					return e.EncodeValue(conv.StringToString(val))
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
 				}
 				return nil
 			}); err != nil {
@@ -893,8 +911,17 @@ func encodeGetV1AuthOauthByProviderCallbackResponse(response *GetV1AuthOauthByPr
 				Explode: false,
 			}
 			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-				if val, ok := response.SetCookie.Get(); ok {
-					return e.EncodeValue(conv.StringToString(val))
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
 				}
 				return nil
 			}); err != nil {
@@ -2248,8 +2275,17 @@ func encodeGetV1SsoOidcByConnectionIdCallbackResponse(response *GetV1SsoOidcByCo
 				Explode: false,
 			}
 			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-				if val, ok := response.SetCookie.Get(); ok {
-					return e.EncodeValue(conv.StringToString(val))
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
 				}
 				return nil
 			}); err != nil {
@@ -3993,7 +4029,7 @@ func encodePostV1AuthTokenExchangeResponse(response *AuthResult, w http.Response
 	return nil
 }
 
-func encodePostV1AuthTokenRefreshResponse(response *AuthResult, w http.ResponseWriter, span trace.Span) error {
+func encodePostV1AuthTokenRefreshResponse(response *AuthResultHeaders, w http.ResponseWriter, span trace.Span) error {
 	if err := func() error {
 		if err := response.Validate(); err != nil {
 			return err
@@ -4003,11 +4039,40 @@ func encodePostV1AuthTokenRefreshResponse(response *AuthResult, w http.ResponseW
 		return errors.Wrap(err, "validate")
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+	// Encoding response headers.
+	{
+		h := uri.NewHeaderEncoder(w.Header())
+		// Encode "Set-Cookie" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Set-Cookie",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
+				}
+				return nil
+			}); err != nil {
+				return errors.Wrap(err, "encode Set-Cookie header")
+			}
+		}
+	}
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
 
 	e := new(jx.Encoder)
-	response.Encode(e)
+	response.Response.Encode(e)
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}
@@ -5270,8 +5335,17 @@ func encodePostV1SsoSamlByConnectionIdAcsResponse(response *PostV1SsoSamlByConne
 				Explode: false,
 			}
 			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-				if val, ok := response.SetCookie.Get(); ok {
-					return e.EncodeValue(conv.StringToString(val))
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
 				}
 				return nil
 			}); err != nil {

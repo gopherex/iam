@@ -1838,7 +1838,7 @@ func (UnimplementedHandler) PostV1AuthTokenExchange(ctx context.Context, req *Co
 // Rotate refresh token, issue new access token.
 //
 // POST /v1/auth/token/refresh
-func (UnimplementedHandler) PostV1AuthTokenRefresh(ctx context.Context, req OptRefreshRequest, params PostV1AuthTokenRefreshParams) (r *AuthResult, _ error) {
+func (UnimplementedHandler) PostV1AuthTokenRefresh(ctx context.Context, req OptRefreshRequest, params PostV1AuthTokenRefreshParams) (r *AuthResultHeaders, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

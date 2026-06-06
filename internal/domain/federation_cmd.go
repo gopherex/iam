@@ -62,8 +62,10 @@ type FederationSamlAcsCmd struct {
 // FederationSsoRedirect is a runtime SSO redirect result: the URL the caller's
 // browser must be sent to, plus an optional Set-Cookie value.
 type FederationSsoRedirect struct {
-	URL    string
-	Cookie string
+	URL string
+	// Cookie carries the session cookies (access + refresh) to set in cookie
+	// mode; each entry is a full Set-Cookie header value.
+	Cookie []string
 }
 
 // FederationScimResource is an opaque SCIM resource (User or Group) carried as a

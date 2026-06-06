@@ -41,7 +41,9 @@ type OAuthSocialCallbackCmd struct {
 // to redirect the browser to and, in cookie mode, the Set-Cookie header value.
 type OAuthSocialCallbackResult struct {
 	RedirectURL string
-	SetCookie   string
+	// SetCookie carries the session cookies (access + refresh) to set in cookie
+	// mode; each entry is a full Set-Cookie header value.
+	SetCookie []string
 }
 
 // OAuthSocialLinkStartCmd begins linking a provider identity to an already

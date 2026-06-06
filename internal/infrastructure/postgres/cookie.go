@@ -1,31 +1,19 @@
 package postgres
 
 // Cookie-mode session cookies. Browser (redirect) auth flows hand the minted
-// access token back as an HttpOnly session cookie instead of (or alongside) the
-// token body; api.CookieAuthMiddleware reads it back on subsequent requests and
-// api.CSRFMiddleware enforces CSRF while it is present. The cookie name is the
-// shared api.SessionCookieName so all three pieces agree.
+// access + refresh tokens back as HttpOnly cookies; the actual Set-Cookie format
+// lives in pkg/api (the transport layer owns it) and is shared with the refresh
+// handler. api.CookieAuthMiddleware reads the access cookie back and
+// api.CSRFMiddleware enforces CSRF while it is present.
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/gopherex/iam/pkg/api"
 )
 
-// sessionCookieHeader renders the Set-Cookie header value for a session cookie
-// carrying token, valid for ttl. HttpOnly + Secure + SameSite=Lax: not readable
-// by JS, HTTPS-only, sent on top-level navigations (CSRF middleware still guards
-// state-changing requests).
-func sessionCookieHeader(token string, ttl time.Duration) string {
-	c := &http.Cookie{
-		Name:     api.SessionCookieName,
-		Value:    token,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-		MaxAge:   int(ttl / time.Second),
-	}
-	return c.String()
+// sessionCookies renders the access + refresh Set-Cookie pair minted on a cookie
+// -mode login (delegates to the shared pkg/api builder).
+func sessionCookies(access, refresh string, accessTTL, refreshTTL time.Duration) []string {
+	return api.SessionCookies(access, refresh, accessTTL, refreshTTL)
 }

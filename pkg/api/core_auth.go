@@ -105,7 +105,7 @@ func (s *CoreAuthService) GetV1AuthEmailVerificationCallback(ctx context.Context
 	}
 	out := &oas.GetV1AuthEmailVerificationCallbackFound{Location: optURI(res.RedirectURL)}
 	if res.SetCookie != "" {
-		out.SetCookie = oas.NewOptString(res.SetCookie)
+		out.SetCookie = []string{res.SetCookie}
 	}
 	return out, nil
 }
@@ -486,10 +486,18 @@ func (s *CoreAuthService) PostV1AuthImpersonateRedeem(ctx context.Context, req *
 	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.OptRefreshRequest, params oas.PostV1AuthTokenRefreshParams) (*oas.AuthResult, error) {
+func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.OptRefreshRequest, params oas.PostV1AuthTokenRefreshParams) (*oas.AuthResultHeaders, error) {
 	rt := ""
 	if v, ok := req.Get(); ok {
 		rt = v.RefreshToken.Or("")
+	}
+	// Cookie mode: when the body omits the token, take it from the refresh cookie.
+	cookieMode := false
+	if rt == "" {
+		if v, ok := params.IamRefresh.Get(); ok && v != "" {
+			rt = v
+			cookieMode = true
+		}
 	}
 	if rt == "" {
 		return nil, domain.ErrInvalidToken.WithMessage("refresh_token is required")
@@ -498,7 +506,13 @@ func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.Op
 	if err != nil {
 		return nil, err
 	}
-	return authResult(acct, sess), nil
+	out := &oas.AuthResultHeaders{Response: *authResult(acct, sess)}
+	// Rotate both cookies for a cookie-mode refresh; token-mode callers get the
+	// rotated tokens in the body only.
+	if cookieMode {
+		out.SetCookie = SessionCookies(sess.AccessToken, sess.RefreshToken, cookieAccessTTL, cookieRefreshTTL)
+	}
+	return out, nil
 }
 
 func (s *CoreAuthService) PostV1ChallengesCaptchaVerify(ctx context.Context, req *oas.PostV1ChallengesCaptchaVerifyReq) (r *oas.PostV1ChallengesCaptchaVerifyOK, _ error) {

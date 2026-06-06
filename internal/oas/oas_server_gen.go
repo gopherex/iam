@@ -985,7 +985,7 @@ type CoreAuthHandler interface {
 	// Rotate refresh token, issue new access token.
 	//
 	// POST /v1/auth/token/refresh
-	PostV1AuthTokenRefresh(ctx context.Context, req OptRefreshRequest, params PostV1AuthTokenRefreshParams) (*AuthResult, error)
+	PostV1AuthTokenRefresh(ctx context.Context, req OptRefreshRequest, params PostV1AuthTokenRefreshParams) (*AuthResultHeaders, error)
 	// PostV1ChallengesCaptchaVerify implements postV1ChallengesCaptchaVerify operation.
 	//
 	// Verify a captcha token.

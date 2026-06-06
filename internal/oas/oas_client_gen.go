@@ -1060,7 +1060,7 @@ type CoreAuthInvoker interface {
 	// Rotate refresh token, issue new access token.
 	//
 	// POST /v1/auth/token/refresh
-	PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, options ...RequestOption) (*AuthResult, error)
+	PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, options ...RequestOption) (*AuthResultHeaders, error)
 	// PostV1ChallengesCaptchaVerify invokes postV1ChallengesCaptchaVerify operation.
 	//
 	// Verify a captcha token.
@@ -35212,12 +35212,12 @@ func (c *Client) sendPostV1AuthTokenExchange(ctx context.Context, request *CodeE
 // Rotate refresh token, issue new access token.
 //
 // POST /v1/auth/token/refresh
-func (c *Client) PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, options ...RequestOption) (*AuthResult, error) {
+func (c *Client) PostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, options ...RequestOption) (*AuthResultHeaders, error) {
 	res, err := c.sendPostV1AuthTokenRefresh(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+func (c *Client) sendPostV1AuthTokenRefresh(ctx context.Context, request OptRefreshRequest, params PostV1AuthTokenRefreshParams, requestOptions ...RequestOption) (res *AuthResultHeaders, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if value, ok := request.Get(); ok {
@@ -35304,6 +35304,25 @@ func (c *Client) sendPostV1AuthTokenRefresh(ctx context.Context, request OptRefr
 			return e.EncodeValue(conv.StringToString(params.XClientID))
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	stage = "EncodeCookieParams"
+	cookie := uri.NewCookieEncoder(r)
+	{
+		// Encode "iam_refresh" parameter.
+		cfg := uri.CookieParameterEncodingConfig{
+			Name:    "iam_refresh",
+			Explode: true,
+		}
+
+		if err := cookie.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IamRefresh.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode cookie")
 		}
 	}
 

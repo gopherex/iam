@@ -31408,6 +31408,8 @@ func decodePostV1AuthTokenExchangeParams(args [0]string, argsEscaped bool, r *ht
 // PostV1AuthTokenRefreshParams is parameters of postV1AuthTokenRefresh operation.
 type PostV1AuthTokenRefreshParams struct {
 	XClientID string
+	// Refresh token in cookie mode (used when the body omits it).
+	IamRefresh OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthTokenRefreshParams(packed middleware.Parameters) (params PostV1AuthTokenRefreshParams) {
@@ -31418,11 +31420,21 @@ func unpackPostV1AuthTokenRefreshParams(packed middleware.Parameters) (params Po
 		}
 		params.XClientID = packed[key].(string)
 	}
+	{
+		key := middleware.ParameterKey{
+			Name: "iam_refresh",
+			In:   "cookie",
+		}
+		if v, ok := packed[key]; ok {
+			params.IamRefresh = v.(OptString)
+		}
+	}
 	return params
 }
 
 func decodePostV1AuthTokenRefreshParams(args [0]string, argsEscaped bool, r *http.Request) (params PostV1AuthTokenRefreshParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
+	c := uri.NewCookieDecoder(r)
 	// Decode header: X-Client-Id.
 	if err := func() error {
 		cfg := uri.HeaderParameterDecodingConfig{
@@ -31474,6 +31486,72 @@ func decodePostV1AuthTokenRefreshParams(args [0]string, argsEscaped bool, r *htt
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
 			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode cookie: iam_refresh.
+	if err := func() error {
+		cfg := uri.CookieParameterDecodingConfig{
+			Name:    "iam_refresh",
+			Explode: true,
+		}
+		if err := c.HasParam(cfg); err == nil {
+			if err := c.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIamRefreshVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIamRefreshVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.IamRefresh.SetTo(paramsDotIamRefreshVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.IamRefresh.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     4096,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "iam_refresh",
+			In:   "cookie",
 			Err:  err,
 		}
 	}

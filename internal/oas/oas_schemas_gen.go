@@ -785,6 +785,32 @@ func (s *AuthResult) SetNextStep(val OptNilNextStep) {
 	s.NextStep = val
 }
 
+// AuthResultHeaders wraps AuthResult with response headers.
+type AuthResultHeaders struct {
+	SetCookie []string
+	Response  AuthResult
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *AuthResultHeaders) GetSetCookie() []string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *AuthResultHeaders) GetResponse() AuthResult {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *AuthResultHeaders) SetSetCookie(val []string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *AuthResultHeaders) SetResponse(val AuthResult) {
+	s.Response = val
+}
+
 // Ref: #/components/schemas/AuthResultOrNextStep
 // AuthResultOrNextStep represents sum type.
 type AuthResultOrNextStep struct {
@@ -2068,7 +2094,7 @@ func (s *GetV1AccountCapabilitiesOKCapabilities) init() GetV1AccountCapabilities
 // GetV1AuthEmailVerificationCallbackFound is response for GetV1AuthEmailVerificationCallback operation.
 type GetV1AuthEmailVerificationCallbackFound struct {
 	Location  OptURI
-	SetCookie OptString
+	SetCookie []string
 }
 
 // GetLocation returns the value of Location.
@@ -2077,7 +2103,7 @@ func (s *GetV1AuthEmailVerificationCallbackFound) GetLocation() OptURI {
 }
 
 // GetSetCookie returns the value of SetCookie.
-func (s *GetV1AuthEmailVerificationCallbackFound) GetSetCookie() OptString {
+func (s *GetV1AuthEmailVerificationCallbackFound) GetSetCookie() []string {
 	return s.SetCookie
 }
 
@@ -2087,7 +2113,7 @@ func (s *GetV1AuthEmailVerificationCallbackFound) SetLocation(val OptURI) {
 }
 
 // SetSetCookie sets the value of SetCookie.
-func (s *GetV1AuthEmailVerificationCallbackFound) SetSetCookie(val OptString) {
+func (s *GetV1AuthEmailVerificationCallbackFound) SetSetCookie(val []string) {
 	s.SetCookie = val
 }
 
@@ -2108,7 +2134,7 @@ func (s *GetV1AuthIdentitiesOK) SetData(val []Identity) {
 // GetV1AuthMagicLinkCallbackFound is response for GetV1AuthMagicLinkCallback operation.
 type GetV1AuthMagicLinkCallbackFound struct {
 	Location  OptURI
-	SetCookie OptString
+	SetCookie []string
 }
 
 // GetLocation returns the value of Location.
@@ -2117,7 +2143,7 @@ func (s *GetV1AuthMagicLinkCallbackFound) GetLocation() OptURI {
 }
 
 // GetSetCookie returns the value of SetCookie.
-func (s *GetV1AuthMagicLinkCallbackFound) GetSetCookie() OptString {
+func (s *GetV1AuthMagicLinkCallbackFound) GetSetCookie() []string {
 	return s.SetCookie
 }
 
@@ -2127,7 +2153,7 @@ func (s *GetV1AuthMagicLinkCallbackFound) SetLocation(val OptURI) {
 }
 
 // SetSetCookie sets the value of SetCookie.
-func (s *GetV1AuthMagicLinkCallbackFound) SetSetCookie(val OptString) {
+func (s *GetV1AuthMagicLinkCallbackFound) SetSetCookie(val []string) {
 	s.SetCookie = val
 }
 
@@ -2148,7 +2174,7 @@ func (s *GetV1AuthMfaFactorsOK) SetData(val []Factor) {
 // GetV1AuthOauthByProviderCallbackFound is response for GetV1AuthOauthByProviderCallback operation.
 type GetV1AuthOauthByProviderCallbackFound struct {
 	Location  OptURI
-	SetCookie OptString
+	SetCookie []string
 }
 
 // GetLocation returns the value of Location.
@@ -2157,7 +2183,7 @@ func (s *GetV1AuthOauthByProviderCallbackFound) GetLocation() OptURI {
 }
 
 // GetSetCookie returns the value of SetCookie.
-func (s *GetV1AuthOauthByProviderCallbackFound) GetSetCookie() OptString {
+func (s *GetV1AuthOauthByProviderCallbackFound) GetSetCookie() []string {
 	return s.SetCookie
 }
 
@@ -2167,7 +2193,7 @@ func (s *GetV1AuthOauthByProviderCallbackFound) SetLocation(val OptURI) {
 }
 
 // SetSetCookie sets the value of SetCookie.
-func (s *GetV1AuthOauthByProviderCallbackFound) SetSetCookie(val OptString) {
+func (s *GetV1AuthOauthByProviderCallbackFound) SetSetCookie(val []string) {
 	s.SetCookie = val
 }
 
@@ -3519,7 +3545,7 @@ func (s *GetV1SsoConnectionsResolveOK) SetConnection(val OptSSOConnection) {
 // GetV1SsoOidcByConnectionIdCallbackFound is response for GetV1SsoOidcByConnectionIdCallback operation.
 type GetV1SsoOidcByConnectionIdCallbackFound struct {
 	Location  OptURI
-	SetCookie OptString
+	SetCookie []string
 }
 
 // GetLocation returns the value of Location.
@@ -3528,7 +3554,7 @@ func (s *GetV1SsoOidcByConnectionIdCallbackFound) GetLocation() OptURI {
 }
 
 // GetSetCookie returns the value of SetCookie.
-func (s *GetV1SsoOidcByConnectionIdCallbackFound) GetSetCookie() OptString {
+func (s *GetV1SsoOidcByConnectionIdCallbackFound) GetSetCookie() []string {
 	return s.SetCookie
 }
 
@@ -3538,7 +3564,7 @@ func (s *GetV1SsoOidcByConnectionIdCallbackFound) SetLocation(val OptURI) {
 }
 
 // SetSetCookie sets the value of SetCookie.
-func (s *GetV1SsoOidcByConnectionIdCallbackFound) SetSetCookie(val OptString) {
+func (s *GetV1SsoOidcByConnectionIdCallbackFound) SetSetCookie(val []string) {
 	s.SetCookie = val
 }
 
@@ -15639,7 +15665,7 @@ func (s *PostV1SsoExchangeReq) SetCode(val string) {
 // PostV1SsoSamlByConnectionIdAcsFound is response for PostV1SsoSamlByConnectionIdAcs operation.
 type PostV1SsoSamlByConnectionIdAcsFound struct {
 	Location  OptURI
-	SetCookie OptString
+	SetCookie []string
 }
 
 // GetLocation returns the value of Location.
@@ -15648,7 +15674,7 @@ func (s *PostV1SsoSamlByConnectionIdAcsFound) GetLocation() OptURI {
 }
 
 // GetSetCookie returns the value of SetCookie.
-func (s *PostV1SsoSamlByConnectionIdAcsFound) GetSetCookie() OptString {
+func (s *PostV1SsoSamlByConnectionIdAcsFound) GetSetCookie() []string {
 	return s.SetCookie
 }
 
@@ -15658,7 +15684,7 @@ func (s *PostV1SsoSamlByConnectionIdAcsFound) SetLocation(val OptURI) {
 }
 
 // SetSetCookie sets the value of SetCookie.
-func (s *PostV1SsoSamlByConnectionIdAcsFound) SetSetCookie(val OptString) {
+func (s *PostV1SsoSamlByConnectionIdAcsFound) SetSetCookie(val []string) {
 	s.SetCookie = val
 }
 

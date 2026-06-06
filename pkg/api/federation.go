@@ -268,8 +268,8 @@ func (s *FederationService) GetV1SsoOidcByConnectionIdCallback(ctx context.Conte
 		return nil, err
 	}
 	out := &oas.GetV1SsoOidcByConnectionIdCallbackFound{Location: optURI(red.URL)}
-	if red.Cookie != "" {
-		out.SetCookie = oas.NewOptString(red.Cookie)
+	if len(red.Cookie) > 0 {
+		out.SetCookie = red.Cookie
 	}
 	return out, nil
 }
@@ -495,8 +495,8 @@ func (s *FederationService) PostV1SsoSamlByConnectionIdAcs(ctx context.Context, 
 		return nil, err
 	}
 	out := &oas.PostV1SsoSamlByConnectionIdAcsFound{Location: optURI(red.URL)}
-	if red.Cookie != "" {
-		out.SetCookie = oas.NewOptString(red.Cookie)
+	if len(red.Cookie) > 0 {
+		out.SetCookie = red.Cookie
 	}
 	return out, nil
 }
