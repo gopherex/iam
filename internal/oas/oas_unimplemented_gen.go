@@ -1534,6 +1534,17 @@ func (UnimplementedHandler) PostV1AuthIdentitiesMergeStart(ctx context.Context, 
 	return r, ht.ErrNotImplemented
 }
 
+// PostV1AuthImpersonateRedeem implements postV1AuthImpersonateRedeem operation.
+//
+// Exchanges a single-use impersonation token (minted by the admin impersonate endpoint) for an
+// authenticated session acting as the target user. The token is single-use: redeeming it consumes
+// the underlying challenge so it cannot be replayed.
+//
+// POST /v1/auth/impersonate/redeem
+func (UnimplementedHandler) PostV1AuthImpersonateRedeem(ctx context.Context, req *PostV1AuthImpersonateRedeemReq, params PostV1AuthImpersonateRedeemParams) (r *AuthResult, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // PostV1AuthMagicLinkStart implements postV1AuthMagicLinkStart operation.
 //
 // Send a magic link.

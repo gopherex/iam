@@ -1108,6 +1108,20 @@ func encodePostV1AuthIdentitiesMergeStartRequest(
 	return nil
 }
 
+func encodePostV1AuthImpersonateRedeemRequest(
+	req *PostV1AuthImpersonateRedeemReq,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodePostV1AuthMagicLinkStartRequest(
 	req *MagicLinkStartRequest,
 	r *http.Request,

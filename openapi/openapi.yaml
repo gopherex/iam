@@ -2109,6 +2109,47 @@ paths:
       - project
       - environment
       x-ogen-operation-group: CoreAuth
+  /v1/auth/impersonate/redeem:
+    post:
+      operationId: postV1AuthImpersonateRedeem
+      x-since: 1.0.0
+      tags:
+      - Core Auth
+      summary: Redeem a support impersonation token for a session.
+      description: >
+        Exchanges a single-use impersonation token (minted by the admin
+        impersonate endpoint) for an authenticated session acting as the target
+        user. The token is single-use: redeeming it consumes the underlying
+        challenge so it cannot be replayed.
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - token
+              properties:
+                token:
+                  type: string
+                  maxLength: 4096
+      responses:
+        '200':
+          description: AuthResult for the impersonated session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResult'
+        default:
+          $ref: '#/components/responses/Default'
+      x-audience: runtime
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: CoreAuth
   /v1/auth/sign-out:
     post:
       operationId: postV1AuthSignOut

@@ -876,6 +876,14 @@ type CoreAuthHandler interface {
 	//
 	// POST /v1/auth/guest
 	PostV1AuthGuest(ctx context.Context, req *PostV1AuthGuestReq, params PostV1AuthGuestParams) (*AuthResult, error)
+	// PostV1AuthImpersonateRedeem implements postV1AuthImpersonateRedeem operation.
+	//
+	// Exchanges a single-use impersonation token (minted by the admin impersonate endpoint) for an
+	// authenticated session acting as the target user. The token is single-use: redeeming it consumes
+	// the underlying challenge so it cannot be replayed.
+	//
+	// POST /v1/auth/impersonate/redeem
+	PostV1AuthImpersonateRedeem(ctx context.Context, req *PostV1AuthImpersonateRedeemReq, params PostV1AuthImpersonateRedeemParams) (*AuthResult, error)
 	// PostV1AuthPasswordChange implements postV1AuthPasswordChange operation.
 	//
 	// Change a known password.

@@ -175,6 +175,7 @@ const (
 	PostV1AuthGuestOperation                                                        OperationName = "PostV1AuthGuest"
 	PostV1AuthIdentitiesMergeConfirmOperation                                       OperationName = "PostV1AuthIdentitiesMergeConfirm"
 	PostV1AuthIdentitiesMergeStartOperation                                         OperationName = "PostV1AuthIdentitiesMergeStart"
+	PostV1AuthImpersonateRedeemOperation                                            OperationName = "PostV1AuthImpersonateRedeem"
 	PostV1AuthMagicLinkStartOperation                                               OperationName = "PostV1AuthMagicLinkStart"
 	PostV1AuthMagicLinkVerifyOperation                                              OperationName = "PostV1AuthMagicLinkVerify"
 	PostV1AuthMfaChallengeOperation                                                 OperationName = "PostV1AuthMfaChallenge"

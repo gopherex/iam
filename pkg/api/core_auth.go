@@ -22,6 +22,7 @@ type CoreAuthAccounts interface {
 	AuthenticatePassword(ctx context.Context, projectID, email, password string) (*domain.Account, *domain.Session, error)
 	Refresh(ctx context.Context, refreshToken string) (*domain.Account, *domain.Session, error)
 	ExchangeCode(ctx context.Context, code, verifier string) (*domain.Account, *domain.Session, error)
+	RedeemImpersonation(ctx context.Context, token, clientID string) (*domain.Account, *domain.Session, error)
 	CreateGuest(ctx context.Context, projectID string) (*domain.Account, *domain.Session, error)
 	GetSession(ctx context.Context, sessionID string) (*domain.Account, *domain.Session, error)
 	SignOut(ctx context.Context, sessionID string, everywhere bool) error
@@ -471,6 +472,14 @@ func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpR
 
 func (s *CoreAuthService) PostV1AuthTokenExchange(ctx context.Context, req *oas.CodeExchangeRequest, params oas.PostV1AuthTokenExchangeParams) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.ExchangeCode(ctx, req.Code, req.CodeVerifier.Or(""))
+	if err != nil {
+		return nil, err
+	}
+	return authResult(acct, sess), nil
+}
+
+func (s *CoreAuthService) PostV1AuthImpersonateRedeem(ctx context.Context, req *oas.PostV1AuthImpersonateRedeemReq, params oas.PostV1AuthImpersonateRedeemParams) (*oas.AuthResult, error) {
+	acct, sess, err := s.deps.Accounts.RedeemImpersonation(ctx, req.Token, params.XClientID)
 	if err != nil {
 		return nil, err
 	}

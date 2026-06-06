@@ -2238,6 +2238,85 @@ func (a *pgCoreAuth) Introspect(ctx context.Context, projectID, token string) (*
 	return &domain.CoreAuthTokenIntrospection{Active: true, Claims: claims}, nil
 }
 
+// RedeemImpersonation exchanges a single-use impersonation token (minted by the
+// admin impersonate endpoint) for a session acting as the target user. The token
+// is a typ=impersonation JWT (sub=target, act=admin); the matching
+// iam_challenges row gates single use and is consumed here so the token cannot be
+// replayed.
+func (a *pgCoreAuth) RedeemImpersonation(ctx context.Context, token, clientID string) (*domain.Account, *domain.Session, error) {
+	claims := a.db.Signer().UnverifiedClaims(token)
+	if claims == nil {
+		return nil, nil, domain.ErrInvalidToken
+	}
+	projectID, _ := claims["pid"].(string)
+	env := coreAuthDefaultEnv
+	if e, ok := claims["env"].(string); ok && e != "" {
+		env = e
+	}
+	verified, err := a.db.Signer().Verify(ctx, projectID, env, token)
+	if err != nil {
+		return nil, nil, domain.ErrInvalidToken
+	}
+	if typ, _ := verified["typ"].(string); typ != "impersonation" {
+		return nil, nil, domain.ErrInvalidToken
+	}
+	sub, _ := verified["sub"].(string)
+	actor, _ := verified["act"].(string)
+	if projectID == "" || sub == "" {
+		return nil, nil, domain.ErrInvalidToken
+	}
+
+	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (*verifyResult, error) {
+		// Consume the single-use challenge (gates replay).
+		row, err := models.IamChallenges.Query(
+			sm.Where(models.IamChallenges.Columns.Type.EQ(psql.Arg("impersonation"))),
+			sm.Where(models.IamChallenges.Columns.CodeHash.EQ(psql.Arg(adminSHA256(token)))),
+		).One(ctx, a.db.Bobx())
+		if err != nil {
+			return nil, domain.ErrChallengeInvalid
+		}
+		if row.ProjectID != projectID {
+			return nil, domain.ErrChallengeInvalid
+		}
+		if nowUTC().After(row.ExpiresAt) {
+			return nil, domain.ErrChallengeExpired
+		}
+		if err := row.Delete(ctx, a.db.Bobx()); err != nil { // single-use redemption
+			return nil, err
+		}
+		// Load the target user and mint a session acting as them.
+		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), sub)
+		if err != nil {
+			return nil, domain.ErrUserNotFound
+		}
+		if userRow.ProjectID != projectID {
+			return nil, domain.ErrUserNotFound
+		}
+		acc, err := coreAuthLoadAccount(userRow, projectID)
+		if err != nil {
+			return nil, err
+		}
+		sess, err := a.coreAuthMintSession(ctx, acc, clientID, []string{"impersonation"}, 1)
+		if err != nil {
+			return nil, err
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.impersonation_redeemed",
+			ProjectID:   projectID,
+			Environment: env,
+			AggregateID: sub,
+			Payload:     map[string]any{"user_id": sub, "actor_id": actor, "session_id": sess.ID},
+		}); err != nil {
+			return nil, err
+		}
+		return &verifyResult{acct: acc, sess: sess}, nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	return res.acct, res.sess, nil
+}
+
 // Verify validates a token's signature and claims for an audience. Signature
 // verification is deferred (opaque tokens), so this checks liveness + audience
 // against the session envelope and reports a structured result.

@@ -30045,6 +30045,81 @@ func decodePostV1AuthGuestParams(args [0]string, argsEscaped bool, r *http.Reque
 	return params, nil
 }
 
+// PostV1AuthImpersonateRedeemParams is parameters of postV1AuthImpersonateRedeem operation.
+type PostV1AuthImpersonateRedeemParams struct {
+	XClientID string
+}
+
+func unpackPostV1AuthImpersonateRedeemParams(packed middleware.Parameters) (params PostV1AuthImpersonateRedeemParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Client-Id",
+			In:   "header",
+		}
+		params.XClientID = packed[key].(string)
+	}
+	return params
+}
+
+func decodePostV1AuthImpersonateRedeemParams(args [0]string, argsEscaped bool, r *http.Request) (params PostV1AuthImpersonateRedeemParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: X-Client-Id.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.XClientID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     1024,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.XClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // PostV1AuthMagicLinkStartParams is parameters of postV1AuthMagicLinkStart operation.
 type PostV1AuthMagicLinkStartParams struct {
 	XClientID string

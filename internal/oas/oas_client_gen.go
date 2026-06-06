@@ -951,6 +951,14 @@ type CoreAuthInvoker interface {
 	//
 	// POST /v1/auth/guest
 	PostV1AuthGuest(ctx context.Context, request *PostV1AuthGuestReq, params PostV1AuthGuestParams, options ...RequestOption) (*AuthResult, error)
+	// PostV1AuthImpersonateRedeem invokes postV1AuthImpersonateRedeem operation.
+	//
+	// Exchanges a single-use impersonation token (minted by the admin impersonate endpoint) for an
+	// authenticated session acting as the target user. The token is single-use: redeeming it consumes
+	// the underlying challenge so it cannot be replayed.
+	//
+	// POST /v1/auth/impersonate/redeem
+	PostV1AuthImpersonateRedeem(ctx context.Context, request *PostV1AuthImpersonateRedeemReq, params PostV1AuthImpersonateRedeemParams, options ...RequestOption) (*AuthResult, error)
 	// PostV1AuthPasswordChange invokes postV1AuthPasswordChange operation.
 	//
 	// Change a known password.
@@ -30715,6 +30723,134 @@ func (c *Client) sendPostV1AuthIdentitiesMergeStart(ctx context.Context, request
 
 	stage = "DecodeResponse"
 	result, err := decodePostV1AuthIdentitiesMergeStartResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostV1AuthImpersonateRedeem invokes postV1AuthImpersonateRedeem operation.
+//
+// Exchanges a single-use impersonation token (minted by the admin impersonate endpoint) for an
+// authenticated session acting as the target user. The token is single-use: redeeming it consumes
+// the underlying challenge so it cannot be replayed.
+//
+// POST /v1/auth/impersonate/redeem
+func (c *Client) PostV1AuthImpersonateRedeem(ctx context.Context, request *PostV1AuthImpersonateRedeemReq, params PostV1AuthImpersonateRedeemParams, options ...RequestOption) (*AuthResult, error) {
+	res, err := c.sendPostV1AuthImpersonateRedeem(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1AuthImpersonateRedeem(ctx context.Context, request *PostV1AuthImpersonateRedeemReq, params PostV1AuthImpersonateRedeemParams, requestOptions ...RequestOption) (res *AuthResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1AuthImpersonateRedeem"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/auth/impersonate/redeem"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1AuthImpersonateRedeemOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [1]string
+	pathParts[0] = "/v1/auth/impersonate/redeem"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostV1AuthImpersonateRedeemRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1AuthImpersonateRedeemResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

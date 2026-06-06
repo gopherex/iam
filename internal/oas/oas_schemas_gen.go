@@ -12056,6 +12056,20 @@ func (s *PostV1AuthIdentitiesMergeStartReq) SetTargetIdentifier(val string) {
 	s.TargetIdentifier = val
 }
 
+type PostV1AuthImpersonateRedeemReq struct {
+	Token string `json:"token"`
+}
+
+// GetToken returns the value of Token.
+func (s *PostV1AuthImpersonateRedeemReq) GetToken() string {
+	return s.Token
+}
+
+// SetToken sets the value of Token.
+func (s *PostV1AuthImpersonateRedeemReq) SetToken(val string) {
+	s.Token = val
+}
+
 type PostV1AuthMfaChallengeReq struct {
 	FlowToken OptNilString `json:"flow_token"`
 	FactorID  OptNilString `json:"factor_id"`

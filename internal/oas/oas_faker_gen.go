@@ -4357,6 +4357,15 @@ func (s *PostV1AuthIdentitiesMergeStartReq) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *PostV1AuthImpersonateRedeemReq) SetFake() {
+	{
+		{
+			s.Token = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *PostV1AuthMfaChallengeReq) SetFake() {
 	{
 		{
