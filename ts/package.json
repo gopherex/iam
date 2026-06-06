@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "generate": "echo \"TODO: generate packages/sdk from ../openapi/openapi.yaml\" && exit 0",
-    "build": "yarn workspaces foreach -A run build"
+    "generate": "yarn workspace @gopherex/iam-sdk generate",
+    "build": "yarn workspaces run build"
   }
 }

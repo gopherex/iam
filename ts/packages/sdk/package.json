@@ -4,14 +4,31 @@
   "description": "TypeScript SDK for the IAM API, generated from openapi/openapi.yaml.",
   "license": "UNLICENSED",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
+  "sideEffects": false,
   "scripts": {
-    "generate": "echo \"TODO: generate client from ../../../openapi/openapi.yaml\" && exit 0",
-    "build": "echo \"TODO: build SDK (tsc)\" && exit 0"
+    "generate": "openapi-ts",
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist src",
+    "prepack": "yarn generate && yarn build"
+  },
+  "dependencies": {
+    "@hey-api/client-fetch": "^0.10.0"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.64.0",
+    "typescript": "^5.7.0"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com",

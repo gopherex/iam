@@ -78,10 +78,10 @@ generate-go:
 	python3 scripts/openapi_to_30.py $(OPENAPI) $(OPENAPI_30)
 	$(OGEN) --config .ogen.yaml --target $(OAS_DIR) --package $(OAS_PKG) --clean $(OPENAPI_30)
 
-## generate-ts: generate the TypeScript SDK from the spec
+## generate-ts: generate the TypeScript SDK from the spec (@hey-api/openapi-ts)
 .PHONY: generate-ts
 generate-ts:
-	cd ts && yarn generate
+	cd ts && yarn install --frozen-lockfile && yarn generate
 
 ## build: build the server binary (embeds the admin web build)
 .PHONY: build
