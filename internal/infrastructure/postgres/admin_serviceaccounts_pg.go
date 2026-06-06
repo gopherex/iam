@@ -31,11 +31,14 @@ import (
 // AdminServiceAccounts — iam_service_accounts + iam_app_secrets
 // =====================================================================
 
-type pgAdminServiceAccounts struct{ db *DB }
+type pgAdminServiceAccounts struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgAdminServiceAccounts builds the Postgres-backed AdminServiceAccounts adapter.
-func NewPgAdminServiceAccounts(db *DB) *pgAdminServiceAccounts {
-	return &pgAdminServiceAccounts{db: db}
+func NewPgAdminServiceAccounts(db *DB, emitter Emitter) *pgAdminServiceAccounts {
+	return &pgAdminServiceAccounts{db: db, emitter: emitter}
 }
 
 var _ api.AdminServiceAccounts = (*pgAdminServiceAccounts)(nil)
@@ -111,7 +114,15 @@ func (a *pgAdminServiceAccounts) Create(ctx context.Context, cmd domain.ServiceA
 			}
 			return nil, err
 		}
-		// TODO outbox event: service_account.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.created",
+			ProjectID:   sa.ProjectID,
+			Environment: "",
+			AggregateID: sa.ID,
+			Payload:     sa,
+		}); err != nil {
+			return nil, err
+		}
 		return sa, nil
 	})
 }
@@ -139,7 +150,15 @@ func (a *pgAdminServiceAccounts) Update(ctx context.Context, cmd domain.AdminSer
 		}); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: service_account.updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.updated",
+			ProjectID:   sa.ProjectID,
+			Environment: "",
+			AggregateID: sa.ID,
+			Payload:     sa,
+		}); err != nil {
+			return nil, err
+		}
 		return sa, nil
 	})
 }
@@ -167,7 +186,15 @@ func (a *pgAdminServiceAccounts) Delete(ctx context.Context, projectID, saID str
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: service_account.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: saID,
+			Payload:     map[string]any{"id": saID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -204,12 +231,21 @@ func (a *pgAdminServiceAccounts) AddSecret(ctx context.Context, cmd domain.Admin
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: service_account.secret_created
-		return &domain.AdminSecret{
+		result := &domain.AdminSecret{
 			SecretID:     secretID,
 			ClientID:     cmd.ServiceAccountID,
 			ClientSecret: secret,
-		}, nil
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.secret_created",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: secretID,
+			Payload:     map[string]any{"secret_id": secretID, "client_id": cmd.ServiceAccountID, "project_id": cmd.ProjectID, "name": cmd.Name},
+		}); err != nil {
+			return nil, err
+		}
+		return result, nil
 	})
 }
 
@@ -229,7 +265,15 @@ func (a *pgAdminServiceAccounts) DeleteSecret(ctx context.Context, projectID, sa
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: service_account.secret_deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.secret_deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: secretID,
+			Payload:     map[string]any{"id": secretID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }

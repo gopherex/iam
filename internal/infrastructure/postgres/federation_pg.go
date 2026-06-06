@@ -467,11 +467,14 @@ func xmlMarshalIndent(v any) ([]byte, error) {
 // pgFederationConnections persists the SSO connection aggregate plus the domains
 // and SCIM tokens bound to it. Every method is scoped to a project (tenant
 // boundary); a row whose project_id does not match is treated as not-found.
-type pgFederationConnections struct{ db *DB }
+type pgFederationConnections struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgFederationConnections builds the Postgres-backed FederationConnections adapter.
-func NewPgFederationConnections(db *DB) *pgFederationConnections {
-	return &pgFederationConnections{db: db}
+func NewPgFederationConnections(db *DB, emitter Emitter) *pgFederationConnections {
+	return &pgFederationConnections{db: db, emitter: emitter}
 }
 
 var _ api.FederationConnections = (*pgFederationConnections)(nil)
@@ -496,7 +499,15 @@ func (a *pgFederationConnections) CreateConnection(ctx context.Context, cmd doma
 			}
 			return nil, err
 		}
-		// TODO outbox event: federation.connection.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.connection.created",
+			ProjectID:   conn.ProjectID,
+			Environment: "",
+			AggregateID: conn.ID,
+			Payload:     conn,
+		}); err != nil {
+			return nil, err
+		}
 		return conn, nil
 	})
 }
@@ -560,7 +571,15 @@ func (a *pgFederationConnections) UpdateConnection(ctx context.Context, cmd doma
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: federation.connection.updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.connection.updated",
+			ProjectID:   conn.ProjectID,
+			Environment: "",
+			AggregateID: conn.ID,
+			Payload:     conn,
+		}); err != nil {
+			return nil, err
+		}
 		return conn, nil
 	})
 }
@@ -611,7 +630,15 @@ func (a *pgFederationConnections) DeleteConnection(ctx context.Context, projectI
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: federation.connection.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.connection.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: id,
+			Payload:     map[string]any{"id": id, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -691,7 +718,15 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return "", err
 		}
-		// TODO outbox event: federation.connection.certificate_rotated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.connection.certificate_rotated",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: conn.ID,
+			Payload:     conn,
+		}); err != nil {
+			return "", err
+		}
 		return certPEM, nil
 	})
 }
@@ -727,7 +762,15 @@ func (a *pgFederationConnections) AddDomain(ctx context.Context, projectID, conn
 			}
 			return nil, err
 		}
-		// TODO outbox event: federation.domain.added
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.domain.added",
+			ProjectID:   dom.ProjectID,
+			Environment: "",
+			AggregateID: dom.ID,
+			Payload:     dom,
+		}); err != nil {
+			return nil, err
+		}
 		return dom, nil
 	})
 }
@@ -765,7 +808,15 @@ func (a *pgFederationConnections) VerifyDomain(ctx context.Context, projectID, d
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: federation.domain.verified
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.domain.verified",
+			ProjectID:   dom.ProjectID,
+			Environment: "",
+			AggregateID: dom.ID,
+			Payload:     dom,
+		}); err != nil {
+			return nil, err
+		}
 		return dom, nil
 	})
 }
@@ -803,7 +854,15 @@ func (a *pgFederationConnections) DeleteDomain(ctx context.Context, projectID, d
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: federation.domain.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.domain.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: domainID,
+			Payload:     map[string]any{"id": domainID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -856,7 +915,15 @@ func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domai
 			}
 			return result{}, err
 		}
-		// TODO outbox event: federation.scim_token.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.scim_token.created",
+			ProjectID:   tok.ProjectID,
+			Environment: "",
+			AggregateID: tok.ID,
+			Payload:     tok,
+		}); err != nil {
+			return result{}, err
+		}
 		return result{tok: tok, secret: secret}, nil
 	})
 	if err != nil {
@@ -899,7 +966,15 @@ func (a *pgFederationConnections) DeleteScimToken(ctx context.Context, projectID
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: federation.scim_token.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.scim_token.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: tokenID,
+			Payload:     map[string]any{"id": tokenID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -950,7 +1025,10 @@ func fedEmailDomain(email string) string {
 // external subject is provisioned (find/create iam_users + iam_identities) and a
 // session is minted; a single-use exchange code is stored in iam_auth_codes and
 // resolved by Exchange (consume -> account + session).
-type pgFederationRuntime struct{ db *DB }
+type pgFederationRuntime struct {
+	db      *DB
+	emitter Emitter
+}
 
 const (
 	// fedDefaultEnv is the environment whose signing key mints the access token for
@@ -968,8 +1046,8 @@ const (
 )
 
 // NewPgFederationRuntime builds the Postgres-backed FederationRuntime adapter.
-func NewPgFederationRuntime(db *DB) *pgFederationRuntime {
-	return &pgFederationRuntime{db: db}
+func NewPgFederationRuntime(db *DB, emitter Emitter) *pgFederationRuntime {
+	return &pgFederationRuntime{db: db, emitter: emitter}
 }
 
 var _ api.FederationRuntime = (*pgFederationRuntime)(nil)
@@ -1058,9 +1136,22 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	if provider == "" {
 		provider = cmd.ConnectionID
 	}
-	// TODO outbox event: federation.sso.oidc_callback
-	exchangeCode, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, provider, "oidc", subject, email)
-	if err != nil {
+	// Provision + emit atomically: the callback event is recorded iff the
+	// exchange code commits (nested withTx joins fedProvisionAndStoreCode's tx).
+	var exchangeCode string
+	if err := a.db.withTx(ctx, func(ctx context.Context) error {
+		code, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, provider, "oidc", subject, email)
+		if err != nil {
+			return err
+		}
+		exchangeCode = code
+		return a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.sso.oidc_callback",
+			ProjectID:   row.ProjectID,
+			AggregateID: cmd.ConnectionID,
+			Payload:     map[string]any{"connection_id": cmd.ConnectionID, "subject": subject, "email": email, "provider": provider},
+		})
+	}); err != nil {
 		return nil, err
 	}
 	return &domain.FederationSsoRedirect{
@@ -1150,9 +1241,21 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	// Provision/link the subject to an IAM user + session, then persist a
 	// single-use exchange code (code -> minted session) for the provisioning leg
 	// to resolve. The provider key is the connection id (no issuer for SAML).
-	// TODO outbox event: federation.sso.saml_acs
-	exchangeCode, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, cmd.ConnectionID, "saml", subject, email)
-	if err != nil {
+	// Provision + emit atomically (nested withTx joins fedProvisionAndStoreCode's tx).
+	var exchangeCode string
+	if err := a.db.withTx(ctx, func(ctx context.Context) error {
+		code, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, cmd.ConnectionID, "saml", subject, email)
+		if err != nil {
+			return err
+		}
+		exchangeCode = code
+		return a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.sso.saml_acs",
+			ProjectID:   row.ProjectID,
+			AggregateID: cmd.ConnectionID,
+			Payload:     map[string]any{"connection_id": cmd.ConnectionID, "subject": subject, "email": email},
+		})
+	}); err != nil {
 		return nil, err
 	}
 	return &domain.FederationSsoRedirect{
@@ -1187,7 +1290,15 @@ func (a *pgFederationRuntime) SamlSlo(ctx context.Context, connectionID string) 
 	// needs the user's NameID, which the connection-scoped port signature does
 	// not carry; the caller leg holding the session builds it. We return the
 	// verified IdP SLO location.
-	// TODO outbox event: federation.sso.saml_slo
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "federation.sso.saml_slo",
+		ProjectID:   row.ProjectID,
+		Environment: "",
+		AggregateID: connectionID,
+		Payload:     map[string]any{"connection_id": connectionID},
+	}); err != nil {
+		return nil, err
+	}
 	return &domain.FederationSsoRedirect{URL: sloLocation}, nil
 }
 
@@ -1259,7 +1370,15 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 		if err != nil {
 			return result{}, err
 		}
-		// TODO outbox event: federation.sso.exchanged
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.sso.exchanged",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return result{}, err
+		}
 		return result{acc: acc, sess: &sess}, nil
 	})
 	if err != nil {
@@ -1308,7 +1427,15 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, proj
 			}
 			return err
 		}
-		// TODO outbox event: federation.sso.exchange_code_issued
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.sso.exchange_code_issued",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: acct.ID,
+			Payload:     map[string]any{"connection_id": connectionID, "user_id": acct.ID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -1343,7 +1470,15 @@ func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID
 		}, projectID, acct.ID); err != nil {
 			return nil, nil, err
 		}
-		// TODO outbox event: identity.linked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "identity.linked",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: acct.ID,
+			Payload:     map[string]any{"user_id": acct.ID, "project_id": projectID, "provider": provider, "provider_account_id": providerAccountID, "id_type": idType},
+		}); err != nil {
+			return nil, nil, err
+		}
 	} else {
 		acct, err = a.fedLoadAccount(ctx, projectID, ident.UserID)
 		if err != nil {
@@ -1354,7 +1489,15 @@ func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID
 	if err != nil {
 		return nil, nil, err
 	}
-	// TODO outbox event: session.created
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "session.created",
+		ProjectID:   acct.ProjectID,
+		Environment: "",
+		AggregateID: sess.ID,
+		Payload:     sess,
+	}); err != nil {
+		return nil, nil, err
+	}
 	return acct, sess, nil
 }
 
@@ -1446,7 +1589,15 @@ func (a *pgFederationRuntime) fedCreateAccount(ctx context.Context, projectID, e
 		}
 		return nil, err
 	}
-	// TODO outbox event: user.created
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "user.created",
+		ProjectID:   acct.ProjectID,
+		Environment: "",
+		AggregateID: acct.ID,
+		Payload:     acct,
+	}); err != nil {
+		return nil, err
+	}
 	return acct, nil
 }
 
@@ -1531,11 +1682,14 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 // for (and, transitively, the connection's project): a resource that does not
 // belong to the requested connection is treated as not-found. The SCIM schema
 // semantics (id assignment, meta block, list envelope) are owned here.
-type pgFederationScim struct{ db *DB }
+type pgFederationScim struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgFederationScim builds the Postgres-backed FederationScim adapter.
-func NewPgFederationScim(db *DB) *pgFederationScim {
-	return &pgFederationScim{db: db}
+func NewPgFederationScim(db *DB, emitter Emitter) *pgFederationScim {
+	return &pgFederationScim{db: db, emitter: emitter}
 }
 
 var _ api.FederationScim = (*pgFederationScim)(nil)
@@ -1677,12 +1831,24 @@ func (a *pgFederationScim) fedScimCreate(ctx context.Context, cmd domain.Federat
 			}
 			return nil, err
 		}
-		// TODO outbox event: federation.scim.resource_created
 		row, err := models.FindIamScimResource(ctx, a.db.Bobx(), id)
 		if err != nil {
 			return nil, err
 		}
-		return fedScimResourceFromRow(row)
+		out, err := fedScimResourceFromRow(row)
+		if err != nil {
+			return nil, err
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.scim.resource_created",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: id,
+			Payload:     out,
+		}); err != nil {
+			return nil, err
+		}
+		return out, nil
 	})
 }
 
@@ -1712,8 +1878,20 @@ func (a *pgFederationScim) fedScimReplace(ctx context.Context, cmd domain.Federa
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: federation.scim.resource_replaced
-		return fedScimResourceFromRow(row)
+		out, err := fedScimResourceFromRow(row)
+		if err != nil {
+			return nil, err
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.scim.resource_replaced",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: row.ID,
+			Payload:     out,
+		}); err != nil {
+			return nil, err
+		}
+		return out, nil
 	})
 }
 
@@ -1749,8 +1927,20 @@ func (a *pgFederationScim) fedScimPatch(ctx context.Context, cmd domain.Federati
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: federation.scim.resource_patched
-		return fedScimResourceFromRow(row)
+		out, err := fedScimResourceFromRow(row)
+		if err != nil {
+			return nil, err
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.scim.resource_patched",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: row.ID,
+			Payload:     out,
+		}); err != nil {
+			return nil, err
+		}
+		return out, nil
 	})
 }
 
@@ -1764,7 +1954,15 @@ func (a *pgFederationScim) fedScimDelete(ctx context.Context, connectionID, reso
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: federation.scim.resource_deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "federation.scim.resource_deleted",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: resourceID,
+			Payload:     map[string]any{"id": resourceID, "project_id": row.ProjectID, "connection_id": connectionID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }

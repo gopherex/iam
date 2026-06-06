@@ -32,11 +32,14 @@ import (
 
 // pgPasswordlessAccounts persists OTP / magic-link challenges and, on verify,
 // resolves-or-creates the user + a fresh session.
-type pgPasswordlessAccounts struct{ db *DB }
+type pgPasswordlessAccounts struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgPasswordlessAccounts builds the Passwordless adapter over db.
-func NewPgPasswordlessAccounts(db *DB) *pgPasswordlessAccounts {
-	return &pgPasswordlessAccounts{db: db}
+func NewPgPasswordlessAccounts(db *DB, emitter Emitter) *pgPasswordlessAccounts {
+	return &pgPasswordlessAccounts{db: db, emitter: emitter}
 }
 
 var _ api.PasswordlessAccounts = (*pgPasswordlessAccounts)(nil)
@@ -90,10 +93,22 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 		Consumed:  false,
 		CreatedAt: now,
 	}
-	if err := a.insertChallenge(ctx, env); err != nil {
+	// Persist the challenge and enqueue the delivery event atomically: the OTP
+	// code must reach the outbox iff the challenge row commits (nested withTx
+	// joins the ambient tx via pgtx).
+	if err := a.db.withTx(ctx, func(ctx context.Context) error {
+		if err := a.insertChallenge(ctx, env); err != nil {
+			return err
+		}
+		return a.emitter.Emit(ctx, domain.Event{
+			Type:        "auth.otp.started",
+			ProjectID:   env.ProjectID,
+			AggregateID: env.ID,
+			Payload:     map[string]any{"code": code, "channel": env.Channel, "account_id": env.Subject},
+		})
+	}); err != nil {
 		return nil, err
 	}
-	// TODO outbox event: auth.otp.started (delivers `code` over `channel`)
 	return challengeFromEnvelope(env), nil
 }
 
@@ -113,7 +128,15 @@ func (a *pgPasswordlessAccounts) VerifyOTP(ctx context.Context, challengeID, cod
 		if err != nil {
 			return nil, err
 		}
-		// TODO outbox event: auth.otp.verified
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "auth.otp.verified",
+			ProjectID:   acct.ProjectID,
+			Environment: "",
+			AggregateID: acct.ID,
+			Payload:     map[string]any{"account_id": acct.ID, "session_id": sess.ID},
+		}); err != nil {
+			return nil, err
+		}
 		return &verifyResult{acct: acct, sess: sess}, nil
 	})
 	return unpackVerify(res, err)
@@ -143,10 +166,20 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 		Consumed:   false,
 		CreatedAt:  now,
 	}
-	if err := a.insertChallenge(ctx, env); err != nil {
+	// Atomic persist + delivery enqueue (nested withTx joins the ambient tx).
+	if err := a.db.withTx(ctx, func(ctx context.Context) error {
+		if err := a.insertChallenge(ctx, env); err != nil {
+			return err
+		}
+		return a.emitter.Emit(ctx, domain.Event{
+			Type:        "auth.magiclink.started",
+			ProjectID:   env.ProjectID,
+			AggregateID: env.ID,
+			Payload:     map[string]any{"token": token, "account_id": env.Subject},
+		})
+	}); err != nil {
 		return nil, err
 	}
-	// TODO outbox event: auth.magiclink.started (delivers `token` link by email)
 	ch := challengeFromEnvelope(env)
 	// Hand the opaque token back to the caller once; the link is built upstream.
 	ch.PublicKey = map[string]any{"token": token, "redirect_to": redirectTo}
@@ -181,7 +214,15 @@ func (a *pgPasswordlessAccounts) VerifyMagicLink(ctx context.Context, token stri
 		if err != nil {
 			return nil, err
 		}
-		// TODO outbox event: auth.magiclink.verified
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "auth.magiclink.verified",
+			ProjectID:   acct.ProjectID,
+			Environment: "",
+			AggregateID: acct.ID,
+			Payload:     map[string]any{"account_id": acct.ID, "session_id": sess.ID},
+		}); err != nil {
+			return nil, err
+		}
 		return &verifyResult{acct: acct, sess: sess}, nil
 	})
 	return unpackVerify(res, err)
@@ -356,7 +397,15 @@ func (a *pgPasswordlessAccounts) resolveOrCreateUser(ctx context.Context, env *c
 		}
 		return nil, err
 	}
-	// TODO outbox event: user.created
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "user.created",
+		ProjectID:   acc.ProjectID,
+		Environment: "",
+		AggregateID: acc.ID,
+		Payload:     acc,
+	}); err != nil {
+		return nil, err
+	}
 	return acc, nil
 }
 
@@ -375,7 +424,15 @@ func (a *pgPasswordlessAccounts) persistAccount(ctx context.Context, acc *domain
 	if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 		return err
 	}
-	// TODO outbox event: user.updated
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "user.updated",
+		ProjectID:   acc.ProjectID,
+		Environment: "",
+		AggregateID: acc.ID,
+		Payload:     acc,
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -432,7 +489,15 @@ func (a *pgPasswordlessAccounts) createSession(ctx context.Context, acct *domain
 	if _, err := models.IamSessions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		return nil, translatePgErr("session", err)
 	}
-	// TODO outbox event: auth.session.created
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "auth.session.created",
+		ProjectID:   sess.ProjectID,
+		Environment: "",
+		AggregateID: sess.ID,
+		Payload:     sess,
+	}); err != nil {
+		return nil, err
+	}
 	return sess, nil
 }
 

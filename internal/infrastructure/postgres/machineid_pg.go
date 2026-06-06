@@ -35,10 +35,15 @@ import (
 )
 
 // PgMachineIdentities is the Postgres-backed MachineIdentities adapter.
-type PgMachineIdentities struct{ db *DB }
+type PgMachineIdentities struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgMachineIdentities builds the adapter over a *DB.
-func NewPgMachineIdentities(db *DB) *PgMachineIdentities { return &PgMachineIdentities{db: db} }
+func NewPgMachineIdentities(db *DB, emitter Emitter) *PgMachineIdentities {
+	return &PgMachineIdentities{db: db, emitter: emitter}
+}
 
 // Port assertion: the adapter must satisfy api.MachineIdentities.
 var _ api.MachineIdentities = (*PgMachineIdentities)(nil)
@@ -138,7 +143,14 @@ func (a *PgMachineIdentities) CreateServiceAccount(ctx context.Context, cmd doma
 			}
 			return nil, err
 		}
-		// TODO outbox event: service_account.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.created",
+			ProjectID:   sa.ProjectID,
+			AggregateID: sa.ID,
+			Payload:     &sa,
+		}); err != nil {
+			return nil, err
+		}
 		return &sa, nil
 	})
 }
@@ -220,8 +232,15 @@ func (a *PgMachineIdentities) UpdateServiceAccount(ctx context.Context, cmd doma
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: service_account.updated
 		sa := env.ServiceAccount
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.updated",
+			ProjectID:   sa.ProjectID,
+			AggregateID: sa.ID,
+			Payload:     &sa,
+		}); err != nil {
+			return nil, err
+		}
 		return &sa, nil
 	})
 }
@@ -236,7 +255,14 @@ func (a *PgMachineIdentities) DeleteServiceAccount(ctx context.Context, projectI
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: service_account.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.deleted",
+			ProjectID:   projectID,
+			AggregateID: serviceAccountID,
+			Payload:     map[string]any{"id": serviceAccountID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -274,7 +300,14 @@ func (a *PgMachineIdentities) CreateServiceAccountSecret(ctx context.Context, cm
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: service_account.secret.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.secret.created",
+			ProjectID:   cmd.ProjectID,
+			AggregateID: cmd.ServiceAccountID,
+			Payload:     &env.ServiceAccount,
+		}); err != nil {
+			return nil, err
+		}
 		return &domain.MachineIDSecret{
 			SecretID:     secretID,
 			ClientID:     clientID,
@@ -309,7 +342,14 @@ func (a *PgMachineIdentities) RevokeServiceAccountSecret(ctx context.Context, pr
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return err
 		}
-		// TODO outbox event: service_account.secret.revoked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.secret.revoked",
+			ProjectID:   projectID,
+			AggregateID: serviceAccountID,
+			Payload:     &env.ServiceAccount,
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -335,7 +375,14 @@ func (a *PgMachineIdentities) MintToken(ctx context.Context, projectID, serviceA
 		if err != nil {
 			return "", err
 		}
-		// TODO outbox event: service_account.token.minted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "service_account.token.minted",
+			ProjectID:   projectID,
+			AggregateID: serviceAccountID,
+			Payload:     &env.ServiceAccount,
+		}); err != nil {
+			return "", err
+		}
 		return token, nil
 	})
 }
@@ -418,7 +465,14 @@ func (a *PgMachineIdentities) CreateAPIKey(ctx context.Context, cmd domain.APIKe
 			}
 			return result{}, err
 		}
-		// TODO outbox event: api_key.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "api_key.created",
+			ProjectID:   key.ProjectID,
+			AggregateID: key.ID,
+			Payload:     &key,
+		}); err != nil {
+			return result{}, err
+		}
 		return result{key: &key, secret: plaintext}, nil
 	})
 	if err != nil {
@@ -473,7 +527,14 @@ func (a *PgMachineIdentities) UpdateAPIKey(ctx context.Context, cmd domain.Machi
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: api_key.updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "api_key.updated",
+			ProjectID:   key.ProjectID,
+			AggregateID: key.ID,
+			Payload:     key,
+		}); err != nil {
+			return nil, err
+		}
 		return key, nil
 	})
 }
@@ -504,7 +565,14 @@ func (a *PgMachineIdentities) RotateAPIKey(ctx context.Context, projectID, keyID
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return result{}, err
 		}
-		// TODO outbox event: api_key.rotated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "api_key.rotated",
+			ProjectID:   key.ProjectID,
+			AggregateID: key.ID,
+			Payload:     key,
+		}); err != nil {
+			return result{}, err
+		}
 		return result{key: key, secret: plaintext}, nil
 	})
 	if err != nil {
@@ -523,7 +591,14 @@ func (a *PgMachineIdentities) RevokeAPIKey(ctx context.Context, projectID, keyID
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: api_key.revoked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "api_key.revoked",
+			ProjectID:   projectID,
+			AggregateID: keyID,
+			Payload:     map[string]any{"id": keyID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }

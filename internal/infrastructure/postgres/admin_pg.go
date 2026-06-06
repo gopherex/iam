@@ -95,10 +95,15 @@ func adminSHA256(token string) string {
 // AdminUsers — iam_users
 // =====================================================================
 
-type pgAdminUsers struct{ db *DB }
+type pgAdminUsers struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgAdminUsers builds the Postgres-backed AdminUsers adapter.
-func NewPgAdminUsers(db *DB) *pgAdminUsers { return &pgAdminUsers{db: db} }
+func NewPgAdminUsers(db *DB, emitter Emitter) *pgAdminUsers {
+	return &pgAdminUsers{db: db, emitter: emitter}
+}
 
 var _ api.AdminUsers = (*pgAdminUsers)(nil)
 
@@ -217,7 +222,15 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 				return nil, err
 			}
 		}
-		// TODO outbox event: user.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.created",
+			ProjectID:   acc.ProjectID,
+			Environment: "",
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return nil, err
+		}
 		return acc, nil
 	})
 }
@@ -238,7 +251,15 @@ func (a *pgAdminUsers) Update(ctx context.Context, cmd domain.AdminUserUpdateCmd
 		if err := a.persist(ctx, row, acc); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: user.updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.updated",
+			ProjectID:   acc.ProjectID,
+			Environment: "",
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return nil, err
+		}
 		return acc, nil
 	})
 }
@@ -266,7 +287,15 @@ func (a *pgAdminUsers) BanWith(ctx context.Context, cmd domain.AdminUserBanCmd) 
 		}); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: user.banned
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.banned",
+			ProjectID:   acc.ProjectID,
+			Environment: "",
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return nil, err
+		}
 		return acc, nil
 	})
 }
@@ -282,7 +311,15 @@ func (a *pgAdminUsers) Unban(ctx context.Context, projectID, accountID string) (
 		if err := a.persist(ctx, row, acc); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: user.unbanned
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.unbanned",
+			ProjectID:   acc.ProjectID,
+			Environment: "",
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return nil, err
+		}
 		return acc, nil
 	})
 }
@@ -296,7 +333,15 @@ func (a *pgAdminUsers) Delete(ctx context.Context, projectID, accountID string) 
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: user.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: accountID,
+			Payload:     map[string]any{"id": accountID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -312,7 +357,15 @@ func (a *pgAdminUsers) VerifyEmail(ctx context.Context, projectID, accountID str
 		if err := a.persist(ctx, row, acc); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: user.email_verified
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.email_verified",
+			ProjectID:   acc.ProjectID,
+			Environment: "",
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return nil, err
+		}
 		return acc, nil
 	})
 }
@@ -329,7 +382,15 @@ func (a *pgAdminUsers) VerifyPhone(ctx context.Context, projectID, accountID str
 		}); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: user.phone_verified
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.phone_verified",
+			ProjectID:   acc.ProjectID,
+			Environment: "",
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return nil, err
+		}
 		return acc, nil
 	})
 }
@@ -383,7 +444,15 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 				return err
 			}
 		}
-		// TODO outbox event: user.password_set
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.password_set",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: cmd.AccountID,
+			Payload:     map[string]any{"id": cmd.AccountID, "project_id": cmd.ProjectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -417,7 +486,15 @@ func (a *pgAdminUsers) Anonymize(ctx context.Context, cmd domain.AdminUserAnonym
 		}); err != nil {
 			return err
 		}
-		// TODO outbox event: user.anonymized
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.anonymized",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: cmd.AccountID,
+			Payload:     acc,
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -443,7 +520,15 @@ func (a *pgAdminUsers) Export(ctx context.Context, projectID, accountID string) 
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return "", err
 		}
-		// TODO outbox event: user.export_requested
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.export_requested",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: accountID,
+			Payload:     map[string]any{"job_id": jobID, "user_id": accountID, "project_id": projectID},
+		}); err != nil {
+			return "", err
+		}
 		return jobID, nil
 	})
 }
@@ -496,7 +581,15 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: user.impersonation_started
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.impersonation_started",
+			ProjectID:   cmd.ProjectID,
+			Environment: adminDefaultEnvironment,
+			AggregateID: cmd.AccountID,
+			Payload:     map[string]any{"user_id": cmd.AccountID, "actor_id": cmd.ActorID, "project_id": cmd.ProjectID, "reason": cmd.Reason},
+		}); err != nil {
+			return nil, err
+		}
 		return &domain.AdminImpersonation{
 			URL:       fmt.Sprintf("/impersonate?token=%s", token),
 			ExpiresAt: expiresAt,
@@ -532,7 +625,15 @@ func (a *pgAdminUsers) ResetMFA(ctx context.Context, projectID, accountID string
 			}
 			removed++
 		}
-		// TODO outbox event: user.mfa_reset
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.mfa_reset",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: accountID,
+			Payload:     map[string]any{"id": accountID, "project_id": projectID, "removed": removed},
+		}); err != nil {
+			return 0, err
+		}
 		return removed, nil
 	})
 }
@@ -574,7 +675,15 @@ func (a *pgAdminUsers) DeleteIdentity(ctx context.Context, projectID, accountID,
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: user.identity_deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.identity_deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: identityID,
+			Payload:     map[string]any{"id": identityID, "user_id": accountID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -616,7 +725,15 @@ func (a *pgAdminUsers) DeleteSession(ctx context.Context, projectID, accountID, 
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: user.session_revoked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.session_revoked",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: sessionID,
+			Payload:     map[string]any{"id": sessionID, "user_id": accountID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -650,7 +767,15 @@ func (a *pgAdminUsers) revokeSessions(ctx context.Context, projectID, accountID,
 		}
 		revoked++
 	}
-	// TODO outbox event: user.sessions_revoked
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "user.sessions_revoked",
+		ProjectID:   projectID,
+		Environment: "",
+		AggregateID: accountID,
+		Payload:     map[string]any{"id": accountID, "project_id": projectID, "revoked": revoked},
+	}); err != nil {
+		return 0, err
+	}
 	return revoked, nil
 }
 
@@ -703,10 +828,15 @@ func (a *pgAdminUsers) persistWithExtra(ctx context.Context, row *models.IamUser
 // AdminApps — iam_app_clients + iam_app_secrets
 // =====================================================================
 
-type pgAdminApps struct{ db *DB }
+type pgAdminApps struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgAdminApps builds the Postgres-backed AdminApps adapter.
-func NewPgAdminApps(db *DB) *pgAdminApps { return &pgAdminApps{db: db} }
+func NewPgAdminApps(db *DB, emitter Emitter) *pgAdminApps {
+	return &pgAdminApps{db: db, emitter: emitter}
+}
 
 var _ api.AdminApps = (*pgAdminApps)(nil)
 
@@ -779,7 +909,15 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 			}
 			return nil, err
 		}
-		// TODO outbox event: app_client.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "app_client.created",
+			ProjectID:   app.ProjectID,
+			Environment: app.Environment,
+			AggregateID: app.ID,
+			Payload:     app,
+		}); err != nil {
+			return nil, err
+		}
 		return app, nil
 	})
 }
@@ -820,7 +958,15 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, appID string, patch
 		}); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: app_client.updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "app_client.updated",
+			ProjectID:   app.ProjectID,
+			Environment: app.Environment,
+			AggregateID: app.ID,
+			Payload:     app,
+		}); err != nil {
+			return nil, err
+		}
 		return app, nil
 	})
 }
@@ -847,7 +993,15 @@ func (a *pgAdminApps) Delete(ctx context.Context, projectID, appID string) error
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: app_client.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "app_client.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: appID,
+			Payload:     map[string]any{"id": appID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -878,7 +1032,15 @@ func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, appID, name stri
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: app_client.secret_created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "app_client.secret_created",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: secretID,
+			Payload:     map[string]any{"id": secretID, "app_id": appID, "project_id": projectID},
+		}); err != nil {
+			return nil, err
+		}
 		return &domain.AdminSecret{
 			SecretID:     secretID,
 			ClientID:     appID,
@@ -902,7 +1064,15 @@ func (a *pgAdminApps) DeleteSecret(ctx context.Context, projectID, appID, secret
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: app_client.secret_deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "app_client.secret_deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: secretID,
+			Payload:     map[string]any{"id": secretID, "app_id": appID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -911,10 +1081,15 @@ func (a *pgAdminApps) DeleteSecret(ctx context.Context, projectID, appID, secret
 // AdminConfig — iam_config + iam_providers + iam_email_templates
 // =====================================================================
 
-type pgAdminConfig struct{ db *DB }
+type pgAdminConfig struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgAdminConfig builds the Postgres-backed AdminConfig adapter.
-func NewPgAdminConfig(db *DB) *pgAdminConfig { return &pgAdminConfig{db: db} }
+func NewPgAdminConfig(db *DB, emitter Emitter) *pgAdminConfig {
+	return &pgAdminConfig{db: db, emitter: emitter}
+}
 
 var _ api.AdminConfig = (*pgAdminConfig)(nil)
 
@@ -974,7 +1149,15 @@ func (a *pgAdminConfig) putConfigDoc(ctx context.Context, projectID, env, key st
 				return nil, ierr
 			}
 		}
-		// TODO outbox event: config.updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "config.updated",
+			ProjectID:   projectID,
+			Environment: env,
+			AggregateID: projectID,
+			Payload:     map[string]any{"project_id": projectID, "environment": env, "key": key, "doc": doc},
+		}); err != nil {
+			return nil, err
+		}
 		return doc, nil
 	})
 }
@@ -1062,7 +1245,15 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 				return nil, ierr
 			}
 		}
-		// TODO outbox event: config.features_updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "config.features_updated",
+			ProjectID:   cmd.ProjectID,
+			Environment: env,
+			AggregateID: cmd.ProjectID,
+			Payload:     map[string]any{"project_id": cmd.ProjectID, "environment": env, "features": cmd.Features},
+		}); err != nil {
+			return nil, err
+		}
 		return cmd.Features, nil
 	})
 }
@@ -1090,10 +1281,21 @@ func (a *pgAdminConfig) GetI18n(ctx context.Context, cmd domain.AdminConfigGetCm
 
 func (a *pgAdminConfig) PutI18n(ctx context.Context, cmd domain.AdminI18nUpdateCmd) (map[string]jx.Raw, error) {
 	doc := domain.AdminConfigDoc(cmd.Messages)
-	if _, err := a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "i18n:"+cmd.Locale, doc); err != nil {
+	// Persist + emit atomically (nested withTx joins putConfigDoc's tx).
+	if err := a.db.withTx(ctx, func(ctx context.Context) error {
+		if _, err := a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "i18n:"+cmd.Locale, doc); err != nil {
+			return err
+		}
+		return a.emitter.Emit(ctx, domain.Event{
+			Type:        "config.i18n_updated",
+			ProjectID:   cmd.ProjectID,
+			Environment: adminEnv(cmd.Environment),
+			AggregateID: cmd.ProjectID,
+			Payload:     map[string]any{"project_id": cmd.ProjectID, "environment": cmd.Environment, "locale": cmd.Locale, "messages": cmd.Messages},
+		})
+	}); err != nil {
 		return nil, err
 	}
-	// TODO outbox event: config.i18n_updated
 	return cmd.Messages, nil
 }
 
@@ -1160,8 +1362,17 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 			}
 			return nil, err
 		}
-		// TODO outbox event: config.provider_created
-		return &domain.AdminProvider{ID: id, Type: cmd.Type, Config: cmd.Config, Enabled: cmd.Enabled}, nil
+		p := &domain.AdminProvider{ID: id, Type: cmd.Type, Config: cmd.Config, Enabled: cmd.Enabled}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "config.provider_created",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: id,
+			Payload:     p,
+		}); err != nil {
+			return nil, err
+		}
+		return p, nil
 	})
 }
 
@@ -1191,8 +1402,17 @@ func (a *pgAdminConfig) updateProvider(ctx context.Context, kind string, cmd dom
 		}); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: config.provider_updated
-		return &domain.AdminProvider{ID: cmd.ID, Type: cmd.Type, Config: cmd.Config, Enabled: cmd.Enabled}, nil
+		p := &domain.AdminProvider{ID: cmd.ID, Type: cmd.Type, Config: cmd.Config, Enabled: cmd.Enabled}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "config.provider_updated",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: cmd.ID,
+			Payload:     p,
+		}); err != nil {
+			return nil, err
+		}
+		return p, nil
 	})
 }
 
@@ -1211,7 +1431,15 @@ func (a *pgAdminConfig) deleteProvider(ctx context.Context, kind string, cmd dom
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: config.provider_deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "config.provider_deleted",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: cmd.ID,
+			Payload:     map[string]any{"id": cmd.ID, "project_id": cmd.ProjectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -1314,7 +1542,15 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 				return nil, err
 			}
 		}
-		// TODO outbox event: config.email_template_updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "config.email_template_updated",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: cmd.TemplateID,
+			Payload:     map[string]any{"project_id": cmd.ProjectID, "template_id": cmd.TemplateID, "body": body},
+		}); err != nil {
+			return nil, err
+		}
 		return body, nil
 	})
 }
@@ -1356,7 +1592,15 @@ func (a *pgAdminConfig) SendTestEmail(ctx context.Context, cmd domain.AdminTempl
 		return domain.ErrNotFound
 	}
 	// Actual delivery is the notification layer's responsibility (no SMTP here).
-	// TODO outbox event: config.test_email_requested
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "config.test_email_requested",
+		ProjectID:   cmd.ProjectID,
+		Environment: "",
+		AggregateID: cmd.TemplateID,
+		Payload:     map[string]any{"project_id": cmd.ProjectID, "template_id": cmd.TemplateID, "to": cmd.To},
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -1364,10 +1608,15 @@ func (a *pgAdminConfig) SendTestEmail(ctx context.Context, cmd domain.AdminTempl
 // AdminKeys — iam_signing_keys + iam_token_profiles
 // =====================================================================
 
-type pgAdminKeys struct{ db *DB }
+type pgAdminKeys struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgAdminKeys builds the Postgres-backed AdminKeys adapter.
-func NewPgAdminKeys(db *DB) *pgAdminKeys { return &pgAdminKeys{db: db} }
+func NewPgAdminKeys(db *DB, emitter Emitter) *pgAdminKeys {
+	return &pgAdminKeys{db: db, emitter: emitter}
+}
 
 var _ api.AdminKeys = (*pgAdminKeys)(nil)
 
@@ -1411,7 +1660,15 @@ func (a *pgAdminKeys) DeleteSigningKey(ctx context.Context, cmd domain.AdminConf
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: keys.signing_key_deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "keys.signing_key_deleted",
+			ProjectID:   cmd.ProjectID,
+			Environment: adminEnv(cmd.Environment),
+			AggregateID: kid,
+			Payload:     map[string]any{"kid": kid, "project_id": cmd.ProjectID, "environment": cmd.Environment},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -1469,7 +1726,15 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: keys.signing_keys_rotated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "keys.signing_keys_rotated",
+			ProjectID:   cmd.ProjectID,
+			Environment: env,
+			AggregateID: kid,
+			Payload:     &key,
+		}); err != nil {
+			return nil, err
+		}
 		return &key, nil
 	})
 }
@@ -1508,7 +1773,15 @@ func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminCo
 			return nil, err
 		}
 		out := adminSigningKeyToDomain(row)
-		// TODO outbox event: keys.signing_key_activated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "keys.signing_key_activated",
+			ProjectID:   cmd.ProjectID,
+			Environment: env,
+			AggregateID: kid,
+			Payload:     &out,
+		}); err != nil {
+			return nil, err
+		}
 		return &out, nil
 	})
 }
@@ -1591,7 +1864,15 @@ func (a *pgAdminKeys) CreateTokenProfile(ctx context.Context, cmd domain.AdminTo
 			return nil, err
 		}
 		out := adminTokenProfileToDomain(row)
-		// TODO outbox event: keys.token_profile_created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "keys.token_profile_created",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: id,
+			Payload:     &out,
+		}); err != nil {
+			return nil, err
+		}
 		return &out, nil
 	})
 }
@@ -1625,7 +1906,15 @@ func (a *pgAdminKeys) UpdateTokenProfile(ctx context.Context, cmd domain.AdminTo
 			return nil, err
 		}
 		out := adminTokenProfileToDomain(row)
-		// TODO outbox event: keys.token_profile_updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "keys.token_profile_updated",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: cmd.ID,
+			Payload:     &out,
+		}); err != nil {
+			return nil, err
+		}
 		return &out, nil
 	})
 }
@@ -1645,7 +1934,15 @@ func (a *pgAdminKeys) DeleteTokenProfile(ctx context.Context, cmd domain.AdminCo
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: keys.token_profile_deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "keys.token_profile_deleted",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: profileID,
+			Payload:     map[string]any{"id": profileID, "project_id": cmd.ProjectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -1704,10 +2001,15 @@ func (a *pgAdminKeys) PreviewTokenProfile(ctx context.Context, cmd domain.AdminT
 // AdminAccessRequests — iam_access_requests
 // =====================================================================
 
-type pgAdminAccessRequests struct{ db *DB }
+type pgAdminAccessRequests struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgAdminAccessRequests builds the Postgres-backed AdminAccessRequests adapter.
-func NewPgAdminAccessRequests(db *DB) *pgAdminAccessRequests { return &pgAdminAccessRequests{db: db} }
+func NewPgAdminAccessRequests(db *DB, emitter Emitter) *pgAdminAccessRequests {
+	return &pgAdminAccessRequests{db: db, emitter: emitter}
+}
 
 var _ api.AdminAccessRequests = (*pgAdminAccessRequests)(nil)
 
@@ -1790,7 +2092,15 @@ func (a *pgAdminAccessRequests) Approve(ctx context.Context, cmd domain.AdminAcc
 		if err := a.persistDecision(ctx, row, ar, cmd.ActorID, ""); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: access_request.approved
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "access_request.approved",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: ar.ID,
+			Payload:     ar,
+		}); err != nil {
+			return nil, err
+		}
 		out := map[string]jx.Raw{
 			"id":     jx.Raw(adminJSONString(ar.ID)),
 			"status": jx.Raw(adminJSONString(ar.Status)),
@@ -1812,7 +2122,15 @@ func (a *pgAdminAccessRequests) Deny(ctx context.Context, cmd domain.AdminAccess
 		if err := a.persistDecision(ctx, row, ar, cmd.ActorID, cmd.Reason); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: access_request.denied
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "access_request.denied",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: ar.ID,
+			Payload:     ar,
+		}); err != nil {
+			return nil, err
+		}
 		return &ar, nil
 	})
 }

@@ -41,10 +41,15 @@ const webauthnChallengeTTL = 5 * time.Minute
 const webauthnSignerEnv = "live"
 
 // pgWebAuthnAccounts is the Postgres adapter for the WebAuthn account ports.
-type pgWebAuthnAccounts struct{ db *DB }
+type pgWebAuthnAccounts struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgWebAuthnAccounts builds the WebAuthn adapter.
-func NewPgWebAuthnAccounts(db *DB) *pgWebAuthnAccounts { return &pgWebAuthnAccounts{db: db} }
+func NewPgWebAuthnAccounts(db *DB, emitter Emitter) *pgWebAuthnAccounts {
+	return &pgWebAuthnAccounts{db: db, emitter: emitter}
+}
 
 // Port assertion — keeps the adapter honest against the pkg/api contract.
 var _ api.WebAuthnAccounts = (*pgWebAuthnAccounts)(nil)
@@ -274,7 +279,15 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: webauthn.challenge.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "webauthn.challenge.created",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: ch.ID,
+			Payload:     ch,
+		}); err != nil {
+			return nil, err
+		}
 		return ch, nil
 	})
 }
@@ -536,7 +549,15 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 			ExpiresIn:    int(time.Hour.Seconds()),
 			CreatedAt:    now,
 		}
-		// TODO outbox event: webauthn.login.succeeded
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "webauthn.login.succeeded",
+			ProjectID:   projectID,
+			Environment: webauthnSignerEnv,
+			AggregateID: acct.ID,
+			Payload:     acct,
+		}); err != nil {
+			return loginResult{}, err
+		}
 		return loginResult{acct: acct, sess: sess}, nil
 	})
 	if err != nil {
@@ -671,7 +692,15 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 		if err := a.consumeChallenge(ctx, row); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: webauthn.credential.registered
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "webauthn.credential.registered",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: cred.ID,
+			Payload:     &cred,
+		}); err != nil {
+			return nil, err
+		}
 		return &cred, nil
 	})
 }
@@ -707,10 +736,19 @@ func (a *pgWebAuthnAccounts) RemoveCredential(ctx context.Context, accountID, cr
 		if err != nil {
 			return err
 		}
+		projectID := row.ProjectID
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: webauthn.credential.removed
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "webauthn.credential.removed",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: credentialID,
+			Payload:     map[string]any{"id": credentialID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -735,7 +773,15 @@ func (a *pgWebAuthnAccounts) RenameCredential(ctx context.Context, cmd domain.We
 		if row.LastUsedAt.IsValue() {
 			cred.LastUsedAt = row.LastUsedAt.GetOrZero()
 		}
-		// TODO outbox event: webauthn.credential.renamed
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "webauthn.credential.renamed",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: cred.ID,
+			Payload:     &cred,
+		}); err != nil {
+			return nil, err
+		}
 		return &cred, nil
 	})
 }

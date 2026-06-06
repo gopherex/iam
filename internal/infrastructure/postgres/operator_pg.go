@@ -39,10 +39,15 @@ const (
 )
 
 // PgOperator persists the operator/project aggregates.
-type PgOperator struct{ db *DB }
+type PgOperator struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgOperator builds the operator adapter.
-func NewPgOperator(db *DB) *PgOperator { return &PgOperator{db: db} }
+func NewPgOperator(db *DB, emitter Emitter) *PgOperator {
+	return &PgOperator{db: db, emitter: emitter}
+}
 
 var _ api.OperatorProjects = (*PgOperator)(nil)
 
@@ -74,7 +79,15 @@ func (a *PgOperator) CreateProject(ctx context.Context, cmd domain.ProjectCmd) (
 		if err := a.insertEnvironment(ctx, env); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: project.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "project.created",
+			ProjectID:   proj.ID,
+			Environment: "",
+			AggregateID: proj.ID,
+			Payload:     proj,
+		}); err != nil {
+			return nil, err
+		}
 		return proj, nil
 	})
 }
@@ -173,7 +186,15 @@ func (a *PgOperator) UpdateProject(ctx context.Context, cmd domain.OperatorProje
 			}
 			return nil, err
 		}
-		// TODO outbox event: project.updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "project.updated",
+			ProjectID:   p.ID,
+			Environment: "",
+			AggregateID: p.ID,
+			Payload:     &p,
+		}); err != nil {
+			return nil, err
+		}
 		return &p, nil
 	})
 }
@@ -192,7 +213,15 @@ func (a *PgOperator) DeleteProject(ctx context.Context, projectID string, hard b
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: project.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "project.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: projectID,
+			Payload:     map[string]any{"id": projectID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -236,7 +265,15 @@ func (a *PgOperator) CreateEnvironment(ctx context.Context, cmd domain.Environme
 				return nil, err
 			}
 		}
-		// TODO outbox event: environment.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "environment.created",
+			ProjectID:   env.ProjectID,
+			Environment: env.Name,
+			AggregateID: env.ProjectID,
+			Payload:     env,
+		}); err != nil {
+			return nil, err
+		}
 		return env, nil
 	})
 }
@@ -331,7 +368,15 @@ func (a *PgOperator) DeleteEnvironment(ctx context.Context, projectID, env strin
 				}
 			}
 		}
-		// TODO outbox event: environment.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "environment.deleted",
+			ProjectID:   projectID,
+			Environment: env,
+			AggregateID: projectID,
+			Payload:     map[string]any{"id": env, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -383,7 +428,15 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, projectID string) (stri
 			}
 			return "", err
 		}
-		// TODO outbox event: admin_token.minted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "admin_token.minted",
+			ProjectID:   tok.ProjectID,
+			Environment: "",
+			AggregateID: tok.ID,
+			Payload:     &tok,
+		}); err != nil {
+			return "", err
+		}
 		return signed, nil
 	})
 }
@@ -431,7 +484,15 @@ func (a *PgOperator) RevokeAdminToken(ctx context.Context, projectID, tokenID st
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamAdminTokenSetter{Data: &rm}); err != nil {
 			return err
 		}
-		// TODO outbox event: admin_token.revoked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "admin_token.revoked",
+			ProjectID:   t.ProjectID,
+			Environment: "",
+			AggregateID: t.ID,
+			Payload:     &t,
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -467,11 +528,20 @@ func (a *PgOperator) ApplyConfig(ctx context.Context, cmd domain.OperatorConfigC
 		if err := a.writeConfig(ctx, cmd.ProjectID, operatorConfigKeyConfig, cmd.Config); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: project.config.applied
-		return map[string]any{
+		result := map[string]any{
 			"project_id": cmd.ProjectID,
 			"applied":    cmd.Config,
-		}, nil
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "project.config.applied",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: cmd.ProjectID,
+			Payload:     result,
+		}); err != nil {
+			return nil, err
+		}
+		return result, nil
 	})
 }
 
@@ -522,7 +592,15 @@ func (a *PgOperator) UpdateFeatures(ctx context.Context, cmd domain.OperatorFeat
 		if err := a.writeConfig(ctx, cmd.ProjectID, operatorConfigKeyFeatures, doc); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: project.features.updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "project.features.updated",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: cmd.ProjectID,
+			Payload:     existing,
+		}); err != nil {
+			return nil, err
+		}
 		return existing, nil
 	})
 }

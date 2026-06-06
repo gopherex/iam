@@ -32,10 +32,15 @@ import (
 
 // pgAccountStore implements api.AccountStore over the iam_users / iam_sessions /
 // iam_identities envelopes plus the consent / activity / job tables.
-type pgAccountStore struct{ db *DB }
+type pgAccountStore struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgAccountStore builds the Postgres-backed AccountStore.
-func NewPgAccountStore(db *DB) *pgAccountStore { return &pgAccountStore{db: db} }
+func NewPgAccountStore(db *DB, emitter Emitter) *pgAccountStore {
+	return &pgAccountStore{db: db, emitter: emitter}
+}
 
 var _ api.AccountStore = (*pgAccountStore)(nil)
 
@@ -203,7 +208,15 @@ func (a *pgAccountStore) UpdateProfile(ctx context.Context, cmd domain.ProfileUp
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: user.profile_updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.profile_updated",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: cmd.AccountID,
+			Payload:     acc,
+		}); err != nil {
+			return nil, err
+		}
 		return &acc, nil
 	})
 }
@@ -218,7 +231,15 @@ func (a *pgAccountStore) Delete(ctx context.Context, projectID, accountID string
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: user.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: accountID,
+			Payload:     map[string]any{"id": accountID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -262,7 +283,15 @@ func (a *pgAccountStore) RevokeSession(ctx context.Context, accountID, sessionID
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: session.revoked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "session.revoked",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: row.ID,
+			Payload:     map[string]any{"id": row.ID, "project_id": row.ProjectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -295,8 +324,20 @@ func (a *pgAccountStore) RenameSession(ctx context.Context, cmd domain.AccountRe
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: session.renamed
-		return accountSessionToDomain(row)
+		sess, err := accountSessionToDomain(row)
+		if err != nil {
+			return nil, err
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "session.renamed",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: row.ID,
+			Payload:     sess,
+		}); err != nil {
+			return nil, err
+		}
+		return sess, nil
 	})
 }
 
@@ -313,8 +354,20 @@ func (a *pgAccountStore) TrustSession(ctx context.Context, cmd domain.AccountTru
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: session.trusted
-		return accountSessionToDomain(row)
+		sess, err := accountSessionToDomain(row)
+		if err != nil {
+			return nil, err
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "session.trusted",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: row.ID,
+			Payload:     sess,
+		}); err != nil {
+			return nil, err
+		}
+		return sess, nil
 	})
 }
 
@@ -340,7 +393,15 @@ func (a *pgAccountStore) RevokeSessions(ctx context.Context, cmd domain.AccountR
 		if err := victims.DeleteAll(ctx, a.db.Bobx()); err != nil {
 			return 0, err
 		}
-		// TODO outbox event: sessions.revoked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "sessions.revoked",
+			ProjectID:   victims[0].ProjectID,
+			Environment: "",
+			AggregateID: cmd.AccountID,
+			Payload:     map[string]any{"account_id": cmd.AccountID, "project_id": victims[0].ProjectID, "count": len(victims)},
+		}); err != nil {
+			return 0, err
+		}
 		return len(victims), nil
 	})
 }
@@ -381,7 +442,15 @@ func (a *pgAccountStore) UnlinkIdentity(ctx context.Context, accountID, identity
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: identity.unlinked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "identity.unlinked",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: row.ID,
+			Payload:     map[string]any{"id": row.ID, "project_id": row.ProjectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -514,7 +583,15 @@ func (a *pgAccountStore) AcceptConsents(ctx context.Context, cmd domain.AccountA
 				return struct{}{}, err
 			}
 		}
-		// TODO outbox event: account.consents_accepted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "account.consents_accepted",
+			ProjectID:   user.ProjectID,
+			Environment: "",
+			AggregateID: cmd.AccountID,
+			Payload:     map[string]any{"account_id": cmd.AccountID, "project_id": user.ProjectID, "accepted": cmd.Accept},
+		}); err != nil {
+			return struct{}{}, err
+		}
 		return struct{}{}, nil
 	})
 	if err != nil {
@@ -559,7 +636,15 @@ func (a *pgAccountStore) StartExport(ctx context.Context, accountID string) (*do
 		if _, err := models.IamJobs.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: account.export_started
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "account.export_started",
+			ProjectID:   user.ProjectID,
+			Environment: "",
+			AggregateID: accountID,
+			Payload:     job,
+		}); err != nil {
+			return nil, err
+		}
 		return job, nil
 	})
 }
@@ -640,12 +725,21 @@ func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.Acco
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: account.identity_merge_started
-		return &domain.Challenge{
+		ch := &domain.Challenge{
 			ID:        challengeID,
 			Type:      "identity_merge",
 			ExpiresAt: expires,
-		}, nil
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "account.identity_merge_started",
+			ProjectID:   user.ProjectID,
+			Environment: "",
+			AggregateID: cmd.AccountID,
+			Payload:     ch,
+		}); err != nil {
+			return nil, err
+		}
+		return ch, nil
 	})
 }
 
@@ -715,10 +809,17 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 			}
 			return result{}, err
 		}
-		// TODO outbox event: account.identity_merged
-
 		var acc domain.Account
 		if err := unmarshal(user.Data, &acc); err != nil {
+			return result{}, err
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "account.identity_merged",
+			ProjectID:   ch.ProjectID,
+			Environment: "",
+			AggregateID: cmd.AccountID,
+			Payload:     acc,
+		}); err != nil {
 			return result{}, err
 		}
 		return result{acc: &acc}, nil

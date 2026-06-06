@@ -84,8 +84,19 @@ func run() error {
 	}
 	log.Info("migrations applied")
 
+	// ----- outbox (mock publisher; enqueue joins the caller tx via db.TxDB) -----
+	ob, err := outbox.New(db.Pool, db.TxDB, &mockPublisher{log: log.AppendName("outbox")},
+		outbox.WithLogger(slog.Default()),
+		outbox.WithPollInterval(time.Second),
+	)
+	if err != nil {
+		log.Error("outbox init failed", xlog.Error("err", err))
+		return err
+	}
+	emitter := postgres.NewOutboxEmitter(ob)
+
 	// ----- API handler (12 feature groups over Postgres adapters) -----
-	handler := buildHandler(db)
+	handler := buildHandler(db, emitter)
 	auth := postgres.NewAuthenticator(db, cfg.Service.Auth.MasterKey)
 	srv, err := oas.NewServer(handler, api.NewSecurityHandler(auth), oas.WithErrorHandler(api.ErrorHandler))
 	if err != nil {
@@ -110,19 +121,6 @@ func run() error {
 		Handler:      root,
 		ReadTimeout:  time.Duration(cfg.Service.HTTP.ReadTimeoutSec) * time.Second,
 		WriteTimeout: time.Duration(cfg.Service.HTTP.WriteTimeoutSec) * time.Second,
-	}
-
-	// ----- outbox relay (mock publisher: log-only) -----
-	// enqueue + relay both run on the pool; once outbox emission points are wired
-	// in the adapters, swap the enqueue executor to db.TxDB so inserts join the
-	// caller's transaction.
-	ob, err := outbox.New(db.Pool, db.Pool, &mockPublisher{log: log.AppendName("outbox")},
-		outbox.WithLogger(slog.Default()),
-		outbox.WithPollInterval(time.Second),
-	)
-	if err != nil {
-		log.Error("outbox init failed", xlog.Error("err", err))
-		return err
 	}
 
 	// ----- shutdown orchestration -----
@@ -172,9 +170,9 @@ func newLogger(c config.Logger) *xlog.Logger {
 
 // buildHandler assembles the full IAM handler from the Postgres adapters, one
 // option per feature group.
-func buildHandler(db *postgres.DB) *api.Service {
-	platform := postgres.NewPgPlatform(db) // implements PlatformConfig + PlatformCsrf
-	coreAuth := postgres.NewPgCoreAuth(db) // implements CoreAuthAccounts + CoreAuthTokens
+func buildHandler(db *postgres.DB, emitter postgres.Emitter) *api.Service {
+	platform := postgres.NewPgPlatform(db)          // implements PlatformConfig + PlatformCsrf
+	coreAuth := postgres.NewPgCoreAuth(db, emitter) // implements CoreAuthAccounts + CoreAuthTokens
 
 	return api.New(
 		api.WithPlatform(api.NewPlatformService(api.PlatformDeps{
@@ -186,43 +184,43 @@ func buildHandler(db *postgres.DB) *api.Service {
 			Tokens:   coreAuth,
 		})),
 		api.WithPasswordless(api.NewPasswordlessService(api.PasswordlessDeps{
-			Accounts: postgres.NewPgPasswordlessAccounts(db),
+			Accounts: postgres.NewPgPasswordlessAccounts(db, emitter),
 		})),
 		api.WithOAuthSocial(api.NewOAuthSocialService(api.OAuthSocialDeps{
-			Accounts: postgres.NewPgOAuthSocial(db),
+			Accounts: postgres.NewPgOAuthSocial(db, emitter),
 		})),
 		api.WithWebAuthn(api.NewWebAuthnService(api.WebAuthnDeps{
-			Accounts: postgres.NewPgWebAuthnAccounts(db),
+			Accounts: postgres.NewPgWebAuthnAccounts(db, emitter),
 		})),
 		api.WithMFA(api.NewMFAService(api.MFADeps{
-			Accounts: postgres.NewPgMFAAccounts(db),
+			Accounts: postgres.NewPgMFAAccounts(db, emitter),
 		})),
 		api.WithAccount(api.NewAccountService(api.AccountDeps{
-			Accounts: postgres.NewPgAccountStore(db),
+			Accounts: postgres.NewPgAccountStore(db, emitter),
 		})),
 		api.WithMachineIdentity(api.NewMachineIdentityService(api.MachineIdentityDeps{
-			Keys: postgres.NewPgMachineIdentities(db),
+			Keys: postgres.NewPgMachineIdentities(db, emitter),
 		})),
 		api.WithFederation(api.NewFederationService(api.FederationDeps{
-			Connections: postgres.NewPgFederationConnections(db),
-			Runtime:     postgres.NewPgFederationRuntime(db),
-			Scim:        postgres.NewPgFederationScim(db),
+			Connections: postgres.NewPgFederationConnections(db, emitter),
+			Runtime:     postgres.NewPgFederationRuntime(db, emitter),
+			Scim:        postgres.NewPgFederationScim(db, emitter),
 		})),
 		api.WithOIDCProvider(api.NewOIDCProviderService(api.OIDCProviderDeps{
-			Grants: postgres.NewPgOIDCGrants(db),
+			Grants: postgres.NewPgOIDCGrants(db, emitter),
 		})),
 		api.WithAdmin(api.NewAdminService(api.AdminDeps{
-			Users:           postgres.NewPgAdminUsers(db),
-			Apps:            postgres.NewPgAdminApps(db),
-			ServiceAccounts: postgres.NewPgAdminServiceAccounts(db),
-			APIKeys:         postgres.NewPgAdminAPIKeys(db),
-			Connections:     postgres.NewPgAdminConnections(db),
-			Config:          postgres.NewPgAdminConfig(db),
-			Keys:            postgres.NewPgAdminKeys(db),
-			AccessRequests:  postgres.NewPgAdminAccessRequests(db),
+			Users:           postgres.NewPgAdminUsers(db, emitter),
+			Apps:            postgres.NewPgAdminApps(db, emitter),
+			ServiceAccounts: postgres.NewPgAdminServiceAccounts(db, emitter),
+			APIKeys:         postgres.NewPgAdminAPIKeys(db, emitter),
+			Connections:     postgres.NewPgAdminConnections(db, emitter),
+			Config:          postgres.NewPgAdminConfig(db, emitter),
+			Keys:            postgres.NewPgAdminKeys(db, emitter),
+			AccessRequests:  postgres.NewPgAdminAccessRequests(db, emitter),
 		})),
 		api.WithOperator(api.NewOperatorService(api.OperatorDeps{
-			Projects: postgres.NewPgOperator(db),
+			Projects: postgres.NewPgOperator(db, emitter),
 		})),
 	)
 }

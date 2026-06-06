@@ -59,10 +59,15 @@ const (
 )
 
 // pgOAuthSocial is the Postgres-backed OAuthSocialAccounts adapter.
-type pgOAuthSocial struct{ db *DB }
+type pgOAuthSocial struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgOAuthSocial builds the OAuthSocial adapter over the connection bundle.
-func NewPgOAuthSocial(db *DB) *pgOAuthSocial { return &pgOAuthSocial{db: db} }
+func NewPgOAuthSocial(db *DB, emitter Emitter) *pgOAuthSocial {
+	return &pgOAuthSocial{db: db, emitter: emitter}
+}
 
 var _ api.OAuthSocialAccounts = (*pgOAuthSocial)(nil)
 
@@ -243,7 +248,14 @@ func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, 
 			}, projectID, acct.ID); err != nil {
 				return result{}, err
 			}
-			// TODO outbox event: identity.linked
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "identity.linked",
+				ProjectID:   projectID,
+				AggregateID: acct.ID,
+				Payload:     acct,
+			}); err != nil {
+				return result{}, err
+			}
 		} else {
 			acct, err = a.loadAccount(ctx, projectID, ident.UserID)
 			if err != nil {
@@ -255,7 +267,14 @@ func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, 
 		if err != nil {
 			return result{}, err
 		}
-		// TODO outbox event: session.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "session.created",
+			ProjectID:   acct.ProjectID,
+			AggregateID: sess.ID,
+			Payload:     sess,
+		}); err != nil {
+			return result{}, err
+		}
 		return result{acct: acct, sess: sess}, nil
 	})
 	if err != nil {
@@ -311,7 +330,14 @@ func (a *pgOAuthSocial) Link(ctx context.Context, accountID, provider, code stri
 		}, projectID, accountID); err != nil {
 			return err
 		}
-		// TODO outbox event: identity.linked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "identity.linked",
+			ProjectID:   projectID,
+			AggregateID: accountID,
+			Payload:     map[string]any{"account_id": accountID, "provider": provider, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -333,7 +359,14 @@ func (a *pgOAuthSocial) Unlink(ctx context.Context, accountID, identityID string
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: identity.unlinked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "identity.unlinked",
+			ProjectID:   row.ProjectID,
+			AggregateID: identityID,
+			Payload:     map[string]any{"id": identityID, "project_id": row.ProjectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -402,7 +435,14 @@ func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExch
 		if err != nil {
 			return result{}, err
 		}
-		// TODO outbox event: oauth.social.exchanged
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oauth.social.exchanged",
+			ProjectID:   cmd.ProjectID,
+			AggregateID: data.Session.ID,
+			Payload:     data.Session,
+		}); err != nil {
+			return result{}, err
+		}
 		return result{acct: acct, sess: data.Session}, nil
 	})
 	if err != nil {
@@ -553,7 +593,14 @@ func (a *pgOAuthSocial) storeExchangeCode(ctx context.Context, projectID string,
 			}
 			return err
 		}
-		// TODO outbox event: oauth.social.exchange_code_issued
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oauth.social.exchange_code_issued",
+			ProjectID:   projectID,
+			AggregateID: sess.AccountID,
+			Payload:     sess,
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -586,7 +633,14 @@ func (a *pgOAuthSocial) resolveLoginAndMint(ctx context.Context, projectID, prov
 			}, projectID, acct.ID); err != nil {
 				return nil, err
 			}
-			// TODO outbox event: identity.linked
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "identity.linked",
+				ProjectID:   projectID,
+				AggregateID: acct.ID,
+				Payload:     acct,
+			}); err != nil {
+				return nil, err
+			}
 		} else {
 			acct, err = a.loadAccount(ctx, projectID, ident.UserID)
 			if err != nil {
@@ -597,7 +651,14 @@ func (a *pgOAuthSocial) resolveLoginAndMint(ctx context.Context, projectID, prov
 		if err != nil {
 			return nil, err
 		}
-		// TODO outbox event: session.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "session.created",
+			ProjectID:   acct.ProjectID,
+			AggregateID: sess.ID,
+			Payload:     sess,
+		}); err != nil {
+			return nil, err
+		}
 		return sess, nil
 	})
 }
@@ -687,7 +748,14 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 		}, projectID, cmd.AccountID); err != nil {
 			return err
 		}
-		// TODO outbox event: identity.linked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "identity.linked",
+			ProjectID:   projectID,
+			AggregateID: cmd.AccountID,
+			Payload:     map[string]any{"account_id": cmd.AccountID, "provider": cmd.Provider, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -888,7 +956,14 @@ func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, emai
 		}
 		return nil, err
 	}
-	// TODO outbox event: user.created
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "user.created",
+		ProjectID:   acct.ProjectID,
+		AggregateID: acct.ID,
+		Payload:     acct,
+	}); err != nil {
+		return nil, err
+	}
 	return acct, nil
 }
 

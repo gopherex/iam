@@ -85,10 +85,15 @@ func oidcHasScope(scopes []string, want string) bool {
 }
 
 // pgOIDCGrants is the Postgres-backed api.OIDCGrants adapter.
-type pgOIDCGrants struct{ db *DB }
+type pgOIDCGrants struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgOIDCGrants builds the OIDC-provider adapter over db.
-func NewPgOIDCGrants(db *DB) *pgOIDCGrants { return &pgOIDCGrants{db: db} }
+func NewPgOIDCGrants(db *DB, emitter Emitter) *pgOIDCGrants {
+	return &pgOIDCGrants{db: db, emitter: emitter}
+}
 
 var _ api.OIDCGrants = (*pgOIDCGrants)(nil)
 
@@ -180,7 +185,15 @@ func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, account
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return err
 		}
-		// TODO outbox event: oidc.interaction.login_completed
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.interaction.login_completed",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: interactionID,
+			Payload:     &env,
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -213,14 +226,30 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			if err := a.persistGrant(ctx, row.ProjectID, &grant); err != nil {
 				return "", err
 			}
-			// TODO outbox event: oidc.grant.created
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "oidc.grant.created",
+				ProjectID:   row.ProjectID,
+				Environment: "",
+				AggregateID: grant.ID,
+				Payload:     &grant,
+			}); err != nil {
+				return "", err
+			}
 		}
 
 		// The interaction is satisfied; drop it so the code cannot be replayed.
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return "", err
 		}
-		// TODO outbox event: oidc.interaction.consented
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.interaction.consented",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: cmd.InteractionID,
+			Payload:     &in,
+		}); err != nil {
+			return "", err
+		}
 
 		// Mint a one-time authorization code (opaque, sha256-hashed at rest, so
 		// it stays revocable) bound to the consenting user/client/scopes. The
@@ -253,13 +282,27 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			ExpiresAt: ptr(nowUTC().Add(10 * time.Minute)),
 			Data:      &rm,
 		}
-		if _, err := models.IamAuthCodes.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+		authCodeRow, err := models.IamAuthCodes.Insert(setter).One(ctx, a.db.Bobx())
+		if err != nil {
 			if isUniqueViolation(err) {
 				return "", domain.ErrConflict
 			}
 			return "", err
 		}
-		// TODO outbox event: oidc.token.issued (authorization code)
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.token.issued",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: authCodeRow.ID,
+			Payload: map[string]any{
+				"grant_type": "authorization_code",
+				"client_id":  in.ClientID,
+				"account_id": cmd.AccountID,
+				"scopes":     scopes,
+			},
+		}); err != nil {
+			return "", err
+		}
 
 		return oidcAppendQuery(in.RedirectURI, "code", code), nil
 	})
@@ -290,7 +333,15 @@ func (a *pgOIDCGrants) Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (st
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return "", err
 		}
-		// TODO outbox event: oidc.interaction.rejected
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.interaction.rejected",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: cmd.InteractionID,
+			Payload:     &in,
+		}); err != nil {
+			return "", err
+		}
 		errCode := cmd.Error
 		if errCode == "" {
 			errCode = "access_denied"
@@ -359,7 +410,15 @@ func (a *pgOIDCGrants) RevokeGrant(ctx context.Context, accountID, grantID strin
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: oidc.grant.revoked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.grant.revoked",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: grantID,
+			Payload:     map[string]any{"id": grantID, "project_id": row.ProjectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -397,7 +456,15 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 		if _, err := models.IamInteractions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return "", err
 		}
-		// TODO outbox event: oidc.interaction.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.interaction.created",
+			ProjectID:   cmd.ClientID, // project resolved by client at UI; clientID is the routing key
+			Environment: "",
+			AggregateID: in.ID,
+			Payload:     &in,
+		}); err != nil {
+			return "", err
+		}
 		return fmt.Sprintf("/oauth/interaction/%s", in.ID), nil
 	})
 }
@@ -424,9 +491,17 @@ func (a *pgOIDCGrants) Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (st
 		if err != nil {
 			return "", err
 		}
-		_ = peekString(claims, "sub") // session subject to terminate
-		_ = peekString(claims, "sid") // session id to terminate
-		// TODO outbox event: oidc.session.logout
+		sub := peekString(claims, "sub") // session subject to terminate
+		sid := peekString(claims, "sid") // session id to terminate
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.session.logout",
+			ProjectID:   projectID,
+			Environment: env,
+			AggregateID: sub,
+			Payload:     map[string]any{"sub": sub, "sid": sid, "project_id": projectID, "env": env},
+		}); err != nil {
+			return "", err
+		}
 	}
 	redirect := cmd.PostLogoutRedirectURI
 	if redirect == "" {
@@ -468,9 +543,17 @@ func (a *pgOIDCGrants) BackchannelLogout(ctx context.Context, cmd domain.OIDCBac
 	if err != nil {
 		return err
 	}
-	_ = peekString(claims, "sub") // session subject to terminate
-	_ = peekString(claims, "sid") // session id to terminate
-	// TODO outbox event: oidc.session.backchannel_logout
+	sub := peekString(claims, "sub") // session subject to terminate
+	sid := peekString(claims, "sid") // session id to terminate
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "oidc.session.backchannel_logout",
+		ProjectID:   projectID,
+		Environment: env,
+		AggregateID: sub,
+		Payload:     map[string]any{"sub": sub, "sid": sid, "project_id": projectID, "env": env},
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -508,14 +591,28 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			if err := row.Update(ctx, a.db.Bobx(), &models.IamAuthCodeSetter{Consumed: &consumed}); err != nil {
 				return nil, err
 			}
-			// TODO outbox event: oidc.token.issued
-			return a.mintTokenResponse(ctx, oidcTokenSubject{
+			tokenSubj := oidcTokenSubject{
 				projectID: row.ProjectID,
 				env:       oidcDefaultEnv,
 				subject:   row.UserID.GetOrZero(),
 				clientID:  firstNonEmpty(row.ClientID.GetOrZero(), cmd.ClientID),
 				scopes:    splitScopesFromData(row.Data),
-			})
+			}
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "oidc.token.issued",
+				ProjectID:   row.ProjectID,
+				Environment: oidcDefaultEnv,
+				AggregateID: row.UserID.GetOrZero(),
+				Payload: map[string]any{
+					"grant_type": "authorization_code",
+					"client_id":  tokenSubj.clientID,
+					"subject":    tokenSubj.subject,
+					"scopes":     tokenSubj.scopes,
+				},
+			}); err != nil {
+				return nil, err
+			}
+			return a.mintTokenResponse(ctx, tokenSubj)
 		case "device_code":
 			if cmd.DeviceCode == "" {
 				return nil, domain.ErrBadRequest
@@ -536,14 +633,28 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			case "approved":
 				var pending domain.OIDCDevicePending
 				_ = unmarshal(row.Data, &pending)
-				// TODO outbox event: oidc.token.issued
-				return a.mintTokenResponse(ctx, oidcTokenSubject{
+				tokenSubj := oidcTokenSubject{
 					projectID: row.ProjectID,
 					env:       oidcDefaultEnv,
 					subject:   row.UserID.GetOrZero(),
 					clientID:  firstNonEmpty(pending.ClientID, cmd.ClientID),
 					scopes:    pending.Scopes,
-				})
+				}
+				if err := a.emitter.Emit(ctx, domain.Event{
+					Type:        "oidc.token.issued",
+					ProjectID:   row.ProjectID,
+					Environment: oidcDefaultEnv,
+					AggregateID: row.UserID.GetOrZero(),
+					Payload: map[string]any{
+						"grant_type": "device_code",
+						"client_id":  tokenSubj.clientID,
+						"subject":    tokenSubj.subject,
+						"scopes":     tokenSubj.scopes,
+					},
+				}); err != nil {
+					return nil, err
+				}
+				return a.mintTokenResponse(ctx, tokenSubj)
 			case "denied":
 				return nil, domain.ErrForbidden
 			default:
@@ -573,12 +684,27 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			if err != nil {
 				return nil, err
 			}
-			// TODO outbox event: oidc.token.refreshed
+			effectiveClientID := firstNonEmpty(clientID, cmd.ClientID)
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "oidc.token.refreshed",
+				ProjectID:   projectID,
+				Environment: env,
+				AggregateID: sub,
+				Payload: map[string]any{
+					"subject":    sub,
+					"client_id":  effectiveClientID,
+					"scopes":     scopes,
+					"project_id": projectID,
+					"env":        env,
+				},
+			}); err != nil {
+				return nil, err
+			}
 			return a.mintTokenResponse(ctx, oidcTokenSubject{
 				projectID: projectID,
 				env:       env,
 				subject:   sub,
-				clientID:  firstNonEmpty(clientID, cmd.ClientID),
+				clientID:  effectiveClientID,
 				scopes:    scopes,
 			})
 		default:
@@ -823,7 +949,19 @@ func (a *pgOIDCGrants) Revoke(ctx context.Context, cmd domain.OIDCRevokeCmd) err
 		// per-jti denylist store, which is not one of this adapter's owned
 		// tables. The auth-code material above is revoked by hash. RFC 7009: any
 		// token we cannot match is a no-op success.
-		// TODO outbox event: oidc.token.revoked
+		aggregateID := ""
+		if len(rows) > 0 {
+			aggregateID = rows[0].ID
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.token.revoked",
+			ProjectID:   cmd.ProjectID,
+			Environment: cmd.Env,
+			AggregateID: aggregateID,
+			Payload:     map[string]any{"id": aggregateID, "project_id": cmd.ProjectID, "token_type_hint": cmd.TokenTypeHint},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -851,14 +989,24 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 			ExpiresAt:  ptr(nowUTC().Add(ttl * time.Second)),
 			Data:       &rm,
 		}
-		if _, err := models.IamParRequests.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+		parRow, err := models.IamParRequests.Insert(setter).One(ctx, a.db.Bobx())
+		if err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
 			return nil, err
 		}
-		// TODO outbox event: oidc.par.created
-		return &domain.OIDCParResult{RequestURI: requestURI, ExpiresIn: ttl}, nil
+		result := &domain.OIDCParResult{RequestURI: requestURI, ExpiresIn: ttl}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.par.created",
+			ProjectID:   cmd.ClientID, // routing key; project resolved by client
+			Environment: "",
+			AggregateID: parRow.ID,
+			Payload:     result,
+		}); err != nil {
+			return nil, err
+		}
+		return result, nil
 	})
 }
 
@@ -908,13 +1056,22 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 			ExpiresAt:  &expiresAt,
 			Data:       &rm,
 		}
-		if _, err := models.IamDeviceCodes.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+		deviceRow, err := models.IamDeviceCodes.Insert(setter).One(ctx, a.db.Bobx())
+		if err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
 			return nil, err
 		}
-		// TODO outbox event: oidc.device.authorized
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.device.authorized",
+			ProjectID:   cmd.ClientID, // routing key; project resolved by client
+			Environment: "",
+			AggregateID: deviceRow.ID,
+			Payload:     &pending,
+		}); err != nil {
+			return nil, err
+		}
 		return out, nil
 	})
 }
@@ -999,7 +1156,20 @@ func (a *pgOIDCGrants) deviceDecision(ctx context.Context, cmd domain.OIDCDevice
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return err
 		}
-		// TODO outbox event: oidc.device.decided
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.device.decided",
+			ProjectID:   cmd.ProjectID,
+			Environment: "",
+			AggregateID: row.ID,
+			Payload: map[string]any{
+				"id":         row.ID,
+				"status":     status,
+				"account_id": cmd.AccountID,
+				"project_id": cmd.ProjectID,
+			},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }

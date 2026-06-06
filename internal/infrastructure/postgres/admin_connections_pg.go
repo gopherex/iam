@@ -40,11 +40,14 @@ import (
 
 // pgAdminConnections provides admin-facing CRUD over iam_sso_connections and
 // iam_domains. It is scoped to a project on every operation (tenant boundary).
-type pgAdminConnections struct{ db *DB }
+type pgAdminConnections struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgAdminConnections builds the Postgres-backed AdminConnections adapter.
-func NewPgAdminConnections(db *DB) *pgAdminConnections {
-	return &pgAdminConnections{db: db}
+func NewPgAdminConnections(db *DB, emitter Emitter) *pgAdminConnections {
+	return &pgAdminConnections{db: db, emitter: emitter}
 }
 
 var _ api.AdminConnections = (*pgAdminConnections)(nil)
@@ -106,7 +109,15 @@ func (a *pgAdminConnections) Create(ctx context.Context, cmd domain.AdminConnect
 			}
 			return nil, err
 		}
-		// TODO outbox event: connection.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "connection.created",
+			ProjectID:   conn.ProjectID,
+			Environment: "",
+			AggregateID: conn.ID,
+			Payload:     conn,
+		}); err != nil {
+			return nil, err
+		}
 		return conn, nil
 	})
 }
@@ -150,7 +161,15 @@ func (a *pgAdminConnections) Update(ctx context.Context, projectID, connID strin
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: connection.updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "connection.updated",
+			ProjectID:   conn.ProjectID,
+			Environment: "",
+			AggregateID: conn.ID,
+			Payload:     conn,
+		}); err != nil {
+			return nil, err
+		}
 		return conn, nil
 	})
 }
@@ -170,7 +189,15 @@ func (a *pgAdminConnections) Delete(ctx context.Context, projectID, connID strin
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: connection.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "connection.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: connID,
+			Payload:     map[string]any{"id": connID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -257,7 +284,15 @@ func (a *pgAdminConnections) CreateDomain(ctx context.Context, cmd domain.AdminD
 			}
 			return nil, err
 		}
-		// TODO outbox event: domain.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "domain.created",
+			ProjectID:   dom.ProjectID,
+			Environment: "",
+			AggregateID: dom.ID,
+			Payload:     dom,
+		}); err != nil {
+			return nil, err
+		}
 		return &domain.AdminDomainRegistration{
 			Domain:                  dom,
 			VerificationRecordType:  "TXT",
@@ -282,7 +317,15 @@ func (a *pgAdminConnections) DeleteDomain(ctx context.Context, projectID, domain
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: domain.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "domain.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: domainID,
+			Payload:     map[string]any{"id": domainID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -322,7 +365,15 @@ func (a *pgAdminConnections) VerifyDomain(ctx context.Context, projectID, domain
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: domain.verified
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "domain.verified",
+			ProjectID:   dom.ProjectID,
+			Environment: "",
+			AggregateID: dom.ID,
+			Payload:     dom,
+		}); err != nil {
+			return nil, err
+		}
 		return dom, nil
 	})
 }

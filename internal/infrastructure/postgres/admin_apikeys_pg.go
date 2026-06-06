@@ -33,10 +33,15 @@ import (
 )
 
 // pgAdminAPIKeys is the Postgres-backed AdminAPIKeys adapter.
-type pgAdminAPIKeys struct{ db *DB }
+type pgAdminAPIKeys struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgAdminAPIKeys constructs the adapter over an open *DB.
-func NewPgAdminAPIKeys(db *DB) *pgAdminAPIKeys { return &pgAdminAPIKeys{db: db} }
+func NewPgAdminAPIKeys(db *DB, emitter Emitter) *pgAdminAPIKeys {
+	return &pgAdminAPIKeys{db: db, emitter: emitter}
+}
 
 // Port assertion.
 var _ api.AdminAPIKeys = (*pgAdminAPIKeys)(nil)
@@ -120,8 +125,17 @@ func (a *pgAdminAPIKeys) Create(ctx context.Context, cmd domain.AdminAPIKeyCmd) 
 			}
 			return nil, err
 		}
-		// TODO outbox event: api_key.created
-		return &domain.AdminAPIKeySecret{Key: &key, Secret: plaintext}, nil
+		result := &domain.AdminAPIKeySecret{Key: &key, Secret: plaintext}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "api_key.created",
+			ProjectID:   key.ProjectID,
+			Environment: "",
+			AggregateID: key.ID,
+			Payload:     &key,
+		}); err != nil {
+			return nil, err
+		}
+		return result, nil
 	})
 }
 
@@ -152,7 +166,15 @@ func (a *pgAdminAPIKeys) Update(ctx context.Context, cmd domain.AdminAPIKeyUpdat
 		}); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: api_key.updated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "api_key.updated",
+			ProjectID:   key.ProjectID,
+			Environment: "",
+			AggregateID: key.ID,
+			Payload:     key,
+		}); err != nil {
+			return nil, err
+		}
 		return key, nil
 	})
 }
@@ -169,7 +191,15 @@ func (a *pgAdminAPIKeys) Delete(ctx context.Context, projectID, keyID string) er
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: api_key.deleted
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "api_key.deleted",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: keyID,
+			Payload:     map[string]any{"id": keyID, "project_id": projectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -202,8 +232,17 @@ func (a *pgAdminAPIKeys) Rotate(ctx context.Context, projectID, keyID string) (*
 		}); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: api_key.rotated
-		return &domain.AdminAPIKeySecret{Key: key, Secret: plaintext}, nil
+		result := &domain.AdminAPIKeySecret{Key: key, Secret: plaintext}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "api_key.rotated",
+			ProjectID:   key.ProjectID,
+			Environment: "",
+			AggregateID: key.ID,
+			Payload:     key,
+		}); err != nil {
+			return nil, err
+		}
+		return result, nil
 	})
 }
 

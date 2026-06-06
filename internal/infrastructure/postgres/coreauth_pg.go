@@ -49,10 +49,15 @@ import (
 // pgCoreAuth is the Postgres-backed Core Auth adapter. Every mutating method
 // wraps its work in db.withTx / withTxRet (serializable + mandatory retry);
 // reads run on db.Bobx() directly.
-type pgCoreAuth struct{ db *DB }
+type pgCoreAuth struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgCoreAuth builds the Postgres-backed Core Auth adapter.
-func NewPgCoreAuth(db *DB) *pgCoreAuth { return &pgCoreAuth{db: db} }
+func NewPgCoreAuth(db *DB, emitter Emitter) *pgCoreAuth {
+	return &pgCoreAuth{db: db, emitter: emitter}
+}
 
 var (
 	_ api.CoreAuthAccounts = (*pgCoreAuth)(nil)
@@ -383,7 +388,15 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	if err := a.coreAuthInsertRefreshToken(ctx, rt); err != nil {
 		return nil, err
 	}
-	// TODO outbox event: session.created
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "session.created",
+		ProjectID:   sess.ProjectID,
+		Environment: coreAuthDefaultEnv,
+		AggregateID: sess.ID,
+		Payload:     sess,
+	}); err != nil {
+		return nil, err
+	}
 	return sess, nil
 }
 
@@ -438,7 +451,15 @@ func (a *pgCoreAuth) coreAuthInsertChallenge(ctx context.Context, ch coreAuthCha
 	if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		return nil, err
 	}
-	// TODO outbox event: challenge.created
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "challenge.created",
+		ProjectID:   ch.ProjectID,
+		Environment: coreAuthDefaultEnv,
+		AggregateID: ch.ID,
+		Payload:     ch,
+	}); err != nil {
+		return nil, err
+	}
 	return &domain.Challenge{ID: ch.ID, Type: ch.Type, ExpiresAt: ch.ExpiresAt}, nil
 }
 
@@ -483,7 +504,21 @@ func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.Core
 		if err != nil {
 			return nil, err
 		}
-		// TODO outbox event: <type>.verification.requested (dispatch code/link)
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        chType + ".verification.requested",
+			ProjectID:   ch.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: ch.ID,
+			Payload: map[string]any{
+				"code":         code,
+				"token":        token,
+				"channel":      ch.Channel,
+				"account_id":   ch.AccountID,
+				"challenge_id": ch.ID,
+			},
+		}); err != nil {
+			return nil, err
+		}
 		return out, nil
 	})
 }
@@ -549,7 +584,15 @@ func (a *pgCoreAuth) coreAuthConsumeChallenge(ctx context.Context, projectID str
 	if err := row.Update(ctx, a.db.Bobx(), &models.IamChallengeSetter{Consumed: ptr(true)}); err != nil {
 		return nil, nil, err
 	}
-	// TODO outbox event: challenge.consumed
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "challenge.consumed",
+		ProjectID:   projectID,
+		Environment: coreAuthDefaultEnv,
+		AggregateID: row.ID,
+		Payload:     data,
+	}); err != nil {
+		return nil, nil, err
+	}
 	return row, &data, nil
 }
 
@@ -612,7 +655,15 @@ func (a *pgCoreAuth) coreAuthUpdateAccount(ctx context.Context, acc *domain.Acco
 		}
 		return err
 	}
-	// TODO outbox event: user.updated
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "user.updated",
+		ProjectID:   acc.ProjectID,
+		Environment: coreAuthDefaultEnv,
+		AggregateID: acc.ID,
+		Payload:     acc,
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -632,10 +683,19 @@ func (a *pgCoreAuth) coreAuthRevokeSession(ctx context.Context, projectID, sessi
 	if err := a.coreAuthRevokeRefreshTokensForSession(ctx, row.ProjectID, sessionID); err != nil {
 		return err
 	}
+	revokedProjectID := row.ProjectID
 	if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 		return err
 	}
-	// TODO outbox event: session.revoked
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "session.revoked",
+		ProjectID:   revokedProjectID,
+		Environment: coreAuthDefaultEnv,
+		AggregateID: sessionID,
+		Payload:     map[string]any{"session_id": sessionID, "project_id": revokedProjectID},
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -775,7 +835,15 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 		if err != nil {
 			return regResult{}, err
 		}
-		// TODO outbox event: user.registered
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.registered",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return regResult{}, err
+		}
 		return regResult{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -821,7 +889,15 @@ func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email,
 		if err != nil {
 			return authResult{}, err
 		}
-		// TODO outbox event: user.signed_in
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.signed_in",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return authResult{}, err
+		}
 		return authResult{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -887,7 +963,15 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 		if err != nil {
 			return refreshResult{}, err
 		}
-		// TODO outbox event: token.refreshed
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "token.refreshed",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: sess.ID,
+			Payload:     sess,
+		}); err != nil {
+			return refreshResult{}, err
+		}
 		return refreshResult{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -959,7 +1043,15 @@ func (a *pgCoreAuth) ExchangeCode(ctx context.Context, code, verifier string) (*
 		if err != nil {
 			return exResult{}, err
 		}
-		// TODO outbox event: token.exchanged
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "token.exchanged",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: sess.ID,
+			Payload:     sess,
+		}); err != nil {
+			return exResult{}, err
+		}
 		return exResult{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -1008,7 +1100,15 @@ func (a *pgCoreAuth) CreateGuest(ctx context.Context, projectID string) (*domain
 		if err != nil {
 			return guestResult{}, err
 		}
-		// TODO outbox event: guest.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "guest.created",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return guestResult{}, err
+		}
 		return guestResult{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -1065,13 +1165,29 @@ func (a *pgCoreAuth) SignOut(ctx context.Context, sessionID string, everywhere b
 			if _, err := a.coreAuthSignOutAll(ctx, row.ProjectID, row.UserID, ""); err != nil {
 				return err
 			}
-			// TODO outbox event: user.signed_out_everywhere
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "user.signed_out_everywhere",
+				ProjectID:   row.ProjectID,
+				Environment: coreAuthDefaultEnv,
+				AggregateID: row.UserID,
+				Payload:     map[string]any{"account_id": row.UserID, "project_id": row.ProjectID},
+			}); err != nil {
+				return err
+			}
 			return nil
 		}
 		if err := a.coreAuthRevokeSession(ctx, row.ProjectID, sessionID); err != nil {
 			return err
 		}
-		// TODO outbox event: user.signed_out
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.signed_out",
+			ProjectID:   row.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: row.UserID,
+			Payload:     map[string]any{"account_id": row.UserID, "session_id": sessionID, "project_id": row.ProjectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -1096,7 +1212,15 @@ func (a *pgCoreAuth) SignOutAll(ctx context.Context, accountID, exceptSessionID 
 		if err != nil {
 			return 0, err
 		}
-		// TODO outbox event: user.sessions_revoked
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "user.sessions_revoked",
+			ProjectID:   userRow.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: accountID,
+			Payload:     map[string]any{"account_id": accountID, "count": n, "project_id": userRow.ProjectID},
+		}); err != nil {
+			return 0, err
+		}
 		return n, nil
 	})
 }
@@ -1160,7 +1284,15 @@ func (a *pgCoreAuth) VerifyEmail(ctx context.Context, cmd domain.CoreAuthVerifyC
 		if err != nil {
 			return verifyResult{}, err
 		}
-		// TODO outbox event: email.verified
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "email.verified",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return verifyResult{}, err
+		}
 		return verifyResult{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -1203,7 +1335,15 @@ func (a *pgCoreAuth) VerifyEmailCallback(ctx context.Context, cmd domain.CoreAut
 		if redirect == "" {
 			redirect = data.RedirectTo
 		}
-		// TODO outbox event: email.verified
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "email.verified",
+			ProjectID:   data.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: data.AccountID,
+			Payload:     data,
+		}); err != nil {
+			return nil, err
+		}
 		// SetCookie is empty: this adapter does not mint a session cookie on the
 		// link callback; the SPA at RedirectURL completes sign-in.
 		return &domain.CoreAuthEmailVerificationCallbackResult{RedirectURL: redirect}, nil
@@ -1376,7 +1516,15 @@ func (a *pgCoreAuth) VerifyEmailChange(ctx context.Context, cmd domain.CoreAuthV
 		if err := a.coreAuthUpdateAccount(ctx, acc); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: email.changed
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "email.changed",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return nil, err
+		}
 		return acc, nil
 	})
 }
@@ -1394,7 +1542,15 @@ func (a *pgCoreAuth) CancelEmailChange(ctx context.Context, token string) error 
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamChallengeSetter{Consumed: ptr(true)}); err != nil {
 			return err
 		}
-		// TODO outbox event: email_change.cancelled
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "email_change.cancelled",
+			ProjectID:   row.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: row.ID,
+			Payload:     map[string]any{"challenge_id": row.ID, "project_id": row.ProjectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -1433,7 +1589,15 @@ func (a *pgCoreAuth) VerifyPhone(ctx context.Context, cmd domain.CoreAuthVerifyC
 		if err != nil {
 			return verifyResult{}, err
 		}
-		// TODO outbox event: phone.verified
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "phone.verified",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return verifyResult{}, err
+		}
 		return verifyResult{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -1490,7 +1654,15 @@ func (a *pgCoreAuth) VerifyPhoneChange(ctx context.Context, cmd domain.CoreAuthV
 		if err := a.coreAuthUpdateAccount(ctx, acc); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: phone.changed
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "phone.changed",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return nil, err
+		}
 		return acc, nil
 	})
 }
@@ -1543,7 +1715,20 @@ func (a *pgCoreAuth) ForgotPassword(ctx context.Context, cmd domain.CoreAuthPass
 		if _, err := a.coreAuthInsertChallenge(ctx, ch); err != nil {
 			return err
 		}
-		// TODO outbox event: password.reset_requested (dispatch code/link)
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "password.reset_requested",
+			ProjectID:   cmd.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: acc.ID,
+			Payload: map[string]any{
+				"code":         code,
+				"token":        token,
+				"account_id":   acc.ID,
+				"challenge_id": ch.ID,
+			},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -1595,7 +1780,15 @@ func (a *pgCoreAuth) ResetPassword(ctx context.Context, cmd domain.CoreAuthPassw
 		if err != nil {
 			return resetResult{}, err
 		}
-		// TODO outbox event: password.reset
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "password.reset",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return resetResult{}, err
+		}
 		return resetResult{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -1703,7 +1896,15 @@ func (a *pgCoreAuth) ChangePassword(ctx context.Context, cmd domain.CoreAuthPass
 				return err
 			}
 		}
-		// TODO outbox event: password.changed
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "password.changed",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -1853,7 +2054,15 @@ func (a *pgCoreAuth) StepUp(ctx context.Context, cmd domain.CoreAuthStepUpCmd) (
 		if err != nil {
 			return nil, err
 		}
-		// TODO outbox event: step_up.requested
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "step_up.requested",
+			ProjectID:   ch.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: ch.AccountID,
+			Payload:     ch,
+		}); err != nil {
+			return nil, err
+		}
 		return &domain.CoreAuthStepUpResult{Satisfied: false, Challenge: out}, nil
 	})
 }
@@ -1908,7 +2117,15 @@ func (a *pgCoreAuth) SwitchGroup(ctx context.Context, accountID, sessionID, grou
 		if err != nil {
 			return switchResult{}, err
 		}
-		// TODO outbox event: session.group_switched
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "session.group_switched",
+			ProjectID:   acc.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: sess.ID,
+			Payload:     sess,
+		}); err != nil {
+			return switchResult{}, err
+		}
 		return switchResult{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -1954,7 +2171,15 @@ func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAut
 			}
 			return nil, err
 		}
-		// TODO outbox event: access_request.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "access_request.created",
+			ProjectID:   ar.ProjectID,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: ar.ID,
+			Payload:     ar,
+		}); err != nil {
+			return nil, err
+		}
 		return ar, nil
 	})
 }
@@ -2057,7 +2282,15 @@ func (a *pgCoreAuth) Revoke(ctx context.Context, cmd domain.CoreAuthRevokeCmd) e
 				!errors.Is(err, domain.ErrSessionNotFound) {
 				return err
 			}
-			// TODO outbox event: session.revoked
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "session.revoked",
+				ProjectID:   "",
+				Environment: coreAuthDefaultEnv,
+				AggregateID: cmd.SessionID,
+				Payload:     map[string]any{"session_id": cmd.SessionID},
+			}); err != nil {
+				return err
+			}
 			return nil
 		}
 		// Refresh token by hash.
@@ -2067,7 +2300,15 @@ func (a *pgCoreAuth) Revoke(ctx context.Context, cmd domain.CoreAuthRevokeCmd) e
 			if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
 				return err
 			}
-			// TODO outbox event: token.revoked
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "token.revoked",
+				ProjectID:   row.ProjectID,
+				Environment: coreAuthDefaultEnv,
+				AggregateID: row.ID,
+				Payload:     map[string]any{"token_id": row.ID, "session_id": row.SessionID, "project_id": row.ProjectID},
+			}); err != nil {
+				return err
+			}
 			return nil
 		} else if !errors.Is(translatePgErr("refresh_token", err), ErrNotFound) {
 			return err
@@ -2082,7 +2323,15 @@ func (a *pgCoreAuth) Revoke(ctx context.Context, cmd domain.CoreAuthRevokeCmd) e
 					!errors.Is(err, domain.ErrSessionNotFound) {
 					return err
 				}
-				// TODO outbox event: token.revoked
+				if err := a.emitter.Emit(ctx, domain.Event{
+					Type:        "token.revoked",
+					ProjectID:   pid,
+					Environment: coreAuthDefaultEnv,
+					AggregateID: sid,
+					Payload:     map[string]any{"session_id": sid, "project_id": pid},
+				}); err != nil {
+					return err
+				}
 			}
 		}
 		// Unknown token: revocation is idempotent, treat as success.

@@ -55,10 +55,15 @@ const mfaChallengeTTL = 5 * time.Minute
 const mfaRecoveryCodeCount = 10
 
 // pgMFAAccounts is the Postgres-backed api.MFAAccounts adapter.
-type pgMFAAccounts struct{ db *DB }
+type pgMFAAccounts struct {
+	db      *DB
+	emitter Emitter
+}
 
 // NewPgMFAAccounts builds the MFA aggregate adapter over a *DB.
-func NewPgMFAAccounts(db *DB) *pgMFAAccounts { return &pgMFAAccounts{db: db} }
+func NewPgMFAAccounts(db *DB, emitter Emitter) *pgMFAAccounts {
+	return &pgMFAAccounts{db: db, emitter: emitter}
+}
 
 var _ api.MFAAccounts = (*pgMFAAccounts)(nil)
 
@@ -265,7 +270,15 @@ func (a *pgMFAAccounts) EnrollTOTP(ctx context.Context, accountID string) (*doma
 		if err := a.mfaInsertFactorFor(ctx, acc.ProjectID, accountID, &f, key.Secret()); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: mfa.factor.enrolled
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.factor.enrolled",
+			ProjectID:   acc.ProjectID,
+			Environment: "",
+			AggregateID: f.ID,
+			Payload:     f,
+		}); err != nil {
+			return nil, err
+		}
 		return &f, nil
 	})
 }
@@ -289,7 +302,15 @@ func (a *pgMFAAccounts) Challenge(ctx context.Context, accountID, factorID strin
 		if err := a.mfaInsertChallenge(ctx, projectID, accountID, &ch, mfaChallengeData{FactorID: factor.ID}); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: mfa.challenge.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.challenge.created",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: ch.ID,
+			Payload:     ch,
+		}); err != nil {
+			return nil, err
+		}
 		return &ch, nil
 	})
 }
@@ -354,7 +375,15 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 		if err != nil {
 			return result{}, err
 		}
-		// TODO outbox event: mfa.challenge.verified
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.challenge.verified",
+			ProjectID:   row.ProjectID,
+			Environment: mfaDefaultEnv,
+			AggregateID: challengeID,
+			Payload:     sess,
+		}); err != nil {
+			return result{}, err
+		}
 		return result{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -398,7 +427,15 @@ func (a *pgMFAAccounts) GenerateRecoveryCodes(ctx context.Context, accountID str
 				return nil, err
 			}
 		}
-		// TODO outbox event: mfa.recovery_codes.generated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.recovery_codes.generated",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: accountID,
+			Payload:     map[string]any{"account_id": accountID, "project_id": projectID, "count": len(codes)},
+		}); err != nil {
+			return nil, err
+		}
 		return codes, nil
 	})
 }
@@ -413,7 +450,15 @@ func (a *pgMFAAccounts) RemoveFactor(ctx context.Context, accountID, factorID st
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// TODO outbox event: mfa.factor.removed
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.factor.removed",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: row.ID,
+			Payload:     map[string]any{"id": row.ID, "project_id": row.ProjectID},
+		}); err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -457,7 +502,15 @@ func (a *pgMFAAccounts) VerifyTOTP(ctx context.Context, cmd domain.MFATotpVerify
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: mfa.factor.activated
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.factor.activated",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: f.ID,
+			Payload:     f,
+		}); err != nil {
+			return nil, err
+		}
 		return &f, nil
 	})
 }
@@ -491,7 +544,15 @@ func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARe
 		if err != nil {
 			return result{}, err
 		}
-		// TODO outbox event: mfa.recovery_code.consumed
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.recovery_code.consumed",
+			ProjectID:   cmd.ProjectID,
+			Environment: mfaDefaultEnv,
+			AggregateID: row.UserID,
+			Payload:     sess,
+		}); err != nil {
+			return result{}, err
+		}
 		return result{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
@@ -550,7 +611,15 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 		}); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: mfa.webauthn.options_issued
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.webauthn.options_issued",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: ch.ID,
+			Payload:     ch,
+		}); err != nil {
+			return nil, err
+		}
 		return &ch, nil
 	})
 }
@@ -646,7 +715,15 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 		if err := a.mfaInsertFactorFor(ctx, row.ProjectID, cmd.AccountID, &f, string(libJSON)); err != nil {
 			return nil, err
 		}
-		// TODO outbox event: mfa.factor.enrolled
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.factor.enrolled",
+			ProjectID:   row.ProjectID,
+			Environment: "",
+			AggregateID: f.ID,
+			Payload:     f,
+		}); err != nil {
+			return nil, err
+		}
 		return &f, nil
 	})
 }
@@ -753,8 +830,24 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 		}); err != nil {
 			return result{}, err
 		}
-		// TODO outbox event: mfa.factor.enrolled
-		// TODO outbox event: mfa.challenge.created
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.factor.enrolled",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: f.ID,
+			Payload:     f,
+		}); err != nil {
+			return result{}, err
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "mfa.challenge.created",
+			ProjectID:   projectID,
+			Environment: "",
+			AggregateID: ch.ID,
+			Payload:     ch,
+		}); err != nil {
+			return result{}, err
+		}
 		return result{factor: &f, ch: &ch}, nil
 	})
 	if err != nil {
