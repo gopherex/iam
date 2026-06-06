@@ -7,8 +7,8 @@ import (
 )
 
 // withTx runs fn in a serializable transaction with the mandatory default retry
-// policy. Every mutating port method wraps its work in this; bob/sqld calls
-// inside pick up the ambient transaction from ctx via db.Bobx() / db.q().
+// policy. Every mutating port method wraps its work in this; bob calls
+// inside pick up the ambient transaction from ctx via db.Bobx().
 //
 // Retry is REQUIRED for serializable workloads (40001 serialization failures
 // are retried by tx.DefaultRetryPolicy); never issue a multi-statement mutation

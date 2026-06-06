@@ -13,7 +13,6 @@ package postgres
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -678,15 +677,6 @@ func (a *PgOperator) writeConfig(ctx context.Context, projectID, key string, doc
 // isStorageNotFound reports whether err is the storage-level not-found sentinel.
 func isStorageNotFound(err error) bool {
 	return err == ErrNotFound
-}
-
-// randomToken returns a hex-encoded cryptographically-random opaque token.
-func randomToken(nbytes int) (string, error) {
-	b := make([]byte, nbytes)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
 }
 
 // sha256Hex returns the hex sha256 digest of s (what we persist for tokens).

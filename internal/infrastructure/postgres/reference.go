@@ -4,7 +4,7 @@ package postgres
 //
 // Persistence rules for this package:
 //   - Prefer the generated bob query builders (internal/.../gen/bob/models).
-//     Use the sqld(c) typed funcs (db.q(), gen/db) ONLY for super-hot paths.
+//     Drop to the sqld(c) typed funcs (gen/db) ONLY for super-hot paths.
 //   - Wrap every MUTATION in db.withTx / withTxRet (serializable + mandatory
 //     retry). Reads may run directly on db.Bobx().
 //   - Marshal the domain aggregate into the `data jsonb` column (marshal/

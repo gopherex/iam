@@ -102,7 +102,6 @@ func (a *pgCoreAuth) coreAuthVerifyAccess(ctx context.Context, projectID, token 
 const (
 	coreAuthDefaultSessionTTL   = 24 * time.Hour
 	coreAuthRefreshTTL          = 30 * 24 * time.Hour
-	coreAuthAuthCodeTTL         = 10 * time.Minute
 	coreAuthChallengeTTL        = 15 * time.Minute
 	coreAuthDefaultExpiresInSec = int(coreAuthDefaultSessionTTL / time.Second)
 
@@ -2225,31 +2224,6 @@ func (a *pgCoreAuth) Introspect(ctx context.Context, projectID, token string) (*
 	}
 	claims["token_type"] = "access_token"
 	return &domain.CoreAuthTokenIntrospection{Active: true, Claims: claims}, nil
-}
-
-// coreAuthFindSessionByAccessToken scans a project's sessions and returns the
-// one whose envelope access token matches, with its row. Access tokens are not
-// a lookup column (they will become signed JWTs), so this matches in memory.
-func (a *pgCoreAuth) coreAuthFindSessionByAccessToken(ctx context.Context, projectID, token string) (*domain.Session, *models.IamSession, error) {
-	rows, err := models.IamSessions.Query(
-		sm.Where(models.IamSessions.Columns.ProjectID.EQ(psql.Arg(projectID))),
-	).All(ctx, a.db.Bobx())
-	if err != nil {
-		return nil, nil, err
-	}
-	for _, row := range rows {
-		var sess domain.Session
-		if err := unmarshal(row.Data, &sess); err != nil {
-			continue
-		}
-		if sess.AccessToken == token {
-			if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
-				return nil, nil, domain.ErrSessionNotFound
-			}
-			return &sess, row, nil
-		}
-	}
-	return nil, nil, domain.ErrSessionNotFound
 }
 
 // Verify validates a token's signature and claims for an audience. Signature

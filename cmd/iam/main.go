@@ -115,7 +115,7 @@ func run() error {
 		return err
 	}
 
-	// ----- probes (mounted under /healthz/* alongside the API) -----
+	// ----- probes -----
 	live := xprobe.NewBool()
 	live.Set(true)
 	probeMux := xprobe.Mux(
@@ -124,17 +124,29 @@ func run() error {
 	)
 
 	root := http.NewServeMux()
-	root.Handle("/healthz/", probeMux)
 	// CSRF protection for cookie-mode requests (inert until a session cookie is
 	// present; bearer/API callers pass through). Verifier is the stateless
 	// platform adapter.
 	root.Handle("/", api.CSRFMiddleware(postgres.NewPgPlatform(db))(srv))
+
+	// Probes get their own listener when ProbeAddr differs from the API port (a
+	// k8s sidecar port not exposed publicly); otherwise they mount on the API
+	// server under /healthz/.
+	probeAddr := cfg.Service.HTTP.ProbeAddr
+	separateProbes := probeAddr != "" && probeAddr != cfg.Service.HTTP.Addr
+	if !separateProbes {
+		root.Handle("/healthz/", probeMux)
+	}
 
 	httpSrv := &http.Server{
 		Addr:         cfg.Service.HTTP.Addr,
 		Handler:      root,
 		ReadTimeout:  time.Duration(cfg.Service.HTTP.ReadTimeoutSec) * time.Second,
 		WriteTimeout: time.Duration(cfg.Service.HTTP.WriteTimeoutSec) * time.Second,
+	}
+	var probeSrv *http.Server
+	if separateProbes {
+		probeSrv = &http.Server{Addr: probeAddr, Handler: probeMux}
 	}
 
 	// ----- shutdown orchestration -----
@@ -145,6 +157,12 @@ func run() error {
 	// Cleanup runs in registration order: stop serving, flip liveness, close DB.
 	sd.RegisterFnErr(
 		func(ctx context.Context) error { return httpSrv.Shutdown(ctx) },
+		func(ctx context.Context) error {
+			if probeSrv != nil {
+				return probeSrv.Shutdown(ctx)
+			}
+			return nil
+		},
 		func(ctx context.Context) error { live.Set(false); return nil },
 	)
 	// Background workers cancel with the shutdown context.
@@ -153,6 +171,14 @@ func run() error {
 			log.Error("outbox relay stopped", xlog.Error("err", err))
 		}
 	})
+	if probeSrv != nil {
+		sd.Go(func(context.Context) {
+			log.Info("probes listening", xlog.String("addr", probeAddr))
+			if err := probeSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Error("probe serve failed", xlog.Error("err", err))
+			}
+		})
+	}
 	sd.Go(func(context.Context) {
 		log.Info("listening", xlog.String("addr", cfg.Service.HTTP.Addr))
 		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

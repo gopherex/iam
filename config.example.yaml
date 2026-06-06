@@ -14,6 +14,7 @@ infra:
 service:
   http:
     addr: ":8080"
+    probe_addr: ":8081"       # separate liveness/readiness port; set "" or =addr to mount probes under /healthz/ on the main port
     read_timeout_sec: 15
     write_timeout_sec: 30
     shutdown_sec: 15

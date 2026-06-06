@@ -17,8 +17,6 @@ import (
 	pgtxlib "github.com/gopherex/pgtx/pkg/tx"
 	"github.com/jackc/pgx/v5/pgxpool"
 	bobpgx "github.com/stephenafamo/bob/drivers/pgx"
-
-	dbgen "github.com/gopherex/iam/internal/infrastructure/postgres/gen/db"
 )
 
 // DB is the Postgres connection bundle: the raw pool, the pgtx transaction
@@ -65,12 +63,6 @@ func (db *DB) UseCipher(c Cipher) {
 // Trm returns the transaction manager services wire into their tx.Trm field so
 // repo calls inside tx.Do* share one transaction.
 func (db *DB) Trm() pgtxlib.Trm { return db.TxManager }
-
-// q returns the sqld-generated typed query set bound to the ctx-aware TxDB
-// executor. Because db.TxDB picks up the ambient transaction from ctx, every
-// generated query func issued through it runs in the service's open transaction
-// (inside tx.Do*) or on the pool (auto-commit) otherwise.
-func (db *DB) q() *dbgen.Queries { return dbgen.New(db.TxDB) }
 
 // Close releases the underlying pool.
 func (db *DB) Close() {

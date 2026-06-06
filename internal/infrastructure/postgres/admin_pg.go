@@ -107,14 +107,6 @@ func NewPgAdminUsers(db *DB, emitter Emitter) *pgAdminUsers {
 
 var _ api.AdminUsers = (*pgAdminUsers)(nil)
 
-// adminUserData mirrors the user-profile fields persisted in the iam_users data
-// envelope that admin updates touch beyond the lookup columns.
-type adminUserData struct {
-	Name      string `json:"name"`
-	Locale    string `json:"locale"`
-	BanReason string `json:"ban_reason,omitempty"`
-}
-
 // findUser loads a user row enforcing the tenant boundary.
 func (a *pgAdminUsers) findUser(ctx context.Context, projectID, accountID string) (*models.IamUser, *domain.Account, error) {
 	row, err := models.FindIamUser(ctx, a.db.Bobx(), accountID)

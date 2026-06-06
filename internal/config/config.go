@@ -31,6 +31,11 @@ type HTTP struct {
 	ReadTimeoutSec  int    `mapstructure:"read_timeout_sec" default:"15" validate:"min=1"`
 	WriteTimeoutSec int    `mapstructure:"write_timeout_sec" default:"30" validate:"min=1"`
 	ShutdownSec     int    `mapstructure:"shutdown_sec" default:"15" validate:"min=1"`
+	// ProbeAddr is the address for the liveness/readiness probe server. When set
+	// to a different address than Addr, probes are served on their own listener
+	// (a k8s sidecar port not exposed publicly); when empty or equal to Addr they
+	// are mounted under /healthz/ on the main server.
+	ProbeAddr string `mapstructure:"probe_addr" default:":8081"`
 }
 
 // Logger is the structured-logging config.
