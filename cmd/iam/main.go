@@ -114,7 +114,10 @@ func run() error {
 
 	root := http.NewServeMux()
 	root.Handle("/healthz/", probeMux)
-	root.Handle("/", srv)
+	// CSRF protection for cookie-mode requests (inert until a session cookie is
+	// present; bearer/API callers pass through). Verifier is the stateless
+	// platform adapter.
+	root.Handle("/", api.CSRFMiddleware(postgres.NewPgPlatform(db))(srv))
 
 	httpSrv := &http.Server{
 		Addr:         cfg.Service.HTTP.Addr,

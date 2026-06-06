@@ -20,9 +20,13 @@ type PlatformConfig interface {
 	PublicConfig(ctx context.Context, projectID, clientID string) (*domain.PublicConfig, error)
 }
 
-// PlatformCsrf issues CSRF tokens for cookie-mode clients.
+// PlatformCsrf issues and verifies CSRF tokens for cookie-mode clients.
 type PlatformCsrf interface {
 	IssueCsrfToken(ctx context.Context, clientID string) (*domain.PlatformCsrfToken, error)
+	// VerifyCsrfToken validates a CSRF token previously issued to clientID. It is
+	// reusable within its TTL (synchronizer-token pattern); returns
+	// domain.ErrInvalidCsrf on a missing/expired/mismatched token.
+	VerifyCsrfToken(ctx context.Context, clientID, token string) error
 }
 
 // PlatformDeps are the ports the Platform service orchestrates.

@@ -67,6 +67,7 @@ var (
 	ErrCaptchaRequired    = newErr(http.StatusForbidden, "captcha_required", "Captcha is required.")
 	ErrCaptchaInvalid     = newErr(http.StatusForbidden, "captcha_invalid", "Invalid captcha.")
 	ErrConsentRequired    = newErr(http.StatusForbidden, "consent_required", "Consent is required.")
+	ErrInvalidCsrf        = newErr(http.StatusForbidden, "invalid_csrf", "Missing or invalid CSRF token.")
 
 	// 404 — not found / not visible.
 	ErrNotFound            = newErr(http.StatusNotFound, "not_found", "Not found.")

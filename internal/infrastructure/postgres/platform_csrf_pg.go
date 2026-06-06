@@ -16,9 +16,13 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"time"
+
+	"github.com/stephenafamo/bob/dialect/psql"
+	"github.com/stephenafamo/bob/dialect/psql/sm"
 
 	"github.com/gopherex/iam/internal/domain"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
@@ -73,6 +77,30 @@ func (a *pgPlatform) IssueCsrfToken(ctx context.Context, clientID string) (*doma
 	}
 
 	return &domain.PlatformCsrfToken{Token: raw}, nil
+}
+
+// VerifyCsrfToken validates a CSRF token issued to clientID: it must exist, be
+// of type csrf_token, be bound to the same client (subject) and be unexpired.
+// Reusable within its TTL (synchronizer-token pattern — not consumed on verify).
+func (a *pgPlatform) VerifyCsrfToken(ctx context.Context, clientID, token string) error {
+	if clientID == "" || token == "" {
+		return domain.ErrInvalidCsrf
+	}
+	row, err := models.IamChallenges.Query(
+		sm.Where(models.IamChallenges.Columns.Type.EQ(psql.Arg("csrf_token"))),
+		sm.Where(models.IamChallenges.Columns.CodeHash.EQ(psql.Arg(csrfHashToken(token)))),
+	).One(ctx, a.db.Bobx())
+	if err != nil {
+		return domain.ErrInvalidCsrf
+	}
+	sub, ok := row.Subject.Get()
+	if !ok || subtle.ConstantTimeCompare([]byte(sub), []byte(clientID)) != 1 {
+		return domain.ErrInvalidCsrf
+	}
+	if nowUTC().After(row.ExpiresAt) {
+		return domain.ErrInvalidCsrf
+	}
+	return nil
 }
 
 // csrfRandomToken returns a URL-safe opaque token drawn from crypto/rand.
