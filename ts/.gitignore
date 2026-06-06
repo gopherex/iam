@@ -4,4 +4,4 @@ node_modules/
 # build + generated artifacts (regenerated from openapi/openapi.yaml via
 # `yarn generate`, compiled by `yarn build`)
 dist/
-packages/sdk/src/
+packages/sdk/src/gen/

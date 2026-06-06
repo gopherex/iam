@@ -19,8 +19,9 @@
   "sideEffects": false,
   "scripts": {
     "generate": "openapi-ts",
-    "build": "tsc -p tsconfig.json",
-    "clean": "rm -rf dist src",
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist src/gen",
     "prepack": "yarn generate && yarn build"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.64.0",
+    "tsup": "^8.3.0",
     "typescript": "^5.7.0"
   },
   "publishConfig": {
