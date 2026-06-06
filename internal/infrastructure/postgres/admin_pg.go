@@ -1311,12 +1311,16 @@ func (a *pgAdminConfig) listProviders(ctx context.Context, projectID, kind strin
 	}
 	out := make([]domain.AdminProvider, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, adminProviderToDomain(row))
+		p, err := adminProviderToDomain(a.db.Cipher, row)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, p)
 	}
 	return out, nil
 }
 
-func adminProviderToDomain(row *models.IamProvider) domain.AdminProvider {
+func adminProviderToDomain(cipher Cipher, row *models.IamProvider) (domain.AdminProvider, error) {
 	p := domain.AdminProvider{ID: row.ID, Type: row.Provider, Enabled: row.Enabled}
 	if len(row.Data) > 0 {
 		var d adminProviderData
@@ -1324,10 +1328,14 @@ func adminProviderToDomain(row *models.IamProvider) domain.AdminProvider {
 			if d.Type != "" {
 				p.Type = d.Type
 			}
-			p.Config = d.Config
+			cfg, err := decryptProviderConfig(cipher, d.Config)
+			if err != nil {
+				return domain.AdminProvider{}, err
+			}
+			p.Config = cfg
 		}
 	}
-	return p
+	return p, nil
 }
 
 func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
@@ -1336,7 +1344,11 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 		if id == "" {
 			id = newUUID()
 		}
-		d := adminProviderData{Type: cmd.Type, Config: cmd.Config}
+		encCfg, err := encryptProviderConfig(a.db.Cipher, cmd.Config)
+		if err != nil {
+			return nil, err
+		}
+		d := adminProviderData{Type: cmd.Type, Config: encCfg}
 		raw, err := json.Marshal(d)
 		if err != nil {
 			return nil, err
@@ -1381,7 +1393,11 @@ func (a *pgAdminConfig) updateProvider(ctx context.Context, kind string, cmd dom
 		if row.ProjectID != cmd.ProjectID || row.Kind != kind {
 			return nil, domain.ErrNotFound
 		}
-		d := adminProviderData{Type: cmd.Type, Config: cmd.Config}
+		encCfg, err := encryptProviderConfig(a.db.Cipher, cmd.Config)
+		if err != nil {
+			return nil, err
+		}
+		d := adminProviderData{Type: cmd.Type, Config: encCfg}
 		raw, err := json.Marshal(d)
 		if err != nil {
 			return nil, err
