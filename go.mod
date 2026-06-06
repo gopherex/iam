@@ -10,8 +10,13 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/go-webauthn/webauthn v0.17.4
 	github.com/google/uuid v1.6.0
+	github.com/gopherex/pg-outbox v1.0.0
 	github.com/gopherex/pgtx v1.1.0
 	github.com/gopherex/sqld v1.0.0
+	github.com/gopherex/xconf v1.1.0
+	github.com/gopherex/xlog v1.0.0
+	github.com/gopherex/xprobe v1.0.0
+	github.com/gopherex/xshutdown v1.0.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/lestrrat-go/jwx/v3 v3.1.1
 	github.com/ogen-go/ogen v1.20.3
@@ -28,6 +33,7 @@ require (
 )
 
 require (
+	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/avito-tech/go-transaction-manager v1.5.1 // indirect
 	github.com/beevik/etree v1.5.0 // indirect
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect

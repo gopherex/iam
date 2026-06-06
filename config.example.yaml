@@ -26,3 +26,4 @@ service:
     default_environment: live
     access_ttl_sec: 1800      # 30m
     refresh_ttl_sec: 2592000  # 30d
+    master_key: ""            # operator master-key credential; empty disables the masterKey scheme (set via MASTER_KEY)

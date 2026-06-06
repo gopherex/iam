@@ -50,6 +50,10 @@ type Auth struct {
 	DefaultEnvironment string `mapstructure:"default_environment" default:"live" validate:"required"`
 	AccessTTLSec       int    `mapstructure:"access_ttl_sec" default:"1800" validate:"min=60"`
 	RefreshTTLSec      int    `mapstructure:"refresh_ttl_sec" default:"2592000" validate:"min=60"`
+	// MasterKey is the platform operator (master-key) credential. When empty the
+	// masterKey security scheme rejects every request — operator endpoints are
+	// disabled until a key is configured (set via MASTER_KEY / service.auth.master_key).
+	MasterKey string `mapstructure:"master_key" default:""`
 }
 
 // Infrastructure is the external-dependency config (datastores, …).
