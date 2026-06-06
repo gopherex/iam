@@ -63,6 +63,10 @@ type Auth struct {
 	// reversible secrets at rest (signing-key PEMs, TOTP secrets). Empty disables
 	// at-rest encryption (passthrough). Set via SERVICE_AUTH_ENCRYPTION_KEY.
 	EncryptionKey string `mapstructure:"encryption_key" default:"" validate:"omitempty,base64"`
+	// SeedRoot, when true, ensures a root project exists on startup so the
+	// operator (master key) has something to manage. Development convenience;
+	// set via SERVICE_AUTH_SEED_ROOT.
+	SeedRoot bool `mapstructure:"seed_root" default:"false"`
 }
 
 // Infrastructure is the external-dependency config (datastores, …).

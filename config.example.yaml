@@ -29,3 +29,4 @@ service:
     refresh_ttl_sec: 2592000  # 30d
     master_key: ""            # operator master-key credential; empty disables the masterKey scheme (set via MASTER_KEY)
     encryption_key: ""        # base64 32-byte AES-256 key; encrypts reversible secrets at rest (signing PEMs, TOTP). Empty = disabled. (SERVICE_AUTH_ENCRYPTION_KEY)
+    seed_root: false          # dev: ensure a "Root" project exists on startup so the operator (master_key) has something to manage (SERVICE_AUTH_SEED_ROOT)

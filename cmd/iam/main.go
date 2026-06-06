@@ -106,6 +106,14 @@ func run() error {
 	}
 	emitter := postgres.NewOutboxEmitter(ob)
 
+	// ----- optional root seed (operator gets a project to manage) -----
+	if cfg.Service.Auth.SeedRoot {
+		if err := seedRoot(ctx, db, emitter, log); err != nil {
+			log.Error("seed root failed", xlog.Error("err", err))
+			return err
+		}
+	}
+
 	// ----- API handler (12 feature groups over Postgres adapters) -----
 	handler := buildHandler(db, emitter)
 	auth := postgres.NewAuthenticator(db, cfg.Service.Auth.MasterKey)
