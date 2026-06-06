@@ -83,12 +83,15 @@ func fedHashToken(token string) string {
 
 // fedConnectionFromRow rebuilds a domain.Connection from its envelope. The jsonb
 // blob is authoritative; lookup columns backfill anything the blob omits.
-func fedConnectionFromRow(row *models.IamSsoConnection) (*domain.Connection, error) {
+func fedConnectionFromRow(cipher Cipher, row *models.IamSsoConnection) (*domain.Connection, error) {
 	var c domain.Connection
 	if len(row.Data) > 0 {
 		if err := unmarshal(row.Data, &c); err != nil {
 			return nil, err
 		}
+	}
+	if err := fedDecryptConnSecrets(cipher, &c); err != nil {
+		return nil, err
 	}
 	c.ID = row.ID
 	c.ProjectID = row.ProjectID
@@ -148,11 +151,76 @@ func fedTokenFromRow(row *models.IamScimToken) (*domain.ScimToken, error) {
 	return &t, nil
 }
 
+// fedEncryptConnSecrets encrypts the reversible secrets in a connection's config
+// (SAML SP private key, OIDC client secret) in place before persistence.
+func fedEncryptConnSecrets(cipher Cipher, c *domain.Connection) error {
+	if c.Config == nil {
+		return nil
+	}
+	if c.Config.Saml != nil && c.Config.Saml.SPPrivateKeyPEM != "" {
+		v, err := cipher.Encrypt(c.Config.Saml.SPPrivateKeyPEM)
+		if err != nil {
+			return err
+		}
+		c.Config.Saml.SPPrivateKeyPEM = v
+	}
+	if c.Config.Oidc != nil && c.Config.Oidc.ClientSecret != "" {
+		v, err := cipher.Encrypt(c.Config.Oidc.ClientSecret)
+		if err != nil {
+			return err
+		}
+		c.Config.Oidc.ClientSecret = v
+	}
+	return nil
+}
+
+// fedDecryptConnSecrets reverses fedEncryptConnSecrets after a row is loaded.
+func fedDecryptConnSecrets(cipher Cipher, c *domain.Connection) error {
+	if c.Config == nil {
+		return nil
+	}
+	if c.Config.Saml != nil && c.Config.Saml.SPPrivateKeyPEM != "" {
+		v, err := cipher.Decrypt(c.Config.Saml.SPPrivateKeyPEM)
+		if err != nil {
+			return err
+		}
+		c.Config.Saml.SPPrivateKeyPEM = v
+	}
+	if c.Config.Oidc != nil && c.Config.Oidc.ClientSecret != "" {
+		v, err := cipher.Decrypt(c.Config.Oidc.ClientSecret)
+		if err != nil {
+			return err
+		}
+		c.Config.Oidc.ClientSecret = v
+	}
+	return nil
+}
+
 // fedConnSetter builds an insert/update setter from a connection aggregate: the
 // lookup columns are projected from the struct, the aggregate is stored whole in
 // the jsonb envelope.
-func fedConnSetter(c *domain.Connection) (*models.IamSsoConnectionSetter, error) {
+func fedConnSetter(cipher Cipher, c *domain.Connection) (*models.IamSsoConnectionSetter, error) {
+	// Encrypt reversible secrets for persistence without corrupting the caller's
+	// in-memory plaintext aggregate: snapshot, encrypt, marshal, restore.
+	var samlOrig, oidcOrig string
+	hasSaml := c.Config != nil && c.Config.Saml != nil
+	hasOidc := c.Config != nil && c.Config.Oidc != nil
+	if hasSaml {
+		samlOrig = c.Config.Saml.SPPrivateKeyPEM
+	}
+	if hasOidc {
+		oidcOrig = c.Config.Oidc.ClientSecret
+	}
+	if err := fedEncryptConnSecrets(cipher, c); err != nil {
+		return nil, err
+	}
 	raw, err := marshal(c)
+	if hasSaml {
+		c.Config.Saml.SPPrivateKeyPEM = samlOrig
+	}
+	if hasOidc {
+		c.Config.Oidc.ClientSecret = oidcOrig
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -489,7 +557,7 @@ func (a *pgFederationConnections) CreateConnection(ctx context.Context, cmd doma
 			Status:    "active",
 			Domains:   cmd.Domains,
 		}
-		setter, err := fedConnSetter(conn)
+		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
 			return nil, err
 		}
@@ -523,7 +591,7 @@ func (a *pgFederationConnections) GetConnection(ctx context.Context, projectID, 
 	if row.ProjectID != projectID { // tenant boundary
 		return nil, domain.ErrConnectionNotFound
 	}
-	return fedConnectionFromRow(row)
+	return fedConnectionFromRow(a.db.Cipher, row)
 }
 
 func (a *pgFederationConnections) ListConnections(ctx context.Context, projectID string) ([]domain.Connection, error) {
@@ -535,7 +603,7 @@ func (a *pgFederationConnections) ListConnections(ctx context.Context, projectID
 	}
 	out := make([]domain.Connection, 0, len(rows))
 	for _, row := range rows {
-		c, err := fedConnectionFromRow(row)
+		c, err := fedConnectionFromRow(a.db.Cipher, row)
 		if err != nil {
 			return nil, err
 		}
@@ -556,12 +624,12 @@ func (a *pgFederationConnections) UpdateConnection(ctx context.Context, cmd doma
 		if row.ProjectID != cmd.ProjectID {
 			return nil, domain.ErrConnectionNotFound
 		}
-		conn, err := fedConnectionFromRow(row)
+		conn, err := fedConnectionFromRow(a.db.Cipher, row)
 		if err != nil {
 			return nil, err
 		}
 		fedApplyConnectionPatch(conn, cmd.Patch)
-		setter, err := fedConnSetter(conn)
+		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
 			return nil, err
 		}
@@ -687,7 +755,7 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 		if row.ProjectID != projectID {
 			return "", domain.ErrConnectionNotFound
 		}
-		conn, err := fedConnectionFromRow(row)
+		conn, err := fedConnectionFromRow(a.db.Cipher, row)
 		if err != nil {
 			return "", err
 		}
@@ -708,7 +776,7 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 		conn.Config.Saml.SPCertificatePEM = certPEM
 		conn.Config.Saml.SPPrivateKeyPEM = keyPEM
 		conn.ExternalRef = fp // fingerprint as the stable external reference
-		setter, err := fedConnSetter(conn)
+		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
 			return "", err
 		}
@@ -1070,7 +1138,7 @@ func (a *pgFederationRuntime) OidcStart(ctx context.Context, cmd domain.Federati
 	if err != nil {
 		return nil, err
 	}
-	conn, err := fedConnectionFromRow(row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
@@ -1101,7 +1169,7 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	if err != nil {
 		return nil, err
 	}
-	conn, err := fedConnectionFromRow(row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
@@ -1164,7 +1232,7 @@ func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.Federati
 	if err != nil {
 		return nil, err
 	}
-	conn, err := fedConnectionFromRow(row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
@@ -1196,7 +1264,7 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	if err != nil {
 		return nil, err
 	}
-	conn, err := fedConnectionFromRow(row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
@@ -1268,7 +1336,7 @@ func (a *pgFederationRuntime) SamlSlo(ctx context.Context, connectionID string) 
 	if err != nil {
 		return nil, err
 	}
-	conn, err := fedConnectionFromRow(row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
@@ -1307,7 +1375,7 @@ func (a *pgFederationRuntime) SamlMetadata(ctx context.Context, connectionID str
 	if err != nil {
 		return nil, err
 	}
-	conn, err := fedConnectionFromRow(row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}

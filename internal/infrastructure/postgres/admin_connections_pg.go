@@ -65,7 +65,7 @@ func (a *pgAdminConnections) List(ctx context.Context, projectID string) ([]doma
 	}
 	out := make([]domain.Connection, 0, len(rows))
 	for _, row := range rows {
-		c, err := fedConnectionFromRow(row)
+		c, err := fedConnectionFromRow(a.db.Cipher, row)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +85,7 @@ func (a *pgAdminConnections) Get(ctx context.Context, projectID, connID string) 
 	if row.ProjectID != projectID { // tenant boundary
 		return nil, domain.ErrConnectionNotFound
 	}
-	return fedConnectionFromRow(row)
+	return fedConnectionFromRow(a.db.Cipher, row)
 }
 
 func (a *pgAdminConnections) Create(ctx context.Context, cmd domain.AdminConnectionCmd) (*domain.Connection, error) {
@@ -99,7 +99,7 @@ func (a *pgAdminConnections) Create(ctx context.Context, cmd domain.AdminConnect
 			Domains:     cmd.Domains,
 			ExternalRef: cmd.ExternalRef,
 		}
-		setter, err := fedConnSetter(conn)
+		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
 			return nil, err
 		}
@@ -144,14 +144,14 @@ func (a *pgAdminConnections) Update(ctx context.Context, projectID, connID strin
 		if row.ProjectID != projectID { // tenant boundary
 			return nil, domain.ErrConnectionNotFound
 		}
-		conn, err := fedConnectionFromRow(row)
+		conn, err := fedConnectionFromRow(a.db.Cipher, row)
 		if err != nil {
 			return nil, err
 		}
 		// Apply the merge patch onto the aggregate (shared helper, same semantics
 		// as the federation update path).
 		fedApplyConnectionPatch(conn, patch)
-		setter, err := fedConnSetter(conn)
+		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
 			return nil, err
 		}
