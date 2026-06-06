@@ -113,12 +113,10 @@ down:
 test:
 	go test ./...
 
-## test-db: run DB-backed tests (auto-starts the compose postgres)
+## test-db: run integration tests (testcontainers spins up throwaway Postgres; needs Docker)
 .PHONY: test-db
 test-db:
-	@docker compose ps --status running --services 2>/dev/null | grep -qx postgres \
-		|| (echo "Starting postgres for tests..."; docker compose up -d postgres; sleep 4)
-	@TEST_DATABASE_URL="$(TEST_DATABASE_URL)" go test ./... -count=1 -p 1
+	go test -tags=integration ./... -count=1 -p 1
 
 ## lint: vet + format check
 .PHONY: lint
