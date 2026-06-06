@@ -71,6 +71,17 @@ func run() error {
 	}
 	defer db.Close()
 
+	// At-rest secret encryption (signing-key PEMs, TOTP secrets).
+	cph, err := postgres.NewCipher(cfg.Service.Auth.EncryptionKey)
+	if err != nil {
+		log.Error("encryption key invalid", xlog.Error("err", err))
+		return err
+	}
+	db.UseCipher(cph)
+	if cfg.Service.Auth.EncryptionKey == "" {
+		log.Warn("secrets-at-rest encryption disabled (no service.auth.encryption_key)")
+	}
+
 	if err := db.Migrate(ctx); err != nil {
 		log.Error("migrate failed", xlog.Error("err", err))
 		return err

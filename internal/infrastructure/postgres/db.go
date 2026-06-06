@@ -29,6 +29,9 @@ type DB struct {
 	TxManager pgtxlib.Trm
 	TxDB      pgtxlib.DB
 	Bob       bobpgx.Pool
+	// Cipher encrypts reversible secrets at rest (signing-key PEMs, TOTP secrets).
+	// Defaults to a passthrough cipher; cmd installs a real one via UseCipher.
+	Cipher Cipher
 }
 
 // Connect opens a pgx pool against dsn and builds the tx manager / executors.
@@ -47,7 +50,16 @@ func Connect(ctx context.Context, dsn string) (*DB, error) {
 		TxManager: txManager,
 		TxDB:      pgtx.NewTxDB(pool),
 		Bob:       bobpgx.NewPool(pool),
+		Cipher:    NewIdentityCipher(),
 	}, nil
+}
+
+// UseCipher installs the at-rest secret cipher (call once after Connect, before
+// serving). A nil cipher is ignored, keeping the passthrough default.
+func (db *DB) UseCipher(c Cipher) {
+	if c != nil {
+		db.Cipher = c
+	}
 }
 
 // Trm returns the transaction manager services wire into their tx.Trm field so

@@ -1714,7 +1714,11 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 		if err != nil {
 			return nil, err
 		}
-		pv := null.From(pemStr)
+		encPem, err := a.db.Cipher.Encrypt(pemStr)
+		if err != nil {
+			return nil, err
+		}
+		pv := null.From(encPem)
 		if _, err := models.IamSigningKeys.Insert(&models.IamSigningKeySetter{
 			Kid:         &kid,
 			ProjectID:   &cmd.ProjectID,

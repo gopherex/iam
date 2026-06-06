@@ -53,7 +53,11 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 		if !ok || pemStr == "" {
 			continue
 		}
-		priv, err := parsePrivatePEM(pemStr)
+		decPem, err := s.db.Cipher.Decrypt(pemStr)
+		if err != nil {
+			return "", nil, err
+		}
+		priv, err := parsePrivatePEM(decPem)
 		if err != nil {
 			return "", nil, err
 		}
@@ -70,7 +74,11 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 		}
 		kid = newUUID()
 		pemStr := encodePrivatePEM(priv)
-		pv := null.From(pemStr)
+		encPem, encErr := s.db.Cipher.Encrypt(pemStr)
+		if encErr != nil {
+			return encErr
+		}
+		pv := null.From(encPem)
 		raw := json.RawMessage(`{}`)
 		setter := &models.IamSigningKeySetter{
 			Kid:         &kid,
@@ -185,7 +193,11 @@ func (s *Signer) publicSet(ctx context.Context, projectID, env string) (jwk.Set,
 		if !ok || pemStr == "" {
 			continue
 		}
-		priv, err := parsePrivatePEM(pemStr)
+		decPem, err := s.db.Cipher.Decrypt(pemStr)
+		if err != nil {
+			continue
+		}
+		priv, err := parsePrivatePEM(decPem)
 		if err != nil {
 			continue
 		}

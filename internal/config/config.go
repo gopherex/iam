@@ -54,6 +54,10 @@ type Auth struct {
 	// masterKey security scheme rejects every request — operator endpoints are
 	// disabled until a key is configured (set via MASTER_KEY / service.auth.master_key).
 	MasterKey string `mapstructure:"master_key" default:""`
+	// EncryptionKey is the base64-encoded 32-byte AES-256 key that encrypts
+	// reversible secrets at rest (signing-key PEMs, TOTP secrets). Empty disables
+	// at-rest encryption (passthrough). Set via SERVICE_AUTH_ENCRYPTION_KEY.
+	EncryptionKey string `mapstructure:"encryption_key" default:"" validate:"omitempty,base64"`
 }
 
 // Infrastructure is the external-dependency config (datastores, …).

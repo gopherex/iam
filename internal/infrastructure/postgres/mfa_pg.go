@@ -360,7 +360,11 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 			if err != nil {
 				return result{}, err
 			}
-			if !totp.Validate(code, factor.Secret) {
+			secret, err := a.db.Cipher.Decrypt(factor.Secret)
+			if err != nil {
+				return result{}, domain.ErrMFAInvalid
+			}
+			if !totp.Validate(code, secret) {
 				return result{}, domain.ErrMFAInvalid
 			}
 		}
@@ -484,7 +488,11 @@ func (a *pgMFAAccounts) VerifyTOTP(ctx context.Context, cmd domain.MFATotpVerify
 		}
 		// Prove possession of the secret before activating: check the code
 		// against the stored shared secret with the RFC 6238 library.
-		if !totp.Validate(cmd.Code, row.Secret) {
+		secret, err := a.db.Cipher.Decrypt(row.Secret)
+		if err != nil {
+			return nil, domain.ErrMFAInvalid
+		}
+		if !totp.Validate(cmd.Code, secret) {
 			return nil, domain.ErrMFAInvalid
 		}
 
@@ -863,13 +871,17 @@ func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accou
 		return err
 	}
 	rm := json.RawMessage(raw)
+	encSecret, err := a.db.Cipher.Encrypt(secret)
+	if err != nil {
+		return err
+	}
 	setter := &models.IamFactorSetter{
 		ID:        ptr(f.ID),
 		ProjectID: ptr(projectID),
 		UserID:    ptr(accountID),
 		Type:      ptr(f.Type),
 		Status:    ptr(f.Status),
-		Secret:    ptr(secret),
+		Secret:    ptr(encSecret),
 		CreatedAt: ptr(nowUTC()),
 		Data:      &rm,
 	}
