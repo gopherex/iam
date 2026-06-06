@@ -1622,7 +1622,11 @@ func (a *pgFederationRuntime) fedLoadAccount(ctx context.Context, projectID, use
 // token signed by the same key. amr carries the SSO method ("saml" | "oidc").
 func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.Account, amr string) (*domain.Session, error) {
 	sessionID := newUUID()
-	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, fedDefaultEnv, map[string]any{
+	signEnv, err := resolveSignEnv(ctx, a.db, acct.ProjectID, fedDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
+	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
 		"iss": acct.ProjectID,
 		"sub": acct.ID,
 		"sid": sessionID,
@@ -1630,18 +1634,18 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 		"aal": 1,
 		"amr": []string{amr},
 		"typ": "access",
-		"env": fedDefaultEnv,
+		"env": signEnv,
 	}, fedAccessTTL)
 	if err != nil {
 		return nil, err
 	}
-	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, fedDefaultEnv, map[string]any{
+	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
 		"iss": acct.ProjectID,
 		"sub": acct.ID,
 		"sid": sessionID,
 		"pid": acct.ProjectID,
 		"typ": "refresh",
-		"env": fedDefaultEnv,
+		"env": signEnv,
 	}, fedRefreshTTL)
 	if err != nil {
 		return nil, err

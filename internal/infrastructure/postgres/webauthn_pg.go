@@ -522,7 +522,11 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		// Mint the session. The access token is a signed RS256 JWT from the
 		// project's active signing key (jwx); the refresh token stays opaque.
 		sessionID := newUUID()
-		accessToken, err := a.db.Signer().Sign(ctx, projectID, webauthnSignerEnv, map[string]any{
+		signEnv, err := resolveSignEnv(ctx, a.db, projectID, webauthnSignerEnv)
+		if err != nil {
+			return loginResult{}, err
+		}
+		accessToken, err := a.db.Signer().Sign(ctx, projectID, signEnv, map[string]any{
 			"iss": projectID,
 			"sub": acct.ID,
 			"sid": sessionID,
@@ -530,7 +534,7 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 			"aal": 2,
 			"amr": []string{"webauthn"},
 			"typ": "access",
-			"env": webauthnSignerEnv,
+			"env": signEnv,
 		}, time.Hour)
 		if err != nil {
 			return loginResult{}, err

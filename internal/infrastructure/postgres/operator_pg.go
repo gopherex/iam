@@ -398,13 +398,17 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, projectID string) (stri
 			CreatedAt: nowUTC(),
 			Revoked:   false,
 		}
-		signed, err := a.db.Signer().Sign(ctx, projectID, "live", map[string]any{
+		signEnv, err := resolveSignEnv(ctx, a.db, projectID, "live")
+		if err != nil {
+			return "", err
+		}
+		signed, err := a.db.Signer().Sign(ctx, projectID, signEnv, map[string]any{
 			"iss": projectID,
 			"sub": projectID,
 			"pid": projectID,
 			"jti": tok.ID,
 			"typ": "admin",
-			"env": "live",
+			"env": signEnv,
 		}, 90*24*time.Hour)
 		if err != nil {
 			return "", err

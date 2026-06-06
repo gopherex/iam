@@ -75,7 +75,15 @@ const (
 // project's signing keys and resolves the still-live session it names. A
 // missing/revoked session yields (claims, nil, nil) so callers report inactive.
 func (a *pgCoreAuth) coreAuthVerifyAccess(ctx context.Context, projectID, token string) (map[string]any, *domain.Session, error) {
-	claims, err := a.db.Signer().Verify(ctx, projectID, coreAuthDefaultEnv, token)
+	// Verify against the environment the token was minted in (its "env" claim),
+	// falling back to the default for legacy untagged tokens.
+	env := coreAuthDefaultEnv
+	if peek := a.db.Signer().UnverifiedClaims(token); peek != nil {
+		if e, ok := peek["env"].(string); ok && e != "" {
+			env = e
+		}
+	}
+	claims, err := a.db.Signer().Verify(ctx, projectID, env, token)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -320,7 +328,11 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	}
 	// Access token is a signed RS256 JWT (jwx); the project's active signing key
 	// is generated on first use.
-	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, coreAuthDefaultEnv, map[string]any{
+	signEnv, err := resolveSignEnv(ctx, a.db, acc.ProjectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
+	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, map[string]any{
 		"iss": acc.ProjectID,
 		"sub": acc.ID,
 		"sid": sessionID,
@@ -329,7 +341,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		"aal": aal,
 		"amr": amr,
 		"typ": "access",
-		"env": coreAuthDefaultEnv,
+		"env": signEnv,
 	}, coreAuthAccessTTL)
 	if err != nil {
 		return nil, err

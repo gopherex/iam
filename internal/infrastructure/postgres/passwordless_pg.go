@@ -442,7 +442,11 @@ func (a *pgPasswordlessAccounts) createSession(ctx context.Context, acct *domain
 	now := nowUTC()
 	const expiresIn = 3600
 	sessionID := newUUID()
-	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, "live", map[string]any{
+	signEnv, err := resolveSignEnv(ctx, a.db, acct.ProjectID, "live")
+	if err != nil {
+		return nil, err
+	}
+	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
 		"iss": acct.ProjectID,
 		"sub": acct.ID,
 		"sid": sessionID,
@@ -450,7 +454,7 @@ func (a *pgPasswordlessAccounts) createSession(ctx context.Context, acct *domain
 		"aal": 1,
 		"amr": []string{"otp"},
 		"typ": "access",
-		"env": "live",
+		"env": signEnv,
 	}, time.Duration(expiresIn)*time.Second)
 	if err != nil {
 		return nil, err

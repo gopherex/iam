@@ -124,10 +124,10 @@ func run() error {
 	)
 
 	root := http.NewServeMux()
-	// CSRF protection for cookie-mode requests (inert until a session cookie is
-	// present; bearer/API callers pass through). Verifier is the stateless
-	// platform adapter.
-	root.Handle("/", api.CSRFMiddleware(postgres.NewPgPlatform(db))(srv))
+	// Request pipeline (outermost first): X-Environment -> ctx, then CSRF for
+	// cookie-mode requests (inert until a session cookie is present; bearer/API
+	// callers pass through), then the API server.
+	root.Handle("/", api.EnvironmentMiddleware(api.CSRFMiddleware(postgres.NewPgPlatform(db))(srv)))
 
 	// Probes get their own listener when ProbeAddr differs from the API port (a
 	// k8s sidecar port not exposed publicly); otherwise they mount on the API

@@ -989,7 +989,11 @@ func (a *pgOAuthSocial) loadAccount(ctx context.Context, projectID, userID strin
 func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (*domain.Session, error) {
 	sessionID := newUUID()
 
-	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, oauthSocialDefaultEnv, map[string]any{
+	signEnv, err := resolveSignEnv(ctx, a.db, acct.ProjectID, oauthSocialDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
+	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
 		"iss": acct.ProjectID,
 		"sub": acct.ID,
 		"sid": sessionID,
@@ -997,18 +1001,18 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 		"aal": 1,
 		"amr": []string{"oauth"},
 		"typ": "access",
-		"env": oauthSocialDefaultEnv,
+		"env": signEnv,
 	}, oauthSocialAccessTTL)
 	if err != nil {
 		return nil, err
 	}
-	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, oauthSocialDefaultEnv, map[string]any{
+	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
 		"iss": acct.ProjectID,
 		"sub": acct.ID,
 		"sid": sessionID,
 		"pid": acct.ProjectID,
 		"typ": "refresh",
-		"env": oauthSocialDefaultEnv,
+		"env": signEnv,
 	}, oauthSocialRefreshTTL)
 	if err != nil {
 		return nil, err

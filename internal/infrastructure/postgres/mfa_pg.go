@@ -906,7 +906,11 @@ const mfaAccessTTL = 30 * time.Minute
 // the session sid); the refresh token stays an opaque random handle.
 func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account) (*domain.Session, error) {
 	sessionID := newUUID()
-	access, err := a.db.Signer().Sign(ctx, acc.ProjectID, mfaDefaultEnv, map[string]any{
+	signEnv, err := resolveSignEnv(ctx, a.db, acc.ProjectID, mfaDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
+	access, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, map[string]any{
 		"iss": acc.ProjectID,
 		"sub": acc.ID,
 		"sid": sessionID,
@@ -914,7 +918,7 @@ func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account)
 		"aal": 2,
 		"amr": []string{"mfa"},
 		"typ": "access",
-		"env": mfaDefaultEnv,
+		"env": signEnv,
 	}, mfaAccessTTL)
 	if err != nil {
 		return nil, err

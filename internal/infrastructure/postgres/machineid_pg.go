@@ -365,13 +365,17 @@ func (a *PgMachineIdentities) MintToken(ctx context.Context, projectID, serviceA
 		if env.Disabled {
 			return "", domain.ErrForbidden
 		}
-		token, err := a.db.Signer().Sign(ctx, projectID, "live", map[string]any{
+		signEnv, err := resolveSignEnv(ctx, a.db, projectID, "live")
+		if err != nil {
+			return "", err
+		}
+		token, err := a.db.Signer().Sign(ctx, projectID, signEnv, map[string]any{
 			"iss":   projectID,
 			"sub":   serviceAccountID,
 			"pid":   projectID,
 			"typ":   "service",
 			"scope": env.Scopes,
-			"env":   "live",
+			"env":   signEnv,
 		}, time.Hour)
 		if err != nil {
 			return "", err
