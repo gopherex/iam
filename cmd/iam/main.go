@@ -124,10 +124,13 @@ func run() error {
 	)
 
 	root := http.NewServeMux()
-	// Request pipeline (outermost first): X-Environment -> ctx, then CSRF for
-	// cookie-mode requests (inert until a session cookie is present; bearer/API
-	// callers pass through), then the API server.
-	root.Handle("/", api.EnvironmentMiddleware(api.CSRFMiddleware(postgres.NewPgPlatform(db))(srv)))
+	// Request pipeline (outermost first): X-Environment -> ctx; CSRF for
+	// cookie-mode requests (evaluated before cookie auth, while there is no
+	// Authorization header); cookie auth promotes the session cookie to a Bearer
+	// header; then the API server.
+	root.Handle("/", api.EnvironmentMiddleware(
+		api.CSRFMiddleware(postgres.NewPgPlatform(db))(
+			api.CookieAuthMiddleware(srv))))
 
 	// Probes get their own listener when ProbeAddr differs from the API port (a
 	// k8s sidecar port not exposed publicly); otherwise they mount on the API

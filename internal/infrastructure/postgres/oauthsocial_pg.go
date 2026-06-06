@@ -545,7 +545,10 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 		redirect = d.RedirectURL
 	}
 	redirect = oauthAppendCode(redirect, code)
-	return domain.OAuthSocialCallbackResult{RedirectURL: redirect, SetCookie: sess.AccessToken}, nil
+	return domain.OAuthSocialCallbackResult{
+		RedirectURL: redirect,
+		SetCookie:   sessionCookieHeader(sess.AccessToken, oauthSocialAccessTTL),
+	}, nil
 }
 
 // oauthAppendCode appends ?code=<code> (or &code=<code>) to a redirect URL,
