@@ -450,6 +450,7 @@ func (a *pgPasswordlessAccounts) createSession(ctx context.Context, acct *domain
 		"aal": 1,
 		"amr": []string{"otp"},
 		"typ": "access",
+		"env": "live",
 	}, time.Duration(expiresIn)*time.Second)
 	if err != nil {
 		return nil, err

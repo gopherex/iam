@@ -405,6 +405,7 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, projectID string) (stri
 			"pid": projectID,
 			"jti": tok.ID,
 			"typ": "admin",
+			"env": "live",
 		}, 90*24*time.Hour)
 		if err != nil {
 			return "", err

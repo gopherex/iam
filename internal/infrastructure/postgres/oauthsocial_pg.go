@@ -997,6 +997,7 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 		"aal": 1,
 		"amr": []string{"oauth"},
 		"typ": "access",
+		"env": oauthSocialDefaultEnv,
 	}, oauthSocialAccessTTL)
 	if err != nil {
 		return nil, err
@@ -1007,6 +1008,7 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 		"sid": sessionID,
 		"pid": acct.ProjectID,
 		"typ": "refresh",
+		"env": oauthSocialDefaultEnv,
 	}, oauthSocialRefreshTTL)
 	if err != nil {
 		return nil, err

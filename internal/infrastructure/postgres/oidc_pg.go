@@ -767,6 +767,7 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		"client_id": sub.clientID,
 		"scope":     joinScopes(sub.scopes),
 		"typ":       "access",
+		"env":       env,
 	}, oidcAccessTTL)
 	if err != nil {
 		return nil, err
@@ -798,6 +799,7 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 			"client_id": sub.clientID,
 			"scope":     joinScopes(sub.scopes),
 			"typ":       "refresh",
+			"env":       env,
 		}, oidcRefreshTTL)
 		if err != nil {
 			return nil, err
@@ -838,6 +840,7 @@ func (a *pgOIDCGrants) mintIDToken(ctx context.Context, sub oidcTokenSubject, en
 	delete(claims, "exp")
 	delete(claims, "iat")
 	delete(claims, "nbf")
+	claims["env"] = env
 	return a.db.Signer().Sign(ctx, sub.projectID, env, claims, oidcIDTokenTTL)
 }
 

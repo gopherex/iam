@@ -552,6 +552,7 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 			"pid": cmd.ProjectID,
 			"act": cmd.ActorID,
 			"typ": "impersonation",
+			"env": adminDefaultEnvironment,
 		}, time.Duration(ttl)*time.Second)
 		if err != nil {
 			return nil, err
@@ -1981,6 +1982,7 @@ func (a *pgAdminKeys) PreviewTokenProfile(ctx context.Context, cmd domain.AdminT
 		sampleClaims["sub"] = cmd.UserID
 	}
 	sampleClaims["typ"] = "access"
+	sampleClaims["env"] = adminEnv(cmd.Environment)
 	token, err := a.db.Signer().Sign(ctx, cmd.ProjectID, adminEnv(cmd.Environment), sampleClaims, adminTokenProfilePreviewTTL)
 	if err != nil {
 		return nil, err

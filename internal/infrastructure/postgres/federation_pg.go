@@ -1630,6 +1630,7 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 		"aal": 1,
 		"amr": []string{amr},
 		"typ": "access",
+		"env": fedDefaultEnv,
 	}, fedAccessTTL)
 	if err != nil {
 		return nil, err
@@ -1640,6 +1641,7 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 		"sid": sessionID,
 		"pid": acct.ProjectID,
 		"typ": "refresh",
+		"env": fedDefaultEnv,
 	}, fedRefreshTTL)
 	if err != nil {
 		return nil, err

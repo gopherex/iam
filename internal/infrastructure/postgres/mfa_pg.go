@@ -902,6 +902,7 @@ func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account)
 		"aal": 2,
 		"amr": []string{"mfa"},
 		"typ": "access",
+		"env": mfaDefaultEnv,
 	}, mfaAccessTTL)
 	if err != nil {
 		return nil, err

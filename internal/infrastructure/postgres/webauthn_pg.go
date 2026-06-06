@@ -530,6 +530,7 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 			"aal": 2,
 			"amr": []string{"webauthn"},
 			"typ": "access",
+			"env": webauthnSignerEnv,
 		}, time.Hour)
 		if err != nil {
 			return loginResult{}, err

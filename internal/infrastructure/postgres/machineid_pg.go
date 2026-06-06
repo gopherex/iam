@@ -371,6 +371,7 @@ func (a *PgMachineIdentities) MintToken(ctx context.Context, projectID, serviceA
 			"pid":   projectID,
 			"typ":   "service",
 			"scope": env.Scopes,
+			"env":   "live",
 		}, time.Hour)
 		if err != nil {
 			return "", err

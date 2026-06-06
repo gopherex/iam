@@ -101,7 +101,7 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 		Kind:        domain.PrincipalUser,
 		AccountID:   claimStr(claims, "sub"),
 		ProjectID:   claimStr(claims, "pid"),
-		Environment: authDefaultEnv,
+		Environment: claimEnv(claims),
 		SessionID:   sid,
 		ClientID:    claimStr(claims, "aud"),
 		AAL:         claimInt(claims, "aal"),
@@ -143,7 +143,7 @@ func (a *pgAuthenticator) Admin(ctx context.Context, token string) (*domain.Prin
 		Kind:        domain.PrincipalAdmin,
 		AccountID:   claimStr(claims, "sub"),
 		ProjectID:   claimStr(claims, "pid"),
-		Environment: authDefaultEnv,
+		Environment: claimEnv(claims),
 		ClientID:    claimStr(claims, "act"),
 	}, nil
 }
@@ -169,7 +169,7 @@ func (a *pgAuthenticator) Service(ctx context.Context, token string) (*domain.Pr
 				Kind:        domain.PrincipalService,
 				AccountID:   claimStr(claims, "sub"),
 				ProjectID:   claimStr(claims, "pid"),
-				Environment: authDefaultEnv,
+				Environment: claimEnv(claims),
 				Scopes:      claimScopes(claims),
 			}, nil
 		}
@@ -262,7 +262,7 @@ func (a *pgAuthenticator) OAuth2(ctx context.Context, token string) (*domain.Pri
 		Kind:        domain.PrincipalUser,
 		AccountID:   claimStr(claims, "sub"),
 		ProjectID:   claimStr(claims, "pid"),
-		Environment: authDefaultEnv,
+		Environment: claimEnv(claims),
 		ClientID:    claimStr(claims, "aud"),
 		Scopes:      claimScopes(claims),
 	}, nil
@@ -273,6 +273,15 @@ func (a *pgAuthenticator) OAuth2(ctx context.Context, token string) (*domain.Pri
 func claimStr(claims map[string]any, key string) string {
 	s, _ := claims[key].(string)
 	return s
+}
+
+// claimEnv returns the token's environment from its "env" claim, falling back to
+// authDefaultEnv for tokens minted before env tagging.
+func claimEnv(claims map[string]any) string {
+	if e, _ := claims["env"].(string); e != "" {
+		return e
+	}
+	return authDefaultEnv
 }
 
 func claimInt(claims map[string]any, key string) int {

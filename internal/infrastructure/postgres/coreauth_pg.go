@@ -330,6 +330,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		"aal": aal,
 		"amr": amr,
 		"typ": "access",
+		"env": coreAuthDefaultEnv,
 	}, coreAuthAccessTTL)
 	if err != nil {
 		return nil, err
