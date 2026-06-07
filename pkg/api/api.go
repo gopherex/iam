@@ -17,6 +17,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ogen-go/ogen/ogenerrors"
+
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
 )
@@ -52,8 +54,14 @@ var _ oas.Handler = (*Service)(nil)
 func (s *Service) NewError(_ context.Context, err error) *oas.DefaultStatusCode {
 	de := domain.ErrInternal
 	var d *domain.Error
-	if errors.As(err, &d) {
+	var se *ogenerrors.SecurityError
+	switch {
+	case errors.As(err, &d):
+		// A wrapped domain error (incl. a SecurityError around a bad credential).
 		de = d
+	case errors.As(err, &se):
+		// Missing / unparseable credential — no domain error inside.
+		de = domain.ErrUnauthorized
 	}
 	return &oas.DefaultStatusCode{
 		StatusCode: de.Status,

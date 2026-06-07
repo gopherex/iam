@@ -1,0 +1,12 @@
+.git
+bin/
+**/node_modules
+**/dist
+ts/packages/sdk/src/gen
+web/dist
+openapi/.build
+*.log
+.env
+docker-compose.yml
+deployments/Dockerfile
+.dockerignore

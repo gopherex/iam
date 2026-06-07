@@ -1,5 +1,9 @@
-# Local development environment for IAM.
-# Brought up with `make dev` (docker compose up -d).
+# Local development environment for IAM. `docker compose up` brings up Postgres
+# and the IAM server (admin SPA embedded, migrations applied, a "Root" project
+# seeded) — open http://localhost:8080 and sign in with the master key below.
+#
+# Production runs the same image (deployments/Dockerfile) configured purely via
+# IAM_* environment variables.
 
 name: iam-dev
 
@@ -20,6 +24,31 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  iam:
+    build:
+      context: .
+      dockerfile: deployments/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      IAM_INFRA_POSTGRES_HOST: postgres
+      IAM_INFRA_POSTGRES_PORT: "5432"
+      IAM_INFRA_POSTGRES_USERNAME: iam
+      IAM_INFRA_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iam}
+      IAM_INFRA_POSTGRES_DATABASE: iam
+      IAM_SERVICE_HTTP_ADDR: ":8080"
+      # Mount probes on the API port for the compose healthcheck.
+      IAM_SERVICE_HTTP_PROBE_ADDR: ":8080"
+      IAM_SERVICE_LOGGER_FORMAT: text
+      # Dev: seed a Root project and sign in with this master key.
+      IAM_SERVICE_AUTH_SEED_ROOT: "true"
+      IAM_SERVICE_AUTH_MASTER_KEY: ${IAM_MASTER_KEY:-dev-master-key}
+      IAM_SERVICE_AUTH_ENCRYPTION_KEY: ${IAM_ENCRYPTION_KEY:-}
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:8080:8080"
 
   # Added when the stack is fixed: cache (redis) and mail capture (mailpit).
 

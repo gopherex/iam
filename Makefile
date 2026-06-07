@@ -83,15 +83,16 @@ generate-go:
 generate-ts:
 	cd ts && yarn install --frozen-lockfile && yarn generate
 
-## build: build the server binary (embeds the admin web build)
+## build: build the server binary (embeds the admin web build via -tags embed)
 .PHONY: build
 build: build-web
-	CGO_ENABLED=0 go build -o $(SERVER_BIN) ./cmd/iam
+	CGO_ENABLED=0 go build -tags embed -o $(SERVER_BIN) ./cmd/iam
 
-## build-web: build the admin SPA served by the server
+## build-web: build the SDK then the admin SPA into web/dist (embedded by `build`)
 .PHONY: build-web
 build-web:
-	cd web && yarn install --immutable && yarn build
+	cd ts && yarn install --frozen-lockfile && yarn build
+	cd web && yarn install --frozen-lockfile && yarn build
 
 ## run: run the server locally
 .PHONY: run

@@ -29,6 +29,7 @@ import (
 	"github.com/gopherex/iam/internal/infrastructure/postgres"
 	"github.com/gopherex/iam/internal/oas"
 	"github.com/gopherex/iam/pkg/api"
+	"github.com/gopherex/iam/web"
 )
 
 func main() {
@@ -131,14 +132,21 @@ func run() error {
 		xprobe.Readiness(xprobe.FromError(db.Ping)),
 	)
 
-	root := http.NewServeMux()
-	// Request pipeline (outermost first): X-Environment -> ctx; CSRF for
+	// API request pipeline (outermost first): X-Environment -> ctx; CSRF for
 	// cookie-mode requests (evaluated before cookie auth, while there is no
 	// Authorization header); cookie auth promotes the session cookie to a Bearer
-	// header; then the API server.
-	root.Handle("/", api.EnvironmentMiddleware(
+	// header; then the generated API server.
+	apiPipeline := api.EnvironmentMiddleware(
 		api.CSRFMiddleware(postgres.NewPgPlatform(db))(
-			api.CookieAuthMiddleware(srv))))
+			api.CookieAuthMiddleware(srv)))
+
+	root := http.NewServeMux()
+	// API namespaces go to the generated server; everything else is the embedded
+	// admin SPA (a stub until the binary is built with `make build` / -tags embed).
+	for _, prefix := range []string{"/v1/", "/mgmt/", "/oauth2/", "/p/"} {
+		root.Handle(prefix, apiPipeline)
+	}
+	root.Handle("/", web.Handler())
 
 	// Probes get their own listener when ProbeAddr differs from the API port (a
 	// k8s sidecar port not exposed publicly); otherwise they mount on the API
