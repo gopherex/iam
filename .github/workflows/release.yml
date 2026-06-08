@@ -29,6 +29,10 @@ jobs:
         id: version
         run: echo "version=${VERSION#v}" >> "$GITHUB_OUTPUT"
 
+      - name: Build metadata
+        id: build_meta
+        run: echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
@@ -42,6 +46,11 @@ jobs:
           context: .
           file: deployments/Dockerfile
           push: true
+          build-args: |
+            SERVICE_NAME=iam
+            VERSION=${{ steps.version.outputs.version }}
+            COMMIT=${{ github.sha }}
+            BUILD_TIME=${{ steps.build_meta.outputs.build_time }}
           tags: |
             ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
             ${{ env.IMAGE }}:latest

@@ -14,10 +14,44 @@ import (
 	"context"
 
 	"github.com/gopherex/pgtx"
+	pgtxotel "github.com/gopherex/pgtx/contrib/otel"
 	pgtxlib "github.com/gopherex/pgtx/pkg/tx"
+	"github.com/gopherex/xlog"
+	pgxlog "github.com/gopherex/xlog/contrib/libs/pgx"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/tracelog"
 	bobpgx "github.com/stephenafamo/bob/drivers/pgx"
 )
+
+type connectOptions struct {
+	logger        *xlog.Logger
+	queryLogLevel string
+	metrics       bool
+}
+
+// ConnectOption customizes Postgres connection instrumentation.
+type ConnectOption func(*connectOptions)
+
+// WithLogger routes pgx query logs through xlog.
+func WithLogger(logger *xlog.Logger) ConnectOption {
+	return func(o *connectOptions) {
+		o.logger = logger
+	}
+}
+
+// WithQueryLogLevel overrides the pgx query log level.
+func WithQueryLogLevel(level string) ConnectOption {
+	return func(o *connectOptions) {
+		o.queryLogLevel = level
+	}
+}
+
+// WithMetrics registers OpenTelemetry metrics for the pgx pool.
+func WithMetrics(enabled bool) ConnectOption {
+	return func(o *connectOptions) {
+		o.metrics = enabled
+	}
+}
 
 // DB is the Postgres connection bundle: the raw pool, the pgtx transaction
 // manager services run repo calls through, the ctx-aware TxDB executor (picks up
@@ -33,10 +67,41 @@ type DB struct {
 }
 
 // Connect opens a pgx pool against dsn and builds the tx manager / executors.
-func Connect(ctx context.Context, dsn string) (*DB, error) {
-	pool, err := pgxpool.New(ctx, dsn)
+func Connect(ctx context.Context, dsn string, opts ...ConnectOption) (*DB, error) {
+	options := connectOptions{}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&options)
+		}
+	}
+	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, err
+	}
+	if options.logger != nil {
+		tracerOpts := []pgxlog.Option(nil)
+		if options.queryLogLevel != "" {
+			level, err := tracelog.LogLevelFromString(options.queryLogLevel)
+			if err != nil {
+				return nil, err
+			}
+			tracerOpts = append(tracerOpts, pgxlog.WithLogLevel(level))
+		}
+		tracer, err := pgxlog.NewTracer(options.logger, tracerOpts...)
+		if err != nil {
+			return nil, err
+		}
+		cfg.ConnConfig.Tracer = tracer
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	if options.metrics {
+		if err := pgtxotel.RegisterMetrics(pool); err != nil {
+			pool.Close()
+			return nil, err
+		}
 	}
 	txManager, err := pgtx.NewTxManager(pool, pgtxlib.ReadCommitted())
 	if err != nil {

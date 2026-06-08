@@ -8,6 +8,7 @@
 //   - logger:   github.com/gopherex/xlog
 //   - probes:   github.com/gopherex/xprobe
 //   - shutdown: github.com/gopherex/xshutdown
+//   - tracing:  github.com/gopherex/xtrace
 //   - outbox:   github.com/gopherex/pg-outbox             (email delivery + event log)
 package main
 
@@ -25,7 +26,11 @@ import (
 	"github.com/gopherex/xlog"
 	"github.com/gopherex/xprobe"
 	"github.com/gopherex/xshutdown"
+	xlogtrace "github.com/gopherex/xtrace/contrib/libs/xlog"
+	xtracesdk "github.com/gopherex/xtrace/contrib/sdk"
+	logglobal "go.opentelemetry.io/otel/log/global"
 
+	"github.com/gopherex/iam/internal/build"
 	"github.com/gopherex/iam/internal/config"
 	"github.com/gopherex/iam/internal/infrastructure/notifications"
 	"github.com/gopherex/iam/internal/infrastructure/postgres"
@@ -60,14 +65,38 @@ func run() error {
 		return err
 	}
 
-	// ----- logger -----
-	log := newLogger(cfg.Service.Logger).AppendName("iam")
-	log.Info("starting", xlog.String("addr", cfg.Service.HTTP.Addr))
-
 	ctx := context.Background()
 
+	// ----- telemetry -----
+	telemetryShutdown, err := xtracesdk.Setup(ctx,
+		xtracesdk.WithService(build.ServiceName),
+		xtracesdk.WithVersion(build.Version),
+		xtracesdk.WithInstanceID(build.InstanceID),
+	)
+	if err != nil {
+		slog.Error("telemetry setup failed", "err", err)
+		return err
+	}
+	defer func() {
+		if telemetryShutdown != nil {
+			_ = telemetryShutdown(context.Background())
+		}
+	}()
+
+	// ----- logger -----
+	log := newLogger(cfg.Service.Logger).AppendName(build.ServiceName).With(buildFields()...)
+	if err := xtracesdk.StartHostRuntime(); err != nil {
+		log.Error("telemetry runtime instrumentation failed", xlog.Error("err", err))
+		return err
+	}
+	log.Info("starting", xlog.String("addr", cfg.Service.HTTP.Addr))
+
 	// ----- postgres -----
-	db, err := postgres.Connect(ctx, cfg.Infra.Postgres.DSN())
+	db, err := postgres.Connect(ctx, cfg.Infra.Postgres.DSN(),
+		postgres.WithLogger(log.AppendName("postgres")),
+		postgres.WithQueryLogLevel(cfg.Infra.Postgres.LogLevel),
+		postgres.WithMetrics(true),
+	)
 	if err != nil {
 		log.Error("postgres connect failed", xlog.Error("err", err))
 		return err
@@ -101,7 +130,8 @@ func run() error {
 
 	// ----- outbox (email publisher; enqueue joins the caller tx via db.TxDB) -----
 	ob, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, log.AppendName("outbox")),
-		outbox.WithLogger(slog.Default()),
+		outbox.WithInstanceID(build.InstanceID),
+		outbox.WithLogger(buildSlogLogger()),
 		outbox.WithPollInterval(time.Second),
 	)
 	if err != nil {
@@ -164,11 +194,11 @@ func run() error {
 	}
 
 	httpSrv := &http.Server{
-		Addr:            cfg.Service.HTTP.Addr,
-		Handler:         http.MaxBytesHandler(root, 1<<20),
-		ReadTimeout:     time.Duration(cfg.Service.HTTP.ReadTimeoutSec) * time.Second,
-		WriteTimeout:    time.Duration(cfg.Service.HTTP.WriteTimeoutSec) * time.Second,
-		MaxHeaderBytes:  1 << 20,
+		Addr:           cfg.Service.HTTP.Addr,
+		Handler:        http.MaxBytesHandler(root, 1<<20),
+		ReadTimeout:    time.Duration(cfg.Service.HTTP.ReadTimeoutSec) * time.Second,
+		WriteTimeout:   time.Duration(cfg.Service.HTTP.WriteTimeoutSec) * time.Second,
+		MaxHeaderBytes: 1 << 20,
 	}
 	var probeSrv *http.Server
 	if separateProbes {
@@ -180,7 +210,7 @@ func run() error {
 		xshutdown.WithTimeout(time.Duration(cfg.Service.HTTP.ShutdownSec)*time.Second),
 		xshutdown.WithErrorHandler(func(err error) { log.Error("shutdown error", xlog.Error("err", err)) }),
 	)
-	// Cleanup runs in registration order: stop serving, flip liveness, close DB.
+	// Cleanup runs in registration order: stop serving, flip liveness, flush telemetry.
 	sd.RegisterFnErr(
 		func(ctx context.Context) error { return httpSrv.Shutdown(ctx) },
 		func(ctx context.Context) error {
@@ -190,6 +220,14 @@ func run() error {
 			return nil
 		},
 		func(ctx context.Context) error { live.Set(false); return nil },
+		func(ctx context.Context) error {
+			if telemetryShutdown == nil {
+				return nil
+			}
+			err := telemetryShutdown(ctx)
+			telemetryShutdown = nil
+			return err
+		},
 	)
 	// Background workers cancel with the shutdown context.
 	sd.Go(func(ctx context.Context) {
@@ -228,10 +266,44 @@ func newLogger(c config.Logger) *xlog.Logger {
 		level = xlog.InfoLevel
 	}
 	opts := []xlog.Option{xlog.WithLevel(level), xlog.WithCaller(true)}
+	otelCore := xlog.NewFilterCore(
+		xlogtrace.Core(logglobal.GetLoggerProvider().Logger(build.ServiceName)),
+		xlog.NewAtomicLevel(level),
+	)
+	var base *xlog.Logger
+	if c.Format == "text" {
+		base = xlog.NewConsole(opts...)
+	} else {
+		base = xlog.NewJSON(opts...)
+	}
+	opts = append(opts,
+		xlog.WithCore(xlog.NewTeeCore(base.Core(), otelCore)),
+	)
+	opts = append(opts, xlogtrace.Options(xlog.ErrorLevel)...)
 	if c.Format == "text" {
 		return xlog.NewConsole(opts...)
 	}
 	return xlog.NewJSON(opts...)
+}
+
+func buildFields() []xlog.Field {
+	return []xlog.Field{
+		xlog.String("service", build.ServiceName),
+		xlog.String("version", build.Version),
+		xlog.String("commit", build.Commit),
+		xlog.String("build_time", build.BuildTime),
+		xlog.String("instance_id", build.InstanceID),
+	}
+}
+
+func buildSlogLogger() *slog.Logger {
+	return slog.Default().With(
+		slog.String("service", build.ServiceName),
+		slog.String("version", build.Version),
+		slog.String("commit", build.Commit),
+		slog.String("build_time", build.BuildTime),
+		slog.String("instance_id", build.InstanceID),
+	)
 }
 
 // buildHandler assembles the full IAM handler from the Postgres adapters, one

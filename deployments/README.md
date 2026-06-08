@@ -15,6 +15,16 @@ embedded (`-tags embed`), and ships a minimal static `distroless` image. The
 single binary serves the API and the admin SPA on `:8080` and probes on `:8081`
 (`/healthz/liveness`, `/healthz/readiness`).
 
+Build metadata can be injected into the binary and is written to startup logs
+and the outbox lease owner:
+
+```sh
+docker build -f deployments/Dockerfile -t iam \
+  --build-arg VERSION=1.2.3 \
+  --build-arg COMMIT="$(git rev-parse HEAD)" \
+  --build-arg BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)" .
+```
+
 ## Release
 
 Run `make release` from a clean worktree. It bumps the single published npm
@@ -44,6 +54,12 @@ Minimum for production:
 | `IAM_SERVICE_AUTH_MASTER_KEY` | operator master key (admin panel + operator API) |
 | `IAM_SERVICE_AUTH_ENCRYPTION_KEY` | base64 32-byte AES-256 key for secrets at rest |
 
+OpenTelemetry traces, metrics, and logs are initialized by the server through
+`xtrace` and use the standard OTel environment variables. Set
+`OTEL_EXPORTER_OTLP_ENDPOINT` (plus headers/protocol variables when needed) to
+export server spans, generated OAS HTTP metrics, Postgres metrics, host/runtime
+metrics, and correlated logs.
+
 Run it (Postgres reachable, migrations apply on boot):
 
 ```sh
@@ -58,8 +74,9 @@ docker run --rm -p 8080:8080 \
 The repo-root [`docker-compose.yml`](../docker-compose.yml) is the dev stack:
 `docker compose up` brings up Postgres and the IAM server (SPA embedded,
 migrations applied, a `Root` project seeded). Open <http://localhost:8080> and
-sign in with `IAM_MASTER_KEY`. Local compose also requires `IAM_ENCRYPTION_KEY`;
-generate one with `openssl rand -base64 32`.
+sign in with `IAM_SERVICE_AUTH_MASTER_KEY` (default: `dev`). Local compose lists
+every supported server env var with a development default; override the
+`IAM_SERVICE_AUTH_ENCRYPTION_KEY` fallback for any non-throwaway environment.
 
 For frontend iteration without rebuilding the image, run the API on the host and
 the Vite dev server (which proxies `/v1` + `/mgmt` to it):

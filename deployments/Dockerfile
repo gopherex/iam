@@ -19,11 +19,18 @@ RUN cd web && yarn install --frozen-lockfile && yarn build
 FROM golang:1.26-alpine AS go
 WORKDIR /src
 RUN apk add --no-cache git
+ARG SERVICE_NAME=iam
+ARG VERSION=0.0.0
+ARG COMMIT=unknown
+ARG BUILD_TIME=
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 COPY --from=web /src/web/dist ./web/dist
-RUN CGO_ENABLED=0 go build -tags embed -trimpath -ldflags="-s -w" -o /iam ./cmd/iam
+RUN build_time="${BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}" && \
+    CGO_ENABLED=0 go build -tags embed -trimpath \
+    -ldflags="-s -w -X github.com/gopherex/iam/internal/build.ServiceName=${SERVICE_NAME} -X github.com/gopherex/iam/internal/build.Version=${VERSION} -X github.com/gopherex/iam/internal/build.Commit=${COMMIT} -X github.com/gopherex/iam/internal/build.BuildTime=${build_time}" \
+    -o /iam ./cmd/iam
 
 # --- 3. runtime ---
 FROM gcr.io/distroless/static-debian12:nonroot
