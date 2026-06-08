@@ -9,7 +9,9 @@ package api
 // memcached-backed implementation sharing the same rateLimiter interface.
 
 import (
+	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -65,25 +67,91 @@ func (rl *rateLimiter) allow(key string) bool {
 }
 
 func rateLimitKey(r *http.Request) string {
-	return r.RemoteAddr
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err == nil && host != "" {
+		return strings.Trim(host, "[]")
+	}
+	return strings.Trim(r.RemoteAddr, "[]")
 }
 
 var (
-	authLimiter      = newRateLimiter(10, time.Minute)
-	sensitiveLimiter = newRateLimiter(5, time.Minute)
+	authLimiter      = newRateLimiter(30, time.Minute)
+	sensitiveLimiter = newRateLimiter(10, time.Minute)
 	guestLimiter     = newRateLimiter(5, time.Minute)
 )
 
 func RateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		limiter, message, ok := rateLimitForRequest(r)
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
 		key := rateLimitKey(r)
-		if !authLimiter.allow(key) {
+		if !limiter.allow(key) {
 			w.Header().Set("Retry-After", "60")
-			http.Error(w, `{"error":"rate_limit_exceeded","message":"Too many requests. Try again later."}`, http.StatusTooManyRequests)
+			http.Error(w, `{"error":"rate_limit_exceeded","message":"`+message+`"}`, http.StatusTooManyRequests)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func rateLimitForRequest(r *http.Request) (*rateLimiter, string, bool) {
+	if r.Method == http.MethodOptions {
+		return nil, "", false
+	}
+	path := r.URL.Path
+	if path == "/v1/auth/guest" {
+		return guestLimiter, "Too many guest accounts created.", true
+	}
+	if isSensitiveRateLimitedPath(path) {
+		return sensitiveLimiter, "Too many attempts. Try again later.", true
+	}
+	if isAuthRateLimitedPath(path) {
+		return authLimiter, "Too many requests. Try again later.", true
+	}
+	return nil, "", false
+}
+
+func isSensitiveRateLimitedPath(path string) bool {
+	switch path {
+	case "/v1/auth/sign-in/password",
+		"/v1/auth/password/forgot",
+		"/v1/auth/password/reset",
+		"/v1/auth/password/verify",
+		"/v1/auth/email/verification/start",
+		"/v1/auth/email/verification/verify",
+		"/v1/auth/phone/verification/start",
+		"/v1/auth/phone/verification/verify",
+		"/v1/auth/otp/start",
+		"/v1/auth/otp/verify",
+		"/v1/auth/magic-link/start",
+		"/v1/auth/magic-link/verify",
+		"/v1/auth/mfa/challenge",
+		"/v1/auth/mfa/verify",
+		"/v1/auth/webauthn/login/options",
+		"/v1/auth/webauthn/login/verify",
+		"/v1/auth/webauthn/register/options",
+		"/v1/auth/webauthn/register/verify",
+		"/v1/challenges/captcha/verify":
+		return true
+	default:
+		return false
+	}
+}
+
+func isAuthRateLimitedPath(path string) bool {
+	switch path {
+	case "/v1/auth/sign-up",
+		"/v1/auth/token/refresh",
+		"/v1/auth/token/exchange",
+		"/v1/auth/oauth/exchange",
+		"/v1/auth/access-requests":
+		return true
+	default:
+		return false
+	}
 }
 
 func SensitiveRateLimitMiddleware(next http.Handler) http.Handler {

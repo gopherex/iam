@@ -58,14 +58,18 @@ docker run --rm -p 8080:8080 \
 The repo-root [`docker-compose.yml`](../docker-compose.yml) is the dev stack:
 `docker compose up` brings up Postgres and the IAM server (SPA embedded,
 migrations applied, a `Root` project seeded). Open <http://localhost:8080> and
-sign in with the master key (`dev-master-key` by default, overridable via
-`IAM_MASTER_KEY`).
+sign in with `IAM_MASTER_KEY`. Local compose also requires `IAM_ENCRYPTION_KEY`;
+generate one with `openssl rand -base64 32`.
 
 For frontend iteration without rebuilding the image, run the API on the host and
 the Vite dev server (which proxies `/v1` + `/mgmt` to it):
 
 ```sh
-IAM_SERVICE_AUTH_SEED_ROOT=true IAM_SERVICE_AUTH_MASTER_KEY=dev go run ./cmd/iam
+IAM_INFRA_POSTGRES_SSLMODE=disable \
+IAM_SERVICE_AUTH_SEED_ROOT=true \
+IAM_SERVICE_AUTH_MASTER_KEY=dev \
+IAM_SERVICE_AUTH_ENCRYPTION_KEY="$(openssl rand -base64 32)" \
+go run ./cmd/iam
 cd web && yarn dev   # http://localhost:5173
 ```
 

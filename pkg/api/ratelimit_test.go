@@ -50,21 +50,16 @@ func TestRateLimiterWindowReset(t *testing.T) {
 }
 
 func TestRateLimitMiddlewareRejects(t *testing.T) {
-	rl := newRateLimiter(2, time.Minute)
+	old := sensitiveLimiter
+	sensitiveLimiter = newRateLimiter(2, time.Minute)
+	t.Cleanup(func() { sensitiveLimiter = old })
+
 	called := 0
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { called++ })
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key := rateLimitKey(r)
-		if !rl.allow(key) {
-			w.Header().Set("Retry-After", "60")
-			http.Error(w, `{"error":"rate_limit_exceeded"}`, http.StatusTooManyRequests)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+	handler := RateLimitMiddleware(next)
 
 	for i := 0; i < 2; i++ {
-		req := httptest.NewRequest("GET", "/", nil)
+		req := httptest.NewRequest("POST", "/v1/auth/sign-in/password", nil)
 		req.RemoteAddr = "1.2.3.4:5678"
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
@@ -73,7 +68,7 @@ func TestRateLimitMiddlewareRejects(t *testing.T) {
 		}
 	}
 
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest("POST", "/v1/auth/sign-in/password", nil)
 	req.RemoteAddr = "1.2.3.4:5678"
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -82,5 +77,36 @@ func TestRateLimitMiddlewareRejects(t *testing.T) {
 	}
 	if called != 2 {
 		t.Fatalf("next handler called %d times, want 2", called)
+	}
+}
+
+func TestRateLimitMiddlewareSkipsNonAuthPaths(t *testing.T) {
+	called := 0
+	handler := RateLimitMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { called++ }))
+
+	for i := 0; i < 20; i++ {
+		req := httptest.NewRequest("GET", "/v1/projects/proj/admin/users", nil)
+		req.RemoteAddr = "1.2.3.4:5678"
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("request %d: expected 200, got %d", i+1, rec.Code)
+		}
+	}
+	if called != 20 {
+		t.Fatalf("next handler called %d times, want 20", called)
+	}
+}
+
+func TestRateLimitKeyIgnoresRemotePort(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	req.RemoteAddr = "1.2.3.4:5678"
+	if got := rateLimitKey(req); got != "1.2.3.4" {
+		t.Fatalf("key = %q", got)
+	}
+
+	req.RemoteAddr = "[2001:db8::1]:5678"
+	if got := rateLimitKey(req); got != "2001:db8::1" {
+		t.Fatalf("ipv6 key = %q", got)
 	}
 }

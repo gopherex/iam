@@ -39,6 +39,7 @@ services:
       IAM_INFRA_POSTGRES_USERNAME: iam
       IAM_INFRA_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iam}
       IAM_INFRA_POSTGRES_DATABASE: iam
+      IAM_INFRA_POSTGRES_SSLMODE: disable
       IAM_SERVICE_HTTP_ADDR: ":8080"
       # Mount probes on the API port for the compose healthcheck.
       IAM_SERVICE_HTTP_PROBE_ADDR: ":8080"
