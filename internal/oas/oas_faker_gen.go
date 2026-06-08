@@ -504,6 +504,21 @@ func (s *ConsentDocument) SetFake() {
 	}
 	{
 		{
+			s.Title.SetFake()
+		}
+	}
+	{
+		{
+			s.Body.SetFake()
+		}
+	}
+	{
+		{
+			s.Locale.SetFake()
+		}
+	}
+	{
+		{
 			s.Required.SetFake()
 		}
 	}
@@ -2449,6 +2464,15 @@ func (s *OptBool) SetFake() {
 	var elem bool
 	{
 		elem = true
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptConsentConfig) SetFake() {
+	var elem ConsentConfig
+	{
+		elem.SetFake()
 	}
 	s.SetTo(elem)
 }
@@ -6762,6 +6786,11 @@ func (s *PublicConfig) SetFake() {
 	{
 		{
 			s.DefaultLocale.SetFake()
+		}
+	}
+	{
+		{
+			s.Consents.SetFake()
 		}
 	}
 }

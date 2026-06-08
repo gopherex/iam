@@ -1,5 +1,7 @@
 import type {
   AuthConfig,
+  ConsentConfig,
+  ConsentDocument,
   MfaPolicy,
   PasswordPolicy,
   RateLimitRule,
@@ -13,11 +15,13 @@ import {
   getV1ProjectsByProjectIdAdminConfigPasswordPolicy,
   getV1ProjectsByProjectIdAdminConfigRateLimits,
   getV1ProjectsByProjectIdAdminConfigSessionPolicy,
+  getV1ProjectsByProjectIdAdminConsents,
   patchV1ProjectsByProjectIdAdminConfigAuth,
   patchV1ProjectsByProjectIdAdminConfigMfaPolicy,
   patchV1ProjectsByProjectIdAdminConfigPasswordPolicy,
   patchV1ProjectsByProjectIdAdminConfigRateLimits,
   patchV1ProjectsByProjectIdAdminConfigSessionPolicy,
+  putV1ProjectsByProjectIdAdminConsents,
 } from '@gopherex/iam-sdk';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -724,6 +728,144 @@ function RateLimitsTab({ projectId, env }: { projectId: string; env: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// Terms / consents tab
+// ---------------------------------------------------------------------------
+
+function emptyConsent(): ConsentDocument {
+  return { key: 'tos', version: new Date().toISOString().slice(0, 10), required: true, locale: 'en' };
+}
+
+function TermsTab({ projectId, env }: { projectId: string; env: string }) {
+  const { data, loading, error, reload } = useApi(
+    () =>
+      call(
+        getV1ProjectsByProjectIdAdminConsents({
+          path: { project_id: projectId },
+          headers: ENV_HEADER(env),
+        }),
+      ),
+    [projectId, env],
+  );
+
+  const [form, setForm] = useState<ConsentConfig>({ documents: [] });
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (data) setForm({ documents: data.documents ?? [] });
+  }, [data]);
+
+  function updateDoc(index: number, patch: Partial<ConsentDocument>) {
+    setForm((prev) => ({
+      documents: (prev.documents ?? []).map((doc, i) => (i === index ? { ...doc, ...patch } : doc)),
+    }));
+  }
+
+  function addDoc() {
+    setForm((prev) => ({ documents: [...(prev.documents ?? []), emptyConsent()] }));
+  }
+
+  function removeDoc(index: number) {
+    setForm((prev) => ({ documents: (prev.documents ?? []).filter((_, i) => i !== index) }));
+  }
+
+  async function save() {
+    setBusy(true);
+    try {
+      const updated = await call(
+        putV1ProjectsByProjectIdAdminConsents({
+          path: { project_id: projectId },
+          headers: ENV_HEADER(env),
+          body: form,
+        }),
+      );
+      setForm(updated);
+      toast.success('Terms saved');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to save terms');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (loading) return <LoadingState label="Loading terms…" />;
+  if (error) return <ErrorState error={error} onRetry={reload} />;
+
+  const docs = form.documents ?? [];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Terms and consent documents</CardTitle>
+        <CardDescription>Documents returned in the public SDK config and accepted as user consents.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {docs.map((doc, idx) => (
+          <div key={`${doc.key}-${doc.version}-${idx}`} className="space-y-3 rounded-lg border p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="space-y-1.5">
+                  <Label>Key</Label>
+                  <Input value={doc.key} onChange={(e) => updateDoc(idx, { key: e.target.value })} placeholder="tos" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Version</Label>
+                  <Input value={doc.version} onChange={(e) => updateDoc(idx, { version: e.target.value })} placeholder="2026-06-08" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Locale</Label>
+                  <Input value={doc.locale ?? ''} onChange={(e) => updateDoc(idx, { locale: e.target.value })} placeholder="en" />
+                </div>
+                <div className="flex items-end gap-2">
+                  <Switch
+                    id={`consent-required-${idx}`}
+                    checked={doc.required ?? true}
+                    onCheckedChange={(required) => updateDoc(idx, { required })}
+                  />
+                  <Label htmlFor={`consent-required-${idx}`} className="pb-1.5">Required</Label>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon-sm" onClick={() => removeDoc(idx)} title="Remove document">
+                <Trash2 className="size-3.5 text-destructive" />
+              </Button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Title</Label>
+                <Input value={doc.title ?? ''} onChange={(e) => updateDoc(idx, { title: e.target.value })} placeholder="Terms of Service" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>URL</Label>
+                <Input value={doc.url ?? ''} onChange={(e) => updateDoc(idx, { url: e.target.value })} placeholder="https://example.com/terms" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Body</Label>
+              <textarea
+                value={doc.body ?? ''}
+                onChange={(e) => updateDoc(idx, { body: e.target.value })}
+                rows={5}
+                className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                placeholder="Localized terms text shown by your application."
+              />
+            </div>
+          </div>
+        ))}
+        <Button variant="outline" size="sm" onClick={addDoc}>
+          <Plus className="size-3.5" />
+          Add document
+        </Button>
+      </CardContent>
+      <CardFooter className="justify-end">
+        <Button onClick={save} disabled={busy}>
+          {busy && <Loader2 className="size-4 animate-spin" />}
+          Save
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Environment selector
 // ---------------------------------------------------------------------------
 
@@ -774,6 +916,7 @@ export function ConfigPage() {
         <TabsList className="mb-4">
           <TabsTrigger value="auth">Auth &amp; methods</TabsTrigger>
           <TabsTrigger value="policies">Policies</TabsTrigger>
+          <TabsTrigger value="terms">Terms</TabsTrigger>
           <TabsTrigger value="rate-limits">Rate limits</TabsTrigger>
         </TabsList>
 
@@ -783,6 +926,10 @@ export function ConfigPage() {
 
         <TabsContent value="policies">
           <PoliciesTab projectId={projectId!} env={env} />
+        </TabsContent>
+
+        <TabsContent value="terms">
+          <TermsTab projectId={projectId!} env={env} />
         </TabsContent>
 
         <TabsContent value="rate-limits">

@@ -104,7 +104,15 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 			Type:        "auth.otp.started",
 			ProjectID:   env.ProjectID,
 			AggregateID: env.ID,
-			Payload:     map[string]any{"code": code, "channel": env.Channel, "account_id": env.Subject},
+			Payload: map[string]any{
+				"code":         code,
+				"channel":      env.Channel,
+				"purpose":      env.Purpose,
+				"account_id":   env.Subject,
+				"contact":      env.Subject,
+				"to":           env.Subject,
+				"challenge_id": env.ID,
+			},
 		})
 	}); err != nil {
 		return nil, err
@@ -175,7 +183,15 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 			Type:        "auth.magiclink.started",
 			ProjectID:   env.ProjectID,
 			AggregateID: env.ID,
-			Payload:     map[string]any{"token": token, "account_id": env.Subject},
+			Payload: map[string]any{
+				"token":        token,
+				"account_id":   env.Subject,
+				"contact":      env.Subject,
+				"to":           env.Subject,
+				"redirect_to":  env.RedirectTo,
+				"purpose":      env.Purpose,
+				"challenge_id": env.ID,
+			},
 		})
 	}); err != nil {
 		return nil, err

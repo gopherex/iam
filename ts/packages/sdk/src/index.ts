@@ -11,7 +11,7 @@ export * from './gen';
 // for non-auth callers such as an admin panel using the raw operations.
 export { client } from './gen/client.gen';
 
-export { createIamClient, IamAuth } from './auth/client';
+export { createIamClient, IamAuth, IamConfig } from './auth/client';
 export { IamAuthError } from './auth/types';
 export type {
   AuthChangeEvent,

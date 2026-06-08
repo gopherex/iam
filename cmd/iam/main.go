@@ -8,7 +8,7 @@
 //   - logger:   github.com/gopherex/xlog
 //   - probes:   github.com/gopherex/xprobe
 //   - shutdown: github.com/gopherex/xshutdown
-//   - outbox:   github.com/gopherex/pg-outbox             (mock publisher for now)
+//   - outbox:   github.com/gopherex/pg-outbox             (email delivery + event log)
 package main
 
 import (
@@ -26,6 +26,7 @@ import (
 	"github.com/gopherex/xshutdown"
 
 	"github.com/gopherex/iam/internal/config"
+	"github.com/gopherex/iam/internal/infrastructure/notifications"
 	"github.com/gopherex/iam/internal/infrastructure/postgres"
 	"github.com/gopherex/iam/internal/oas"
 	"github.com/gopherex/iam/pkg/api"
@@ -96,8 +97,8 @@ func run() error {
 	}
 	log.Info("migrations applied")
 
-	// ----- outbox (mock publisher; enqueue joins the caller tx via db.TxDB) -----
-	ob, err := outbox.New(db.Pool, db.TxDB, &mockPublisher{log: log.AppendName("outbox")},
+	// ----- outbox (email publisher; enqueue joins the caller tx via db.TxDB) -----
+	ob, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, log.AppendName("outbox")),
 		outbox.WithLogger(slog.Default()),
 		outbox.WithPollInterval(time.Second),
 	)
@@ -283,20 +284,4 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter) *api.Service {
 			Projects: postgres.NewPgOperator(db, emitter),
 		})),
 	)
-}
-
-// mockPublisher is a placeholder outbox transport: it logs each batch and acks
-// it. Replace with a real broker publisher (NATS/Kafka/…) when outbox emission
-// points are wired in the adapters.
-type mockPublisher struct{ log *xlog.Logger }
-
-func (p *mockPublisher) Publish(_ context.Context, msgs []outbox.Message) error {
-	for _, m := range msgs {
-		p.log.Info("would publish",
-			xlog.String("id", m.ID),
-			xlog.String("topic", m.Topic),
-			xlog.String("type", m.MessageType),
-		)
-	}
-	return nil
 }

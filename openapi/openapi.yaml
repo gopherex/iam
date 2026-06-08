@@ -885,6 +885,8 @@ components:
           type: string
           pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
           maxLength: 35
+        consents:
+          $ref: '#/components/schemas/ConsentConfig'
     WebAuthnCredential:
       type: object
       properties:
@@ -1368,6 +1370,16 @@ components:
         version:
           type: string
           maxLength: 1024
+        title:
+          type: string
+          maxLength: 1024
+        body:
+          type: string
+          maxLength: 16384
+        locale:
+          type: string
+          pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+          maxLength: 35
         required:
           type: boolean
         url:

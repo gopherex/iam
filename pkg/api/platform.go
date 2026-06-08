@@ -88,5 +88,33 @@ func oasPublicConfig(c *domain.PublicConfig) *oas.PublicConfig {
 			Name: oas.NewOptString(p.Name),
 		})
 	}
+	if len(c.ConsentDocuments) > 0 {
+		docs := make([]oas.ConsentDocument, 0, len(c.ConsentDocuments))
+		for i := range c.ConsentDocuments {
+			docs = append(docs, oasConsentDocument(&c.ConsentDocuments[i]))
+		}
+		r.Consents = oas.NewOptConsentConfig(oas.ConsentConfig{Documents: docs})
+	}
 	return r
+}
+
+func oasConsentDocument(d *domain.ConsentDocument) oas.ConsentDocument {
+	out := oas.ConsentDocument{
+		Key:     d.Key,
+		Version: d.Version,
+	}
+	if d.Title != "" {
+		out.Title = oas.NewOptString(d.Title)
+	}
+	if d.Body != "" {
+		out.Body = oas.NewOptString(d.Body)
+	}
+	if d.Locale != "" {
+		out.Locale = oas.NewOptString(d.Locale)
+	}
+	out.Required = oas.NewOptBool(d.Required)
+	if d.URL != "" {
+		out.URL = oas.NewOptNilString(d.URL)
+	}
+	return out
 }

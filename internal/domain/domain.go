@@ -183,11 +183,22 @@ type OAuthProvider struct {
 }
 
 type PublicConfig struct {
-	ProjectName   string
-	Methods       []string
-	Providers     []OAuthProvider
-	Locales       []string
-	DefaultLocale string
+	ProjectName      string
+	Methods          []string
+	Providers        []OAuthProvider
+	Locales          []string
+	DefaultLocale    string
+	ConsentDocuments []ConsentDocument
+}
+
+type ConsentDocument struct {
+	Key      string
+	Version  string
+	Title    string
+	Body     string
+	Locale   string
+	Required bool
+	URL      string
 }
 
 // ===== Commands (multi-field inputs to aggregate operations) =====
@@ -198,6 +209,7 @@ type RegisterCmd struct {
 	Phone     string
 	Password  string
 	Name      string
+	Consents  []AccountConsentAcceptance
 }
 
 type ProfileUpdateCmd struct {

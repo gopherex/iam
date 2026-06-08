@@ -93,7 +93,7 @@ build: build-web
 
 ## build-web: build the SDK then the admin SPA into web/dist (embedded by `build`)
 .PHONY: build-web
-build-web:
+build-web: generate-ts
 	cd ts && yarn install --frozen-lockfile && yarn build
 	cd web && yarn install --frozen-lockfile && yarn build
 

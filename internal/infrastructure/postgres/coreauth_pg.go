@@ -527,6 +527,11 @@ func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.Core
 				"channel":      ch.Channel,
 				"account_id":   ch.AccountID,
 				"challenge_id": ch.ID,
+				"contact":      ch.Subject,
+				"to":           ch.Subject,
+				"locale":       ch.Locale,
+				"redirect_to":  ch.RedirectTo,
+				"purpose":      ch.Purpose,
 			},
 		}); err != nil {
 			return nil, err
@@ -806,6 +811,18 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 				return regResult{}, domain.ErrPhoneExists
 			}
 			return regResult{}, err
+		}
+		for _, c := range cmd.Consents {
+			if _, err := models.IamConsents.Insert(&models.IamConsentSetter{
+				ID:         ptr(newUUID()),
+				ProjectID:  ptr(acc.ProjectID),
+				UserID:     ptr(acc.ID),
+				DocKey:     ptr(c.Key),
+				Version:    ptr(c.Version),
+				AcceptedAt: ptr(now),
+			}).One(ctx, a.db.Bobx()); err != nil {
+				return regResult{}, err
+			}
 		}
 
 		// Password credential (bcrypt). Optional: phone-only sign-ups have none.
@@ -1737,6 +1754,11 @@ func (a *pgCoreAuth) ForgotPassword(ctx context.Context, cmd domain.CoreAuthPass
 				"token":        token,
 				"account_id":   acc.ID,
 				"challenge_id": ch.ID,
+				"contact":      ch.Subject,
+				"to":           ch.Subject,
+				"locale":       ch.Locale,
+				"redirect_to":  ch.RedirectTo,
+				"purpose":      ch.Purpose,
 			},
 		}); err != nil {
 			return err

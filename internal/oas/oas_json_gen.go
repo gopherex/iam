@@ -2429,6 +2429,24 @@ func (s *ConsentDocument) encodeFields(e *jx.Encoder) {
 		e.Str(s.Version)
 	}
 	{
+		if s.Title.Set {
+			e.FieldStart("title")
+			s.Title.Encode(e)
+		}
+	}
+	{
+		if s.Body.Set {
+			e.FieldStart("body")
+			s.Body.Encode(e)
+		}
+	}
+	{
+		if s.Locale.Set {
+			e.FieldStart("locale")
+			s.Locale.Encode(e)
+		}
+	}
+	{
 		if s.Required.Set {
 			e.FieldStart("required")
 			s.Required.Encode(e)
@@ -2442,11 +2460,14 @@ func (s *ConsentDocument) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfConsentDocument = [4]string{
+var jsonFieldsNameOfConsentDocument = [7]string{
 	0: "key",
 	1: "version",
-	2: "required",
-	3: "url",
+	2: "title",
+	3: "body",
+	4: "locale",
+	5: "required",
+	6: "url",
 }
 
 // Decode decodes ConsentDocument from json.
@@ -2481,6 +2502,36 @@ func (s *ConsentDocument) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"version\"")
+			}
+		case "title":
+			if err := func() error {
+				s.Title.Reset()
+				if err := s.Title.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"title\"")
+			}
+		case "body":
+			if err := func() error {
+				s.Body.Reset()
+				if err := s.Body.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body\"")
+			}
+		case "locale":
+			if err := func() error {
+				s.Locale.Reset()
+				if err := s.Locale.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"locale\"")
 			}
 		case "required":
 			if err := func() error {
@@ -12324,6 +12375,39 @@ func (s OptBool) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptBool) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ConsentConfig as json.
+func (o OptConsentConfig) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes ConsentConfig from json.
+func (o *OptConsentConfig) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptConsentConfig to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptConsentConfig) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptConsentConfig) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -36186,9 +36270,15 @@ func (s *PublicConfig) encodeFields(e *jx.Encoder) {
 			s.DefaultLocale.Encode(e)
 		}
 	}
+	{
+		if s.Consents.Set {
+			e.FieldStart("consents")
+			s.Consents.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfPublicConfig = [9]string{
+var jsonFieldsNameOfPublicConfig = [10]string{
 	0: "project",
 	1: "registration",
 	2: "methods",
@@ -36198,6 +36288,7 @@ var jsonFieldsNameOfPublicConfig = [9]string{
 	6: "features",
 	7: "locales",
 	8: "default_locale",
+	9: "consents",
 }
 
 // Decode decodes PublicConfig from json.
@@ -36322,6 +36413,16 @@ func (s *PublicConfig) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"default_locale\"")
+			}
+		case "consents":
+			if err := func() error {
+				s.Consents.Reset()
+				if err := s.Consents.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"consents\"")
 			}
 		default:
 			return d.Skip()

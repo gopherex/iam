@@ -852,7 +852,14 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 			ProjectID:   projectID,
 			Environment: "",
 			AggregateID: ch.ID,
-			Payload:     ch,
+			Payload: map[string]any{
+				"code":         code,
+				"channel":      factorType,
+				"factor_id":    f.ID,
+				"challenge_id": ch.ID,
+				"to":           hint,
+				"contact":      hint,
+			},
 		}); err != nil {
 			return result{}, err
 		}

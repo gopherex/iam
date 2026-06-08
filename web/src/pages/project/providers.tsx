@@ -790,6 +790,7 @@ function EditTemplateDialog({
   const [subject, setSubject] = useState(template.subject ?? '');
   const [html, setHtml] = useState(template.html ?? '');
   const [text, setText] = useState(template.text ?? '');
+  const [locale, setLocale] = useState(template.locale ?? 'en');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -797,6 +798,7 @@ function EditTemplateDialog({
     setSubject(template.subject ?? '');
     setHtml(template.html ?? '');
     setText(template.text ?? '');
+    setLocale(template.locale ?? 'en');
     setErr(null);
   }
 
@@ -809,7 +811,7 @@ function EditTemplateDialog({
       await call(
         patchV1ProjectsByProjectIdAdminEmailTemplatesById({
           path: { project_id: projectId, id: template.id },
-          body: { subject, html, text },
+          body: { subject, html, text, locale },
         }),
       );
       toast.success('Template saved');
@@ -849,6 +851,15 @@ function EditTemplateDialog({
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Your subject line"
               autoFocus
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="tpl-locale">Locale</Label>
+            <Input
+              id="tpl-locale"
+              value={locale}
+              onChange={(e) => setLocale(e.target.value)}
+              placeholder="en"
             />
           </div>
           <div className="space-y-2">

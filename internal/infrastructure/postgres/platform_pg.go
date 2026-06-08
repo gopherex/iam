@@ -37,6 +37,10 @@ type platformAuthConfig struct {
 	DefaultLocale string   `json:"default_locale"`
 }
 
+type platformConsentConfig struct {
+	Documents []domain.ConsentDocument `json:"documents"`
+}
+
 // PublicConfig assembles domain.PublicConfig for the (projectID) tenant. The
 // clientID is accepted for interface parity / future per-client overrides; the
 // current bootstrap is project-wide. A missing project is a not-found.
@@ -101,6 +105,23 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 	}
 	for _, p := range provRows {
 		cfg.Providers = append(cfg.Providers, platformProviderToDomain(p))
+	}
+
+	consentRow, err := models.IamConfigs.Query(
+		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(platformDefaultEnvironment))),
+		sm.Where(models.IamConfigs.Columns.Key.EQ(psql.Arg("consent"))),
+	).One(ctx, a.db.Bobx())
+	if err != nil {
+		if !errors.Is(translatePgErr("config", err), ErrNotFound) {
+			return nil, err
+		}
+	} else if len(consentRow.Data) > 0 {
+		var cc platformConsentConfig
+		if err := unmarshal(consentRow.Data, &cc); err != nil {
+			return nil, err
+		}
+		cfg.ConsentDocuments = cc.Documents
 	}
 
 	return cfg, nil

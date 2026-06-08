@@ -1164,6 +1164,9 @@ func (s *ConsentDocRef) SetURL(val OptNilString) {
 type ConsentDocument struct {
 	Key      string       `json:"key"`
 	Version  string       `json:"version"`
+	Title    OptString    `json:"title"`
+	Body     OptString    `json:"body"`
+	Locale   OptString    `json:"locale"`
 	Required OptBool      `json:"required"`
 	URL      OptNilString `json:"url"`
 }
@@ -1176,6 +1179,21 @@ func (s *ConsentDocument) GetKey() string {
 // GetVersion returns the value of Version.
 func (s *ConsentDocument) GetVersion() string {
 	return s.Version
+}
+
+// GetTitle returns the value of Title.
+func (s *ConsentDocument) GetTitle() OptString {
+	return s.Title
+}
+
+// GetBody returns the value of Body.
+func (s *ConsentDocument) GetBody() OptString {
+	return s.Body
+}
+
+// GetLocale returns the value of Locale.
+func (s *ConsentDocument) GetLocale() OptString {
+	return s.Locale
 }
 
 // GetRequired returns the value of Required.
@@ -1196,6 +1214,21 @@ func (s *ConsentDocument) SetKey(val string) {
 // SetVersion sets the value of Version.
 func (s *ConsentDocument) SetVersion(val string) {
 	s.Version = val
+}
+
+// SetTitle sets the value of Title.
+func (s *ConsentDocument) SetTitle(val OptString) {
+	s.Title = val
+}
+
+// SetBody sets the value of Body.
+func (s *ConsentDocument) SetBody(val OptString) {
+	s.Body = val
+}
+
+// SetLocale sets the value of Locale.
+func (s *ConsentDocument) SetLocale(val OptString) {
+	s.Locale = val
 }
 
 // SetRequired sets the value of Required.
@@ -5119,6 +5152,52 @@ func (o OptBool) Get() (v bool, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptConsentConfig returns new OptConsentConfig with value set to v.
+func NewOptConsentConfig(v ConsentConfig) OptConsentConfig {
+	return OptConsentConfig{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptConsentConfig is optional ConsentConfig.
+type OptConsentConfig struct {
+	Value ConsentConfig
+	Set   bool
+}
+
+// IsSet returns true if OptConsentConfig was set.
+func (o OptConsentConfig) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptConsentConfig) Reset() {
+	var v ConsentConfig
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptConsentConfig) SetTo(v ConsentConfig) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptConsentConfig) Get() (v ConsentConfig, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptConsentConfig) Or(d ConsentConfig) ConsentConfig {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -16100,6 +16179,7 @@ type PublicConfig struct {
 	Features       OptPublicConfigFeatures       `json:"features"`
 	Locales        []string                      `json:"locales"`
 	DefaultLocale  OptString                     `json:"default_locale"`
+	Consents       OptConsentConfig              `json:"consents"`
 }
 
 // GetProject returns the value of Project.
@@ -16147,6 +16227,11 @@ func (s *PublicConfig) GetDefaultLocale() OptString {
 	return s.DefaultLocale
 }
 
+// GetConsents returns the value of Consents.
+func (s *PublicConfig) GetConsents() OptConsentConfig {
+	return s.Consents
+}
+
 // SetProject sets the value of Project.
 func (s *PublicConfig) SetProject(val OptPublicConfigProject) {
 	s.Project = val
@@ -16190,6 +16275,11 @@ func (s *PublicConfig) SetLocales(val []string) {
 // SetDefaultLocale sets the value of DefaultLocale.
 func (s *PublicConfig) SetDefaultLocale(val OptString) {
 	s.DefaultLocale = val
+}
+
+// SetConsents sets the value of Consents.
+func (s *PublicConfig) SetConsents(val OptConsentConfig) {
+	s.Consents = val
 }
 
 type PublicConfigFeatures map[string]bool

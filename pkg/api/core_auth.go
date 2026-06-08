@@ -453,12 +453,17 @@ func (s *CoreAuthService) PostV1AuthSignOutAll(ctx context.Context, req oas.OptP
 }
 
 func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpRequest, params oas.PostV1AuthSignUpParams) (*oas.AuthResult, error) {
+	consents := make([]domain.AccountConsentAcceptance, 0, len(req.Consents))
+	for _, c := range req.Consents {
+		consents = append(consents, domain.AccountConsentAcceptance{Key: c.Key, Version: c.Version})
+	}
 	cmd := domain.RegisterCmd{
 		ProjectID: params.XClientID,
 		Email:     req.Email.Or(""),
 		Phone:     req.Phone.Or(""),
 		Password:  req.Password.Or(""),
 		Name:      req.Name.Or(""),
+		Consents:  consents,
 	}
 	if err := cmd.Validate(); err != nil {
 		return nil, err

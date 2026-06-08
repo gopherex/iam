@@ -11,8 +11,11 @@ import {
   postV1AuthSignOut,
   postV1AuthWebauthnLoginOptions,
   postV1AuthWebauthnLoginVerify,
+  getV1ConfigPublic,
   type AuthResultOrNextStep,
   type ClientOptions as GeneratedClientOptions,
+  type ConsentAcceptance,
+  type PublicConfig,
   type SessionTokens,
   type User,
 } from '../gen';
@@ -40,6 +43,22 @@ function toSession(tokens: SessionTokens, user: User): Session {
     expires_at: Date.now() + tokens.expires_in * 1000,
     user,
   };
+}
+
+export class IamConfig {
+  constructor(
+    private readonly client: Client,
+    private readonly clientId: string,
+  ) {}
+
+  async getPublicConfig(): Promise<{ data: PublicConfig | null; error: IamAuthError | null }> {
+    const r = await getV1ConfigPublic({
+      client: this.client,
+      headers: { 'X-Client-Id': this.clientId },
+    });
+    if (r.error) return { data: null, error: authError(r) };
+    return { data: r.data ?? null, error: null };
+  }
 }
 
 function authError(result: { error?: unknown; response?: Response }): IamAuthError {
@@ -131,6 +150,7 @@ export class IamAuth {
     password?: string;
     name?: string;
     metadata?: Record<string, unknown>;
+    consents?: Array<ConsentAcceptance>;
   }): Promise<AuthResponse> {
     const r = await postV1AuthSignUp({
       client: this.client,
@@ -141,6 +161,7 @@ export class IamAuth {
         password: params.password ?? null,
         name: params.name ?? null,
         metadata: params.metadata,
+        consents: params.consents ?? [],
       },
     });
     return this.handle(r);
@@ -443,8 +464,9 @@ function encodeAssertion(cred: PublicKeyCredential): Record<string, unknown> {
  */
 export function createIamClient(options: IamClientOptions): {
   auth: IamAuth;
+  config: IamConfig;
   client: Client;
 } {
   const auth = new IamAuth(options);
-  return { auth, client: auth.client };
+  return { auth, config: new IamConfig(auth.client, options.clientId), client: auth.client };
 }

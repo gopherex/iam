@@ -23,6 +23,7 @@ package postgres
 // `// TODO outbox event: <name>` comment (no outbox logic).
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -31,6 +32,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"text/template"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -1500,7 +1502,23 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 	}
 	out := make(map[string]jx.Raw, len(rows))
 	for _, row := range rows {
-		out[row.Key] = jx.Raw(row.Data)
+		key := row.Key
+		if row.Locale != "" {
+			key = row.Key + ":" + row.Locale
+		}
+		body := map[string]jx.Raw{}
+		if len(row.Data) > 0 {
+			if err := json.Unmarshal(row.Data, &body); err != nil {
+				return nil, err
+			}
+		}
+		body["id"] = adminRawString(row.Key)
+		body["locale"] = adminRawString(row.Locale)
+		raw, err := json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+		out[key] = jx.Raw(raw)
 	}
 	return out, nil
 }
@@ -1510,6 +1528,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 		existing, err := models.IamEmailTemplates.Query(
 			sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 			sm.Where(models.IamEmailTemplates.Columns.Key.EQ(psql.Arg(cmd.TemplateID))),
+			sm.Where(models.IamEmailTemplates.Columns.Locale.EQ(psql.Arg(adminTemplateLocaleFromPatch(cmd.Patch)))),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
 			return nil, err
@@ -1528,6 +1547,9 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 		for k, v := range cmd.Patch {
 			body[k] = v
 		}
+		locale := adminTemplateLocaleFromPatch(body)
+		body["id"] = adminRawString(cmd.TemplateID)
+		body["locale"] = adminRawString(locale)
 		raw, err := json.Marshal(body)
 		if err != nil {
 			return nil, err
@@ -1545,7 +1567,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 				ID:        ptr(newUUID()),
 				ProjectID: &cmd.ProjectID,
 				Key:       ptr(cmd.TemplateID),
-				Locale:    ptr(adminTemplateLocale),
+				Locale:    ptr(locale),
 				Data:      &rm,
 			}).One(ctx, a.db.Bobx()); err != nil {
 				return nil, err
@@ -1556,7 +1578,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 			ProjectID:   cmd.ProjectID,
 			Environment: "",
 			AggregateID: cmd.TemplateID,
-			Payload:     map[string]any{"project_id": cmd.ProjectID, "template_id": cmd.TemplateID, "body": body},
+			Payload:     map[string]any{"project_id": cmd.ProjectID, "template_id": cmd.TemplateID, "locale": locale, "body": body},
 		}); err != nil {
 			return nil, err
 		}
@@ -1565,52 +1587,163 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 }
 
 func (a *pgAdminConfig) PreviewEmailTemplate(ctx context.Context, cmd domain.AdminTemplatePreviewCmd) (*domain.AdminTemplatePreview, error) {
-	rows, err := models.IamEmailTemplates.Query(
-		sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
-		sm.Where(models.IamEmailTemplates.Columns.Key.EQ(psql.Arg(cmd.TemplateID))),
-	).All(ctx, a.db.Bobx())
+	row, err := a.findEmailTemplate(ctx, cmd.ProjectID, cmd.TemplateID, adminTemplateLocaleOrDefault(cmd.Locale))
 	if err != nil {
 		return nil, err
 	}
-	if len(rows) == 0 {
-		return nil, domain.ErrNotFound
-	}
 	body := map[string]string{}
-	if len(rows[0].Data) > 0 {
-		_ = json.Unmarshal(rows[0].Data, &body) // best-effort: only string fields render
+	if len(row.Data) > 0 {
+		_ = json.Unmarshal(row.Data, &body) // best-effort: only string fields render
 	}
-	// NOTE: real rendering (merge cmd.Data into the template) lives in the
-	// notification layer; here we surface the stored subject/html/text as-is.
+	data := adminTemplateData(cmd.Data)
+	subject, err := renderAdminTemplate(body["subject"], data)
+	if err != nil {
+		return nil, domain.ErrValidation.WithMessage("subject template is invalid")
+	}
+	html, err := renderAdminTemplate(body["html"], data)
+	if err != nil {
+		return nil, domain.ErrValidation.WithMessage("html template is invalid")
+	}
+	text, err := renderAdminTemplate(body["text"], data)
+	if err != nil {
+		return nil, domain.ErrValidation.WithMessage("text template is invalid")
+	}
 	return &domain.AdminTemplatePreview{
-		Subject: body["subject"],
-		HTML:    body["html"],
-		Text:    body["text"],
+		Subject: subject,
+		HTML:    html,
+		Text:    text,
 	}, nil
 }
 
 func (a *pgAdminConfig) SendTestEmail(ctx context.Context, cmd domain.AdminTemplateSendTestCmd) error {
 	// Tenant boundary: the template must exist for the project.
-	rows, err := models.IamEmailTemplates.Query(
-		sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
-		sm.Where(models.IamEmailTemplates.Columns.Key.EQ(psql.Arg(cmd.TemplateID))),
-	).All(ctx, a.db.Bobx())
+	if _, err := a.findEmailTemplate(ctx, cmd.ProjectID, cmd.TemplateID, adminTemplateLocaleOrDefault(cmd.Locale)); err != nil {
+		return err
+	}
+	ok, err := a.hasEnabledProvider(ctx, cmd.ProjectID, "email")
 	if err != nil {
 		return err
 	}
-	if len(rows) == 0 {
-		return domain.ErrNotFound
+	if !ok {
+		return domain.ErrValidation.WithMessage("enabled email provider is required")
 	}
-	// Actual delivery is the notification layer's responsibility (no SMTP here).
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "config.test_email_requested",
 		ProjectID:   cmd.ProjectID,
-		Environment: "",
+		Environment: adminEnv(cmd.Environment),
 		AggregateID: cmd.TemplateID,
-		Payload:     map[string]any{"project_id": cmd.ProjectID, "template_id": cmd.TemplateID, "to": cmd.To},
+		Payload: map[string]any{
+			"project_id":    cmd.ProjectID,
+			"template_id":   cmd.TemplateID,
+			"to":            cmd.To,
+			"locale":        adminTemplateLocaleOrDefault(cmd.Locale),
+			"template_data": adminTemplateData(cmd.Data),
+		},
 	}); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (a *pgAdminConfig) hasEnabledProvider(ctx context.Context, projectID, kind string) (bool, error) {
+	rows, err := models.IamProviders.Query(
+		sm.Where(models.IamProviders.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamProviders.Columns.Kind.EQ(psql.Arg(kind))),
+		sm.Where(models.IamProviders.Columns.Enabled.EQ(psql.Arg(true))),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return false, err
+	}
+	return len(rows) > 0, nil
+}
+
+func (a *pgAdminConfig) findEmailTemplate(ctx context.Context, projectID, key, locale string) (*models.IamEmailTemplate, error) {
+	row, err := models.IamEmailTemplates.Query(
+		sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamEmailTemplates.Columns.Key.EQ(psql.Arg(key))),
+		sm.Where(models.IamEmailTemplates.Columns.Locale.EQ(psql.Arg(locale))),
+	).One(ctx, a.db.Bobx())
+	if err == nil {
+		return row, nil
+	}
+	if !adminIsNotFound(err) || locale == adminTemplateLocale {
+		if adminIsNotFound(err) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+	row, err = models.IamEmailTemplates.Query(
+		sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamEmailTemplates.Columns.Key.EQ(psql.Arg(key))),
+		sm.Where(models.IamEmailTemplates.Columns.Locale.EQ(psql.Arg(adminTemplateLocale))),
+	).One(ctx, a.db.Bobx())
+	if err != nil {
+		if adminIsNotFound(err) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+	return row, nil
+}
+
+func adminTemplateLocaleOrDefault(locale string) string {
+	if locale == "" {
+		return adminTemplateLocale
+	}
+	return locale
+}
+
+func adminTemplateLocaleFromPatch(patch map[string]jx.Raw) string {
+	if raw, ok := patch["locale"]; ok {
+		var locale string
+		if err := json.Unmarshal(raw, &locale); err == nil && locale != "" {
+			return locale
+		}
+	}
+	return adminTemplateLocale
+}
+
+func adminRawString(s string) jx.Raw {
+	raw, _ := json.Marshal(s)
+	return jx.Raw(raw)
+}
+
+func adminTemplateData(in map[string]jx.Raw) map[string]any {
+	out := map[string]any{
+		"code":             "123456",
+		"token":            "sample-token",
+		"link":             "https://example.test/auth/callback?token=sample-token",
+		"email":            "user@example.com",
+		"to":               "user@example.com",
+		"project_name":     "IAM",
+		"challenge_id":     "chl_sample",
+		"template_id":      "sample",
+		"reset_url":        "https://example.test/reset?token=sample-token",
+		"magic_link":       "https://example.test/auth/magic?token=sample-token",
+		"verification_url": "https://example.test/auth/verify?token=sample-token",
+	}
+	for k, raw := range in {
+		var v any
+		if err := json.Unmarshal(raw, &v); err == nil {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+func renderAdminTemplate(src string, data map[string]any) (string, error) {
+	if src == "" {
+		return "", nil
+	}
+	tpl, err := template.New("email").Option("missingkey=zero").Parse(src)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	if err := tpl.Execute(&buf, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // =====================================================================
