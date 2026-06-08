@@ -255,6 +255,9 @@ func (a *pgAuthenticator) OAuth2(ctx context.Context, token string) (*domain.Pri
 	if err != nil {
 		return nil, err
 	}
+	if typ, _ := claims["typ"].(string); typ != "access" {
+		return nil, domain.ErrUnauthorized
+	}
 	return &domain.Principal{
 		Kind:        domain.PrincipalUser,
 		AccountID:   claimStr(claims, "sub"),

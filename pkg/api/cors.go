@@ -7,8 +7,9 @@ import (
 
 // CORSMiddleware applies the configured browser cross-origin policy to runtime
 // endpoints and handles preflight requests before they reach the generated
-// router. A wildcard allows any origin by echoing the request Origin, which is
-// compatible with credentialed browser requests.
+// router. Only explicitly listed origins are reflected; wildcard ("*") is
+// treated as "allow any origin WITHOUT credentials" (no Access-Control-Allow-
+// Credentials header), preventing credential theft via cross-origin requests.
 func CORSMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 	allowAny := false
 	allowed := map[string]struct{}{}
@@ -31,7 +32,7 @@ func CORSMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 				return
 			}
 			if allowAny {
-				setCORSHeaders(w, origin)
+				setCORSHeadersPublic(w, origin)
 			} else if _, ok := allowed[origin]; ok {
 				setCORSHeaders(w, origin)
 			} else {
@@ -55,5 +56,14 @@ func setCORSHeaders(w http.ResponseWriter, origin string) {
 	h.Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
 	h.Set("Access-Control-Allow-Headers", "Authorization,Content-Type,X-Client-ID,X-CSRF-Token,X-Environment,Idempotency-Key")
 	h.Set("Access-Control-Expose-Headers", "Set-Cookie,RateLimit-Limit,RateLimit-Remaining,RateLimit-Reset")
+	h.Set("Access-Control-Max-Age", "600")
+}
+
+func setCORSHeadersPublic(w http.ResponseWriter, origin string) {
+	h := w.Header()
+	h.Add("Vary", "Origin")
+	h.Set("Access-Control-Allow-Origin", "*")
+	h.Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
+	h.Set("Access-Control-Allow-Headers", "Authorization,Content-Type,X-Client-ID,X-CSRF-Token,X-Environment,Idempotency-Key")
 	h.Set("Access-Control-Max-Age", "600")
 }

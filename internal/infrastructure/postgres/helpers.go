@@ -18,6 +18,8 @@ var (
 	ErrConflict = errors.New("conflict")
 )
 
+func ptr[T any](v T) *T { return &v }
+
 // marshal serializes a record to a JSONB blob.
 func marshal(v any) ([]byte, error) { return json.Marshal(v) }
 

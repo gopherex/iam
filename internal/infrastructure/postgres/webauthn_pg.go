@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -109,6 +110,13 @@ func webauthnRPFromProject(row *models.IamProject) (rpID, displayName string, or
 	} else if rpID != webauthnDefaultRPID {
 		// Derive a single https origin from the configured RP id.
 		origins = []string{"https://" + rpID}
+	}
+	// L-05: log a warning when the project has no WebAuthn RP config and
+	// localhost defaults are used — this is fine for dev but a misconfiguration
+	// in production.
+	if rpID == webauthnDefaultRPID {
+		slog.Warn("webauthn: no RP config on project, using localhost defaults",
+			"project_slug", row.Slug, "project_id", row.ID)
 	}
 	return rpID, displayName, origins
 }
@@ -431,6 +439,12 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 	}
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (loginResult, error) {
 		// We must locate the challenge to know which project we operate in.
+		// M-13 note: the challenge lookup is by primary key only (no projectID
+		// filter), but projectID is derived from the challenge row immediately
+		// below and all subsequent operations (loadCeremony, rpConfigFor,
+		// credential lookup, session minting) are scoped to that projectID.
+		// This is by-design: the FinishLogin caller does not carry projectID —
+		// it is a public endpoint that authenticates the challenge itself.
 		row, err := models.FindIamChallenge(ctx, a.db.Bobx(), challengeID)
 		if err != nil {
 			return loginResult{}, translatePgErr("challenge", err)
@@ -486,6 +500,21 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		if credRow.ProjectID != projectID || credRow.UserID != cer.AccountID {
 			return loginResult{}, domain.ErrMFAInvalid
 		}
+		// Clone detection: if both stored and incoming sign counts are
+		// non-zero and the incoming count is not strictly greater, the
+		// authenticator may be cloned. Emit a security event and reject.
+		if credRow.SignCount > 0 && int64(validated.Authenticator.SignCount) <= credRow.SignCount {
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "webauthn.clone_detected",
+				ProjectID:   projectID,
+				Environment: webauthnSignerEnv,
+				AggregateID: credID,
+				Payload:     map[string]any{"stored": credRow.SignCount, "received": validated.Authenticator.SignCount},
+			}); err != nil {
+				slog.Error("webauthn: failed to emit clone_detected event", "err", err, "credential_id", credID)
+			}
+			return loginResult{}, domain.ErrMFAInvalid
+		}
 		var stored domain.WebAuthnStoredCredential
 		if err := unmarshal(credRow.Data, &stored); err != nil {
 			return loginResult{}, err
@@ -527,10 +556,12 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 			return loginResult{}, err
 		}
 		accessToken, err := a.db.Signer().Sign(ctx, projectID, signEnv, map[string]any{
-			"iss": projectID,
+			"iss": "https://iam.gopherex.com/" + projectID,
 			"sub": acct.ID,
 			"sid": sessionID,
+			"jti": newUUID(),
 			"pid": projectID,
+			"aud": projectID,
 			"aal": 2,
 			"amr": []string{"webauthn"},
 			"typ": "access",

@@ -14,6 +14,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -81,7 +82,8 @@ func run() error {
 	}
 	db.UseCipher(cph)
 	if cfg.Service.Auth.EncryptionKey == "" {
-		log.Warn("secrets-at-rest encryption disabled (no service.auth.encryption_key)")
+		log.Error("secrets-at-rest encryption is DISABLED — set service.auth.encryption_key (base64 32-byte AES-256 key) before running in production")
+		return fmt.Errorf("service.auth.encryption_key is required")
 	}
 
 	if err := db.Migrate(ctx); err != nil {
@@ -141,6 +143,8 @@ func run() error {
 		api.CSRFMiddleware(postgres.NewPgPlatform(db))(
 			api.CookieAuthMiddleware(srv)))
 	apiPipeline = api.CORSMiddleware(cfg.Service.CORS.AllowedOrigins)(apiPipeline)
+	apiPipeline = api.SecurityHeaders(apiPipeline)
+	apiPipeline = api.RateLimitMiddleware(apiPipeline)
 
 	root := http.NewServeMux()
 	// API namespaces go to the generated server; everything else is the embedded
@@ -160,10 +164,11 @@ func run() error {
 	}
 
 	httpSrv := &http.Server{
-		Addr:         cfg.Service.HTTP.Addr,
-		Handler:      root,
-		ReadTimeout:  time.Duration(cfg.Service.HTTP.ReadTimeoutSec) * time.Second,
-		WriteTimeout: time.Duration(cfg.Service.HTTP.WriteTimeoutSec) * time.Second,
+		Addr:            cfg.Service.HTTP.Addr,
+		Handler:         http.MaxBytesHandler(root, 1<<20),
+		ReadTimeout:     time.Duration(cfg.Service.HTTP.ReadTimeoutSec) * time.Second,
+		WriteTimeout:    time.Duration(cfg.Service.HTTP.WriteTimeoutSec) * time.Second,
+		MaxHeaderBytes:  1 << 20,
 	}
 	var probeSrv *http.Server
 	if separateProbes {

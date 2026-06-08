@@ -25,6 +25,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -53,6 +54,10 @@ const mfaChallengeTTL = 5 * time.Minute
 
 // mfaRecoveryCodeCount is the size of a freshly minted recovery-code batch.
 const mfaRecoveryCodeCount = 10
+
+// mfaMaxFactorsPerAccount is the maximum number of MFA factors an account may
+// have enrolled (M-14: prevents unbounded factor creation).
+const mfaMaxFactorsPerAccount = 10
 
 // pgMFAAccounts is the Postgres-backed api.MFAAccounts adapter.
 type pgMFAAccounts struct {
@@ -174,6 +179,17 @@ func (a *pgMFAAccounts) mfaFindFactor(ctx context.Context, accountID, factorID s
 	return row, nil
 }
 
+// mfaCountFactors returns the number of factors enrolled for an account.
+func (a *pgMFAAccounts) mfaCountFactors(ctx context.Context, accountID string) (int, error) {
+	rows, err := models.IamFactors.Query(
+		sm.Where(models.IamFactors.Columns.UserID.EQ(psql.Arg(accountID))),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return 0, err
+	}
+	return len(rows), nil
+}
+
 // ===== WebAuthn-factor ceremony helpers (mfa-prefixed) =====
 //
 // A WebAuthn MFA factor is enrolled through the same attestation ceremony the
@@ -252,6 +268,13 @@ func (a *pgMFAAccounts) EnrollTOTP(ctx context.Context, accountID string) (*doma
 		acc, err := a.mfaResolveAccount(ctx, accountID)
 		if err != nil {
 			return nil, err
+		}
+		count, err := a.mfaCountFactors(ctx, accountID)
+		if err != nil {
+			return nil, err
+		}
+		if count >= mfaMaxFactorsPerAccount {
+			return nil, domain.ErrConflict.WithMessage("maximum number of MFA factors reached")
 		}
 		// Provision the shared secret + otpauth URL via the RFC 6238 library;
 		// key.Secret() is the base32 secret stored in iam_factors.secret and
@@ -347,7 +370,7 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 		//     secret with the RFC 6238 library.
 		switch row.Type {
 		case "email", "sms":
-			if data.FlowTokenHash == "" || mfaSha256Hex(code) != data.FlowTokenHash {
+			if data.FlowTokenHash == "" || subtle.ConstantTimeCompare([]byte(mfaSha256Hex(code)), []byte(data.FlowTokenHash)) != 1 {
 				return result{}, domain.ErrMFAInvalid
 			}
 		default:
@@ -359,6 +382,9 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 			factor, err := a.mfaFindFactor(ctx, accountID, data.FactorID)
 			if err != nil {
 				return result{}, err
+			}
+			if factor.Status != "active" {
+				return result{}, domain.ErrMFAInvalid
 			}
 			secret, err := a.db.Cipher.Decrypt(factor.Secret)
 			if err != nil {
@@ -414,7 +440,7 @@ func (a *pgMFAAccounts) GenerateRecoveryCodes(ctx context.Context, accountID str
 		}
 		codes := make([]string, 0, mfaRecoveryCodeCount)
 		for i := 0; i < mfaRecoveryCodeCount; i++ {
-			code, err := mfaNewOpaqueToken(8) // 16 hex chars
+			code, err := mfaNewOpaqueToken(16) // 32 hex chars, 128 bits
 			if err != nil {
 				return nil, err
 			}
@@ -470,12 +496,18 @@ func (a *pgMFAAccounts) RemoveFactor(ctx context.Context, accountID, factorID st
 // EnrollEmail enrolls an email factor and issues a delivery challenge carrying
 // the sha256 of a freshly minted one-time code.
 func (a *pgMFAAccounts) EnrollEmail(ctx context.Context, cmd domain.MFAEmailEnrollCmd) (*domain.Factor, *domain.Challenge, error) {
+	if err := domain.ValidateEmail(cmd.Email); err != nil {
+		return nil, nil, err
+	}
 	return a.mfaEnrollDelivery(ctx, cmd.AccountID, "email", cmd.Email)
 }
 
 // EnrollSMS enrolls an SMS factor and issues a delivery challenge carrying the
 // sha256 of a freshly minted one-time code.
 func (a *pgMFAAccounts) EnrollSMS(ctx context.Context, cmd domain.MFASmsEnrollCmd) (*domain.Factor, *domain.Challenge, error) {
+	if err := domain.ValidatePhone(cmd.Phone); err != nil {
+		return nil, nil, err
+	}
 	return a.mfaEnrollDelivery(ctx, cmd.AccountID, "sms", cmd.Phone)
 }
 
@@ -534,6 +566,7 @@ func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARe
 		hash := mfaSha256Hex(cmd.Code)
 		row, err := models.IamRecoveryCodes.Query(
 			sm.Where(models.IamRecoveryCodes.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
+			sm.Where(models.IamRecoveryCodes.Columns.UserID.EQ(psql.Arg(cmd.AccountID))),
 			sm.Where(models.IamRecoveryCodes.Columns.Hash.EQ(psql.Arg(hash))),
 			sm.Where(models.IamRecoveryCodes.Columns.Used.EQ(psql.Arg(false))),
 		).One(ctx, a.db.Bobx())
@@ -813,6 +846,13 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 		projectID, err := a.mfaResolveProject(ctx, accountID)
 		if err != nil {
 			return result{}, err
+		}
+		count, err := a.mfaCountFactors(ctx, accountID)
+		if err != nil {
+			return result{}, err
+		}
+		if count >= mfaMaxFactorsPerAccount {
+			return result{}, domain.ErrConflict.WithMessage("maximum number of MFA factors reached")
 		}
 		f := domain.Factor{
 			ID:     newUUID(),

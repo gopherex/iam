@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	htmltemplate "html/template"
 	"mime"
 	"net"
 	"net/mail"
@@ -188,7 +189,13 @@ func linkWithToken(rawBase, token string) string {
 	}
 	u, err := url.Parse(rawBase)
 	if err != nil {
-		return rawBase
+		return ""
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return ""
+	}
+	if u.Host == "" {
+		return ""
 	}
 	q := u.Query()
 	if q.Get("token") == "" {
@@ -255,7 +262,7 @@ func (p *Publisher) decodeSMTPConfig(raw map[string]json.RawMessage) (*smtpConfi
 		From:     rawString(raw, "from"),
 		FromName: rawString(raw, "from_name"),
 		Secure:   rawBool(raw, "secure") || rawBool(raw, "ssl"),
-		StartTLS: rawBool(raw, "start_tls") || rawBool(raw, "tls"),
+		StartTLS: rawBool(raw, "start_tls") || rawBool(raw, "tls") || !rawBool(raw, "secure"),
 	}
 	if cfg.Port == 465 {
 		cfg.Secure = true
@@ -291,15 +298,15 @@ func (p *Publisher) renderTemplate(ctx context.Context, projectID string, job em
 	if err != nil {
 		return renderedEmail{}, err
 	}
-	subject, err := render(body["subject"], job.Data)
+	subject, err := renderText(body["subject"], job.Data)
 	if err != nil {
 		return renderedEmail{}, err
 	}
-	html, err := render(body["html"], job.Data)
+	html, err := renderHTML(body["html"], job.Data)
 	if err != nil {
 		return renderedEmail{}, err
 	}
-	text, err := render(body["text"], job.Data)
+	text, err := renderText(body["text"], job.Data)
 	if err != nil {
 		return renderedEmail{}, err
 	}
@@ -332,7 +339,22 @@ func (p *Publisher) templateBody(ctx context.Context, projectID, key, locale str
 	return out, nil
 }
 
-func render(src string, data map[string]any) (string, error) {
+func renderHTML(src string, data map[string]any) (string, error) {
+	if src == "" {
+		return "", nil
+	}
+	tpl, err := htmltemplate.New("email").Option("missingkey=zero").Parse(src)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	if err := tpl.Execute(&buf, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func renderText(src string, data map[string]any) (string, error) {
 	if src == "" {
 		return "", nil
 	}

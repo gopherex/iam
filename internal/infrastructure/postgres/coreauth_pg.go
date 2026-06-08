@@ -29,6 +29,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -131,7 +132,7 @@ const (
 // coreAuthHashPassword bcrypt-hashes a plaintext password for the secret column
 // / credential envelope.
 func coreAuthHashPassword(plaintext string) (string, error) {
-	h, err := bcrypt.GenerateFromPassword([]byte(plaintext), bcrypt.DefaultCost)
+	h, err := bcrypt.GenerateFromPassword([]byte(plaintext), 12)
 	if err != nil {
 		return "", err
 	}
@@ -332,12 +333,17 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	if err != nil {
 		return nil, err
 	}
+	aud := clientID
+	if aud == "" {
+		aud = acc.ProjectID
+	}
 	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, map[string]any{
-		"iss": acc.ProjectID,
+		"iss": "https://iam.gopherex.com/" + acc.ProjectID,
 		"sub": acc.ID,
 		"sid": sessionID,
+		"jti": newUUID(),
 		"pid": acc.ProjectID,
-		"aud": clientID,
+		"aud": aud,
 		"aal": aal,
 		"amr": amr,
 		"typ": "access",
@@ -716,6 +722,25 @@ func (a *pgCoreAuth) coreAuthRevokeSession(ctx context.Context, projectID, sessi
 	return nil
 }
 
+// coreAuthRevokeAllForUser revokes all sessions and refresh tokens for a user
+// (reuse detection defense). Errors are logged but not surfaced to avoid
+// information leakage. MUST run inside an open transaction.
+func (a *pgCoreAuth) coreAuthRevokeAllForUser(ctx context.Context, projectID, userID string) error {
+	sessions, err := models.IamSessions.Query(
+		sm.Where(models.IamSessions.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(userID))),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return err
+	}
+	for _, s := range sessions {
+		if err := a.coreAuthRevokeSession(ctx, projectID, s.ID); err != nil {
+			slog.Error("coreauth: failed to revoke session during revoke-all", "err", err, "session_id", s.ID, "project_id", projectID, "user_id", userID)
+		}
+	}
+	return nil
+}
+
 // coreAuthRevokeRefreshTokensForSession flags every refresh token bound to a
 // session revoked. MUST run inside an open transaction.
 func (a *pgCoreAuth) coreAuthRevokeRefreshTokensForSession(ctx context.Context, projectID, sessionID string) error {
@@ -740,7 +765,9 @@ func (a *pgCoreAuth) coreAuthRevokeRefreshTokensForSession(ctx context.Context, 
 func (a *pgCoreAuth) coreAuthMarkRefreshRevoked(ctx context.Context, row *models.IamRefreshToken) error {
 	var data coreAuthRefreshToken
 	if len(row.Data) > 0 {
-		_ = unmarshal(row.Data, &data)
+		if err := unmarshal(row.Data, &data); err != nil {
+			data = coreAuthRefreshToken{Revoked: false}
+		}
 	}
 	data.Revoked = true
 	raw, err := marshal(data)
@@ -958,6 +985,18 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 			return refreshResult{}, err
 		}
 		if row.Revoked {
+			if err := a.coreAuthRevokeAllForUser(ctx, row.ProjectID, row.UserID); err != nil {
+				slog.Error("coreauth: failed to revoke all sessions on refresh token reuse", "err", err, "project_id", row.ProjectID, "user_id", row.UserID)
+			}
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "token.reuse_detected",
+				ProjectID:   row.ProjectID,
+				Environment: coreAuthDefaultEnv,
+				AggregateID: row.UserID,
+				Payload:     map[string]any{"session_id": row.SessionID},
+			}); err != nil {
+				slog.Error("coreauth: failed to emit token.reuse_detected event", "err", err, "project_id", row.ProjectID, "user_id", row.UserID)
+			}
 			return refreshResult{}, domain.ErrTokenRevoked
 		}
 		if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
@@ -1457,8 +1496,7 @@ func (a *pgCoreAuth) VerifyCaptcha(ctx context.Context, projectID, provider, tok
 	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, coreAuthDefaultEnv, "captcha")
 	if err != nil {
 		if errors.Is(translatePgErr("config", err), ErrNotFound) {
-			// No provider configured: accept (enforcement decided upstream).
-			return &domain.CoreAuthCaptchaVerifyResult{Valid: true, Score: 1}, nil
+			return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
 		}
 		return nil, err
 	}
@@ -1471,8 +1509,7 @@ func (a *pgCoreAuth) VerifyCaptcha(ctx context.Context, projectID, provider, tok
 		cfg.Provider = provider
 	}
 	if cfg.Secret == "" {
-		// No provider configured: accept (enforcement decided upstream).
-		return &domain.CoreAuthCaptchaVerifyResult{Valid: true, Score: 1}, nil
+		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
 	}
 
 	verifyURL := coreAuthCaptchaVerifyURL(cfg.Provider, cfg.VerifyURL)

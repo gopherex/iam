@@ -14,7 +14,7 @@ type Postgres struct {
 	Username string `mapstructure:"username" default:"iam" validate:"required"`
 	Password string `mapstructure:"password" default:"iam" validate:"required"`
 	Database string `mapstructure:"database" default:"iam" validate:"required"`
-	SSLMode  string `mapstructure:"sslmode" default:"disable" validate:"oneof=disable require verify-ca verify-full"`
+	SSLMode  string `mapstructure:"sslmode" default:"require" validate:"oneof=disable require verify-ca verify-full"`
 	LogLevel string `mapstructure:"log_level" default:"info" validate:"oneof=debug info warn error"`
 }
 
@@ -46,7 +46,7 @@ type Logger struct {
 
 // CORS is the browser cross-origin policy for runtime endpoints.
 type CORS struct {
-	AllowedOrigins []string `mapstructure:"allowed_origins" default:"[\"*\"]"`
+	AllowedOrigins []string `mapstructure:"allowed_origins"`
 }
 
 // Auth holds IAM token/issuer defaults applied when an environment does not

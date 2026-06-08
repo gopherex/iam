@@ -27,6 +27,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -265,8 +266,14 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			scopes = in.Scopes
 		}
 		codeData, err := marshal(struct {
-			Scopes []string `json:"Scopes"`
-		}{Scopes: scopes})
+			Scopes      []string `json:"Scopes"`
+			RedirectURI string   `json:"RedirectURI"`
+			Nonce       string   `json:"Nonce"`
+		}{
+			Scopes:      scopes,
+			RedirectURI: in.RedirectURI,
+			Nonce:       in.Nonce,
+		})
 		if err != nil {
 			return "", err
 		}
@@ -436,6 +443,7 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 			ClientID:    cmd.ClientID,
 			Scopes:      splitScopes(cmd.Scope),
 			RedirectURI: cmd.RedirectURI,
+			Nonce:       cmd.Nonce,
 		}
 		raw, err := marshal(&in)
 		if err != nil {
@@ -587,6 +595,33 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
 				return nil, domain.ErrTokenExpired
 			}
+
+			// H-01: Verify client_secret for confidential clients.
+			effectiveClientID := firstNonEmpty(row.ClientID.GetOrZero(), cmd.ClientID)
+			if err := a.oidcVerifyClientSecret(ctx, effectiveClientID, cmd.ClientSecret); err != nil {
+				return nil, err
+			}
+
+			// Parse the code data envelope for redirect_uri, nonce, and scopes.
+			codeData, err := parseAuthCodeData(row.Data)
+			if err != nil {
+				return nil, err
+			}
+
+			// H-03: Verify redirect_uri matches the one stored at authorize time.
+			if cmd.RedirectURI != "" || codeData.RedirectURI != "" {
+				if subtle.ConstantTimeCompare([]byte(cmd.RedirectURI), []byte(codeData.RedirectURI)) != 1 {
+					return nil, domain.ErrUnauthorized
+				}
+			}
+
+			// M-02: Verify consent was granted for this (project, user, client).
+			if row.ProjectID != "" && row.UserID.GetOrZero() != "" && effectiveClientID != "" {
+				if err := a.oidcVerifyConsent(ctx, row.ProjectID, row.UserID.GetOrZero(), effectiveClientID); err != nil {
+					return nil, err
+				}
+			}
+
 			consumed := true
 			if err := row.Update(ctx, a.db.Bobx(), &models.IamAuthCodeSetter{Consumed: &consumed}); err != nil {
 				return nil, err
@@ -595,7 +630,8 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 				projectID: row.ProjectID,
 				env:       oidcDefaultEnv,
 				subject:   row.UserID.GetOrZero(),
-				clientID:  firstNonEmpty(row.ClientID.GetOrZero(), cmd.ClientID),
+				clientID:  effectiveClientID,
+				nonce:     codeData.Nonce,
 				scopes:    splitScopesFromData(row.Data),
 			}
 			if err := a.emitter.Emit(ctx, domain.Event{
@@ -1278,4 +1314,76 @@ func splitScopesFromData(data json.RawMessage) []string {
 		return env.Scopes
 	}
 	return splitScopes(env.Scope)
+}
+
+// authCodeData holds fields persisted alongside an authorization code.
+type authCodeData struct {
+	Scopes      []string `json:"Scopes"`
+	Scope       string   `json:"scope"`
+	RedirectURI string   `json:"RedirectURI"`
+	Nonce       string   `json:"Nonce"`
+}
+
+// parseAuthCodeData unmarshals the auth-code data envelope.
+func parseAuthCodeData(data json.RawMessage) (authCodeData, error) {
+	var d authCodeData
+	if err := json.Unmarshal(data, &d); err != nil {
+		return d, domain.ErrBadRequest.WithMessage("corrupted auth code data")
+	}
+	return d, nil
+}
+
+// oidcIsConfidentialClient reports whether the app client type requires a
+// client secret (web and machine are confidential; spa and native are public).
+func oidcIsConfidentialClient(clientType string) bool {
+	return clientType == "web" || clientType == "machine"
+}
+
+// oidcVerifyClientSecret looks up an app client by ID, and if it is a
+// confidential client, verifies the supplied secret against the stored sha256
+// hash in the data envelope using constant-time comparison.
+func (a *pgOIDCGrants) oidcVerifyClientSecret(ctx context.Context, clientID, clientSecret string) error {
+	if clientID == "" {
+		return domain.ErrUnauthorized
+	}
+	row, err := models.FindIamAppClient(ctx, a.db.Bobx(), clientID)
+	if err != nil {
+		return domain.ErrUnauthorized
+	}
+	if !oidcIsConfidentialClient(row.Type) {
+		return nil
+	}
+	if clientSecret == "" {
+		return domain.ErrUnauthorized
+	}
+	var data struct {
+		ClientSecretHash string `json:"client_secret_hash"`
+	}
+	if err := json.Unmarshal(row.Data, &data); err != nil || data.ClientSecretHash == "" {
+		return domain.ErrUnauthorized
+	}
+	given := sha256.Sum256([]byte(clientSecret))
+	givenHex := hex.EncodeToString(given[:])
+	if subtle.ConstantTimeCompare([]byte(givenHex), []byte(data.ClientSecretHash)) != 1 {
+		return domain.ErrUnauthorized
+	}
+	return nil
+}
+
+// oidcVerifyConsent checks that a consent grant exists for the given
+// (projectID, userID, clientID), returning ErrConsentRequired if absent.
+func (a *pgOIDCGrants) oidcVerifyConsent(ctx context.Context, projectID, userID, clientID string) error {
+	rows, err := models.IamOauthGrants.Query(
+		sm.Where(models.IamOauthGrants.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamOauthGrants.Columns.UserID.EQ(psql.Arg(userID))),
+		sm.Where(models.IamOauthGrants.Columns.ClientID.EQ(psql.Arg(clientID))),
+		sm.Limit(1),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return err
+	}
+	if len(rows) == 0 {
+		return domain.ErrConsentRequired
+	}
+	return nil
 }

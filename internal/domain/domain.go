@@ -172,6 +172,8 @@ type Interaction struct {
 	ClientID    string
 	Scopes      []string
 	RedirectURI string
+	Nonce       string
+	SessionID   string
 }
 
 // ===== Read models =====

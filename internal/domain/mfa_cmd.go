@@ -40,6 +40,7 @@ type MFAWebAuthnEnrollVerifyCmd struct {
 // MFARecoveryVerifyCmd consumes a recovery code to complete an MFA flow.
 type MFARecoveryVerifyCmd struct {
 	ProjectID string
+	AccountID string
 	FlowToken string
 	Code      string
 }

@@ -652,23 +652,94 @@ func (a *pgFederationConnections) UpdateConnection(ctx context.Context, cmd doma
 	})
 }
 
-// fedApplyConnectionPatch applies the supplied merge-patch fields onto the
-// connection aggregate (only keys the caller provided are touched).
+var fedPatchableFields = map[string]bool{
+	"name":               true,
+	"display_name":       true,
+	"enabled":            true,
+	"metadata":           true,
+	"saml_metadata_url":  true,
+	"saml_metadata_xml":  true,
+	"oidc_discovery_url": true,
+	"oidc_issuer":        true,
+	"oidc_client_id":     true,
+	"oidc_client_secret": true,
+	"oidc_scopes":        true,
+	"oidc_response_mode": true,
+	"domain":             true,
+	"domains":            true,
+}
+
 func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 	if patch == nil {
 		return
 	}
+	for k := range patch {
+		if !fedPatchableFields[k] {
+			delete(patch, k)
+		}
+	}
 	if v, ok := patch["name"].(string); ok {
 		c.Name = v
 	}
-	if v, ok := patch["status"].(string); ok {
-		c.Status = v
+	if v, ok := patch["display_name"].(string); ok {
+		c.Name = v
 	}
-	if v, ok := patch["type"].(string); ok {
-		c.Type = v
+	if v, ok := patch["enabled"].(bool); ok {
+		if v {
+			c.Status = "active"
+		} else {
+			c.Status = "disabled"
+		}
 	}
-	if v, ok := patch["external_ref"].(string); ok {
-		c.ExternalRef = v
+	if c.Config == nil {
+		c.Config = &domain.FederationConnectionConfig{}
+	}
+	if v, ok := patch["saml_metadata_url"].(string); ok {
+		if c.Config.Saml == nil {
+			c.Config.Saml = &domain.FederationSamlConfig{}
+		}
+		c.Config.Saml.MetadataURL = v
+	}
+	if v, ok := patch["saml_metadata_xml"].(string); ok {
+		if c.Config.Saml == nil {
+			c.Config.Saml = &domain.FederationSamlConfig{}
+		}
+		c.Config.Saml.IDPMetadataXML = v
+	}
+	if v, ok := patch["oidc_issuer"].(string); ok {
+		if c.Config.Oidc == nil {
+			c.Config.Oidc = &domain.FederationOidcConfig{}
+		}
+		c.Config.Oidc.Issuer = v
+	}
+	if v, ok := patch["oidc_client_id"].(string); ok {
+		if c.Config.Oidc == nil {
+			c.Config.Oidc = &domain.FederationOidcConfig{}
+		}
+		c.Config.Oidc.ClientID = v
+	}
+	if v, ok := patch["oidc_client_secret"].(string); ok {
+		if c.Config.Oidc == nil {
+			c.Config.Oidc = &domain.FederationOidcConfig{}
+		}
+		c.Config.Oidc.ClientSecret = v
+	}
+	if raw, ok := patch["oidc_scopes"].([]any); ok {
+		if c.Config.Oidc == nil {
+			c.Config.Oidc = &domain.FederationOidcConfig{}
+		}
+		scopes := make([]string, 0, len(raw))
+		for _, item := range raw {
+			if s, ok := item.(string); ok {
+				scopes = append(scopes, s)
+			}
+		}
+		c.Config.Oidc.Scopes = scopes
+	} else if scopes, ok := patch["oidc_scopes"].([]string); ok {
+		if c.Config.Oidc == nil {
+			c.Config.Oidc = &domain.FederationOidcConfig{}
+		}
+		c.Config.Oidc.Scopes = scopes
 	}
 	if raw, ok := patch["domains"].([]any); ok {
 		doms := make([]string, 0, len(raw))

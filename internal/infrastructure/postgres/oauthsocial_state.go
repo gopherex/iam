@@ -104,7 +104,9 @@ func (a *pgOAuthSocial) consumeState(ctx context.Context, projectID, provider, s
 		}
 		var d oauthStateData
 		if len(row.Data) > 0 {
-			_ = json.Unmarshal(row.Data, &d)
+			if err := json.Unmarshal(row.Data, &d); err != nil {
+				return domain.ErrBadRequest.WithMessage("corrupted OAuth state data")
+			}
 		}
 		redirect, accountID = d.Redirect, d.AccountID
 		consumed := true

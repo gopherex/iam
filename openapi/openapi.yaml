@@ -1839,7 +1839,6 @@ components:
           type: string
           enum:
           - S256
-          - plain
         nonce:
           type: string
           maxLength: 1024

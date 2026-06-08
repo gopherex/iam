@@ -45,8 +45,8 @@ services:
       IAM_SERVICE_LOGGER_FORMAT: text
       # Dev: seed a Root project and sign in with this master key.
       IAM_SERVICE_AUTH_SEED_ROOT: "true"
-      IAM_SERVICE_AUTH_MASTER_KEY: ${IAM_MASTER_KEY:-dev-master-key}
-      IAM_SERVICE_AUTH_ENCRYPTION_KEY: ${IAM_ENCRYPTION_KEY:-}
+      IAM_SERVICE_AUTH_MASTER_KEY: ${IAM_MASTER_KEY:?set IAM_MASTER_KEY}
+      IAM_SERVICE_AUTH_ENCRYPTION_KEY: ${IAM_ENCRYPTION_KEY:?set IAM_ENCRYPTION_KEY}
     ports:
       - "${BIND_ADDR:-127.0.0.1}:8080:8080"
 

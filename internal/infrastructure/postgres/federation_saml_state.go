@@ -36,7 +36,10 @@ func (a *pgFederationRuntime) fedStoreSamlRequest(ctx context.Context, projectID
 	if relayState == "" {
 		return nil // nothing to correlate (no SP-initiated state)
 	}
-	data, _ := json.Marshal(map[string]string{"redirect": redirect, "connection_id": connectionID})
+	data, err := json.Marshal(map[string]string{"redirect": redirect, "connection_id": connectionID})
+	if err != nil {
+		return err
+	}
 	rm := json.RawMessage(data)
 	id := newUUID()
 	typ := "saml_request"

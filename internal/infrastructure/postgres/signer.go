@@ -12,6 +12,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"log/slog"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -121,8 +122,12 @@ func (s *Signer) Sign(ctx context.Context, projectID, env string, claims map[str
 	if err != nil {
 		return "", err
 	}
-	_ = key.Set(jwk.KeyIDKey, kid)
-	_ = key.Set(jwk.AlgorithmKey, jwa.RS256())
+	if err := key.Set(jwk.KeyIDKey, kid); err != nil {
+		return "", err
+	}
+	if err := key.Set(jwk.AlgorithmKey, jwa.RS256()); err != nil {
+		return "", err
+	}
 	signed, err := jwt.Sign(tok, jwt.WithKey(jwa.RS256(), key))
 	if err != nil {
 		return "", err
@@ -205,10 +210,22 @@ func (s *Signer) publicSet(ctx context.Context, projectID, env string) (jwk.Set,
 		if err != nil {
 			continue
 		}
-		_ = pub.Set(jwk.KeyIDKey, r.Kid)
-		_ = pub.Set(jwk.AlgorithmKey, jwa.RS256())
-		_ = pub.Set(jwk.KeyUsageKey, "sig")
-		_ = set.AddKey(pub)
+		if err := pub.Set(jwk.KeyIDKey, r.Kid); err != nil {
+			slog.Error("webauthn: failed to set key ID on JWKS public key", "err", err, "kid", r.Kid)
+			continue
+		}
+		if err := pub.Set(jwk.AlgorithmKey, jwa.RS256()); err != nil {
+			slog.Error("webauthn: failed to set algorithm on JWKS public key", "err", err, "kid", r.Kid)
+			continue
+		}
+		if err := pub.Set(jwk.KeyUsageKey, "sig"); err != nil {
+			slog.Error("webauthn: failed to set key usage on JWKS public key", "err", err, "kid", r.Kid)
+			continue
+		}
+		if err := set.AddKey(pub); err != nil {
+			slog.Error("webauthn: failed to add public key to JWKS set", "err", err, "kid", r.Kid)
+			continue
+		}
 	}
 	return set, nil
 }

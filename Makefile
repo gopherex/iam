@@ -139,6 +139,10 @@ clean:
 	rm -rf $(BIN_DIR)
 
 ## release: interactive tag-driven release (Docker image + @gopherex/iam-sdk)
+## WARNING: Option 2 (recreate last tag) force-pushes tags by deleting and
+## recreating them on the current HEAD. This is intended for LOCAL development
+## use only — do NOT use this in CI/CD pipelines. In production, release tags
+## MUST be treated as immutable once published.
 .PHONY: release
 release:
 	@set -eu; \

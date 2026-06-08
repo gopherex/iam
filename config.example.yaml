@@ -8,7 +8,7 @@ infra:
     username: iam
     password: iam
     database: iam
-    sslmode: disable          # disable | require | verify-ca | verify-full
+    sslmode: require          # disable | require | verify-ca | verify-full
     log_level: info           # debug | info | warn | error
 
 service:
@@ -22,11 +22,11 @@ service:
     level: info               # debug | info | warn | error
     format: json              # json | text
   cors:
-    allowed_origins: ["*"]
+    allowed_origins: []
   auth:
     default_environment: live
     access_ttl_sec: 1800      # 30m
     refresh_ttl_sec: 2592000  # 30d
     master_key: ""            # operator master-key credential; empty disables the masterKey scheme (set via MASTER_KEY)
-    encryption_key: ""        # base64 32-byte AES-256 key; encrypts reversible secrets at rest (signing PEMs, TOTP). Empty = disabled. (SERVICE_AUTH_ENCRYPTION_KEY)
+    encryption_key: ""        # REQUIRED: base64 32-byte AES-256 key; encrypts reversible secrets at rest. Service refuses to start without it. (SERVICE_AUTH_ENCRYPTION_KEY)
     seed_root: false          # dev: ensure a "Root" project exists on startup so the operator (master_key) has something to manage (SERVICE_AUTH_SEED_ROOT)

@@ -36,7 +36,7 @@ func TestEmailJobFromEventIgnoresSMSOTP(t *testing.T) {
 }
 
 func TestRenderTemplate(t *testing.T) {
-	got, err := render("Code: {{.code}}", map[string]any{"code": "123456"})
+	got, err := renderText("Code: {{.code}}", map[string]any{"code": "123456"})
 	if err != nil {
 		t.Fatal(err)
 	}
