@@ -17,9 +17,20 @@ type OperatorProjectPatchCmd struct {
 type OperatorAdminToken struct {
 	ID        string
 	ProjectID string
+	Name      string
+	Scopes    []string
 	CreatedAt time.Time
 	ExpiresAt time.Time
 	Revoked   bool
+}
+
+// OperatorAdminTokenCmd carries the operator request to mint a project-admin
+// token. Empty ExpiresAt means the adapter applies its default TTL.
+type OperatorAdminTokenCmd struct {
+	ProjectID string
+	Name      string
+	Scopes    []string
+	ExpiresAt time.Time
 }
 
 // OperatorConfigCmd carries a free-form declarative project configuration

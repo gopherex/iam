@@ -2,26 +2,21 @@ import { atom, computed } from 'nanostores';
 
 // The admin panel authenticates as the operator with the master key (Bearer on
 // /mgmt/* operator calls), and per project with an admin token (Bearer on the
-// project's /v1/.../admin/* calls). The master key is persisted; the admin token
-// is held in memory for the active project.
-
-const MASTER_KEY = 'iam.master_key';
+// project's /v1/.../admin/* calls). Both credentials are held in memory only.
 
 export interface ProjectRef {
   id: string;
   name: string;
 }
 
-export const $masterKey = atom<string | null>(localStorage.getItem(MASTER_KEY));
+export const $masterKey = atom<string | null>(null);
 export const $project = atom<ProjectRef | null>(null);
 export const $adminToken = atom<string | null>(null);
 
 export const $authed = computed($masterKey, (k) => !!k);
 
 export function setMasterKey(key: string | null): void {
-  $masterKey.set(key);
-  if (key) localStorage.setItem(MASTER_KEY, key);
-  else localStorage.removeItem(MASTER_KEY);
+	$masterKey.set(key);
 }
 
 export function setProjectContext(project: ProjectRef | null, adminToken: string | null): void {

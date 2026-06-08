@@ -109,34 +109,30 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 	}, nil
 }
 
-// Admin validates an adminToken: a verified typ=admin (or typ=impersonation)
-// JWT. typ=admin tokens are revocable — a matching iam_admin_tokens row must
-// exist and be neither revoked nor expired.
+// Admin validates an adminToken: a verified typ=admin JWT. Admin tokens are
+// revocable — a matching iam_admin_tokens row must exist and be neither revoked
+// nor expired. Impersonation tokens are intentionally rejected here; their only
+// valid use is the single-use redeem endpoint.
 func (a *pgAuthenticator) Admin(ctx context.Context, token string) (*domain.Principal, error) {
 	claims, err := a.verifyJWT(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 	typ, _ := claims["typ"].(string)
-	switch typ {
-	case "admin":
-		row, err := models.IamAdminTokens.Query(
-			sm.Where(models.IamAdminTokens.Columns.Hash.EQ(psql.Arg(sha256Hex(token)))),
-		).One(ctx, a.db.Bobx())
-		if err != nil {
-			return nil, domain.ErrUnauthorized
-		}
-		var tok domain.OperatorAdminToken
-		if err := unmarshal(row.Data, &tok); err == nil && tok.Revoked {
-			return nil, domain.ErrUnauthorized
-		}
-		if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
-			return nil, domain.ErrUnauthorized
-		}
-	case "impersonation":
-		// Single-use redemption is gated by the challenge row at the call site;
-		// here we only require a valid signature/expiry.
-	default:
+	if typ != "admin" {
+		return nil, domain.ErrUnauthorized
+	}
+	row, err := models.IamAdminTokens.Query(
+		sm.Where(models.IamAdminTokens.Columns.Hash.EQ(psql.Arg(sha256Hex(token)))),
+	).One(ctx, a.db.Bobx())
+	if err != nil {
+		return nil, domain.ErrUnauthorized
+	}
+	var tok domain.OperatorAdminToken
+	if err := unmarshal(row.Data, &tok); err == nil && tok.Revoked {
+		return nil, domain.ErrUnauthorized
+	}
+	if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
 		return nil, domain.ErrUnauthorized
 	}
 	return &domain.Principal{
@@ -145,6 +141,7 @@ func (a *pgAuthenticator) Admin(ctx context.Context, token string) (*domain.Prin
 		ProjectID:   claimStr(claims, "pid"),
 		Environment: claimEnv(claims),
 		ClientID:    claimStr(claims, "act"),
+		Scopes:      claimScopes(claims),
 	}, nil
 }
 

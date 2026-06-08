@@ -15,6 +15,19 @@ embedded (`-tags embed`), and ships a minimal static `distroless` image. The
 single binary serves the API and the admin SPA on `:8080` and probes on `:8081`
 (`/healthz/liveness`, `/healthz/readiness`).
 
+## Release
+
+Run `make release` from a clean worktree. It bumps the single published npm
+package (`@gopherex/iam-sdk`) to the selected `X.Y.Z`, commits `release vX.Y.Z`,
+and pushes tag `vX.Y.Z`.
+
+Pushing the tag triggers GitHub Actions release publishing:
+
+| Artifact | Tags / version |
+|---|---|
+| Docker image `ghcr.io/gopherex/iam` | `X.Y.Z` and `latest` |
+| npm package `@gopherex/iam-sdk` | `X.Y.Z` |
+
 ## Configuration
 
 Everything is configured via `IAM_*` environment variables (see

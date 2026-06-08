@@ -16,6 +16,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -382,55 +383,73 @@ func (a *PgOperator) DeleteEnvironment(ctx context.Context, projectID, env strin
 
 // ===== Admin tokens =====
 
-func (a *PgOperator) MintAdminToken(ctx context.Context, projectID string) (string, error) {
-	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
-		if _, err := models.FindIamProject(ctx, a.db.Bobx(), projectID); err != nil {
+func (a *PgOperator) MintAdminToken(ctx context.Context, cmd domain.OperatorAdminTokenCmd) (string, time.Time, error) {
+	type mintResult struct {
+		token     string
+		expiresAt time.Time
+	}
+	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (mintResult, error) {
+		if _, err := models.FindIamProject(ctx, a.db.Bobx(), cmd.ProjectID); err != nil {
 			if isStorageNotFound(translatePgErr("project", err)) {
-				return "", domain.ErrProjectNotFound
+				return mintResult{}, domain.ErrProjectNotFound
 			}
-			return "", err
+			return mintResult{}, err
+		}
+		now := nowUTC()
+		expiresAt := cmd.ExpiresAt
+		if expiresAt.IsZero() {
+			expiresAt = now.Add(90 * 24 * time.Hour)
+		}
+		expiresAt = expiresAt.UTC()
+		if !expiresAt.After(now) {
+			return mintResult{}, domain.ErrBadRequest.WithMessage("expires_at must be in the future")
 		}
 		// Admin token is a signed RS256 JWT (jwx Signer) carrying its jti; only
 		// the jti's sha256 hash is persisted, keeping the token revocable.
 		tok := domain.OperatorAdminToken{
 			ID:        newUUID(),
-			ProjectID: projectID,
-			CreatedAt: nowUTC(),
+			ProjectID: cmd.ProjectID,
+			Name:      cmd.Name,
+			Scopes:    append([]string(nil), cmd.Scopes...),
+			CreatedAt: now,
+			ExpiresAt: expiresAt,
 			Revoked:   false,
 		}
-		signEnv, err := resolveSignEnv(ctx, a.db, projectID, "live")
+		signEnv, err := resolveSignEnv(ctx, a.db, cmd.ProjectID, "live")
 		if err != nil {
-			return "", err
+			return mintResult{}, err
 		}
-		signed, err := a.db.Signer().Sign(ctx, projectID, signEnv, map[string]any{
-			"iss": projectID,
-			"sub": projectID,
-			"pid": projectID,
-			"jti": tok.ID,
-			"typ": "admin",
-			"env": signEnv,
-		}, 90*24*time.Hour)
+		signed, err := a.db.Signer().Sign(ctx, cmd.ProjectID, signEnv, map[string]any{
+			"iss":   cmd.ProjectID,
+			"sub":   cmd.ProjectID,
+			"pid":   cmd.ProjectID,
+			"jti":   tok.ID,
+			"typ":   "admin",
+			"env":   signEnv,
+			"scope": strings.Join(tok.Scopes, " "),
+		}, expiresAt.Sub(now))
 		if err != nil {
-			return "", err
+			return mintResult{}, err
 		}
 		hash := sha256Hex(signed)
 		raw, err := marshal(&tok)
 		if err != nil {
-			return "", err
+			return mintResult{}, err
 		}
 		rm := json.RawMessage(raw)
 		setter := &models.IamAdminTokenSetter{
 			ID:        &tok.ID,
 			ProjectID: &tok.ProjectID,
 			Hash:      &hash,
+			ExpiresAt: ptr(null.From(expiresAt)),
 			CreatedAt: ptr(tok.CreatedAt),
 			Data:      &rm,
 		}
 		if _, err := models.IamAdminTokens.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
-				return "", domain.ErrConflict
+				return mintResult{}, domain.ErrConflict
 			}
-			return "", err
+			return mintResult{}, err
 		}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "admin_token.minted",
@@ -439,10 +458,11 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, projectID string) (stri
 			AggregateID: tok.ID,
 			Payload:     &tok,
 		}); err != nil {
-			return "", err
+			return mintResult{}, err
 		}
-		return signed, nil
+		return mintResult{token: signed, expiresAt: expiresAt}, nil
 	})
+	return res.token, res.expiresAt, err
 }
 
 func (a *PgOperator) ListAdminTokens(ctx context.Context, projectID string) ([]domain.OperatorAdminToken, error) {

@@ -1,4 +1,4 @@
-import { client as heyClient } from '../gen/client.gen';
+import { createClient, createConfig, type Client } from '@hey-api/client-fetch';
 import {
   postV1AuthSignInPassword,
   postV1AuthSignUp,
@@ -12,6 +12,7 @@ import {
   postV1AuthWebauthnLoginOptions,
   postV1AuthWebauthnLoginVerify,
   type AuthResultOrNextStep,
+  type ClientOptions as GeneratedClientOptions,
   type SessionTokens,
   type User,
 } from '../gen';
@@ -68,6 +69,7 @@ export class IamAuth {
   private inflightRefresh: Promise<boolean> | null = null;
   private channel: BroadcastChannel | null = null;
   private initialized: Promise<void>;
+  public readonly client: Client;
 
   constructor(opts: IamClientOptions) {
     this.clientId = opts.clientId;
@@ -76,6 +78,10 @@ export class IamAuth {
     this.persist = opts.persistSession ?? true;
     this.autoRefresh = opts.autoRefresh ?? true;
     this.marginMs = (opts.refreshMarginSeconds ?? 30) * 1000;
+    this.client = createClient(createConfig<GeneratedClientOptions>({
+      baseUrl: opts.baseUrl,
+      auth: async () => this.session?.access_token,
+    }));
 
     this.installInterceptors();
     if ((opts.multiTab ?? true) && typeof BroadcastChannel !== 'undefined') {
@@ -112,6 +118,7 @@ export class IamAuth {
 
   async signInWithPassword(params: { email?: string; phone?: string; password: string }): Promise<AuthResponse> {
     const r = await postV1AuthSignInPassword({
+      client: this.client,
       headers: this.headers(),
       body: { email: params.email ?? null, phone: params.phone ?? null, password: params.password },
     });
@@ -126,6 +133,7 @@ export class IamAuth {
     metadata?: Record<string, unknown>;
   }): Promise<AuthResponse> {
     const r = await postV1AuthSignUp({
+      client: this.client,
       headers: this.headers(),
       body: {
         email: params.email ?? null,
@@ -145,6 +153,7 @@ export class IamAuth {
     purpose?: 'signin' | 'signup' | 'verify';
   }): Promise<{ data: { challengeId: string } | null; error: IamAuthError | null }> {
     const r = await postV1AuthOtpStart({
+      client: this.client,
       headers: this.headers(),
       body: {
         identifier: params.identifier,
@@ -158,6 +167,7 @@ export class IamAuth {
 
   async verifyOtp(params: { challengeId: string; code: string }): Promise<AuthResponse> {
     const r = await postV1AuthOtpVerify({
+      client: this.client,
       headers: this.headers(),
       body: { challenge_id: params.challengeId, code: params.code },
     });
@@ -171,6 +181,7 @@ export class IamAuth {
     purpose?: 'signin' | 'signup';
   }): Promise<{ error: IamAuthError | null }> {
     const r = await postV1AuthMagicLinkStart({
+      client: this.client,
       headers: this.headers(),
       body: { email: params.email, redirect_to: params.redirectTo, purpose: params.purpose ?? 'signin' },
     });
@@ -178,7 +189,7 @@ export class IamAuth {
   }
 
   async verifyMagicLink(params: { token: string }): Promise<AuthResponse> {
-    const r = await postV1AuthMagicLinkVerify({ headers: this.headers(), body: { token: params.token } });
+    const r = await postV1AuthMagicLinkVerify({ client: this.client, headers: this.headers(), body: { token: params.token } });
     return this.handle(r);
   }
 
@@ -192,8 +203,10 @@ export class IamAuth {
     redirectTo?: string;
     skipBrowserRedirect?: boolean;
   }): { url: string } {
-    const base = heyClient.getConfig().baseUrl ?? '';
-    const u = new URL(`${base}/v1/auth/oauth/${encodeURIComponent(params.provider)}/start`);
+    const path = `/v1/auth/oauth/${encodeURIComponent(params.provider)}/start`;
+    const base = this.client.getConfig().baseUrl ?? '';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+    const u = new URL(path, base || origin);
     if (params.redirectTo) u.searchParams.set('redirect_to', params.redirectTo);
     u.searchParams.set('client_id', this.clientId);
     const url = u.toString();
@@ -206,6 +219,7 @@ export class IamAuth {
   /** Exchange the auth code from an OAuth/redirect callback for a session. */
   async exchangeCodeForSession(params: { code: string; codeVerifier?: string }): Promise<AuthResponse> {
     const r = await postV1AuthTokenExchange({
+      client: this.client,
       headers: this.headers(),
       body: { grant_type: 'auth_code', code: params.code, code_verifier: params.codeVerifier ?? null },
     });
@@ -218,6 +232,7 @@ export class IamAuth {
       return { data: { session: null, user: null }, error: new IamAuthError('WebAuthn unavailable', 'webauthn_unavailable') };
     }
     const opt = await postV1AuthWebauthnLoginOptions({
+      client: this.client,
       headers: this.headers(),
       body: { email: params.email ?? null, username: params.username ?? null },
     });
@@ -229,6 +244,7 @@ export class IamAuth {
     if (!cred) return { data: { session: null, user: null }, error: new IamAuthError('WebAuthn cancelled', 'webauthn_cancelled') };
 
     const r = await postV1AuthWebauthnLoginVerify({
+      client: this.client,
       headers: this.headers(),
       body: { challenge_id: data.challenge_id ?? '', credential: encodeAssertion(cred) },
     });
@@ -246,7 +262,7 @@ export class IamAuth {
     await this.ready();
     let error: IamAuthError | null = null;
     if (this.session) {
-      const r = await postV1AuthSignOut({ headers: this.headers(), body: {} });
+      const r = await postV1AuthSignOut({ client: this.client, headers: this.headers(), body: {} });
       if (r.error) error = authError(r);
     }
     await this.setSession(null, 'SIGNED_OUT');
@@ -336,7 +352,7 @@ export class IamAuth {
   private async doRefresh(): Promise<boolean> {
     const rt = this.session?.refresh_token;
     if (!rt) return false;
-    const r = await postV1AuthTokenRefresh({ headers: this.headers(), body: { refresh_token: rt } });
+    const r = await postV1AuthTokenRefresh({ client: this.client, headers: this.headers(), body: { refresh_token: rt } });
     if (r.error || !r.data) {
       await this.setSession(null, 'SIGNED_OUT');
       return false;
@@ -354,13 +370,13 @@ export class IamAuth {
   }
 
   private installInterceptors(): void {
-    heyClient.interceptors.request.use((request: Request) => {
+    this.client.interceptors.request.use((request: Request) => {
       if (this.clientId && !request.headers.has('X-Client-Id')) {
         request.headers.set('X-Client-Id', this.clientId);
       }
       return request;
     });
-    heyClient.interceptors.response.use(async (response: Response, request: Request) => {
+    this.client.interceptors.response.use(async (response: Response, request: Request) => {
       if (
         response.status !== 401 ||
         request.headers.has(RETRY_HEADER) ||
@@ -427,18 +443,8 @@ function encodeAssertion(cred: PublicKeyCredential): Record<string, unknown> {
  */
 export function createIamClient(options: IamClientOptions): {
   auth: IamAuth;
-  client: typeof heyClient;
+  client: Client;
 } {
-  heyClient.setConfig({
-    baseUrl: options.baseUrl,
-    // hey-api attaches this as the Bearer token on operations that require it.
-    auth: () => undefined as unknown as string,
-  });
   const auth = new IamAuth(options);
-  // Bind the bearer resolver to the live session (set after auth exists).
-  heyClient.setConfig({
-    baseUrl: options.baseUrl,
-    auth: async () => (await auth.getSession())?.access_token,
-  });
-  return { auth, client: heyClient };
+  return { auth, client: auth.client };
 }

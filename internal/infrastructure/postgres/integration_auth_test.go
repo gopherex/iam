@@ -5,8 +5,10 @@ package postgres
 import (
 	"context"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gopherex/iam/internal/domain"
 )
@@ -76,6 +78,11 @@ func TestImpersonationRedeemSingleUse(t *testing.T) {
 	}
 	token := impersonationToken(t, imp.URL)
 
+	auth := NewAuthenticator(testDB, "")
+	if _, err := auth.Admin(ctx, token); err == nil {
+		t.Fatal("impersonation token must not authenticate as adminToken")
+	}
+
 	ca := NewPgCoreAuth(testDB, nopEmitter{})
 	acct, sess, err := ca.RedeemImpersonation(ctx, token, "client-1")
 	if err != nil {
@@ -91,6 +98,65 @@ func TestImpersonationRedeemSingleUse(t *testing.T) {
 	// Single-use: a second redemption must fail (the challenge was consumed).
 	if _, _, err := ca.RedeemImpersonation(ctx, token, "client-1"); err == nil {
 		t.Fatal("expected single-use failure on second redeem")
+	}
+	if _, err := auth.Admin(ctx, token); err == nil {
+		t.Fatal("redeemed impersonation token must not authenticate as adminToken")
+	}
+}
+
+func TestAdminTokenMintUsesRequestMetadata(t *testing.T) {
+	ctx := context.Background()
+	operator := NewPgOperator(testDB, nopEmitter{})
+	project, err := operator.CreateProject(ctx, domain.ProjectCmd{Name: "Admin Token Metadata"})
+	if err != nil {
+		t.Fatalf("create project: %v", err)
+	}
+
+	wantExpires := nowUTC().Add(2 * time.Hour).Truncate(time.Second)
+	token, expiresAt, err := operator.MintAdminToken(ctx, domain.OperatorAdminTokenCmd{
+		ProjectID: project.ID,
+		Name:      "console",
+		Scopes:    []string{"admin:ui", "users:read"},
+		ExpiresAt: wantExpires,
+	})
+	if err != nil {
+		t.Fatalf("mint admin token: %v", err)
+	}
+	if token == "" {
+		t.Fatal("empty admin token")
+	}
+	if !expiresAt.Equal(wantExpires) {
+		t.Fatalf("expiresAt = %s, want %s", expiresAt, wantExpires)
+	}
+
+	auth := NewAuthenticator(testDB, "")
+	p, err := auth.Admin(ctx, token)
+	if err != nil {
+		t.Fatalf("admin auth: %v", err)
+	}
+	if p.ProjectID != project.ID {
+		t.Fatalf("principal project = %q, want %q", p.ProjectID, project.ID)
+	}
+	if !slices.Equal(p.Scopes, []string{"admin:ui", "users:read"}) {
+		t.Fatalf("scopes = %v", p.Scopes)
+	}
+
+	tokens, err := operator.ListAdminTokens(ctx, project.ID)
+	if err != nil {
+		t.Fatalf("list admin tokens: %v", err)
+	}
+	if len(tokens) != 1 {
+		t.Fatalf("len(tokens) = %d, want 1", len(tokens))
+	}
+	got := tokens[0]
+	if got.Name != "console" {
+		t.Fatalf("name = %q, want console", got.Name)
+	}
+	if !slices.Equal(got.Scopes, []string{"admin:ui", "users:read"}) {
+		t.Fatalf("listed scopes = %v", got.Scopes)
+	}
+	if !got.ExpiresAt.Equal(wantExpires) {
+		t.Fatalf("listed expiresAt = %s, want %s", got.ExpiresAt, wantExpires)
 	}
 }
 

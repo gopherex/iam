@@ -58,7 +58,11 @@ export function ProjectLayout() {
         const tk = await call(
           postMgmtV1ProjectsByProjectIdAdminTokens({
             path: { project_id: projectId },
-            body: { name: 'admin-panel' },
+            body: {
+              name: 'admin-panel',
+              scopes: ['admin:ui'],
+              expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+            },
           }),
         );
         if (cancelled) return;

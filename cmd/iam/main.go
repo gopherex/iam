@@ -139,6 +139,7 @@ func run() error {
 	apiPipeline := api.EnvironmentMiddleware(
 		api.CSRFMiddleware(postgres.NewPgPlatform(db))(
 			api.CookieAuthMiddleware(srv)))
+	apiPipeline = api.CORSMiddleware(cfg.Service.CORS.AllowedOrigins)(apiPipeline)
 
 	root := http.NewServeMux()
 	// API namespaces go to the generated server; everything else is the embedded
@@ -146,7 +147,7 @@ func run() error {
 	for _, prefix := range []string{"/v1/", "/mgmt/", "/oauth2/", "/p/"} {
 		root.Handle(prefix, apiPipeline)
 	}
-	root.Handle("/", web.Handler())
+	root.Handle("/", api.SecurityHeaders(web.Handler()))
 
 	// Probes get their own listener when ProbeAddr differs from the API port (a
 	// k8s sidecar port not exposed publicly); otherwise they mount on the API

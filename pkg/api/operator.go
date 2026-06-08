@@ -10,6 +10,7 @@ package api
 
 import (
 	"context"
+	"time"
 
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
@@ -25,7 +26,7 @@ type OperatorProjects interface {
 	ListEnvironments(ctx context.Context, projectID string) ([]domain.Environment, error)
 	GetEnvironment(ctx context.Context, projectID, env string) (*domain.Environment, error)
 	DeleteEnvironment(ctx context.Context, projectID, env string) error
-	MintAdminToken(ctx context.Context, projectID string) (string, error)
+	MintAdminToken(ctx context.Context, cmd domain.OperatorAdminTokenCmd) (string, time.Time, error)
 	ListAdminTokens(ctx context.Context, projectID string) ([]domain.OperatorAdminToken, error)
 	RevokeAdminToken(ctx context.Context, projectID, tokenID string) error
 	PlanConfig(ctx context.Context, cmd domain.OperatorConfigCmd) (map[string]any, error)
@@ -229,12 +230,21 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.C
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
-	token, err := s.deps.Projects.MintAdminToken(ctx, params.ProjectID)
+	cmd := domain.OperatorAdminTokenCmd{
+		ProjectID: params.ProjectID,
+		Name:      req.Name,
+		Scopes:    req.Scopes,
+	}
+	if expiresAt, ok := req.ExpiresAt.Get(); ok {
+		cmd.ExpiresAt = expiresAt
+	}
+	token, expiresAt, err := s.deps.Projects.MintAdminToken(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 	return &oas.PostMgmtV1ProjectsByProjectIdAdminTokensOK{
 		AdminToken: oas.NewOptString(token),
+		ExpiresAt:  oas.NewOptTimestamp(oas.Timestamp(expiresAt)),
 	}, nil
 }
 
@@ -315,6 +325,12 @@ func oasOperatorAdminToken(t *domain.OperatorAdminToken) map[string]any {
 		"id":         t.ID,
 		"project_id": t.ProjectID,
 		"revoked":    t.Revoked,
+	}
+	if t.Name != "" {
+		m["name"] = t.Name
+	}
+	if len(t.Scopes) > 0 {
+		m["scopes"] = t.Scopes
 	}
 	if !t.CreatedAt.IsZero() {
 		m["created_at"] = t.CreatedAt
