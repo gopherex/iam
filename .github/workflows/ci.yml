@@ -19,7 +19,7 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - uses: actions/setup-python@a26aa6937d212e703925e98609e10c4a6c3f9414 # v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.x'
 
