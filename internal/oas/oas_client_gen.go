@@ -11132,6 +11132,20 @@ func (c *Client) sendGetV1AuthOauthByProviderStart(ctx context.Context, params G
 	stage = "EncodeQueryParams"
 	q := uri.NewQueryEncoder()
 	{
+		// Encode "client_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "client_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.ClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
 		// Encode "redirect_to" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
 			Name:    "redirect_to",

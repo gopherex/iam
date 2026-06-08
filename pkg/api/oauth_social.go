@@ -88,6 +88,7 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkStart(ctx context.Conte
 	}
 	url, err := s.deps.Accounts.StartLink(ctx, domain.OAuthSocialLinkStartCmd{
 		AccountID:  p.AccountID,
+		ProjectID:  p.ProjectID,
 		Provider:   params.Provider,
 		RedirectTo: params.RedirectTo,
 		State:      params.State.Or(""),
@@ -102,6 +103,7 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkStart(ctx context.Conte
 // security: []) and redirects to the provider's authorize endpoint.
 func (s *OAuthSocialService) GetV1AuthOauthByProviderStart(ctx context.Context, params oas.GetV1AuthOauthByProviderStartParams) (r *oas.GetV1AuthOauthByProviderStartFound, _ error) {
 	url, err := s.deps.Accounts.StartLogin(ctx, domain.OAuthSocialStartCmd{
+		ProjectID:     params.ClientID,
 		Provider:      params.Provider,
 		RedirectTo:    params.RedirectTo,
 		State:         params.State.Or(""),

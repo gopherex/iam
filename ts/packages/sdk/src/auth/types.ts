@@ -1,4 +1,4 @@
-import type { Factor, NextStep, User } from '../gen';
+import type { ConsentDocRef, Factor, NextStep, User } from '../gen';
 
 /**
  * A pluggable key/value store for persisting the session. Browser builds default
@@ -52,6 +52,7 @@ export interface AuthData {
   nextStep?: NextStep;
   factors?: Array<Factor>;
   flowToken?: string;
+  documents?: Array<ConsentDocRef>;
 }
 
 export type AuthResponse =

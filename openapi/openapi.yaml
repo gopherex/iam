@@ -3015,6 +3015,12 @@ paths:
         schema:
           type: string
           maxLength: 1024
+      - name: client_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 1024
       - name: redirect_to
         in: query
         required: true

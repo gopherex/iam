@@ -16538,15 +16538,13 @@ func (s *PushedAuthorizationRequest) SetClientAssertion(val OptString) {
 type PushedAuthorizationRequestCodeChallengeMethod string
 
 const (
-	PushedAuthorizationRequestCodeChallengeMethodS256  PushedAuthorizationRequestCodeChallengeMethod = "S256"
-	PushedAuthorizationRequestCodeChallengeMethodPlain PushedAuthorizationRequestCodeChallengeMethod = "plain"
+	PushedAuthorizationRequestCodeChallengeMethodS256 PushedAuthorizationRequestCodeChallengeMethod = "S256"
 )
 
 // AllValues returns all PushedAuthorizationRequestCodeChallengeMethod values.
 func (PushedAuthorizationRequestCodeChallengeMethod) AllValues() []PushedAuthorizationRequestCodeChallengeMethod {
 	return []PushedAuthorizationRequestCodeChallengeMethod{
 		PushedAuthorizationRequestCodeChallengeMethodS256,
-		PushedAuthorizationRequestCodeChallengeMethodPlain,
 	}
 }
 
@@ -16554,8 +16552,6 @@ func (PushedAuthorizationRequestCodeChallengeMethod) AllValues() []PushedAuthori
 func (s PushedAuthorizationRequestCodeChallengeMethod) MarshalText() ([]byte, error) {
 	switch s {
 	case PushedAuthorizationRequestCodeChallengeMethodS256:
-		return []byte(s), nil
-	case PushedAuthorizationRequestCodeChallengeMethodPlain:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -16567,9 +16563,6 @@ func (s *PushedAuthorizationRequestCodeChallengeMethod) UnmarshalText(data []byt
 	switch PushedAuthorizationRequestCodeChallengeMethod(data) {
 	case PushedAuthorizationRequestCodeChallengeMethodS256:
 		*s = PushedAuthorizationRequestCodeChallengeMethodS256
-		return nil
-	case PushedAuthorizationRequestCodeChallengeMethodPlain:
-		*s = PushedAuthorizationRequestCodeChallengeMethodPlain
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

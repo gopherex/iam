@@ -17144,8 +17144,6 @@ func (s PushedAuthorizationRequestCodeChallengeMethod) Validate() error {
 	switch s {
 	case "S256":
 		return nil
-	case "plain":
-		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}

@@ -1,5 +1,6 @@
 import { createClient, createConfig, type Client } from '@hey-api/client-fetch';
 import {
+  postV1AuthGuest,
   postV1AuthSignInPassword,
   postV1AuthSignUp,
   postV1AuthOtpStart,
@@ -7,19 +8,33 @@ import {
   postV1AuthMagicLinkStart,
   postV1AuthMagicLinkVerify,
   postV1AuthTokenExchange,
+  postV1AuthOauthExchange,
   postV1AuthTokenRefresh,
   postV1AuthSignOut,
+  postV1AuthEmailVerificationStart,
+  postV1AuthEmailVerificationVerify,
+  postV1AuthPhoneVerificationStart,
+  postV1AuthPhoneVerificationVerify,
+  postV1AuthPasswordForgot,
+  postV1AuthPasswordReset,
+  postV1AuthPasswordChange,
+  postV1AuthSessionStepUp,
+  postV1AuthMfaChallenge,
+  postV1AuthMfaVerify,
   postV1AuthWebauthnLoginOptions,
   postV1AuthWebauthnLoginVerify,
   getV1ConfigPublic,
   type AuthResultOrNextStep,
   type ClientOptions as GeneratedClientOptions,
   type ConsentAcceptance,
+  type GetV1AuthOauthByProviderStartData,
+  type PhoneVerifyResult,
   type PublicConfig,
+  type StepUpResult,
   type SessionTokens,
   type User,
 } from '../gen';
-import { defaultStorage } from './storage';
+import { defaultStorage, MemoryStorage } from './storage';
 import {
   IamAuthError,
   type AuthChangeEvent,
@@ -35,6 +50,8 @@ const BROADCAST_NAME = 'iam:auth';
 
 type Listener = (event: AuthChangeEvent, session: Session | null) => void;
 
+type ChallengeResponse = { data: { challengeId: string } | null; error: IamAuthError | null };
+
 function toSession(tokens: SessionTokens, user: User): Session {
   return {
     access_token: tokens.access_token,
@@ -43,6 +60,20 @@ function toSession(tokens: SessionTokens, user: User): Session {
     expires_at: Date.now() + tokens.expires_in * 1000,
     user,
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isStoredSession(value: unknown): value is Session {
+  if (!isRecord(value)) return false;
+  if (typeof value.access_token !== 'string' || value.access_token === '') return false;
+  if (value.refresh_token !== undefined && typeof value.refresh_token !== 'string') return false;
+  if (typeof value.token_type !== 'string' || value.token_type === '') return false;
+  if (typeof value.expires_at !== 'number' || !Number.isFinite(value.expires_at)) return false;
+  if (!isRecord(value.user) || typeof value.user.id !== 'string' || value.user.id === '') return false;
+  return true;
 }
 
 export class IamConfig {
@@ -92,9 +123,9 @@ export class IamAuth {
 
   constructor(opts: IamClientOptions) {
     this.clientId = opts.clientId;
-    this.storage = opts.storage ?? defaultStorage();
-    this.storageKey = opts.storageKey ?? 'iam.session';
     this.persist = opts.persistSession ?? true;
+    this.storage = opts.storage ?? (this.persist ? defaultStorage() : new MemoryStorage());
+    this.storageKey = opts.storageKey ?? 'iam.session';
     this.autoRefresh = opts.autoRefresh ?? true;
     this.marginMs = (opts.refreshMarginSeconds ?? 30) * 1000;
     this.client = createClient(createConfig<GeneratedClientOptions>({
@@ -103,7 +134,7 @@ export class IamAuth {
     }));
 
     this.installInterceptors();
-    if ((opts.multiTab ?? true) && typeof BroadcastChannel !== 'undefined') {
+    if (this.persist && (opts.multiTab ?? true) && typeof BroadcastChannel !== 'undefined') {
       this.channel = new BroadcastChannel(BROADCAST_NAME);
       this.channel.onmessage = () => void this.reloadFromStorage();
     }
@@ -140,6 +171,15 @@ export class IamAuth {
       client: this.client,
       headers: this.headers(),
       body: { email: params.email ?? null, phone: params.phone ?? null, password: params.password },
+    });
+    return this.handle(r);
+  }
+
+  async signInAnonymously(): Promise<AuthResponse> {
+    const r = await postV1AuthGuest({
+      client: this.client,
+      headers: this.headers(),
+      body: {},
     });
     return this.handle(r);
   }
@@ -214,6 +254,58 @@ export class IamAuth {
     return this.handle(r);
   }
 
+  async sendEmailVerification(params: {
+    email?: string;
+    redirectTo?: string;
+    locale?: string;
+  }): Promise<ChallengeResponse> {
+    const r = await postV1AuthEmailVerificationStart({
+      client: this.client,
+      headers: this.headers(),
+      body: {
+        email: params.email,
+        redirect_to: params.redirectTo ?? null,
+        locale: params.locale ?? null,
+      },
+    });
+    return this.challengeResult(r);
+  }
+
+  async verifyEmail(params: { challengeId: string; code: string }): Promise<AuthResponse> {
+    const r = await postV1AuthEmailVerificationVerify({
+      client: this.client,
+      headers: this.headers(),
+      body: { challenge_id: params.challengeId, code: params.code },
+    });
+    return this.handle(r);
+  }
+
+  async sendPhoneVerification(params: {
+    phone: string;
+    channel?: 'sms' | 'whatsapp';
+    locale?: string;
+  }): Promise<ChallengeResponse> {
+    const r = await postV1AuthPhoneVerificationStart({
+      client: this.client,
+      headers: this.headers(),
+      body: {
+        phone: params.phone,
+        channel: params.channel ?? 'sms',
+        locale: params.locale ?? null,
+      },
+    });
+    return this.challengeResult(r);
+  }
+
+  async verifyPhone(params: { challengeId: string; code: string }): Promise<AuthResponse> {
+    const r = await postV1AuthPhoneVerificationVerify({
+      client: this.client,
+      headers: this.headers(),
+      body: { challenge_id: params.challengeId, code: params.code },
+    });
+    return this.handlePhoneVerify(r);
+  }
+
   /**
    * Begin an OAuth/social sign-in. In a browser this redirects to the provider
    * (unless skipBrowserRedirect); the provider returns to your app with a `code`
@@ -222,15 +314,29 @@ export class IamAuth {
   signInWithOAuth(params: {
     provider: string;
     redirectTo?: string;
+    state?: string;
+    codeChallenge?: string;
+    prompt?: string;
+    loginHint?: string;
     skipBrowserRedirect?: boolean;
   }): { url: string } {
-    const path = `/v1/auth/oauth/${encodeURIComponent(params.provider)}/start`;
-    const base = this.client.getConfig().baseUrl ?? '';
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
-    const u = new URL(path, base || origin);
-    if (params.redirectTo) u.searchParams.set('redirect_to', params.redirectTo);
-    u.searchParams.set('client_id', this.clientId);
-    const url = u.toString();
+    const redirectTo = params.redirectTo ?? (typeof window !== 'undefined' ? window.location.href : undefined);
+    if (!redirectTo) {
+      throw new IamAuthError('redirectTo is required outside a browser', 'redirect_to_required');
+    }
+    const url = this.client.buildUrl<GetV1AuthOauthByProviderStartData>({
+      baseUrl: this.client.getConfig().baseUrl,
+      url: '/v1/auth/oauth/{provider}/start',
+      path: { provider: params.provider },
+      query: {
+        client_id: this.clientId,
+        redirect_to: redirectTo,
+        state: params.state,
+        code_challenge: params.codeChallenge,
+        prompt: params.prompt,
+        login_hint: params.loginHint,
+      },
+    });
     if (!params.skipBrowserRedirect && typeof window !== 'undefined') {
       window.location.assign(url);
     }
@@ -243,6 +349,140 @@ export class IamAuth {
       client: this.client,
       headers: this.headers(),
       body: { grant_type: 'auth_code', code: params.code, code_verifier: params.codeVerifier ?? null },
+    });
+    return this.handle(r);
+  }
+
+  async exchangeOAuthCodeForSession(params: { code: string; codeVerifier?: string }): Promise<AuthResponse> {
+    const r = await postV1AuthOauthExchange({
+      client: this.client,
+      headers: this.headers(),
+      body: { code: params.code, code_verifier: params.codeVerifier ?? null },
+    });
+    return this.handle(r);
+  }
+
+  async resetPasswordForEmail(params: {
+    email: string;
+    redirectTo?: string;
+    locale?: string;
+    captchaToken?: string;
+  }): Promise<{ error: IamAuthError | null }> {
+    const r = await postV1AuthPasswordForgot({
+      client: this.client,
+      headers: this.headers(),
+      body: {
+        email: params.email,
+        redirect_to: params.redirectTo ?? null,
+        locale: params.locale ?? null,
+        captcha_token: params.captchaToken ?? null,
+      },
+    });
+    return { error: r.error ? authError(r) : null };
+  }
+
+  async resetPassword(params: {
+    newPassword: string;
+    token?: string;
+    challengeId?: string;
+    code?: string;
+  }): Promise<AuthResponse> {
+    const r = await postV1AuthPasswordReset({
+      client: this.client,
+      headers: this.headers(),
+      body: {
+        new_password: params.newPassword,
+        token: params.token ?? null,
+        challenge_id: params.challengeId ?? null,
+        code: params.code ?? null,
+      },
+    });
+    return this.handle(r);
+  }
+
+  async updatePassword(params: {
+    currentPassword?: string;
+    newPassword: string;
+    revokeOtherSessions?: boolean;
+  }): Promise<{ error: IamAuthError | null }> {
+    const r = await postV1AuthPasswordChange({
+      client: this.client,
+      body: {
+        current_password: params.currentPassword ?? null,
+        new_password: params.newPassword,
+        revoke_other_sessions: params.revokeOtherSessions,
+      },
+    });
+    return { error: r.error ? authError(r) : null };
+  }
+
+  async stepUp(params: {
+    purpose: string;
+    requiredAal?: 1 | 2;
+    maxAgeSeconds?: number;
+  }): Promise<AuthResponse> {
+    const r = await postV1AuthSessionStepUp({
+      client: this.client,
+      body: {
+        purpose: params.purpose,
+        required_aal: params.requiredAal,
+        max_age_seconds: params.maxAgeSeconds ?? null,
+      },
+    });
+    if (r.error) return { data: { session: null, user: null }, error: authError(r) };
+    const payload = r.data as StepUpResult;
+    if (payload.result_type === 'next_step') {
+      return {
+        data: {
+          session: null,
+          user: null,
+          nextStep: payload.next_step,
+          factors: payload.factors,
+          flowToken: payload.flow_token,
+          documents: payload.documents,
+        },
+        error: null,
+      };
+    }
+    return { data: { session: this.session, user: this.session?.user ?? null }, error: null };
+  }
+
+  async challengeMfa(params: {
+    flowToken?: string;
+    factorId?: string;
+    type?: string;
+  } = {}): Promise<ChallengeResponse> {
+    const r = await postV1AuthMfaChallenge({
+      client: this.client,
+      headers: this.headers(),
+      body: {
+        flow_token: params.flowToken ?? null,
+        factor_id: params.factorId ?? null,
+        type: params.type ?? null,
+      },
+    });
+    return this.challengeResult(r);
+  }
+
+  async verifyMfa(params: {
+    flowToken?: string;
+    challengeId?: string;
+    factorId?: string;
+    code?: string;
+    credential?: Record<string, unknown>;
+    recoveryCode?: string;
+  }): Promise<AuthResponse> {
+    const r = await postV1AuthMfaVerify({
+      client: this.client,
+      headers: this.headers(),
+      body: {
+        flow_token: params.flowToken ?? null,
+        challenge_id: params.challengeId ?? null,
+        factor_id: params.factorId ?? null,
+        code: params.code ?? null,
+        credential: params.credential ?? null,
+        recovery_code: params.recoveryCode ?? null,
+      },
     });
     return this.handle(r);
   }
@@ -305,9 +545,41 @@ export class IamAuth {
       return { data: { session, user: payload.user, nextStep: payload.next_step ?? undefined }, error: null };
     }
     return {
-      data: { session: null, user: null, nextStep: payload.next_step, factors: payload.factors, flowToken: payload.flow_token },
+      data: {
+        session: null,
+        user: null,
+        nextStep: payload.next_step,
+        factors: payload.factors,
+        flowToken: payload.flow_token,
+        documents: payload.documents,
+      },
       error: null,
     };
+  }
+
+  private challengeResult(result: { data?: unknown; error?: unknown; response?: Response }): ChallengeResponse {
+    if (result.error) return { data: null, error: authError(result) };
+    const data = result.data as { challenge_id?: string } | undefined;
+    if (!data?.challenge_id) {
+      return { data: null, error: new IamAuthError('challenge id missing', 'invalid_response', result.response?.status) };
+    }
+    return { data: { challengeId: data.challenge_id }, error: null };
+  }
+
+  private async handlePhoneVerify(result: { data?: unknown; error?: unknown; response?: Response }): Promise<AuthResponse> {
+    if (result.error) return { data: { session: null, user: null }, error: authError(result) };
+    const payload = result.data as PhoneVerifyResult;
+    if (payload.result_type === 'authenticated') {
+      const session = toSession(payload.session, payload.user);
+      await this.setSession(session, 'SIGNED_IN');
+      return { data: { session, user: payload.user, nextStep: payload.next_step ?? undefined }, error: null };
+    }
+    if (payload.result_type === 'user_updated') {
+      const session = this.session ? { ...this.session, user: payload.user } : null;
+      if (session) await this.setSession(session, 'USER_UPDATED');
+      return { data: { session, user: payload.user }, error: null };
+    }
+    return { data: { session: null, user: null }, error: new IamAuthError('unsupported phone verification response', 'invalid_response', result.response?.status) };
   }
 
   private async setSession(session: Session | null, event: AuthChangeEvent): Promise<void> {
@@ -335,7 +607,15 @@ export class IamAuth {
   private async reloadFromStorage(emitChange = true): Promise<void> {
     try {
       const raw = await this.storage.getItem(this.storageKey);
-      const next = raw ? (JSON.parse(raw) as Session) : null;
+      const parsed = raw ? JSON.parse(raw) : null;
+      let next = isStoredSession(parsed) ? parsed : null;
+      if (raw && !next) {
+        await this.storage.removeItem(this.storageKey);
+      }
+      if (next && next.expires_at <= Date.now() && !next.refresh_token) {
+        await this.storage.removeItem(this.storageKey);
+        next = null;
+      }
       const changed = (next?.access_token ?? null) !== (this.session?.access_token ?? null);
       this.session = next;
       if (changed && emitChange) {

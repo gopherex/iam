@@ -10782,6 +10782,10 @@ func (s *Server) handleGetV1AuthOauthByProviderStartRequest(args [1]string, args
 					In:   "path",
 				}: params.Provider,
 				{
+					Name: "client_id",
+					In:   "query",
+				}: params.ClientID,
+				{
 					Name: "redirect_to",
 					In:   "query",
 				}: params.RedirectTo,

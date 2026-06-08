@@ -9639,6 +9639,7 @@ func decodeGetV1AuthOauthByProviderLinkStartParams(args [1]string, argsEscaped b
 // GetV1AuthOauthByProviderStartParams is parameters of getV1AuthOauthByProviderStart operation.
 type GetV1AuthOauthByProviderStartParams struct {
 	Provider      string
+	ClientID      string
 	RedirectTo    string
 	State         OptString `json:",omitempty,omitzero"`
 	CodeChallenge OptString `json:",omitempty,omitzero"`
@@ -9653,6 +9654,13 @@ func unpackGetV1AuthOauthByProviderStartParams(packed middleware.Parameters) (pa
 			In:   "path",
 		}
 		params.Provider = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "client_id",
+			In:   "query",
+		}
+		params.ClientID = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -9764,6 +9772,62 @@ func decodeGetV1AuthOauthByProviderStartParams(args [1]string, argsEscaped bool,
 		return params, &ogenerrors.DecodeParamError{
 			Name: "provider",
 			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode query: client_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "client_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ClientID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     1024,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.ClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "client_id",
+			In:   "query",
 			Err:  err,
 		}
 	}

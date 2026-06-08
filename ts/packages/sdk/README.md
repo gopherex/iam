@@ -51,21 +51,52 @@ What `iam.auth` does for you:
 
 Sign-in flows: `signInWithPassword`, `signUp`, `signInWithOtp` / `verifyOtp`,
 `signInWithMagicLink` / `verifyMagicLink`, `signInWithOAuth` (browser redirect) /
-`exchangeCodeForSession`, `signInWithWebAuthn`. Plus `getSession`, `getUser`,
-`refreshSession`, `onAuthStateChange`, `signOut`.
+`exchangeOAuthCodeForSession`, `signInWithWebAuthn`, `signInAnonymously`,
+email/phone verification, password reset/update, step-up, and MFA challenge /
+verify. Plus `getSession`, `getUser`, `refreshSession`, `onAuthStateChange`,
+`signOut`.
+
+## Persistence
+
+By default the SDK persists the session under `iam.session` in `localStorage`
+when Web Storage is available. The persisted value is JSON containing:
+
+- `access_token`
+- `refresh_token` when issued
+- `token_type`
+- absolute `expires_at` in epoch milliseconds
+- the resolved `user`
+
+Storage is validated on load; malformed values and expired sessions without a
+refresh token are ignored and removed.
+
+Disable persistence entirely with `persistSession: false`. In that mode the SDK
+does not read, write, or probe `localStorage`, and cross-tab sync is disabled.
+
+```ts
+const iam = createIamClient({
+  baseUrl: 'https://iam.acme.com',
+  clientId: 'web',
+  persistSession: false,
+});
+```
+
+Use `storage` and `storageKey` to plug in React Native, SSR, encrypted storage,
+or test storage. Storage methods may be sync or async.
 
 ## Raw operations (management / admin)
 
-The generated functions are re-exported for everything else; they use the same
-client configured by `createIamClient`, so the bearer token is attached
-automatically.
+The generated functions are re-exported for everything else. Pass the configured
+`client` returned by `createIamClient`; it attaches `X-Client-Id`, bearer auth,
+and the refresh-on-401 interceptor.
 
 ```ts
-import { getV1ProjectsByProjectIdAdminApiKeys } from '@gopherex/iam-sdk';
+import { createIamClient, getV1ProjectsByProjectIdAdminApiKeys } from '@gopherex/iam-sdk';
 
+const iam = createIamClient({ baseUrl: 'https://iam.acme.com', clientId: 'web' });
 const { data } = await getV1ProjectsByProjectIdAdminApiKeys({
+  client: iam.client,
   path: { project_id: 'p1' },
-  headers: { 'X-Client-Id': 'web' },
 });
 ```
 
