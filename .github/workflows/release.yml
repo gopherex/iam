@@ -95,6 +95,21 @@ jobs:
           yarn build
         working-directory: ts
 
+      - name: Delete existing version (allow republish on tag re-create)
+        run: |
+          id="$(gh api "/orgs/${ORG}/packages/npm/${PKG}/versions" \
+            --jq ".[] | select(.name == \"${VERSION}\") | .id" 2>/dev/null || true)"
+          if [ -n "$id" ]; then
+            echo "Deleting existing ${PKG}@${VERSION} (version id ${id})"
+            gh api -X DELETE "/orgs/${ORG}/packages/npm/${PKG}/versions/${id}"
+          else
+            echo "No existing ${PKG}@${VERSION}, nothing to delete"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ORG: gopherex
+          PKG: iam-sdk
+
       - name: Publish @gopherex/iam-sdk
         run: npm publish
         working-directory: ts/packages/sdk
