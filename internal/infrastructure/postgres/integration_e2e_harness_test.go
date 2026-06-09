@@ -84,7 +84,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 		})),
 	)
 
-	auth := NewAuthenticator(testDB, "")
+	auth := NewAuthenticator(testDB, e2eMasterKey)
 	srv, err := oas.NewServer(handler, api.NewSecurityHandler(auth), oas.WithErrorHandler(api.ErrorHandler))
 	if err != nil {
 		t.Fatalf("build server: %v", err)
@@ -172,6 +172,13 @@ func e2eReq(t *testing.T, ctx context.Context, method, url string, body any, hea
 func e2eBearer(token string) map[string]string {
 	return map[string]string{"Authorization": "Bearer " + token, "X-Environment": "live"}
 }
+
+// e2eMasterKey is the operator master key the harness server is built with;
+// send it as a bearer token to authenticate operator (cross-project) endpoints.
+const e2eMasterKey = "e2e-master-key"
+
+// e2eMaster is the header map for an operator (master-key) authenticated request.
+func e2eMaster() map[string]string { return e2eBearer(e2eMasterKey) }
 
 // e2eDecode unmarshals an e2eResp body into dst, failing the test on error.
 func e2eDecode(t *testing.T, r e2eResp, dst any) {
