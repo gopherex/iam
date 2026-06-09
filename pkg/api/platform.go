@@ -77,10 +77,14 @@ func (s *PlatformService) GetV1HealthReady(ctx context.Context) (*oas.GetV1Healt
 // oasPublicConfig maps the domain bootstrap config to the oas wire type.
 func oasPublicConfig(c *domain.PublicConfig) *oas.PublicConfig {
 	r := &oas.PublicConfig{
-		Project:       oas.NewOptPublicConfigProject(oas.PublicConfigProject{Name: oas.NewOptString(c.ProjectName)}),
-		Methods:       c.Methods,
-		Locales:       c.Locales,
-		DefaultLocale: oas.NewOptString(c.DefaultLocale),
+		Project: oas.NewOptPublicConfigProject(oas.PublicConfigProject{Name: oas.NewOptString(c.ProjectName)}),
+		Methods: c.Methods,
+		Locales: c.Locales,
+	}
+	// Only set the default locale when present: an empty string fails the oas
+	// locale pattern on response validation, which would reject the response.
+	if c.DefaultLocale != "" {
+		r.DefaultLocale = oas.NewOptString(c.DefaultLocale)
 	}
 	for _, p := range c.Providers {
 		r.Providers = append(r.Providers, oas.PublicConfigProvidersItem{

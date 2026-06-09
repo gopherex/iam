@@ -297,15 +297,20 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.
 
 // oasProject maps a domain Project to its oas wire representation.
 func oasProject(p *domain.Project) oas.Project {
-	return oas.Project{
+	out := oas.Project{
 		ID:               oas.NewOptString(p.ID),
 		Name:             oas.NewOptString(p.Name),
 		Slug:             oas.NewOptString(p.Slug),
-		DefaultLocale:    oas.NewOptString(p.DefaultLocale),
 		SupportedLocales: p.SupportedLocales,
 		Environments:     p.Environments,
 		CreatedAt:        oas.NewOptTimestamp(oas.Timestamp(p.CreatedAt)),
 	}
+	// Only set the default locale when present: an empty string fails the oas
+	// locale pattern on response validation, which would reject the response.
+	if p.DefaultLocale != "" {
+		out.DefaultLocale = oas.NewOptString(p.DefaultLocale)
+	}
+	return out
 }
 
 // oasEnvironment maps a domain Environment to its oas wire representation.

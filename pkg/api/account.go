@@ -410,7 +410,11 @@ func oasAccountConsent(c *domain.AccountConsent) oas.GetV1UsersMeConsentsOKConse
 		Key:        oas.NewOptString(c.Key),
 		Version:    oas.NewOptString(c.Version),
 		AcceptedAt: oas.NewOptTimestamp(oas.Timestamp(c.AcceptedAt)),
-		Locale:     oas.NewOptString(c.Locale),
+	}
+	// Only set locale when present: an empty string fails the oas locale
+	// pattern on response validation, which would reject the whole response.
+	if c.Locale != "" {
+		item.Locale = oas.NewOptString(c.Locale)
 	}
 	if c.URL != "" {
 		item.URL = oas.NewOptNilString(c.URL)
