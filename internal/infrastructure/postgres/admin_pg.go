@@ -27,6 +27,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -65,13 +66,15 @@ func adminEnv(env string) string {
 }
 
 // adminIsNotFound reports whether err is (or wraps) a no-rows / not-found from
-// any layer: the raw pgx.ErrNoRows a bob .One() returns, the package
-// ErrNotFound translatePgErr produces, or a domain not-found.
+// any layer: the sql.ErrNoRows a bob .One() returns (bob wraps the pgx driver in
+// database/sql semantics), the raw pgx.ErrNoRows, the package ErrNotFound
+// translatePgErr produces, or a domain not-found.
 func adminIsNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	return errors.Is(err, pgx.ErrNoRows) ||
+	return errors.Is(err, sql.ErrNoRows) ||
+		errors.Is(err, pgx.ErrNoRows) ||
 		errors.Is(err, ErrNotFound) ||
 		errors.Is(err, domain.ErrNotFound)
 }

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,10 +27,12 @@ func marshal(v any) ([]byte, error) { return json.Marshal(v) }
 // unmarshal decodes a JSONB blob into v.
 func unmarshal(b []byte, v any) error { return json.Unmarshal(b, v) }
 
-// translatePgErr maps pgx.ErrNoRows onto ErrNotFound; everything else passes
-// through wrapped with the resource name.
+// translatePgErr maps a no-rows error onto ErrNotFound; everything else passes
+// through wrapped with the resource name. Both sentinels matter: generated PK
+// finders surface the raw pgx.ErrNoRows, while the bob query builder (.One())
+// wraps the driver in database/sql semantics and returns sql.ErrNoRows.
 func translatePgErr(resource string, err error) error {
-	if errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) || errors.Is(err, pgx.ErrNoRows) {
 		return fmt.Errorf("%s: %w", resource, ErrNotFound)
 	}
 	return err

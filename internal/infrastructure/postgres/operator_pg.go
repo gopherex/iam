@@ -16,6 +16,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 
@@ -698,9 +699,11 @@ func (a *PgOperator) writeConfig(ctx context.Context, projectID, key string, doc
 
 // ===== small local helpers =====
 
-// isStorageNotFound reports whether err is the storage-level not-found sentinel.
+// isStorageNotFound reports whether err is (or wraps) the storage-level
+// not-found sentinel. translatePgErr wraps ErrNotFound with the resource name,
+// so this must use errors.Is, not ==.
 func isStorageNotFound(err error) bool {
-	return err == ErrNotFound
+	return errors.Is(err, ErrNotFound)
 }
 
 // sha256Hex returns the hex sha256 digest of s (what we persist for tokens).
