@@ -467,6 +467,154 @@ func decodeDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams(args [2]string
 	return params, nil
 }
 
+// DeleteV1AuthFlowsByFlowTokenParams is parameters of deleteV1AuthFlowsByFlowToken operation.
+type DeleteV1AuthFlowsByFlowTokenParams struct {
+	XClientID string
+	FlowToken string
+}
+
+func unpackDeleteV1AuthFlowsByFlowTokenParams(packed middleware.Parameters) (params DeleteV1AuthFlowsByFlowTokenParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Client-Id",
+			In:   "header",
+		}
+		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "flow_token",
+			In:   "path",
+		}
+		params.FlowToken = packed[key].(string)
+	}
+	return params
+}
+
+func decodeDeleteV1AuthFlowsByFlowTokenParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteV1AuthFlowsByFlowTokenParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: X-Client-Id.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.XClientID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     1024,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.XClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode path: flow_token.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "flow_token",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.FlowToken = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     4096,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.FlowToken)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "flow_token",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DeleteV1AuthIdentitiesByIdentityIdParams is parameters of deleteV1AuthIdentitiesByIdentityId operation.
 type DeleteV1AuthIdentitiesByIdentityIdParams struct {
 	IdentityID string
@@ -8842,6 +8990,229 @@ func decodeGetV1AuthEmailVerificationCallbackParams(args [0]string, argsEscaped 
 		return params, &ogenerrors.DecodeParamError{
 			Name: "redirect_to",
 			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetV1AuthFlowsByFlowTokenParams is parameters of getV1AuthFlowsByFlowToken operation.
+type GetV1AuthFlowsByFlowTokenParams struct {
+	XClientID string
+	FlowToken string
+}
+
+func unpackGetV1AuthFlowsByFlowTokenParams(packed middleware.Parameters) (params GetV1AuthFlowsByFlowTokenParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Client-Id",
+			In:   "header",
+		}
+		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "flow_token",
+			In:   "path",
+		}
+		params.FlowToken = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetV1AuthFlowsByFlowTokenParams(args [1]string, argsEscaped bool, r *http.Request) (params GetV1AuthFlowsByFlowTokenParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: X-Client-Id.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.XClientID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     1024,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.XClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode path: flow_token.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "flow_token",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.FlowToken = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     4096,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.FlowToken)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "flow_token",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetV1AuthFlowsCurrentParams is parameters of getV1AuthFlowsCurrent operation.
+type GetV1AuthFlowsCurrentParams struct {
+	XClientID string
+}
+
+func unpackGetV1AuthFlowsCurrentParams(packed middleware.Parameters) (params GetV1AuthFlowsCurrentParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Client-Id",
+			In:   "header",
+		}
+		params.XClientID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetV1AuthFlowsCurrentParams(args [0]string, argsEscaped bool, r *http.Request) (params GetV1AuthFlowsCurrentParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: X-Client-Id.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.XClientID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     1024,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.XClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Client-Id",
+			In:   "header",
 			Err:  err,
 		}
 	}
@@ -30028,6 +30399,377 @@ func decodePostV1AuthEmailVerificationVerifyParams(args [0]string, argsEscaped b
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
 			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// PostV1AuthFlowsParams is parameters of postV1AuthFlows operation.
+type PostV1AuthFlowsParams struct {
+	XClientID string
+}
+
+func unpackPostV1AuthFlowsParams(packed middleware.Parameters) (params PostV1AuthFlowsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Client-Id",
+			In:   "header",
+		}
+		params.XClientID = packed[key].(string)
+	}
+	return params
+}
+
+func decodePostV1AuthFlowsParams(args [0]string, argsEscaped bool, r *http.Request) (params PostV1AuthFlowsParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: X-Client-Id.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.XClientID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     1024,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.XClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// PostV1AuthFlowsByFlowTokenResendParams is parameters of postV1AuthFlowsByFlowTokenResend operation.
+type PostV1AuthFlowsByFlowTokenResendParams struct {
+	XClientID string
+	FlowToken string
+}
+
+func unpackPostV1AuthFlowsByFlowTokenResendParams(packed middleware.Parameters) (params PostV1AuthFlowsByFlowTokenResendParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Client-Id",
+			In:   "header",
+		}
+		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "flow_token",
+			In:   "path",
+		}
+		params.FlowToken = packed[key].(string)
+	}
+	return params
+}
+
+func decodePostV1AuthFlowsByFlowTokenResendParams(args [1]string, argsEscaped bool, r *http.Request) (params PostV1AuthFlowsByFlowTokenResendParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: X-Client-Id.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.XClientID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     1024,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.XClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode path: flow_token.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "flow_token",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.FlowToken = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     4096,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.FlowToken)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "flow_token",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// PostV1AuthFlowsByFlowTokenSubmitParams is parameters of postV1AuthFlowsByFlowTokenSubmit operation.
+type PostV1AuthFlowsByFlowTokenSubmitParams struct {
+	XClientID string
+	FlowToken string
+}
+
+func unpackPostV1AuthFlowsByFlowTokenSubmitParams(packed middleware.Parameters) (params PostV1AuthFlowsByFlowTokenSubmitParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Client-Id",
+			In:   "header",
+		}
+		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "flow_token",
+			In:   "path",
+		}
+		params.FlowToken = packed[key].(string)
+	}
+	return params
+}
+
+func decodePostV1AuthFlowsByFlowTokenSubmitParams(args [1]string, argsEscaped bool, r *http.Request) (params PostV1AuthFlowsByFlowTokenSubmitParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: X-Client-Id.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.XClientID = c
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     1024,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.XClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode path: flow_token.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "flow_token",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.FlowToken = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     4096,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.FlowToken)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "flow_token",
+			In:   "path",
 			Err:  err,
 		}
 	}

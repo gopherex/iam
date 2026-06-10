@@ -816,6 +816,12 @@ type AdminHandler interface {
 //
 // x-ogen-operation-group: CoreAuth
 type CoreAuthHandler interface {
+	// DeleteV1AuthFlowsByFlowToken implements deleteV1AuthFlowsByFlowToken operation.
+	//
+	// Abandon a flow.
+	//
+	// DELETE /v1/auth/flows/{flow_token}
+	DeleteV1AuthFlowsByFlowToken(ctx context.Context, params DeleteV1AuthFlowsByFlowTokenParams) error
 	// GetV1AuthEmailChangeCancel implements getV1AuthEmailChangeCancel operation.
 	//
 	// Cancel a pending email change (from old-address link).
@@ -828,6 +834,18 @@ type CoreAuthHandler interface {
 	//
 	// GET /v1/auth/email/verification/callback
 	GetV1AuthEmailVerificationCallback(ctx context.Context, params GetV1AuthEmailVerificationCallbackParams) (*GetV1AuthEmailVerificationCallbackFound, error)
+	// GetV1AuthFlowsByFlowToken implements getV1AuthFlowsByFlowToken operation.
+	//
+	// Resume a flow by token.
+	//
+	// GET /v1/auth/flows/{flow_token}
+	GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams) (*FlowState, error)
+	// GetV1AuthFlowsCurrent implements getV1AuthFlowsCurrent operation.
+	//
+	// Resume the current flow (cookie-bound).
+	//
+	// GET /v1/auth/flows/current
+	GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams) (*FlowState, error)
 	// GetV1AuthSession implements getV1AuthSession operation.
 	//
 	// Get current session and user.
@@ -870,6 +888,25 @@ type CoreAuthHandler interface {
 	//
 	// POST /v1/auth/email/verification/verify
 	PostV1AuthEmailVerificationVerify(ctx context.Context, req *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams) (*AuthResult, error)
+	// PostV1AuthFlows implements postV1AuthFlows operation.
+	//
+	// Single entry point for signup/signin/recovery. Returns the full FlowState, with any required
+	// challenge already issued.
+	//
+	// POST /v1/auth/flows
+	PostV1AuthFlows(ctx context.Context, req *FlowCreateRequest, params PostV1AuthFlowsParams) (*FlowState, error)
+	// PostV1AuthFlowsByFlowTokenResend implements postV1AuthFlowsByFlowTokenResend operation.
+	//
+	// Re-issue the active challenge of a flow.
+	//
+	// POST /v1/auth/flows/{flow_token}/resend
+	PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams) (*FlowState, error)
+	// PostV1AuthFlowsByFlowTokenSubmit implements postV1AuthFlowsByFlowTokenSubmit operation.
+	//
+	// Submit the current step of a flow.
+	//
+	// POST /v1/auth/flows/{flow_token}/submit
+	PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, req *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams) (*FlowState, error)
 	// PostV1AuthGuest implements postV1AuthGuest operation.
 	//
 	// Create an anonymous guest user and session.

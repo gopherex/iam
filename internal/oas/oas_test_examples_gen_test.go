@@ -503,6 +503,140 @@ func TestFactorType_EncodeDecode(t *testing.T) {
 	var typ2 FactorType
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestFlowChallenge_EncodeDecode(t *testing.T) {
+	var typ FlowChallenge
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowChallenge
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFlowContact_EncodeDecode(t *testing.T) {
+	var typ FlowContact
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowContact
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFlowCreateRequest_EncodeDecode(t *testing.T) {
+	var typ FlowCreateRequest
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowCreateRequest
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFlowCreateRequestKind_EncodeDecode(t *testing.T) {
+	var typ FlowCreateRequestKind
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowCreateRequestKind
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFlowError_EncodeDecode(t *testing.T) {
+	var typ FlowError
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowError
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFlowState_EncodeDecode(t *testing.T) {
+	var typ FlowState
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowState
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFlowStateKind_EncodeDecode(t *testing.T) {
+	var typ FlowStateKind
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowStateKind
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFlowStateStatus_EncodeDecode(t *testing.T) {
+	var typ FlowStateStatus
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowStateStatus
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFlowStateStep_EncodeDecode(t *testing.T) {
+	var typ FlowStateStep
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowStateStep
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFlowSubmitRequest_EncodeDecode(t *testing.T) {
+	var typ FlowSubmitRequest
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowSubmitRequest
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFlowSubmitRequestPayload_EncodeDecode(t *testing.T) {
+	var typ FlowSubmitRequestPayload
+	typ = make(FlowSubmitRequestPayload)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowSubmitRequestPayload
+	typ2 = make(FlowSubmitRequestPayload)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestGetMgmtV1ProjectsByProjectIdAdminTokensOK_EncodeDecode(t *testing.T) {
 	var typ GetMgmtV1ProjectsByProjectIdAdminTokensOK
 	typ = make(GetMgmtV1ProjectsByProjectIdAdminTokensOK)

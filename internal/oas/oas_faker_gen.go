@@ -797,6 +797,217 @@ func (s *FactorType) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *FlowChallenge) SetFake() {
+	{
+		{
+			s.Channel.SetFake()
+		}
+	}
+	{
+		{
+			s.ExpiresAt.SetFake()
+		}
+	}
+	{
+		{
+			s.ResendAt.SetFake()
+		}
+	}
+	{
+		{
+			s.AttemptsLeft.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *FlowContact) SetFake() {
+	{
+		{
+			s.EmailMasked.SetFake()
+		}
+	}
+	{
+		{
+			s.PhoneMasked.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *FlowCreateRequest) SetFake() {
+	{
+		{
+			s.Kind.SetFake()
+		}
+	}
+	{
+		{
+			s.Email.SetFake()
+		}
+	}
+	{
+		{
+			s.Password.SetFake()
+		}
+	}
+	{
+		{
+			s.Name.SetFake()
+		}
+	}
+	{
+		{
+			s.CaptchaToken.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *FlowCreateRequestKind) SetFake() {
+	*s = FlowCreateRequestKindSignup
+}
+
+// SetFake set fake values.
+func (s *FlowError) SetFake() {
+	{
+		{
+			s.Code.SetFake()
+		}
+	}
+	{
+		{
+			s.Message.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *FlowState) SetFake() {
+	{
+		{
+			s.FlowToken = "string"
+		}
+	}
+	{
+		{
+			s.Kind.SetFake()
+		}
+	}
+	{
+		{
+			s.Status.SetFake()
+		}
+	}
+	{
+		{
+			s.Step.SetFake()
+		}
+	}
+	{
+		{
+			s.NextActions = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.NextActions = append(s.NextActions, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Contact.SetFake()
+		}
+	}
+	{
+		{
+			s.Challenge.SetFake()
+		}
+	}
+	{
+		{
+			s.ConsentsRequired = nil
+			for i := 0; i < 0; i++ {
+				var elem ConsentDocRef
+				{
+					elem.SetFake()
+				}
+				s.ConsentsRequired = append(s.ConsentsRequired, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Factors = nil
+			for i := 0; i < 0; i++ {
+				var elem Factor
+				{
+					elem.SetFake()
+				}
+				s.Factors = append(s.Factors, elem)
+			}
+		}
+	}
+	{
+		{
+			s.ExpiresAt.SetFake()
+		}
+	}
+	{
+		{
+			s.Error.SetFake()
+		}
+	}
+	{
+		{
+			s.Session.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *FlowStateKind) SetFake() {
+	*s = FlowStateKindSignup
+}
+
+// SetFake set fake values.
+func (s *FlowStateStatus) SetFake() {
+	*s = FlowStateStatusPending
+}
+
+// SetFake set fake values.
+func (s *FlowStateStep) SetFake() {
+	*s = FlowStateStepCollectCredentials
+}
+
+// SetFake set fake values.
+func (s *FlowSubmitRequest) SetFake() {
+	{
+		{
+			s.Action = "string"
+		}
+	}
+	{
+		{
+			s.Payload.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *FlowSubmitRequestPayload) SetFake() {
+	var (
+		elem jx.Raw
+		m    map[string]jx.Raw = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
+	}
+}
+
+// SetFake set fake values.
 func (s *GetMgmtV1ProjectsByProjectIdAdminTokensOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -2595,6 +2806,42 @@ func (s *OptFloat64) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptFlowChallenge) SetFake() {
+	var elem FlowChallenge
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptFlowContact) SetFake() {
+	var elem FlowContact
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptFlowError) SetFake() {
+	var elem FlowError
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptFlowSubmitRequestPayload) SetFake() {
+	var elem FlowSubmitRequestPayload
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
 func (s *OptGetV1AccountCapabilitiesOKCapabilities) SetFake() {
 	var elem GetV1AccountCapabilitiesOKCapabilities
 	{
@@ -3284,6 +3531,15 @@ func (s *OptSession) SetFake() {
 // SetFake set fake values.
 func (s *OptSessionAal) SetFake() {
 	var elem SessionAal
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptSessionTokens) SetFake() {
+	var elem SessionTokens
 	{
 		elem.SetFake()
 	}

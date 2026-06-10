@@ -57,6 +57,13 @@ func encodeDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvResponse(response *Ok
 	return nil
 }
 
+func encodeDeleteV1AuthFlowsByFlowTokenResponse(response *DeleteV1AuthFlowsByFlowTokenNoContent, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(204)
+	span.SetStatus(codes.Ok, http.StatusText(204))
+
+	return nil
+}
+
 func encodeDeleteV1AuthIdentitiesByIdentityIdResponse(response *Ok, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
@@ -785,6 +792,50 @@ func encodeGetV1AuthEmailVerificationCallbackResponse(response *GetV1AuthEmailVe
 	}
 	w.WriteHeader(302)
 	span.SetStatus(codes.Ok, http.StatusText(302))
+
+	return nil
+}
+
+func encodeGetV1AuthFlowsByFlowTokenResponse(response *FlowState, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeGetV1AuthFlowsCurrentResponse(response *FlowState, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
 
 	return nil
 }
@@ -3256,6 +3307,72 @@ func encodePostV1AuthEmailVerificationStartResponse(response *Challenge, w http.
 }
 
 func encodePostV1AuthEmailVerificationVerifyResponse(response *AuthResult, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodePostV1AuthFlowsResponse(response *FlowState, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodePostV1AuthFlowsByFlowTokenResendResponse(response *FlowState, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodePostV1AuthFlowsByFlowTokenSubmitResponse(response *FlowState, w http.ResponseWriter, span trace.Span) error {
 	if err := func() error {
 		if err := response.Validate(); err != nil {
 			return err

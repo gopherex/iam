@@ -40,6 +40,15 @@ func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx
 	return r, ht.ErrNotImplemented
 }
 
+// DeleteV1AuthFlowsByFlowToken implements deleteV1AuthFlowsByFlowToken operation.
+//
+// Abandon a flow.
+//
+// DELETE /v1/auth/flows/{flow_token}
+func (UnimplementedHandler) DeleteV1AuthFlowsByFlowToken(ctx context.Context, params DeleteV1AuthFlowsByFlowTokenParams) error {
+	return ht.ErrNotImplemented
+}
+
 // DeleteV1AuthIdentitiesByIdentityId implements deleteV1AuthIdentitiesByIdentityId operation.
 //
 // Unlink an identity (step-up).
@@ -442,6 +451,24 @@ func (UnimplementedHandler) GetV1AuthEmailChangeCancel(ctx context.Context, para
 //
 // GET /v1/auth/email/verification/callback
 func (UnimplementedHandler) GetV1AuthEmailVerificationCallback(ctx context.Context, params GetV1AuthEmailVerificationCallbackParams) (r *GetV1AuthEmailVerificationCallbackFound, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetV1AuthFlowsByFlowToken implements getV1AuthFlowsByFlowToken operation.
+//
+// Resume a flow by token.
+//
+// GET /v1/auth/flows/{flow_token}
+func (UnimplementedHandler) GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams) (r *FlowState, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetV1AuthFlowsCurrent implements getV1AuthFlowsCurrent operation.
+//
+// Resume the current flow (cookie-bound).
+//
+// GET /v1/auth/flows/current
+func (UnimplementedHandler) GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams) (r *FlowState, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1504,6 +1531,34 @@ func (UnimplementedHandler) PostV1AuthEmailVerificationStart(ctx context.Context
 //
 // POST /v1/auth/email/verification/verify
 func (UnimplementedHandler) PostV1AuthEmailVerificationVerify(ctx context.Context, req *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams) (r *AuthResult, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PostV1AuthFlows implements postV1AuthFlows operation.
+//
+// Single entry point for signup/signin/recovery. Returns the full FlowState, with any required
+// challenge already issued.
+//
+// POST /v1/auth/flows
+func (UnimplementedHandler) PostV1AuthFlows(ctx context.Context, req *FlowCreateRequest, params PostV1AuthFlowsParams) (r *FlowState, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PostV1AuthFlowsByFlowTokenResend implements postV1AuthFlowsByFlowTokenResend operation.
+//
+// Re-issue the active challenge of a flow.
+//
+// POST /v1/auth/flows/{flow_token}/resend
+func (UnimplementedHandler) PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams) (r *FlowState, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PostV1AuthFlowsByFlowTokenSubmit implements postV1AuthFlowsByFlowTokenSubmit operation.
+//
+// Submit the current step of a flow.
+//
+// POST /v1/auth/flows/{flow_token}/submit
+func (UnimplementedHandler) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, req *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams) (r *FlowState, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

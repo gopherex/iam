@@ -891,6 +891,12 @@ type AdminInvoker interface {
 //
 // x-gen-operation-group: CoreAuth
 type CoreAuthInvoker interface {
+	// DeleteV1AuthFlowsByFlowToken invokes deleteV1AuthFlowsByFlowToken operation.
+	//
+	// Abandon a flow.
+	//
+	// DELETE /v1/auth/flows/{flow_token}
+	DeleteV1AuthFlowsByFlowToken(ctx context.Context, params DeleteV1AuthFlowsByFlowTokenParams, options ...RequestOption) error
 	// GetV1AuthEmailChangeCancel invokes getV1AuthEmailChangeCancel operation.
 	//
 	// Cancel a pending email change (from old-address link).
@@ -903,6 +909,18 @@ type CoreAuthInvoker interface {
 	//
 	// GET /v1/auth/email/verification/callback
 	GetV1AuthEmailVerificationCallback(ctx context.Context, params GetV1AuthEmailVerificationCallbackParams, options ...RequestOption) (*GetV1AuthEmailVerificationCallbackFound, error)
+	// GetV1AuthFlowsByFlowToken invokes getV1AuthFlowsByFlowToken operation.
+	//
+	// Resume a flow by token.
+	//
+	// GET /v1/auth/flows/{flow_token}
+	GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams, options ...RequestOption) (*FlowState, error)
+	// GetV1AuthFlowsCurrent invokes getV1AuthFlowsCurrent operation.
+	//
+	// Resume the current flow (cookie-bound).
+	//
+	// GET /v1/auth/flows/current
+	GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams, options ...RequestOption) (*FlowState, error)
 	// GetV1AuthSession invokes getV1AuthSession operation.
 	//
 	// Get current session and user.
@@ -945,6 +963,25 @@ type CoreAuthInvoker interface {
 	//
 	// POST /v1/auth/email/verification/verify
 	PostV1AuthEmailVerificationVerify(ctx context.Context, request *PostV1AuthEmailVerificationVerifyReq, params PostV1AuthEmailVerificationVerifyParams, options ...RequestOption) (*AuthResult, error)
+	// PostV1AuthFlows invokes postV1AuthFlows operation.
+	//
+	// Single entry point for signup/signin/recovery. Returns the full FlowState, with any required
+	// challenge already issued.
+	//
+	// POST /v1/auth/flows
+	PostV1AuthFlows(ctx context.Context, request *FlowCreateRequest, params PostV1AuthFlowsParams, options ...RequestOption) (*FlowState, error)
+	// PostV1AuthFlowsByFlowTokenResend invokes postV1AuthFlowsByFlowTokenResend operation.
+	//
+	// Re-issue the active challenge of a flow.
+	//
+	// POST /v1/auth/flows/{flow_token}/resend
+	PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams, options ...RequestOption) (*FlowState, error)
+	// PostV1AuthFlowsByFlowTokenSubmit invokes postV1AuthFlowsByFlowTokenSubmit operation.
+	//
+	// Submit the current step of a flow.
+	//
+	// POST /v1/auth/flows/{flow_token}/submit
+	PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, request *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams, options ...RequestOption) (*FlowState, error)
 	// PostV1AuthGuest invokes postV1AuthGuest operation.
 	//
 	// Create an anonymous guest user and session.
@@ -2409,6 +2446,138 @@ func (c *Client) sendDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx contex
 
 	stage = "DecodeResponse"
 	result, err := decodeDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// DeleteV1AuthFlowsByFlowToken invokes deleteV1AuthFlowsByFlowToken operation.
+//
+// Abandon a flow.
+//
+// DELETE /v1/auth/flows/{flow_token}
+func (c *Client) DeleteV1AuthFlowsByFlowToken(ctx context.Context, params DeleteV1AuthFlowsByFlowTokenParams, options ...RequestOption) error {
+	_, err := c.sendDeleteV1AuthFlowsByFlowToken(ctx, params, options...)
+	return err
+}
+
+func (c *Client) sendDeleteV1AuthFlowsByFlowToken(ctx context.Context, params DeleteV1AuthFlowsByFlowTokenParams, requestOptions ...RequestOption) (res *DeleteV1AuthFlowsByFlowTokenNoContent, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("deleteV1AuthFlowsByFlowToken"),
+		semconv.HTTPRequestMethodKey.String("DELETE"),
+		semconv.URLTemplateKey.String("/v1/auth/flows/{flow_token}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, DeleteV1AuthFlowsByFlowTokenOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [2]string
+	pathParts[0] = "/v1/auth/flows/"
+	{
+		// Encode "flow_token" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "flow_token",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.FlowToken))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "DELETE", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodeDeleteV1AuthFlowsByFlowTokenResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -10161,6 +10330,252 @@ func (c *Client) sendGetV1AuthEmailVerificationCallback(ctx context.Context, par
 
 	stage = "DecodeResponse"
 	result, err := decodeGetV1AuthEmailVerificationCallbackResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetV1AuthFlowsByFlowToken invokes getV1AuthFlowsByFlowToken operation.
+//
+// Resume a flow by token.
+//
+// GET /v1/auth/flows/{flow_token}
+func (c *Client) GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams, options ...RequestOption) (*FlowState, error) {
+	res, err := c.sendGetV1AuthFlowsByFlowToken(ctx, params, options...)
+	return res, err
+}
+
+func (c *Client) sendGetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams, requestOptions ...RequestOption) (res *FlowState, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getV1AuthFlowsByFlowToken"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/auth/flows/{flow_token}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetV1AuthFlowsByFlowTokenOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [2]string
+	pathParts[0] = "/v1/auth/flows/"
+	{
+		// Encode "flow_token" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "flow_token",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.FlowToken))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodeGetV1AuthFlowsByFlowTokenResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetV1AuthFlowsCurrent invokes getV1AuthFlowsCurrent operation.
+//
+// Resume the current flow (cookie-bound).
+//
+// GET /v1/auth/flows/current
+func (c *Client) GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams, options ...RequestOption) (*FlowState, error) {
+	res, err := c.sendGetV1AuthFlowsCurrent(ctx, params, options...)
+	return res, err
+}
+
+func (c *Client) sendGetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams, requestOptions ...RequestOption) (res *FlowState, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getV1AuthFlowsCurrent"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/auth/flows/current"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetV1AuthFlowsCurrentOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [1]string
+	pathParts[0] = "/v1/auth/flows/current"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodeGetV1AuthFlowsCurrentResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -30330,6 +30745,411 @@ func (c *Client) sendPostV1AuthEmailVerificationVerify(ctx context.Context, requ
 
 	stage = "DecodeResponse"
 	result, err := decodePostV1AuthEmailVerificationVerifyResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostV1AuthFlows invokes postV1AuthFlows operation.
+//
+// Single entry point for signup/signin/recovery. Returns the full FlowState, with any required
+// challenge already issued.
+//
+// POST /v1/auth/flows
+func (c *Client) PostV1AuthFlows(ctx context.Context, request *FlowCreateRequest, params PostV1AuthFlowsParams, options ...RequestOption) (*FlowState, error) {
+	res, err := c.sendPostV1AuthFlows(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1AuthFlows(ctx context.Context, request *FlowCreateRequest, params PostV1AuthFlowsParams, requestOptions ...RequestOption) (res *FlowState, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1AuthFlows"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/auth/flows"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1AuthFlowsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [1]string
+	pathParts[0] = "/v1/auth/flows"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostV1AuthFlowsRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1AuthFlowsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostV1AuthFlowsByFlowTokenResend invokes postV1AuthFlowsByFlowTokenResend operation.
+//
+// Re-issue the active challenge of a flow.
+//
+// POST /v1/auth/flows/{flow_token}/resend
+func (c *Client) PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams, options ...RequestOption) (*FlowState, error) {
+	res, err := c.sendPostV1AuthFlowsByFlowTokenResend(ctx, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams, requestOptions ...RequestOption) (res *FlowState, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1AuthFlowsByFlowTokenResend"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/auth/flows/{flow_token}/resend"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1AuthFlowsByFlowTokenResendOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [3]string
+	pathParts[0] = "/v1/auth/flows/"
+	{
+		// Encode "flow_token" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "flow_token",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.FlowToken))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/resend"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1AuthFlowsByFlowTokenResendResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostV1AuthFlowsByFlowTokenSubmit invokes postV1AuthFlowsByFlowTokenSubmit operation.
+//
+// Submit the current step of a flow.
+//
+// POST /v1/auth/flows/{flow_token}/submit
+func (c *Client) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, request *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams, options ...RequestOption) (*FlowState, error) {
+	res, err := c.sendPostV1AuthFlowsByFlowTokenSubmit(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, request *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams, requestOptions ...RequestOption) (res *FlowState, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1AuthFlowsByFlowTokenSubmit"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/auth/flows/{flow_token}/submit"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1AuthFlowsByFlowTokenSubmitOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [3]string
+	pathParts[0] = "/v1/auth/flows/"
+	{
+		// Encode "flow_token" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "flow_token",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.FlowToken))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/submit"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostV1AuthFlowsByFlowTokenSubmitRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Client-Id",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1AuthFlowsByFlowTokenSubmitResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

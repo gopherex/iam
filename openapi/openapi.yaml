@@ -713,6 +713,146 @@ components:
         mapping:
           authenticated: '#/components/schemas/AuthResult'
           next_step: '#/components/schemas/AuthNextStep'
+    FlowState:
+      type: object
+      description: >-
+        Full state of a server-side resumable auth flow. The client renders this
+        verbatim and never computes the next step itself.
+      required:
+      - flow_token
+      - kind
+      - status
+      - step
+      properties:
+        flow_token:
+          type: string
+          example: ftk_…
+          maxLength: 4096
+        kind:
+          type: string
+          enum:
+          - signup
+          - signin
+          - recovery
+          - email_change
+        status:
+          type: string
+          enum:
+          - pending
+          - completed
+          - expired
+          - aborted
+        step:
+          type: string
+          enum:
+          - collect_credentials
+          - verify_email
+          - verify_phone
+          - set_password
+          - mfa_required
+          - step_up
+          - accept_consents
+          - request_access
+          - awaiting_approval
+          - completed
+          - blocked
+        next_actions:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          maxItems: 32
+        contact:
+          $ref: '#/components/schemas/FlowContact'
+        challenge:
+          $ref: '#/components/schemas/FlowChallenge'
+        consents_required:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsentDocRef'
+          maxItems: 1000
+        factors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Factor'
+          maxItems: 1000
+        expires_at:
+          $ref: '#/components/schemas/Timestamp'
+        error:
+          $ref: '#/components/schemas/FlowError'
+        session:
+          $ref: '#/components/schemas/SessionTokens'
+    FlowContact:
+      type: object
+      description: Masked contact so the client can render targets without storing them.
+      properties:
+        email_masked:
+          type: string
+          example: a***@b.ru
+          maxLength: 256
+        phone_masked:
+          type: string
+          maxLength: 64
+    FlowChallenge:
+      type: object
+      description: The active code challenge a step is waiting on.
+      properties:
+        channel:
+          type: string
+          maxLength: 64
+        expires_at:
+          $ref: '#/components/schemas/Timestamp'
+        resend_at:
+          $ref: '#/components/schemas/Timestamp'
+        attempts_left:
+          type: integer
+    FlowError:
+      type: object
+      description: >-
+        Why the last input was rejected. Present without resetting the flow; the
+        client branches on code, not HTTP status.
+      properties:
+        code:
+          type: string
+          maxLength: 256
+        message:
+          type: string
+          maxLength: 1024
+    FlowCreateRequest:
+      type: object
+      required:
+      - kind
+      properties:
+        kind:
+          type: string
+          enum:
+          - signup
+          - signin
+          - recovery
+          - email_change
+        email:
+          type: string
+          maxLength: 256
+        password:
+          type: string
+          maxLength: 1024
+        name:
+          type: string
+          maxLength: 256
+        captcha_token:
+          type: string
+          maxLength: 4096
+    FlowSubmitRequest:
+      type: object
+      required:
+      - action
+      properties:
+        action:
+          type: string
+          maxLength: 64
+        payload:
+          type: object
+          additionalProperties: true
     Challenge:
       type: object
       required:
@@ -2054,6 +2194,184 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResultOrNextStep'
+        default:
+          $ref: '#/components/responses/Default'
+      x-audience: runtime
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: CoreAuth
+  /v1/auth/flows:
+    post:
+      operationId: postV1AuthFlows
+      x-since: 1.3.0
+      tags:
+      - Core Auth
+      summary: Create a resumable auth flow.
+      description: >-
+        Single entry point for signup/signin/recovery. Returns the full FlowState,
+        with any required challenge already issued.
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowCreateRequest'
+      responses:
+        '200':
+          description: Flow state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowState'
+        default:
+          $ref: '#/components/responses/Default'
+      x-audience: runtime
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: CoreAuth
+  /v1/auth/flows/current:
+    get:
+      operationId: getV1AuthFlowsCurrent
+      x-since: 1.3.0
+      tags:
+      - Core Auth
+      summary: Resume the current flow (cookie-bound).
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      responses:
+        '200':
+          description: Flow state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowState'
+        default:
+          $ref: '#/components/responses/Default'
+      x-audience: runtime
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: CoreAuth
+  /v1/auth/flows/{flow_token}:
+    get:
+      operationId: getV1AuthFlowsByFlowToken
+      x-since: 1.3.0
+      tags:
+      - Core Auth
+      summary: Resume a flow by token.
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: flow_token
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 4096
+      responses:
+        '200':
+          description: Flow state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowState'
+        default:
+          $ref: '#/components/responses/Default'
+      x-audience: runtime
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: CoreAuth
+    delete:
+      operationId: deleteV1AuthFlowsByFlowToken
+      x-since: 1.3.0
+      tags:
+      - Core Auth
+      summary: Abandon a flow.
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: flow_token
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 4096
+      responses:
+        '204':
+          description: Abandoned.
+        default:
+          $ref: '#/components/responses/Default'
+      x-audience: runtime
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: CoreAuth
+  /v1/auth/flows/{flow_token}/submit:
+    post:
+      operationId: postV1AuthFlowsByFlowTokenSubmit
+      x-since: 1.3.0
+      tags:
+      - Core Auth
+      summary: Submit the current step of a flow.
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: flow_token
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 4096
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowSubmitRequest'
+      responses:
+        '200':
+          description: Advanced flow state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowState'
+        default:
+          $ref: '#/components/responses/Default'
+      x-audience: runtime
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: CoreAuth
+  /v1/auth/flows/{flow_token}/resend:
+    post:
+      operationId: postV1AuthFlowsByFlowTokenResend
+      x-since: 1.3.0
+      tags:
+      - Core Auth
+      summary: Re-issue the active challenge of a flow.
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: flow_token
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 4096
+      responses:
+        '200':
+          description: Flow state with a refreshed challenge.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowState'
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime

@@ -1304,6 +1304,9 @@ func (s *DefaultStatusCode) SetResponse(val ErrorEnvelope) {
 	s.Response = val
 }
 
+// DeleteV1AuthFlowsByFlowTokenNoContent is response for DeleteV1AuthFlowsByFlowToken operation.
+type DeleteV1AuthFlowsByFlowTokenNoContent struct{}
+
 // DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNoContent is response for DeleteV1ScimV2ByConnectionIdGroupsByGroupId operation.
 type DeleteV1ScimV2ByConnectionIdGroupsByGroupIdNoContent struct{}
 
@@ -1868,6 +1871,613 @@ func (s *FactorType) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// The active code challenge a step is waiting on.
+// Ref: #/components/schemas/FlowChallenge
+type FlowChallenge struct {
+	Channel      OptString    `json:"channel"`
+	ExpiresAt    OptTimestamp `json:"expires_at"`
+	ResendAt     OptTimestamp `json:"resend_at"`
+	AttemptsLeft OptInt       `json:"attempts_left"`
+}
+
+// GetChannel returns the value of Channel.
+func (s *FlowChallenge) GetChannel() OptString {
+	return s.Channel
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *FlowChallenge) GetExpiresAt() OptTimestamp {
+	return s.ExpiresAt
+}
+
+// GetResendAt returns the value of ResendAt.
+func (s *FlowChallenge) GetResendAt() OptTimestamp {
+	return s.ResendAt
+}
+
+// GetAttemptsLeft returns the value of AttemptsLeft.
+func (s *FlowChallenge) GetAttemptsLeft() OptInt {
+	return s.AttemptsLeft
+}
+
+// SetChannel sets the value of Channel.
+func (s *FlowChallenge) SetChannel(val OptString) {
+	s.Channel = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *FlowChallenge) SetExpiresAt(val OptTimestamp) {
+	s.ExpiresAt = val
+}
+
+// SetResendAt sets the value of ResendAt.
+func (s *FlowChallenge) SetResendAt(val OptTimestamp) {
+	s.ResendAt = val
+}
+
+// SetAttemptsLeft sets the value of AttemptsLeft.
+func (s *FlowChallenge) SetAttemptsLeft(val OptInt) {
+	s.AttemptsLeft = val
+}
+
+// Masked contact so the client can render targets without storing them.
+// Ref: #/components/schemas/FlowContact
+type FlowContact struct {
+	EmailMasked OptString `json:"email_masked"`
+	PhoneMasked OptString `json:"phone_masked"`
+}
+
+// GetEmailMasked returns the value of EmailMasked.
+func (s *FlowContact) GetEmailMasked() OptString {
+	return s.EmailMasked
+}
+
+// GetPhoneMasked returns the value of PhoneMasked.
+func (s *FlowContact) GetPhoneMasked() OptString {
+	return s.PhoneMasked
+}
+
+// SetEmailMasked sets the value of EmailMasked.
+func (s *FlowContact) SetEmailMasked(val OptString) {
+	s.EmailMasked = val
+}
+
+// SetPhoneMasked sets the value of PhoneMasked.
+func (s *FlowContact) SetPhoneMasked(val OptString) {
+	s.PhoneMasked = val
+}
+
+// Ref: #/components/schemas/FlowCreateRequest
+type FlowCreateRequest struct {
+	Kind         FlowCreateRequestKind `json:"kind"`
+	Email        OptString             `json:"email"`
+	Password     OptString             `json:"password"`
+	Name         OptString             `json:"name"`
+	CaptchaToken OptString             `json:"captcha_token"`
+}
+
+// GetKind returns the value of Kind.
+func (s *FlowCreateRequest) GetKind() FlowCreateRequestKind {
+	return s.Kind
+}
+
+// GetEmail returns the value of Email.
+func (s *FlowCreateRequest) GetEmail() OptString {
+	return s.Email
+}
+
+// GetPassword returns the value of Password.
+func (s *FlowCreateRequest) GetPassword() OptString {
+	return s.Password
+}
+
+// GetName returns the value of Name.
+func (s *FlowCreateRequest) GetName() OptString {
+	return s.Name
+}
+
+// GetCaptchaToken returns the value of CaptchaToken.
+func (s *FlowCreateRequest) GetCaptchaToken() OptString {
+	return s.CaptchaToken
+}
+
+// SetKind sets the value of Kind.
+func (s *FlowCreateRequest) SetKind(val FlowCreateRequestKind) {
+	s.Kind = val
+}
+
+// SetEmail sets the value of Email.
+func (s *FlowCreateRequest) SetEmail(val OptString) {
+	s.Email = val
+}
+
+// SetPassword sets the value of Password.
+func (s *FlowCreateRequest) SetPassword(val OptString) {
+	s.Password = val
+}
+
+// SetName sets the value of Name.
+func (s *FlowCreateRequest) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetCaptchaToken sets the value of CaptchaToken.
+func (s *FlowCreateRequest) SetCaptchaToken(val OptString) {
+	s.CaptchaToken = val
+}
+
+type FlowCreateRequestKind string
+
+const (
+	FlowCreateRequestKindSignup      FlowCreateRequestKind = "signup"
+	FlowCreateRequestKindSignin      FlowCreateRequestKind = "signin"
+	FlowCreateRequestKindRecovery    FlowCreateRequestKind = "recovery"
+	FlowCreateRequestKindEmailChange FlowCreateRequestKind = "email_change"
+)
+
+// AllValues returns all FlowCreateRequestKind values.
+func (FlowCreateRequestKind) AllValues() []FlowCreateRequestKind {
+	return []FlowCreateRequestKind{
+		FlowCreateRequestKindSignup,
+		FlowCreateRequestKindSignin,
+		FlowCreateRequestKindRecovery,
+		FlowCreateRequestKindEmailChange,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s FlowCreateRequestKind) MarshalText() ([]byte, error) {
+	switch s {
+	case FlowCreateRequestKindSignup:
+		return []byte(s), nil
+	case FlowCreateRequestKindSignin:
+		return []byte(s), nil
+	case FlowCreateRequestKindRecovery:
+		return []byte(s), nil
+	case FlowCreateRequestKindEmailChange:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *FlowCreateRequestKind) UnmarshalText(data []byte) error {
+	switch FlowCreateRequestKind(data) {
+	case FlowCreateRequestKindSignup:
+		*s = FlowCreateRequestKindSignup
+		return nil
+	case FlowCreateRequestKindSignin:
+		*s = FlowCreateRequestKindSignin
+		return nil
+	case FlowCreateRequestKindRecovery:
+		*s = FlowCreateRequestKindRecovery
+		return nil
+	case FlowCreateRequestKindEmailChange:
+		*s = FlowCreateRequestKindEmailChange
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Why the last input was rejected. Present without resetting the flow; the client branches on code,
+// not HTTP status.
+// Ref: #/components/schemas/FlowError
+type FlowError struct {
+	Code    OptString `json:"code"`
+	Message OptString `json:"message"`
+}
+
+// GetCode returns the value of Code.
+func (s *FlowError) GetCode() OptString {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *FlowError) GetMessage() OptString {
+	return s.Message
+}
+
+// SetCode sets the value of Code.
+func (s *FlowError) SetCode(val OptString) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *FlowError) SetMessage(val OptString) {
+	s.Message = val
+}
+
+// Full state of a server-side resumable auth flow. The client renders this verbatim and never
+// computes the next step itself.
+// Ref: #/components/schemas/FlowState
+type FlowState struct {
+	FlowToken        string           `json:"flow_token"`
+	Kind             FlowStateKind    `json:"kind"`
+	Status           FlowStateStatus  `json:"status"`
+	Step             FlowStateStep    `json:"step"`
+	NextActions      []string         `json:"next_actions"`
+	Contact          OptFlowContact   `json:"contact"`
+	Challenge        OptFlowChallenge `json:"challenge"`
+	ConsentsRequired []ConsentDocRef  `json:"consents_required"`
+	Factors          []Factor         `json:"factors"`
+	ExpiresAt        OptTimestamp     `json:"expires_at"`
+	Error            OptFlowError     `json:"error"`
+	Session          OptSessionTokens `json:"session"`
+}
+
+// GetFlowToken returns the value of FlowToken.
+func (s *FlowState) GetFlowToken() string {
+	return s.FlowToken
+}
+
+// GetKind returns the value of Kind.
+func (s *FlowState) GetKind() FlowStateKind {
+	return s.Kind
+}
+
+// GetStatus returns the value of Status.
+func (s *FlowState) GetStatus() FlowStateStatus {
+	return s.Status
+}
+
+// GetStep returns the value of Step.
+func (s *FlowState) GetStep() FlowStateStep {
+	return s.Step
+}
+
+// GetNextActions returns the value of NextActions.
+func (s *FlowState) GetNextActions() []string {
+	return s.NextActions
+}
+
+// GetContact returns the value of Contact.
+func (s *FlowState) GetContact() OptFlowContact {
+	return s.Contact
+}
+
+// GetChallenge returns the value of Challenge.
+func (s *FlowState) GetChallenge() OptFlowChallenge {
+	return s.Challenge
+}
+
+// GetConsentsRequired returns the value of ConsentsRequired.
+func (s *FlowState) GetConsentsRequired() []ConsentDocRef {
+	return s.ConsentsRequired
+}
+
+// GetFactors returns the value of Factors.
+func (s *FlowState) GetFactors() []Factor {
+	return s.Factors
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *FlowState) GetExpiresAt() OptTimestamp {
+	return s.ExpiresAt
+}
+
+// GetError returns the value of Error.
+func (s *FlowState) GetError() OptFlowError {
+	return s.Error
+}
+
+// GetSession returns the value of Session.
+func (s *FlowState) GetSession() OptSessionTokens {
+	return s.Session
+}
+
+// SetFlowToken sets the value of FlowToken.
+func (s *FlowState) SetFlowToken(val string) {
+	s.FlowToken = val
+}
+
+// SetKind sets the value of Kind.
+func (s *FlowState) SetKind(val FlowStateKind) {
+	s.Kind = val
+}
+
+// SetStatus sets the value of Status.
+func (s *FlowState) SetStatus(val FlowStateStatus) {
+	s.Status = val
+}
+
+// SetStep sets the value of Step.
+func (s *FlowState) SetStep(val FlowStateStep) {
+	s.Step = val
+}
+
+// SetNextActions sets the value of NextActions.
+func (s *FlowState) SetNextActions(val []string) {
+	s.NextActions = val
+}
+
+// SetContact sets the value of Contact.
+func (s *FlowState) SetContact(val OptFlowContact) {
+	s.Contact = val
+}
+
+// SetChallenge sets the value of Challenge.
+func (s *FlowState) SetChallenge(val OptFlowChallenge) {
+	s.Challenge = val
+}
+
+// SetConsentsRequired sets the value of ConsentsRequired.
+func (s *FlowState) SetConsentsRequired(val []ConsentDocRef) {
+	s.ConsentsRequired = val
+}
+
+// SetFactors sets the value of Factors.
+func (s *FlowState) SetFactors(val []Factor) {
+	s.Factors = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *FlowState) SetExpiresAt(val OptTimestamp) {
+	s.ExpiresAt = val
+}
+
+// SetError sets the value of Error.
+func (s *FlowState) SetError(val OptFlowError) {
+	s.Error = val
+}
+
+// SetSession sets the value of Session.
+func (s *FlowState) SetSession(val OptSessionTokens) {
+	s.Session = val
+}
+
+type FlowStateKind string
+
+const (
+	FlowStateKindSignup      FlowStateKind = "signup"
+	FlowStateKindSignin      FlowStateKind = "signin"
+	FlowStateKindRecovery    FlowStateKind = "recovery"
+	FlowStateKindEmailChange FlowStateKind = "email_change"
+)
+
+// AllValues returns all FlowStateKind values.
+func (FlowStateKind) AllValues() []FlowStateKind {
+	return []FlowStateKind{
+		FlowStateKindSignup,
+		FlowStateKindSignin,
+		FlowStateKindRecovery,
+		FlowStateKindEmailChange,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s FlowStateKind) MarshalText() ([]byte, error) {
+	switch s {
+	case FlowStateKindSignup:
+		return []byte(s), nil
+	case FlowStateKindSignin:
+		return []byte(s), nil
+	case FlowStateKindRecovery:
+		return []byte(s), nil
+	case FlowStateKindEmailChange:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *FlowStateKind) UnmarshalText(data []byte) error {
+	switch FlowStateKind(data) {
+	case FlowStateKindSignup:
+		*s = FlowStateKindSignup
+		return nil
+	case FlowStateKindSignin:
+		*s = FlowStateKindSignin
+		return nil
+	case FlowStateKindRecovery:
+		*s = FlowStateKindRecovery
+		return nil
+	case FlowStateKindEmailChange:
+		*s = FlowStateKindEmailChange
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type FlowStateStatus string
+
+const (
+	FlowStateStatusPending   FlowStateStatus = "pending"
+	FlowStateStatusCompleted FlowStateStatus = "completed"
+	FlowStateStatusExpired   FlowStateStatus = "expired"
+	FlowStateStatusAborted   FlowStateStatus = "aborted"
+)
+
+// AllValues returns all FlowStateStatus values.
+func (FlowStateStatus) AllValues() []FlowStateStatus {
+	return []FlowStateStatus{
+		FlowStateStatusPending,
+		FlowStateStatusCompleted,
+		FlowStateStatusExpired,
+		FlowStateStatusAborted,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s FlowStateStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case FlowStateStatusPending:
+		return []byte(s), nil
+	case FlowStateStatusCompleted:
+		return []byte(s), nil
+	case FlowStateStatusExpired:
+		return []byte(s), nil
+	case FlowStateStatusAborted:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *FlowStateStatus) UnmarshalText(data []byte) error {
+	switch FlowStateStatus(data) {
+	case FlowStateStatusPending:
+		*s = FlowStateStatusPending
+		return nil
+	case FlowStateStatusCompleted:
+		*s = FlowStateStatusCompleted
+		return nil
+	case FlowStateStatusExpired:
+		*s = FlowStateStatusExpired
+		return nil
+	case FlowStateStatusAborted:
+		*s = FlowStateStatusAborted
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type FlowStateStep string
+
+const (
+	FlowStateStepCollectCredentials FlowStateStep = "collect_credentials"
+	FlowStateStepVerifyEmail        FlowStateStep = "verify_email"
+	FlowStateStepVerifyPhone        FlowStateStep = "verify_phone"
+	FlowStateStepSetPassword        FlowStateStep = "set_password"
+	FlowStateStepMfaRequired        FlowStateStep = "mfa_required"
+	FlowStateStepStepUp             FlowStateStep = "step_up"
+	FlowStateStepAcceptConsents     FlowStateStep = "accept_consents"
+	FlowStateStepRequestAccess      FlowStateStep = "request_access"
+	FlowStateStepAwaitingApproval   FlowStateStep = "awaiting_approval"
+	FlowStateStepCompleted          FlowStateStep = "completed"
+	FlowStateStepBlocked            FlowStateStep = "blocked"
+)
+
+// AllValues returns all FlowStateStep values.
+func (FlowStateStep) AllValues() []FlowStateStep {
+	return []FlowStateStep{
+		FlowStateStepCollectCredentials,
+		FlowStateStepVerifyEmail,
+		FlowStateStepVerifyPhone,
+		FlowStateStepSetPassword,
+		FlowStateStepMfaRequired,
+		FlowStateStepStepUp,
+		FlowStateStepAcceptConsents,
+		FlowStateStepRequestAccess,
+		FlowStateStepAwaitingApproval,
+		FlowStateStepCompleted,
+		FlowStateStepBlocked,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s FlowStateStep) MarshalText() ([]byte, error) {
+	switch s {
+	case FlowStateStepCollectCredentials:
+		return []byte(s), nil
+	case FlowStateStepVerifyEmail:
+		return []byte(s), nil
+	case FlowStateStepVerifyPhone:
+		return []byte(s), nil
+	case FlowStateStepSetPassword:
+		return []byte(s), nil
+	case FlowStateStepMfaRequired:
+		return []byte(s), nil
+	case FlowStateStepStepUp:
+		return []byte(s), nil
+	case FlowStateStepAcceptConsents:
+		return []byte(s), nil
+	case FlowStateStepRequestAccess:
+		return []byte(s), nil
+	case FlowStateStepAwaitingApproval:
+		return []byte(s), nil
+	case FlowStateStepCompleted:
+		return []byte(s), nil
+	case FlowStateStepBlocked:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *FlowStateStep) UnmarshalText(data []byte) error {
+	switch FlowStateStep(data) {
+	case FlowStateStepCollectCredentials:
+		*s = FlowStateStepCollectCredentials
+		return nil
+	case FlowStateStepVerifyEmail:
+		*s = FlowStateStepVerifyEmail
+		return nil
+	case FlowStateStepVerifyPhone:
+		*s = FlowStateStepVerifyPhone
+		return nil
+	case FlowStateStepSetPassword:
+		*s = FlowStateStepSetPassword
+		return nil
+	case FlowStateStepMfaRequired:
+		*s = FlowStateStepMfaRequired
+		return nil
+	case FlowStateStepStepUp:
+		*s = FlowStateStepStepUp
+		return nil
+	case FlowStateStepAcceptConsents:
+		*s = FlowStateStepAcceptConsents
+		return nil
+	case FlowStateStepRequestAccess:
+		*s = FlowStateStepRequestAccess
+		return nil
+	case FlowStateStepAwaitingApproval:
+		*s = FlowStateStepAwaitingApproval
+		return nil
+	case FlowStateStepCompleted:
+		*s = FlowStateStepCompleted
+		return nil
+	case FlowStateStepBlocked:
+		*s = FlowStateStepBlocked
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/FlowSubmitRequest
+type FlowSubmitRequest struct {
+	Action  string                      `json:"action"`
+	Payload OptFlowSubmitRequestPayload `json:"payload"`
+}
+
+// GetAction returns the value of Action.
+func (s *FlowSubmitRequest) GetAction() string {
+	return s.Action
+}
+
+// GetPayload returns the value of Payload.
+func (s *FlowSubmitRequest) GetPayload() OptFlowSubmitRequestPayload {
+	return s.Payload
+}
+
+// SetAction sets the value of Action.
+func (s *FlowSubmitRequest) SetAction(val string) {
+	s.Action = val
+}
+
+// SetPayload sets the value of Payload.
+func (s *FlowSubmitRequest) SetPayload(val OptFlowSubmitRequestPayload) {
+	s.Payload = val
+}
+
+type FlowSubmitRequestPayload map[string]jx.Raw
+
+func (s *FlowSubmitRequestPayload) init() FlowSubmitRequestPayload {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
 }
 
 type GetMgmtV1ProjectsByProjectIdAdminTokensOK map[string]jx.Raw
@@ -5802,6 +6412,190 @@ func (o OptFloat64) Or(d float64) float64 {
 	return d
 }
 
+// NewOptFlowChallenge returns new OptFlowChallenge with value set to v.
+func NewOptFlowChallenge(v FlowChallenge) OptFlowChallenge {
+	return OptFlowChallenge{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFlowChallenge is optional FlowChallenge.
+type OptFlowChallenge struct {
+	Value FlowChallenge
+	Set   bool
+}
+
+// IsSet returns true if OptFlowChallenge was set.
+func (o OptFlowChallenge) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFlowChallenge) Reset() {
+	var v FlowChallenge
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFlowChallenge) SetTo(v FlowChallenge) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFlowChallenge) Get() (v FlowChallenge, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFlowChallenge) Or(d FlowChallenge) FlowChallenge {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFlowContact returns new OptFlowContact with value set to v.
+func NewOptFlowContact(v FlowContact) OptFlowContact {
+	return OptFlowContact{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFlowContact is optional FlowContact.
+type OptFlowContact struct {
+	Value FlowContact
+	Set   bool
+}
+
+// IsSet returns true if OptFlowContact was set.
+func (o OptFlowContact) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFlowContact) Reset() {
+	var v FlowContact
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFlowContact) SetTo(v FlowContact) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFlowContact) Get() (v FlowContact, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFlowContact) Or(d FlowContact) FlowContact {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFlowError returns new OptFlowError with value set to v.
+func NewOptFlowError(v FlowError) OptFlowError {
+	return OptFlowError{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFlowError is optional FlowError.
+type OptFlowError struct {
+	Value FlowError
+	Set   bool
+}
+
+// IsSet returns true if OptFlowError was set.
+func (o OptFlowError) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFlowError) Reset() {
+	var v FlowError
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFlowError) SetTo(v FlowError) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFlowError) Get() (v FlowError, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFlowError) Or(d FlowError) FlowError {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFlowSubmitRequestPayload returns new OptFlowSubmitRequestPayload with value set to v.
+func NewOptFlowSubmitRequestPayload(v FlowSubmitRequestPayload) OptFlowSubmitRequestPayload {
+	return OptFlowSubmitRequestPayload{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFlowSubmitRequestPayload is optional FlowSubmitRequestPayload.
+type OptFlowSubmitRequestPayload struct {
+	Value FlowSubmitRequestPayload
+	Set   bool
+}
+
+// IsSet returns true if OptFlowSubmitRequestPayload was set.
+func (o OptFlowSubmitRequestPayload) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFlowSubmitRequestPayload) Reset() {
+	var v FlowSubmitRequestPayload
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFlowSubmitRequestPayload) SetTo(v FlowSubmitRequestPayload) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFlowSubmitRequestPayload) Get() (v FlowSubmitRequestPayload, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFlowSubmitRequestPayload) Or(d FlowSubmitRequestPayload) FlowSubmitRequestPayload {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptGetV1AccountCapabilitiesOKCapabilities returns new OptGetV1AccountCapabilitiesOKCapabilities with value set to v.
 func NewOptGetV1AccountCapabilitiesOKCapabilities(v GetV1AccountCapabilitiesOKCapabilities) OptGetV1AccountCapabilitiesOKCapabilities {
 	return OptGetV1AccountCapabilitiesOKCapabilities{
@@ -9712,6 +10506,52 @@ func (o OptSessionAal) Get() (v SessionAal, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptSessionAal) Or(d SessionAal) SessionAal {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSessionTokens returns new OptSessionTokens with value set to v.
+func NewOptSessionTokens(v SessionTokens) OptSessionTokens {
+	return OptSessionTokens{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSessionTokens is optional SessionTokens.
+type OptSessionTokens struct {
+	Value SessionTokens
+	Set   bool
+}
+
+// IsSet returns true if OptSessionTokens was set.
+func (o OptSessionTokens) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSessionTokens) Reset() {
+	var v SessionTokens
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSessionTokens) SetTo(v SessionTokens) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSessionTokens) Get() (v SessionTokens, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSessionTokens) Or(d SessionTokens) SessionTokens {
 	if v, ok := o.Get(); ok {
 		return v
 	}
