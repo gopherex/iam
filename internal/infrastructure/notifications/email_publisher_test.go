@@ -25,6 +25,37 @@ func TestEmailJobFromEventMagicLink(t *testing.T) {
 	}
 }
 
+func TestEmailJobFromEventFlowContinue(t *testing.T) {
+	job, ok := emailJobFromEvent(eventEnvelope{
+		Type:    "auth.flow.continue",
+		Payload: map[string]any{"to": "user@example.com", "flow_token": "ftk_abc", "kind": "signup"},
+	})
+	if !ok {
+		t.Fatal("expected email job")
+	}
+	if job.TemplateID != "flow_continue" {
+		t.Fatalf("template = %q", job.TemplateID)
+	}
+	if job.To != "user@example.com" {
+		t.Fatalf("to = %q", job.To)
+	}
+}
+
+func TestFlowContinueURL(t *testing.T) {
+	if got := flowContinueURL("https://app.example.com", "ftk_abc"); got != "https://app.example.com/continue?flow=ftk_abc" {
+		t.Fatalf("url = %q", got)
+	}
+	if flowContinueURL("", "ftk_abc") != "" {
+		t.Fatal("empty base must yield empty link")
+	}
+	if flowContinueURL("https://app.example.com", "") != "" {
+		t.Fatal("empty token must yield empty link")
+	}
+	if flowContinueURL("not-a-url", "ftk_abc") != "" {
+		t.Fatal("bad base must yield empty link")
+	}
+}
+
 func TestEmailJobFromEventIgnoresSMSOTP(t *testing.T) {
 	_, ok := emailJobFromEvent(eventEnvelope{
 		Type:    "auth.otp.started",

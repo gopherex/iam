@@ -129,7 +129,7 @@ func run() error {
 	log.Info("migrations applied")
 
 	// ----- outbox (email publisher; enqueue joins the caller tx via db.TxDB) -----
-	ob, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, log.AppendName("outbox")),
+	ob, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, log.AppendName("outbox"), cfg.Service.Auth.AppBaseURL),
 		outbox.WithInstanceID(build.InstanceID),
 		outbox.WithLogger(buildSlogLogger()),
 		outbox.WithPollInterval(time.Second),

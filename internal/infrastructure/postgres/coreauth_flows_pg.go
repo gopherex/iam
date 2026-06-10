@@ -294,10 +294,43 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 			HasPassword: cmd.Password != "",
 		},
 	}
+	var state *domain.FlowState
+	var err error
 	if create, ok := flowCreators[cmd.Kind]; ok {
-		return create(ctx, a, f, cmd)
+		state, err = create(ctx, a, f, cmd)
+	} else {
+		state, err = a.flowCreateCollect(ctx, f)
 	}
-	return a.flowCreateCollect(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	a.emitFlowContinue(ctx, state)
+	return state, nil
+}
+
+// emitFlowContinue fires a best-effort cross-device "continue" deep-link email
+// for still-pending email-bearing flows (signup/recovery). The notification
+// layer turns flow_token into <app_base_url>/continue?flow=… ; a send/emit
+// failure must not fail flow creation, so the error is swallowed.
+func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.FlowState) {
+	f := state.Flow
+	if f.Status != domain.FlowStatusPending || f.Contact.Email == "" {
+		return
+	}
+	if f.Kind != domain.FlowKindSignup && f.Kind != domain.FlowKindRecovery {
+		return
+	}
+	_ = a.emitter.Emit(ctx, domain.Event{
+		Type:        "auth.flow.continue",
+		ProjectID:   f.ProjectID,
+		AggregateID: f.ID,
+		Payload: map[string]any{
+			"flow_token": state.FlowToken,
+			"kind":       string(f.Kind),
+			"to":         f.Contact.Email,
+			"contact":    f.Contact.Email,
+		},
+	})
 }
 
 // flowCreateCollect persists a fresh flow at collect_credentials with a new token.

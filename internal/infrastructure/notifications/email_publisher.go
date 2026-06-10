@@ -30,12 +30,13 @@ import (
 const defaultLocale = "en"
 
 type Publisher struct {
-	db  *postgres.DB
-	log *xlog.Logger
+	db         *postgres.DB
+	log        *xlog.Logger
+	appBaseURL string
 }
 
-func NewPublisher(db *postgres.DB, log *xlog.Logger) *Publisher {
-	return &Publisher{db: db, log: log}
+func NewPublisher(db *postgres.DB, log *xlog.Logger, appBaseURL string) *Publisher {
+	return &Publisher{db: db, log: log, appBaseURL: appBaseURL}
 }
 
 func (p *Publisher) Publish(ctx context.Context, msgs []outbox.Message) error {
@@ -78,6 +79,20 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	}
 	if job.To == "" {
 		return fmt.Errorf("notifications: email event %s has no recipient", ev.Type)
+	}
+	// Flow continue email: requires a configured app base URL to build the
+	// cross-device deep-link. With none configured the feature is disabled.
+	if job.TemplateID == "flow_continue" {
+		if p.appBaseURL == "" {
+			p.log.Info("flow continue email skipped: no app base URL configured", xlog.String("project_id", ev.ProjectID))
+			return nil
+		}
+		link := flowContinueURL(p.appBaseURL, stringValue(ev.Payload, "flow_token"))
+		if link == "" {
+			return nil
+		}
+		job.Data["continue_url"] = link
+		job.Data["link"] = link
 	}
 	provider, err := p.smtpProvider(ctx, ev.ProjectID)
 	if err != nil {
@@ -134,6 +149,11 @@ func emailJobFromEvent(ev eventEnvelope) (emailJob, bool) {
 		}
 		job.TemplateID = "mfa_email"
 		job.To = recipient(ev.Payload)
+	case "auth.flow.continue":
+		// Cross-device "continue your sign-up" deep-link. continue_url is built in
+		// publishOne from the configured app base URL + flow_token.
+		job.TemplateID = "flow_continue"
+		job.To = recipient(ev.Payload)
 	default:
 		return emailJob{}, false
 	}
@@ -181,6 +201,23 @@ func stringValue(m map[string]any, key string) string {
 	default:
 		return ""
 	}
+}
+
+// flowContinueURL builds the cross-device resume deep-link
+// <base>/continue?flow=<flow_token>. Returns "" on a bad base or empty token.
+func flowContinueURL(rawBase, flowToken string) string {
+	if rawBase == "" || flowToken == "" {
+		return ""
+	}
+	u, err := url.Parse(rawBase)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return ""
+	}
+	u.Path = strings.TrimRight(u.Path, "/") + "/continue"
+	q := u.Query()
+	q.Set("flow", flowToken)
+	u.RawQuery = q.Encode()
+	return u.String()
 }
 
 func linkWithToken(rawBase, token string) string {
@@ -381,6 +418,8 @@ func defaultTemplate(key string) map[string]string {
 		return map[string]string{"subject": "Reset your password", "text": "Use code {{.code}} or open {{.link}} to reset your password."}
 	case "mfa_email":
 		return map[string]string{"subject": "Your MFA code", "text": "Your MFA code is {{.code}}."}
+	case "flow_continue":
+		return map[string]string{"subject": "Continue where you left off", "text": "Continue on this or another device: {{.continue_url}}", "html": `<p>Continue where you left off: <a href="{{.continue_url}}">{{.continue_url}}</a></p>`}
 	default:
 		return map[string]string{"subject": "Verify your email", "text": "Use code {{.code}} or open {{.link}} to verify your email."}
 	}
