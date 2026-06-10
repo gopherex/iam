@@ -50,32 +50,45 @@ export function ProjectLayout() {
 
   useEffect(() => {
     if (!projectId) return;
-    if (project?.id === projectId && adminToken) return;
     let cancelled = false;
-    (async () => {
+
+    // Mint (or re-mint) the project admin token. The token has a 1h TTL, so a
+    // long-lived panel session must re-mint before it expires or project calls
+    // start failing with 401. We re-mint on mount and then on a timer well
+    // inside the TTL.
+    const TTL_MS = 60 * 60 * 1000;
+    const REMINT_MS = 50 * 60 * 1000;
+    const mint = async (withProject: boolean) => {
       try {
-        const p = await call(getMgmtV1ProjectsByProjectId({ path: { project_id: projectId } }));
+        const name = withProject
+          ? (await call(getMgmtV1ProjectsByProjectId({ path: { project_id: projectId } }))).project
+              ?.name ?? projectId
+          : null;
         const tk = await call(
           postMgmtV1ProjectsByProjectIdAdminTokens({
             path: { project_id: projectId },
             body: {
               name: 'admin-panel',
               scopes: ['admin:ui'],
-              expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+              expires_at: new Date(Date.now() + TTL_MS).toISOString(),
             },
           }),
         );
         if (cancelled) return;
-        setProjectContext(
-          { id: projectId, name: p.project?.name ?? projectId },
-          tk.admin_token ?? null,
-        );
+        if (withProject) setProjectContext({ id: projectId, name: name ?? projectId }, tk.admin_token ?? null);
+        else $adminToken.set(tk.admin_token ?? null);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e : new Error(String(e)));
+        if (!cancelled && withProject) setError(e instanceof Error ? e : new Error(String(e)));
       }
-    })();
+    };
+
+    if (!(project?.id === projectId && adminToken)) {
+      void mint(true);
+    }
+    const timer = window.setInterval(() => void mint(false), REMINT_MS);
     return () => {
       cancelled = true;
+      window.clearInterval(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
