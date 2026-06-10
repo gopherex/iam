@@ -91,6 +91,9 @@ func machineIDHash(token string) string {
 func (a *PgMachineIdentities) loadServiceAccount(ctx context.Context, projectID, id string) (*models.IamServiceAccount, *saEnvelope, error) {
 	row, err := models.FindIamServiceAccount(ctx, a.db.Bobx(), id)
 	if err != nil {
+		if adminIsNotFound(err) { // a missing row is a domain not-found, not a 500
+			return nil, nil, domain.ErrNotFound
+		}
 		return nil, nil, translatePgErr("service_account", err)
 	}
 	if row.ProjectID != projectID { // tenant boundary
@@ -404,6 +407,9 @@ type keyEnvelope struct {
 func (a *PgMachineIdentities) loadAPIKey(ctx context.Context, projectID, keyID string) (*models.IamAPIKey, *domain.APIKey, error) {
 	row, err := models.FindIamAPIKey(ctx, a.db.Bobx(), keyID)
 	if err != nil {
+		if adminIsNotFound(err) { // a missing row is a domain not-found, not a 500
+			return nil, nil, domain.ErrNotFound
+		}
 		return nil, nil, translatePgErr("api_key", err)
 	}
 	if row.ProjectID != projectID { // tenant boundary
