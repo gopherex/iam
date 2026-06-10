@@ -2223,6 +2223,13 @@ paths:
       responses:
         '200':
           description: Flow state.
+          headers:
+            Set-Cookie:
+              schema:
+                type: array
+                items:
+                  type: string
+              description: HttpOnly iam_flow cookie carrying the flow_token (set while pending, cleared on completion).
           content:
             application/json:
               schema:
@@ -2244,9 +2251,23 @@ paths:
       security: []
       parameters:
       - $ref: '#/components/parameters/XClientId'
+      - name: iam_flow
+        in: cookie
+        required: false
+        description: flow_token in cookie mode; the current flow is resolved from it.
+        schema:
+          type: string
+          maxLength: 4096
       responses:
         '200':
           description: Flow state.
+          headers:
+            Set-Cookie:
+              schema:
+                type: array
+                items:
+                  type: string
+              description: Refreshed HttpOnly iam_flow cookie.
           content:
             application/json:
               schema:
@@ -2277,6 +2298,13 @@ paths:
       responses:
         '200':
           description: Flow state.
+          headers:
+            Set-Cookie:
+              schema:
+                type: array
+                items:
+                  type: string
+              description: Refreshed HttpOnly iam_flow cookie.
           content:
             application/json:
               schema:
@@ -2338,6 +2366,13 @@ paths:
       responses:
         '200':
           description: Advanced flow state.
+          headers:
+            Set-Cookie:
+              schema:
+                type: array
+                items:
+                  type: string
+              description: HttpOnly iam_flow cookie (refreshed while pending, cleared on completion).
           content:
             application/json:
               schema:
@@ -2368,6 +2403,13 @@ paths:
       responses:
         '200':
           description: Flow state with a refreshed challenge.
+          headers:
+            Set-Cookie:
+              schema:
+                type: array
+                items:
+                  type: string
+              description: Refreshed HttpOnly iam_flow cookie.
           content:
             application/json:
               schema:

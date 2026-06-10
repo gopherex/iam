@@ -9147,6 +9147,8 @@ func decodeGetV1AuthFlowsByFlowTokenParams(args [1]string, argsEscaped bool, r *
 // GetV1AuthFlowsCurrentParams is parameters of getV1AuthFlowsCurrent operation.
 type GetV1AuthFlowsCurrentParams struct {
 	XClientID string
+	// Flow_token in cookie mode; the current flow is resolved from it.
+	IamFlow OptString `json:",omitempty,omitzero"`
 }
 
 func unpackGetV1AuthFlowsCurrentParams(packed middleware.Parameters) (params GetV1AuthFlowsCurrentParams) {
@@ -9157,11 +9159,21 @@ func unpackGetV1AuthFlowsCurrentParams(packed middleware.Parameters) (params Get
 		}
 		params.XClientID = packed[key].(string)
 	}
+	{
+		key := middleware.ParameterKey{
+			Name: "iam_flow",
+			In:   "cookie",
+		}
+		if v, ok := packed[key]; ok {
+			params.IamFlow = v.(OptString)
+		}
+	}
 	return params
 }
 
 func decodeGetV1AuthFlowsCurrentParams(args [0]string, argsEscaped bool, r *http.Request) (params GetV1AuthFlowsCurrentParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
+	c := uri.NewCookieDecoder(r)
 	// Decode header: X-Client-Id.
 	if err := func() error {
 		cfg := uri.HeaderParameterDecodingConfig{
@@ -9213,6 +9225,72 @@ func decodeGetV1AuthFlowsCurrentParams(args [0]string, argsEscaped bool, r *http
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
 			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode cookie: iam_flow.
+	if err := func() error {
+		cfg := uri.CookieParameterDecodingConfig{
+			Name:    "iam_flow",
+			Explode: true,
+		}
+		if err := c.HasParam(cfg); err == nil {
+			if err := c.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIamFlowVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIamFlowVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.IamFlow.SetTo(paramsDotIamFlowVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.IamFlow.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     4096,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "iam_flow",
+			In:   "cookie",
 			Err:  err,
 		}
 	}

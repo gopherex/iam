@@ -839,13 +839,13 @@ type CoreAuthHandler interface {
 	// Resume a flow by token.
 	//
 	// GET /v1/auth/flows/{flow_token}
-	GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams) (*FlowState, error)
+	GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams) (*FlowStateHeaders, error)
 	// GetV1AuthFlowsCurrent implements getV1AuthFlowsCurrent operation.
 	//
 	// Resume the current flow (cookie-bound).
 	//
 	// GET /v1/auth/flows/current
-	GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams) (*FlowState, error)
+	GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams) (*FlowStateHeaders, error)
 	// GetV1AuthSession implements getV1AuthSession operation.
 	//
 	// Get current session and user.
@@ -894,19 +894,19 @@ type CoreAuthHandler interface {
 	// challenge already issued.
 	//
 	// POST /v1/auth/flows
-	PostV1AuthFlows(ctx context.Context, req *FlowCreateRequest, params PostV1AuthFlowsParams) (*FlowState, error)
+	PostV1AuthFlows(ctx context.Context, req *FlowCreateRequest, params PostV1AuthFlowsParams) (*FlowStateHeaders, error)
 	// PostV1AuthFlowsByFlowTokenResend implements postV1AuthFlowsByFlowTokenResend operation.
 	//
 	// Re-issue the active challenge of a flow.
 	//
 	// POST /v1/auth/flows/{flow_token}/resend
-	PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams) (*FlowState, error)
+	PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams) (*FlowStateHeaders, error)
 	// PostV1AuthFlowsByFlowTokenSubmit implements postV1AuthFlowsByFlowTokenSubmit operation.
 	//
 	// Submit the current step of a flow.
 	//
 	// POST /v1/auth/flows/{flow_token}/submit
-	PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, req *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams) (*FlowState, error)
+	PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, req *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams) (*FlowStateHeaders, error)
 	// PostV1AuthGuest implements postV1AuthGuest operation.
 	//
 	// Create an anonymous guest user and session.

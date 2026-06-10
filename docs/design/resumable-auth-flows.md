@@ -20,8 +20,20 @@ already-issued challenge — one fewer round-trip.
 - TS SDK stateful wrapper (`flow.start/submit/resend/onChange`, BroadcastChannel)
   and the web `/flow` page — separate later milestone. Backend is the source of
   truth; the SDK is generated from the openapi added here plus a hand wrapper.
-- Cross-device deep-link / `iam_flow` httpOnly cookie — Phase 3 (the token rules
-  here already allow it; the cookie binding is additive).
+
+### Phase 3 — DONE (backend)
+
+- **`iam_flow` httpOnly cookie**: every FlowState response sets `Set-Cookie:
+  iam_flow=<flow_token>` (HttpOnly, Secure, SameSite=Lax, Path=/v1/auth/flows)
+  while the flow is pending, and clears it on completion/abandon-via-completion.
+  `GET /v1/auth/flows/current` resolves the flow from that cookie (no token in
+  JS). Implemented in `pkg/api/cookie.go` (`FlowCookieSet`/`FlowCookieClear`) +
+  the flow handlers (`flowHeaders`). Covered by `integration_e2e_flow_cookie_test.go`.
+- **Cross-device deep-link**: already supported by the backend — `GET
+  /v1/auth/flows/{flow_token}` resumes any flow by the opaque token returned in
+  every response, so a "continue" link `https://app/continue?flow=<flow_token>`
+  resolves on any device. Building/sending that email link (app base URL +
+  template) is the notification/web layer's job, deferred with the SDK milestone.
 
 ## 3. Principle
 

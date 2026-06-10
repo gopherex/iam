@@ -796,7 +796,7 @@ func encodeGetV1AuthEmailVerificationCallbackResponse(response *GetV1AuthEmailVe
 	return nil
 }
 
-func encodeGetV1AuthFlowsByFlowTokenResponse(response *FlowState, w http.ResponseWriter, span trace.Span) error {
+func encodeGetV1AuthFlowsByFlowTokenResponse(response *FlowStateHeaders, w http.ResponseWriter, span trace.Span) error {
 	if err := func() error {
 		if err := response.Validate(); err != nil {
 			return err
@@ -806,11 +806,40 @@ func encodeGetV1AuthFlowsByFlowTokenResponse(response *FlowState, w http.Respons
 		return errors.Wrap(err, "validate")
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+	// Encoding response headers.
+	{
+		h := uri.NewHeaderEncoder(w.Header())
+		// Encode "Set-Cookie" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Set-Cookie",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
+				}
+				return nil
+			}); err != nil {
+				return errors.Wrap(err, "encode Set-Cookie header")
+			}
+		}
+	}
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
 
 	e := new(jx.Encoder)
-	response.Encode(e)
+	response.Response.Encode(e)
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}
@@ -818,7 +847,7 @@ func encodeGetV1AuthFlowsByFlowTokenResponse(response *FlowState, w http.Respons
 	return nil
 }
 
-func encodeGetV1AuthFlowsCurrentResponse(response *FlowState, w http.ResponseWriter, span trace.Span) error {
+func encodeGetV1AuthFlowsCurrentResponse(response *FlowStateHeaders, w http.ResponseWriter, span trace.Span) error {
 	if err := func() error {
 		if err := response.Validate(); err != nil {
 			return err
@@ -828,11 +857,40 @@ func encodeGetV1AuthFlowsCurrentResponse(response *FlowState, w http.ResponseWri
 		return errors.Wrap(err, "validate")
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+	// Encoding response headers.
+	{
+		h := uri.NewHeaderEncoder(w.Header())
+		// Encode "Set-Cookie" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Set-Cookie",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
+				}
+				return nil
+			}); err != nil {
+				return errors.Wrap(err, "encode Set-Cookie header")
+			}
+		}
+	}
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
 
 	e := new(jx.Encoder)
-	response.Encode(e)
+	response.Response.Encode(e)
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}
@@ -3328,7 +3386,7 @@ func encodePostV1AuthEmailVerificationVerifyResponse(response *AuthResult, w htt
 	return nil
 }
 
-func encodePostV1AuthFlowsResponse(response *FlowState, w http.ResponseWriter, span trace.Span) error {
+func encodePostV1AuthFlowsResponse(response *FlowStateHeaders, w http.ResponseWriter, span trace.Span) error {
 	if err := func() error {
 		if err := response.Validate(); err != nil {
 			return err
@@ -3338,11 +3396,40 @@ func encodePostV1AuthFlowsResponse(response *FlowState, w http.ResponseWriter, s
 		return errors.Wrap(err, "validate")
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+	// Encoding response headers.
+	{
+		h := uri.NewHeaderEncoder(w.Header())
+		// Encode "Set-Cookie" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Set-Cookie",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
+				}
+				return nil
+			}); err != nil {
+				return errors.Wrap(err, "encode Set-Cookie header")
+			}
+		}
+	}
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
 
 	e := new(jx.Encoder)
-	response.Encode(e)
+	response.Response.Encode(e)
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}
@@ -3350,7 +3437,7 @@ func encodePostV1AuthFlowsResponse(response *FlowState, w http.ResponseWriter, s
 	return nil
 }
 
-func encodePostV1AuthFlowsByFlowTokenResendResponse(response *FlowState, w http.ResponseWriter, span trace.Span) error {
+func encodePostV1AuthFlowsByFlowTokenResendResponse(response *FlowStateHeaders, w http.ResponseWriter, span trace.Span) error {
 	if err := func() error {
 		if err := response.Validate(); err != nil {
 			return err
@@ -3360,11 +3447,40 @@ func encodePostV1AuthFlowsByFlowTokenResendResponse(response *FlowState, w http.
 		return errors.Wrap(err, "validate")
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+	// Encoding response headers.
+	{
+		h := uri.NewHeaderEncoder(w.Header())
+		// Encode "Set-Cookie" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Set-Cookie",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
+				}
+				return nil
+			}); err != nil {
+				return errors.Wrap(err, "encode Set-Cookie header")
+			}
+		}
+	}
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
 
 	e := new(jx.Encoder)
-	response.Encode(e)
+	response.Response.Encode(e)
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}
@@ -3372,7 +3488,7 @@ func encodePostV1AuthFlowsByFlowTokenResendResponse(response *FlowState, w http.
 	return nil
 }
 
-func encodePostV1AuthFlowsByFlowTokenSubmitResponse(response *FlowState, w http.ResponseWriter, span trace.Span) error {
+func encodePostV1AuthFlowsByFlowTokenSubmitResponse(response *FlowStateHeaders, w http.ResponseWriter, span trace.Span) error {
 	if err := func() error {
 		if err := response.Validate(); err != nil {
 			return err
@@ -3382,11 +3498,40 @@ func encodePostV1AuthFlowsByFlowTokenSubmitResponse(response *FlowState, w http.
 		return errors.Wrap(err, "validate")
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+	// Encoding response headers.
+	{
+		h := uri.NewHeaderEncoder(w.Header())
+		// Encode "Set-Cookie" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Set-Cookie",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
+				}
+				return nil
+			}); err != nil {
+				return errors.Wrap(err, "encode Set-Cookie header")
+			}
+		}
+	}
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
 
 	e := new(jx.Encoder)
-	response.Encode(e)
+	response.Response.Encode(e)
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}

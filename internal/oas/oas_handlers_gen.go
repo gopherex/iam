@@ -9869,7 +9869,7 @@ func (s *Server) handleGetV1AuthFlowsByFlowTokenRequest(args [1]string, argsEsca
 
 	var rawBody []byte
 
-	var response *FlowState
+	var response *FlowStateHeaders
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -9894,7 +9894,7 @@ func (s *Server) handleGetV1AuthFlowsByFlowTokenRequest(args [1]string, argsEsca
 		type (
 			Request  = struct{}
 			Params   = GetV1AuthFlowsByFlowTokenParams
-			Response = *FlowState
+			Response = *FlowStateHeaders
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -10027,7 +10027,7 @@ func (s *Server) handleGetV1AuthFlowsCurrentRequest(args [0]string, argsEscaped 
 
 	var rawBody []byte
 
-	var response *FlowState
+	var response *FlowStateHeaders
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -10041,6 +10041,10 @@ func (s *Server) handleGetV1AuthFlowsCurrentRequest(args [0]string, argsEscaped 
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "iam_flow",
+					In:   "cookie",
+				}: params.IamFlow,
 			},
 			Raw: r,
 		}
@@ -10048,7 +10052,7 @@ func (s *Server) handleGetV1AuthFlowsCurrentRequest(args [0]string, argsEscaped 
 		type (
 			Request  = struct{}
 			Params   = GetV1AuthFlowsCurrentParams
-			Response = *FlowState
+			Response = *FlowStateHeaders
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -33799,7 +33803,7 @@ func (s *Server) handlePostV1AuthFlowsRequest(args [0]string, argsEscaped bool, 
 		}
 	}()
 
-	var response *FlowState
+	var response *FlowStateHeaders
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -33820,7 +33824,7 @@ func (s *Server) handlePostV1AuthFlowsRequest(args [0]string, argsEscaped bool, 
 		type (
 			Request  = *FlowCreateRequest
 			Params   = PostV1AuthFlowsParams
-			Response = *FlowState
+			Response = *FlowStateHeaders
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -33953,7 +33957,7 @@ func (s *Server) handlePostV1AuthFlowsByFlowTokenResendRequest(args [1]string, a
 
 	var rawBody []byte
 
-	var response *FlowState
+	var response *FlowStateHeaders
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -33978,7 +33982,7 @@ func (s *Server) handlePostV1AuthFlowsByFlowTokenResendRequest(args [1]string, a
 		type (
 			Request  = struct{}
 			Params   = PostV1AuthFlowsByFlowTokenResendParams
-			Response = *FlowState
+			Response = *FlowStateHeaders
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -34126,7 +34130,7 @@ func (s *Server) handlePostV1AuthFlowsByFlowTokenSubmitRequest(args [1]string, a
 		}
 	}()
 
-	var response *FlowState
+	var response *FlowStateHeaders
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -34151,7 +34155,7 @@ func (s *Server) handlePostV1AuthFlowsByFlowTokenSubmitRequest(args [1]string, a
 		type (
 			Request  = *FlowSubmitRequest
 			Params   = PostV1AuthFlowsByFlowTokenSubmitParams
-			Response = *FlowState
+			Response = *FlowStateHeaders
 		)
 		response, err = middleware.HookMiddleware[
 			Request,

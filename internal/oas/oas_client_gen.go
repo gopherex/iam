@@ -914,13 +914,13 @@ type CoreAuthInvoker interface {
 	// Resume a flow by token.
 	//
 	// GET /v1/auth/flows/{flow_token}
-	GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams, options ...RequestOption) (*FlowState, error)
+	GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams, options ...RequestOption) (*FlowStateHeaders, error)
 	// GetV1AuthFlowsCurrent invokes getV1AuthFlowsCurrent operation.
 	//
 	// Resume the current flow (cookie-bound).
 	//
 	// GET /v1/auth/flows/current
-	GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams, options ...RequestOption) (*FlowState, error)
+	GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams, options ...RequestOption) (*FlowStateHeaders, error)
 	// GetV1AuthSession invokes getV1AuthSession operation.
 	//
 	// Get current session and user.
@@ -969,19 +969,19 @@ type CoreAuthInvoker interface {
 	// challenge already issued.
 	//
 	// POST /v1/auth/flows
-	PostV1AuthFlows(ctx context.Context, request *FlowCreateRequest, params PostV1AuthFlowsParams, options ...RequestOption) (*FlowState, error)
+	PostV1AuthFlows(ctx context.Context, request *FlowCreateRequest, params PostV1AuthFlowsParams, options ...RequestOption) (*FlowStateHeaders, error)
 	// PostV1AuthFlowsByFlowTokenResend invokes postV1AuthFlowsByFlowTokenResend operation.
 	//
 	// Re-issue the active challenge of a flow.
 	//
 	// POST /v1/auth/flows/{flow_token}/resend
-	PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams, options ...RequestOption) (*FlowState, error)
+	PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams, options ...RequestOption) (*FlowStateHeaders, error)
 	// PostV1AuthFlowsByFlowTokenSubmit invokes postV1AuthFlowsByFlowTokenSubmit operation.
 	//
 	// Submit the current step of a flow.
 	//
 	// POST /v1/auth/flows/{flow_token}/submit
-	PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, request *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams, options ...RequestOption) (*FlowState, error)
+	PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, request *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams, options ...RequestOption) (*FlowStateHeaders, error)
 	// PostV1AuthGuest invokes postV1AuthGuest operation.
 	//
 	// Create an anonymous guest user and session.
@@ -10342,12 +10342,12 @@ func (c *Client) sendGetV1AuthEmailVerificationCallback(ctx context.Context, par
 // Resume a flow by token.
 //
 // GET /v1/auth/flows/{flow_token}
-func (c *Client) GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams, options ...RequestOption) (*FlowState, error) {
+func (c *Client) GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams, options ...RequestOption) (*FlowStateHeaders, error) {
 	res, err := c.sendGetV1AuthFlowsByFlowToken(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams, requestOptions ...RequestOption) (res *FlowState, err error) {
+func (c *Client) sendGetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams, requestOptions ...RequestOption) (res *FlowStateHeaders, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1AuthFlowsByFlowToken"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -10474,12 +10474,12 @@ func (c *Client) sendGetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1
 // Resume the current flow (cookie-bound).
 //
 // GET /v1/auth/flows/current
-func (c *Client) GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams, options ...RequestOption) (*FlowState, error) {
+func (c *Client) GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams, options ...RequestOption) (*FlowStateHeaders, error) {
 	res, err := c.sendGetV1AuthFlowsCurrent(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams, requestOptions ...RequestOption) (res *FlowState, err error) {
+func (c *Client) sendGetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams, requestOptions ...RequestOption) (res *FlowStateHeaders, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1AuthFlowsCurrent"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -10547,6 +10547,25 @@ func (c *Client) sendGetV1AuthFlowsCurrent(ctx context.Context, params GetV1Auth
 			return e.EncodeValue(conv.StringToString(params.XClientID))
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	stage = "EncodeCookieParams"
+	cookie := uri.NewCookieEncoder(r)
+	{
+		// Encode "iam_flow" parameter.
+		cfg := uri.CookieParameterEncodingConfig{
+			Name:    "iam_flow",
+			Explode: true,
+		}
+
+		if err := cookie.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IamFlow.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode cookie")
 		}
 	}
 
@@ -30758,12 +30777,12 @@ func (c *Client) sendPostV1AuthEmailVerificationVerify(ctx context.Context, requ
 // challenge already issued.
 //
 // POST /v1/auth/flows
-func (c *Client) PostV1AuthFlows(ctx context.Context, request *FlowCreateRequest, params PostV1AuthFlowsParams, options ...RequestOption) (*FlowState, error) {
+func (c *Client) PostV1AuthFlows(ctx context.Context, request *FlowCreateRequest, params PostV1AuthFlowsParams, options ...RequestOption) (*FlowStateHeaders, error) {
 	res, err := c.sendPostV1AuthFlows(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthFlows(ctx context.Context, request *FlowCreateRequest, params PostV1AuthFlowsParams, requestOptions ...RequestOption) (res *FlowState, err error) {
+func (c *Client) sendPostV1AuthFlows(ctx context.Context, request *FlowCreateRequest, params PostV1AuthFlowsParams, requestOptions ...RequestOption) (res *FlowStateHeaders, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
@@ -30884,12 +30903,12 @@ func (c *Client) sendPostV1AuthFlows(ctx context.Context, request *FlowCreateReq
 // Re-issue the active challenge of a flow.
 //
 // POST /v1/auth/flows/{flow_token}/resend
-func (c *Client) PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams, options ...RequestOption) (*FlowState, error) {
+func (c *Client) PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams, options ...RequestOption) (*FlowStateHeaders, error) {
 	res, err := c.sendPostV1AuthFlowsByFlowTokenResend(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams, requestOptions ...RequestOption) (res *FlowState, err error) {
+func (c *Client) sendPostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams, requestOptions ...RequestOption) (res *FlowStateHeaders, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1AuthFlowsByFlowTokenResend"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -31017,12 +31036,12 @@ func (c *Client) sendPostV1AuthFlowsByFlowTokenResend(ctx context.Context, param
 // Submit the current step of a flow.
 //
 // POST /v1/auth/flows/{flow_token}/submit
-func (c *Client) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, request *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams, options ...RequestOption) (*FlowState, error) {
+func (c *Client) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, request *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams, options ...RequestOption) (*FlowStateHeaders, error) {
 	res, err := c.sendPostV1AuthFlowsByFlowTokenSubmit(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, request *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams, requestOptions ...RequestOption) (res *FlowState, err error) {
+func (c *Client) sendPostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, request *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams, requestOptions ...RequestOption) (res *FlowStateHeaders, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {

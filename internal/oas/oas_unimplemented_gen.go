@@ -459,7 +459,7 @@ func (UnimplementedHandler) GetV1AuthEmailVerificationCallback(ctx context.Conte
 // Resume a flow by token.
 //
 // GET /v1/auth/flows/{flow_token}
-func (UnimplementedHandler) GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams) (r *FlowState, _ error) {
+func (UnimplementedHandler) GetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1AuthFlowsByFlowTokenParams) (r *FlowStateHeaders, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -468,7 +468,7 @@ func (UnimplementedHandler) GetV1AuthFlowsByFlowToken(ctx context.Context, param
 // Resume the current flow (cookie-bound).
 //
 // GET /v1/auth/flows/current
-func (UnimplementedHandler) GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams) (r *FlowState, _ error) {
+func (UnimplementedHandler) GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams) (r *FlowStateHeaders, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1540,7 +1540,7 @@ func (UnimplementedHandler) PostV1AuthEmailVerificationVerify(ctx context.Contex
 // challenge already issued.
 //
 // POST /v1/auth/flows
-func (UnimplementedHandler) PostV1AuthFlows(ctx context.Context, req *FlowCreateRequest, params PostV1AuthFlowsParams) (r *FlowState, _ error) {
+func (UnimplementedHandler) PostV1AuthFlows(ctx context.Context, req *FlowCreateRequest, params PostV1AuthFlowsParams) (r *FlowStateHeaders, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1549,7 +1549,7 @@ func (UnimplementedHandler) PostV1AuthFlows(ctx context.Context, req *FlowCreate
 // Re-issue the active challenge of a flow.
 //
 // POST /v1/auth/flows/{flow_token}/resend
-func (UnimplementedHandler) PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams) (r *FlowState, _ error) {
+func (UnimplementedHandler) PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params PostV1AuthFlowsByFlowTokenResendParams) (r *FlowStateHeaders, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1558,7 +1558,7 @@ func (UnimplementedHandler) PostV1AuthFlowsByFlowTokenResend(ctx context.Context
 // Submit the current step of a flow.
 //
 // POST /v1/auth/flows/{flow_token}/submit
-func (UnimplementedHandler) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, req *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams) (r *FlowState, _ error) {
+func (UnimplementedHandler) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, req *FlowSubmitRequest, params PostV1AuthFlowsByFlowTokenSubmitParams) (r *FlowStateHeaders, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

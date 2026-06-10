@@ -2229,6 +2229,32 @@ func (s *FlowState) SetSession(val OptSessionTokens) {
 	s.Session = val
 }
 
+// FlowStateHeaders wraps FlowState with response headers.
+type FlowStateHeaders struct {
+	SetCookie []string
+	Response  FlowState
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *FlowStateHeaders) GetSetCookie() []string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *FlowStateHeaders) GetResponse() FlowState {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *FlowStateHeaders) SetSetCookie(val []string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *FlowStateHeaders) SetResponse(val FlowState) {
+	s.Response = val
+}
+
 type FlowStateKind string
 
 const (
