@@ -66,6 +66,7 @@ type EmailTemplate = {
   html?: string;
   text?: string;
   locale?: string;
+  customized?: boolean;
   [key: string]: unknown;
 };
 
@@ -1120,7 +1121,12 @@ function EmailTemplatesTab({ projectId }: { projectId: string }) {
       header: 'Name',
       accessorFn: (t) => t.name ?? t.id ?? '',
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.name ?? row.original.id ?? '—'}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{row.original.name ?? row.original.id ?? '—'}</span>
+          <Badge variant={row.original.customized ? 'secondary' : 'outline'}>
+            {row.original.customized ? 'Customized' : 'Default'}
+          </Badge>
+        </div>
       ),
     },
     {

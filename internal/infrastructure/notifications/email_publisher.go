@@ -23,6 +23,7 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 
+	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/infrastructure/postgres"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
 )
@@ -456,23 +457,19 @@ func renderText(src string, data map[string]any) (string, error) {
 	return buf.String(), nil
 }
 
+// defaultTemplate returns the built-in copy for a template key from the shared
+// domain catalogue, falling back to the email_verification default for unknown
+// keys (mirrors the admin API so previews/tests match what is actually sent).
 func defaultTemplate(key string) map[string]string {
-	switch key {
-	case "otp":
-		return map[string]string{"subject": "Your sign-in code", "text": "Your code is {{.code}}."}
-	case "magic_link":
-		return map[string]string{"subject": "Your sign-in link", "text": "Open this link to sign in: {{.link}}", "html": `<p>Open this link to sign in: <a href="{{.link}}">{{.link}}</a></p>`}
-	case "email_change":
-		return map[string]string{"subject": "Confirm your new email", "text": "Use code {{.code}} or open {{.link}} to confirm your new email."}
-	case "password_reset":
-		return map[string]string{"subject": "Reset your password", "text": "Use code {{.code}} or open {{.link}} to reset your password."}
-	case "mfa_email":
-		return map[string]string{"subject": "Your MFA code", "text": "Your MFA code is {{.code}}."}
-	case "flow_continue":
-		return map[string]string{"subject": "Continue where you left off", "text": "Continue on this or another device: {{.continue_url}}", "html": `<p>Continue where you left off: <a href="{{.continue_url}}">{{.continue_url}}</a></p>`}
-	default:
-		return map[string]string{"subject": "Verify your email", "text": "Use code {{.code}} or open {{.link}} to verify your email."}
+	t := domain.BuiltinEmailTemplateByKey(key)
+	if t == nil {
+		t = domain.BuiltinEmailTemplateByKey("email_verification")
 	}
+	out := map[string]string{"subject": t.Subject, "text": t.Text}
+	if t.HTML != "" {
+		out["html"] = t.HTML
+	}
+	return out
 }
 
 func (c *smtpConfig) send(to string, msg renderedEmail) error {

@@ -1505,10 +1505,29 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 	if err != nil {
 		return nil, err
 	}
-	out := make(map[string]jx.Raw, len(rows))
+	out := make(map[string]jx.Raw, len(rows)+len(domain.BuiltinEmailTemplates))
+	// Seed with the built-in catalogue so every system template is always listed
+	// (editable/previewable/testable) even before a project customises it.
+	for _, t := range domain.BuiltinEmailTemplates {
+		body := map[string]jx.Raw{
+			"id":         adminRawString(t.Key),
+			"name":       adminRawString(t.Name),
+			"locale":     adminRawString(""),
+			"subject":    adminRawString(t.Subject),
+			"text":       adminRawString(t.Text),
+			"html":       adminRawString(t.HTML),
+			"customized": jx.Raw("false"),
+		}
+		raw, err := json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+		out[t.Key] = jx.Raw(raw)
+	}
+	// Overlay project overrides (mark them customized).
 	for _, row := range rows {
 		key := row.Key
-		if row.Locale != "" {
+		if row.Locale != "" && row.Locale != adminTemplateLocale {
 			key = row.Key + ":" + row.Locale
 		}
 		body := map[string]jx.Raw{}
@@ -1517,8 +1536,12 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 				return nil, err
 			}
 		}
+		if bt := domain.BuiltinEmailTemplateByKey(row.Key); bt != nil && body["name"] == nil {
+			body["name"] = adminRawString(bt.Name)
+		}
 		body["id"] = adminRawString(row.Key)
 		body["locale"] = adminRawString(row.Locale)
+		body["customized"] = jx.Raw("true")
 		raw, err := json.Marshal(body)
 		if err != nil {
 			return nil, err
@@ -1671,24 +1694,48 @@ func (a *pgAdminConfig) findEmailTemplate(ctx context.Context, projectID, key, l
 	if err == nil {
 		return row, nil
 	}
-	if !adminIsNotFound(err) || locale == adminTemplateLocale {
-		if adminIsNotFound(err) {
-			return nil, domain.ErrNotFound
-		}
+	if !adminIsNotFound(err) {
 		return nil, err
 	}
-	row, err = models.IamEmailTemplates.Query(
-		sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(projectID))),
-		sm.Where(models.IamEmailTemplates.Columns.Key.EQ(psql.Arg(key))),
-		sm.Where(models.IamEmailTemplates.Columns.Locale.EQ(psql.Arg(adminTemplateLocale))),
-	).One(ctx, a.db.Bobx())
-	if err != nil {
-		if adminIsNotFound(err) {
-			return nil, domain.ErrNotFound
+	// No project override for the requested locale; try the default locale.
+	if locale != adminTemplateLocale {
+		row, err = models.IamEmailTemplates.Query(
+			sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(projectID))),
+			sm.Where(models.IamEmailTemplates.Columns.Key.EQ(psql.Arg(key))),
+			sm.Where(models.IamEmailTemplates.Columns.Locale.EQ(psql.Arg(adminTemplateLocale))),
+		).One(ctx, a.db.Bobx())
+		if err == nil {
+			return row, nil
 		}
-		return nil, err
+		if !adminIsNotFound(err) {
+			return nil, err
+		}
 	}
-	return row, nil
+	// No override at all: fall back to the built-in catalogue so previews and
+	// test-sends work for system templates the project has never customised.
+	if syn := builtinTemplateRow(projectID, key, locale); syn != nil {
+		return syn, nil
+	}
+	return nil, domain.ErrNotFound
+}
+
+// builtinTemplateRow synthesizes an in-memory (unpersisted) template row from the
+// domain catalogue, so callers that read row.Data render the system default.
+func builtinTemplateRow(projectID, key, locale string) *models.IamEmailTemplate {
+	t := domain.BuiltinEmailTemplateByKey(key)
+	if t == nil {
+		return nil
+	}
+	if locale == "" {
+		locale = adminTemplateLocale
+	}
+	body, _ := json.Marshal(map[string]string{"subject": t.Subject, "text": t.Text, "html": t.HTML})
+	return &models.IamEmailTemplate{
+		ProjectID: projectID,
+		Key:       key,
+		Locale:    locale,
+		Data:      body,
+	}
 }
 
 func adminTemplateLocaleOrDefault(locale string) string {
