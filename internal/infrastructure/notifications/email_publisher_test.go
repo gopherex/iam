@@ -54,11 +54,11 @@ func TestSameOrigin(t *testing.T) {
 		}
 	}
 	deny := []struct{ a, b string }{
-		{"https://evil.com", "https://app.example.com"},        // foreign host (phishing)
-		{"http://app.example.com", "https://app.example.com"},  // scheme mismatch
+		{"https://evil.com", "https://app.example.com"},             // foreign host (phishing)
+		{"http://app.example.com", "https://app.example.com"},       // scheme mismatch
 		{"https://app.example.com:9000", "https://app.example.com"}, // port mismatch
-		{"", "https://app.example.com"},                        // empty
-		{"not-a-url", "https://app.example.com"},                // unparseable
+		{"", "https://app.example.com"},                             // empty
+		{"not-a-url", "https://app.example.com"},                    // unparseable
 	}
 	for _, c := range deny {
 		if sameOrigin(c.a, c.b) {
