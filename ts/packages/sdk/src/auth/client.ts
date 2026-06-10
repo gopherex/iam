@@ -45,6 +45,10 @@ import {
   type StorageAdapter,
   type Subscription,
 } from './types';
+import { IamAccount } from './account';
+import { IamMfa } from './mfa';
+import { IamWebAuthn } from './webauthn';
+import { createFlowController, type FlowController } from './flow';
 
 const RETRY_HEADER = 'X-IAM-Retry';
 const BROADCAST_NAME = 'iam:auth';
@@ -558,7 +562,8 @@ export class IamAuth {
 
   // ----- engine -----
 
-  private headers(): { 'X-Client-Id': string } {
+  /** @internal — shared with the account/mfa/webauthn namespaces. */
+  headers(): { 'X-Client-Id': string } {
     return { 'X-Client-Id': this.clientId };
   }
 
@@ -772,7 +777,20 @@ export function createIamClient(options: IamClientOptions): {
   auth: IamAuth;
   config: IamConfig;
   client: Client;
+  account: IamAccount;
+  mfa: IamMfa;
+  webauthn: IamWebAuthn;
+  flow: FlowController;
 } {
   const auth = new IamAuth(options);
-  return { auth, config: new IamConfig(auth.client, options.clientId), client: auth.client };
+  const headers = () => auth.headers();
+  return {
+    auth,
+    config: new IamConfig(auth.client, options.clientId),
+    client: auth.client,
+    account: new IamAccount(auth.client, headers),
+    mfa: new IamMfa(auth.client, headers),
+    webauthn: new IamWebAuthn(auth.client, headers),
+    flow: createFlowController({ baseUrl: options.baseUrl, clientId: options.clientId, auth }),
+  };
 }

@@ -31,3 +31,39 @@ export type {
   FlowKind,
 } from './auth/flow';
 // Note: FlowState is exported from './gen' via the wildcard export above.
+
+// Ergonomic authenticated namespaces (exposed on createIamClient as
+// iam.account / iam.mfa / iam.webauthn).
+export { IamAccount } from './auth/account';
+export type {
+  AccountProfile,
+  AccountCapabilities,
+  AccountActivity,
+  ExportJob,
+  ExportStatus,
+  ConsentRecord,
+  IdentityList,
+  MergeStartResult,
+  MergeConfirmResult,
+  SessionList,
+  CurrentSessionResult,
+  SessionResult,
+  RevokeAllResult,
+} from './auth/account';
+export { IamMfa } from './auth/mfa';
+export type {
+  TotpEnrollResult,
+  TotpVerifyResult,
+  SmsEnrollResult,
+  EmailEnrollResult,
+  WebAuthnEnrollOptionsResult,
+  WebAuthnEnrollVerifyResult,
+  RecoveryCodesResult,
+} from './auth/mfa';
+export { IamWebAuthn } from './auth/webauthn';
+export type {
+  RegisterOptionsResult,
+  RegisterVerifyResult,
+  CredentialList,
+  CredentialResult,
+} from './auth/webauthn';
