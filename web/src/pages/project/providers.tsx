@@ -449,6 +449,7 @@ function EmailProvidersTab({ projectId }: { projectId: string }) {
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<EmailProvider | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [smtpTestOpen, setSmtpTestOpen] = useState(false);
 
   async function doDelete() {
     if (!deleteTarget?.id) return;
@@ -535,10 +536,10 @@ function EmailProvidersTab({ projectId }: { projectId: string }) {
                   {p.enabled ? 'Disable' : 'Enable'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <SendTestDialog
-                  projectId={projectId}
-                  template={{ id: 'email_verification', name: 'SMTP connectivity test' }}
-                />
+                <DropdownMenuItem onClick={() => setSmtpTestOpen(true)}>
+                  <Send className="size-4" />
+                  Send test
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
@@ -605,6 +606,13 @@ function EmailProvidersTab({ projectId }: { projectId: string }) {
         label={deleteTarget?.type ?? 'this provider'}
         onConfirm={() => void doDelete()}
         busy={deleteBusy}
+      />
+
+      <SendTestDialog
+        projectId={projectId}
+        template={{ id: 'email_verification', name: 'SMTP connectivity test' }}
+        open={smtpTestOpen}
+        onOpenChange={setSmtpTestOpen}
       />
     </div>
   );
@@ -1015,14 +1023,21 @@ function PreviewTemplateDialog({
 // Send-test dialog
 // ---------------------------------------------------------------------------
 
+// SendTestDialog is CONTROLLED by the parent (open/onOpenChange) and rendered
+// OUTSIDE the row DropdownMenu. Nesting a Dialog trigger inside a Base UI Menu
+// makes the menu's close dismiss the dialog immediately, so the trigger is a
+// plain menu item that lifts state instead.
 function SendTestDialog({
   projectId,
   template,
+  open,
+  onOpenChange,
 }: {
   projectId: string;
-  template: EmailTemplate;
+  template: EmailTemplate | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [to, setTo] = useState('');
   const [locale, setLocale] = useState('');
   const [busy, setBusy] = useState(false);
@@ -1030,7 +1045,7 @@ function SendTestDialog({
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
-    if (!template.id) return;
+    if (!template?.id) return;
     setBusy(true);
     setErr(null);
     try {
@@ -1041,7 +1056,7 @@ function SendTestDialog({
         }),
       );
       toast.success(`Test email sent to ${to}`);
-      setOpen(false);
+      onOpenChange(false);
       setTo('');
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Failed to send test email');
@@ -1051,16 +1066,12 @@ function SendTestDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setErr(null); }}>
-      <DialogTrigger render={<DropdownMenuItem onSelect={(e) => e.preventDefault()} />}>
-        <Send className="size-4" />
-        Send test
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setErr(null); }}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Send test email</DialogTitle>
           <DialogDescription>
-            Send a rendered copy of <strong>{template.name ?? template.id}</strong> to a recipient
+            Send a rendered copy of <strong>{template?.name ?? template?.id}</strong> to a recipient
             address.
           </DialogDescription>
         </DialogHeader>
@@ -1108,6 +1119,7 @@ function EmailTemplatesTab({ projectId }: { projectId: string }) {
     () => call(getV1ProjectsByProjectIdAdminEmailTemplates({ path: { project_id: projectId } })),
     [projectId],
   );
+  const [testTemplate, setTestTemplate] = useState<EmailTemplate | null>(null);
 
   // The response is { [key: string]: unknown } — coerce to a list.
   const templates: EmailTemplate[] = (() => {
@@ -1171,7 +1183,10 @@ function EmailTemplatesTab({ projectId }: { projectId: string }) {
                 <EditTemplateDialog projectId={projectId} template={t} onSaved={reload} />
                 <PreviewTemplateDialog projectId={projectId} template={t} />
                 <DropdownMenuSeparator />
-                <SendTestDialog projectId={projectId} template={t} />
+                <DropdownMenuItem onClick={() => setTestTemplate(t)}>
+                  <Send className="size-4" />
+                  Send test
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -1198,6 +1213,13 @@ function EmailTemplatesTab({ projectId }: { projectId: string }) {
           emptyMessage="No templates match your search."
         />
       )}
+
+      <SendTestDialog
+        projectId={projectId}
+        template={testTemplate}
+        open={Boolean(testTemplate)}
+        onOpenChange={(o) => { if (!o) setTestTemplate(null); }}
+      />
     </div>
   );
 }
