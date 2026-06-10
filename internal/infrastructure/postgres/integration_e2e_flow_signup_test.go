@@ -358,17 +358,20 @@ func TestE2EFlowAbandon(t *testing.T) {
 	}
 }
 
-// TestE2EFlowSigninNotImplemented verifies the placeholder for signin.
-func TestE2EFlowSigninNotImplemented(t *testing.T) {
+// TestE2EFlowSigninWrongPasswordIsNeutral verifies that an unknown email or
+// wrong password returns a neutral 401 (anti-enumeration §5.4). The previous
+// placeholder checked for 200; now that signin is implemented the create step
+// authenticates immediately.
+func TestE2EFlowSigninWrongPasswordIsNeutral(t *testing.T) {
 	ctx := context.Background()
 	ts := e2eServer(t)
 	projectID := e2eProject(t, ctx)
 
 	_, r := flowCreate(t, ctx, ts, projectID, map[string]any{
-		"kind": "signin", "email": "test@example.com", "password": "pass",
+		"kind": "signin", "email": "nonexistent@example.com", "password": "wrongpass",
 	})
-	// Signin create returns collect_credentials (not an error at create time).
-	e2eWantStatus(t, r, http.StatusOK)
+	// Wrong/unknown credentials → neutral 401, no enumeration.
+	e2eWantStatus(t, r, http.StatusUnauthorized)
 }
 
 // suppress unused-symbol lint (referenced via reflection / blank imports).
