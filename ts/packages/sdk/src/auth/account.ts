@@ -34,6 +34,19 @@ import {
   type Timestamp,
   type Session as ApiSession,
   type PageMeta,
+  postV1AuthPasswordCheck,
+  postV1AuthPasswordVerify,
+  postV1AuthEmailChangeStart,
+  postV1AuthEmailChangeVerify,
+  getV1AuthEmailChangeCancel,
+  postV1AuthPhoneChangeStart,
+  postV1AuthPhoneChangeVerify,
+  type PostV1AuthPasswordCheckResponse,
+  type PostV1AuthPasswordVerifyResponse,
+  type PostV1AuthEmailChangeStartResponse,
+  type PostV1AuthEmailChangeVerifyResponse,
+  type PostV1AuthPhoneChangeStartResponse,
+  type PostV1AuthPhoneChangeVerifyResponse,
 } from '../gen';
 import { IamAuthError } from './types';
 
@@ -349,5 +362,55 @@ export class IamAccount {
     if (r.error) return { data: null, error: accountError(r) };
     const data = r.data as { revoked_count?: number } | undefined;
     return { data: { revokedCount: data?.revoked_count ?? 0 }, error: null };
+  }
+
+  // ---- password & contact-change ----------------------------------------
+
+  /** Public password-strength check — no session required. */
+  async checkPassword(password: string): Promise<{ data: PostV1AuthPasswordCheckResponse | null; error: IamAuthError | null }> {
+    const r = await postV1AuthPasswordCheck({ client: this._client, headers: this._headers(), body: { password } });
+    if (r.error) return { data: null, error: accountError(r) };
+    return { data: r.data ?? null, error: null };
+  }
+
+  /** Re-authenticate the current user's password (sensitive-action guard). */
+  async verifyPassword(password: string, challengeId?: string): Promise<{ data: PostV1AuthPasswordVerifyResponse | null; error: IamAuthError | null }> {
+    const r = await postV1AuthPasswordVerify({ client: this._client, headers: this._headers(), body: { password, challenge_id: challengeId ?? null } });
+    if (r.error) return { data: null, error: accountError(r) };
+    return { data: r.data ?? null, error: null };
+  }
+
+  /** Start an email-change flow (notifies the old address, challenges the new). */
+  async changeEmailStart(params: { email: string; redirectTo?: string; locale?: string }): Promise<{ data: PostV1AuthEmailChangeStartResponse | null; error: IamAuthError | null }> {
+    const r = await postV1AuthEmailChangeStart({ client: this._client, headers: this._headers(), body: { new_email: params.email, redirect_to: params.redirectTo ?? null, locale: params.locale ?? null } });
+    if (r.error) return { data: null, error: accountError(r) };
+    return { data: r.data ?? null, error: null };
+  }
+
+  /** Confirm the new email address with a code or token. */
+  async changeEmailVerify(params: { challengeId?: string; code?: string; token?: string }): Promise<{ data: PostV1AuthEmailChangeVerifyResponse | null; error: IamAuthError | null }> {
+    const r = await postV1AuthEmailChangeVerify({ client: this._client, headers: this._headers(), body: { challenge_id: params.challengeId ?? null, code: params.code ?? null, token: params.token ?? null } });
+    if (r.error) return { data: null, error: accountError(r) };
+    return { data: r.data ?? null, error: null };
+  }
+
+  /** Cancel a pending email-change from the old-address cancellation link token. */
+  async changeEmailCancel(token: string): Promise<{ error: IamAuthError | null }> {
+    const r = await getV1AuthEmailChangeCancel({ client: this._client, headers: this._headers(), query: { token } });
+    return { error: r.error ? accountError(r) : null };
+  }
+
+  /** Start a phone-change flow. */
+  async changePhoneStart(params: { phone: string; channel?: 'sms' | 'whatsapp' }): Promise<{ data: PostV1AuthPhoneChangeStartResponse | null; error: IamAuthError | null }> {
+    const r = await postV1AuthPhoneChangeStart({ client: this._client, headers: this._headers(), body: { new_phone: params.phone, channel: params.channel } });
+    if (r.error) return { data: null, error: accountError(r) };
+    return { data: r.data ?? null, error: null };
+  }
+
+  /** Confirm the new phone number with a verification code. */
+  async changePhoneVerify(params: { challengeId: string; code: string }): Promise<{ data: PostV1AuthPhoneChangeVerifyResponse | null; error: IamAuthError | null }> {
+    const r = await postV1AuthPhoneChangeVerify({ client: this._client, headers: this._headers(), body: { challenge_id: params.challengeId, code: params.code } });
+    if (r.error) return { data: null, error: accountError(r) };
+    return { data: r.data ?? null, error: null };
   }
 }

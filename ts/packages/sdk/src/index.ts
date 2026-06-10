@@ -67,3 +67,5 @@ export type {
   CredentialList,
   CredentialResult,
 } from './auth/webauthn';
+export { IamTokens } from './auth/tokens';
+export { IamOidc } from './auth/oidc';

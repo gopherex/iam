@@ -11,6 +11,9 @@ import {
   postV1AuthOauthExchange,
   postV1AuthTokenRefresh,
   postV1AuthSignOut,
+  postV1AuthSignOutAll,
+  postV1AuthSessionSwitchGroup,
+  postV1AuthAccessRequests,
   postV1AuthEmailVerificationStart,
   postV1AuthEmailVerificationVerify,
   postV1AuthPhoneVerificationStart,
@@ -48,6 +51,8 @@ import {
 import { IamAccount } from './account';
 import { IamMfa } from './mfa';
 import { IamWebAuthn } from './webauthn';
+import { IamTokens } from './tokens';
+import { IamOidc } from './oidc';
 import { createFlowController, type FlowController } from './flow';
 
 const RETRY_HEADER = 'X-IAM-Retry';
@@ -560,6 +565,28 @@ export class IamAuth {
     return { error };
   }
 
+  /** Revoke all of the user's sessions (optionally keeping the current one). */
+  async signOutAll(params?: { exceptCurrent?: boolean }): Promise<{ data: { revokedCount: number } | null; error: IamAuthError | null }> {
+    const r = await postV1AuthSignOutAll({ client: this.client, headers: this.headers(), body: { except_current: params?.exceptCurrent } });
+    if (r.error) return { data: null, error: authError(r) };
+    const body = r.data as { revoked_count?: number } | undefined;
+    return { data: { revokedCount: body?.revoked_count ?? 0 }, error: null };
+  }
+
+  /** Re-issue the access token with a new active-group claim; updates the stored session. */
+  async switchGroup(groupId: string): Promise<AuthResponse> {
+    const r = await postV1AuthSessionSwitchGroup({ client: this.client, headers: this.headers(), body: { group_id: groupId } });
+    return this.handle(r);
+  }
+
+  /** Submit an access request (request-access registration mode; no session needed). */
+  async requestAccess(params: { email: string; reason?: string; captchaToken?: string }): Promise<{ data: { id?: string; status?: string } | null; error: IamAuthError | null }> {
+    const r = await postV1AuthAccessRequests({ client: this.client, headers: this.headers(), body: { email: params.email, reason: params.reason, captcha_token: params.captchaToken } });
+    if (r.error) return { data: null, error: authError(r) };
+    const body = r.data as { request?: { id?: string; status?: string } } | undefined;
+    return { data: body?.request ?? null, error: null };
+  }
+
   // ----- engine -----
 
   /** @internal — shared with the account/mfa/webauthn namespaces. */
@@ -780,6 +807,8 @@ export function createIamClient(options: IamClientOptions): {
   account: IamAccount;
   mfa: IamMfa;
   webauthn: IamWebAuthn;
+  tokens: IamTokens;
+  oidc: IamOidc;
   flow: FlowController;
 } {
   const auth = new IamAuth(options);
@@ -791,6 +820,8 @@ export function createIamClient(options: IamClientOptions): {
     account: new IamAccount(auth.client, headers),
     mfa: new IamMfa(auth.client, headers),
     webauthn: new IamWebAuthn(auth.client, headers),
+    tokens: new IamTokens(auth.client, headers),
+    oidc: new IamOidc(auth.client, headers),
     flow: createFlowController({ baseUrl: options.baseUrl, clientId: options.clientId, auth }),
   };
 }
