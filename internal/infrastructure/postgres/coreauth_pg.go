@@ -418,6 +418,94 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	return sess, nil
 }
 
+// coreAuthRotateSession rotates the access + refresh tokens for an EXISTING
+// session, preserving its identity and security context — session id, AAL, AMR,
+// client, created-at. Used on token refresh so a long-lived session keeps its
+// AAL2 (MFA) elevation, client binding, and stable id instead of being rebuilt
+// as a fresh AAL1 session on every refresh.
+func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Account, row *models.IamSession) (*domain.Session, error) {
+	now := nowUTC()
+	prev, err := coreAuthLoadSession(row, row.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	aal := int(row.Aal)
+	if aal <= 0 {
+		aal = prev.AAL
+	}
+	if aal <= 0 {
+		aal = 1
+	}
+	amr := prev.AMR
+	clientID := prev.ClientID
+	signEnv, err := resolveSignEnv(ctx, a.db, acc.ProjectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
+	aud := clientID
+	if aud == "" {
+		aud = acc.ProjectID
+	}
+	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, map[string]any{
+		"iss": "https://iam.gopherex.com/" + acc.ProjectID,
+		"sub": acc.ID,
+		"sid": row.ID,
+		"jti": newUUID(),
+		"pid": acc.ProjectID,
+		"aud": aud,
+		"aal": aal,
+		"amr": amr,
+		"typ": "access",
+		"env": signEnv,
+	}, coreAuthAccessTTL)
+	if err != nil {
+		return nil, err
+	}
+	refreshPlain, err := coreAuthRandomToken()
+	if err != nil {
+		return nil, err
+	}
+	sess := &domain.Session{
+		ID:           row.ID,
+		AccountID:    acc.ID,
+		ProjectID:    acc.ProjectID,
+		ClientID:     clientID,
+		AMR:          amr,
+		AAL:          aal,
+		AccessToken:  accessToken,
+		RefreshToken: refreshPlain,
+		ExpiresIn:    coreAuthDefaultExpiresInSec,
+		CreatedAt:    prev.CreatedAt,
+	}
+	rawSess, err := marshal(sess)
+	if err != nil {
+		return nil, err
+	}
+	rmSess := json.RawMessage(rawSess)
+	// Keep the session row; only refresh last-active + the token snapshot. AAL,
+	// trusted, client_id columns are intentionally left untouched.
+	if err := row.Update(ctx, a.db.Bobx(), &models.IamSessionSetter{
+		LastActiveAt: &now,
+		Data:         &rmSess,
+	}); err != nil {
+		return nil, err
+	}
+	rt := coreAuthRefreshToken{
+		ID:        newUUID(),
+		ProjectID: acc.ProjectID,
+		UserID:    acc.ID,
+		SessionID: row.ID,
+		Hash:      coreAuthSHA256(refreshPlain),
+		Revoked:   false,
+		ExpiresAt: now.Add(coreAuthRefreshTTL),
+		CreatedAt: now,
+	}
+	if err := a.coreAuthInsertRefreshToken(ctx, rt); err != nil {
+		return nil, err
+	}
+	return sess, nil
+}
+
 // coreAuthInsertRefreshToken persists a refresh-token envelope row. MUST run
 // inside an open transaction.
 func (a *pgCoreAuth) coreAuthInsertRefreshToken(ctx context.Context, rt coreAuthRefreshToken) error {
@@ -1043,16 +1131,21 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 			return refreshResult{}, err
 		}
 
-		// Rotate: revoke the presented token and drop its old session, then mint
-		// a fresh session + refresh token.
+		// Rotate the tokens in place: revoke the presented refresh token, then
+		// mint a new access + refresh pair bound to the SAME session, preserving
+		// its id, AAL (MFA elevation), AMR, and client. The session is not torn
+		// down on refresh.
 		if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
 			return refreshResult{}, err
 		}
-		if err := a.coreAuthRevokeSession(ctx, row.ProjectID, row.SessionID); err != nil &&
-			!errors.Is(err, domain.ErrSessionNotFound) {
+		sessRow, err := models.FindIamSession(ctx, a.db.Bobx(), row.SessionID)
+		if err != nil {
+			if errors.Is(translatePgErr("session", err), ErrNotFound) {
+				return refreshResult{}, domain.ErrSessionNotFound
+			}
 			return refreshResult{}, err
 		}
-		sess, err := a.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
+		sess, err := a.coreAuthRotateSession(ctx, acc, sessRow)
 		if err != nil {
 			return refreshResult{}, err
 		}
