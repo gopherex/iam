@@ -243,12 +243,21 @@ func TestE2EMFAVerify(t *testing.T) {
 		e2eWantStatus(t, r, http.StatusUnprocessableEntity)
 	})
 
-	t.Run("BUG: invalid challenge_id returns 500 instead of 401/404", func(t *testing.T) {
-		t.Skip("Production bug #2: POST /v1/auth/mfa/verify with non-existent challenge_id " +
-			"returns 500 (internal_error) instead of 401 or 404. " +
-			"Root cause: translatePgErr wraps postgres.ErrNotFound (a plain error, not *domain.Error); " +
-			"NewError cannot errors.As to *domain.Error so falls through to ErrInternal. " +
-			"Fix: return domain.ErrChallengeInvalid when challenge row is not found.")
+	t.Run("invalid challenge_id returns 4xx", func(t *testing.T) {
+		// translatePgErr now wraps domain.ErrNotFound (via ErrNotFound alias) so the
+		// ogen NewError hook renders it as 404. The Verify adapter translates a missing
+		// challenge row to domain.ErrNotFound → 404.
+		hdrs := map[string]string{
+			"X-Client-Id":   projectID,
+			"X-Environment": "live",
+		}
+		r := e2eReq(t, ctx, http.MethodPost, url, map[string]any{
+			"challenge_id": newUUID(), // does not exist
+			"code":         "123456",
+		}, hdrs)
+		if r.Status < 400 || r.Status >= 500 {
+			t.Fatalf("want 4xx for invalid challenge_id, got %d\nbody: %s", r.Status, r.Body)
+		}
 	})
 }
 
@@ -447,13 +456,12 @@ func TestE2EMFADeleteFactor(t *testing.T) {
 		e2eWantStatus(t, r, http.StatusUnauthorized)
 	})
 
-	// Production bug #1: non-existent factor returns 500 instead of 404.
-	t.Run("BUG: not-found factor returns 500 instead of 404", func(t *testing.T) {
-		t.Skip("Production bug #1: DELETE /v1/auth/mfa/factors/{factor_id} with non-existent ID " +
-			"returns 500 (internal_error) instead of 404 (not_found). " +
-			"Root cause: mfaFindFactor → translatePgErr wraps local postgres.ErrNotFound " +
-			"(errors.New), not *domain.ErrNotFound. NewError cannot errors.As to *domain.Error. " +
-			"Fix: return domain.ErrNotFound when the factor row is not found.")
+	t.Run("not-found factor returns 404", func(t *testing.T) {
+		// ErrNotFound now aliases domain.ErrNotFound; translatePgErr wraps it so the
+		// ogen NewError hook can errors.As to *domain.Error and render 404.
+		url := ts.URL + "/v1/auth/mfa/factors/" + newUUID()
+		r := e2eReq(t, ctx, http.MethodDelete, url, nil, e2eBearer(sess.AccessToken))
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("happy path deletes the factor", func(t *testing.T) {
@@ -469,10 +477,13 @@ func TestE2EMFADeleteFactor(t *testing.T) {
 		}
 	})
 
-	// Production bug #1: also applies to already-deleted factors.
-	t.Run("BUG: already-deleted factor returns 500 instead of 404", func(t *testing.T) {
-		t.Skip("Production bug #1 (same as above): DELETE of already-deleted factor returns 500. " +
-			"See previous skip note for root cause and fix.")
+	t.Run("already-deleted factor returns 404", func(t *testing.T) {
+		// The happy path above already deleted enrollBody.FactorID. A second delete
+		// of the same factor_id should return 404 (not 500) now that ErrNotFound
+		// aliases domain.ErrNotFound.
+		url := ts.URL + "/v1/auth/mfa/factors/" + enrollBody.FactorID
+		r := e2eReq(t, ctx, http.MethodDelete, url, nil, e2eBearer(sess.AccessToken))
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 }
 
@@ -781,14 +792,13 @@ func TestE2EWebAuthnDeleteCredential(t *testing.T) {
 		e2eWantStatus(t, r, http.StatusUnauthorized)
 	})
 
-	// Production bug #3: non-existent credential returns 500 instead of 404.
-	t.Run("BUG: non-existent credential returns 500 instead of 404", func(t *testing.T) {
-		t.Skip("Production bug #3: DELETE /v1/auth/webauthn/credentials/{credential_id} with " +
-			"non-existent ID returns 500 (internal_error) instead of 404 (not_found). " +
-			"Root cause: loadCredential → translatePgErr wraps local postgres.ErrNotFound " +
-			"(a plain error.New value, not *domain.Error). NewError cannot errors.As to " +
-			"*domain.Error so falls through to ErrInternal (500). " +
-			"Fix: return domain.ErrNotFound when the credential row is not found.")
+	t.Run("non-existent credential returns 404", func(t *testing.T) {
+		// loadCredential uses translatePgErr; ErrNotFound now aliases domain.ErrNotFound
+		// so the ogen NewError hook renders 404, not 500.
+		_, sess := registerUser(t, ctx, projectID, fmt.Sprintf("wa-del-noexist-%s@test.com", newUUID()))
+		url := ts.URL + "/v1/auth/webauthn/credentials/" + newUUID()
+		r := e2eReq(t, ctx, http.MethodDelete, url, nil, e2eBearer(sess.AccessToken))
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 }
 
@@ -805,11 +815,12 @@ func TestE2EWebAuthnRenameCredential(t *testing.T) {
 		e2eWantStatus(t, r, http.StatusUnauthorized)
 	})
 
-	// Production bug #3: non-existent credential returns 500 instead of 404.
-	t.Run("BUG: non-existent credential returns 500 instead of 404", func(t *testing.T) {
-		t.Skip("Production bug #3: PATCH /v1/auth/webauthn/credentials/{credential_id} with " +
-			"non-existent ID returns 500 (internal_error) instead of 404 (not_found). " +
-			"Same root cause as DELETE — translatePgErr wraps local ErrNotFound not domain.ErrNotFound.")
+	t.Run("non-existent credential returns 404", func(t *testing.T) {
+		// loadCredential calls translatePgErr; ErrNotFound now aliases domain.ErrNotFound
+		// so the ogen NewError hook renders 404, not 500.
+		url := ts.URL + "/v1/auth/webauthn/credentials/" + newUUID()
+		r := e2eReq(t, ctx, http.MethodPatch, url, map[string]any{"name": "renamed"}, e2eBearer(sess.AccessToken))
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("missing name field returns 422", func(t *testing.T) {

@@ -6,6 +6,11 @@ import (
 	"context"
 	"net/http"
 	"testing"
+
+	"encoding/json"
+
+	"github.com/aarondl/opt/null"
+	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
 )
 
 // TestE2EAccountGetMe verifies GET /v1/users/me — happy path + unauthenticated.
@@ -469,39 +474,69 @@ func TestE2EAccountUnlinkIdentity(t *testing.T) {
 	})
 
 	t.Run("unlink another user identity returns 404", func(t *testing.T) {
-		_, otherSess := registerUser(t, ctx, projectID, "unlinkother-"+newUUID()[:8]+"@example.com")
-		ro := e2eReq(t, ctx, http.MethodGet, ts.URL+"/v1/auth/identities", nil, e2eBearer(otherSess.AccessToken))
-		e2eWantStatus(t, ro, http.StatusOK)
-		var otherList struct {
-			Data []struct {
-				ID string `json:"id"`
-			} `json:"data"`
+		// Register a second user and insert an identity row directly in the DB for
+		// them. User A then tries to unlink that identity — must get 404 (ownership
+		// boundary) even though the row exists.
+		otherAcct, _ := registerUser(t, ctx, projectID, "unlinkother-"+newUUID()[:8]+"@example.com")
+		otherIdentityID := newUUID()
+		otherProvider := null.From("github")
+		otherProviderAccID := null.From("other-provider-id-" + newUUID()[:8])
+		emptyData := json.RawMessage("{}")
+		setter := &models.IamIdentitySetter{
+			ID:                ptr(otherIdentityID),
+			ProjectID:         ptr(projectID),
+			UserID:            ptr(otherAcct.ID),
+			Type:              ptr("oauth"),
+			Provider:          &otherProvider,
+			ProviderAccountID: &otherProviderAccID,
+			CreatedAt:         ptr(nowUTC()),
+			Data:              &emptyData,
 		}
-		e2eDecode(t, ro, &otherList)
-		if len(otherList.Data) == 0 {
-			t.Skip("no identities for other user; skipping cross-tenant unlink test")
+		if _, err := models.IamIdentities.Insert(setter).One(ctx, testDB.Bobx()); err != nil {
+			t.Fatalf("insert other-user identity: %v", err)
 		}
-		otherIdentityID := otherList.Data[0].ID
+		// User A tries to delete other user's identity → 404.
 		r := e2eReq(t, ctx, http.MethodDelete, ts.URL+"/v1/auth/identities/"+otherIdentityID, nil, e2eBearer(sess.AccessToken))
 		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("unlink own identity succeeds", func(t *testing.T) {
-		_, freshSess := registerUser(t, ctx, projectID, "unlinkown-"+newUUID()[:8]+"@example.com")
+		// Register a fresh user and insert an identity row for them so there is
+		// something to unlink. registerUser creates a user+credential but no
+		// identity row; we seed one directly via the DB.
+		// Use type "oauth" — a value in the IdentityType enum — so ogen response
+		// validation does not reject the GET /v1/auth/identities list response.
+		freshAcct, freshSess := registerUser(t, ctx, projectID, "unlinkown-"+newUUID()[:8]+"@example.com")
+		identityID := newUUID()
+		providerAccID := null.From("fake-provider-id-" + newUUID()[:8])
+		provider := null.From("google")
+		emptyData2 := json.RawMessage("{}")
+		setter := &models.IamIdentitySetter{
+			ID:                ptr(identityID),
+			ProjectID:         ptr(projectID),
+			UserID:            ptr(freshAcct.ID),
+			Type:              ptr("oauth"),
+			Provider:          &provider,
+			ProviderAccountID: &providerAccID,
+			CreatedAt:         ptr(nowUTC()),
+			Data:              &emptyData2,
+		}
+		if _, err := models.IamIdentities.Insert(setter).One(ctx, testDB.Bobx()); err != nil {
+			t.Fatalf("insert own identity: %v", err)
+		}
+		// Confirm the identity is visible via the HTTP list endpoint.
 		rf := e2eReq(t, ctx, http.MethodGet, ts.URL+"/v1/auth/identities", nil, e2eBearer(freshSess.AccessToken))
 		e2eWantStatus(t, rf, http.StatusOK)
-		var freshList struct {
-			Data []struct {
-				ID string `json:"id"`
-			} `json:"data"`
-		}
-		e2eDecode(t, rf, &freshList)
-		if len(freshList.Data) == 0 {
-			t.Skip("no identities to unlink")
-		}
-		identityID := freshList.Data[0].ID
+		// Now unlink it.
 		rd := e2eReq(t, ctx, http.MethodDelete, ts.URL+"/v1/auth/identities/"+identityID, nil, e2eBearer(freshSess.AccessToken))
 		e2eWantStatus(t, rd, http.StatusOK)
+		var body struct {
+			Ok bool `json:"ok"`
+		}
+		e2eDecode(t, rd, &body)
+		if !body.Ok {
+			t.Error("expected ok=true after unlink")
+		}
 	})
 }
 
@@ -609,9 +644,9 @@ func TestE2EAccountConsents(t *testing.T) {
 	})
 
 	t.Run("get consents after acceptance", func(t *testing.T) {
-		// Regression guard: a stored consent with empty locale must not break the
-		// response. oasAccountConsent now only sets Locale when non-empty, so ogen
-		// response validation (locale regex) no longer rejects the document.
+		// Regression guard: a stored consent with empty locale must not 400.
+		// oasAccountConsent only sets Locale when non-empty, so the ogen response
+		// validator (locale regex) no longer rejects the document.
 		r := e2eReq(t, ctx, http.MethodGet, ts.URL+"/v1/users/me/consents", nil, e2eBearer(sess.AccessToken))
 		e2eWantStatus(t, r, http.StatusOK)
 		var body struct {

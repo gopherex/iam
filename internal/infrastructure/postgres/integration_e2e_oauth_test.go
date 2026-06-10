@@ -14,18 +14,19 @@ package postgres
 // exercised for their start + error-path only; a note documents what can't
 // be fully exercised without a live provider.
 //
-// PRODUCTION BUGS FOUND (these subtests are t.Skipped with precise notes):
+// Previously observed production bugs (now FIXED on this branch):
 //
-//  1. OTP/MagicLink verify: bob's scan.One returns sql.ErrNoRows (not pgx.ErrNoRows),
-//     but isNoRows() checks errors.Is(err, pgx.ErrNoRows). Since sql.ErrNoRows doesn't
-//     unwrap to pgx.ErrNoRows, isNoRows() returns false and the not-found path falls
-//     through to returning the raw sql.ErrNoRows → API maps it to 500.
+//  1. OTP/MagicLink verify: isNoRows() only checked pgx.ErrNoRows but bob's
+//     scan.One returns sql.ErrNoRows. Fixed: translatePgErr now checks both
+//     sql.ErrNoRows and pgx.ErrNoRows; isNoRows() uses translatePgErr internally.
 //
-//  2. OIDC Interaction (ResolveInteraction, CompleteLogin, Consent, Reject),
-//     OAuth Social Unlink, and OIDC Grant Revoke all use translatePgErr() which
-//     returns the package-level postgres.ErrNotFound (a plain error) instead of
-//     domain.ErrNotFound (*domain.Error). The API error handler only matches
-//     *domain.Error, so all not-found cases return 500 instead of 404.
+//  2. OIDC Interaction, OAuth Social Unlink, and OIDC Grant Revoke returned 500
+//     because translatePgErr wrapped the package-level postgres.ErrNotFound (a
+//     plain error) not domain.ErrNotFound (*domain.Error). Fixed: ErrNotFound now
+//     aliases domain.ErrNotFound so errors.As in the ogen NewError hook finds it.
+//
+// Remaining skips are for infeasible happy paths (token from delivered email):
+//   - TestE2EPasswordlessOTPRoundTrip / TestE2EPasswordlessMagicLinkRoundTrip
 
 import (
 	"bytes"
@@ -125,12 +126,9 @@ func TestE2EPasswordlessOTPVerify(t *testing.T) {
 	projectID := e2eProject(t, ctx)
 
 	t.Run("invalid_challenge_4xx", func(t *testing.T) {
-		// PRODUCTION BUG: isNoRows() checks errors.Is(err, pgx.ErrNoRows) but
-		// bob's scan.One returns sql.ErrNoRows; pgx.ErrNoRows wraps sql.ErrNoRows
-		// but the check is in the wrong direction so isNoRows() returns false, and
-		// the not-found case falls through, returning sql.ErrNoRows → 500 internal.
-		// The correct status would be 401 (challenge_invalid) or 404.
-		t.Skip("production bug: isNoRows() does not catch sql.ErrNoRows from bob scan.One → returns 500 instead of 4xx; fix: use errors.Is(err, sql.ErrNoRows) || errors.Is(err, pgx.ErrNoRows)")
+		// loadChallengeForVerify calls FindIamChallenge; isNoRows() now catches both
+		// sql.ErrNoRows (bob) and pgx.ErrNoRows (generated finders) via translatePgErr,
+		// so a missing challenge maps to domain.ErrChallengeInvalid → 401.
 		r := e2eReq(t, ctx, http.MethodPost,
 			ts.URL+"/v1/auth/otp/verify",
 			map[string]any{
@@ -140,7 +138,7 @@ func TestE2EPasswordlessOTPVerify(t *testing.T) {
 			map[string]string{"X-Client-Id": projectID},
 		)
 		if r.Status < 400 || r.Status >= 500 {
-			t.Fatalf("expected 4xx for invalid OTP, got %d\nbody: %s", r.Status, r.Body)
+			t.Fatalf("expected 4xx for invalid OTP challenge, got %d\nbody: %s", r.Status, r.Body)
 		}
 	})
 
@@ -250,13 +248,9 @@ func TestE2EPasswordlessMagicLinkVerify(t *testing.T) {
 	projectID := e2eProject(t, ctx)
 
 	t.Run("bogus_token_4xx", func(t *testing.T) {
-		// PRODUCTION BUG: VerifyMagicLink calls findUnconsumedByHash which uses
-		// IamChallenges.Query().One() → scan.One returns sql.ErrNoRows on no match.
-		// isNoRows() checks errors.Is(err, pgx.ErrNoRows) which is false for
-		// sql.ErrNoRows (pgx.ErrNoRows wraps sql but not vice versa). The not-found
-		// path is skipped, sql.ErrNoRows propagates, and the API returns 500.
-		// The correct status would be 401 (invalid_token).
-		t.Skip("production bug: isNoRows() does not catch sql.ErrNoRows from bob scan.One → returns 500 instead of 4xx; fix: check errors.Is(err, sql.ErrNoRows) in isNoRows()")
+		// findUnconsumedByHash uses IamChallenges.Query().One() which returns
+		// sql.ErrNoRows on no match; isNoRows() now catches it (translatePgErr checks
+		// both sql.ErrNoRows and pgx.ErrNoRows), mapping to domain.ErrInvalidToken → 401.
 		r := e2eReq(t, ctx, http.MethodPost,
 			ts.URL+"/v1/auth/magic-link/verify",
 			map[string]any{"token": "not-a-real-magic-link-token"},
@@ -314,11 +308,11 @@ func TestE2EPasswordlessOTPRoundTrip(t *testing.T) {
 		t.Fatal("no challenge_id in OTP start response")
 	}
 
-	// Verify with wrong code. Skipped due to production bug (500 instead of 4xx).
-	// NOTE: correct code can only be obtained from the delivered email / SMS,
-	// which is suppressed by nopEmitter in test mode. A full round-trip requires
-	// either a test-mode code capture API or email mailhog integration.
-	t.Skip("production bug: OTP verify returns 500 for invalid challenge (isNoRows bug); skipping wrong-code verify assertion")
+	// Verify with wrong code. The OTP verify endpoint now correctly returns 401
+	// for an invalid code (isNoRows bug is fixed). However the correct code is
+	// delivered via email/SMS and suppressed by nopEmitter in test mode; we
+	// cannot complete a full happy-path round-trip without mailhog / code-capture.
+	t.Skip("cannot complete OTP round-trip: correct code is only available from the delivered email/SMS (suppressed by nopEmitter); integrate a code-capture sink or mailhog to enable the happy path")
 }
 
 // TestE2EPasswordlessMagicLinkRoundTrip exercises the magic-link sign-in flow.
@@ -345,11 +339,12 @@ func TestE2EPasswordlessMagicLinkRoundTrip(t *testing.T) {
 		t.Fatal("no challenge_id in magic-link start response")
 	}
 
-	// Verify with a fabricated token is skipped due to production bug.
-	// NOTE: correct token is only available from the delivered email (suppressed
-	// by nopEmitter). Full round-trip requires mailhog / test-capture integration.
+	// The magic-link verify endpoint now correctly returns 401 for a bogus token
+	// (isNoRows bug is fixed). A full happy-path round-trip requires the real
+	// token delivered to the user's email, which nopEmitter discards. We cannot
+	// complete the round-trip without mailhog / test-capture integration.
 	_ = base64.URLEncoding.EncodeToString([]byte("not-a-real-token")) // illustrative
-	t.Skip("production bug: magic-link verify returns 500 for bogus token (isNoRows bug); skipping bogus-token verify assertion")
+	t.Skip("cannot complete magic-link round-trip: token is only available from the delivered email (suppressed by nopEmitter); integrate a token-capture sink or mailhog to enable the happy path")
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -510,11 +505,8 @@ func TestE2EOAuthSocialUnlink(t *testing.T) {
 	})
 
 	t.Run("authenticated_unknown_identity_4xx", func(t *testing.T) {
-		// PRODUCTION BUG: Unlink calls models.FindIamIdentity → translatePgErr →
-		// returns postgres.ErrNotFound (a plain sentinel error) not domain.ErrNotFound
-		// (*domain.Error). The API error handler only matches *domain.Error, so the
-		// not-found case returns 500 internal_error instead of 404 not_found.
-		t.Skip("production bug: Unlink returns postgres.ErrNotFound (plain error) not domain.ErrNotFound; API handler maps it to 500; fix: wrap with domain.ErrNotFound after translatePgErr")
+		// Unlink calls translatePgErr; ErrNotFound now aliases domain.ErrNotFound so
+		// the ogen NewError hook renders 404 for a non-existent identity.
 		projectID := e2eProject(t, ctx)
 		_, sess := registerUser(t, ctx, projectID, "unlink-user@example.com")
 		r := e2eReq(t, ctx, http.MethodPost,
@@ -1067,12 +1059,8 @@ func TestE2EOIDCProviderInteractionFetch(t *testing.T) {
 	projectID := e2eProject(t, ctx)
 
 	t.Run("unknown_interaction_4xx", func(t *testing.T) {
-		// PRODUCTION BUG: ResolveInteraction calls translatePgErr("interaction", err)
-		// which returns postgres.ErrNotFound (a fmt.Errorf wrapping ErrNotFound, a
-		// plain error) rather than domain.ErrNotFound (*domain.Error). The API error
-		// handler only type-asserts *domain.Error, so postgres.ErrNotFound becomes
-		// 500 internal_error instead of 404 not_found.
-		t.Skip("production bug: ResolveInteraction returns postgres.ErrNotFound (plain error) not domain.ErrNotFound; API maps it to 500; fix: return domain.ErrNotFound when translatePgErr detects ErrNotFound")
+		// ResolveInteraction calls translatePgErr; ErrNotFound now aliases
+		// domain.ErrNotFound so the ogen NewError hook renders 404.
 		u := fmt.Sprintf("%s/v1/oauth/interaction/%s", ts.URL, newUUID())
 		r := e2eReq(t, ctx, http.MethodGet, u, nil,
 			map[string]string{"X-Client-Id": projectID})
@@ -1095,8 +1083,8 @@ func TestE2EOIDCProviderInteractionLogin(t *testing.T) {
 	})
 
 	t.Run("authenticated_unknown_interaction_4xx", func(t *testing.T) {
-		// PRODUCTION BUG: same translatePgErr issue as InteractionFetch.
-		t.Skip("production bug: CompleteLogin returns postgres.ErrNotFound (plain error) not domain.ErrNotFound; API maps it to 500; fix: wrap with domain.ErrNotFound")
+		// CompleteLogin calls translatePgErr; ErrNotFound now aliases domain.ErrNotFound
+		// so the ogen NewError hook renders 404, not 500.
 		projectID := e2eProject(t, ctx)
 		_, sess := registerUser(t, ctx, projectID, "interaction-login@example.com")
 		u := fmt.Sprintf("%s/v1/oauth/interaction/%s/login", ts.URL, newUUID())
@@ -1120,8 +1108,8 @@ func TestE2EOIDCProviderInteractionConsent(t *testing.T) {
 	})
 
 	t.Run("authenticated_unknown_interaction_4xx", func(t *testing.T) {
-		// PRODUCTION BUG: same translatePgErr issue.
-		t.Skip("production bug: Consent returns postgres.ErrNotFound (plain error) not domain.ErrNotFound; API maps it to 500; fix: wrap with domain.ErrNotFound")
+		// Consent calls translatePgErr; ErrNotFound now aliases domain.ErrNotFound
+		// so the ogen NewError hook renders 404, not 500.
 		projectID := e2eProject(t, ctx)
 		_, sess := registerUser(t, ctx, projectID, "consent-user@example.com")
 		u := fmt.Sprintf("%s/v1/oauth/interaction/%s/consent", ts.URL, newUUID())
@@ -1141,8 +1129,8 @@ func TestE2EOIDCProviderInteractionReject(t *testing.T) {
 	ts := e2eServer(t)
 
 	t.Run("unknown_interaction_4xx", func(t *testing.T) {
-		// PRODUCTION BUG: same translatePgErr issue as InteractionFetch.
-		t.Skip("production bug: Reject returns postgres.ErrNotFound (plain error) not domain.ErrNotFound; API maps it to 500; fix: wrap with domain.ErrNotFound")
+		// Reject calls translatePgErr; ErrNotFound now aliases domain.ErrNotFound
+		// so the ogen NewError hook renders 404, not 500.
 		u := fmt.Sprintf("%s/v1/oauth/interaction/%s/reject", ts.URL, newUUID())
 		r := e2eReq(t, ctx, http.MethodPost, u,
 			map[string]any{"error": "access_denied", "error_description": "User denied"}, nil)
@@ -1194,10 +1182,8 @@ func TestE2EOIDCProviderGrantRevoke(t *testing.T) {
 	})
 
 	t.Run("authenticated_unknown_grant_4xx", func(t *testing.T) {
-		// PRODUCTION BUG: RevokeGrant calls models.FindIamOauthGrant → translatePgErr →
-		// returns postgres.ErrNotFound (plain error) not domain.ErrNotFound.
-		// API error handler maps it to 500 instead of 404.
-		t.Skip("production bug: RevokeGrant returns postgres.ErrNotFound (plain error) not domain.ErrNotFound; API maps it to 500; fix: wrap with domain.ErrNotFound after translatePgErr in RevokeGrant")
+		// RevokeGrant calls translatePgErr; ErrNotFound now aliases domain.ErrNotFound
+		// so the ogen NewError hook renders 404 for a non-existent grant.
 		projectID := e2eProject(t, ctx)
 		_, sess := registerUser(t, ctx, projectID, "revoke-grant@example.com")
 		u := fmt.Sprintf("%s/v1/oauth/grants/%s", ts.URL, newUUID())
