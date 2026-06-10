@@ -63,13 +63,31 @@ func oasSessionTokens(s *domain.Session) oas.SessionTokens {
 }
 
 func oasSession(s *domain.Session) oas.Session {
-	return oas.Session{
+	out := oas.Session{
 		ID:       s.ID,
 		UserID:   oas.NewOptString(s.AccountID),
 		ClientID: oas.NewOptString(s.ClientID),
 		Amr:      s.AMR,
 		Aal:      oas.NewOptSessionAal(oas.SessionAal(s.AAL)),
+		Trusted:  oas.NewOptBool(s.Trusted),
+		Current:  oas.NewOptBool(s.Current),
 	}
+	if s.DeviceName != "" {
+		out.DeviceName = oas.NewOptNilString(s.DeviceName)
+	}
+	if s.IP != "" {
+		out.IP = oas.NewOptString(s.IP)
+	}
+	if s.UserAgent != "" {
+		out.UserAgent = oas.NewOptString(s.UserAgent)
+	}
+	if !s.CreatedAt.IsZero() {
+		out.CreatedAt = oas.NewOptTimestamp(oas.Timestamp(s.CreatedAt))
+	}
+	if !s.LastActiveAt.IsZero() {
+		out.LastActiveAt = oas.NewOptTimestamp(oas.Timestamp(s.LastActiveAt))
+	}
+	return out
 }
 
 // authResult builds the authenticated AuthResult from a freshly issued session.

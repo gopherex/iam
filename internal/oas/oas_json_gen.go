@@ -40317,19 +40317,33 @@ func (s *Session) encodeFields(e *jx.Encoder) {
 			s.LastActiveAt.Encode(e)
 		}
 	}
+	{
+		if s.IP.Set {
+			e.FieldStart("ip")
+			s.IP.Encode(e)
+		}
+	}
+	{
+		if s.UserAgent.Set {
+			e.FieldStart("user_agent")
+			s.UserAgent.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfSession = [10]string{
-	0: "id",
-	1: "user_id",
-	2: "client_id",
-	3: "device_name",
-	4: "amr",
-	5: "aal",
-	6: "trusted",
-	7: "current",
-	8: "created_at",
-	9: "last_active_at",
+var jsonFieldsNameOfSession = [12]string{
+	0:  "id",
+	1:  "user_id",
+	2:  "client_id",
+	3:  "device_name",
+	4:  "amr",
+	5:  "aal",
+	6:  "trusted",
+	7:  "current",
+	8:  "created_at",
+	9:  "last_active_at",
+	10: "ip",
+	11: "user_agent",
 }
 
 // Decode decodes Session from json.
@@ -40451,6 +40465,26 @@ func (s *Session) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"last_active_at\"")
+			}
+		case "ip":
+			if err := func() error {
+				s.IP.Reset()
+				if err := s.IP.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"ip\"")
+			}
+		case "user_agent":
+			if err := func() error {
+				s.UserAgent.Reset()
+				if err := s.UserAgent.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"user_agent\"")
 			}
 		default:
 			return d.Skip()

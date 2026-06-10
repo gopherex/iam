@@ -18329,6 +18329,8 @@ type Session struct {
 	Current      OptBool       `json:"current"`
 	CreatedAt    OptTimestamp  `json:"created_at"`
 	LastActiveAt OptTimestamp  `json:"last_active_at"`
+	IP           OptString     `json:"ip"`
+	UserAgent    OptString     `json:"user_agent"`
 }
 
 // GetID returns the value of ID.
@@ -18381,6 +18383,16 @@ func (s *Session) GetLastActiveAt() OptTimestamp {
 	return s.LastActiveAt
 }
 
+// GetIP returns the value of IP.
+func (s *Session) GetIP() OptString {
+	return s.IP
+}
+
+// GetUserAgent returns the value of UserAgent.
+func (s *Session) GetUserAgent() OptString {
+	return s.UserAgent
+}
+
 // SetID sets the value of ID.
 func (s *Session) SetID(val string) {
 	s.ID = val
@@ -18429,6 +18441,16 @@ func (s *Session) SetCreatedAt(val OptTimestamp) {
 // SetLastActiveAt sets the value of LastActiveAt.
 func (s *Session) SetLastActiveAt(val OptTimestamp) {
 	s.LastActiveAt = val
+}
+
+// SetIP sets the value of IP.
+func (s *Session) SetIP(val OptString) {
+	s.IP = val
+}
+
+// SetUserAgent sets the value of UserAgent.
+func (s *Session) SetUserAgent(val OptString) {
+	s.UserAgent = val
 }
 
 type SessionAal int

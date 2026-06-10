@@ -357,6 +357,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		return nil, err
 	}
 	refreshHash := coreAuthSHA256(refreshPlain)
+	meta := domain.RequestMetaFromContext(ctx)
 	sess := &domain.Session{
 		ID:           sessionID,
 		AccountID:    acc.ID,
@@ -368,6 +369,10 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		RefreshToken: refreshPlain,
 		ExpiresIn:    coreAuthDefaultExpiresInSec,
 		CreatedAt:    now,
+		IP:           meta.IP,
+		UserAgent:    meta.UserAgent,
+		Fingerprint:  meta.Fingerprint,
+		LastActiveAt: now,
 	}
 
 	rawSess, err := marshal(sess)
@@ -476,6 +481,17 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		RefreshToken: refreshPlain,
 		ExpiresIn:    coreAuthDefaultExpiresInSec,
 		CreatedAt:    prev.CreatedAt,
+		// Carry the device identity across refresh; refresh the IP/last-active
+		// from the current request when available.
+		DeviceName:   prev.DeviceName,
+		UserAgent:    prev.UserAgent,
+		Fingerprint:  prev.Fingerprint,
+		Trusted:      prev.Trusted,
+		IP:           prev.IP,
+		LastActiveAt: now,
+	}
+	if m := domain.RequestMetaFromContext(ctx); m.IP != "" {
+		sess.IP = m.IP
 	}
 	rawSess, err := marshal(sess)
 	if err != nil {

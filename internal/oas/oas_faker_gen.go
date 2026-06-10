@@ -7619,6 +7619,16 @@ func (s *Session) SetFake() {
 			s.LastActiveAt.SetFake()
 		}
 	}
+	{
+		{
+			s.IP.SetFake()
+		}
+	}
+	{
+		{
+			s.UserAgent.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.

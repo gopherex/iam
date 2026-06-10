@@ -161,6 +161,7 @@ func (s *AccountService) GetV1Sessions(ctx context.Context) (*oas.GetV1SessionsO
 	}
 	data := make([]oas.Session, 0, len(sessions))
 	for i := range sessions {
+		sessions[i].Current = sessions[i].ID == p.SessionID
 		data = append(data, oasSession(&sessions[i]))
 	}
 	return &oas.GetV1SessionsOK{Data: data}, nil
@@ -175,6 +176,7 @@ func (s *AccountService) GetV1SessionsCurrent(ctx context.Context) (*oas.GetV1Se
 	if err != nil {
 		return nil, err
 	}
+	sess.Current = true
 	return &oas.GetV1SessionsCurrentOK{Session: oas.NewOptSession(oasSession(sess))}, nil
 }
 

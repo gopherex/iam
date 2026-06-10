@@ -601,6 +601,12 @@ components:
           $ref: '#/components/schemas/Timestamp'
         last_active_at:
           $ref: '#/components/schemas/Timestamp'
+        ip:
+          type: string
+          maxLength: 64
+        user_agent:
+          type: string
+          maxLength: 2048
     SessionTokens:
       type: object
       required:

@@ -45,6 +45,18 @@ type Session struct {
 	RefreshToken string
 	ExpiresIn    int
 	CreatedAt    time.Time
+	// Device / management metadata (stored in the iam_sessions data envelope;
+	// snake-cased so it round-trips with the rename/trust paths). Powers
+	// self-managed-session UIs.
+	DeviceName   string    `json:"device_name,omitempty"`
+	IP           string    `json:"ip,omitempty"`
+	UserAgent    string    `json:"user_agent,omitempty"`
+	Fingerprint  string    `json:"fingerprint,omitempty"`
+	Trusted      bool      `json:"trusted,omitempty"`
+	LastActiveAt time.Time `json:"last_active_at,omitempty"`
+	// Current is a transient view flag (this session == the caller's) — never
+	// persisted.
+	Current bool `json:"-"`
 }
 
 type Identity struct {

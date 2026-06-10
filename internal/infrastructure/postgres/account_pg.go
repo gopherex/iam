@@ -115,6 +115,8 @@ func accountSessionToDomain(row *models.IamSession) (*domain.Session, error) {
 	}
 	s.AAL = int(row.Aal)
 	s.CreatedAt = row.CreatedAt
+	s.Trusted = row.Trusted
+	s.LastActiveAt = row.LastActiveAt
 	if v, ok := row.ExpiresAt.Get(); ok {
 		s.ExpiresIn = int(v.Sub(row.CreatedAt).Seconds())
 	}

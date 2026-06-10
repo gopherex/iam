@@ -133,9 +133,10 @@ func e2eServer(t *testing.T) *httptest.Server {
 	if err != nil {
 		t.Fatalf("build server: %v", err)
 	}
-	pipeline := api.EnvironmentMiddleware(
-		api.CSRFMiddleware(platform)(
-			api.CookieAuthMiddleware(srv)))
+	pipeline := api.RequestMetaMiddleware(
+		api.EnvironmentMiddleware(
+			api.CSRFMiddleware(platform)(
+				api.CookieAuthMiddleware(srv))))
 	ts := httptest.NewServer(pipeline)
 	t.Cleanup(ts.Close)
 	return ts

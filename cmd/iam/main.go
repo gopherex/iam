@@ -169,9 +169,10 @@ func run() error {
 	// cookie-mode requests (evaluated before cookie auth, while there is no
 	// Authorization header); cookie auth promotes the session cookie to a Bearer
 	// header; then the generated API server.
-	apiPipeline := api.EnvironmentMiddleware(
-		api.CSRFMiddleware(postgres.NewPgPlatform(db))(
-			api.CookieAuthMiddleware(srv)))
+	apiPipeline := api.RequestMetaMiddleware(
+		api.EnvironmentMiddleware(
+			api.CSRFMiddleware(postgres.NewPgPlatform(db))(
+				api.CookieAuthMiddleware(srv))))
 	apiPipeline = api.CORSMiddleware(cfg.Service.CORS.AllowedOrigins)(apiPipeline)
 	apiPipeline = api.SecurityHeaders(apiPipeline)
 	apiPipeline = api.RateLimitMiddleware(apiPipeline)
