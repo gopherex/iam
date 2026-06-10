@@ -278,6 +278,11 @@ func (s *AuthConfig) SetFake() {
 	}
 	{
 		{
+			s.AppBaseURL.SetFake()
+		}
+	}
+	{
+		{
 			s.DefaultLocale.SetFake()
 		}
 	}
@@ -859,6 +864,11 @@ func (s *FlowCreateRequest) SetFake() {
 	{
 		{
 			s.CaptchaToken.SetFake()
+		}
+	}
+	{
+		{
+			s.RedirectTo.SetFake()
 		}
 	}
 }

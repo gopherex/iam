@@ -41,6 +41,32 @@ func TestEmailJobFromEventFlowContinue(t *testing.T) {
 	}
 }
 
+func TestSameOrigin(t *testing.T) {
+	allow := []struct{ a, b string }{
+		{"https://app.example.com/continue", "https://app.example.com"},
+		{"https://app.example.com/x", "https://app.example.com/y"},
+		{"https://APP.example.com", "https://app.example.com"}, // host case-insensitive
+		{"https://app.example.com:8443/x", "https://app.example.com:8443"},
+	}
+	for _, c := range allow {
+		if !sameOrigin(c.a, c.b) {
+			t.Errorf("sameOrigin(%q,%q) = false, want true", c.a, c.b)
+		}
+	}
+	deny := []struct{ a, b string }{
+		{"https://evil.com", "https://app.example.com"},        // foreign host (phishing)
+		{"http://app.example.com", "https://app.example.com"},  // scheme mismatch
+		{"https://app.example.com:9000", "https://app.example.com"}, // port mismatch
+		{"", "https://app.example.com"},                        // empty
+		{"not-a-url", "https://app.example.com"},                // unparseable
+	}
+	for _, c := range deny {
+		if sameOrigin(c.a, c.b) {
+			t.Errorf("sameOrigin(%q,%q) = true, want false", c.a, c.b)
+		}
+	}
+}
+
 func TestFlowContinueURL(t *testing.T) {
 	if got := flowContinueURL("https://app.example.com", "ftk_abc"); got != "https://app.example.com/continue?flow=ftk_abc" {
 		t.Fatalf("url = %q", got)

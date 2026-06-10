@@ -67,11 +67,6 @@ type Auth struct {
 	// operator (master key) has something to manage. Development convenience;
 	// set via SERVICE_AUTH_SEED_ROOT.
 	SeedRoot bool `mapstructure:"seed_root" default:"false"`
-	// AppBaseURL is the public base of the hosted auth UI used to build
-	// cross-device resume deep-links: the "continue" email links to
-	// <AppBaseURL>/continue?flow=<flow_token>. Empty disables the continue email.
-	// Set via SERVICE_AUTH_APP_BASE_URL.
-	AppBaseURL string `mapstructure:"app_base_url" default:"" validate:"omitempty,url"`
 }
 
 // Infrastructure is the external-dependency config (datastores, …).

@@ -304,7 +304,7 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 	if err != nil {
 		return nil, err
 	}
-	a.emitFlowContinue(ctx, state)
+	a.emitFlowContinue(ctx, state, cmd.RedirectTo)
 	return state, nil
 }
 
@@ -312,7 +312,7 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 // for still-pending email-bearing flows (signup/recovery). The notification
 // layer turns flow_token into <app_base_url>/continue?flow=… ; a send/emit
 // failure must not fail flow creation, so the error is swallowed.
-func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.FlowState) {
+func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.FlowState, redirectTo string) {
 	f := state.Flow
 	if f.Status != domain.FlowStatusPending || f.Contact.Email == "" {
 		return
@@ -320,16 +320,22 @@ func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.Fl
 	if f.Kind != domain.FlowKindSignup && f.Kind != domain.FlowKindRecovery {
 		return
 	}
+	payload := map[string]any{
+		"flow_token": state.FlowToken,
+		"kind":       string(f.Kind),
+		"to":         f.Contact.Email,
+		"contact":    f.Contact.Email,
+	}
+	// Per-flow base override; the notification layer validates its origin against
+	// the project before honouring it, falling back to app_base_url.
+	if redirectTo != "" {
+		payload["redirect_to"] = redirectTo
+	}
 	_ = a.emitter.Emit(ctx, domain.Event{
 		Type:        "auth.flow.continue",
 		ProjectID:   f.ProjectID,
 		AggregateID: f.ID,
-		Payload: map[string]any{
-			"flow_token": state.FlowToken,
-			"kind":       string(f.Kind),
-			"to":         f.Contact.Email,
-			"contact":    f.Contact.Email,
-		},
+		Payload:     payload,
 	})
 }
 

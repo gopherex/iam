@@ -118,6 +118,11 @@ type FlowCreateCmd struct {
 	Password     string
 	Name         string
 	CaptchaToken string
+	// RedirectTo optionally overrides the cross-device "continue" deep-link base
+	// for this flow. The notification layer only honours it when its origin
+	// (scheme+host) matches the project's configured app_base_url; otherwise it
+	// falls back to app_base_url.
+	RedirectTo string
 }
 
 // FlowGetCmd retrieves a live flow by its opaque token (project-scoped).

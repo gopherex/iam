@@ -74,10 +74,6 @@ services:
       # Dev-only fallback key: base64("0123456789abcdef0123456789abcdef").
       IAM_SERVICE_AUTH_ENCRYPTION_KEY: ${IAM_SERVICE_AUTH_ENCRYPTION_KEY:-MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
       IAM_SERVICE_AUTH_SEED_ROOT: ${IAM_SERVICE_AUTH_SEED_ROOT:-true}
-      # Public base of the hosted auth UI. Used to build cross-device resume
-      # deep-links (the "continue on another device" email links to
-      # <base>/continue?flow=<token>). Empty disables that email.
-      IAM_SERVICE_AUTH_APP_BASE_URL: ${IAM_SERVICE_AUTH_APP_BASE_URL:-}
 
       # OpenTelemetry/xtrace resource config.
       # service.name/version/instance.id are set by the binary from build metadata;

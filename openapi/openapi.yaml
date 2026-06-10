@@ -848,6 +848,15 @@ components:
         captcha_token:
           type: string
           maxLength: 4096
+        redirect_to:
+          type: string
+          description: >-
+            Optional per-flow override for the cross-device "continue" deep-link
+            base. Its origin (scheme+host) must match the project's configured
+            app_base_url origin; otherwise it is ignored and app_base_url is
+            used. This lets a flow target a specific path within the trusted
+            origin without allowing an arbitrary host.
+          maxLength: 2048
     FlowSubmitRequest:
       type: object
       required:
@@ -1554,6 +1563,14 @@ components:
           maxItems: 1000
         registration:
           $ref: '#/components/schemas/RegistrationConfig'
+        app_base_url:
+          type: string
+          description: >-
+            Public base URL of this project's hosted auth UI. Used to build
+            cross-device resume deep-links (the "continue on another device"
+            email links to <app_base_url>/continue?flow=<token>). Empty disables
+            that email unless a per-flow redirect_to is supplied and allowed.
+          maxLength: 2048
         default_locale:
           type: string
           pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$

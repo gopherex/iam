@@ -573,10 +573,14 @@ func (s *AuditLogData) init() AuditLogData {
 
 // Ref: #/components/schemas/AuthConfig
 type AuthConfig struct {
-	Methods          []string              `json:"methods"`
-	Registration     OptRegistrationConfig `json:"registration"`
-	DefaultLocale    OptString             `json:"default_locale"`
-	SupportedLocales []string              `json:"supported_locales"`
+	Methods      []string              `json:"methods"`
+	Registration OptRegistrationConfig `json:"registration"`
+	// Public base URL of this project's hosted auth UI. Used to build cross-device resume deep-links
+	// (the "continue on another device" email links to <app_base_url>/continue?flow=<token>). Empty
+	// disables that email unless a per-flow redirect_to is supplied and allowed.
+	AppBaseURL       OptString `json:"app_base_url"`
+	DefaultLocale    OptString `json:"default_locale"`
+	SupportedLocales []string  `json:"supported_locales"`
 	AdditionalProps  AuthConfigAdditional
 }
 
@@ -588,6 +592,11 @@ func (s *AuthConfig) GetMethods() []string {
 // GetRegistration returns the value of Registration.
 func (s *AuthConfig) GetRegistration() OptRegistrationConfig {
 	return s.Registration
+}
+
+// GetAppBaseURL returns the value of AppBaseURL.
+func (s *AuthConfig) GetAppBaseURL() OptString {
+	return s.AppBaseURL
 }
 
 // GetDefaultLocale returns the value of DefaultLocale.
@@ -613,6 +622,11 @@ func (s *AuthConfig) SetMethods(val []string) {
 // SetRegistration sets the value of Registration.
 func (s *AuthConfig) SetRegistration(val OptRegistrationConfig) {
 	s.Registration = val
+}
+
+// SetAppBaseURL sets the value of AppBaseURL.
+func (s *AuthConfig) SetAppBaseURL(val OptString) {
+	s.AppBaseURL = val
 }
 
 // SetDefaultLocale sets the value of DefaultLocale.
@@ -1956,6 +1970,11 @@ type FlowCreateRequest struct {
 	Password     OptString             `json:"password"`
 	Name         OptString             `json:"name"`
 	CaptchaToken OptString             `json:"captcha_token"`
+	// Optional per-flow override for the cross-device "continue" deep-link base. Its origin
+	// (scheme+host) must match the project's configured app_base_url origin; otherwise it is ignored and
+	// app_base_url is used. This lets a flow target a specific path within the trusted origin without
+	// allowing an arbitrary host.
+	RedirectTo OptString `json:"redirect_to"`
 }
 
 // GetKind returns the value of Kind.
@@ -1983,6 +2002,11 @@ func (s *FlowCreateRequest) GetCaptchaToken() OptString {
 	return s.CaptchaToken
 }
 
+// GetRedirectTo returns the value of RedirectTo.
+func (s *FlowCreateRequest) GetRedirectTo() OptString {
+	return s.RedirectTo
+}
+
 // SetKind sets the value of Kind.
 func (s *FlowCreateRequest) SetKind(val FlowCreateRequestKind) {
 	s.Kind = val
@@ -2006,6 +2030,11 @@ func (s *FlowCreateRequest) SetName(val OptString) {
 // SetCaptchaToken sets the value of CaptchaToken.
 func (s *FlowCreateRequest) SetCaptchaToken(val OptString) {
 	s.CaptchaToken = val
+}
+
+// SetRedirectTo sets the value of RedirectTo.
+func (s *FlowCreateRequest) SetRedirectTo(val OptString) {
+	s.RedirectTo = val
 }
 
 type FlowCreateRequestKind string

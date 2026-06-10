@@ -1105,6 +1105,12 @@ func (s *AuthConfig) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.AppBaseURL.Set {
+			e.FieldStart("app_base_url")
+			s.AppBaseURL.Encode(e)
+		}
+	}
+	{
 		if s.DefaultLocale.Set {
 			e.FieldStart("default_locale")
 			s.DefaultLocale.Encode(e)
@@ -1129,11 +1135,12 @@ func (s *AuthConfig) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfAuthConfig = [4]string{
+var jsonFieldsNameOfAuthConfig = [5]string{
 	0: "methods",
 	1: "registration",
-	2: "default_locale",
-	3: "supported_locales",
+	2: "app_base_url",
+	3: "default_locale",
+	4: "supported_locales",
 }
 
 // Decode decodes AuthConfig from json.
@@ -1173,6 +1180,16 @@ func (s *AuthConfig) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"registration\"")
+			}
+		case "app_base_url":
+			if err := func() error {
+				s.AppBaseURL.Reset()
+				if err := s.AppBaseURL.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"app_base_url\"")
 			}
 		case "default_locale":
 			if err := func() error {
@@ -4337,14 +4354,21 @@ func (s *FlowCreateRequest) encodeFields(e *jx.Encoder) {
 			s.CaptchaToken.Encode(e)
 		}
 	}
+	{
+		if s.RedirectTo.Set {
+			e.FieldStart("redirect_to")
+			s.RedirectTo.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfFlowCreateRequest = [5]string{
+var jsonFieldsNameOfFlowCreateRequest = [6]string{
 	0: "kind",
 	1: "email",
 	2: "password",
 	3: "name",
 	4: "captcha_token",
+	5: "redirect_to",
 }
 
 // Decode decodes FlowCreateRequest from json.
@@ -4405,6 +4429,16 @@ func (s *FlowCreateRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"captcha_token\"")
+			}
+		case "redirect_to":
+			if err := func() error {
+				s.RedirectTo.Reset()
+				if err := s.RedirectTo.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"redirect_to\"")
 			}
 		default:
 			return d.Skip()

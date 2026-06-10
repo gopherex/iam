@@ -30,13 +30,12 @@ import (
 const defaultLocale = "en"
 
 type Publisher struct {
-	db         *postgres.DB
-	log        *xlog.Logger
-	appBaseURL string
+	db  *postgres.DB
+	log *xlog.Logger
 }
 
-func NewPublisher(db *postgres.DB, log *xlog.Logger, appBaseURL string) *Publisher {
-	return &Publisher{db: db, log: log, appBaseURL: appBaseURL}
+func NewPublisher(db *postgres.DB, log *xlog.Logger) *Publisher {
+	return &Publisher{db: db, log: log}
 }
 
 func (p *Publisher) Publish(ctx context.Context, msgs []outbox.Message) error {
@@ -80,14 +79,16 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	if job.To == "" {
 		return fmt.Errorf("notifications: email event %s has no recipient", ev.Type)
 	}
-	// Flow continue email: requires a configured app base URL to build the
-	// cross-device deep-link. With none configured the feature is disabled.
+	// Flow continue email: build the cross-device deep-link from a per-tenant
+	// base — the per-flow redirect_to when its origin is allowed, else the
+	// project's configured app_base_url. With neither, the feature is disabled.
 	if job.TemplateID == "flow_continue" {
-		if p.appBaseURL == "" {
-			p.log.Info("flow continue email skipped: no app base URL configured", xlog.String("project_id", ev.ProjectID))
+		base := p.resolveContinueBase(ctx, ev)
+		if base == "" {
+			p.log.Info("flow continue email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
 			return nil
 		}
-		link := flowContinueURL(p.appBaseURL, stringValue(ev.Payload, "flow_token"))
+		link := flowContinueURL(base, stringValue(ev.Payload, "flow_token"))
 		if link == "" {
 			return nil
 		}
@@ -201,6 +202,55 @@ func stringValue(m map[string]any, key string) string {
 	default:
 		return ""
 	}
+}
+
+// resolveContinueBase picks the per-tenant base for a flow-continue deep-link:
+// the per-flow redirect_to when its origin matches the project's configured
+// app_base_url, otherwise app_base_url itself. A redirect_to from a foreign
+// origin is dropped (it would phish a valid flow token to an attacker host).
+// Returns "" when the project has no app_base_url configured.
+func (p *Publisher) resolveContinueBase(ctx context.Context, ev eventEnvelope) string {
+	base := p.projectAppBaseURL(ctx, ev.ProjectID, ev.Environment)
+	if redirectTo := stringValue(ev.Payload, "redirect_to"); redirectTo != "" {
+		if base != "" && sameOrigin(redirectTo, base) {
+			return redirectTo
+		}
+		p.log.Info("flow continue: redirect_to origin not allowed; using app_base_url",
+			xlog.String("project_id", ev.ProjectID))
+	}
+	return base
+}
+
+// projectAppBaseURL reads app_base_url from the project+env "auth" config doc.
+// Returns "" when unset or unreadable.
+func (p *Publisher) projectAppBaseURL(ctx context.Context, projectID, env string) string {
+	if env == "" {
+		env = "live"
+	}
+	row, err := models.IamConfigs.Query(
+		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(env))),
+		sm.Where(models.IamConfigs.Columns.Key.EQ(psql.Arg("auth"))),
+	).One(ctx, p.db.Bobx())
+	if err != nil || len(row.Data) == 0 {
+		return ""
+	}
+	var doc map[string]any
+	if json.Unmarshal(row.Data, &doc) != nil {
+		return ""
+	}
+	s, _ := doc["app_base_url"].(string)
+	return strings.TrimSpace(s)
+}
+
+// sameOrigin reports whether two URLs share scheme + host (incl. port).
+func sameOrigin(a, b string) bool {
+	ua, err1 := url.Parse(a)
+	ub, err2 := url.Parse(b)
+	if err1 != nil || err2 != nil || ua.Scheme == "" || ua.Host == "" || ub.Scheme == "" || ub.Host == "" {
+		return false
+	}
+	return strings.EqualFold(ua.Scheme, ub.Scheme) && strings.EqualFold(ua.Host, ub.Host)
 }
 
 // flowContinueURL builds the cross-device resume deep-link
