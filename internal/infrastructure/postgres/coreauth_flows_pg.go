@@ -262,6 +262,21 @@ func (a *pgCoreAuthFlows) flowInsert(ctx context.Context, f *domain.Flow, hash s
 
 // ─── Create ──────────────────────────────────────────────────────────────────
 
+// flowCreateFn is the per-kind create seam (mirrors flowAdvanceFn for Submit).
+// Each kind may process the create-time credentials immediately (e.g. signin
+// verifies the password, recovery issues an OTP). Registered in flowCreators;
+// per-kind files override their entry from an init().
+type flowCreateFn func(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error)
+
+// flowCreators maps each FlowKind to its create handler. signup is wired here;
+// signin/recovery/email_change are registered by their own files (init()), and
+// fall back to flowCreateCollect (persist at collect_credentials) until then.
+var flowCreators = map[domain.FlowKind]flowCreateFn{
+	domain.FlowKindSignup: func(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+		return a.advanceSignupCreate(ctx, f, cmd)
+	},
+}
+
 func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
 	now := nowUTC()
 	f := &domain.Flow{
@@ -279,13 +294,15 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 			HasPassword: cmd.Password != "",
 		},
 	}
-
-	// For signup: advance immediately into verify_email (§7 auto-issue challenge).
-	if cmd.Kind == domain.FlowKindSignup {
-		return a.advanceSignupCreate(ctx, f, cmd)
+	if create, ok := flowCreators[cmd.Kind]; ok {
+		return create(ctx, a, f, cmd)
 	}
+	return a.flowCreateCollect(ctx, f)
+}
 
-	// Non-signup kinds: persist at collect_credentials; advancers implement next steps.
+// flowCreateCollect persists a fresh flow at collect_credentials with a new token.
+// Default create behavior for kinds that have not registered a create handler.
+func (a *pgCoreAuthFlows) flowCreateCollect(ctx context.Context, f *domain.Flow) (*domain.FlowState, error) {
 	token, hash, err := flowMintToken()
 	if err != nil {
 		return nil, fmt.Errorf("flow create: %w", err)
