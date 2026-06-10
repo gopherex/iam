@@ -535,6 +535,11 @@ function EmailProvidersTab({ projectId }: { projectId: string }) {
                   {p.enabled ? 'Disable' : 'Enable'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <SendTestDialog
+                  projectId={projectId}
+                  template={{ id: 'email_verification', name: 'SMTP connectivity test' }}
+                />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={() => setDeleteTarget(p)}

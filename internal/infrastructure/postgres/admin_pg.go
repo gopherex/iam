@@ -1507,19 +1507,20 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 	}
 	out := make(map[string]jx.Raw, len(rows)+len(domain.BuiltinEmailTemplates))
 	// Seed with the built-in catalogue so every system template is always listed
-	// (editable/previewable/testable) even before a project customises it.
+	// (editable/previewable/testable) even before a project customises it. Bodies
+	// are built as plain values and json-marshaled — NOT map[string]jx.Raw, which
+	// encoding/json base64-encodes (jx.Raw is []byte).
 	for _, t := range domain.BuiltinEmailTemplates {
 		c := t.Copy(adminTemplateLocale)
-		body := map[string]jx.Raw{
-			"id":         adminRawString(t.Key),
-			"name":       adminRawString(t.Name),
-			"locale":     adminRawString(""),
-			"subject":    adminRawString(c.Subject),
-			"text":       adminRawString(c.Text),
-			"html":       adminRawString(c.HTML),
-			"customized": jx.Raw("false"),
-		}
-		raw, err := json.Marshal(body)
+		raw, err := json.Marshal(map[string]any{
+			"id":         t.Key,
+			"name":       t.Name,
+			"locale":     "",
+			"subject":    c.Subject,
+			"text":       c.Text,
+			"html":       c.HTML,
+			"customized": false,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -1531,18 +1532,20 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 		if row.Locale != "" && row.Locale != adminTemplateLocale {
 			key = row.Key + ":" + row.Locale
 		}
-		body := map[string]jx.Raw{}
+		body := map[string]any{}
 		if len(row.Data) > 0 {
 			if err := json.Unmarshal(row.Data, &body); err != nil {
 				return nil, err
 			}
 		}
-		if bt := domain.BuiltinEmailTemplateByKey(row.Key); bt != nil && body["name"] == nil {
-			body["name"] = adminRawString(bt.Name)
+		if bt := domain.BuiltinEmailTemplateByKey(row.Key); bt != nil {
+			if _, ok := body["name"]; !ok {
+				body["name"] = bt.Name
+			}
 		}
-		body["id"] = adminRawString(row.Key)
-		body["locale"] = adminRawString(row.Locale)
-		body["customized"] = jx.Raw("true")
+		body["id"] = row.Key
+		body["locale"] = row.Locale
+		body["customized"] = true
 		raw, err := json.Marshal(body)
 		if err != nil {
 			return nil, err
