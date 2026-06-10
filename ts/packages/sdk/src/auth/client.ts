@@ -28,10 +28,15 @@ import {
   postV1AuthWebauthnLoginVerify,
   getV1ConfigPublic,
   getV1UsersMe,
+  getV1AuthOauthProviders,
+  postV1AuthOauthByProviderUnlink,
+  postV1AuthImpersonateRedeem,
+  postV1ChallengesCaptchaVerify,
   type AuthResultOrNextStep,
   type ClientOptions as GeneratedClientOptions,
   type ConsentAcceptance,
   type GetV1AuthOauthByProviderStartData,
+  type GetV1AuthOauthByProviderLinkStartData,
   type PhoneVerifyResult,
   type PublicConfig,
   type StepUpResult,
@@ -351,6 +356,71 @@ export class IamAuth {
       window.location.assign(url);
     }
     return { url };
+  }
+
+  /** List the project's enabled social/OAuth providers. */
+  async listOAuthProviders(): Promise<{ data: unknown; error: IamAuthError | null }> {
+    const r = await getV1AuthOauthProviders({ client: this.client, headers: this.headers() });
+    if (r.error) return { data: null, error: authError(r) };
+    return { data: r.data ?? null, error: null };
+  }
+
+  /**
+   * Link an additional OAuth provider to the SIGNED-IN account. Mirrors
+   * signInWithOAuth but hits the link/start endpoint; in a browser it redirects
+   * (unless skipBrowserRedirect). Returns the start URL.
+   */
+  linkOAuth(params: {
+    provider: string;
+    redirectTo?: string;
+    state?: string;
+    skipBrowserRedirect?: boolean;
+  }): { url: string } {
+    const redirectTo = params.redirectTo ?? (typeof window !== 'undefined' ? window.location.href : undefined);
+    if (!redirectTo) {
+      throw new IamAuthError('redirectTo is required outside a browser', 'redirect_to_required');
+    }
+    const url = this.client.buildUrl<GetV1AuthOauthByProviderLinkStartData>({
+      baseUrl: this.client.getConfig().baseUrl,
+      url: '/v1/auth/oauth/{provider}/link/start',
+      path: { provider: params.provider },
+      query: { redirect_to: redirectTo, state: params.state },
+    });
+    if (!params.skipBrowserRedirect && typeof window !== 'undefined') {
+      window.location.assign(url);
+    }
+    return { url };
+  }
+
+  /**
+   * Unlink a previously-linked OAuth provider identity from the signed-in
+   * account. identityId comes from iam.account.listIdentities().
+   */
+  async unlinkOAuth(params: { provider: string; identityId: string }): Promise<{ error: IamAuthError | null }> {
+    const r = await postV1AuthOauthByProviderUnlink({
+      client: this.client,
+      headers: this.headers(),
+      path: { provider: params.provider },
+      body: { identity_id: params.identityId },
+    });
+    return { error: r.error ? authError(r) : null };
+  }
+
+  /** Redeem an impersonation link token for a session (support-impersonation UX). */
+  async redeemImpersonation(token: string): Promise<AuthResponse> {
+    const r = await postV1AuthImpersonateRedeem({ client: this.client, headers: this.headers(), body: { token } });
+    return this.handle(r);
+  }
+
+  /** Verify a CAPTCHA token (e.g. before submitting a sign-up form). */
+  async verifyCaptcha(params: { provider: string; token: string; action?: string }): Promise<{ data: unknown; error: IamAuthError | null }> {
+    const r = await postV1ChallengesCaptchaVerify({
+      client: this.client,
+      headers: this.headers(),
+      body: { provider: params.provider, token: params.token, action: params.action },
+    });
+    if (r.error) return { data: null, error: authError(r) };
+    return { data: r.data ?? null, error: null };
   }
 
   /** Exchange the auth code from an OAuth/redirect callback for a session. */
