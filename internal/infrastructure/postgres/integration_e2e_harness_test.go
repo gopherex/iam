@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -24,13 +25,52 @@ import (
 	"github.com/gopherex/iam/pkg/api"
 )
 
+// e2eCaptureEmitter records emitted domain events so tests can recover the
+// plaintext OTP code / magic-link token that production only delivers out of
+// band (email/SMS). Keyed lookups are by challenge_id from the event payload.
+type e2eCaptureEmitter struct {
+	mu     sync.Mutex
+	events []domain.Event
+}
+
+func (c *e2eCaptureEmitter) Emit(_ context.Context, e domain.Event) error {
+	c.mu.Lock()
+	c.events = append(c.events, e)
+	c.mu.Unlock()
+	return nil
+}
+
+// payloadFor returns the value of field in the most recent event whose payload
+// carries the given challenge_id, or "" if none.
+func (c *e2eCaptureEmitter) payloadFor(challengeID, field string) string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for i := len(c.events) - 1; i >= 0; i-- {
+		p, ok := c.events[i].Payload.(map[string]any)
+		if !ok {
+			continue
+		}
+		if cid, _ := p["challenge_id"].(string); cid == challengeID {
+			if v, ok := p[field].(string); ok {
+				return v
+			}
+		}
+	}
+	return ""
+}
+
+// e2eEmitter is the shared capture emitter wired into the harness server. Tests
+// run serially (-p 1); lookups key on the unique challenge_id so cross-test
+// events don't collide.
+var e2eEmitter = &e2eCaptureEmitter{}
+
 // e2eServer assembles the full IAM handler + middleware pipeline over testDB and
 // returns a live httptest server (closed via t.Cleanup). Rate-limit / CORS /
 // security-header middleware are intentionally omitted: they are not under test
 // and would make assertions flaky.
 func e2eServer(t *testing.T) *httptest.Server {
 	t.Helper()
-	em := nopEmitter{}
+	em := e2eEmitter
 	platform := NewPgPlatform(testDB)
 	coreAuth := NewPgCoreAuth(testDB, em)
 

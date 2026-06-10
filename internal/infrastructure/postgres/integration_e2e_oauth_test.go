@@ -31,7 +31,6 @@ package postgres
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -308,11 +307,35 @@ func TestE2EPasswordlessOTPRoundTrip(t *testing.T) {
 		t.Fatal("no challenge_id in OTP start response")
 	}
 
-	// Verify with wrong code. The OTP verify endpoint now correctly returns 401
-	// for an invalid code (isNoRows bug is fixed). However the correct code is
-	// delivered via email/SMS and suppressed by nopEmitter in test mode; we
-	// cannot complete a full happy-path round-trip without mailhog / code-capture.
-	t.Skip("cannot complete OTP round-trip: correct code is only available from the delivered email/SMS (suppressed by nopEmitter); integrate a code-capture sink or mailhog to enable the happy path")
+	// The plaintext code only reaches the delivery channel; the harness capture
+	// emitter records it from the auth.otp.started event.
+	code := e2eEmitter.payloadFor(challengeID, "code")
+	if code == "" {
+		t.Fatalf("OTP code not captured for challenge %s", challengeID)
+	}
+
+	t.Run("wrong code returns 401", func(t *testing.T) {
+		r := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/otp/verify",
+			map[string]any{"challenge_id": challengeID, "code": "000000"},
+			map[string]string{"X-Client-Id": projectID})
+		e2eWantStatus(t, r, http.StatusUnauthorized)
+	})
+
+	t.Run("correct code mints a session", func(t *testing.T) {
+		r := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/otp/verify",
+			map[string]any{"challenge_id": challengeID, "code": code},
+			map[string]string{"X-Client-Id": projectID})
+		e2eWantStatus(t, r, http.StatusOK)
+		var body struct {
+			Session struct {
+				AccessToken string `json:"access_token"`
+			} `json:"session"`
+		}
+		e2eDecode(t, r, &body)
+		if body.Session.AccessToken == "" {
+			t.Errorf("expected access_token after OTP verify, body=%s", r.Body)
+		}
+	})
 }
 
 // TestE2EPasswordlessMagicLinkRoundTrip exercises the magic-link sign-in flow.
@@ -335,16 +358,40 @@ func TestE2EPasswordlessMagicLinkRoundTrip(t *testing.T) {
 	e2eWantStatus(t, r, http.StatusOK)
 	var start map[string]any
 	e2eDecode(t, r, &start)
-	if start["challenge_id"] == nil {
+	challengeID, _ := start["challenge_id"].(string)
+	if challengeID == "" {
 		t.Fatal("no challenge_id in magic-link start response")
 	}
 
-	// The magic-link verify endpoint now correctly returns 401 for a bogus token
-	// (isNoRows bug is fixed). A full happy-path round-trip requires the real
-	// token delivered to the user's email, which nopEmitter discards. We cannot
-	// complete the round-trip without mailhog / test-capture integration.
-	_ = base64.URLEncoding.EncodeToString([]byte("not-a-real-token")) // illustrative
-	t.Skip("cannot complete magic-link round-trip: token is only available from the delivered email (suppressed by nopEmitter); integrate a token-capture sink or mailhog to enable the happy path")
+	// The opaque token only reaches the delivery channel; the harness capture
+	// emitter records it from the auth.magiclink.started event.
+	token := e2eEmitter.payloadFor(challengeID, "token")
+	if token == "" {
+		t.Fatalf("magic-link token not captured for challenge %s", challengeID)
+	}
+
+	t.Run("bogus token returns 401", func(t *testing.T) {
+		r := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/magic-link/verify",
+			map[string]any{"token": "not-a-real-token"},
+			map[string]string{"X-Client-Id": projectID})
+		e2eWantStatus(t, r, http.StatusUnauthorized)
+	})
+
+	t.Run("real token mints a session", func(t *testing.T) {
+		r := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/magic-link/verify",
+			map[string]any{"token": token},
+			map[string]string{"X-Client-Id": projectID})
+		e2eWantStatus(t, r, http.StatusOK)
+		var body struct {
+			Session struct {
+				AccessToken string `json:"access_token"`
+			} `json:"session"`
+		}
+		e2eDecode(t, r, &body)
+		if body.Session.AccessToken == "" {
+			t.Errorf("expected access_token after magic-link verify, body=%s", r.Body)
+		}
+	})
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
