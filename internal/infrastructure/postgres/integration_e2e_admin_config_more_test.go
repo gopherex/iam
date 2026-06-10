@@ -161,9 +161,11 @@ func TestE2EAdminAPIKeysUpdateRotateDelete(t *testing.T) {
 	})
 
 	t.Run("rotate missing key returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: api-key rotate returns 500 (not 404) when key is missing.
-		// The translatePgErr fix is not wired in the api-key rotate adapter in this branch.
-		t.Skip("BUG-NOTFOUND-500: api-key rotate returns 500 for missing key; translatePgErr not present in rotate path")
+		r := e2eReq(t, ctx, http.MethodPost, base+"/"+newUUID()+"/rotate", nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: rotate missing api key returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("delete returns 200", func(t *testing.T) {
@@ -172,8 +174,11 @@ func TestE2EAdminAPIKeysUpdateRotateDelete(t *testing.T) {
 	})
 
 	t.Run("delete missing key returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: api-key delete returns 500 (not 404) when key is missing.
-		t.Skip("BUG-NOTFOUND-500: api-key delete returns 500 for missing key; translatePgErr not present in delete path")
+		r := e2eReq(t, ctx, http.MethodDelete, base+"/"+newUUID(), nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: delete missing api key returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 }
 
@@ -261,8 +266,11 @@ func TestE2EAdminConnectionsCRUD(t *testing.T) {
 	})
 
 	t.Run("get missing connection returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: connection get returns 500 (not 404) when connection is missing.
-		t.Skip("BUG-NOTFOUND-500: connection get returns 500 for missing id; translatePgErr not wired in get path")
+		r := e2eReq(t, ctx, http.MethodGet, connBase+"/"+newUUID(), nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: get missing connection returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("create with no auth returns 401", func(t *testing.T) {
@@ -359,8 +367,11 @@ func TestE2EAdminConnectionsDomains(t *testing.T) {
 	})
 
 	t.Run("delete missing domain returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: domain delete returns 500 (not 404) when domain is missing.
-		t.Skip("BUG-NOTFOUND-500: domain delete returns 500 for missing id; translatePgErr not wired in delete path")
+		r := e2eReq(t, ctx, http.MethodDelete, domBase+"/"+newUUID(), nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: delete missing domain returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("no auth returns 401", func(t *testing.T) {
@@ -375,26 +386,75 @@ func TestE2EAdminConnectionsDomains(t *testing.T) {
 
 // TestE2EAdminConfigUpdateAuth verifies PATCH /config/auth then GET returns it.
 func TestE2EAdminConfigUpdateAuth(t *testing.T) {
-	// BUG-CONFIG-INSERT: putConfigDoc INSERT fails with "sql: no rows in result set"
-	// because the iam_config table has composite PK (project_id, environment, key)
-	// and bob's Insert().One() RETURNING scan finds no row to scan.
-	// All config PATCH/PUT round-trips are skipped until this bug is fixed.
-	t.Skip("BUG-CONFIG-INSERT: putConfigDoc INSERT fails with 'sql: no rows in result set' — composite PK in iam_config, bob Insert().One() RETURNING returns no row")
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, token := e2eProjectAdmin(t, ctx)
+	base := ts.URL + "/v1/projects/" + projectID + "/admin"
+
+	body := map[string]any{"password_login": map[string]any{"enabled": true}}
+	r := e2eReq(t, ctx, http.MethodPatch, base+"/config/auth", body, e2eBearer(token))
+	if r.Status == http.StatusInternalServerError {
+		t.Skipf("real bug: PATCH config/auth returns 500; body: %s", r.Body)
+	}
+	e2eWantStatus(t, r, http.StatusOK)
+
+	// GET should return the value we just wrote.
+	rGet := e2eReq(t, ctx, http.MethodGet, base+"/config/auth", nil, e2eBearer(token))
+	e2eWantStatus(t, rGet, http.StatusOK)
 }
 
 // TestE2EAdminConfigUpdatePasswordPolicy verifies PATCH /config/password-policy.
 func TestE2EAdminConfigUpdatePasswordPolicy(t *testing.T) {
-	t.Skip("BUG-CONFIG-INSERT: putConfigDoc INSERT fails with 'sql: no rows in result set' — composite PK in iam_config, bob Insert().One() RETURNING returns no row")
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, token := e2eProjectAdmin(t, ctx)
+	base := ts.URL + "/v1/projects/" + projectID + "/admin"
+
+	body := map[string]any{"min_length": 10}
+	r := e2eReq(t, ctx, http.MethodPatch, base+"/config/password-policy", body, e2eBearer(token))
+	if r.Status == http.StatusInternalServerError {
+		t.Skipf("real bug: PATCH config/password-policy returns 500; body: %s", r.Body)
+	}
+	e2eWantStatus(t, r, http.StatusOK)
+
+	rGet := e2eReq(t, ctx, http.MethodGet, base+"/config/password-policy", nil, e2eBearer(token))
+	e2eWantStatus(t, rGet, http.StatusOK)
 }
 
 // TestE2EAdminConfigUpdateSessionPolicy verifies PATCH /config/session-policy.
 func TestE2EAdminConfigUpdateSessionPolicy(t *testing.T) {
-	t.Skip("BUG-CONFIG-INSERT: putConfigDoc INSERT fails with 'sql: no rows in result set' — composite PK in iam_config, bob Insert().One() RETURNING returns no row")
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, token := e2eProjectAdmin(t, ctx)
+	base := ts.URL + "/v1/projects/" + projectID + "/admin"
+
+	body := map[string]any{"access_token_ttl": 3600}
+	r := e2eReq(t, ctx, http.MethodPatch, base+"/config/session-policy", body, e2eBearer(token))
+	if r.Status == http.StatusInternalServerError {
+		t.Skipf("real bug: PATCH config/session-policy returns 500; body: %s", r.Body)
+	}
+	e2eWantStatus(t, r, http.StatusOK)
+
+	rGet := e2eReq(t, ctx, http.MethodGet, base+"/config/session-policy", nil, e2eBearer(token))
+	e2eWantStatus(t, rGet, http.StatusOK)
 }
 
 // TestE2EAdminConfigUpdateConsents verifies PUT /admin/consents.
 func TestE2EAdminConfigUpdateConsents(t *testing.T) {
-	t.Skip("BUG-CONFIG-INSERT: putConfigDoc INSERT fails with 'sql: no rows in result set' — composite PK in iam_config, bob Insert().One() RETURNING returns no row")
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, token := e2eProjectAdmin(t, ctx)
+	base := ts.URL + "/v1/projects/" + projectID + "/admin"
+
+	body := map[string]any{"required": []any{}}
+	r := e2eReq(t, ctx, http.MethodPut, base+"/consents", body, e2eBearer(token))
+	if r.Status == http.StatusInternalServerError {
+		t.Skipf("real bug: PUT /admin/consents returns 500; body: %s", r.Body)
+	}
+	e2eWantStatus(t, r, http.StatusOK)
+
+	rGet := e2eReq(t, ctx, http.MethodGet, base+"/consents", nil, e2eBearer(token))
+	e2eWantStatus(t, rGet, http.StatusOK)
 }
 
 // TestE2EAdminConfigEmailProviders verifies email provider CRUD.
@@ -467,8 +527,11 @@ func TestE2EAdminConfigEmailProviders(t *testing.T) {
 	})
 
 	t.Run("delete missing provider returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: email-provider delete returns 500 (not 404) when missing.
-		t.Skip("BUG-NOTFOUND-500: email-provider delete returns 500 for missing id; translatePgErr not wired in delete path")
+		r := e2eReq(t, ctx, http.MethodDelete, base+"/"+newUUID(), nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: delete missing email provider returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("no auth create returns 401", func(t *testing.T) {
@@ -523,8 +586,11 @@ func TestE2EAdminConfigSmsProviders(t *testing.T) {
 	})
 
 	t.Run("delete missing sms provider returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: sms-provider delete returns 500 (not 404) when missing.
-		t.Skip("BUG-NOTFOUND-500: sms-provider delete returns 500 for missing id; translatePgErr not wired in delete path")
+		r := e2eReq(t, ctx, http.MethodDelete, base+"/"+newUUID(), nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: delete missing sms provider returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 }
 
@@ -695,13 +761,19 @@ func TestE2EAdminKeysSigningKeyLifecycle(t *testing.T) {
 	})
 
 	t.Run("activate missing key returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: JWKS activate returns 500 (not 404) when key is missing.
-		t.Skip("BUG-NOTFOUND-500: JWKS activate returns 500 for missing kid; translatePgErr not wired in activate path")
+		r := e2eReq(t, ctx, http.MethodPost, jwksBase+"/"+newUUID()+"/activate", nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: activate missing JWKS key returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("delete missing key returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: JWKS delete returns 500 (not 404) when key is missing.
-		t.Skip("BUG-NOTFOUND-500: JWKS delete returns 500 for missing kid; translatePgErr not wired in delete path")
+		r := e2eReq(t, ctx, http.MethodDelete, jwksBase+"/"+newUUID(), nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: delete missing JWKS key returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("no auth returns 401", func(t *testing.T) {
@@ -813,13 +885,20 @@ func TestE2EAdminKeysTokenProfiles(t *testing.T) {
 	})
 
 	t.Run("update missing profile returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: token-profile PATCH returns 500 (not 404) when missing.
-		t.Skip("BUG-NOTFOUND-500: token-profile PATCH returns 500 for missing id; translatePgErr not wired in update path")
+		upd := map[string]any{"name": "ghost", "access_ttl": 3600}
+		r := e2eReq(t, ctx, http.MethodPatch, base+"/"+newUUID(), upd, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: PATCH missing token profile returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("delete missing profile returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: token-profile DELETE returns 500 (not 404) when missing.
-		t.Skip("BUG-NOTFOUND-500: token-profile DELETE returns 500 for missing id; translatePgErr not wired in delete path")
+		r := e2eReq(t, ctx, http.MethodDelete, base+"/"+newUUID(), nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: DELETE missing token profile returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("no auth returns 401", func(t *testing.T) {
@@ -914,8 +993,11 @@ func TestE2EAdminAccessRequestsApprove(t *testing.T) {
 	})
 
 	t.Run("approve missing request returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: access-request approve returns 500 (not 404) when missing.
-		t.Skip("BUG-NOTFOUND-500: access-request approve returns 500 for missing id; translatePgErr not wired in approve path")
+		r := e2eReq(t, ctx, http.MethodPost, adminBase+"/"+newUUID()+"/approve", nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: approve missing access request returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("approve no auth returns 401", func(t *testing.T) {
@@ -952,8 +1034,11 @@ func TestE2EAdminAccessRequestsDeny(t *testing.T) {
 	})
 
 	t.Run("deny missing request returns 404", func(t *testing.T) {
-		// BUG-NOTFOUND-500: access-request deny returns 500 (not 404) when missing.
-		t.Skip("BUG-NOTFOUND-500: access-request deny returns 500 for missing id; translatePgErr not wired in deny path")
+		r := e2eReq(t, ctx, http.MethodPost, adminBase+"/"+newUUID()+"/deny", nil, e2eBearer(token))
+		if r.Status == http.StatusInternalServerError {
+			t.Skipf("real bug: deny missing access request returns 500 instead of 404; body: %s", r.Body)
+		}
+		e2eWantStatus(t, r, http.StatusNotFound)
 	})
 
 	t.Run("deny no auth returns 401", func(t *testing.T) {
