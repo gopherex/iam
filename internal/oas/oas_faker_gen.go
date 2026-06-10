@@ -876,6 +876,11 @@ func (s *FlowCreateRequest) SetFake() {
 			s.Locale.SetFake()
 		}
 	}
+	{
+		{
+			s.InviteToken.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.
@@ -1705,6 +1710,22 @@ func (s *GetV1ProjectsByProjectIdAdminI18nByLocaleOK) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *GetV1ProjectsByProjectIdAdminInvitesOK) SetFake() {
+	{
+		{
+			s.Invites = nil
+			for i := 0; i < 0; i++ {
+				var elem Invite
+				{
+					elem.SetFake()
+				}
+				s.Invites = append(s.Invites, elem)
+			}
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminJobsByJobIdOK) SetFake() {
 	{
 		{
@@ -2370,6 +2391,98 @@ func (s *Identity) SetFake() {
 // SetFake set fake values.
 func (s *IdentityType) SetFake() {
 	*s = IdentityTypePassword
+}
+
+// SetFake set fake values.
+func (s *Invite) SetFake() {
+	{
+		{
+			s.ID = "string"
+		}
+	}
+	{
+		{
+			s.Email.SetFake()
+		}
+	}
+	{
+		{
+			s.Status.SetFake()
+		}
+	}
+	{
+		{
+			s.ExpiresAt.SetFake()
+		}
+	}
+	{
+		{
+			s.CreatedAt.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *InviteCreateRequest) SetFake() {
+	{
+		{
+			s.Email.SetFake()
+		}
+	}
+	{
+		{
+			s.ExpiresAt.SetFake()
+		}
+	}
+	{
+		{
+			s.RedirectTo.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *InviteCreated) SetFake() {
+	{
+		{
+			s.ID = "string"
+		}
+	}
+	{
+		{
+			s.Email.SetFake()
+		}
+	}
+	{
+		{
+			s.Status.SetFake()
+		}
+	}
+	{
+		{
+			s.ExpiresAt.SetFake()
+		}
+	}
+	{
+		{
+			s.CreatedAt.SetFake()
+		}
+	}
+	{
+		{
+			s.InviteToken = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *InviteCreatedStatus) SetFake() {
+	*s = InviteCreatedStatusPending
+}
+
+// SetFake set fake values.
+func (s *InviteStatus) SetFake() {
+	*s = InviteStatusPending
 }
 
 // SetFake set fake values.

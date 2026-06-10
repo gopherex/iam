@@ -814,6 +814,15 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminI18nByLocale(ctx contex
 	return r, ht.ErrNotImplemented
 }
 
+// GetV1ProjectsByProjectIdAdminInvites implements getV1ProjectsByProjectIdAdminInvites operation.
+//
+// List invitations.
+//
+// GET /v1/projects/{project_id}/admin/invites
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminInvites(ctx context.Context, params GetV1ProjectsByProjectIdAdminInvitesParams) (r *GetV1ProjectsByProjectIdAdminInvitesOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetV1ProjectsByProjectIdAdminJobs implements getV1ProjectsByProjectIdAdminJobs operation.
 //
 // List background jobs.
@@ -2137,6 +2146,24 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminImportPasswordHashesVe
 //
 // POST /v1/projects/{project_id}/admin/import/users
 func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, req *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams) (r *PostV1ProjectsByProjectIdAdminImportUsersOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PostV1ProjectsByProjectIdAdminInvites implements postV1ProjectsByProjectIdAdminInvites operation.
+//
+// Create invitation.
+//
+// POST /v1/projects/{project_id}/admin/invites
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminInvites(ctx context.Context, req *InviteCreateRequest, params PostV1ProjectsByProjectIdAdminInvitesParams) (r *InviteCreated, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke implements postV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke operation.
+//
+// Revoke invitation.
+//
+// POST /v1/projects/{project_id}/admin/invites/{invite_id}/revoke
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke(ctx context.Context, params PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

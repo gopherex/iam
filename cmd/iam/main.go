@@ -361,6 +361,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter) *api.Service {
 			Config:          postgres.NewPgAdminConfig(db, emitter),
 			Keys:            postgres.NewPgAdminKeys(db, emitter),
 			AccessRequests:  postgres.NewPgAdminAccessRequests(db, emitter),
+			Invites:         postgres.NewPgInvites(db, emitter),
 		})),
 		api.WithOperator(api.NewOperatorService(api.OperatorDeps{
 			Projects: postgres.NewPgOperator(db, emitter),

@@ -28,6 +28,7 @@ func Where[Q psql.Filterable]() struct {
 	IamChallenges          iamChallengeWhere[Q]
 	IamFlows               iamFlowWhere[Q]
 	IamConsents            iamConsentWhere[Q]
+	IamInvites             iamInviteWhere[Q]
 	IamServiceAccounts     iamServiceAccountWhere[Q]
 	IamAPIKeys             iamAPIKeyWhere[Q]
 	IamAppClients          iamAppClientWhere[Q]
@@ -71,6 +72,7 @@ func Where[Q psql.Filterable]() struct {
 		IamChallenges          iamChallengeWhere[Q]
 		IamFlows               iamFlowWhere[Q]
 		IamConsents            iamConsentWhere[Q]
+		IamInvites             iamInviteWhere[Q]
 		IamServiceAccounts     iamServiceAccountWhere[Q]
 		IamAPIKeys             iamAPIKeyWhere[Q]
 		IamAppClients          iamAppClientWhere[Q]
@@ -113,6 +115,7 @@ func Where[Q psql.Filterable]() struct {
 		IamChallenges:          buildIamChallengeWhere[Q](IamChallenges.Columns),
 		IamFlows:               buildIamFlowWhere[Q](IamFlows.Columns),
 		IamConsents:            buildIamConsentWhere[Q](IamConsents.Columns),
+		IamInvites:             buildIamInviteWhere[Q](IamInvites.Columns),
 		IamServiceAccounts:     buildIamServiceAccountWhere[Q](IamServiceAccounts.Columns),
 		IamAPIKeys:             buildIamAPIKeyWhere[Q](IamAPIKeys.Columns),
 		IamAppClients:          buildIamAppClientWhere[Q](IamAppClients.Columns),

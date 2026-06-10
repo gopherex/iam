@@ -190,6 +190,20 @@ CREATE TABLE "public"."iam_factors" (
   "data" jsonb NOT NULL,
   PRIMARY KEY ("id")
 );
+CREATE TABLE "public"."iam_flows" (
+  "id" text NOT NULL,
+  "project_id" text NOT NULL,
+  "token_hash" text NOT NULL,
+  "kind" text NOT NULL,
+  "status" text NOT NULL,
+  "step" text NOT NULL,
+  "user_id" text,
+  "expires_at" timestamptz NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  "data" jsonb NOT NULL,
+  PRIMARY KEY ("id")
+);
 CREATE TABLE "public"."iam_hooks" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
@@ -219,6 +233,20 @@ CREATE TABLE "public"."iam_interactions" (
   "session_id" text,
   "expires_at" timestamptz,
   "created_at" timestamptz NOT NULL DEFAULT now(),
+  "data" jsonb NOT NULL,
+  PRIMARY KEY ("id")
+);
+CREATE TABLE "public"."iam_invites" (
+  "id" text NOT NULL,
+  "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
+  "email" text,
+  "token_hash" text NOT NULL,
+  "status" text NOT NULL DEFAULT 'pending'::text,
+  "expires_at" timestamptz,
+  "accepted_at" timestamptz,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
   "data" jsonb NOT NULL,
   PRIMARY KEY ("id")
 );
@@ -411,6 +439,7 @@ CREATE TABLE "public"."iam_webhooks" (
   "data" jsonb NOT NULL,
   PRIMARY KEY ("id")
 );
+ALTER TABLE "public"."iam_flows" ADD CONSTRAINT "iam_flows_token_hash_key" UNIQUE ("token_hash");
 CREATE INDEX "idx_iam_access_requests_project" ON "public"."iam_access_requests" ("project_id", "status");
 CREATE INDEX "idx_iam_activity_user" ON "public"."iam_activity" ("project_id", "user_id", "at");
 CREATE INDEX "idx_iam_admin_tokens_project" ON "public"."iam_admin_tokens" ("project_id");
@@ -431,9 +460,12 @@ CREATE UNIQUE INDEX "uq_iam_domains_domain" ON "public"."iam_domains" ("domain")
 CREATE INDEX "idx_iam_email_templates_project" ON "public"."iam_email_templates" ("project_id");
 CREATE INDEX "idx_iam_events_unpublished" ON "public"."iam_events" ("created_at") WHERE (published = false);
 CREATE INDEX "idx_iam_factors_user" ON "public"."iam_factors" ("project_id", "user_id");
+CREATE INDEX "iam_flows_project_idx" ON "public"."iam_flows" ("project_id");
 CREATE INDEX "idx_iam_hooks_project" ON "public"."iam_hooks" ("project_id");
 CREATE INDEX "idx_iam_identities_user" ON "public"."iam_identities" ("project_id", "user_id");
 CREATE UNIQUE INDEX "uq_iam_identities_provider" ON "public"."iam_identities" ("project_id", "provider", "provider_account_id") WHERE ((provider IS NOT NULL) AND (provider_account_id IS NOT NULL));
+CREATE INDEX "idx_iam_invites_hash" ON "public"."iam_invites" ("token_hash");
+CREATE INDEX "idx_iam_invites_project" ON "public"."iam_invites" ("project_id", "status");
 CREATE INDEX "idx_iam_jobs_project" ON "public"."iam_jobs" ("project_id");
 CREATE INDEX "idx_iam_oauth_grants_user" ON "public"."iam_oauth_grants" ("project_id", "user_id");
 CREATE UNIQUE INDEX "uq_iam_par_request_uri" ON "public"."iam_par_requests" ("request_uri");

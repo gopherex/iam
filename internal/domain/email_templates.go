@@ -83,6 +83,14 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			"ru": {Subject: "Продолжите с того же места", Text: "Продолжите на этом или другом устройстве: {{.continue_url}}", HTML: `<p>Продолжите с того же места: <a href="{{.continue_url}}">{{.continue_url}}</a></p>`},
 		},
 	},
+	{
+		Key:  "invite",
+		Name: "Invitation",
+		Locales: map[string]BuiltinEmailCopy{
+			"en": {Subject: "You're invited", Text: "You've been invited. Accept your invitation: {{.invite_url}} (or use code {{.invite_token}})", HTML: `<p>You've been invited. <a href="{{.invite_url}}">Accept your invitation</a>.</p>`},
+			"ru": {Subject: "Вас пригласили", Text: "Вас пригласили. Примите приглашение: {{.invite_url}} (или используйте код {{.invite_token}})", HTML: `<p>Вас пригласили. <a href="{{.invite_url}}">Примите приглашение</a>.</p>`},
+		},
+	},
 }
 
 // BuiltinEmailTemplateByKey returns the catalogue entry for key, or nil when key

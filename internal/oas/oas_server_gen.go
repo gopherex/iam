@@ -348,6 +348,12 @@ type AdminHandler interface {
 	//
 	// GET /v1/projects/{project_id}/admin/i18n/{locale}
 	GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params GetV1ProjectsByProjectIdAdminI18nByLocaleParams) (GetV1ProjectsByProjectIdAdminI18nByLocaleOK, error)
+	// GetV1ProjectsByProjectIdAdminInvites implements getV1ProjectsByProjectIdAdminInvites operation.
+	//
+	// List invitations.
+	//
+	// GET /v1/projects/{project_id}/admin/invites
+	GetV1ProjectsByProjectIdAdminInvites(ctx context.Context, params GetV1ProjectsByProjectIdAdminInvitesParams) (*GetV1ProjectsByProjectIdAdminInvitesOK, error)
 	// GetV1ProjectsByProjectIdAdminJobs implements getV1ProjectsByProjectIdAdminJobs operation.
 	//
 	// List background jobs.
@@ -624,6 +630,18 @@ type AdminHandler interface {
 	//
 	// POST /v1/projects/{project_id}/admin/import/users
 	PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, req *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams) (*PostV1ProjectsByProjectIdAdminImportUsersOK, error)
+	// PostV1ProjectsByProjectIdAdminInvites implements postV1ProjectsByProjectIdAdminInvites operation.
+	//
+	// Create invitation.
+	//
+	// POST /v1/projects/{project_id}/admin/invites
+	PostV1ProjectsByProjectIdAdminInvites(ctx context.Context, req *InviteCreateRequest, params PostV1ProjectsByProjectIdAdminInvitesParams) (*InviteCreated, error)
+	// PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke implements postV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke operation.
+	//
+	// Revoke invitation.
+	//
+	// POST /v1/projects/{project_id}/admin/invites/{invite_id}/revoke
+	PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke(ctx context.Context, params PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeParams) (*Ok, error)
 	// PostV1ProjectsByProjectIdAdminJobsByJobIdCancel implements postV1ProjectsByProjectIdAdminJobsByJobIdCancel operation.
 	//
 	// Cancel a job.

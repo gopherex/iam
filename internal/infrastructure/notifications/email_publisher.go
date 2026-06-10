@@ -99,6 +99,23 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 		job.Data["continue_url"] = link
 		job.Data["link"] = link
 	}
+	// Invitation email: build the accept deep-link from the per-tenant base
+	// (per-invite redirect_to when allowed, else app_base_url) + raw invite_token.
+	if job.TemplateID == "invite" {
+		base := p.resolveContinueBase(ctx, ev)
+		if base == "" {
+			p.log.Info("invite email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
+			return nil
+		}
+		token := stringValue(ev.Payload, "invite_token")
+		link := inviteURL(base, token)
+		if link == "" {
+			return nil
+		}
+		job.Data["invite_url"] = link
+		job.Data["invite_token"] = token
+		job.Data["link"] = link
+	}
 	provider, err := p.smtpProvider(ctx, ev.ProjectID)
 	if err != nil {
 		return err
@@ -156,6 +173,11 @@ func emailJobFromEvent(ev eventEnvelope) (emailJob, bool) {
 		// Cross-device "continue your sign-up" deep-link. continue_url is built in
 		// publishOne from the configured app base URL + flow_token.
 		job.TemplateID = "flow_continue"
+		job.To = recipient(ev.Payload)
+	case "invite.created":
+		// Invitation email. invite_url is built in publishOne from the configured
+		// app base URL (or the per-invite redirect_to) + raw invite_token.
+		job.TemplateID = "invite"
 		job.To = recipient(ev.Payload)
 	default:
 		return emailJob{}, false
@@ -316,6 +338,23 @@ func flowContinueURL(rawBase, flowToken string) string {
 	u.Path = strings.TrimRight(u.Path, "/") + "/continue"
 	q := u.Query()
 	q.Set("flow", flowToken)
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+// inviteURL builds the invitation accept deep-link <base>/invite?token=<token>.
+// Returns "" on a bad base or empty token (mirrors flowContinueURL).
+func inviteURL(rawBase, token string) string {
+	if rawBase == "" || token == "" {
+		return ""
+	}
+	u, err := url.Parse(rawBase)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return ""
+	}
+	u.Path = strings.TrimRight(u.Path, "/") + "/invite"
+	q := u.Query()
+	q.Set("token", token)
 	u.RawQuery = q.Encode()
 	return u.String()
 }

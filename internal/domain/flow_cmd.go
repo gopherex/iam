@@ -127,6 +127,11 @@ type FlowCreateCmd struct {
 	// Locale is the requested language for flow emails (verification, continue).
 	// Empty lets the notification layer fall back to the account/project default.
 	Locale string
+	// InviteToken is the raw invitation token (inv_…) to redeem when the project
+	// registration mode is invite_only. Valid+pending+unexpired (and email-matched
+	// for email-bound invites) lets the signup proceed and marks the invite
+	// accepted in the same flow-create transaction.
+	InviteToken string
 }
 
 // FlowGetCmd retrieves a live flow by its opaque token (project-scoped).

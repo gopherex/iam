@@ -423,6 +423,12 @@ type AdminInvoker interface {
 	//
 	// GET /v1/projects/{project_id}/admin/i18n/{locale}
 	GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params GetV1ProjectsByProjectIdAdminI18nByLocaleParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminI18nByLocaleOK, error)
+	// GetV1ProjectsByProjectIdAdminInvites invokes getV1ProjectsByProjectIdAdminInvites operation.
+	//
+	// List invitations.
+	//
+	// GET /v1/projects/{project_id}/admin/invites
+	GetV1ProjectsByProjectIdAdminInvites(ctx context.Context, params GetV1ProjectsByProjectIdAdminInvitesParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminInvitesOK, error)
 	// GetV1ProjectsByProjectIdAdminJobs invokes getV1ProjectsByProjectIdAdminJobs operation.
 	//
 	// List background jobs.
@@ -699,6 +705,18 @@ type AdminInvoker interface {
 	//
 	// POST /v1/projects/{project_id}/admin/import/users
 	PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, request *PostV1ProjectsByProjectIdAdminImportUsersReq, params PostV1ProjectsByProjectIdAdminImportUsersParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminImportUsersOK, error)
+	// PostV1ProjectsByProjectIdAdminInvites invokes postV1ProjectsByProjectIdAdminInvites operation.
+	//
+	// Create invitation.
+	//
+	// POST /v1/projects/{project_id}/admin/invites
+	PostV1ProjectsByProjectIdAdminInvites(ctx context.Context, request *InviteCreateRequest, params PostV1ProjectsByProjectIdAdminInvitesParams, options ...RequestOption) (*InviteCreated, error)
+	// PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke invokes postV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke operation.
+	//
+	// Revoke invitation.
+	//
+	// POST /v1/projects/{project_id}/admin/invites/{invite_id}/revoke
+	PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke(ctx context.Context, params PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeParams, options ...RequestOption) (*Ok, error)
 	// PostV1ProjectsByProjectIdAdminJobsByJobIdCancel invokes postV1ProjectsByProjectIdAdminJobsByJobIdCancel operation.
 	//
 	// Cancel a job.
@@ -16803,6 +16821,175 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Conte
 
 	stage = "DecodeResponse"
 	result, err := decodeGetV1ProjectsByProjectIdAdminI18nByLocaleResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetV1ProjectsByProjectIdAdminInvites invokes getV1ProjectsByProjectIdAdminInvites operation.
+//
+// List invitations.
+//
+// GET /v1/projects/{project_id}/admin/invites
+func (c *Client) GetV1ProjectsByProjectIdAdminInvites(ctx context.Context, params GetV1ProjectsByProjectIdAdminInvitesParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminInvitesOK, error) {
+	res, err := c.sendGetV1ProjectsByProjectIdAdminInvites(ctx, params, options...)
+	return res, err
+}
+
+func (c *Client) sendGetV1ProjectsByProjectIdAdminInvites(ctx context.Context, params GetV1ProjectsByProjectIdAdminInvitesParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminInvitesOK, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getV1ProjectsByProjectIdAdminInvites"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/projects/{project_id}/admin/invites"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetV1ProjectsByProjectIdAdminInvitesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [3]string
+	pathParts[0] = "/v1/projects/"
+	{
+		// Encode "project_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ProjectID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/admin/invites"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:AdminToken"
+			switch err := c.securityAdminToken(ctx, GetV1ProjectsByProjectIdAdminInvitesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"AdminToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodeGetV1ProjectsByProjectIdAdminInvitesResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -40947,6 +41134,389 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminImportUsers(ctx context.Conte
 
 	stage = "DecodeResponse"
 	result, err := decodePostV1ProjectsByProjectIdAdminImportUsersResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostV1ProjectsByProjectIdAdminInvites invokes postV1ProjectsByProjectIdAdminInvites operation.
+//
+// Create invitation.
+//
+// POST /v1/projects/{project_id}/admin/invites
+func (c *Client) PostV1ProjectsByProjectIdAdminInvites(ctx context.Context, request *InviteCreateRequest, params PostV1ProjectsByProjectIdAdminInvitesParams, options ...RequestOption) (*InviteCreated, error) {
+	res, err := c.sendPostV1ProjectsByProjectIdAdminInvites(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1ProjectsByProjectIdAdminInvites(ctx context.Context, request *InviteCreateRequest, params PostV1ProjectsByProjectIdAdminInvitesParams, requestOptions ...RequestOption) (res *InviteCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1ProjectsByProjectIdAdminInvites"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/projects/{project_id}/admin/invites"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1ProjectsByProjectIdAdminInvitesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [3]string
+	pathParts[0] = "/v1/projects/"
+	{
+		// Encode "project_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ProjectID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/admin/invites"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostV1ProjectsByProjectIdAdminInvitesRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Idempotency-Key",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IdempotencyKey.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:AdminToken"
+			switch err := c.securityAdminToken(ctx, PostV1ProjectsByProjectIdAdminInvitesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"AdminToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1ProjectsByProjectIdAdminInvitesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke invokes postV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke operation.
+//
+// Revoke invitation.
+//
+// POST /v1/projects/{project_id}/admin/invites/{invite_id}/revoke
+func (c *Client) PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke(ctx context.Context, params PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeParams, options ...RequestOption) (*Ok, error) {
+	res, err := c.sendPostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke(ctx, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke(ctx context.Context, params PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeParams, requestOptions ...RequestOption) (res *Ok, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/projects/{project_id}/admin/invites/{invite_id}/revoke"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [5]string
+	pathParts[0] = "/v1/projects/"
+	{
+		// Encode "project_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ProjectID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/admin/invites/"
+	{
+		// Encode "invite_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "invite_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.InviteID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	pathParts[4] = "/revoke"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:AdminToken"
+			switch err := c.securityAdminToken(ctx, PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"AdminToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

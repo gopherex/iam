@@ -145,6 +145,13 @@ type AdminAccessRequests interface {
 	Deny(ctx context.Context, cmd domain.AdminAccessRequestDecisionCmd) (*domain.CoreAuthAccessRequest, error)
 }
 
+// AdminInvites is the project invitation administration slice.
+type AdminInvites interface {
+	Create(ctx context.Context, cmd domain.InviteCreateCmd) (*domain.InviteCreated, error)
+	List(ctx context.Context, cmd domain.InviteListCmd) ([]domain.Invite, error)
+	Revoke(ctx context.Context, cmd domain.InviteRevokeCmd) error
+}
+
 // AdminDeps are the per-project administration ports.
 type AdminDeps struct {
 	Users           AdminUsers
@@ -155,6 +162,7 @@ type AdminDeps struct {
 	Config          AdminConfig
 	Keys            AdminKeys
 	AccessRequests  AdminAccessRequests
+	Invites         AdminInvites
 }
 
 // AdminService implements the AdminHandler slice of oas.Handler.

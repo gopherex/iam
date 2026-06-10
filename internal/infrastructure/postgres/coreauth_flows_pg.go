@@ -536,13 +536,46 @@ func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flo
 		return a.flowPersistAtStep(ctx, f, domain.FlowStepBlocked,
 			&domain.FlowError{Code: "registration_closed", Message: "Registration is closed."})
 	case "invite_only":
-		// Invite redemption lands in Phase 1b; until then, no public signup.
-		return a.flowPersistAtStep(ctx, f, domain.FlowStepBlocked,
-			&domain.FlowError{Code: "invite_required", Message: "An invitation is required to sign up."})
+		// Redeem the supplied invite. A valid+pending+unexpired token (matching the
+		// bound email for email-bound invites) lets the signup proceed and is marked
+		// accepted on the success path below. Absent token → invite_required; a bad
+		// token → invite_invalid. Both keep the flow blocked.
+		if cmd.InviteToken == "" {
+			return a.flowPersistAtStep(ctx, f, domain.FlowStepBlocked,
+				&domain.FlowError{Code: "invite_required", Message: "An invitation is required to sign up."})
+		}
+		inviteRow, ok, err := a.flowFindRedeemableInvite(ctx, f.ProjectID, cmd.InviteToken, cmd.Email)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return a.flowPersistAtStep(ctx, f, domain.FlowStepBlocked,
+				&domain.FlowError{Code: "invite_invalid", Message: "The invitation is invalid or expired."})
+		}
+		// Valid invite: proceed with the normal signup path, marking the invite
+		// accepted in the same (ambient) transaction once the user is created.
+		return a.advanceSignupCreateAccepted(ctx, f, cmd, inviteRow)
 	case "request_access":
 		return a.flowPersistAtStep(ctx, f, domain.FlowStepRequestAccess, nil)
 	}
 
+	return a.flowSignupRegisterAndPersist(ctx, f, cmd, pwStrategy)
+}
+
+// advanceSignupCreateAccepted runs the invite_only success path: it marks the
+// redeemed invite accepted (same ambient transaction; a later register error
+// rolls it back) and then proceeds with the normal signup.
+func (a *pgCoreAuthFlows) advanceSignupCreateAccepted(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd, inviteRow *models.IamInvite) (*domain.FlowState, error) {
+	if err := a.flowMarkInviteAccepted(ctx, inviteRow); err != nil {
+		return nil, err
+	}
+	return a.flowSignupRegisterAndPersist(ctx, f, cmd, f.PasswordStrategy)
+}
+
+// flowSignupRegisterAndPersist registers the user, issues the email challenge,
+// and persists the flow at verify_email. Shared by the open and invite_only
+// (accepted) paths.
+func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd, pwStrategy string) (*domain.FlowState, error) {
 	// 1. Register the user. With the after_verify password strategy the account is
 	// created WITHOUT a password (set later at the set_password step).
 	password := cmd.Password
@@ -596,6 +629,52 @@ func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flo
 		return nil, err
 	}
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
+}
+
+// flowFindRedeemableInvite looks up an invite by its raw token and validates it
+// for (project, env=live, status=pending, unexpired, email match for email-bound
+// invites). Returns (row, true, nil) when redeemable; (nil, false, nil) for any
+// validation miss; (nil, false, err) only on an unexpected DB error.
+func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectID, rawToken, email string) (*models.IamInvite, bool, error) {
+	hash := inviteHashToken(rawToken)
+	rows, err := models.IamInvites.Query(
+		sm.Where(models.IamInvites.Columns.TokenHash.EQ(psql.Arg(hash))),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return nil, false, err
+	}
+	if len(rows) == 0 {
+		return nil, false, nil
+	}
+	row := rows[0]
+	if row.ProjectID != projectID {
+		return nil, false, nil
+	}
+	if row.Environment != coreAuthDefaultEnv {
+		return nil, false, nil
+	}
+	if row.Status != inviteStatusPend {
+		return nil, false, nil
+	}
+	if exp, ok := row.ExpiresAt.Get(); ok && nowUTC().After(exp) {
+		return nil, false, nil
+	}
+	// Email-bound invites must match the signup email.
+	if bound, ok := row.Email.Get(); ok && bound != "" && bound != email {
+		return nil, false, nil
+	}
+	return row, true, nil
+}
+
+// flowMarkInviteAccepted sets status=accepted + accepted_at=now on a redeemed
+// invite, joining the caller's (ambient) transaction.
+func (a *pgCoreAuthFlows) flowMarkInviteAccepted(ctx context.Context, row *models.IamInvite) error {
+	now := nowUTC()
+	return row.Update(ctx, a.db.Bobx(), &models.IamInviteSetter{
+		Status:     ptr(inviteStatusAccept),
+		AcceptedAt: ptr(null.From(now)),
+		UpdatedAt:  &now,
+	})
 }
 
 // advanceSignup handles Submit for signup flows.

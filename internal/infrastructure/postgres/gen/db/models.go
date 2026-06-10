@@ -135,6 +135,20 @@ type IamConsents struct {
 	AcceptedAt time.Time
 }
 
+type IamInvites struct {
+	ID          string
+	ProjectID   string
+	Environment string
+	Email       *string
+	TokenHash   string
+	Status      string
+	ExpiresAt   *time.Time
+	AcceptedAt  *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Data        json.RawMessage
+}
+
 type IamServiceAccounts struct {
 	ID        string
 	ProjectID string

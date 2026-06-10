@@ -1978,6 +1978,10 @@ type FlowCreateRequest struct {
 	// Preferred language for this flow's emails (verification, continue). Empty falls back to the
 	// account's locale, then the project default, then English.
 	Locale OptString `json:"locale"`
+	// Raw invitation token (inv_…) to redeem when the project's registration mode is invite_only. A
+	// valid, pending, unexpired token (matching the bound email when the invite is email-bound) lets the
+	// signup proceed and marks the invite accepted.
+	InviteToken OptString `json:"invite_token"`
 }
 
 // GetKind returns the value of Kind.
@@ -2015,6 +2019,11 @@ func (s *FlowCreateRequest) GetLocale() OptString {
 	return s.Locale
 }
 
+// GetInviteToken returns the value of InviteToken.
+func (s *FlowCreateRequest) GetInviteToken() OptString {
+	return s.InviteToken
+}
+
 // SetKind sets the value of Kind.
 func (s *FlowCreateRequest) SetKind(val FlowCreateRequestKind) {
 	s.Kind = val
@@ -2048,6 +2057,11 @@ func (s *FlowCreateRequest) SetRedirectTo(val OptString) {
 // SetLocale sets the value of Locale.
 func (s *FlowCreateRequest) SetLocale(val OptString) {
 	s.Locale = val
+}
+
+// SetInviteToken sets the value of InviteToken.
+func (s *FlowCreateRequest) SetInviteToken(val OptString) {
+	s.InviteToken = val
 }
 
 type FlowCreateRequestKind string
@@ -3661,6 +3675,20 @@ func (s *GetV1ProjectsByProjectIdAdminI18nByLocaleOK) init() GetV1ProjectsByProj
 	return m
 }
 
+type GetV1ProjectsByProjectIdAdminInvitesOK struct {
+	Invites []Invite `json:"invites"`
+}
+
+// GetInvites returns the value of Invites.
+func (s *GetV1ProjectsByProjectIdAdminInvitesOK) GetInvites() []Invite {
+	return s.Invites
+}
+
+// SetInvites sets the value of Invites.
+func (s *GetV1ProjectsByProjectIdAdminInvitesOK) SetInvites(val []Invite) {
+	s.Invites = val
+}
+
 type GetV1ProjectsByProjectIdAdminJobsByJobIdOK struct {
 	Job OptJob `json:"job"`
 }
@@ -4741,6 +4769,273 @@ func (s *IdentityType) UnmarshalText(data []byte) error {
 		return nil
 	case IdentityTypePasskey:
 		*s = IdentityTypePasskey
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/Invite
+type Invite struct {
+	ID        string       `json:"id"`
+	Email     OptString    `json:"email"`
+	Status    InviteStatus `json:"status"`
+	ExpiresAt OptTimestamp `json:"expires_at"`
+	CreatedAt OptTimestamp `json:"created_at"`
+}
+
+// GetID returns the value of ID.
+func (s *Invite) GetID() string {
+	return s.ID
+}
+
+// GetEmail returns the value of Email.
+func (s *Invite) GetEmail() OptString {
+	return s.Email
+}
+
+// GetStatus returns the value of Status.
+func (s *Invite) GetStatus() InviteStatus {
+	return s.Status
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *Invite) GetExpiresAt() OptTimestamp {
+	return s.ExpiresAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Invite) GetCreatedAt() OptTimestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *Invite) SetID(val string) {
+	s.ID = val
+}
+
+// SetEmail sets the value of Email.
+func (s *Invite) SetEmail(val OptString) {
+	s.Email = val
+}
+
+// SetStatus sets the value of Status.
+func (s *Invite) SetStatus(val InviteStatus) {
+	s.Status = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *Invite) SetExpiresAt(val OptTimestamp) {
+	s.ExpiresAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Invite) SetCreatedAt(val OptTimestamp) {
+	s.CreatedAt = val
+}
+
+// Ref: #/components/schemas/InviteCreateRequest
+type InviteCreateRequest struct {
+	// Optional invitee email. When set, the invite is email-bound (signup must use the same email) and a
+	// notification email is sent.
+	Email     OptString    `json:"email"`
+	ExpiresAt OptTimestamp `json:"expires_at"`
+	// Optional base URL for the invitation email link. Its origin must match the project's configured
+	// app_base_url; otherwise app_base_url is used.
+	RedirectTo OptString `json:"redirect_to"`
+}
+
+// GetEmail returns the value of Email.
+func (s *InviteCreateRequest) GetEmail() OptString {
+	return s.Email
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *InviteCreateRequest) GetExpiresAt() OptTimestamp {
+	return s.ExpiresAt
+}
+
+// GetRedirectTo returns the value of RedirectTo.
+func (s *InviteCreateRequest) GetRedirectTo() OptString {
+	return s.RedirectTo
+}
+
+// SetEmail sets the value of Email.
+func (s *InviteCreateRequest) SetEmail(val OptString) {
+	s.Email = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *InviteCreateRequest) SetExpiresAt(val OptTimestamp) {
+	s.ExpiresAt = val
+}
+
+// SetRedirectTo sets the value of RedirectTo.
+func (s *InviteCreateRequest) SetRedirectTo(val OptString) {
+	s.RedirectTo = val
+}
+
+// Ref: #/components/schemas/InviteCreated
+type InviteCreated struct {
+	ID        string              `json:"id"`
+	Email     OptString           `json:"email"`
+	Status    InviteCreatedStatus `json:"status"`
+	ExpiresAt OptTimestamp        `json:"expires_at"`
+	CreatedAt OptTimestamp        `json:"created_at"`
+	// Raw invitation token, returned exactly once at creation.
+	InviteToken string `json:"invite_token"`
+}
+
+// GetID returns the value of ID.
+func (s *InviteCreated) GetID() string {
+	return s.ID
+}
+
+// GetEmail returns the value of Email.
+func (s *InviteCreated) GetEmail() OptString {
+	return s.Email
+}
+
+// GetStatus returns the value of Status.
+func (s *InviteCreated) GetStatus() InviteCreatedStatus {
+	return s.Status
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *InviteCreated) GetExpiresAt() OptTimestamp {
+	return s.ExpiresAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *InviteCreated) GetCreatedAt() OptTimestamp {
+	return s.CreatedAt
+}
+
+// GetInviteToken returns the value of InviteToken.
+func (s *InviteCreated) GetInviteToken() string {
+	return s.InviteToken
+}
+
+// SetID sets the value of ID.
+func (s *InviteCreated) SetID(val string) {
+	s.ID = val
+}
+
+// SetEmail sets the value of Email.
+func (s *InviteCreated) SetEmail(val OptString) {
+	s.Email = val
+}
+
+// SetStatus sets the value of Status.
+func (s *InviteCreated) SetStatus(val InviteCreatedStatus) {
+	s.Status = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *InviteCreated) SetExpiresAt(val OptTimestamp) {
+	s.ExpiresAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *InviteCreated) SetCreatedAt(val OptTimestamp) {
+	s.CreatedAt = val
+}
+
+// SetInviteToken sets the value of InviteToken.
+func (s *InviteCreated) SetInviteToken(val string) {
+	s.InviteToken = val
+}
+
+type InviteCreatedStatus string
+
+const (
+	InviteCreatedStatusPending  InviteCreatedStatus = "pending"
+	InviteCreatedStatusAccepted InviteCreatedStatus = "accepted"
+	InviteCreatedStatusRevoked  InviteCreatedStatus = "revoked"
+)
+
+// AllValues returns all InviteCreatedStatus values.
+func (InviteCreatedStatus) AllValues() []InviteCreatedStatus {
+	return []InviteCreatedStatus{
+		InviteCreatedStatusPending,
+		InviteCreatedStatusAccepted,
+		InviteCreatedStatusRevoked,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s InviteCreatedStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case InviteCreatedStatusPending:
+		return []byte(s), nil
+	case InviteCreatedStatusAccepted:
+		return []byte(s), nil
+	case InviteCreatedStatusRevoked:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *InviteCreatedStatus) UnmarshalText(data []byte) error {
+	switch InviteCreatedStatus(data) {
+	case InviteCreatedStatusPending:
+		*s = InviteCreatedStatusPending
+		return nil
+	case InviteCreatedStatusAccepted:
+		*s = InviteCreatedStatusAccepted
+		return nil
+	case InviteCreatedStatusRevoked:
+		*s = InviteCreatedStatusRevoked
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type InviteStatus string
+
+const (
+	InviteStatusPending  InviteStatus = "pending"
+	InviteStatusAccepted InviteStatus = "accepted"
+	InviteStatusRevoked  InviteStatus = "revoked"
+)
+
+// AllValues returns all InviteStatus values.
+func (InviteStatus) AllValues() []InviteStatus {
+	return []InviteStatus{
+		InviteStatusPending,
+		InviteStatusAccepted,
+		InviteStatusRevoked,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s InviteStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case InviteStatusPending:
+		return []byte(s), nil
+	case InviteStatusAccepted:
+		return []byte(s), nil
+	case InviteStatusRevoked:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *InviteStatus) UnmarshalText(data []byte) error {
+	switch InviteStatus(data) {
+	case InviteStatusPending:
+		*s = InviteStatusPending
+		return nil
+	case InviteStatusAccepted:
+		*s = InviteStatusAccepted
+		return nil
+	case InviteStatusRevoked:
+		*s = InviteStatusRevoked
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

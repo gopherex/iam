@@ -1179,6 +1179,18 @@ func TestGetV1ProjectsByProjectIdAdminI18nByLocaleOK_EncodeDecode(t *testing.T) 
 	typ2 = make(GetV1ProjectsByProjectIdAdminI18nByLocaleOK)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestGetV1ProjectsByProjectIdAdminInvitesOK_EncodeDecode(t *testing.T) {
+	var typ GetV1ProjectsByProjectIdAdminInvitesOK
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 GetV1ProjectsByProjectIdAdminInvitesOK
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestGetV1ProjectsByProjectIdAdminJobsByJobIdOK_EncodeDecode(t *testing.T) {
 	var typ GetV1ProjectsByProjectIdAdminJobsByJobIdOK
 	typ.SetFake()
@@ -1687,6 +1699,66 @@ func TestIdentityType_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 IdentityType
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestInvite_EncodeDecode(t *testing.T) {
+	var typ Invite
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 Invite
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestInviteCreateRequest_EncodeDecode(t *testing.T) {
+	var typ InviteCreateRequest
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 InviteCreateRequest
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestInviteCreated_EncodeDecode(t *testing.T) {
+	var typ InviteCreated
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 InviteCreated
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestInviteCreatedStatus_EncodeDecode(t *testing.T) {
+	var typ InviteCreatedStatus
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 InviteCreatedStatus
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestInviteStatus_EncodeDecode(t *testing.T) {
+	var typ InviteStatus
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 InviteStatus
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestJob_EncodeDecode(t *testing.T) {

@@ -122,6 +122,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 			Config:          NewPgAdminConfig(testDB, em),
 			Keys:            NewPgAdminKeys(testDB, em),
 			AccessRequests:  NewPgAdminAccessRequests(testDB, em),
+			Invites:         NewPgInvites(testDB, em),
 		})),
 		api.WithOperator(api.NewOperatorService(api.OperatorDeps{
 			Projects: NewPgOperator(testDB, em),

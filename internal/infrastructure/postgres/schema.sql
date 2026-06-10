@@ -162,6 +162,22 @@ CREATE TABLE iam_consents (
 );
 CREATE INDEX idx_iam_consents_user ON iam_consents (project_id, user_id);
 
+CREATE TABLE iam_invites (
+  id          text PRIMARY KEY,
+  project_id  text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
+  email       text,                              -- null = not bound to a specific address
+  token_hash  text NOT NULL,
+  status      text NOT NULL DEFAULT 'pending',   -- pending | accepted | revoked
+  expires_at  timestamptz,
+  accepted_at timestamptz,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  data        jsonb NOT NULL
+);
+CREATE INDEX idx_iam_invites_project ON iam_invites (project_id, status);
+CREATE INDEX idx_iam_invites_hash ON iam_invites (token_hash);
+
 -- ============================================================
 -- Machine identity & app clients
 -- ============================================================

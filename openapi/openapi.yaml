@@ -864,6 +864,14 @@ components:
             Empty falls back to the account's locale, then the project default,
             then English.
           maxLength: 35
+        invite_token:
+          type: string
+          description: >-
+            Raw invitation token (inv_…) to redeem when the project's
+            registration mode is invite_only. A valid, pending, unexpired token
+            (matching the bound email when the invite is email-bound) lets the
+            signup proceed and marks the invite accepted.
+          maxLength: 512
     FlowSubmitRequest:
       type: object
       required:
@@ -1629,6 +1637,73 @@ components:
           type: boolean
       required:
       - type
+    Invite:
+      type: object
+      required:
+      - id
+      - status
+      properties:
+        id:
+          type: string
+          maxLength: 256
+        email:
+          type: string
+          maxLength: 256
+        status:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - revoked
+        expires_at:
+          $ref: '#/components/schemas/Timestamp'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+    InviteCreateRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          description: >-
+            Optional invitee email. When set, the invite is email-bound (signup
+            must use the same email) and a notification email is sent.
+          maxLength: 256
+        expires_at:
+          $ref: '#/components/schemas/Timestamp'
+        redirect_to:
+          type: string
+          description: >-
+            Optional base URL for the invitation email link. Its origin must
+            match the project's configured app_base_url; otherwise app_base_url
+            is used.
+          maxLength: 2048
+    InviteCreated:
+      type: object
+      required:
+      - id
+      - status
+      - invite_token
+      properties:
+        id:
+          type: string
+          maxLength: 256
+        email:
+          type: string
+          maxLength: 256
+        status:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - revoked
+        expires_at:
+          $ref: '#/components/schemas/Timestamp'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        invite_token:
+          type: string
+          description: Raw invitation token, returned exactly once at creation.
+          maxLength: 512
     OAuthProviderConfig:
       type: object
       properties:
@@ -9758,6 +9833,105 @@ paths:
       tags:
       - Admin Config
       summary: Delete email provider.
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
+        default:
+          $ref: '#/components/responses/Default'
+      security:
+      - adminToken: []
+      x-audience: project-admin
+      x-scopes:
+      - project
+      - environment
+      parameters:
+      - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
+  /v1/projects/{project_id}/admin/invites:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    - $ref: '#/components/parameters/XEnvironment'
+    get:
+      operationId: getV1ProjectsByProjectIdAdminInvites
+      x-since: 1.0.0
+      tags:
+      - Admin Config
+      summary: List invitations.
+      responses:
+        '200':
+          description: Invitations.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invites:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invite'
+                    maxItems: 1000
+        default:
+          $ref: '#/components/responses/Default'
+      security:
+      - adminToken: []
+      x-audience: project-admin
+      x-scopes:
+      - project
+      - environment
+      parameters:
+      - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
+    post:
+      operationId: postV1ProjectsByProjectIdAdminInvites
+      x-since: 1.0.0
+      tags:
+      - Admin Config
+      summary: Create invitation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteCreateRequest'
+      responses:
+        '201':
+          description: Invitation created (token returned once).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InviteCreated'
+        default:
+          $ref: '#/components/responses/Default'
+      security:
+      - adminToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/XEnvironment'
+      x-audience: project-admin
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: Admin
+  /v1/projects/{project_id}/admin/invites/{invite_id}/revoke:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    - name: invite_id
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 256
+    - $ref: '#/components/parameters/XEnvironment'
+    post:
+      operationId: postV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke
+      x-since: 1.0.0
+      tags:
+      - Admin Config
+      summary: Revoke invitation.
       responses:
         '200':
           description: OK.

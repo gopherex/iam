@@ -2054,6 +2054,20 @@ func encodePostV1ProjectsByProjectIdAdminImportUsersRequest(
 	return nil
 }
 
+func encodePostV1ProjectsByProjectIdAdminInvitesRequest(
+	req *InviteCreateRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodePostV1ProjectsByProjectIdAdminJwksRotateRequest(
 	req OptPostV1ProjectsByProjectIdAdminJwksRotateReq,
 	r *http.Request,
