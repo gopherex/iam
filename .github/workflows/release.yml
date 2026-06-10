@@ -95,18 +95,32 @@ jobs:
           yarn build
         working-directory: ts
 
+      # Republish-on-tag-recreate needs the existing version gone first; GitHub
+      # Packages rejects re-publishing a live version. The automatic
+      # GITHUB_TOKEN cannot delete packages (no delete:packages scope — the most
+      # a workflow token gets is packages: write), so deletion only works when a
+      # PAT with delete:packages is provided as the PACKAGES_TOKEN secret. When
+      # it is absent we warn and let publish proceed (a first-time publish still
+      # succeeds; a true re-publish then fails loudly below).
       - name: Delete existing version (allow republish on tag re-create)
+        continue-on-error: true
         run: |
-          id="$(gh api "/orgs/${ORG}/packages/npm/${PKG}/versions" \
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::warning::PACKAGES_TOKEN not set; cannot delete existing version. Re-publishing an existing version will fail. Add a PAT with delete:packages as the PACKAGES_TOKEN secret."
+            exit 0
+          fi
+          id="$(gh api --paginate "/orgs/${ORG}/packages/npm/${PKG}/versions" \
             --jq ".[] | select(.name == \"${VERSION}\") | .id" 2>/dev/null || true)"
-          if [ -n "$id" ]; then
-            echo "Deleting existing ${PKG}@${VERSION} (version id ${id})"
-            gh api -X DELETE "/orgs/${ORG}/packages/npm/${PKG}/versions/${id}"
-          else
+          if [ -z "$id" ]; then
             echo "No existing ${PKG}@${VERSION}, nothing to delete"
+            exit 0
+          fi
+          echo "Deleting existing ${PKG}@${VERSION} (version id ${id})"
+          if ! gh api -X DELETE "/orgs/${ORG}/packages/npm/${PKG}/versions/${id}"; then
+            echo "::warning::Failed to delete ${PKG}@${VERSION}; PACKAGES_TOKEN likely lacks delete:packages. Re-publish will fail."
           fi
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
           ORG: gopherex
           PKG: iam-sdk
 
