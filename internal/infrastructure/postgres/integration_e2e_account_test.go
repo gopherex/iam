@@ -609,14 +609,9 @@ func TestE2EAccountConsents(t *testing.T) {
 	})
 
 	t.Run("get consents after acceptance", func(t *testing.T) {
-		// BUG: oasAccountConsent (pkg/api/account.go) always sets
-		// Locale: oas.NewOptString(c.Locale) even when Locale is "", which results
-		// in OptString{Set:true, Value:""}. The ogen response validator then applies
-		// the locale regex (^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$) to "" which
-		// fails, causing encodeGetV1UsersMeConsentsResponse to return an error that
-		// propagates as 400 bad_request. The fix is to only set Locale when
-		// c.Locale != "". Fixed in master.
-		t.Skip("production bug: GET /v1/users/me/consents returns 400 when stored consent has empty locale (ogen response validation fails)")
+		// Regression guard: a stored consent with empty locale must not break the
+		// response. oasAccountConsent now only sets Locale when non-empty, so ogen
+		// response validation (locale regex) no longer rejects the document.
 		r := e2eReq(t, ctx, http.MethodGet, ts.URL+"/v1/users/me/consents", nil, e2eBearer(sess.AccessToken))
 		e2eWantStatus(t, r, http.StatusOK)
 		var body struct {
