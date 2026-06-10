@@ -9,14 +9,22 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	"github.com/gopherex/iam/internal/domain"
 )
 
 // ErrNotFound / ErrConflict are the storage-level sentinels the service layer
 // translates to its API errors. (IAM has no proto layer; records are stored as
 // plain JSON in the `data` column.)
+//
+// ErrNotFound aliases domain.ErrNotFound so that an adapter which surfaces a
+// no-rows result (directly or wrapped via translatePgErr) renders as a 404 at
+// the API boundary instead of being masked as a 500 — errors.As in the ogen
+// NewError hook finds the *domain.Error through the wrap. errors.Is checks
+// against this sentinel keep working unchanged since it is the same value.
 var (
-	ErrNotFound = errors.New("not found")
-	ErrConflict = errors.New("conflict")
+	ErrNotFound error = domain.ErrNotFound
+	ErrConflict       = errors.New("conflict")
 )
 
 func ptr[T any](v T) *T { return &v }
