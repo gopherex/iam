@@ -4360,15 +4360,22 @@ func (s *FlowCreateRequest) encodeFields(e *jx.Encoder) {
 			s.RedirectTo.Encode(e)
 		}
 	}
+	{
+		if s.Locale.Set {
+			e.FieldStart("locale")
+			s.Locale.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfFlowCreateRequest = [6]string{
+var jsonFieldsNameOfFlowCreateRequest = [7]string{
 	0: "kind",
 	1: "email",
 	2: "password",
 	3: "name",
 	4: "captcha_token",
 	5: "redirect_to",
+	6: "locale",
 }
 
 // Decode decodes FlowCreateRequest from json.
@@ -4439,6 +4446,16 @@ func (s *FlowCreateRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"redirect_to\"")
+			}
+		case "locale":
+			if err := func() error {
+				s.Locale.Reset()
+				if err := s.Locale.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"locale\"")
 			}
 		default:
 			return d.Skip()

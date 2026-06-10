@@ -80,6 +80,9 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	if job.To == "" {
 		return fmt.Errorf("notifications: email event %s has no recipient", ev.Type)
 	}
+	// Resolve the effective locale: the request locale carried on the event, else
+	// the recipient account's locale, else the project default, else "en".
+	job.Locale = p.resolveLocale(ctx, ev, job.Locale)
 	// Flow continue email: build the cross-device deep-link from a per-tenant
 	// base — the per-flow redirect_to when its origin is allowed, else the
 	// project's configured app_base_url. With neither, the feature is disabled.
@@ -118,11 +121,9 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 
 func emailJobFromEvent(ev eventEnvelope) (emailJob, bool) {
 	data := payloadData(ev.Payload)
-	locale := stringValue(ev.Payload, "locale")
-	if locale == "" {
-		locale = defaultLocale
-	}
-	job := emailJob{Locale: locale, Data: data}
+	// Locale may be empty here; publishOne resolves it (request → account →
+	// project default → "en") with DB context before rendering.
+	job := emailJob{Locale: stringValue(ev.Payload, "locale"), Data: data}
 	switch ev.Type {
 	case "config.test_email_requested":
 		job.TemplateID = stringValue(ev.Payload, "template_id")
@@ -220,6 +221,54 @@ func (p *Publisher) resolveContinueBase(ctx context.Context, ev eventEnvelope) s
 			xlog.String("project_id", ev.ProjectID))
 	}
 	return base
+}
+
+// resolveLocale picks the effective email locale: the request locale already on
+// the event, else the recipient account's locale, else the project default, else
+// "en". Best-effort — any lookup miss just falls through.
+func (p *Publisher) resolveLocale(ctx context.Context, ev eventEnvelope, reqLocale string) string {
+	if reqLocale != "" {
+		return reqLocale
+	}
+	if accID := stringValue(ev.Payload, "account_id"); accID != "" {
+		if loc := p.accountLocale(ctx, accID); loc != "" {
+			return loc
+		}
+	}
+	if loc := p.projectDefaultLocale(ctx, ev.ProjectID); loc != "" {
+		return loc
+	}
+	return defaultLocale
+}
+
+// accountLocale reads an account's preferred locale from its iam_users envelope.
+func (p *Publisher) accountLocale(ctx context.Context, accountID string) string {
+	row, err := models.FindIamUser(ctx, p.db.Bobx(), accountID)
+	if err != nil || len(row.Data) == 0 {
+		return ""
+	}
+	var env struct {
+		Locale string `json:"Locale"`
+	}
+	if json.Unmarshal(row.Data, &env) != nil {
+		return ""
+	}
+	return env.Locale
+}
+
+// projectDefaultLocale reads a project's default locale from its envelope.
+func (p *Publisher) projectDefaultLocale(ctx context.Context, projectID string) string {
+	row, err := models.FindIamProject(ctx, p.db.Bobx(), projectID)
+	if err != nil || len(row.Data) == 0 {
+		return ""
+	}
+	var env struct {
+		DefaultLocale string `json:"DefaultLocale"`
+	}
+	if json.Unmarshal(row.Data, &env) != nil {
+		return ""
+	}
+	return env.DefaultLocale
 }
 
 // projectAppBaseURL reads app_base_url from the project+env "auth" config doc.
@@ -415,14 +464,14 @@ func (p *Publisher) templateBody(ctx context.Context, projectID, key, locale str
 		).One(ctx, p.db.Bobx())
 	}
 	if err != nil {
-		return defaultTemplate(key), nil
+		return defaultTemplate(key, locale), nil
 	}
 	out := map[string]string{}
 	if len(row.Data) > 0 {
 		_ = json.Unmarshal(row.Data, &out)
 	}
 	if out["subject"] == "" && out["html"] == "" && out["text"] == "" {
-		return defaultTemplate(key), nil
+		return defaultTemplate(key, locale), nil
 	}
 	return out, nil
 }
@@ -457,17 +506,18 @@ func renderText(src string, data map[string]any) (string, error) {
 	return buf.String(), nil
 }
 
-// defaultTemplate returns the built-in copy for a template key from the shared
-// domain catalogue, falling back to the email_verification default for unknown
+// defaultTemplate returns the localized built-in copy for a template key from
+// the shared domain catalogue, falling back to email_verification for unknown
 // keys (mirrors the admin API so previews/tests match what is actually sent).
-func defaultTemplate(key string) map[string]string {
+func defaultTemplate(key, locale string) map[string]string {
 	t := domain.BuiltinEmailTemplateByKey(key)
 	if t == nil {
 		t = domain.BuiltinEmailTemplateByKey("email_verification")
 	}
-	out := map[string]string{"subject": t.Subject, "text": t.Text}
-	if t.HTML != "" {
-		out["html"] = t.HTML
+	c := t.Copy(locale)
+	out := map[string]string{"subject": c.Subject, "text": c.Text}
+	if c.HTML != "" {
+		out["html"] = c.HTML
 	}
 	return out
 }

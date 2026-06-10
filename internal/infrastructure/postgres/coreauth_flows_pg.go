@@ -304,7 +304,7 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 	if err != nil {
 		return nil, err
 	}
-	a.emitFlowContinue(ctx, state, cmd.RedirectTo)
+	a.emitFlowContinue(ctx, state, cmd.RedirectTo, cmd.Locale)
 	return state, nil
 }
 
@@ -312,7 +312,7 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 // for still-pending email-bearing flows (signup/recovery). The notification
 // layer turns flow_token into <app_base_url>/continue?flow=… ; a send/emit
 // failure must not fail flow creation, so the error is swallowed.
-func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.FlowState, redirectTo string) {
+func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.FlowState, redirectTo, locale string) {
 	f := state.Flow
 	if f.Status != domain.FlowStatusPending || f.Contact.Email == "" {
 		return
@@ -330,6 +330,11 @@ func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.Fl
 	// the project before honouring it, falling back to app_base_url.
 	if redirectTo != "" {
 		payload["redirect_to"] = redirectTo
+	}
+	// Requested language; the notification layer falls back to account/project
+	// default when empty.
+	if locale != "" {
+		payload["locale"] = locale
 	}
 	_ = a.emitter.Emit(ctx, domain.Event{
 		Type:        "auth.flow.continue",
@@ -479,6 +484,7 @@ func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flo
 		Email:     cmd.Email,
 		Password:  cmd.Password,
 		Name:      cmd.Name,
+		Locale:    cmd.Locale,
 	})
 	if err != nil {
 		return nil, err
@@ -491,6 +497,7 @@ func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flo
 		ProjectID: f.ProjectID,
 		AccountID: acct.ID,
 		Contact:   acct.PrimaryEmail,
+		Locale:    cmd.Locale,
 	})
 	if err != nil {
 		return nil, err

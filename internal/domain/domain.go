@@ -223,6 +223,7 @@ type RegisterCmd struct {
 	Phone     string
 	Password  string
 	Name      string
+	Locale    string
 	Consents  []AccountConsentAcceptance
 }
 

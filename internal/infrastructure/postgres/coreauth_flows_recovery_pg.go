@@ -93,6 +93,7 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 			Subject:   cmd.Email,
 			CodeHash:  coreAuthSHA256(code),
 			TokenHash: coreAuthSHA256(token),
+			Locale:    cmd.Locale,
 			ExpiresAt: now.Add(coreAuthChallengeTTL),
 			CreatedAt: now,
 		}
@@ -113,6 +114,7 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 					"challenge_id": ch.ID,
 					"contact":      ch.Subject,
 					"to":           ch.Subject,
+					"locale":       cmd.Locale,
 					"purpose":      ch.Purpose,
 				},
 			})

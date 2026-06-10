@@ -871,6 +871,11 @@ func (s *FlowCreateRequest) SetFake() {
 			s.RedirectTo.SetFake()
 		}
 	}
+	{
+		{
+			s.Locale.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.

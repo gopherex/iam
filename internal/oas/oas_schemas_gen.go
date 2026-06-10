@@ -1975,6 +1975,9 @@ type FlowCreateRequest struct {
 	// app_base_url is used. This lets a flow target a specific path within the trusted origin without
 	// allowing an arbitrary host.
 	RedirectTo OptString `json:"redirect_to"`
+	// Preferred language for this flow's emails (verification, continue). Empty falls back to the
+	// account's locale, then the project default, then English.
+	Locale OptString `json:"locale"`
 }
 
 // GetKind returns the value of Kind.
@@ -2007,6 +2010,11 @@ func (s *FlowCreateRequest) GetRedirectTo() OptString {
 	return s.RedirectTo
 }
 
+// GetLocale returns the value of Locale.
+func (s *FlowCreateRequest) GetLocale() OptString {
+	return s.Locale
+}
+
 // SetKind sets the value of Kind.
 func (s *FlowCreateRequest) SetKind(val FlowCreateRequestKind) {
 	s.Kind = val
@@ -2035,6 +2043,11 @@ func (s *FlowCreateRequest) SetCaptchaToken(val OptString) {
 // SetRedirectTo sets the value of RedirectTo.
 func (s *FlowCreateRequest) SetRedirectTo(val OptString) {
 	s.RedirectTo = val
+}
+
+// SetLocale sets the value of Locale.
+func (s *FlowCreateRequest) SetLocale(val OptString) {
+	s.Locale = val
 }
 
 type FlowCreateRequestKind string

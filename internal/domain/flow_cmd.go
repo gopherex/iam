@@ -123,6 +123,9 @@ type FlowCreateCmd struct {
 	// (scheme+host) matches the project's configured app_base_url; otherwise it
 	// falls back to app_base_url.
 	RedirectTo string
+	// Locale is the requested language for flow emails (verification, continue).
+	// Empty lets the notification layer fall back to the account/project default.
+	Locale string
 }
 
 // FlowGetCmd retrieves a live flow by its opaque token (project-scoped).

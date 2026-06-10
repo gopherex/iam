@@ -857,6 +857,13 @@ components:
             used. This lets a flow target a specific path within the trusted
             origin without allowing an arbitrary host.
           maxLength: 2048
+        locale:
+          type: string
+          description: >-
+            Preferred language for this flow's emails (verification, continue).
+            Empty falls back to the account's locale, then the project default,
+            then English.
+          maxLength: 35
     FlowSubmitRequest:
       type: object
       required:

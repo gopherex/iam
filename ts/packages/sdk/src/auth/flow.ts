@@ -65,6 +65,8 @@ export interface FlowController {
     name?: string;
     captchaToken?: string;
     redirectTo?: string;
+    /** Preferred language for this flow's emails (e.g. 'ru'). */
+    locale?: string;
   }): Promise<{ state: FlowState | null; error: IamAuthError | null }>;
 
   /**
@@ -248,6 +250,7 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
           name: params.name,
           captcha_token: params.captchaToken,
           redirect_to: params.redirectTo,
+          locale: params.locale,
         },
       });
       return handleState(r);

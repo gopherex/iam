@@ -910,6 +910,7 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 			PrimaryEmail:  cmd.Email,
 			PrimaryPhone:  cmd.Phone,
 			Name:          cmd.Name,
+			Locale:        cmd.Locale,
 			EmailVerified: false,
 			CreatedAt:     now,
 			UpdatedAt:     now,

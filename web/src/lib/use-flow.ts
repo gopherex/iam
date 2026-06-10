@@ -95,10 +95,16 @@ export function useFlow(opts?: { flowToken?: string }): UseFlowReturn {
       password?: string;
       name?: string;
       captchaToken?: string;
+      locale?: string;
     }) => {
       setLoading(true);
       try {
-        await controller.start(params);
+        // Default flow-email language to the browser's, so verification/continue
+        // emails match what the user sees. Apps may override via params.locale.
+        await controller.start({
+          ...params,
+          locale: params.locale ?? (typeof navigator !== 'undefined' ? navigator.language : undefined),
+        });
       } finally {
         setLoading(false);
       }

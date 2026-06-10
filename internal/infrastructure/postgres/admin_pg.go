@@ -1509,13 +1509,14 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 	// Seed with the built-in catalogue so every system template is always listed
 	// (editable/previewable/testable) even before a project customises it.
 	for _, t := range domain.BuiltinEmailTemplates {
+		c := t.Copy(adminTemplateLocale)
 		body := map[string]jx.Raw{
 			"id":         adminRawString(t.Key),
 			"name":       adminRawString(t.Name),
 			"locale":     adminRawString(""),
-			"subject":    adminRawString(t.Subject),
-			"text":       adminRawString(t.Text),
-			"html":       adminRawString(t.HTML),
+			"subject":    adminRawString(c.Subject),
+			"text":       adminRawString(c.Text),
+			"html":       adminRawString(c.HTML),
 			"customized": jx.Raw("false"),
 		}
 		raw, err := json.Marshal(body)
@@ -1729,7 +1730,8 @@ func builtinTemplateRow(projectID, key, locale string) *models.IamEmailTemplate 
 	if locale == "" {
 		locale = adminTemplateLocale
 	}
-	body, _ := json.Marshal(map[string]string{"subject": t.Subject, "text": t.Text, "html": t.HTML})
+	c := t.Copy(locale)
+	body, _ := json.Marshal(map[string]string{"subject": c.Subject, "text": c.Text, "html": c.HTML})
 	return &models.IamEmailTemplate{
 		ProjectID: projectID,
 		Key:       key,

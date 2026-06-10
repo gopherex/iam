@@ -65,6 +65,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.Flow
 		Name:         req.Name.Or(""),
 		CaptchaToken: req.CaptchaToken.Or(""),
 		RedirectTo:   req.RedirectTo.Or(""),
+		Locale:       req.Locale.Or(""),
 	})
 	if err != nil {
 		return nil, err

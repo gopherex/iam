@@ -67,6 +67,29 @@ func TestSameOrigin(t *testing.T) {
 	}
 }
 
+func TestDefaultTemplateLocale(t *testing.T) {
+	en := defaultTemplate("otp", "en")
+	if en["subject"] != "Your sign-in code" {
+		t.Fatalf("en subject = %q", en["subject"])
+	}
+	ru := defaultTemplate("otp", "ru")
+	if ru["subject"] != "Код для входа" {
+		t.Fatalf("ru subject = %q", ru["subject"])
+	}
+	// Region subtag falls back to base language.
+	if defaultTemplate("otp", "ru-RU")["subject"] != ru["subject"] {
+		t.Fatal("ru-RU should fall back to ru")
+	}
+	// Unknown locale falls back to English.
+	if defaultTemplate("otp", "de")["subject"] != en["subject"] {
+		t.Fatal("unknown locale should fall back to en")
+	}
+	// Unknown key falls back to email_verification (still localized).
+	if defaultTemplate("nope", "ru")["subject"] == "" {
+		t.Fatal("unknown key must still yield a subject")
+	}
+}
+
 func TestFlowContinueURL(t *testing.T) {
 	if got := flowContinueURL("https://app.example.com", "ftk_abc"); got != "https://app.example.com/continue?flow=ftk_abc" {
 		t.Fatalf("url = %q", got)
