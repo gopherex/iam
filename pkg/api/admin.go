@@ -96,6 +96,8 @@ type AdminConfig interface {
 	UpdatePasswordPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
 	GetSessionPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
 	UpdateSessionPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
+	GetRateLimits(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
+	UpdateRateLimits(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
 	GetConsent(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
 	PutConsent(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
 
@@ -594,6 +596,40 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx co
 		return nil, err
 	}
 	out := &oas.SessionPolicy{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigRateLimitsParams) (r *oas.RateLimits, _ error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.GetRateLimits(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.RateLimits{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, req *oas.RateLimits, params oas.PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams) (r *oas.RateLimits, _ error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.UpdateRateLimits(ctx, domain.AdminConfigUpdateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Doc:         oasEncodeConfig(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.RateLimits{}
 	if err := oasDecodeConfig(doc, out); err != nil {
 		return nil, err
 	}

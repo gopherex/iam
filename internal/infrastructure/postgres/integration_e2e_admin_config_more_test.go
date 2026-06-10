@@ -629,6 +629,49 @@ func TestE2EAdminConfigEmailTemplates(t *testing.T) {
 	})
 }
 
+// TestE2EAdminConfigRateLimits — /v1/projects/{id}/admin/config/rate-limits.
+// Regression: the endpoint was declared in OpenAPI but had no handler, so it fell
+// through to the UnimplementedHandler and GET returned an error instead of 200.
+func TestE2EAdminConfigRateLimits(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, token := e2eProjectAdmin(t, ctx)
+	base := ts.URL + "/v1/projects/" + projectID + "/admin/config/rate-limits"
+
+	t.Run("get on fresh project returns 200 empty", func(t *testing.T) {
+		r := e2eReq(t, ctx, http.MethodGet, base, nil, e2eBearer(token))
+		e2eWantStatus(t, r, http.StatusOK)
+	})
+
+	t.Run("patch then get round-trips rules", func(t *testing.T) {
+		body := map[string]any{
+			"rules": []map[string]any{
+				{"endpoint": "/v1/auth/sign-in", "action": "sign_in", "limit": 5, "window_seconds": 60, "by": "ip"},
+			},
+		}
+		r := e2eReq(t, ctx, http.MethodPatch, base, body, e2eBearer(token))
+		e2eWantStatus(t, r, http.StatusOK)
+
+		r = e2eReq(t, ctx, http.MethodGet, base, nil, e2eBearer(token))
+		e2eWantStatus(t, r, http.StatusOK)
+		var resp struct {
+			Rules []struct {
+				Endpoint string `json:"endpoint"`
+				Limit    int    `json:"limit"`
+			} `json:"rules"`
+		}
+		e2eDecode(t, r, &resp)
+		if len(resp.Rules) != 1 || resp.Rules[0].Endpoint != "/v1/auth/sign-in" || resp.Rules[0].Limit != 5 {
+			t.Fatalf("rules not persisted: %+v", resp.Rules)
+		}
+	})
+
+	t.Run("no auth returns 401", func(t *testing.T) {
+		r := e2eReq(t, ctx, http.MethodGet, base, nil, map[string]string{"X-Environment": "live"})
+		e2eWantStatus(t, r, http.StatusUnauthorized)
+	})
+}
+
 // ============================================================================
 // TestE2EAdminKeys — /v1/projects/{projectId}/admin/jwks
 //                    /v1/projects/{projectId}/admin/token-profiles

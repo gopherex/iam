@@ -1185,6 +1185,12 @@ func (a *pgAdminConfig) GetSessionPolicy(ctx context.Context, cmd domain.AdminCo
 func (a *pgAdminConfig) UpdateSessionPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "session_policy", cmd.Doc)
 }
+func (a *pgAdminConfig) GetRateLimits(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
+	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "rate_limits")
+}
+func (a *pgAdminConfig) UpdateRateLimits(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
+	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "rate_limits", cmd.Doc)
+}
 
 func (a *pgAdminConfig) GetConsent(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
 	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "consent")
