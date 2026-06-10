@@ -186,14 +186,17 @@ func TestE2EMFAChallenge(t *testing.T) {
 	projectID := e2eProject(t, ctx)
 	challengeURL := ts.URL + "/v1/auth/mfa/challenge"
 
-	// Production bug #4: the handler calls requirePrincipal but the endpoint
-	// has security:[] so no principal is ever placed in context. Every request
-	// returns 401 regardless of headers.
+	// INCOMPLETE FEATURE (MFA step-up during login). The endpoint is security:[]
+	// (public) and carries a flow_token, but the handler calls requirePrincipal →
+	// always 401. The real gap: sign-in does not gate on enrolled MFA, so nothing
+	// mints the flow_token this endpoint needs to identify the account. Wiring it
+	// requires: sign-in detects MFA → mints a short-lived flow_token bound to the
+	// account; challenge/recovery-verify resolve the account from that flow_token
+	// (mfa/verify already resolves the account from challenge_id). Security-
+	// sensitive — left for a dedicated change.
 	t.Run("BUG: public endpoint always returns 401 (handler calls requirePrincipal on security:[] op)", func(t *testing.T) {
-		t.Skip("Production bug #4: POST /v1/auth/mfa/challenge is security:[] in openapi.yaml " +
-			"but handler calls requirePrincipal — returns 401 instead of 200. " +
-			"Fix: either add bearerAuth security to the spec or remove requirePrincipal from the handler " +
-			"and rely on flow_token to identify the account.")
+		t.Skip("incomplete feature: MFA step-up at login is not wired — sign-in mints no flow_token, " +
+			"and POST /v1/auth/mfa/challenge calls requirePrincipal on a public op → always 401")
 	})
 
 	t.Run("missing X-Client-Id returns 422", func(t *testing.T) {
@@ -418,14 +421,16 @@ func TestE2EMFARecoveryCodesVerify(t *testing.T) {
 		}
 	})
 
-	// Production bug #5: even with a valid code the handler always returns 401 because
-	// the AccountID is never set in MFARecoveryVerifyCmd. The adapter queries
-	// iam_recovery_codes with user_id="" which matches nothing.
+	// INCOMPLETE FEATURE (same gap as mfa/challenge). The handler sets only
+	// FlowToken on MFARecoveryVerifyCmd, but the adapter queries
+	// iam_recovery_codes by user_id (left empty) → matches nothing → always 401.
+	// Resolving the account requires either the login flow_token (not minted yet,
+	// see mfa/challenge) or resolving by the code hash within the project. Both
+	// are security-policy decisions (single- vs two-factor recovery), left for a
+	// dedicated change.
 	t.Run("BUG: valid code always returns 401 (AccountID missing from cmd)", func(t *testing.T) {
-		t.Skip("Production bug #5: POST /v1/auth/mfa/recovery-codes/verify always returns 401 " +
-			"(invalid_credentials) even for valid codes because the handler does not set AccountID " +
-			"on MFARecoveryVerifyCmd. The adapter queries with user_id='' which finds no rows. " +
-			"Fix: derive AccountID from flow_token or add it to the request/session context.")
+		t.Skip("incomplete feature: recovery-code login not wired — handler passes no AccountID and " +
+			"the adapter queries iam_recovery_codes by an empty user_id → always 401")
 	})
 }
 
