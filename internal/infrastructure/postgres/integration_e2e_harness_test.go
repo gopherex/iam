@@ -82,6 +82,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 		api.WithCoreAuth(api.NewCoreAuthService(api.CoreAuthDeps{
 			Accounts: coreAuth,
 			Tokens:   coreAuth,
+			MFA:      NewPgMFAAccounts(testDB, em),
 		})),
 		api.WithPasswordless(api.NewPasswordlessService(api.PasswordlessDeps{
 			Accounts: NewPgPasswordlessAccounts(testDB, em),

@@ -19,7 +19,7 @@ import (
 // is one atomic operation; the adapter owns its transaction.
 type CoreAuthAccounts interface {
 	Register(ctx context.Context, cmd domain.RegisterCmd) (*domain.Account, *domain.Session, error)
-	AuthenticatePassword(ctx context.Context, projectID, email, password string) (*domain.Account, *domain.Session, error)
+	AuthenticatePassword(ctx context.Context, projectID, email, password string) (*domain.CoreAuthPasswordResult, error)
 	Refresh(ctx context.Context, refreshToken string) (*domain.Account, *domain.Session, error)
 	ExchangeCode(ctx context.Context, code, verifier string) (*domain.Account, *domain.Session, error)
 	RedeemImpersonation(ctx context.Context, token, clientID string) (*domain.Account, *domain.Session, error)
@@ -71,6 +71,14 @@ type CoreAuthTokens interface {
 type CoreAuthDeps struct {
 	Accounts CoreAuthAccounts
 	Tokens   CoreAuthTokens
+	MFA      CoreAuthMFA
+}
+
+// CoreAuthMFA issues the step-up challenge when password sign-in needs a second
+// factor. The returned challenge id is the flow_token the client presents to
+// mfa/verify or recovery-codes/verify to finish authentication.
+type CoreAuthMFA interface {
+	Challenge(ctx context.Context, accountID, factorID string) (*domain.Challenge, error)
 }
 
 // CoreAuthService implements the CoreAuthHandler slice of oas.Handler.
@@ -414,11 +422,57 @@ func (s *CoreAuthService) PostV1AuthSessionSwitchGroup(ctx context.Context, req 
 }
 
 func (s *CoreAuthService) PostV1AuthSignInPassword(ctx context.Context, req *oas.PasswordSignInRequest, params oas.PostV1AuthSignInPasswordParams) (oas.AuthResultOrNextStep, error) {
-	acct, sess, err := s.deps.Accounts.AuthenticatePassword(ctx, params.XClientID, req.Email.Or(""), req.Password)
+	res, err := s.deps.Accounts.AuthenticatePassword(ctx, params.XClientID, req.Email.Or(""), req.Password)
 	if err != nil {
 		return oas.AuthResultOrNextStep{}, err
 	}
-	return oas.NewAuthResultAuthResultOrNextStep(*authResult(acct, sess)), nil
+	if res.MFARequired {
+		// Issue a step-up challenge for the account's primary factor; its id is the
+		// flow_token the client presents to mfa/verify or recovery-codes/verify.
+		ch, err := s.deps.MFA.Challenge(ctx, res.Account.ID, primaryFactorID(res.Factors))
+		if err != nil {
+			return oas.AuthResultOrNextStep{}, err
+		}
+		next := oas.AuthNextStep{
+			ResultType: oas.AuthNextStepResultTypeNextStep,
+			FlowToken:  oas.NewOptString(ch.ID),
+			Factors:    oasFactors(res.Factors),
+		}
+		next.NextStep.SetTo(oas.NextStepMfaRequired)
+		return oas.NewAuthNextStepAuthResultOrNextStep(next), nil
+	}
+	return oas.NewAuthResultAuthResultOrNextStep(*authResult(res.Account, res.Session)), nil
+}
+
+// primaryFactorID picks the factor to challenge first at sign-in: prefer factors
+// that need no out-of-band delivery (TOTP, WebAuthn), else the first active one.
+func primaryFactorID(factors []domain.Factor) string {
+	for _, f := range factors {
+		if f.Type == "totp" || f.Type == "webauthn" {
+			return f.ID
+		}
+	}
+	if len(factors) > 0 {
+		return factors[0].ID
+	}
+	return ""
+}
+
+// oasFactors maps domain factors to their wire form for the MFA next-step.
+func oasFactors(factors []domain.Factor) []oas.Factor {
+	out := make([]oas.Factor, 0, len(factors))
+	for _, f := range factors {
+		item := oas.Factor{
+			ID:     oas.NewOptString(f.ID),
+			Type:   oas.NewOptFactorType(oas.FactorType(f.Type)),
+			Status: oas.NewOptFactorStatus(oas.FactorStatus(f.Status)),
+		}
+		if f.Hint != "" {
+			item.Hint = oas.NewOptNilString(f.Hint)
+		}
+		out = append(out, item)
+	}
+	return out
 }
 
 func (s *CoreAuthService) PostV1AuthSignOut(ctx context.Context, req oas.OptPostV1AuthSignOutReq) (*oas.Ok, error) {

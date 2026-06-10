@@ -911,39 +911,46 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 // AuthenticatePassword verifies an email + password against the bcrypt
 // credential and mints a session. A missing user or a bad password both return
 // ErrInvalidCredentials (no account enumeration).
-func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email, password string) (*domain.Account, *domain.Session, error) {
+func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email, password string) (*domain.CoreAuthPasswordResult, error) {
 	if projectID == "" || email == "" {
-		return nil, nil, domain.ErrInvalidCredentials
+		return nil, domain.ErrInvalidCredentials
 	}
-	type authResult struct {
-		acc  *domain.Account
-		sess *domain.Session
-	}
-	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (authResult, error) {
+	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.CoreAuthPasswordResult, error) {
 		userRow, err := a.coreAuthFindUserByEmail(ctx, projectID, email)
 		if err != nil {
 			if errors.Is(err, domain.ErrUserNotFound) {
-				return authResult{}, domain.ErrInvalidCredentials
+				return nil, domain.ErrInvalidCredentials
 			}
-			return authResult{}, err
+			return nil, err
 		}
 		acc, err := coreAuthLoadAccount(userRow, projectID)
 		if err != nil {
-			return authResult{}, err
+			return nil, err
 		}
 		cred, err := a.coreAuthFindPasswordCredential(ctx, projectID, acc.ID)
 		if err != nil {
-			return authResult{}, err
+			return nil, err
 		}
 		if !coreAuthCheckPassword(cred.Secret, password) {
-			return authResult{}, domain.ErrInvalidCredentials
+			return nil, domain.ErrInvalidCredentials
 		}
 		if err := coreAuthAccountActive(acc); err != nil {
-			return authResult{}, err
+			return nil, err
+		}
+		// Second factor: password (factor 1) verified, but if the account has an
+		// active MFA factor we do NOT mint a session — the caller must complete a
+		// second factor (mfa/verify or recovery-codes/verify) carrying the
+		// flow_token. This keeps AAL2 enforcement at login.
+		factors, err := a.coreAuthActiveFactors(ctx, acc.ID)
+		if err != nil {
+			return nil, err
+		}
+		if len(factors) > 0 {
+			return &domain.CoreAuthPasswordResult{Account: acc, MFARequired: true, Factors: factors}, nil
 		}
 		sess, err := a.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
 		if err != nil {
-			return authResult{}, err
+			return nil, err
 		}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.signed_in",
@@ -952,14 +959,32 @@ func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email,
 			AggregateID: acc.ID,
 			Payload:     acc,
 		}); err != nil {
-			return authResult{}, err
+			return nil, err
 		}
-		return authResult{acc: acc, sess: sess}, nil
+		return &domain.CoreAuthPasswordResult{Account: acc, Session: sess}, nil
 	})
+}
+
+// coreAuthActiveFactors returns the account's active MFA factors (used to decide
+// whether password sign-in must gate on a second factor).
+func (a *pgCoreAuth) coreAuthActiveFactors(ctx context.Context, accountID string) ([]domain.Factor, error) {
+	rows, err := models.IamFactors.Query(
+		sm.Where(models.IamFactors.Columns.UserID.EQ(psql.Arg(accountID))),
+	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return res.acc, res.sess, nil
+	out := make([]domain.Factor, 0, len(rows))
+	for _, row := range rows {
+		f, err := mfaFactorFromRow(row)
+		if err != nil {
+			return nil, err
+		}
+		if f.Status == "active" {
+			out = append(out, f)
+		}
+	}
+	return out, nil
 }
 
 // Refresh rotates a refresh token: it looks the token up by sha256 hash,

@@ -320,6 +320,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter) *api.Service {
 		api.WithCoreAuth(api.NewCoreAuthService(api.CoreAuthDeps{
 			Accounts: coreAuth,
 			Tokens:   coreAuth,
+			MFA:      postgres.NewPgMFAAccounts(db, emitter),
 		})),
 		api.WithPasswordless(api.NewPasswordlessService(api.PasswordlessDeps{
 			Accounts: postgres.NewPgPasswordlessAccounts(db, emitter),

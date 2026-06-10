@@ -313,7 +313,11 @@ func (a *pgMFAAccounts) Challenge(ctx context.Context, accountID, factorID strin
 		if err != nil {
 			return nil, err
 		}
-		factor, err := a.mfaFindFactor(ctx, accountID, factorID)
+		factorRow, err := a.mfaFindFactor(ctx, accountID, factorID)
+		if err != nil {
+			return nil, err
+		}
+		factor, err := mfaFactorFromRow(factorRow)
 		if err != nil {
 			return nil, err
 		}
@@ -322,20 +326,104 @@ func (a *pgMFAAccounts) Challenge(ctx context.Context, accountID, factorID strin
 			Type:      factor.Type,
 			ExpiresAt: nowUTC().Add(mfaChallengeTTL),
 		}
-		if err := a.mfaInsertChallenge(ctx, projectID, accountID, &ch, mfaChallengeData{FactorID: factor.ID}); err != nil {
+		data := mfaChallengeData{FactorID: factor.ID}
+		// Delivery factors (email/sms) carry a one-time code sent out of band;
+		// Verify matches its sha256 against FlowTokenHash. TOTP/WebAuthn need no
+		// delivery — the code comes from the authenticator.
+		deliver := factor.Type == "email" || factor.Type == "sms"
+		var code string
+		if deliver {
+			code, err = mfaNewOpaqueToken(4) // 8 hex chars
+			if err != nil {
+				return nil, err
+			}
+			data.FlowTokenHash = mfaSha256Hex(code)
+		}
+		if err := a.mfaInsertChallenge(ctx, projectID, accountID, &ch, data); err != nil {
 			return nil, err
+		}
+		payload := map[string]any{
+			"channel":      factor.Type,
+			"factor_id":    factor.ID,
+			"challenge_id": ch.ID,
+		}
+		if deliver {
+			payload["code"] = code
+			payload["to"] = factor.Hint
 		}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.challenge.created",
 			ProjectID:   projectID,
 			Environment: "",
 			AggregateID: ch.ID,
-			Payload:     ch,
+			Payload:     payload,
 		}); err != nil {
 			return nil, err
 		}
 		return &ch, nil
 	})
+}
+
+// mfaAccountFromFlow resolves the account behind a login flow_token (the id of
+// the step-up challenge minted at password sign-in). It enforces the tenant
+// boundary and rejects consumed/expired tokens, so a second factor can only be
+// completed against a live, password-backed flow.
+func (a *pgMFAAccounts) mfaAccountFromFlow(ctx context.Context, projectID, flowToken string) (string, error) {
+	if flowToken == "" {
+		return "", domain.ErrChallengeInvalid
+	}
+	row, err := models.FindIamChallenge(ctx, a.db.Bobx(), flowToken)
+	if err != nil {
+		return "", domain.ErrChallengeInvalid
+	}
+	if row.ProjectID != projectID || row.Consumed {
+		return "", domain.ErrChallengeInvalid
+	}
+	if nowUTC().After(row.ExpiresAt) {
+		return "", domain.ErrChallengeExpired
+	}
+	accountID := row.Subject.GetOrZero()
+	if accountID == "" {
+		return "", domain.ErrChallengeInvalid
+	}
+	return accountID, nil
+}
+
+// ChallengeWithFlow issues a fresh challenge for a different factor mid-login,
+// identifying the account from the flow_token rather than a session principal
+// (the endpoint is public — the user is not yet authenticated). When factorID is
+// empty the account's primary factor is chosen.
+func (a *pgMFAAccounts) ChallengeWithFlow(ctx context.Context, projectID, flowToken, factorID string) (*domain.Challenge, error) {
+	accountID, err := a.mfaAccountFromFlow(ctx, projectID, flowToken)
+	if err != nil {
+		return nil, err
+	}
+	if factorID == "" {
+		factors, err := a.ListFactors(ctx, accountID)
+		if err != nil {
+			return nil, err
+		}
+		factorID = mfaPrimaryFactorID(factors)
+		if factorID == "" {
+			return nil, domain.ErrMFAInvalid
+		}
+	}
+	return a.Challenge(ctx, accountID, factorID)
+}
+
+// mfaPrimaryFactorID prefers factors needing no out-of-band delivery.
+func mfaPrimaryFactorID(factors []domain.Factor) string {
+	for _, f := range factors {
+		if f.Status == "active" && (f.Type == "totp" || f.Type == "webauthn") {
+			return f.ID
+		}
+	}
+	for _, f := range factors {
+		if f.Status == "active" {
+			return f.ID
+		}
+	}
+	return ""
 }
 
 // Verify consumes a challenge and, on success, returns the authenticated account
@@ -563,10 +651,17 @@ func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARe
 		sess *domain.Session
 	}
 	out, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
+		// A recovery code is a second factor: it is accepted only against a live
+		// login flow_token (password already verified). The account is taken from
+		// the flow, never from the request, so a code cannot be redeemed standalone.
+		accountID, err := a.mfaAccountFromFlow(ctx, cmd.ProjectID, cmd.FlowToken)
+		if err != nil {
+			return result{}, err
+		}
 		hash := mfaSha256Hex(cmd.Code)
 		row, err := models.IamRecoveryCodes.Query(
 			sm.Where(models.IamRecoveryCodes.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
-			sm.Where(models.IamRecoveryCodes.Columns.UserID.EQ(psql.Arg(cmd.AccountID))),
+			sm.Where(models.IamRecoveryCodes.Columns.UserID.EQ(psql.Arg(accountID))),
 			sm.Where(models.IamRecoveryCodes.Columns.Hash.EQ(psql.Arg(hash))),
 			sm.Where(models.IamRecoveryCodes.Columns.Used.EQ(psql.Arg(false))),
 		).One(ctx, a.db.Bobx())

@@ -19,6 +19,7 @@ type MFAAccounts interface {
 	ListFactors(ctx context.Context, accountID string) ([]domain.Factor, error)
 	EnrollTOTP(ctx context.Context, accountID string) (*domain.Factor, error)
 	Challenge(ctx context.Context, accountID, factorID string) (*domain.Challenge, error)
+	ChallengeWithFlow(ctx context.Context, projectID, flowToken, factorID string) (*domain.Challenge, error)
 	Verify(ctx context.Context, challengeID, code string) (*domain.Account, *domain.Session, error)
 	GenerateRecoveryCodes(ctx context.Context, accountID string) ([]string, error)
 	RemoveFactor(ctx context.Context, accountID, factorID string) error
@@ -71,16 +72,16 @@ func (s *MFAService) GetV1AuthMfaFactors(ctx context.Context) (*oas.GetV1AuthMfa
 	return &oas.GetV1AuthMfaFactorsOK{Data: out}, nil
 }
 
+// PostV1AuthMfaChallenge is public (no session yet): it (re)issues a step-up
+// challenge mid-login. The account is identified by the flow_token minted at
+// password sign-in, not a principal.
 func (s *MFAService) PostV1AuthMfaChallenge(ctx context.Context, req oas.OptPostV1AuthMfaChallengeReq, params oas.PostV1AuthMfaChallengeParams) (*oas.Challenge, error) {
-	p, err := requirePrincipal(ctx)
-	if err != nil {
-		return nil, err
-	}
-	factorID := ""
+	flowToken, factorID := "", ""
 	if v, ok := req.Get(); ok {
+		flowToken = v.FlowToken.Or("")
 		factorID = v.FactorID.Or("")
 	}
-	ch, err := s.deps.Accounts.Challenge(ctx, p.AccountID, factorID)
+	ch, err := s.deps.Accounts.ChallengeWithFlow(ctx, params.XClientID, flowToken, factorID)
 	if err != nil {
 		return nil, err
 	}

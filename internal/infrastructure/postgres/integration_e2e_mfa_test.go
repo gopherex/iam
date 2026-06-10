@@ -69,7 +69,43 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+
+	"github.com/gopherex/iam/internal/domain"
 )
+
+// e2eActiveEmailFactor inserts an active email MFA factor directly (bypassing the
+// enroll→verify ceremony) so that a password sign-in for accountID gates on a
+// second factor. Returns the factor id. testDB uses the identity cipher, so the
+// empty secret round-trips.
+func e2eActiveEmailFactor(t *testing.T, ctx context.Context, projectID, accountID, email string) string {
+	t.Helper()
+	mfa := NewPgMFAAccounts(testDB, e2eEmitter)
+	f := domain.Factor{ID: newUUID(), Type: "email", Status: "active", Hint: email}
+	if err := mfa.mfaInsertFactorFor(ctx, projectID, accountID, &f, ""); err != nil {
+		t.Fatalf("insert active email factor: %v", err)
+	}
+	return f.ID
+}
+
+// e2eSignInFlowToken signs in with password and returns the MFA flow_token the
+// server issues when the account has a second factor enrolled.
+func e2eSignInFlowToken(t *testing.T, ctx context.Context, baseURL, projectID, email string) string {
+	t.Helper()
+	r := e2eReq(t, ctx, http.MethodPost, baseURL+"/v1/auth/sign-in/password",
+		map[string]any{"email": email, "password": "Sup3rStr0ng!Pass"},
+		map[string]string{"X-Client-Id": projectID, "X-Environment": "live"})
+	e2eWantStatus(t, r, http.StatusOK)
+	var step struct {
+		ResultType string `json:"result_type"`
+		NextStep   string `json:"next_step"`
+		FlowToken  string `json:"flow_token"`
+	}
+	e2eDecode(t, r, &step)
+	if step.ResultType != "next_step" || step.NextStep != "mfa_required" || step.FlowToken == "" {
+		t.Fatalf("expected mfa_required next step with flow_token, got: %s", r.Body)
+	}
+	return step.FlowToken
+}
 
 // ============================================================
 // MFA tests
@@ -186,33 +222,56 @@ func TestE2EMFAChallenge(t *testing.T) {
 	projectID := e2eProject(t, ctx)
 	challengeURL := ts.URL + "/v1/auth/mfa/challenge"
 
-	// INCOMPLETE FEATURE (MFA step-up during login). The endpoint is security:[]
-	// (public) and carries a flow_token, but the handler calls requirePrincipal →
-	// always 401. The real gap: sign-in does not gate on enrolled MFA, so nothing
-	// mints the flow_token this endpoint needs to identify the account. Wiring it
-	// requires: sign-in detects MFA → mints a short-lived flow_token bound to the
-	// account; challenge/recovery-verify resolve the account from that flow_token
-	// (mfa/verify already resolves the account from challenge_id). Security-
-	// sensitive — left for a dedicated change.
-	t.Run("BUG: public endpoint always returns 401 (handler calls requirePrincipal on security:[] op)", func(t *testing.T) {
-		t.Skip("incomplete feature: MFA step-up at login is not wired — sign-in mints no flow_token, " +
-			"and POST /v1/auth/mfa/challenge calls requirePrincipal on a public op → always 401")
+	// Full MFA step-up at login: password sign-in returns mfa_required + a
+	// flow_token; mfa/challenge (public) re-issues a challenge for the chosen
+	// factor identified by that flow_token; mfa/verify completes to a session.
+	t.Run("re-issue challenge with flow_token then verify to a session", func(t *testing.T) {
+		pid := e2eProject(t, ctx)
+		email := "stepup-" + newUUID()[:8] + "@example.com"
+		acct, _ := registerUser(t, ctx, pid, email)
+		factorID := e2eActiveEmailFactor(t, ctx, pid, acct.ID, email)
+
+		flow := e2eSignInFlowToken(t, ctx, ts.URL, pid, email)
+
+		// Public re-issue for the email factor → fresh challenge + delivered code.
+		hdrs := map[string]string{"X-Client-Id": pid, "X-Environment": "live"}
+		r := e2eReq(t, ctx, http.MethodPost, challengeURL,
+			map[string]any{"flow_token": flow, "factor_id": factorID}, hdrs)
+		e2eWantStatus(t, r, http.StatusOK)
+		var chal struct {
+			ChallengeID string `json:"challenge_id"`
+		}
+		e2eDecode(t, r, &chal)
+		if chal.ChallengeID == "" {
+			t.Fatalf("no challenge id, body=%s", r.Body)
+		}
+		code := e2eEmitter.payloadFor(chal.ChallengeID, "code")
+		if code == "" {
+			t.Fatalf("no code captured for challenge %s", chal.ChallengeID)
+		}
+
+		// Complete the second factor → AAL2 session.
+		r = e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/mfa/verify",
+			map[string]any{"challenge_id": chal.ChallengeID, "code": code}, hdrs)
+		e2eWantStatus(t, r, http.StatusOK)
+		var auth struct {
+			Session struct {
+				AccessToken string `json:"access_token"`
+			} `json:"session"`
+		}
+		e2eDecode(t, r, &auth)
+		if auth.Session.AccessToken == "" {
+			t.Errorf("expected access_token after mfa verify, body=%s", r.Body)
+		}
 	})
 
 	t.Run("missing X-Client-Id returns 422", func(t *testing.T) {
-		// X-Client-Id is a required header for this endpoint; missing it should
-		// trigger the parameter decode error → 422.
 		r := e2eReq(t, ctx, http.MethodPost, challengeURL, map[string]any{}, nil)
 		e2eWantStatus(t, r, http.StatusUnprocessableEntity)
 	})
 
-	t.Run("X-Client-Id only returns 401 (no principal in context)", func(t *testing.T) {
-		// Demonstrate the current observed behaviour: even with X-Client-Id set,
-		// requirePrincipal returns 401 because bearer auth is not processed.
-		hdrs := map[string]string{
-			"X-Client-Id":   projectID,
-			"X-Environment": "live",
-		}
+	t.Run("invalid/empty flow_token returns 401", func(t *testing.T) {
+		hdrs := map[string]string{"X-Client-Id": projectID, "X-Environment": "live"}
 		r := e2eReq(t, ctx, http.MethodPost, challengeURL, map[string]any{}, hdrs)
 		e2eWantStatus(t, r, http.StatusUnauthorized)
 	})
@@ -421,16 +480,50 @@ func TestE2EMFARecoveryCodesVerify(t *testing.T) {
 		}
 	})
 
-	// INCOMPLETE FEATURE (same gap as mfa/challenge). The handler sets only
-	// FlowToken on MFARecoveryVerifyCmd, but the adapter queries
-	// iam_recovery_codes by user_id (left empty) → matches nothing → always 401.
-	// Resolving the account requires either the login flow_token (not minted yet,
-	// see mfa/challenge) or resolving by the code hash within the project. Both
-	// are security-policy decisions (single- vs two-factor recovery), left for a
-	// dedicated change.
-	t.Run("BUG: valid code always returns 401 (AccountID missing from cmd)", func(t *testing.T) {
-		t.Skip("incomplete feature: recovery-code login not wired — handler passes no AccountID and " +
-			"the adapter queries iam_recovery_codes by an empty user_id → always 401")
+	// Full recovery-code second factor: generate codes (authenticated), then sign
+	// in with password (→ flow_token) and redeem a code against that flow to mint
+	// a session. The code is a second factor — it only works with a live
+	// flow_token, never standalone.
+	t.Run("valid code with flow_token mints a session", func(t *testing.T) {
+		pid := e2eProject(t, ctx)
+		email := "rec-" + newUUID()[:8] + "@example.com"
+		acct, sess := registerUser(t, ctx, pid, email)
+		e2eActiveEmailFactor(t, ctx, pid, acct.ID, email)
+
+		// Generate recovery codes (AAL-managed, authenticated).
+		r := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/mfa/recovery-codes/generate",
+			map[string]any{}, e2eBearer(sess.AccessToken))
+		e2eWantStatus(t, r, http.StatusOK)
+		var gen struct {
+			Codes []string `json:"codes"`
+		}
+		e2eDecode(t, r, &gen)
+		if len(gen.Codes) == 0 {
+			t.Fatalf("no recovery codes generated, body=%s", r.Body)
+		}
+
+		// Password sign-in now gates on the factor → flow_token.
+		flow := e2eSignInFlowToken(t, ctx, ts.URL, pid, email)
+
+		// Redeem a recovery code against the flow → AAL2 session.
+		hdrs := map[string]string{"X-Client-Id": pid, "X-Environment": "live"}
+		r = e2eReq(t, ctx, http.MethodPost, verifyURL,
+			map[string]any{"flow_token": flow, "code": gen.Codes[0]}, hdrs)
+		e2eWantStatus(t, r, http.StatusOK)
+		var auth struct {
+			Session struct {
+				AccessToken string `json:"access_token"`
+			} `json:"session"`
+		}
+		e2eDecode(t, r, &auth)
+		if auth.Session.AccessToken == "" {
+			t.Errorf("expected access_token after recovery verify, body=%s", r.Body)
+		}
+
+		// Single-use: the same code must not redeem twice.
+		r = e2eReq(t, ctx, http.MethodPost, verifyURL,
+			map[string]any{"flow_token": e2eSignInFlowToken(t, ctx, ts.URL, pid, email), "code": gen.Codes[0]}, hdrs)
+		e2eWantStatus(t, r, http.StatusUnauthorized)
 	})
 }
 

@@ -68,6 +68,18 @@ type CoreAuthPasswordVerifyResult struct {
 	AMR []string
 }
 
+// CoreAuthPasswordResult is the outcome of a password sign-in. When MFARequired
+// is true the password (factor 1) verified but the account has an enrolled MFA
+// factor, so no session is issued yet: the caller must complete a second factor.
+// Session is non-nil only when MFARequired is false. Factors lists the account's
+// active MFA factors so the client can choose which to use.
+type CoreAuthPasswordResult struct {
+	Account     *Account
+	Session     *Session
+	MFARequired bool
+	Factors     []Factor
+}
+
 // CoreAuthStepUpCmd requests elevation of the current session to a higher AAL.
 type CoreAuthStepUpCmd struct {
 	AccountID     string
