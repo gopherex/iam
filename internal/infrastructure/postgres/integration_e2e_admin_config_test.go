@@ -25,6 +25,8 @@ func TestE2EAdminConfigFreshProject(t *testing.T) {
 		{"auth", base + "/config/auth", http.StatusOK},
 		{"password-policy", base + "/config/password-policy", http.StatusOK},
 		{"session-policy", base + "/config/session-policy", http.StatusOK},
+		{"mfa-policy", base + "/config/mfa-policy", http.StatusOK},
+		{"rate-limits", base + "/config/rate-limits", http.StatusOK},
 		{"consents", base + "/consents", http.StatusOK},
 	}
 	for _, tc := range cases {

@@ -98,6 +98,8 @@ type AdminConfig interface {
 	UpdateSessionPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
 	GetRateLimits(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
 	UpdateRateLimits(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
+	GetMfaPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
+	UpdateMfaPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
 	GetConsent(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
 	PutConsent(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
 
@@ -619,6 +621,40 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context
 		return nil, err
 	}
 	out := &oas.RateLimits{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams) (r *oas.MfaPolicy, _ error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.GetMfaPolicy(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.MfaPolicy{}
+	if err := oasDecodeConfig(doc, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, req *oas.MfaPolicy, params oas.PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams) (r *oas.MfaPolicy, _ error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	doc, err := s.deps.Config.UpdateMfaPolicy(ctx, domain.AdminConfigUpdateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Doc:         oasEncodeConfig(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &oas.MfaPolicy{}
 	if err := oasDecodeConfig(doc, out); err != nil {
 		return nil, err
 	}

@@ -1219,6 +1219,12 @@ func (a *pgAdminConfig) GetRateLimits(ctx context.Context, cmd domain.AdminConfi
 func (a *pgAdminConfig) UpdateRateLimits(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "rate_limits", cmd.Doc)
 }
+func (a *pgAdminConfig) GetMfaPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
+	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "mfa_policy")
+}
+func (a *pgAdminConfig) UpdateMfaPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
+	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "mfa_policy", cmd.Doc)
+}
 
 func (a *pgAdminConfig) GetConsent(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
 	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "consent")
