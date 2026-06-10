@@ -11,6 +11,7 @@ import {
   KeyRound,
   KeySquare,
   LayoutDashboard,
+  MailPlus,
   Network,
   Send,
   Settings2,
@@ -23,7 +24,38 @@ import { ProjectSwitcher } from '@/components/project-switcher';
 import { ErrorState, LoadingState } from '@/components/states';
 import { AppShell, type NavItem } from '@/layout/app-shell';
 import { call } from '@/lib/sdk';
-import { $adminToken, $project, setProjectContext } from '@/stores/auth';
+import { $adminToken, $environment, $project, setEnvironment, setProjectContext } from '@/stores/auth';
+
+// Environments the project-admin data views can switch between. Mirrors the
+// COMMON_ENVS picker on the Configuration page; the selection drives the
+// X-Environment header attached to project-admin data calls (see lib/sdk.ts).
+const COMMON_ENVS = ['live', 'staging', 'dev'];
+
+function EnvSwitcher() {
+  const env = useStore($environment);
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground">Env</span>
+      <div className="flex rounded-lg border border-border bg-muted p-[3px]">
+        {COMMON_ENVS.map((e) => (
+          <button
+            key={e}
+            type="button"
+            onClick={() => setEnvironment(e)}
+            className={[
+              'rounded-md px-2.5 py-0.5 text-sm transition-colors',
+              e === env
+                ? 'bg-background font-medium text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            ].join(' ')}
+          >
+            {e}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function projectNav(id: string): NavItem[] {
   const base = `/projects/${id}`;
@@ -37,6 +69,7 @@ function projectNav(id: string): NavItem[] {
     { label: 'Domains', to: `${base}/domains`, icon: Globe },
     { label: 'Signing Keys', to: `${base}/signing-keys`, icon: KeySquare },
     { label: 'Providers', to: `${base}/providers`, icon: Send },
+    { label: 'Invitations', to: `${base}/invites`, icon: MailPlus },
     { label: 'Configuration', to: `${base}/config`, icon: Settings2 },
     { label: 'Access Requests', to: `${base}/access-requests`, icon: Inbox },
   ];
@@ -112,7 +145,12 @@ export function ProjectLayout() {
   return (
     <AppShell
       nav={projectNav(projectId)}
-      topLeft={<ProjectSwitcher />}
+      topLeft={
+        <>
+          <ProjectSwitcher />
+          <EnvSwitcher />
+        </>
+      }
       topRight={<AccountMenu />}
     />
   );

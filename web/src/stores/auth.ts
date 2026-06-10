@@ -12,6 +12,8 @@ import { atom, computed } from 'nanostores';
 // (1h) and re-minted on demand, so persisting it buys nothing.
 
 const MASTER_KEY_STORAGE = 'iam.masterKey';
+const ENVIRONMENT_STORAGE = 'iam.environment';
+const DEFAULT_ENVIRONMENT = 'live';
 
 function readStoredMasterKey(): string | null {
   try {
@@ -30,6 +32,22 @@ function writeStoredMasterKey(key: string | null): void {
   }
 }
 
+function readStoredEnvironment(): string {
+  try {
+    return sessionStorage.getItem(ENVIRONMENT_STORAGE) ?? DEFAULT_ENVIRONMENT;
+  } catch {
+    return DEFAULT_ENVIRONMENT;
+  }
+}
+
+function writeStoredEnvironment(env: string): void {
+  try {
+    sessionStorage.setItem(ENVIRONMENT_STORAGE, env);
+  } catch {
+    // Storage unavailable (private mode / disabled) — fall back to memory only.
+  }
+}
+
 export interface ProjectRef {
   id: string;
   name: string;
@@ -39,11 +57,21 @@ export const $masterKey = atom<string | null>(readStoredMasterKey());
 export const $project = atom<ProjectRef | null>(null);
 export const $adminToken = atom<string | null>(null);
 
+// The environment (live / staging / dev) project-admin data views operate in,
+// giving Stripe-like test/live data isolation. Persisted in sessionStorage like
+// the master key so a reload keeps the selected environment within the tab.
+export const $environment = atom<string>(readStoredEnvironment());
+
 export const $authed = computed($masterKey, (k) => !!k);
 
 export function setMasterKey(key: string | null): void {
 	$masterKey.set(key);
 	writeStoredMasterKey(key);
+}
+
+export function setEnvironment(env: string): void {
+  $environment.set(env);
+  writeStoredEnvironment(env);
 }
 
 export function setProjectContext(project: ProjectRef | null, adminToken: string | null): void {
@@ -57,6 +85,14 @@ export function logout(): void {
 }
 
 /** Non-reactive snapshot for the request interceptor. */
-export function authSnapshot(): { masterKey: string | null; adminToken: string | null } {
-  return { masterKey: $masterKey.get(), adminToken: $adminToken.get() };
+export function authSnapshot(): {
+  masterKey: string | null;
+  adminToken: string | null;
+  environment: string;
+} {
+  return {
+    masterKey: $masterKey.get(),
+    adminToken: $adminToken.get(),
+    environment: $environment.get(),
+  };
 }

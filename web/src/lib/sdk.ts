@@ -8,11 +8,21 @@ client.setConfig({ baseUrl: '' });
 
 // Attach the right bearer per call: the master key on operator (/mgmt/*) calls,
 // the project admin token on everything else (falling back to the master key).
+//
+// Also attach the selected environment to project-admin data calls. Admin
+// endpoints accept an X-Environment header for Stripe-like test/live isolation;
+// the global $environment store picks which environment the data views read. We
+// only set it when the caller hasn't set one explicitly (e.g. the Configuration
+// page passes its own per-tab X-Environment), and only for project-admin routes.
 client.interceptors.request.use((request: Request) => {
   if (!request.headers.has('Authorization')) {
     const { masterKey, adminToken } = authSnapshot();
     const token = request.url.includes('/mgmt/') ? masterKey : adminToken ?? masterKey;
     if (token) request.headers.set('Authorization', `Bearer ${token}`);
+  }
+  if (!request.headers.has('X-Environment') && /\/v1\/projects\/[^/]+\/admin\//.test(request.url)) {
+    const { environment } = authSnapshot();
+    if (environment) request.headers.set('X-Environment', environment);
   }
   return request;
 });
