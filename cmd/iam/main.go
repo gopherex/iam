@@ -173,7 +173,9 @@ func run() error {
 		api.EnvironmentMiddleware(
 			api.CSRFMiddleware(postgres.NewPgPlatform(db))(
 				api.CookieAuthMiddleware(srv))))
-	apiPipeline = api.CORSMiddleware(cfg.Service.CORS.AllowedOrigins)(apiPipeline)
+	// CORS allows the statically configured origins plus the dynamic per-client
+	// union (app clients' allowed_origins), cached for 60s.
+	apiPipeline = api.CORSMiddleware(cfg.Service.CORS.AllowedOrigins, postgres.NewPgAdminApps(db, emitter), 60*time.Second)(apiPipeline)
 	apiPipeline = api.SecurityHeaders(apiPipeline)
 	apiPipeline = api.RateLimitMiddleware(apiPipeline)
 

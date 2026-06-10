@@ -288,6 +288,7 @@ function CreateClientDialog({
   const [type, setType] = useState<AppType>('spa');
   const [environment, setEnvironment] = useState('');
   const [redirectUris, setRedirectUris] = useState('');
+  const [allowedOrigins, setAllowedOrigins] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -299,6 +300,7 @@ function CreateClientDialog({
     setType('spa');
     setEnvironment('');
     setRedirectUris('');
+    setAllowedOrigins('');
     setErr(null);
     setBusy(false);
   }
@@ -312,6 +314,10 @@ function CreateClientDialog({
         .split('\n')
         .map((u) => u.trim())
         .filter(Boolean);
+      const origins = allowedOrigins
+        .split('\n')
+        .map((o) => o.trim())
+        .filter(Boolean);
       const result = await call(
         postV1ProjectsByProjectIdAdminApps({
           path: { project_id: projectId },
@@ -320,6 +326,7 @@ function CreateClientDialog({
             type,
             environment: environment || undefined,
             redirect_uris: uris.length ? uris : undefined,
+            allowed_origins: origins.length ? origins : undefined,
           },
         }),
       );
@@ -414,6 +421,21 @@ function CreateClientDialog({
                   />
                   <p className="text-xs text-muted-foreground">One URI per line.</p>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="c-origins">Allowed origins (CORS)</Label>
+                  <textarea
+                    id="c-origins"
+                    value={allowedOrigins}
+                    onChange={(e) => setAllowedOrigins(e.target.value)}
+                    rows={2}
+                    placeholder="https://app.example.com&#10;http://localhost:1421"
+                    className="h-auto w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Browser origins allowed to call IAM (scheme://host[:port], one per line).
+                    https only off-localhost.
+                  </p>
+                </div>
                 {err && <p className="text-sm text-destructive">{err}</p>}
                 <DialogFooter>
                   <Button type="submit" disabled={busy || !name}>
@@ -489,6 +511,9 @@ function ClientDetailDialog({
   const [redirectUris, setRedirectUris] = useState(
     (initialClient.redirect_uris ?? []).join('\n'),
   );
+  const [allowedOrigins, setAllowedOrigins] = useState(
+    (initialClient.allowed_origins ?? []).join('\n'),
+  );
   const [loginUri, setLoginUri] = useState(initialClient.login_uri ?? '');
   const [defaultRedirectUri, setDefaultRedirectUri] = useState(
     initialClient.default_redirect_uri ?? '',
@@ -508,6 +533,10 @@ function ClientDetailDialog({
         .split('\n')
         .map((u) => u.trim())
         .filter(Boolean);
+      const origins = allowedOrigins
+        .split('\n')
+        .map((o) => o.trim())
+        .filter(Boolean);
       await call(
         patchV1ProjectsByProjectIdAdminAppsByAppId({
           path: { project_id: projectId, app_id: appId },
@@ -515,6 +544,7 @@ function ClientDetailDialog({
             name,
             type,
             redirect_uris: uris,
+            allowed_origins: origins,
             login_uri: loginUri || null,
             default_redirect_uri: defaultRedirectUri || null,
           },
@@ -583,6 +613,21 @@ function ClientDetailDialog({
                     className="h-auto w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                   <p className="text-xs text-muted-foreground">One URI per line.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="d-origins">Allowed origins (CORS)</Label>
+                  <textarea
+                    id="d-origins"
+                    value={allowedOrigins}
+                    onChange={(e) => setAllowedOrigins(e.target.value)}
+                    rows={2}
+                    placeholder="https://app.example.com&#10;http://localhost:1421"
+                    className="h-auto w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Browser origins allowed to call IAM. https only off-localhost; invalid entries
+                    are dropped server-side.
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">

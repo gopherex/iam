@@ -147,6 +147,10 @@ type AppClient struct {
 	Type         string // spa | native | web | machine
 	Environment  string
 	RedirectURIs []string
+	// AllowedOrigins are the browser origins (scheme://host[:port]) permitted to
+	// make cross-origin calls to IAM for this client. The CORS layer reflects
+	// ACAO for any origin in the union of all clients' AllowedOrigins.
+	AllowedOrigins []string
 }
 
 // ===== Project aggregate (admin / operator) =====
@@ -264,11 +268,12 @@ type APIKeyCmd struct {
 }
 
 type AppClientCmd struct {
-	ProjectID    string
-	Environment  string
-	Name         string
-	Type         string
-	RedirectURIs []string
+	ProjectID      string
+	Environment    string
+	Name           string
+	Type           string
+	RedirectURIs   []string
+	AllowedOrigins []string
 }
 
 type ProjectCmd struct {

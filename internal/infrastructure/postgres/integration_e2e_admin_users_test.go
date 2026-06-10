@@ -1208,3 +1208,45 @@ func TestE2EAdminServiceAccountsDeleteSecretNoAuth(t *testing.T) {
 		map[string]string{"X-Environment": "live"})
 	e2eWantStatus(t, r3, http.StatusUnauthorized)
 }
+
+// TestE2EAdminAppsAllowedOrigins verifies app-client allowed_origins round-trip
+// + server-side normalization (invalid/wildcard entries dropped, deduped,
+// lowercased), which feed the dynamic CORS union.
+func TestE2EAdminAppsAllowedOrigins(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, token := e2eProjectAdmin(t, ctx)
+	appsURL := fmt.Sprintf("%s/v1/projects/%s/admin/apps", ts.URL, projectID)
+
+	r := e2eReq(t, ctx, http.MethodPost, appsURL,
+		map[string]any{
+			"name": "Origins App",
+			"type": "spa",
+			"allowed_origins": []string{
+				"https://App.Example.com/", // normalized -> https://app.example.com
+				"*",                        // dropped
+				"http://evil.com",          // dropped (http off-localhost)
+				"http://localhost:1421",    // kept
+				"https://app.example.com",  // dedup
+			},
+		},
+		e2eBearer(token))
+	e2eWantStatus(t, r, http.StatusCreated)
+	var resp struct {
+		App struct {
+			ID             string   `json:"id"`
+			AllowedOrigins []string `json:"allowed_origins"`
+		} `json:"app"`
+	}
+	e2eDecode(t, r, &resp)
+	got := map[string]bool{}
+	for _, o := range resp.App.AllowedOrigins {
+		got[o] = true
+	}
+	if !got["https://app.example.com"] || !got["http://localhost:1421"] {
+		t.Fatalf("expected normalized origins kept, got %v", resp.App.AllowedOrigins)
+	}
+	if got["*"] || got["http://evil.com"] || len(resp.App.AllowedOrigins) != 2 {
+		t.Fatalf("invalid origins not dropped/deduped: %v", resp.App.AllowedOrigins)
+	}
+}

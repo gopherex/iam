@@ -1,14 +1,47 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
+type fakeOriginSource struct{ origins []string }
+
+func (f fakeOriginSource) AllowedOrigins(context.Context) ([]string, error) { return f.origins, nil }
+
+func TestCORSDynamicOriginAllowed(t *testing.T) {
+	// No static origins; the dynamic per-client union allows the origin.
+	handler := CORSMiddleware(nil, fakeOriginSource{origins: []string{"https://landing.example.com"}}, time.Minute)(
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }))
+
+	// Registered dynamic origin -> reflected with credentials.
+	req := httptest.NewRequest("GET", "/v1/config/public", nil)
+	req.Header.Set("Origin", "https://landing.example.com")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "https://landing.example.com" {
+		t.Fatalf("dynamic origin ACAO = %q, want reflected", got)
+	}
+	if rec.Header().Get("Access-Control-Allow-Credentials") != "true" {
+		t.Fatal("dynamic origin must be credentialed")
+	}
+
+	// Unregistered origin -> no ACAO.
+	req2 := httptest.NewRequest("GET", "/v1/config/public", nil)
+	req2.Header.Set("Origin", "https://evil.com")
+	rec2 := httptest.NewRecorder()
+	handler.ServeHTTP(rec2, req2)
+	if got := rec2.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Fatalf("unregistered origin ACAO = %q, want empty", got)
+	}
+}
+
 func TestCORSWildcardNoCredentials(t *testing.T) {
-	handler := CORSMiddleware([]string{"*"})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSMiddleware([]string{"*"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -33,7 +66,7 @@ func TestCORSWildcardNoCredentials(t *testing.T) {
 }
 
 func TestCORSExplicitOriginWithCredentials(t *testing.T) {
-	handler := CORSMiddleware([]string{"https://app.example.com"})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSMiddleware([]string{"https://app.example.com"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -55,7 +88,7 @@ func TestCORSExplicitOriginWithCredentials(t *testing.T) {
 }
 
 func TestCORSRejectsUnknownOrigin(t *testing.T) {
-	handler := CORSMiddleware([]string{"https://app.example.com"})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSMiddleware([]string{"https://app.example.com"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 

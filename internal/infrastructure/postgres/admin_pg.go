@@ -890,15 +890,49 @@ func (a *pgAdminApps) Get(ctx context.Context, projectID, environment, appID str
 	return app, err
 }
 
+// AllOrigins returns the de-duplicated union of every app client's allowed
+// origins across all projects/environments — the dynamic CORS allow-list. CORS
+// preflight (OPTIONS) carries no X-Client-Id, so the allow decision can only be
+// made against this global union (tenant isolation is enforced separately by
+// X-Client-Id + tokens; CORS only governs browser read access).
+func (a *pgAdminApps) AllowedOrigins(ctx context.Context) ([]string, error) {
+	rows, err := models.IamAppClients.Query().All(ctx, a.db.Bobx())
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[string]struct{})
+	out := make([]string, 0)
+	for _, row := range rows {
+		if len(row.Data) == 0 {
+			continue
+		}
+		var app struct {
+			AllowedOrigins []string `json:"AllowedOrigins"`
+		}
+		if unmarshal(row.Data, &app) != nil {
+			continue
+		}
+		for _, o := range domain.NormalizeOrigins(app.AllowedOrigins) {
+			if _, ok := seen[o]; ok {
+				continue
+			}
+			seen[o] = struct{}{}
+			out = append(out, o)
+		}
+	}
+	return out, nil
+}
+
 func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*domain.AppClient, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AppClient, error) {
 		app := &domain.AppClient{
-			ID:           newUUID(),
-			ProjectID:    cmd.ProjectID,
-			Name:         cmd.Name,
-			Type:         cmd.Type,
-			Environment:  adminEnv(cmd.Environment),
-			RedirectURIs: cmd.RedirectURIs,
+			ID:             newUUID(),
+			ProjectID:      cmd.ProjectID,
+			Name:           cmd.Name,
+			Type:           cmd.Type,
+			Environment:    adminEnv(cmd.Environment),
+			RedirectURIs:   cmd.RedirectURIs,
+			AllowedOrigins: domain.NormalizeOrigins(cmd.AllowedOrigins),
 		}
 		raw, err := marshal(app)
 		if err != nil {
@@ -953,6 +987,17 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 				}
 			}
 			app.RedirectURIs = uris
+		}
+		if v, ok := patch["allowed_origins"].([]string); ok {
+			app.AllowedOrigins = domain.NormalizeOrigins(v)
+		} else if v, ok := patch["allowed_origins"].([]any); ok {
+			origins := make([]string, 0, len(v))
+			for _, o := range v {
+				if s, ok := o.(string); ok {
+					origins = append(origins, s)
+				}
+			}
+			app.AllowedOrigins = domain.NormalizeOrigins(origins)
 		}
 		raw, err := marshal(app)
 		if err != nil {

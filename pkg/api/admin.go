@@ -817,11 +817,12 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, r
 		return nil, err
 	}
 	cmd := domain.AppClientCmd{
-		ProjectID:    params.ProjectID,
-		Environment:  params.XEnvironment.Or("live"),
-		Name:         req.Name,
-		Type:         string(req.Type),
-		RedirectURIs: req.RedirectUris,
+		ProjectID:      params.ProjectID,
+		Environment:    params.XEnvironment.Or("live"),
+		Name:           req.Name,
+		Type:           string(req.Type),
+		RedirectURIs:   req.RedirectUris,
+		AllowedOrigins: req.AllowedOrigins,
 	}
 	app, err := s.deps.Apps.Create(ctx, cmd)
 	if err != nil {
@@ -1577,10 +1578,11 @@ func oasRawPatch[T ~map[string]jx.Raw](m T) map[string]any {
 // oasAppClient maps a domain AppClient onto the generated oas.AppClient.
 func oasAppClient(a *domain.AppClient) oas.AppClient {
 	out := oas.AppClient{
-		ID:           oas.NewOptString(a.ID),
-		Name:         oas.NewOptString(a.Name),
-		Environment:  oas.NewOptString(a.Environment),
-		RedirectUris: a.RedirectURIs,
+		ID:             oas.NewOptString(a.ID),
+		Name:           oas.NewOptString(a.Name),
+		Environment:    oas.NewOptString(a.Environment),
+		RedirectUris:   a.RedirectURIs,
+		AllowedOrigins: a.AllowedOrigins,
 	}
 	if a.Type != "" {
 		out.Type = oas.NewOptAppClientType(oas.AppClientType(a.Type))
