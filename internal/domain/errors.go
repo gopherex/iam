@@ -44,14 +44,15 @@ func newErr(status int, code, msg string) *Error {
 // The complete catalogue of domain errors. Branch with errors.Is.
 var (
 	// 401 — authentication.
-	ErrInvalidCredentials = newErr(http.StatusUnauthorized, "invalid_credentials", "Invalid credentials.")
-	ErrUnauthorized       = newErr(http.StatusUnauthorized, "unauthorized", "Authentication required.")
-	ErrInvalidToken       = newErr(http.StatusUnauthorized, "invalid_token", "The token is invalid.")
-	ErrTokenExpired       = newErr(http.StatusUnauthorized, "token_expired", "The token has expired.")
-	ErrTokenRevoked       = newErr(http.StatusUnauthorized, "token_revoked", "The token has been revoked.")
-	ErrMFAInvalid         = newErr(http.StatusUnauthorized, "mfa_invalid", "Invalid MFA code.")
-	ErrInvalidOTP         = newErr(http.StatusUnauthorized, "invalid_otp", "Invalid one-time code.")
-	ErrChallengeInvalid   = newErr(http.StatusUnauthorized, "challenge_invalid", "Invalid challenge.")
+	ErrInvalidCredentials    = newErr(http.StatusUnauthorized, "invalid_credentials", "Invalid credentials.")
+	ErrUnauthorized          = newErr(http.StatusUnauthorized, "unauthorized", "Authentication required.")
+	ErrInvalidToken          = newErr(http.StatusUnauthorized, "invalid_token", "The token is invalid.")
+	ErrTokenExpired          = newErr(http.StatusUnauthorized, "token_expired", "The token has expired.")
+	ErrTokenRevoked          = newErr(http.StatusUnauthorized, "token_revoked", "The token has been revoked.")
+	ErrSessionDeviceMismatch = newErr(http.StatusUnauthorized, "device_mismatch", "The session was used from a different device.")
+	ErrMFAInvalid            = newErr(http.StatusUnauthorized, "mfa_invalid", "Invalid MFA code.")
+	ErrInvalidOTP            = newErr(http.StatusUnauthorized, "invalid_otp", "Invalid one-time code.")
+	ErrChallengeInvalid      = newErr(http.StatusUnauthorized, "challenge_invalid", "Invalid challenge.")
 
 	// 403 — permitted-but-blocked / gated.
 	ErrForbidden          = newErr(http.StatusForbidden, "forbidden", "Not permitted.")

@@ -1100,8 +1100,9 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 	}
 	hash := coreAuthSHA256(refreshToken)
 	type refreshResult struct {
-		acc  *domain.Account
-		sess *domain.Session
+		acc      *domain.Account
+		sess     *domain.Session
+		mismatch bool
 	}
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (refreshResult, error) {
 		row, err := models.IamRefreshTokens.Query(
@@ -1147,18 +1148,51 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 			return refreshResult{}, err
 		}
 
-		// Rotate the tokens in place: revoke the presented refresh token, then
-		// mint a new access + refresh pair bound to the SAME session, preserving
-		// its id, AAL (MFA elevation), AMR, and client. The session is not torn
-		// down on refresh.
-		if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
-			return refreshResult{}, err
-		}
 		sessRow, err := models.FindIamSession(ctx, a.db.Bobx(), row.SessionID)
 		if err != nil {
 			if errors.Is(translatePgErr("session", err), ErrNotFound) {
 				return refreshResult{}, domain.ErrSessionNotFound
 			}
+			return refreshResult{}, err
+		}
+
+		// Device-change defense: a request that presents a device fingerprint
+		// which differs from the one bound to the session at sign-in is a strong
+		// token-theft signal. Revoke the session (committing this tx so the
+		// revocation persists) and refuse the refresh. UA changes are NOT treated
+		// as theft (browsers update their UA legitimately); only a fingerprint
+		// mismatch denies.
+		prev, err := coreAuthLoadSession(sessRow, sessRow.ProjectID)
+		if err != nil {
+			return refreshResult{}, err
+		}
+		meta := domain.RequestMetaFromContext(ctx)
+		if prev.Fingerprint != "" && meta.Fingerprint != "" && meta.Fingerprint != prev.Fingerprint {
+			if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
+				return refreshResult{}, err
+			}
+			if err := a.coreAuthRevokeSession(ctx, sessRow.ProjectID, sessRow.ID); err != nil &&
+				!errors.Is(err, domain.ErrSessionNotFound) {
+				return refreshResult{}, err
+			}
+			if err := a.emitter.Emit(ctx, domain.Event{
+				Type:        "session.device_mismatch",
+				ProjectID:   sessRow.ProjectID,
+				Environment: coreAuthDefaultEnv,
+				AggregateID: sessRow.ID,
+				Payload:     map[string]any{"session_id": sessRow.ID, "user_id": sessRow.UserID},
+			}); err != nil {
+				return refreshResult{}, err
+			}
+			// Commit the revocation (nil error); the caller maps mismatch to an error.
+			return refreshResult{mismatch: true}, nil
+		}
+
+		// Rotate the tokens in place: revoke the presented refresh token, then
+		// mint a new access + refresh pair bound to the SAME session, preserving
+		// its id, AAL (MFA elevation), AMR, and client. The session is not torn
+		// down on refresh.
+		if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
 			return refreshResult{}, err
 		}
 		sess, err := a.coreAuthRotateSession(ctx, acc, sessRow)
@@ -1178,6 +1212,9 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 	})
 	if err != nil {
 		return nil, nil, err
+	}
+	if res.mismatch {
+		return nil, nil, domain.ErrSessionDeviceMismatch
 	}
 	return res.acc, res.sess, nil
 }

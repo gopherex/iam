@@ -742,6 +742,31 @@ function UserSessionsTab({ user, projectId }: { user: User; projectId: string })
       cell: ({ row }) => row.original.aal ?? '—',
     },
     {
+      accessorKey: 'ip',
+      header: 'IP',
+      cell: ({ row }) =>
+        row.original.ip ? (
+          <span className="font-mono text-xs">{row.original.ip}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
+      accessorKey: 'user_agent',
+      header: 'User agent',
+      cell: ({ row }) =>
+        row.original.user_agent ? (
+          <span
+            className="block max-w-[220px] truncate text-xs text-muted-foreground"
+            title={row.original.user_agent}
+          >
+            {row.original.user_agent}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
       accessorFn: (s) => s.last_active_at ?? '',
       id: 'last_active_at',
       header: 'Last active',

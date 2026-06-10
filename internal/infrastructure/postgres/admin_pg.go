@@ -699,11 +699,13 @@ func (a *pgAdminUsers) ListSessions(ctx context.Context, projectID, accountID st
 	}
 	out := make([]domain.Session, 0, len(rows))
 	for _, row := range rows {
-		var s domain.Session
-		if err := unmarshal(row.Data, &s); err != nil {
+		// Use the shared mapper so envelope columns (last_active_at, trusted, aal,
+		// client_id) win over the at-mint snapshot in data — admins see live state.
+		s, err := accountSessionToDomain(row)
+		if err != nil {
 			return nil, err
 		}
-		out = append(out, s)
+		out = append(out, *s)
 	}
 	return out, nil
 }
