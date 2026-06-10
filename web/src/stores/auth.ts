@@ -62,7 +62,19 @@ export const $adminToken = atom<string | null>(null);
 // the master key so a reload keeps the selected environment within the tab.
 export const $environment = atom<string>(readStoredEnvironment());
 
+// The project's actually-declared environments (from the operator API), driving
+// the header switcher. Defaults to just live until loaded — the switcher must
+// only offer environments that exist, or the server rejects X-Environment (400).
+export const $environments = atom<string[]>(['live']);
+
 export const $authed = computed($masterKey, (k) => !!k);
+
+export function setEnvironments(names: string[]): void {
+  const list = names.length ? names : ['live'];
+  $environments.set(list);
+  // If the selected env no longer exists, snap back to a valid one.
+  if (!list.includes($environment.get())) setEnvironment(list.includes('live') ? 'live' : list[0]);
+}
 
 export function setMasterKey(key: string | null): void {
 	$masterKey.set(key);

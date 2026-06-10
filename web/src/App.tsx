@@ -12,6 +12,7 @@ import { ClientsPage } from '@/pages/project/clients';
 import { ConfigPage } from '@/pages/project/config';
 import { ConnectionsPage } from '@/pages/project/connections';
 import { DomainsPage } from '@/pages/project/domains';
+import { EnvironmentsPage } from '@/pages/project/environments';
 import { InvitesPage } from '@/pages/project/invites';
 import { ProvidersPage } from '@/pages/project/providers';
 import { ProjectOverview } from '@/pages/project/overview';
@@ -41,6 +42,7 @@ export function App() {
             <Route path="connections" element={<ConnectionsPage />} />
             <Route path="domains" element={<DomainsPage />} />
             <Route path="signing-keys" element={<SigningKeysPage />} />
+            <Route path="environments" element={<EnvironmentsPage />} />
             <Route path="providers" element={<ProvidersPage />} />
             <Route path="invites" element={<InvitesPage />} />
             <Route path="config" element={<ConfigPage />} />
