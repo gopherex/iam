@@ -21,15 +21,16 @@ import (
 
 // IamDeviceCode is an object representing the database table.
 type IamDeviceCode struct {
-	ID         string           `db:"id,pk" `
-	ProjectID  string           `db:"project_id" `
-	DeviceCode string           `db:"device_code" `
-	UserCode   string           `db:"user_code" `
-	Status     string           `db:"status" `
-	UserID     null.Val[string] `db:"user_id" `
-	ExpiresAt  time.Time        `db:"expires_at" `
-	CreatedAt  time.Time        `db:"created_at" `
-	Data       json.RawMessage  `db:"data" `
+	ID          string           `db:"id,pk" `
+	ProjectID   string           `db:"project_id" `
+	Environment string           `db:"environment" `
+	DeviceCode  string           `db:"device_code" `
+	UserCode    string           `db:"user_code" `
+	Status      string           `db:"status" `
+	UserID      null.Val[string] `db:"user_id" `
+	ExpiresAt   time.Time        `db:"expires_at" `
+	CreatedAt   time.Time        `db:"created_at" `
+	Data        json.RawMessage  `db:"data" `
 }
 
 // IamDeviceCodeSlice is an alias for a slice of pointers to IamDeviceCode.
@@ -44,7 +45,7 @@ type IamDeviceCodesQuery = *psql.ViewQuery[*IamDeviceCode, IamDeviceCodeSlice]
 
 func buildIamDeviceCodeColumns(tableName string) iamDeviceCodeColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "device_code", "user_code", "status", "user_id", "expires_at", "created_at", "data",
+		"id", "project_id", "environment", "device_code", "user_code", "status", "user_id", "expires_at", "created_at", "data",
 	)
 
 	if tableName != "" {
@@ -56,6 +57,7 @@ func buildIamDeviceCodeColumns(tableName string) iamDeviceCodeColumns {
 		tableAlias:  tableName,
 		ID:          buildIamDeviceCodeColumn(tableName, "id"),
 		ProjectID:   buildIamDeviceCodeColumn(tableName, "project_id"),
+		Environment: buildIamDeviceCodeColumn(tableName, "environment"),
 		DeviceCode:  buildIamDeviceCodeColumn(tableName, "device_code"),
 		UserCode:    buildIamDeviceCodeColumn(tableName, "user_code"),
 		Status:      buildIamDeviceCodeColumn(tableName, "status"),
@@ -68,16 +70,17 @@ func buildIamDeviceCodeColumns(tableName string) iamDeviceCodeColumns {
 
 type iamDeviceCodeColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamDeviceCodeColumn
-	ProjectID  iamDeviceCodeColumn
-	DeviceCode iamDeviceCodeColumn
-	UserCode   iamDeviceCodeColumn
-	Status     iamDeviceCodeColumn
-	UserID     iamDeviceCodeColumn
-	ExpiresAt  iamDeviceCodeColumn
-	CreatedAt  iamDeviceCodeColumn
-	Data       iamDeviceCodeColumn
+	tableAlias  string
+	ID          iamDeviceCodeColumn
+	ProjectID   iamDeviceCodeColumn
+	Environment iamDeviceCodeColumn
+	DeviceCode  iamDeviceCodeColumn
+	UserCode    iamDeviceCodeColumn
+	Status      iamDeviceCodeColumn
+	UserID      iamDeviceCodeColumn
+	ExpiresAt   iamDeviceCodeColumn
+	CreatedAt   iamDeviceCodeColumn
+	Data        iamDeviceCodeColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -123,24 +126,28 @@ func (c iamDeviceCodeColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamDeviceCodeSetter struct {
-	ID         *string           `db:"id,pk" `
-	ProjectID  *string           `db:"project_id" `
-	DeviceCode *string           `db:"device_code" `
-	UserCode   *string           `db:"user_code" `
-	Status     *string           `db:"status" `
-	UserID     *null.Val[string] `db:"user_id" `
-	ExpiresAt  *time.Time        `db:"expires_at" `
-	CreatedAt  *time.Time        `db:"created_at" `
-	Data       *json.RawMessage  `db:"data" `
+	ID          *string           `db:"id,pk" `
+	ProjectID   *string           `db:"project_id" `
+	Environment *string           `db:"environment" `
+	DeviceCode  *string           `db:"device_code" `
+	UserCode    *string           `db:"user_code" `
+	Status      *string           `db:"status" `
+	UserID      *null.Val[string] `db:"user_id" `
+	ExpiresAt   *time.Time        `db:"expires_at" `
+	CreatedAt   *time.Time        `db:"created_at" `
+	Data        *json.RawMessage  `db:"data" `
 }
 
 func (s IamDeviceCodeSetter) SetColumns() []string {
-	vals := make([]string, 0, 9)
+	vals := make([]string, 0, 10)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.DeviceCode != nil {
 		vals = append(vals, "device_code")
@@ -181,6 +188,14 @@ func (s IamDeviceCodeSetter) Overwrite(t *IamDeviceCode) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.DeviceCode != nil {
@@ -248,7 +263,7 @@ func (s *IamDeviceCodeSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 9)
+		vals := make([]bob.Expression, 10)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -271,41 +286,52 @@ func (s *IamDeviceCodeSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.DeviceCode != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.DeviceCode != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.DeviceCode == nil {
 					return *new(string)
 				}
 				return *s.DeviceCode
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.UserCode != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.UserCode == nil {
 					return *new(string)
 				}
 				return *s.UserCode
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.Status != nil {
-			vals[4] = psql.Arg(func() string {
+			vals[5] = psql.Arg(func() string {
 				if s.Status == nil {
 					return *new(string)
 				}
 				return *s.Status
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.UserID != nil {
-			vals[5] = psql.Arg(func() null.Val[string] {
+			vals[6] = psql.Arg(func() null.Val[string] {
 				if s.UserID == nil {
 					return *new(null.Val[string])
 				}
@@ -313,40 +339,40 @@ func (s *IamDeviceCodeSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.ExpiresAt != nil {
-			vals[6] = psql.Arg(func() time.Time {
+			vals[7] = psql.Arg(func() time.Time {
 				if s.ExpiresAt == nil {
 					return *new(time.Time)
 				}
 				return *s.ExpiresAt
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[7] = psql.Arg(func() time.Time {
+			vals[8] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[8] = psql.Arg(func() json.RawMessage {
+			vals[9] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[8] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -358,7 +384,7 @@ func (s IamDeviceCodeSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamDeviceCodeSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 9)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -371,6 +397,13 @@ func (s IamDeviceCodeSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -681,15 +714,16 @@ func (o IamDeviceCodeSlice) ReloadAll(ctx context.Context, exec bob.Executor) er
 }
 
 type iamDeviceCodeWhere[Q psql.Filterable] struct {
-	ID         psql.WhereMod[Q, string]
-	ProjectID  psql.WhereMod[Q, string]
-	DeviceCode psql.WhereMod[Q, string]
-	UserCode   psql.WhereMod[Q, string]
-	Status     psql.WhereMod[Q, string]
-	UserID     psql.WhereNullMod[Q, string]
-	ExpiresAt  psql.WhereMod[Q, time.Time]
-	CreatedAt  psql.WhereMod[Q, time.Time]
-	Data       psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	DeviceCode  psql.WhereMod[Q, string]
+	UserCode    psql.WhereMod[Q, string]
+	Status      psql.WhereMod[Q, string]
+	UserID      psql.WhereNullMod[Q, string]
+	ExpiresAt   psql.WhereMod[Q, time.Time]
+	CreatedAt   psql.WhereMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamDeviceCodeWhere[Q]) AliasedAs(alias string) iamDeviceCodeWhere[Q] {
@@ -698,14 +732,15 @@ func (iamDeviceCodeWhere[Q]) AliasedAs(alias string) iamDeviceCodeWhere[Q] {
 
 func buildIamDeviceCodeWhere[Q psql.Filterable](cols iamDeviceCodeColumns) iamDeviceCodeWhere[Q] {
 	return iamDeviceCodeWhere[Q]{
-		ID:         psql.Where[Q, string](cols.ID.Expression),
-		ProjectID:  psql.Where[Q, string](cols.ProjectID.Expression),
-		DeviceCode: psql.Where[Q, string](cols.DeviceCode.Expression),
-		UserCode:   psql.Where[Q, string](cols.UserCode.Expression),
-		Status:     psql.Where[Q, string](cols.Status.Expression),
-		UserID:     psql.WhereNull[Q, string](cols.UserID.Expression),
-		ExpiresAt:  psql.Where[Q, time.Time](cols.ExpiresAt.Expression),
-		CreatedAt:  psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		Data:       psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		DeviceCode:  psql.Where[Q, string](cols.DeviceCode.Expression),
+		UserCode:    psql.Where[Q, string](cols.UserCode.Expression),
+		Status:      psql.Where[Q, string](cols.Status.Expression),
+		UserID:      psql.WhereNull[Q, string](cols.UserID.Expression),
+		ExpiresAt:   psql.Where[Q, time.Time](cols.ExpiresAt.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

@@ -10,6 +10,7 @@ import (
 type IamUsers struct {
 	ID           string
 	ProjectID    string
+	Environment  string
 	Kind         string
 	Status       string
 	PrimaryEmail *string
@@ -20,19 +21,21 @@ type IamUsers struct {
 }
 
 type IamCredentials struct {
-	ID        string
-	ProjectID string
-	UserID    string
-	Type      string
-	Secret    string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	Type        string
+	Secret      string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Data        json.RawMessage
 }
 
 type IamIdentities struct {
 	ID                string
 	ProjectID         string
+	Environment       string
 	UserID            string
 	Type              string
 	Provider          *string
@@ -45,6 +48,7 @@ type IamIdentities struct {
 type IamSessions struct {
 	ID           string
 	ProjectID    string
+	Environment  string
 	UserID       string
 	ClientID     *string
 	Aal          int32
@@ -56,31 +60,34 @@ type IamSessions struct {
 }
 
 type IamRefreshTokens struct {
-	ID        string
-	ProjectID string
-	UserID    string
-	SessionID string
-	Hash      string
-	Revoked   bool
-	ExpiresAt *time.Time
-	CreatedAt time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	SessionID   string
+	Hash        string
+	Revoked     bool
+	ExpiresAt   *time.Time
+	CreatedAt   time.Time
+	Data        json.RawMessage
 }
 
 type IamFactors struct {
-	ID        string
-	ProjectID string
-	UserID    string
-	Type      string
-	Status    string
-	Secret    string
-	CreatedAt time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	Type        string
+	Status      string
+	Secret      string
+	CreatedAt   time.Time
+	Data        json.RawMessage
 }
 
 type IamWebauthnCredentials struct {
 	ID           string
 	ProjectID    string
+	Environment  string
 	UserID       string
 	CredentialID string
 	PublicKey    []byte
@@ -91,48 +98,52 @@ type IamWebauthnCredentials struct {
 }
 
 type IamRecoveryCodes struct {
-	ID        string
-	ProjectID string
-	UserID    string
-	Hash      string
-	Used      bool
-	CreatedAt time.Time
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	Hash        string
+	Used        bool
+	CreatedAt   time.Time
 }
 
 type IamChallenges struct {
-	ID        string
-	ProjectID string
-	Type      string
-	Subject   *string
-	CodeHash  *string
-	ExpiresAt time.Time
-	Consumed  bool
-	CreatedAt time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	Type        string
+	Subject     *string
+	CodeHash    *string
+	ExpiresAt   time.Time
+	Consumed    bool
+	CreatedAt   time.Time
+	Data        json.RawMessage
 }
 
 type IamFlows struct {
-	ID        string
-	ProjectID string
-	TokenHash string
-	Kind      string
-	Status    string
-	Step      string
-	UserID    *string
-	ExpiresAt time.Time
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	TokenHash   string
+	Kind        string
+	Status      string
+	Step        string
+	UserID      *string
+	ExpiresAt   time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Data        json.RawMessage
 }
 
 type IamConsents struct {
-	ID         string
-	ProjectID  string
-	UserID     string
-	DocKey     string
-	Version    string
-	Locale     *string
-	AcceptedAt time.Time
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	DocKey      string
+	Version     string
+	Locale      *string
+	AcceptedAt  time.Time
 }
 
 type IamInvites struct {
@@ -235,34 +246,37 @@ type IamScimResources struct {
 }
 
 type IamOauthGrants struct {
-	ID        string
-	ProjectID string
-	UserID    string
-	ClientID  string
-	GrantedAt time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	ClientID    string
+	GrantedAt   time.Time
+	Data        json.RawMessage
 }
 
 type IamInteractions struct {
-	ID        string
-	ProjectID string
-	ClientID  *string
-	SessionID *string
-	ExpiresAt *time.Time
-	CreatedAt time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	ClientID    *string
+	SessionID   *string
+	ExpiresAt   *time.Time
+	CreatedAt   time.Time
+	Data        json.RawMessage
 }
 
 type IamAuthCodes struct {
-	ID        string
-	ProjectID string
-	CodeHash  string
-	ClientID  *string
-	UserID    *string
-	ExpiresAt time.Time
-	Consumed  bool
-	CreatedAt time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	CodeHash    string
+	ClientID    *string
+	UserID      *string
+	ExpiresAt   time.Time
+	Consumed    bool
+	CreatedAt   time.Time
+	Data        json.RawMessage
 }
 
 type IamParRequests struct {
@@ -276,15 +290,16 @@ type IamParRequests struct {
 }
 
 type IamDeviceCodes struct {
-	ID         string
-	ProjectID  string
-	DeviceCode string
-	UserCode   string
-	Status     string
-	UserID     *string
-	ExpiresAt  time.Time
-	CreatedAt  time.Time
-	Data       json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	DeviceCode  string
+	UserCode    string
+	Status      string
+	UserID      *string
+	ExpiresAt   time.Time
+	CreatedAt   time.Time
+	Data        json.RawMessage
 }
 
 type IamProjects struct {
@@ -402,13 +417,14 @@ type IamAuditLogs struct {
 }
 
 type IamAccessRequests struct {
-	ID        string
-	ProjectID string
-	Email     string
-	Status    string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	Email       string
+	Status      string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Data        json.RawMessage
 }
 
 type IamRiskRules struct {
@@ -421,21 +437,23 @@ type IamRiskRules struct {
 }
 
 type IamBlocks struct {
-	ID        string
-	ProjectID string
-	Subject   string
-	CreatedAt time.Time
-	ExpiresAt *time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	Subject     string
+	CreatedAt   time.Time
+	ExpiresAt   *time.Time
+	Data        json.RawMessage
 }
 
 type IamActivity struct {
-	ID        string
-	ProjectID string
-	UserID    string
-	Type      string
-	At        time.Time
-	Data      json.RawMessage
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	Type        string
+	At          time.Time
+	Data        json.RawMessage
 }
 
 type IamEvents struct {

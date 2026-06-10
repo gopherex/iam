@@ -21,15 +21,16 @@ import (
 
 // IamRefreshToken is an object representing the database table.
 type IamRefreshToken struct {
-	ID        string              `db:"id,pk" `
-	ProjectID string              `db:"project_id" `
-	UserID    string              `db:"user_id" `
-	SessionID string              `db:"session_id" `
-	Hash      string              `db:"hash" `
-	Revoked   bool                `db:"revoked" `
-	ExpiresAt null.Val[time.Time] `db:"expires_at" `
-	CreatedAt time.Time           `db:"created_at" `
-	Data      json.RawMessage     `db:"data" `
+	ID          string              `db:"id,pk" `
+	ProjectID   string              `db:"project_id" `
+	Environment string              `db:"environment" `
+	UserID      string              `db:"user_id" `
+	SessionID   string              `db:"session_id" `
+	Hash        string              `db:"hash" `
+	Revoked     bool                `db:"revoked" `
+	ExpiresAt   null.Val[time.Time] `db:"expires_at" `
+	CreatedAt   time.Time           `db:"created_at" `
+	Data        json.RawMessage     `db:"data" `
 }
 
 // IamRefreshTokenSlice is an alias for a slice of pointers to IamRefreshToken.
@@ -44,7 +45,7 @@ type IamRefreshTokensQuery = *psql.ViewQuery[*IamRefreshToken, IamRefreshTokenSl
 
 func buildIamRefreshTokenColumns(tableName string) iamRefreshTokenColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "user_id", "session_id", "hash", "revoked", "expires_at", "created_at", "data",
+		"id", "project_id", "environment", "user_id", "session_id", "hash", "revoked", "expires_at", "created_at", "data",
 	)
 
 	if tableName != "" {
@@ -56,6 +57,7 @@ func buildIamRefreshTokenColumns(tableName string) iamRefreshTokenColumns {
 		tableAlias:  tableName,
 		ID:          buildIamRefreshTokenColumn(tableName, "id"),
 		ProjectID:   buildIamRefreshTokenColumn(tableName, "project_id"),
+		Environment: buildIamRefreshTokenColumn(tableName, "environment"),
 		UserID:      buildIamRefreshTokenColumn(tableName, "user_id"),
 		SessionID:   buildIamRefreshTokenColumn(tableName, "session_id"),
 		Hash:        buildIamRefreshTokenColumn(tableName, "hash"),
@@ -68,16 +70,17 @@ func buildIamRefreshTokenColumns(tableName string) iamRefreshTokenColumns {
 
 type iamRefreshTokenColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamRefreshTokenColumn
-	ProjectID  iamRefreshTokenColumn
-	UserID     iamRefreshTokenColumn
-	SessionID  iamRefreshTokenColumn
-	Hash       iamRefreshTokenColumn
-	Revoked    iamRefreshTokenColumn
-	ExpiresAt  iamRefreshTokenColumn
-	CreatedAt  iamRefreshTokenColumn
-	Data       iamRefreshTokenColumn
+	tableAlias  string
+	ID          iamRefreshTokenColumn
+	ProjectID   iamRefreshTokenColumn
+	Environment iamRefreshTokenColumn
+	UserID      iamRefreshTokenColumn
+	SessionID   iamRefreshTokenColumn
+	Hash        iamRefreshTokenColumn
+	Revoked     iamRefreshTokenColumn
+	ExpiresAt   iamRefreshTokenColumn
+	CreatedAt   iamRefreshTokenColumn
+	Data        iamRefreshTokenColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -123,24 +126,28 @@ func (c iamRefreshTokenColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamRefreshTokenSetter struct {
-	ID        *string              `db:"id,pk" `
-	ProjectID *string              `db:"project_id" `
-	UserID    *string              `db:"user_id" `
-	SessionID *string              `db:"session_id" `
-	Hash      *string              `db:"hash" `
-	Revoked   *bool                `db:"revoked" `
-	ExpiresAt *null.Val[time.Time] `db:"expires_at" `
-	CreatedAt *time.Time           `db:"created_at" `
-	Data      *json.RawMessage     `db:"data" `
+	ID          *string              `db:"id,pk" `
+	ProjectID   *string              `db:"project_id" `
+	Environment *string              `db:"environment" `
+	UserID      *string              `db:"user_id" `
+	SessionID   *string              `db:"session_id" `
+	Hash        *string              `db:"hash" `
+	Revoked     *bool                `db:"revoked" `
+	ExpiresAt   *null.Val[time.Time] `db:"expires_at" `
+	CreatedAt   *time.Time           `db:"created_at" `
+	Data        *json.RawMessage     `db:"data" `
 }
 
 func (s IamRefreshTokenSetter) SetColumns() []string {
-	vals := make([]string, 0, 9)
+	vals := make([]string, 0, 10)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.UserID != nil {
 		vals = append(vals, "user_id")
@@ -181,6 +188,14 @@ func (s IamRefreshTokenSetter) Overwrite(t *IamRefreshToken) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.UserID != nil {
@@ -248,7 +263,7 @@ func (s *IamRefreshTokenSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 9)
+		vals := make([]bob.Expression, 10)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -271,52 +286,63 @@ func (s *IamRefreshTokenSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.UserID != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.UserID != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.UserID == nil {
 					return *new(string)
 				}
 				return *s.UserID
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.SessionID != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.SessionID == nil {
 					return *new(string)
 				}
 				return *s.SessionID
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.Hash != nil {
-			vals[4] = psql.Arg(func() string {
+			vals[5] = psql.Arg(func() string {
 				if s.Hash == nil {
 					return *new(string)
 				}
 				return *s.Hash
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.Revoked != nil {
-			vals[5] = psql.Arg(func() bool {
+			vals[6] = psql.Arg(func() bool {
 				if s.Revoked == nil {
 					return *new(bool)
 				}
 				return *s.Revoked
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.ExpiresAt != nil {
-			vals[6] = psql.Arg(func() null.Val[time.Time] {
+			vals[7] = psql.Arg(func() null.Val[time.Time] {
 				if s.ExpiresAt == nil {
 					return *new(null.Val[time.Time])
 				}
@@ -324,29 +350,29 @@ func (s *IamRefreshTokenSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[7] = psql.Arg(func() time.Time {
+			vals[8] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[8] = psql.Arg(func() json.RawMessage {
+			vals[9] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[8] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -358,7 +384,7 @@ func (s IamRefreshTokenSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamRefreshTokenSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 9)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -371,6 +397,13 @@ func (s IamRefreshTokenSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -681,15 +714,16 @@ func (o IamRefreshTokenSlice) ReloadAll(ctx context.Context, exec bob.Executor) 
 }
 
 type iamRefreshTokenWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	UserID    psql.WhereMod[Q, string]
-	SessionID psql.WhereMod[Q, string]
-	Hash      psql.WhereMod[Q, string]
-	Revoked   psql.WhereMod[Q, bool]
-	ExpiresAt psql.WhereNullMod[Q, time.Time]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	UserID      psql.WhereMod[Q, string]
+	SessionID   psql.WhereMod[Q, string]
+	Hash        psql.WhereMod[Q, string]
+	Revoked     psql.WhereMod[Q, bool]
+	ExpiresAt   psql.WhereNullMod[Q, time.Time]
+	CreatedAt   psql.WhereMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamRefreshTokenWhere[Q]) AliasedAs(alias string) iamRefreshTokenWhere[Q] {
@@ -698,14 +732,15 @@ func (iamRefreshTokenWhere[Q]) AliasedAs(alias string) iamRefreshTokenWhere[Q] {
 
 func buildIamRefreshTokenWhere[Q psql.Filterable](cols iamRefreshTokenColumns) iamRefreshTokenWhere[Q] {
 	return iamRefreshTokenWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		UserID:    psql.Where[Q, string](cols.UserID.Expression),
-		SessionID: psql.Where[Q, string](cols.SessionID.Expression),
-		Hash:      psql.Where[Q, string](cols.Hash.Expression),
-		Revoked:   psql.Where[Q, bool](cols.Revoked.Expression),
-		ExpiresAt: psql.WhereNull[Q, time.Time](cols.ExpiresAt.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		UserID:      psql.Where[Q, string](cols.UserID.Expression),
+		SessionID:   psql.Where[Q, string](cols.SessionID.Expression),
+		Hash:        psql.Where[Q, string](cols.Hash.Expression),
+		Revoked:     psql.Where[Q, bool](cols.Revoked.Expression),
+		ExpiresAt:   psql.WhereNull[Q, time.Time](cols.ExpiresAt.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

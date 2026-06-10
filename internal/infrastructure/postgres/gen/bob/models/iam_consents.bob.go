@@ -20,13 +20,14 @@ import (
 
 // IamConsent is an object representing the database table.
 type IamConsent struct {
-	ID         string           `db:"id,pk" `
-	ProjectID  string           `db:"project_id" `
-	UserID     string           `db:"user_id" `
-	DocKey     string           `db:"doc_key" `
-	Version    string           `db:"version" `
-	Locale     null.Val[string] `db:"locale" `
-	AcceptedAt time.Time        `db:"accepted_at" `
+	ID          string           `db:"id,pk" `
+	ProjectID   string           `db:"project_id" `
+	Environment string           `db:"environment" `
+	UserID      string           `db:"user_id" `
+	DocKey      string           `db:"doc_key" `
+	Version     string           `db:"version" `
+	Locale      null.Val[string] `db:"locale" `
+	AcceptedAt  time.Time        `db:"accepted_at" `
 }
 
 // IamConsentSlice is an alias for a slice of pointers to IamConsent.
@@ -41,7 +42,7 @@ type IamConsentsQuery = *psql.ViewQuery[*IamConsent, IamConsentSlice]
 
 func buildIamConsentColumns(tableName string) iamConsentColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "user_id", "doc_key", "version", "locale", "accepted_at",
+		"id", "project_id", "environment", "user_id", "doc_key", "version", "locale", "accepted_at",
 	)
 
 	if tableName != "" {
@@ -53,6 +54,7 @@ func buildIamConsentColumns(tableName string) iamConsentColumns {
 		tableAlias:  tableName,
 		ID:          buildIamConsentColumn(tableName, "id"),
 		ProjectID:   buildIamConsentColumn(tableName, "project_id"),
+		Environment: buildIamConsentColumn(tableName, "environment"),
 		UserID:      buildIamConsentColumn(tableName, "user_id"),
 		DocKey:      buildIamConsentColumn(tableName, "doc_key"),
 		Version:     buildIamConsentColumn(tableName, "version"),
@@ -63,14 +65,15 @@ func buildIamConsentColumns(tableName string) iamConsentColumns {
 
 type iamConsentColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamConsentColumn
-	ProjectID  iamConsentColumn
-	UserID     iamConsentColumn
-	DocKey     iamConsentColumn
-	Version    iamConsentColumn
-	Locale     iamConsentColumn
-	AcceptedAt iamConsentColumn
+	tableAlias  string
+	ID          iamConsentColumn
+	ProjectID   iamConsentColumn
+	Environment iamConsentColumn
+	UserID      iamConsentColumn
+	DocKey      iamConsentColumn
+	Version     iamConsentColumn
+	Locale      iamConsentColumn
+	AcceptedAt  iamConsentColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -116,22 +119,26 @@ func (c iamConsentColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamConsentSetter struct {
-	ID         *string           `db:"id,pk" `
-	ProjectID  *string           `db:"project_id" `
-	UserID     *string           `db:"user_id" `
-	DocKey     *string           `db:"doc_key" `
-	Version    *string           `db:"version" `
-	Locale     *null.Val[string] `db:"locale" `
-	AcceptedAt *time.Time        `db:"accepted_at" `
+	ID          *string           `db:"id,pk" `
+	ProjectID   *string           `db:"project_id" `
+	Environment *string           `db:"environment" `
+	UserID      *string           `db:"user_id" `
+	DocKey      *string           `db:"doc_key" `
+	Version     *string           `db:"version" `
+	Locale      *null.Val[string] `db:"locale" `
+	AcceptedAt  *time.Time        `db:"accepted_at" `
 }
 
 func (s IamConsentSetter) SetColumns() []string {
-	vals := make([]string, 0, 7)
+	vals := make([]string, 0, 8)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.UserID != nil {
 		vals = append(vals, "user_id")
@@ -166,6 +173,14 @@ func (s IamConsentSetter) Overwrite(t *IamConsent) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.UserID != nil {
@@ -217,7 +232,7 @@ func (s *IamConsentSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 7)
+		vals := make([]bob.Expression, 8)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -240,41 +255,52 @@ func (s *IamConsentSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.UserID != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.UserID != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.UserID == nil {
 					return *new(string)
 				}
 				return *s.UserID
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.DocKey != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.DocKey == nil {
 					return *new(string)
 				}
 				return *s.DocKey
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.Version != nil {
-			vals[4] = psql.Arg(func() string {
+			vals[5] = psql.Arg(func() string {
 				if s.Version == nil {
 					return *new(string)
 				}
 				return *s.Version
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.Locale != nil {
-			vals[5] = psql.Arg(func() null.Val[string] {
+			vals[6] = psql.Arg(func() null.Val[string] {
 				if s.Locale == nil {
 					return *new(null.Val[string])
 				}
@@ -282,18 +308,18 @@ func (s *IamConsentSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.AcceptedAt != nil {
-			vals[6] = psql.Arg(func() time.Time {
+			vals[7] = psql.Arg(func() time.Time {
 				if s.AcceptedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.AcceptedAt
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -305,7 +331,7 @@ func (s IamConsentSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamConsentSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 7)
+	exprs := make([]bob.Expression, 0, 8)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -318,6 +344,13 @@ func (s IamConsentSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -614,13 +647,14 @@ func (o IamConsentSlice) ReloadAll(ctx context.Context, exec bob.Executor) error
 }
 
 type iamConsentWhere[Q psql.Filterable] struct {
-	ID         psql.WhereMod[Q, string]
-	ProjectID  psql.WhereMod[Q, string]
-	UserID     psql.WhereMod[Q, string]
-	DocKey     psql.WhereMod[Q, string]
-	Version    psql.WhereMod[Q, string]
-	Locale     psql.WhereNullMod[Q, string]
-	AcceptedAt psql.WhereMod[Q, time.Time]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	UserID      psql.WhereMod[Q, string]
+	DocKey      psql.WhereMod[Q, string]
+	Version     psql.WhereMod[Q, string]
+	Locale      psql.WhereNullMod[Q, string]
+	AcceptedAt  psql.WhereMod[Q, time.Time]
 }
 
 func (iamConsentWhere[Q]) AliasedAs(alias string) iamConsentWhere[Q] {
@@ -629,12 +663,13 @@ func (iamConsentWhere[Q]) AliasedAs(alias string) iamConsentWhere[Q] {
 
 func buildIamConsentWhere[Q psql.Filterable](cols iamConsentColumns) iamConsentWhere[Q] {
 	return iamConsentWhere[Q]{
-		ID:         psql.Where[Q, string](cols.ID.Expression),
-		ProjectID:  psql.Where[Q, string](cols.ProjectID.Expression),
-		UserID:     psql.Where[Q, string](cols.UserID.Expression),
-		DocKey:     psql.Where[Q, string](cols.DocKey.Expression),
-		Version:    psql.Where[Q, string](cols.Version.Expression),
-		Locale:     psql.WhereNull[Q, string](cols.Locale.Expression),
-		AcceptedAt: psql.Where[Q, time.Time](cols.AcceptedAt.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		UserID:      psql.Where[Q, string](cols.UserID.Expression),
+		DocKey:      psql.Where[Q, string](cols.DocKey.Expression),
+		Version:     psql.Where[Q, string](cols.Version.Expression),
+		Locale:      psql.WhereNull[Q, string](cols.Locale.Expression),
+		AcceptedAt:  psql.Where[Q, time.Time](cols.AcceptedAt.Expression),
 	}
 }

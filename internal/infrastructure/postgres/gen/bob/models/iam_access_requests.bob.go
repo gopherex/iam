@@ -20,13 +20,14 @@ import (
 
 // IamAccessRequest is an object representing the database table.
 type IamAccessRequest struct {
-	ID        string          `db:"id,pk" `
-	ProjectID string          `db:"project_id" `
-	Email     string          `db:"email" `
-	Status    string          `db:"status" `
-	CreatedAt time.Time       `db:"created_at" `
-	UpdatedAt time.Time       `db:"updated_at" `
-	Data      json.RawMessage `db:"data" `
+	ID          string          `db:"id,pk" `
+	ProjectID   string          `db:"project_id" `
+	Environment string          `db:"environment" `
+	Email       string          `db:"email" `
+	Status      string          `db:"status" `
+	CreatedAt   time.Time       `db:"created_at" `
+	UpdatedAt   time.Time       `db:"updated_at" `
+	Data        json.RawMessage `db:"data" `
 }
 
 // IamAccessRequestSlice is an alias for a slice of pointers to IamAccessRequest.
@@ -41,7 +42,7 @@ type IamAccessRequestsQuery = *psql.ViewQuery[*IamAccessRequest, IamAccessReques
 
 func buildIamAccessRequestColumns(tableName string) iamAccessRequestColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "email", "status", "created_at", "updated_at", "data",
+		"id", "project_id", "environment", "email", "status", "created_at", "updated_at", "data",
 	)
 
 	if tableName != "" {
@@ -53,6 +54,7 @@ func buildIamAccessRequestColumns(tableName string) iamAccessRequestColumns {
 		tableAlias:  tableName,
 		ID:          buildIamAccessRequestColumn(tableName, "id"),
 		ProjectID:   buildIamAccessRequestColumn(tableName, "project_id"),
+		Environment: buildIamAccessRequestColumn(tableName, "environment"),
 		Email:       buildIamAccessRequestColumn(tableName, "email"),
 		Status:      buildIamAccessRequestColumn(tableName, "status"),
 		CreatedAt:   buildIamAccessRequestColumn(tableName, "created_at"),
@@ -63,14 +65,15 @@ func buildIamAccessRequestColumns(tableName string) iamAccessRequestColumns {
 
 type iamAccessRequestColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamAccessRequestColumn
-	ProjectID  iamAccessRequestColumn
-	Email      iamAccessRequestColumn
-	Status     iamAccessRequestColumn
-	CreatedAt  iamAccessRequestColumn
-	UpdatedAt  iamAccessRequestColumn
-	Data       iamAccessRequestColumn
+	tableAlias  string
+	ID          iamAccessRequestColumn
+	ProjectID   iamAccessRequestColumn
+	Environment iamAccessRequestColumn
+	Email       iamAccessRequestColumn
+	Status      iamAccessRequestColumn
+	CreatedAt   iamAccessRequestColumn
+	UpdatedAt   iamAccessRequestColumn
+	Data        iamAccessRequestColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -116,22 +119,26 @@ func (c iamAccessRequestColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamAccessRequestSetter struct {
-	ID        *string          `db:"id,pk" `
-	ProjectID *string          `db:"project_id" `
-	Email     *string          `db:"email" `
-	Status    *string          `db:"status" `
-	CreatedAt *time.Time       `db:"created_at" `
-	UpdatedAt *time.Time       `db:"updated_at" `
-	Data      *json.RawMessage `db:"data" `
+	ID          *string          `db:"id,pk" `
+	ProjectID   *string          `db:"project_id" `
+	Environment *string          `db:"environment" `
+	Email       *string          `db:"email" `
+	Status      *string          `db:"status" `
+	CreatedAt   *time.Time       `db:"created_at" `
+	UpdatedAt   *time.Time       `db:"updated_at" `
+	Data        *json.RawMessage `db:"data" `
 }
 
 func (s IamAccessRequestSetter) SetColumns() []string {
-	vals := make([]string, 0, 7)
+	vals := make([]string, 0, 8)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.Email != nil {
 		vals = append(vals, "email")
@@ -166,6 +173,14 @@ func (s IamAccessRequestSetter) Overwrite(t *IamAccessRequest) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.Email != nil {
@@ -216,7 +231,7 @@ func (s *IamAccessRequestSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 7)
+		vals := make([]bob.Expression, 8)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -239,59 +254,70 @@ func (s *IamAccessRequestSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.Email != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.Email != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.Email == nil {
 					return *new(string)
 				}
 				return *s.Email
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.Status != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.Status == nil {
 					return *new(string)
 				}
 				return *s.Status
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[4] = psql.Arg(func() time.Time {
+			vals[5] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.UpdatedAt != nil {
-			vals[5] = psql.Arg(func() time.Time {
+			vals[6] = psql.Arg(func() time.Time {
 				if s.UpdatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.UpdatedAt
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[6] = psql.Arg(func() json.RawMessage {
+			vals[7] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -303,7 +329,7 @@ func (s IamAccessRequestSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamAccessRequestSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 7)
+	exprs := make([]bob.Expression, 0, 8)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -316,6 +342,13 @@ func (s IamAccessRequestSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -612,13 +645,14 @@ func (o IamAccessRequestSlice) ReloadAll(ctx context.Context, exec bob.Executor)
 }
 
 type iamAccessRequestWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	Email     psql.WhereMod[Q, string]
-	Status    psql.WhereMod[Q, string]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	UpdatedAt psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	Email       psql.WhereMod[Q, string]
+	Status      psql.WhereMod[Q, string]
+	CreatedAt   psql.WhereMod[Q, time.Time]
+	UpdatedAt   psql.WhereMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamAccessRequestWhere[Q]) AliasedAs(alias string) iamAccessRequestWhere[Q] {
@@ -627,12 +661,13 @@ func (iamAccessRequestWhere[Q]) AliasedAs(alias string) iamAccessRequestWhere[Q]
 
 func buildIamAccessRequestWhere[Q psql.Filterable](cols iamAccessRequestColumns) iamAccessRequestWhere[Q] {
 	return iamAccessRequestWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		Email:     psql.Where[Q, string](cols.Email.Expression),
-		Status:    psql.Where[Q, string](cols.Status.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		UpdatedAt: psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		Email:       psql.Where[Q, string](cols.Email.Expression),
+		Status:      psql.Where[Q, string](cols.Status.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		UpdatedAt:   psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

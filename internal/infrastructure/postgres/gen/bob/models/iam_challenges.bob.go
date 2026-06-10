@@ -21,15 +21,16 @@ import (
 
 // IamChallenge is an object representing the database table.
 type IamChallenge struct {
-	ID        string           `db:"id,pk" `
-	ProjectID string           `db:"project_id" `
-	Type      string           `db:"type" `
-	Subject   null.Val[string] `db:"subject" `
-	CodeHash  null.Val[string] `db:"code_hash" `
-	ExpiresAt time.Time        `db:"expires_at" `
-	Consumed  bool             `db:"consumed" `
-	CreatedAt time.Time        `db:"created_at" `
-	Data      json.RawMessage  `db:"data" `
+	ID          string           `db:"id,pk" `
+	ProjectID   string           `db:"project_id" `
+	Environment string           `db:"environment" `
+	Type        string           `db:"type" `
+	Subject     null.Val[string] `db:"subject" `
+	CodeHash    null.Val[string] `db:"code_hash" `
+	ExpiresAt   time.Time        `db:"expires_at" `
+	Consumed    bool             `db:"consumed" `
+	CreatedAt   time.Time        `db:"created_at" `
+	Data        json.RawMessage  `db:"data" `
 }
 
 // IamChallengeSlice is an alias for a slice of pointers to IamChallenge.
@@ -44,7 +45,7 @@ type IamChallengesQuery = *psql.ViewQuery[*IamChallenge, IamChallengeSlice]
 
 func buildIamChallengeColumns(tableName string) iamChallengeColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "type", "subject", "code_hash", "expires_at", "consumed", "created_at", "data",
+		"id", "project_id", "environment", "type", "subject", "code_hash", "expires_at", "consumed", "created_at", "data",
 	)
 
 	if tableName != "" {
@@ -56,6 +57,7 @@ func buildIamChallengeColumns(tableName string) iamChallengeColumns {
 		tableAlias:  tableName,
 		ID:          buildIamChallengeColumn(tableName, "id"),
 		ProjectID:   buildIamChallengeColumn(tableName, "project_id"),
+		Environment: buildIamChallengeColumn(tableName, "environment"),
 		Type:        buildIamChallengeColumn(tableName, "type"),
 		Subject:     buildIamChallengeColumn(tableName, "subject"),
 		CodeHash:    buildIamChallengeColumn(tableName, "code_hash"),
@@ -68,16 +70,17 @@ func buildIamChallengeColumns(tableName string) iamChallengeColumns {
 
 type iamChallengeColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamChallengeColumn
-	ProjectID  iamChallengeColumn
-	Type       iamChallengeColumn
-	Subject    iamChallengeColumn
-	CodeHash   iamChallengeColumn
-	ExpiresAt  iamChallengeColumn
-	Consumed   iamChallengeColumn
-	CreatedAt  iamChallengeColumn
-	Data       iamChallengeColumn
+	tableAlias  string
+	ID          iamChallengeColumn
+	ProjectID   iamChallengeColumn
+	Environment iamChallengeColumn
+	Type        iamChallengeColumn
+	Subject     iamChallengeColumn
+	CodeHash    iamChallengeColumn
+	ExpiresAt   iamChallengeColumn
+	Consumed    iamChallengeColumn
+	CreatedAt   iamChallengeColumn
+	Data        iamChallengeColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -123,24 +126,28 @@ func (c iamChallengeColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamChallengeSetter struct {
-	ID        *string           `db:"id,pk" `
-	ProjectID *string           `db:"project_id" `
-	Type      *string           `db:"type" `
-	Subject   *null.Val[string] `db:"subject" `
-	CodeHash  *null.Val[string] `db:"code_hash" `
-	ExpiresAt *time.Time        `db:"expires_at" `
-	Consumed  *bool             `db:"consumed" `
-	CreatedAt *time.Time        `db:"created_at" `
-	Data      *json.RawMessage  `db:"data" `
+	ID          *string           `db:"id,pk" `
+	ProjectID   *string           `db:"project_id" `
+	Environment *string           `db:"environment" `
+	Type        *string           `db:"type" `
+	Subject     *null.Val[string] `db:"subject" `
+	CodeHash    *null.Val[string] `db:"code_hash" `
+	ExpiresAt   *time.Time        `db:"expires_at" `
+	Consumed    *bool             `db:"consumed" `
+	CreatedAt   *time.Time        `db:"created_at" `
+	Data        *json.RawMessage  `db:"data" `
 }
 
 func (s IamChallengeSetter) SetColumns() []string {
-	vals := make([]string, 0, 9)
+	vals := make([]string, 0, 10)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.Type != nil {
 		vals = append(vals, "type")
@@ -181,6 +188,14 @@ func (s IamChallengeSetter) Overwrite(t *IamChallenge) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.Type != nil {
@@ -249,7 +264,7 @@ func (s *IamChallengeSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 9)
+		vals := make([]bob.Expression, 10)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -272,19 +287,30 @@ func (s *IamChallengeSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.Type != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.Type != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.Type == nil {
 					return *new(string)
 				}
 				return *s.Type
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.Subject != nil {
-			vals[3] = psql.Arg(func() null.Val[string] {
+			vals[4] = psql.Arg(func() null.Val[string] {
 				if s.Subject == nil {
 					return *new(null.Val[string])
 				}
@@ -292,11 +318,11 @@ func (s *IamChallengeSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.CodeHash != nil {
-			vals[4] = psql.Arg(func() null.Val[string] {
+			vals[5] = psql.Arg(func() null.Val[string] {
 				if s.CodeHash == nil {
 					return *new(null.Val[string])
 				}
@@ -304,51 +330,51 @@ func (s *IamChallengeSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.ExpiresAt != nil {
-			vals[5] = psql.Arg(func() time.Time {
+			vals[6] = psql.Arg(func() time.Time {
 				if s.ExpiresAt == nil {
 					return *new(time.Time)
 				}
 				return *s.ExpiresAt
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.Consumed != nil {
-			vals[6] = psql.Arg(func() bool {
+			vals[7] = psql.Arg(func() bool {
 				if s.Consumed == nil {
 					return *new(bool)
 				}
 				return *s.Consumed
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[7] = psql.Arg(func() time.Time {
+			vals[8] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[8] = psql.Arg(func() json.RawMessage {
+			vals[9] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[8] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -360,7 +386,7 @@ func (s IamChallengeSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamChallengeSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 9)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -373,6 +399,13 @@ func (s IamChallengeSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -683,15 +716,16 @@ func (o IamChallengeSlice) ReloadAll(ctx context.Context, exec bob.Executor) err
 }
 
 type iamChallengeWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	Type      psql.WhereMod[Q, string]
-	Subject   psql.WhereNullMod[Q, string]
-	CodeHash  psql.WhereNullMod[Q, string]
-	ExpiresAt psql.WhereMod[Q, time.Time]
-	Consumed  psql.WhereMod[Q, bool]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	Type        psql.WhereMod[Q, string]
+	Subject     psql.WhereNullMod[Q, string]
+	CodeHash    psql.WhereNullMod[Q, string]
+	ExpiresAt   psql.WhereMod[Q, time.Time]
+	Consumed    psql.WhereMod[Q, bool]
+	CreatedAt   psql.WhereMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamChallengeWhere[Q]) AliasedAs(alias string) iamChallengeWhere[Q] {
@@ -700,14 +734,15 @@ func (iamChallengeWhere[Q]) AliasedAs(alias string) iamChallengeWhere[Q] {
 
 func buildIamChallengeWhere[Q psql.Filterable](cols iamChallengeColumns) iamChallengeWhere[Q] {
 	return iamChallengeWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		Type:      psql.Where[Q, string](cols.Type.Expression),
-		Subject:   psql.WhereNull[Q, string](cols.Subject.Expression),
-		CodeHash:  psql.WhereNull[Q, string](cols.CodeHash.Expression),
-		ExpiresAt: psql.Where[Q, time.Time](cols.ExpiresAt.Expression),
-		Consumed:  psql.Where[Q, bool](cols.Consumed.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		Type:        psql.Where[Q, string](cols.Type.Expression),
+		Subject:     psql.WhereNull[Q, string](cols.Subject.Expression),
+		CodeHash:    psql.WhereNull[Q, string](cols.CodeHash.Expression),
+		ExpiresAt:   psql.Where[Q, time.Time](cols.ExpiresAt.Expression),
+		Consumed:    psql.Where[Q, bool](cols.Consumed.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

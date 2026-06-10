@@ -20,12 +20,13 @@ import (
 
 // IamActivity is an object representing the database table.
 type IamActivity struct {
-	ID        string          `db:"id,pk" `
-	ProjectID string          `db:"project_id" `
-	UserID    string          `db:"user_id" `
-	Type      string          `db:"type" `
-	At        time.Time       `db:"at" `
-	Data      json.RawMessage `db:"data" `
+	ID          string          `db:"id,pk" `
+	ProjectID   string          `db:"project_id" `
+	Environment string          `db:"environment" `
+	UserID      string          `db:"user_id" `
+	Type        string          `db:"type" `
+	At          time.Time       `db:"at" `
+	Data        json.RawMessage `db:"data" `
 }
 
 // IamActivitySlice is an alias for a slice of pointers to IamActivity.
@@ -40,7 +41,7 @@ type IamActivitiesQuery = *psql.ViewQuery[*IamActivity, IamActivitySlice]
 
 func buildIamActivityColumns(tableName string) iamActivityColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "user_id", "type", "at", "data",
+		"id", "project_id", "environment", "user_id", "type", "at", "data",
 	)
 
 	if tableName != "" {
@@ -52,6 +53,7 @@ func buildIamActivityColumns(tableName string) iamActivityColumns {
 		tableAlias:  tableName,
 		ID:          buildIamActivityColumn(tableName, "id"),
 		ProjectID:   buildIamActivityColumn(tableName, "project_id"),
+		Environment: buildIamActivityColumn(tableName, "environment"),
 		UserID:      buildIamActivityColumn(tableName, "user_id"),
 		Type:        buildIamActivityColumn(tableName, "type"),
 		At:          buildIamActivityColumn(tableName, "at"),
@@ -61,13 +63,14 @@ func buildIamActivityColumns(tableName string) iamActivityColumns {
 
 type iamActivityColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamActivityColumn
-	ProjectID  iamActivityColumn
-	UserID     iamActivityColumn
-	Type       iamActivityColumn
-	At         iamActivityColumn
-	Data       iamActivityColumn
+	tableAlias  string
+	ID          iamActivityColumn
+	ProjectID   iamActivityColumn
+	Environment iamActivityColumn
+	UserID      iamActivityColumn
+	Type        iamActivityColumn
+	At          iamActivityColumn
+	Data        iamActivityColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -113,21 +116,25 @@ func (c iamActivityColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamActivitySetter struct {
-	ID        *string          `db:"id,pk" `
-	ProjectID *string          `db:"project_id" `
-	UserID    *string          `db:"user_id" `
-	Type      *string          `db:"type" `
-	At        *time.Time       `db:"at" `
-	Data      *json.RawMessage `db:"data" `
+	ID          *string          `db:"id,pk" `
+	ProjectID   *string          `db:"project_id" `
+	Environment *string          `db:"environment" `
+	UserID      *string          `db:"user_id" `
+	Type        *string          `db:"type" `
+	At          *time.Time       `db:"at" `
+	Data        *json.RawMessage `db:"data" `
 }
 
 func (s IamActivitySetter) SetColumns() []string {
-	vals := make([]string, 0, 6)
+	vals := make([]string, 0, 7)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.UserID != nil {
 		vals = append(vals, "user_id")
@@ -159,6 +166,14 @@ func (s IamActivitySetter) Overwrite(t *IamActivity) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.UserID != nil {
@@ -201,7 +216,7 @@ func (s *IamActivitySetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 6)
+		vals := make([]bob.Expression, 7)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -224,48 +239,59 @@ func (s *IamActivitySetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.UserID != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.UserID != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.UserID == nil {
 					return *new(string)
 				}
 				return *s.UserID
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.Type != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.Type == nil {
 					return *new(string)
 				}
 				return *s.Type
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.At != nil {
-			vals[4] = psql.Arg(func() time.Time {
+			vals[5] = psql.Arg(func() time.Time {
 				if s.At == nil {
 					return *new(time.Time)
 				}
 				return *s.At
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[5] = psql.Arg(func() json.RawMessage {
+			vals[6] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -277,7 +303,7 @@ func (s IamActivitySetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamActivitySetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 6)
+	exprs := make([]bob.Expression, 0, 7)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -290,6 +316,13 @@ func (s IamActivitySetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -579,12 +612,13 @@ func (o IamActivitySlice) ReloadAll(ctx context.Context, exec bob.Executor) erro
 }
 
 type iamActivityWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	UserID    psql.WhereMod[Q, string]
-	Type      psql.WhereMod[Q, string]
-	At        psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	UserID      psql.WhereMod[Q, string]
+	Type        psql.WhereMod[Q, string]
+	At          psql.WhereMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamActivityWhere[Q]) AliasedAs(alias string) iamActivityWhere[Q] {
@@ -593,11 +627,12 @@ func (iamActivityWhere[Q]) AliasedAs(alias string) iamActivityWhere[Q] {
 
 func buildIamActivityWhere[Q psql.Filterable](cols iamActivityColumns) iamActivityWhere[Q] {
 	return iamActivityWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		UserID:    psql.Where[Q, string](cols.UserID.Expression),
-		Type:      psql.Where[Q, string](cols.Type.Expression),
-		At:        psql.Where[Q, time.Time](cols.At.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		UserID:      psql.Where[Q, string](cols.UserID.Expression),
+		Type:        psql.Where[Q, string](cols.Type.Expression),
+		At:          psql.Where[Q, time.Time](cols.At.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

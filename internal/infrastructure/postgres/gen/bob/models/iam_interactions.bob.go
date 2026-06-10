@@ -21,13 +21,14 @@ import (
 
 // IamInteraction is an object representing the database table.
 type IamInteraction struct {
-	ID        string              `db:"id,pk" `
-	ProjectID string              `db:"project_id" `
-	ClientID  null.Val[string]    `db:"client_id" `
-	SessionID null.Val[string]    `db:"session_id" `
-	ExpiresAt null.Val[time.Time] `db:"expires_at" `
-	CreatedAt time.Time           `db:"created_at" `
-	Data      json.RawMessage     `db:"data" `
+	ID          string              `db:"id,pk" `
+	ProjectID   string              `db:"project_id" `
+	Environment string              `db:"environment" `
+	ClientID    null.Val[string]    `db:"client_id" `
+	SessionID   null.Val[string]    `db:"session_id" `
+	ExpiresAt   null.Val[time.Time] `db:"expires_at" `
+	CreatedAt   time.Time           `db:"created_at" `
+	Data        json.RawMessage     `db:"data" `
 }
 
 // IamInteractionSlice is an alias for a slice of pointers to IamInteraction.
@@ -42,7 +43,7 @@ type IamInteractionsQuery = *psql.ViewQuery[*IamInteraction, IamInteractionSlice
 
 func buildIamInteractionColumns(tableName string) iamInteractionColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "client_id", "session_id", "expires_at", "created_at", "data",
+		"id", "project_id", "environment", "client_id", "session_id", "expires_at", "created_at", "data",
 	)
 
 	if tableName != "" {
@@ -54,6 +55,7 @@ func buildIamInteractionColumns(tableName string) iamInteractionColumns {
 		tableAlias:  tableName,
 		ID:          buildIamInteractionColumn(tableName, "id"),
 		ProjectID:   buildIamInteractionColumn(tableName, "project_id"),
+		Environment: buildIamInteractionColumn(tableName, "environment"),
 		ClientID:    buildIamInteractionColumn(tableName, "client_id"),
 		SessionID:   buildIamInteractionColumn(tableName, "session_id"),
 		ExpiresAt:   buildIamInteractionColumn(tableName, "expires_at"),
@@ -64,14 +66,15 @@ func buildIamInteractionColumns(tableName string) iamInteractionColumns {
 
 type iamInteractionColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamInteractionColumn
-	ProjectID  iamInteractionColumn
-	ClientID   iamInteractionColumn
-	SessionID  iamInteractionColumn
-	ExpiresAt  iamInteractionColumn
-	CreatedAt  iamInteractionColumn
-	Data       iamInteractionColumn
+	tableAlias  string
+	ID          iamInteractionColumn
+	ProjectID   iamInteractionColumn
+	Environment iamInteractionColumn
+	ClientID    iamInteractionColumn
+	SessionID   iamInteractionColumn
+	ExpiresAt   iamInteractionColumn
+	CreatedAt   iamInteractionColumn
+	Data        iamInteractionColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -117,22 +120,26 @@ func (c iamInteractionColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamInteractionSetter struct {
-	ID        *string              `db:"id,pk" `
-	ProjectID *string              `db:"project_id" `
-	ClientID  *null.Val[string]    `db:"client_id" `
-	SessionID *null.Val[string]    `db:"session_id" `
-	ExpiresAt *null.Val[time.Time] `db:"expires_at" `
-	CreatedAt *time.Time           `db:"created_at" `
-	Data      *json.RawMessage     `db:"data" `
+	ID          *string              `db:"id,pk" `
+	ProjectID   *string              `db:"project_id" `
+	Environment *string              `db:"environment" `
+	ClientID    *null.Val[string]    `db:"client_id" `
+	SessionID   *null.Val[string]    `db:"session_id" `
+	ExpiresAt   *null.Val[time.Time] `db:"expires_at" `
+	CreatedAt   *time.Time           `db:"created_at" `
+	Data        *json.RawMessage     `db:"data" `
 }
 
 func (s IamInteractionSetter) SetColumns() []string {
-	vals := make([]string, 0, 7)
+	vals := make([]string, 0, 8)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.ClientID != nil {
 		vals = append(vals, "client_id")
@@ -167,6 +174,14 @@ func (s IamInteractionSetter) Overwrite(t *IamInteraction) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.ClientID != nil {
@@ -220,7 +235,7 @@ func (s *IamInteractionSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 7)
+		vals := make([]bob.Expression, 8)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -243,8 +258,19 @@ func (s *IamInteractionSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
+		if s.Environment != nil {
+			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
 		if s.ClientID != nil {
-			vals[2] = psql.Arg(func() null.Val[string] {
+			vals[3] = psql.Arg(func() null.Val[string] {
 				if s.ClientID == nil {
 					return *new(null.Val[string])
 				}
@@ -252,11 +278,11 @@ func (s *IamInteractionSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.SessionID != nil {
-			vals[3] = psql.Arg(func() null.Val[string] {
+			vals[4] = psql.Arg(func() null.Val[string] {
 				if s.SessionID == nil {
 					return *new(null.Val[string])
 				}
@@ -264,11 +290,11 @@ func (s *IamInteractionSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.ExpiresAt != nil {
-			vals[4] = psql.Arg(func() null.Val[time.Time] {
+			vals[5] = psql.Arg(func() null.Val[time.Time] {
 				if s.ExpiresAt == nil {
 					return *new(null.Val[time.Time])
 				}
@@ -276,29 +302,29 @@ func (s *IamInteractionSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[5] = psql.Arg(func() time.Time {
+			vals[6] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[6] = psql.Arg(func() json.RawMessage {
+			vals[7] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -310,7 +336,7 @@ func (s IamInteractionSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamInteractionSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 7)
+	exprs := make([]bob.Expression, 0, 8)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -323,6 +349,13 @@ func (s IamInteractionSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -619,13 +652,14 @@ func (o IamInteractionSlice) ReloadAll(ctx context.Context, exec bob.Executor) e
 }
 
 type iamInteractionWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	ClientID  psql.WhereNullMod[Q, string]
-	SessionID psql.WhereNullMod[Q, string]
-	ExpiresAt psql.WhereNullMod[Q, time.Time]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	ClientID    psql.WhereNullMod[Q, string]
+	SessionID   psql.WhereNullMod[Q, string]
+	ExpiresAt   psql.WhereNullMod[Q, time.Time]
+	CreatedAt   psql.WhereMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamInteractionWhere[Q]) AliasedAs(alias string) iamInteractionWhere[Q] {
@@ -634,12 +668,13 @@ func (iamInteractionWhere[Q]) AliasedAs(alias string) iamInteractionWhere[Q] {
 
 func buildIamInteractionWhere[Q psql.Filterable](cols iamInteractionColumns) iamInteractionWhere[Q] {
 	return iamInteractionWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		ClientID:  psql.WhereNull[Q, string](cols.ClientID.Expression),
-		SessionID: psql.WhereNull[Q, string](cols.SessionID.Expression),
-		ExpiresAt: psql.WhereNull[Q, time.Time](cols.ExpiresAt.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		ClientID:    psql.WhereNull[Q, string](cols.ClientID.Expression),
+		SessionID:   psql.WhereNull[Q, string](cols.SessionID.Expression),
+		ExpiresAt:   psql.WhereNull[Q, time.Time](cols.ExpiresAt.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

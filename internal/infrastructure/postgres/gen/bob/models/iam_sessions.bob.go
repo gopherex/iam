@@ -23,6 +23,7 @@ import (
 type IamSession struct {
 	ID           string              `db:"id,pk" `
 	ProjectID    string              `db:"project_id" `
+	Environment  string              `db:"environment" `
 	UserID       string              `db:"user_id" `
 	ClientID     null.Val[string]    `db:"client_id" `
 	Aal          int32               `db:"aal" `
@@ -45,7 +46,7 @@ type IamSessionsQuery = *psql.ViewQuery[*IamSession, IamSessionSlice]
 
 func buildIamSessionColumns(tableName string) iamSessionColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "user_id", "client_id", "aal", "trusted", "expires_at", "created_at", "last_active_at", "data",
+		"id", "project_id", "environment", "user_id", "client_id", "aal", "trusted", "expires_at", "created_at", "last_active_at", "data",
 	)
 
 	if tableName != "" {
@@ -57,6 +58,7 @@ func buildIamSessionColumns(tableName string) iamSessionColumns {
 		tableAlias:   tableName,
 		ID:           buildIamSessionColumn(tableName, "id"),
 		ProjectID:    buildIamSessionColumn(tableName, "project_id"),
+		Environment:  buildIamSessionColumn(tableName, "environment"),
 		UserID:       buildIamSessionColumn(tableName, "user_id"),
 		ClientID:     buildIamSessionColumn(tableName, "client_id"),
 		Aal:          buildIamSessionColumn(tableName, "aal"),
@@ -73,6 +75,7 @@ type iamSessionColumns struct {
 	tableAlias   string
 	ID           iamSessionColumn
 	ProjectID    iamSessionColumn
+	Environment  iamSessionColumn
 	UserID       iamSessionColumn
 	ClientID     iamSessionColumn
 	Aal          iamSessionColumn
@@ -128,6 +131,7 @@ func (c iamSessionColumn) ShouldOmitParens() bool {
 type IamSessionSetter struct {
 	ID           *string              `db:"id,pk" `
 	ProjectID    *string              `db:"project_id" `
+	Environment  *string              `db:"environment" `
 	UserID       *string              `db:"user_id" `
 	ClientID     *null.Val[string]    `db:"client_id" `
 	Aal          *int32               `db:"aal" `
@@ -139,12 +143,15 @@ type IamSessionSetter struct {
 }
 
 func (s IamSessionSetter) SetColumns() []string {
-	vals := make([]string, 0, 10)
+	vals := make([]string, 0, 11)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.UserID != nil {
 		vals = append(vals, "user_id")
@@ -188,6 +195,14 @@ func (s IamSessionSetter) Overwrite(t *IamSession) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.UserID != nil {
@@ -264,7 +279,7 @@ func (s *IamSessionSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 10)
+		vals := make([]bob.Expression, 11)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -287,19 +302,30 @@ func (s *IamSessionSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.UserID != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.UserID != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.UserID == nil {
 					return *new(string)
 				}
 				return *s.UserID
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.ClientID != nil {
-			vals[3] = psql.Arg(func() null.Val[string] {
+			vals[4] = psql.Arg(func() null.Val[string] {
 				if s.ClientID == nil {
 					return *new(null.Val[string])
 				}
@@ -307,33 +333,33 @@ func (s *IamSessionSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.Aal != nil {
-			vals[4] = psql.Arg(func() int32 {
+			vals[5] = psql.Arg(func() int32 {
 				if s.Aal == nil {
 					return *new(int32)
 				}
 				return *s.Aal
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.Trusted != nil {
-			vals[5] = psql.Arg(func() bool {
+			vals[6] = psql.Arg(func() bool {
 				if s.Trusted == nil {
 					return *new(bool)
 				}
 				return *s.Trusted
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.ExpiresAt != nil {
-			vals[6] = psql.Arg(func() null.Val[time.Time] {
+			vals[7] = psql.Arg(func() null.Val[time.Time] {
 				if s.ExpiresAt == nil {
 					return *new(null.Val[time.Time])
 				}
@@ -341,40 +367,40 @@ func (s *IamSessionSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[7] = psql.Arg(func() time.Time {
+			vals[8] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.LastActiveAt != nil {
-			vals[8] = psql.Arg(func() time.Time {
+			vals[9] = psql.Arg(func() time.Time {
 				if s.LastActiveAt == nil {
 					return *new(time.Time)
 				}
 				return *s.LastActiveAt
 			}())
 		} else {
-			vals[8] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[9] = psql.Arg(func() json.RawMessage {
+			vals[10] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[9] = psql.Raw("DEFAULT")
+			vals[10] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -386,7 +412,7 @@ func (s IamSessionSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamSessionSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 10)
+	exprs := make([]bob.Expression, 0, 11)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -399,6 +425,13 @@ func (s IamSessionSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -718,6 +751,7 @@ func (o IamSessionSlice) ReloadAll(ctx context.Context, exec bob.Executor) error
 type iamSessionWhere[Q psql.Filterable] struct {
 	ID           psql.WhereMod[Q, string]
 	ProjectID    psql.WhereMod[Q, string]
+	Environment  psql.WhereMod[Q, string]
 	UserID       psql.WhereMod[Q, string]
 	ClientID     psql.WhereNullMod[Q, string]
 	Aal          psql.WhereMod[Q, int32]
@@ -736,6 +770,7 @@ func buildIamSessionWhere[Q psql.Filterable](cols iamSessionColumns) iamSessionW
 	return iamSessionWhere[Q]{
 		ID:           psql.Where[Q, string](cols.ID.Expression),
 		ProjectID:    psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment:  psql.Where[Q, string](cols.Environment.Expression),
 		UserID:       psql.Where[Q, string](cols.UserID.Expression),
 		ClientID:     psql.WhereNull[Q, string](cols.ClientID.Expression),
 		Aal:          psql.Where[Q, int32](cols.Aal.Expression),

@@ -21,12 +21,13 @@ import (
 
 // IamBlock is an object representing the database table.
 type IamBlock struct {
-	ID        string              `db:"id,pk" `
-	ProjectID string              `db:"project_id" `
-	Subject   string              `db:"subject" `
-	CreatedAt time.Time           `db:"created_at" `
-	ExpiresAt null.Val[time.Time] `db:"expires_at" `
-	Data      json.RawMessage     `db:"data" `
+	ID          string              `db:"id,pk" `
+	ProjectID   string              `db:"project_id" `
+	Environment string              `db:"environment" `
+	Subject     string              `db:"subject" `
+	CreatedAt   time.Time           `db:"created_at" `
+	ExpiresAt   null.Val[time.Time] `db:"expires_at" `
+	Data        json.RawMessage     `db:"data" `
 }
 
 // IamBlockSlice is an alias for a slice of pointers to IamBlock.
@@ -41,7 +42,7 @@ type IamBlocksQuery = *psql.ViewQuery[*IamBlock, IamBlockSlice]
 
 func buildIamBlockColumns(tableName string) iamBlockColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "subject", "created_at", "expires_at", "data",
+		"id", "project_id", "environment", "subject", "created_at", "expires_at", "data",
 	)
 
 	if tableName != "" {
@@ -53,6 +54,7 @@ func buildIamBlockColumns(tableName string) iamBlockColumns {
 		tableAlias:  tableName,
 		ID:          buildIamBlockColumn(tableName, "id"),
 		ProjectID:   buildIamBlockColumn(tableName, "project_id"),
+		Environment: buildIamBlockColumn(tableName, "environment"),
 		Subject:     buildIamBlockColumn(tableName, "subject"),
 		CreatedAt:   buildIamBlockColumn(tableName, "created_at"),
 		ExpiresAt:   buildIamBlockColumn(tableName, "expires_at"),
@@ -62,13 +64,14 @@ func buildIamBlockColumns(tableName string) iamBlockColumns {
 
 type iamBlockColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamBlockColumn
-	ProjectID  iamBlockColumn
-	Subject    iamBlockColumn
-	CreatedAt  iamBlockColumn
-	ExpiresAt  iamBlockColumn
-	Data       iamBlockColumn
+	tableAlias  string
+	ID          iamBlockColumn
+	ProjectID   iamBlockColumn
+	Environment iamBlockColumn
+	Subject     iamBlockColumn
+	CreatedAt   iamBlockColumn
+	ExpiresAt   iamBlockColumn
+	Data        iamBlockColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -114,21 +117,25 @@ func (c iamBlockColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamBlockSetter struct {
-	ID        *string              `db:"id,pk" `
-	ProjectID *string              `db:"project_id" `
-	Subject   *string              `db:"subject" `
-	CreatedAt *time.Time           `db:"created_at" `
-	ExpiresAt *null.Val[time.Time] `db:"expires_at" `
-	Data      *json.RawMessage     `db:"data" `
+	ID          *string              `db:"id,pk" `
+	ProjectID   *string              `db:"project_id" `
+	Environment *string              `db:"environment" `
+	Subject     *string              `db:"subject" `
+	CreatedAt   *time.Time           `db:"created_at" `
+	ExpiresAt   *null.Val[time.Time] `db:"expires_at" `
+	Data        *json.RawMessage     `db:"data" `
 }
 
 func (s IamBlockSetter) SetColumns() []string {
-	vals := make([]string, 0, 6)
+	vals := make([]string, 0, 7)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.Subject != nil {
 		vals = append(vals, "subject")
@@ -160,6 +167,14 @@ func (s IamBlockSetter) Overwrite(t *IamBlock) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.Subject != nil {
@@ -203,7 +218,7 @@ func (s *IamBlockSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 6)
+		vals := make([]bob.Expression, 7)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -226,30 +241,41 @@ func (s *IamBlockSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.Subject != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.Subject != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.Subject == nil {
 					return *new(string)
 				}
 				return *s.Subject
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[3] = psql.Arg(func() time.Time {
+			vals[4] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.ExpiresAt != nil {
-			vals[4] = psql.Arg(func() null.Val[time.Time] {
+			vals[5] = psql.Arg(func() null.Val[time.Time] {
 				if s.ExpiresAt == nil {
 					return *new(null.Val[time.Time])
 				}
@@ -257,18 +283,18 @@ func (s *IamBlockSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[5] = psql.Arg(func() json.RawMessage {
+			vals[6] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -280,7 +306,7 @@ func (s IamBlockSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamBlockSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 6)
+	exprs := make([]bob.Expression, 0, 7)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -293,6 +319,13 @@ func (s IamBlockSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -582,12 +615,13 @@ func (o IamBlockSlice) ReloadAll(ctx context.Context, exec bob.Executor) error {
 }
 
 type iamBlockWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	Subject   psql.WhereMod[Q, string]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	ExpiresAt psql.WhereNullMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	Subject     psql.WhereMod[Q, string]
+	CreatedAt   psql.WhereMod[Q, time.Time]
+	ExpiresAt   psql.WhereNullMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamBlockWhere[Q]) AliasedAs(alias string) iamBlockWhere[Q] {
@@ -596,11 +630,12 @@ func (iamBlockWhere[Q]) AliasedAs(alias string) iamBlockWhere[Q] {
 
 func buildIamBlockWhere[Q psql.Filterable](cols iamBlockColumns) iamBlockWhere[Q] {
 	return iamBlockWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		Subject:   psql.Where[Q, string](cols.Subject.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		ExpiresAt: psql.WhereNull[Q, time.Time](cols.ExpiresAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		Subject:     psql.Where[Q, string](cols.Subject.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		ExpiresAt:   psql.WhereNull[Q, time.Time](cols.ExpiresAt.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

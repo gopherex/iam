@@ -16,6 +16,7 @@
 CREATE TABLE iam_users (
   id            text PRIMARY KEY,
   project_id    text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   kind          text NOT NULL DEFAULT 'human',
   status        text NOT NULL DEFAULT 'active',
   primary_email text,
@@ -25,12 +26,13 @@ CREATE TABLE iam_users (
   data          jsonb NOT NULL
 );
 CREATE INDEX idx_iam_users_project ON iam_users (project_id);
-CREATE UNIQUE INDEX uq_iam_users_email ON iam_users (project_id, primary_email) WHERE primary_email IS NOT NULL;
-CREATE UNIQUE INDEX uq_iam_users_phone ON iam_users (project_id, primary_phone) WHERE primary_phone IS NOT NULL;
+CREATE UNIQUE INDEX uq_iam_users_email ON iam_users (project_id, environment, primary_email) WHERE primary_email IS NOT NULL;
+CREATE UNIQUE INDEX uq_iam_users_phone ON iam_users (project_id, environment, primary_phone) WHERE primary_phone IS NOT NULL;
 
 CREATE TABLE iam_credentials (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   user_id    text NOT NULL,
   type       text NOT NULL,          -- password
   secret     text NOT NULL DEFAULT '', -- hash (argon2/bcrypt)
@@ -43,6 +45,7 @@ CREATE INDEX idx_iam_credentials_user ON iam_credentials (project_id, user_id);
 CREATE TABLE iam_identities (
   id                  text PRIMARY KEY,
   project_id          text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   user_id             text NOT NULL,
   type                text NOT NULL,   -- password | oauth | saml | oidc | passkey
   provider            text,
@@ -52,12 +55,13 @@ CREATE TABLE iam_identities (
   data                jsonb NOT NULL
 );
 CREATE INDEX idx_iam_identities_user ON iam_identities (project_id, user_id);
-CREATE UNIQUE INDEX uq_iam_identities_provider ON iam_identities (project_id, provider, provider_account_id)
+CREATE UNIQUE INDEX uq_iam_identities_provider ON iam_identities (project_id, environment, provider, provider_account_id)
   WHERE provider IS NOT NULL AND provider_account_id IS NOT NULL;
 
 CREATE TABLE iam_sessions (
   id             text PRIMARY KEY,
   project_id     text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   user_id        text NOT NULL,
   client_id      text,
   aal            integer NOT NULL DEFAULT 1,
@@ -72,6 +76,7 @@ CREATE INDEX idx_iam_sessions_user ON iam_sessions (project_id, user_id);
 CREATE TABLE iam_refresh_tokens (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   user_id    text NOT NULL,
   session_id text NOT NULL,
   hash       text NOT NULL,
@@ -90,6 +95,7 @@ CREATE INDEX idx_iam_refresh_hash ON iam_refresh_tokens (hash);
 CREATE TABLE iam_factors (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   user_id    text NOT NULL,
   type       text NOT NULL,   -- totp | sms | email | webauthn
   status     text NOT NULL DEFAULT 'pending',
@@ -102,6 +108,7 @@ CREATE INDEX idx_iam_factors_user ON iam_factors (project_id, user_id);
 CREATE TABLE iam_webauthn_credentials (
   id           text PRIMARY KEY,
   project_id   text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   user_id      text NOT NULL,
   credential_id text NOT NULL,
   public_key   bytea,
@@ -111,11 +118,12 @@ CREATE TABLE iam_webauthn_credentials (
   data         jsonb NOT NULL
 );
 CREATE INDEX idx_iam_webauthn_user ON iam_webauthn_credentials (project_id, user_id);
-CREATE UNIQUE INDEX uq_iam_webauthn_cred ON iam_webauthn_credentials (project_id, credential_id);
+CREATE UNIQUE INDEX uq_iam_webauthn_cred ON iam_webauthn_credentials (project_id, environment, credential_id);
 
 CREATE TABLE iam_recovery_codes (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   user_id    text NOT NULL,
   hash       text NOT NULL,
   used       boolean NOT NULL DEFAULT false,
@@ -126,6 +134,7 @@ CREATE INDEX idx_iam_recovery_user ON iam_recovery_codes (project_id, user_id);
 CREATE TABLE iam_challenges (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   type       text NOT NULL,   -- otp | mfa | email | phone | passkey | consent | merge
   subject    text,            -- email/phone/user being challenged
   code_hash  text,
@@ -139,6 +148,7 @@ CREATE INDEX idx_iam_challenges_subject ON iam_challenges (project_id, subject);
 CREATE TABLE iam_flows (
   id          text PRIMARY KEY,
   project_id  text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   token_hash  text NOT NULL UNIQUE,
   kind        text NOT NULL,
   status      text NOT NULL,
@@ -154,6 +164,7 @@ CREATE INDEX iam_flows_project_idx ON iam_flows (project_id);
 CREATE TABLE iam_consents (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   user_id    text NOT NULL,
   doc_key    text NOT NULL,
   version    text NOT NULL,
@@ -288,6 +299,7 @@ CREATE INDEX idx_iam_scim_resources_conn ON iam_scim_resources (project_id, conn
 CREATE TABLE iam_oauth_grants (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   user_id    text NOT NULL,
   client_id  text NOT NULL,
   granted_at timestamptz NOT NULL DEFAULT now(),
@@ -298,6 +310,7 @@ CREATE INDEX idx_iam_oauth_grants_user ON iam_oauth_grants (project_id, user_id)
 CREATE TABLE iam_interactions (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   client_id  text,
   session_id text,           -- bound session (anti-hijack)
   expires_at timestamptz,
@@ -308,6 +321,7 @@ CREATE TABLE iam_interactions (
 CREATE TABLE iam_auth_codes (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   code_hash  text NOT NULL,
   client_id  text,
   user_id    text,
@@ -332,6 +346,7 @@ CREATE UNIQUE INDEX uq_iam_par_request_uri ON iam_par_requests (request_uri);
 CREATE TABLE iam_device_codes (
   id           text PRIMARY KEY,
   project_id   text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   device_code  text NOT NULL,
   user_code    text NOT NULL,
   status       text NOT NULL DEFAULT 'pending',
@@ -340,7 +355,7 @@ CREATE TABLE iam_device_codes (
   created_at   timestamptz NOT NULL DEFAULT now(),
   data         jsonb NOT NULL
 );
-CREATE UNIQUE INDEX uq_iam_device_user_code ON iam_device_codes (project_id, user_code);
+CREATE UNIQUE INDEX uq_iam_device_user_code ON iam_device_codes (project_id, environment, user_code);
 CREATE UNIQUE INDEX uq_iam_device_device_code ON iam_device_codes (device_code);
 
 -- ============================================================
@@ -484,6 +499,7 @@ CREATE INDEX idx_iam_audit_project ON iam_audit_logs (project_id, at);
 CREATE TABLE iam_access_requests (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   email      text NOT NULL,
   status     text NOT NULL DEFAULT 'pending',
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -505,6 +521,7 @@ CREATE INDEX idx_iam_risk_rules_project ON iam_risk_rules (project_id);
 CREATE TABLE iam_blocks (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   subject    text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   expires_at timestamptz,
@@ -519,6 +536,7 @@ CREATE INDEX idx_iam_blocks_project ON iam_blocks (project_id, subject);
 CREATE TABLE iam_activity (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
   user_id    text NOT NULL,
   type       text NOT NULL,
   at         timestamptz NOT NULL DEFAULT now(),

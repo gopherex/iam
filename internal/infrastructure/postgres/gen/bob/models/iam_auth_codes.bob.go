@@ -21,15 +21,16 @@ import (
 
 // IamAuthCode is an object representing the database table.
 type IamAuthCode struct {
-	ID        string           `db:"id,pk" `
-	ProjectID string           `db:"project_id" `
-	CodeHash  string           `db:"code_hash" `
-	ClientID  null.Val[string] `db:"client_id" `
-	UserID    null.Val[string] `db:"user_id" `
-	ExpiresAt time.Time        `db:"expires_at" `
-	Consumed  bool             `db:"consumed" `
-	CreatedAt time.Time        `db:"created_at" `
-	Data      json.RawMessage  `db:"data" `
+	ID          string           `db:"id,pk" `
+	ProjectID   string           `db:"project_id" `
+	Environment string           `db:"environment" `
+	CodeHash    string           `db:"code_hash" `
+	ClientID    null.Val[string] `db:"client_id" `
+	UserID      null.Val[string] `db:"user_id" `
+	ExpiresAt   time.Time        `db:"expires_at" `
+	Consumed    bool             `db:"consumed" `
+	CreatedAt   time.Time        `db:"created_at" `
+	Data        json.RawMessage  `db:"data" `
 }
 
 // IamAuthCodeSlice is an alias for a slice of pointers to IamAuthCode.
@@ -44,7 +45,7 @@ type IamAuthCodesQuery = *psql.ViewQuery[*IamAuthCode, IamAuthCodeSlice]
 
 func buildIamAuthCodeColumns(tableName string) iamAuthCodeColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "code_hash", "client_id", "user_id", "expires_at", "consumed", "created_at", "data",
+		"id", "project_id", "environment", "code_hash", "client_id", "user_id", "expires_at", "consumed", "created_at", "data",
 	)
 
 	if tableName != "" {
@@ -56,6 +57,7 @@ func buildIamAuthCodeColumns(tableName string) iamAuthCodeColumns {
 		tableAlias:  tableName,
 		ID:          buildIamAuthCodeColumn(tableName, "id"),
 		ProjectID:   buildIamAuthCodeColumn(tableName, "project_id"),
+		Environment: buildIamAuthCodeColumn(tableName, "environment"),
 		CodeHash:    buildIamAuthCodeColumn(tableName, "code_hash"),
 		ClientID:    buildIamAuthCodeColumn(tableName, "client_id"),
 		UserID:      buildIamAuthCodeColumn(tableName, "user_id"),
@@ -68,16 +70,17 @@ func buildIamAuthCodeColumns(tableName string) iamAuthCodeColumns {
 
 type iamAuthCodeColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamAuthCodeColumn
-	ProjectID  iamAuthCodeColumn
-	CodeHash   iamAuthCodeColumn
-	ClientID   iamAuthCodeColumn
-	UserID     iamAuthCodeColumn
-	ExpiresAt  iamAuthCodeColumn
-	Consumed   iamAuthCodeColumn
-	CreatedAt  iamAuthCodeColumn
-	Data       iamAuthCodeColumn
+	tableAlias  string
+	ID          iamAuthCodeColumn
+	ProjectID   iamAuthCodeColumn
+	Environment iamAuthCodeColumn
+	CodeHash    iamAuthCodeColumn
+	ClientID    iamAuthCodeColumn
+	UserID      iamAuthCodeColumn
+	ExpiresAt   iamAuthCodeColumn
+	Consumed    iamAuthCodeColumn
+	CreatedAt   iamAuthCodeColumn
+	Data        iamAuthCodeColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -123,24 +126,28 @@ func (c iamAuthCodeColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamAuthCodeSetter struct {
-	ID        *string           `db:"id,pk" `
-	ProjectID *string           `db:"project_id" `
-	CodeHash  *string           `db:"code_hash" `
-	ClientID  *null.Val[string] `db:"client_id" `
-	UserID    *null.Val[string] `db:"user_id" `
-	ExpiresAt *time.Time        `db:"expires_at" `
-	Consumed  *bool             `db:"consumed" `
-	CreatedAt *time.Time        `db:"created_at" `
-	Data      *json.RawMessage  `db:"data" `
+	ID          *string           `db:"id,pk" `
+	ProjectID   *string           `db:"project_id" `
+	Environment *string           `db:"environment" `
+	CodeHash    *string           `db:"code_hash" `
+	ClientID    *null.Val[string] `db:"client_id" `
+	UserID      *null.Val[string] `db:"user_id" `
+	ExpiresAt   *time.Time        `db:"expires_at" `
+	Consumed    *bool             `db:"consumed" `
+	CreatedAt   *time.Time        `db:"created_at" `
+	Data        *json.RawMessage  `db:"data" `
 }
 
 func (s IamAuthCodeSetter) SetColumns() []string {
-	vals := make([]string, 0, 9)
+	vals := make([]string, 0, 10)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.CodeHash != nil {
 		vals = append(vals, "code_hash")
@@ -181,6 +188,14 @@ func (s IamAuthCodeSetter) Overwrite(t *IamAuthCode) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.CodeHash != nil {
@@ -249,7 +264,7 @@ func (s *IamAuthCodeSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 9)
+		vals := make([]bob.Expression, 10)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -272,19 +287,30 @@ func (s *IamAuthCodeSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.CodeHash != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.CodeHash != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.CodeHash == nil {
 					return *new(string)
 				}
 				return *s.CodeHash
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.ClientID != nil {
-			vals[3] = psql.Arg(func() null.Val[string] {
+			vals[4] = psql.Arg(func() null.Val[string] {
 				if s.ClientID == nil {
 					return *new(null.Val[string])
 				}
@@ -292,11 +318,11 @@ func (s *IamAuthCodeSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.UserID != nil {
-			vals[4] = psql.Arg(func() null.Val[string] {
+			vals[5] = psql.Arg(func() null.Val[string] {
 				if s.UserID == nil {
 					return *new(null.Val[string])
 				}
@@ -304,51 +330,51 @@ func (s *IamAuthCodeSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.ExpiresAt != nil {
-			vals[5] = psql.Arg(func() time.Time {
+			vals[6] = psql.Arg(func() time.Time {
 				if s.ExpiresAt == nil {
 					return *new(time.Time)
 				}
 				return *s.ExpiresAt
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.Consumed != nil {
-			vals[6] = psql.Arg(func() bool {
+			vals[7] = psql.Arg(func() bool {
 				if s.Consumed == nil {
 					return *new(bool)
 				}
 				return *s.Consumed
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[7] = psql.Arg(func() time.Time {
+			vals[8] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[8] = psql.Arg(func() json.RawMessage {
+			vals[9] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[8] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -360,7 +386,7 @@ func (s IamAuthCodeSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamAuthCodeSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 9)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -373,6 +399,13 @@ func (s IamAuthCodeSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -683,15 +716,16 @@ func (o IamAuthCodeSlice) ReloadAll(ctx context.Context, exec bob.Executor) erro
 }
 
 type iamAuthCodeWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	CodeHash  psql.WhereMod[Q, string]
-	ClientID  psql.WhereNullMod[Q, string]
-	UserID    psql.WhereNullMod[Q, string]
-	ExpiresAt psql.WhereMod[Q, time.Time]
-	Consumed  psql.WhereMod[Q, bool]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	CodeHash    psql.WhereMod[Q, string]
+	ClientID    psql.WhereNullMod[Q, string]
+	UserID      psql.WhereNullMod[Q, string]
+	ExpiresAt   psql.WhereMod[Q, time.Time]
+	Consumed    psql.WhereMod[Q, bool]
+	CreatedAt   psql.WhereMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamAuthCodeWhere[Q]) AliasedAs(alias string) iamAuthCodeWhere[Q] {
@@ -700,14 +734,15 @@ func (iamAuthCodeWhere[Q]) AliasedAs(alias string) iamAuthCodeWhere[Q] {
 
 func buildIamAuthCodeWhere[Q psql.Filterable](cols iamAuthCodeColumns) iamAuthCodeWhere[Q] {
 	return iamAuthCodeWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		CodeHash:  psql.Where[Q, string](cols.CodeHash.Expression),
-		ClientID:  psql.WhereNull[Q, string](cols.ClientID.Expression),
-		UserID:    psql.WhereNull[Q, string](cols.UserID.Expression),
-		ExpiresAt: psql.Where[Q, time.Time](cols.ExpiresAt.Expression),
-		Consumed:  psql.Where[Q, bool](cols.Consumed.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		CodeHash:    psql.Where[Q, string](cols.CodeHash.Expression),
+		ClientID:    psql.WhereNull[Q, string](cols.ClientID.Expression),
+		UserID:      psql.WhereNull[Q, string](cols.UserID.Expression),
+		ExpiresAt:   psql.Where[Q, time.Time](cols.ExpiresAt.Expression),
+		Consumed:    psql.Where[Q, bool](cols.Consumed.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

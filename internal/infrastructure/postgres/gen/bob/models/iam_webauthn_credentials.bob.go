@@ -23,6 +23,7 @@ import (
 type IamWebauthnCredential struct {
 	ID           string              `db:"id,pk" `
 	ProjectID    string              `db:"project_id" `
+	Environment  string              `db:"environment" `
 	UserID       string              `db:"user_id" `
 	CredentialID string              `db:"credential_id" `
 	PublicKey    null.Val[[]byte]    `db:"public_key" `
@@ -44,7 +45,7 @@ type IamWebauthnCredentialsQuery = *psql.ViewQuery[*IamWebauthnCredential, IamWe
 
 func buildIamWebauthnCredentialColumns(tableName string) iamWebauthnCredentialColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "user_id", "credential_id", "public_key", "sign_count", "created_at", "last_used_at", "data",
+		"id", "project_id", "environment", "user_id", "credential_id", "public_key", "sign_count", "created_at", "last_used_at", "data",
 	)
 
 	if tableName != "" {
@@ -56,6 +57,7 @@ func buildIamWebauthnCredentialColumns(tableName string) iamWebauthnCredentialCo
 		tableAlias:   tableName,
 		ID:           buildIamWebauthnCredentialColumn(tableName, "id"),
 		ProjectID:    buildIamWebauthnCredentialColumn(tableName, "project_id"),
+		Environment:  buildIamWebauthnCredentialColumn(tableName, "environment"),
 		UserID:       buildIamWebauthnCredentialColumn(tableName, "user_id"),
 		CredentialID: buildIamWebauthnCredentialColumn(tableName, "credential_id"),
 		PublicKey:    buildIamWebauthnCredentialColumn(tableName, "public_key"),
@@ -71,6 +73,7 @@ type iamWebauthnCredentialColumns struct {
 	tableAlias   string
 	ID           iamWebauthnCredentialColumn
 	ProjectID    iamWebauthnCredentialColumn
+	Environment  iamWebauthnCredentialColumn
 	UserID       iamWebauthnCredentialColumn
 	CredentialID iamWebauthnCredentialColumn
 	PublicKey    iamWebauthnCredentialColumn
@@ -125,6 +128,7 @@ func (c iamWebauthnCredentialColumn) ShouldOmitParens() bool {
 type IamWebauthnCredentialSetter struct {
 	ID           *string              `db:"id,pk" `
 	ProjectID    *string              `db:"project_id" `
+	Environment  *string              `db:"environment" `
 	UserID       *string              `db:"user_id" `
 	CredentialID *string              `db:"credential_id" `
 	PublicKey    *null.Val[[]byte]    `db:"public_key" `
@@ -135,12 +139,15 @@ type IamWebauthnCredentialSetter struct {
 }
 
 func (s IamWebauthnCredentialSetter) SetColumns() []string {
-	vals := make([]string, 0, 9)
+	vals := make([]string, 0, 10)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.UserID != nil {
 		vals = append(vals, "user_id")
@@ -181,6 +188,14 @@ func (s IamWebauthnCredentialSetter) Overwrite(t *IamWebauthnCredential) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.UserID != nil {
@@ -249,7 +264,7 @@ func (s *IamWebauthnCredentialSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 9)
+		vals := make([]bob.Expression, 10)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -272,30 +287,41 @@ func (s *IamWebauthnCredentialSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.UserID != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.UserID != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.UserID == nil {
 					return *new(string)
 				}
 				return *s.UserID
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.CredentialID != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.CredentialID == nil {
 					return *new(string)
 				}
 				return *s.CredentialID
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.PublicKey != nil {
-			vals[4] = psql.Arg(func() null.Val[[]byte] {
+			vals[5] = psql.Arg(func() null.Val[[]byte] {
 				if s.PublicKey == nil {
 					return *new(null.Val[[]byte])
 				}
@@ -303,33 +329,33 @@ func (s *IamWebauthnCredentialSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.SignCount != nil {
-			vals[5] = psql.Arg(func() int64 {
+			vals[6] = psql.Arg(func() int64 {
 				if s.SignCount == nil {
 					return *new(int64)
 				}
 				return *s.SignCount
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[6] = psql.Arg(func() time.Time {
+			vals[7] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.LastUsedAt != nil {
-			vals[7] = psql.Arg(func() null.Val[time.Time] {
+			vals[8] = psql.Arg(func() null.Val[time.Time] {
 				if s.LastUsedAt == nil {
 					return *new(null.Val[time.Time])
 				}
@@ -337,18 +363,18 @@ func (s *IamWebauthnCredentialSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[8] = psql.Arg(func() json.RawMessage {
+			vals[9] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[8] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -360,7 +386,7 @@ func (s IamWebauthnCredentialSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamWebauthnCredentialSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 9)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -373,6 +399,13 @@ func (s IamWebauthnCredentialSetter) Expressions(prefix ...string) []bob.Express
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -685,6 +718,7 @@ func (o IamWebauthnCredentialSlice) ReloadAll(ctx context.Context, exec bob.Exec
 type iamWebauthnCredentialWhere[Q psql.Filterable] struct {
 	ID           psql.WhereMod[Q, string]
 	ProjectID    psql.WhereMod[Q, string]
+	Environment  psql.WhereMod[Q, string]
 	UserID       psql.WhereMod[Q, string]
 	CredentialID psql.WhereMod[Q, string]
 	PublicKey    psql.WhereNullMod[Q, []byte]
@@ -702,6 +736,7 @@ func buildIamWebauthnCredentialWhere[Q psql.Filterable](cols iamWebauthnCredenti
 	return iamWebauthnCredentialWhere[Q]{
 		ID:           psql.Where[Q, string](cols.ID.Expression),
 		ProjectID:    psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment:  psql.Where[Q, string](cols.Environment.Expression),
 		UserID:       psql.Where[Q, string](cols.UserID.Expression),
 		CredentialID: psql.Where[Q, string](cols.CredentialID.Expression),
 		PublicKey:    psql.WhereNull[Q, []byte](cols.PublicKey.Expression),

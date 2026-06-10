@@ -19,12 +19,13 @@ import (
 
 // IamRecoveryCode is an object representing the database table.
 type IamRecoveryCode struct {
-	ID        string    `db:"id,pk" `
-	ProjectID string    `db:"project_id" `
-	UserID    string    `db:"user_id" `
-	Hash      string    `db:"hash" `
-	Used      bool      `db:"used" `
-	CreatedAt time.Time `db:"created_at" `
+	ID          string    `db:"id,pk" `
+	ProjectID   string    `db:"project_id" `
+	Environment string    `db:"environment" `
+	UserID      string    `db:"user_id" `
+	Hash        string    `db:"hash" `
+	Used        bool      `db:"used" `
+	CreatedAt   time.Time `db:"created_at" `
 }
 
 // IamRecoveryCodeSlice is an alias for a slice of pointers to IamRecoveryCode.
@@ -39,7 +40,7 @@ type IamRecoveryCodesQuery = *psql.ViewQuery[*IamRecoveryCode, IamRecoveryCodeSl
 
 func buildIamRecoveryCodeColumns(tableName string) iamRecoveryCodeColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "user_id", "hash", "used", "created_at",
+		"id", "project_id", "environment", "user_id", "hash", "used", "created_at",
 	)
 
 	if tableName != "" {
@@ -51,6 +52,7 @@ func buildIamRecoveryCodeColumns(tableName string) iamRecoveryCodeColumns {
 		tableAlias:  tableName,
 		ID:          buildIamRecoveryCodeColumn(tableName, "id"),
 		ProjectID:   buildIamRecoveryCodeColumn(tableName, "project_id"),
+		Environment: buildIamRecoveryCodeColumn(tableName, "environment"),
 		UserID:      buildIamRecoveryCodeColumn(tableName, "user_id"),
 		Hash:        buildIamRecoveryCodeColumn(tableName, "hash"),
 		Used:        buildIamRecoveryCodeColumn(tableName, "used"),
@@ -60,13 +62,14 @@ func buildIamRecoveryCodeColumns(tableName string) iamRecoveryCodeColumns {
 
 type iamRecoveryCodeColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamRecoveryCodeColumn
-	ProjectID  iamRecoveryCodeColumn
-	UserID     iamRecoveryCodeColumn
-	Hash       iamRecoveryCodeColumn
-	Used       iamRecoveryCodeColumn
-	CreatedAt  iamRecoveryCodeColumn
+	tableAlias  string
+	ID          iamRecoveryCodeColumn
+	ProjectID   iamRecoveryCodeColumn
+	Environment iamRecoveryCodeColumn
+	UserID      iamRecoveryCodeColumn
+	Hash        iamRecoveryCodeColumn
+	Used        iamRecoveryCodeColumn
+	CreatedAt   iamRecoveryCodeColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -112,21 +115,25 @@ func (c iamRecoveryCodeColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamRecoveryCodeSetter struct {
-	ID        *string    `db:"id,pk" `
-	ProjectID *string    `db:"project_id" `
-	UserID    *string    `db:"user_id" `
-	Hash      *string    `db:"hash" `
-	Used      *bool      `db:"used" `
-	CreatedAt *time.Time `db:"created_at" `
+	ID          *string    `db:"id,pk" `
+	ProjectID   *string    `db:"project_id" `
+	Environment *string    `db:"environment" `
+	UserID      *string    `db:"user_id" `
+	Hash        *string    `db:"hash" `
+	Used        *bool      `db:"used" `
+	CreatedAt   *time.Time `db:"created_at" `
 }
 
 func (s IamRecoveryCodeSetter) SetColumns() []string {
-	vals := make([]string, 0, 6)
+	vals := make([]string, 0, 7)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.UserID != nil {
 		vals = append(vals, "user_id")
@@ -158,6 +165,14 @@ func (s IamRecoveryCodeSetter) Overwrite(t *IamRecoveryCode) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.UserID != nil {
@@ -200,7 +215,7 @@ func (s *IamRecoveryCodeSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 6)
+		vals := make([]bob.Expression, 7)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -223,48 +238,59 @@ func (s *IamRecoveryCodeSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.UserID != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.UserID != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.UserID == nil {
 					return *new(string)
 				}
 				return *s.UserID
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.Hash != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.Hash == nil {
 					return *new(string)
 				}
 				return *s.Hash
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.Used != nil {
-			vals[4] = psql.Arg(func() bool {
+			vals[5] = psql.Arg(func() bool {
 				if s.Used == nil {
 					return *new(bool)
 				}
 				return *s.Used
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[5] = psql.Arg(func() time.Time {
+			vals[6] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -276,7 +302,7 @@ func (s IamRecoveryCodeSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamRecoveryCodeSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 6)
+	exprs := make([]bob.Expression, 0, 7)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -289,6 +315,13 @@ func (s IamRecoveryCodeSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -578,12 +611,13 @@ func (o IamRecoveryCodeSlice) ReloadAll(ctx context.Context, exec bob.Executor) 
 }
 
 type iamRecoveryCodeWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	UserID    psql.WhereMod[Q, string]
-	Hash      psql.WhereMod[Q, string]
-	Used      psql.WhereMod[Q, bool]
-	CreatedAt psql.WhereMod[Q, time.Time]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	UserID      psql.WhereMod[Q, string]
+	Hash        psql.WhereMod[Q, string]
+	Used        psql.WhereMod[Q, bool]
+	CreatedAt   psql.WhereMod[Q, time.Time]
 }
 
 func (iamRecoveryCodeWhere[Q]) AliasedAs(alias string) iamRecoveryCodeWhere[Q] {
@@ -592,11 +626,12 @@ func (iamRecoveryCodeWhere[Q]) AliasedAs(alias string) iamRecoveryCodeWhere[Q] {
 
 func buildIamRecoveryCodeWhere[Q psql.Filterable](cols iamRecoveryCodeColumns) iamRecoveryCodeWhere[Q] {
 	return iamRecoveryCodeWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		UserID:    psql.Where[Q, string](cols.UserID.Expression),
-		Hash:      psql.Where[Q, string](cols.Hash.Expression),
-		Used:      psql.Where[Q, bool](cols.Used.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		UserID:      psql.Where[Q, string](cols.UserID.Expression),
+		Hash:        psql.Where[Q, string](cols.Hash.Expression),
+		Used:        psql.Where[Q, bool](cols.Used.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
 	}
 }

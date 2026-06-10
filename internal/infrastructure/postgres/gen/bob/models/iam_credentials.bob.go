@@ -20,14 +20,15 @@ import (
 
 // IamCredential is an object representing the database table.
 type IamCredential struct {
-	ID        string          `db:"id,pk" `
-	ProjectID string          `db:"project_id" `
-	UserID    string          `db:"user_id" `
-	Type      string          `db:"type" `
-	Secret    string          `db:"secret" `
-	CreatedAt time.Time       `db:"created_at" `
-	UpdatedAt time.Time       `db:"updated_at" `
-	Data      json.RawMessage `db:"data" `
+	ID          string          `db:"id,pk" `
+	ProjectID   string          `db:"project_id" `
+	Environment string          `db:"environment" `
+	UserID      string          `db:"user_id" `
+	Type        string          `db:"type" `
+	Secret      string          `db:"secret" `
+	CreatedAt   time.Time       `db:"created_at" `
+	UpdatedAt   time.Time       `db:"updated_at" `
+	Data        json.RawMessage `db:"data" `
 }
 
 // IamCredentialSlice is an alias for a slice of pointers to IamCredential.
@@ -42,7 +43,7 @@ type IamCredentialsQuery = *psql.ViewQuery[*IamCredential, IamCredentialSlice]
 
 func buildIamCredentialColumns(tableName string) iamCredentialColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "user_id", "type", "secret", "created_at", "updated_at", "data",
+		"id", "project_id", "environment", "user_id", "type", "secret", "created_at", "updated_at", "data",
 	)
 
 	if tableName != "" {
@@ -54,6 +55,7 @@ func buildIamCredentialColumns(tableName string) iamCredentialColumns {
 		tableAlias:  tableName,
 		ID:          buildIamCredentialColumn(tableName, "id"),
 		ProjectID:   buildIamCredentialColumn(tableName, "project_id"),
+		Environment: buildIamCredentialColumn(tableName, "environment"),
 		UserID:      buildIamCredentialColumn(tableName, "user_id"),
 		Type:        buildIamCredentialColumn(tableName, "type"),
 		Secret:      buildIamCredentialColumn(tableName, "secret"),
@@ -65,15 +67,16 @@ func buildIamCredentialColumns(tableName string) iamCredentialColumns {
 
 type iamCredentialColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamCredentialColumn
-	ProjectID  iamCredentialColumn
-	UserID     iamCredentialColumn
-	Type       iamCredentialColumn
-	Secret     iamCredentialColumn
-	CreatedAt  iamCredentialColumn
-	UpdatedAt  iamCredentialColumn
-	Data       iamCredentialColumn
+	tableAlias  string
+	ID          iamCredentialColumn
+	ProjectID   iamCredentialColumn
+	Environment iamCredentialColumn
+	UserID      iamCredentialColumn
+	Type        iamCredentialColumn
+	Secret      iamCredentialColumn
+	CreatedAt   iamCredentialColumn
+	UpdatedAt   iamCredentialColumn
+	Data        iamCredentialColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -119,23 +122,27 @@ func (c iamCredentialColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamCredentialSetter struct {
-	ID        *string          `db:"id,pk" `
-	ProjectID *string          `db:"project_id" `
-	UserID    *string          `db:"user_id" `
-	Type      *string          `db:"type" `
-	Secret    *string          `db:"secret" `
-	CreatedAt *time.Time       `db:"created_at" `
-	UpdatedAt *time.Time       `db:"updated_at" `
-	Data      *json.RawMessage `db:"data" `
+	ID          *string          `db:"id,pk" `
+	ProjectID   *string          `db:"project_id" `
+	Environment *string          `db:"environment" `
+	UserID      *string          `db:"user_id" `
+	Type        *string          `db:"type" `
+	Secret      *string          `db:"secret" `
+	CreatedAt   *time.Time       `db:"created_at" `
+	UpdatedAt   *time.Time       `db:"updated_at" `
+	Data        *json.RawMessage `db:"data" `
 }
 
 func (s IamCredentialSetter) SetColumns() []string {
-	vals := make([]string, 0, 8)
+	vals := make([]string, 0, 9)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.UserID != nil {
 		vals = append(vals, "user_id")
@@ -173,6 +180,14 @@ func (s IamCredentialSetter) Overwrite(t *IamCredential) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.UserID != nil {
@@ -231,7 +246,7 @@ func (s *IamCredentialSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 8)
+		vals := make([]bob.Expression, 9)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -254,70 +269,81 @@ func (s *IamCredentialSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.UserID != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.UserID != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.UserID == nil {
 					return *new(string)
 				}
 				return *s.UserID
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.Type != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.Type == nil {
 					return *new(string)
 				}
 				return *s.Type
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.Secret != nil {
-			vals[4] = psql.Arg(func() string {
+			vals[5] = psql.Arg(func() string {
 				if s.Secret == nil {
 					return *new(string)
 				}
 				return *s.Secret
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[5] = psql.Arg(func() time.Time {
+			vals[6] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.UpdatedAt != nil {
-			vals[6] = psql.Arg(func() time.Time {
+			vals[7] = psql.Arg(func() time.Time {
 				if s.UpdatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.UpdatedAt
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[7] = psql.Arg(func() json.RawMessage {
+			vals[8] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -329,7 +355,7 @@ func (s IamCredentialSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamCredentialSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 8)
+	exprs := make([]bob.Expression, 0, 9)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -342,6 +368,13 @@ func (s IamCredentialSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -645,14 +678,15 @@ func (o IamCredentialSlice) ReloadAll(ctx context.Context, exec bob.Executor) er
 }
 
 type iamCredentialWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	UserID    psql.WhereMod[Q, string]
-	Type      psql.WhereMod[Q, string]
-	Secret    psql.WhereMod[Q, string]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	UpdatedAt psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	UserID      psql.WhereMod[Q, string]
+	Type        psql.WhereMod[Q, string]
+	Secret      psql.WhereMod[Q, string]
+	CreatedAt   psql.WhereMod[Q, time.Time]
+	UpdatedAt   psql.WhereMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamCredentialWhere[Q]) AliasedAs(alias string) iamCredentialWhere[Q] {
@@ -661,13 +695,14 @@ func (iamCredentialWhere[Q]) AliasedAs(alias string) iamCredentialWhere[Q] {
 
 func buildIamCredentialWhere[Q psql.Filterable](cols iamCredentialColumns) iamCredentialWhere[Q] {
 	return iamCredentialWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		UserID:    psql.Where[Q, string](cols.UserID.Expression),
-		Type:      psql.Where[Q, string](cols.Type.Expression),
-		Secret:    psql.Where[Q, string](cols.Secret.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		UpdatedAt: psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		UserID:      psql.Where[Q, string](cols.UserID.Expression),
+		Type:        psql.Where[Q, string](cols.Type.Expression),
+		Secret:      psql.Where[Q, string](cols.Secret.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		UpdatedAt:   psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

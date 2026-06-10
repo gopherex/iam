@@ -1,6 +1,7 @@
 CREATE TABLE "public"."iam_access_requests" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "email" text NOT NULL,
   "status" text NOT NULL DEFAULT 'pending'::text,
   "created_at" timestamptz NOT NULL DEFAULT now(),
@@ -11,6 +12,7 @@ CREATE TABLE "public"."iam_access_requests" (
 CREATE TABLE "public"."iam_activity" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "user_id" text NOT NULL,
   "type" text NOT NULL,
   "at" timestamptz NOT NULL DEFAULT now(),
@@ -70,6 +72,7 @@ CREATE TABLE "public"."iam_audit_logs" (
 CREATE TABLE "public"."iam_auth_codes" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "code_hash" text NOT NULL,
   "client_id" text,
   "user_id" text,
@@ -82,6 +85,7 @@ CREATE TABLE "public"."iam_auth_codes" (
 CREATE TABLE "public"."iam_blocks" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "subject" text NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "expires_at" timestamptz,
@@ -91,6 +95,7 @@ CREATE TABLE "public"."iam_blocks" (
 CREATE TABLE "public"."iam_challenges" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "type" text NOT NULL,
   "subject" text,
   "code_hash" text,
@@ -111,6 +116,7 @@ CREATE TABLE "public"."iam_config" (
 CREATE TABLE "public"."iam_consents" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "user_id" text NOT NULL,
   "doc_key" text NOT NULL,
   "version" text NOT NULL,
@@ -121,6 +127,7 @@ CREATE TABLE "public"."iam_consents" (
 CREATE TABLE "public"."iam_credentials" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "user_id" text NOT NULL,
   "type" text NOT NULL,
   "secret" text NOT NULL DEFAULT ''::text,
@@ -132,6 +139,7 @@ CREATE TABLE "public"."iam_credentials" (
 CREATE TABLE "public"."iam_device_codes" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "device_code" text NOT NULL,
   "user_code" text NOT NULL,
   "status" text NOT NULL DEFAULT 'pending'::text,
@@ -182,6 +190,7 @@ CREATE TABLE "public"."iam_events" (
 CREATE TABLE "public"."iam_factors" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "user_id" text NOT NULL,
   "type" text NOT NULL,
   "status" text NOT NULL DEFAULT 'pending'::text,
@@ -193,6 +202,7 @@ CREATE TABLE "public"."iam_factors" (
 CREATE TABLE "public"."iam_flows" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "token_hash" text NOT NULL,
   "kind" text NOT NULL,
   "status" text NOT NULL,
@@ -217,6 +227,7 @@ CREATE TABLE "public"."iam_hooks" (
 CREATE TABLE "public"."iam_identities" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "user_id" text NOT NULL,
   "type" text NOT NULL,
   "provider" text,
@@ -229,6 +240,7 @@ CREATE TABLE "public"."iam_identities" (
 CREATE TABLE "public"."iam_interactions" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "client_id" text,
   "session_id" text,
   "expires_at" timestamptz,
@@ -263,6 +275,7 @@ CREATE TABLE "public"."iam_jobs" (
 CREATE TABLE "public"."iam_oauth_grants" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "user_id" text NOT NULL,
   "client_id" text NOT NULL,
   "granted_at" timestamptz NOT NULL DEFAULT now(),
@@ -302,6 +315,7 @@ CREATE TABLE "public"."iam_providers" (
 CREATE TABLE "public"."iam_recovery_codes" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "user_id" text NOT NULL,
   "hash" text NOT NULL,
   "used" bool NOT NULL DEFAULT false,
@@ -311,6 +325,7 @@ CREATE TABLE "public"."iam_recovery_codes" (
 CREATE TABLE "public"."iam_refresh_tokens" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "user_id" text NOT NULL,
   "session_id" text NOT NULL,
   "hash" text NOT NULL,
@@ -363,6 +378,7 @@ CREATE TABLE "public"."iam_service_accounts" (
 CREATE TABLE "public"."iam_sessions" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "user_id" text NOT NULL,
   "client_id" text,
   "aal" int4 NOT NULL DEFAULT 1,
@@ -409,6 +425,7 @@ CREATE TABLE "public"."iam_token_profiles" (
 CREATE TABLE "public"."iam_users" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "kind" text NOT NULL DEFAULT 'human'::text,
   "status" text NOT NULL DEFAULT 'active'::text,
   "primary_email" text,
@@ -421,6 +438,7 @@ CREATE TABLE "public"."iam_users" (
 CREATE TABLE "public"."iam_webauthn_credentials" (
   "id" text NOT NULL,
   "project_id" text NOT NULL,
+  "environment" text NOT NULL DEFAULT 'live'::text,
   "user_id" text NOT NULL,
   "credential_id" text NOT NULL,
   "public_key" bytea,
@@ -454,7 +472,7 @@ CREATE INDEX "idx_iam_challenges_subject" ON "public"."iam_challenges" ("project
 CREATE INDEX "idx_iam_consents_user" ON "public"."iam_consents" ("project_id", "user_id");
 CREATE INDEX "idx_iam_credentials_user" ON "public"."iam_credentials" ("project_id", "user_id");
 CREATE UNIQUE INDEX "uq_iam_device_device_code" ON "public"."iam_device_codes" ("device_code");
-CREATE UNIQUE INDEX "uq_iam_device_user_code" ON "public"."iam_device_codes" ("project_id", "user_code");
+CREATE UNIQUE INDEX "uq_iam_device_user_code" ON "public"."iam_device_codes" ("project_id", "environment", "user_code");
 CREATE INDEX "idx_iam_domains_project" ON "public"."iam_domains" ("project_id");
 CREATE UNIQUE INDEX "uq_iam_domains_domain" ON "public"."iam_domains" ("domain");
 CREATE INDEX "idx_iam_email_templates_project" ON "public"."iam_email_templates" ("project_id");
@@ -463,7 +481,7 @@ CREATE INDEX "idx_iam_factors_user" ON "public"."iam_factors" ("project_id", "us
 CREATE INDEX "iam_flows_project_idx" ON "public"."iam_flows" ("project_id");
 CREATE INDEX "idx_iam_hooks_project" ON "public"."iam_hooks" ("project_id");
 CREATE INDEX "idx_iam_identities_user" ON "public"."iam_identities" ("project_id", "user_id");
-CREATE UNIQUE INDEX "uq_iam_identities_provider" ON "public"."iam_identities" ("project_id", "provider", "provider_account_id") WHERE ((provider IS NOT NULL) AND (provider_account_id IS NOT NULL));
+CREATE UNIQUE INDEX "uq_iam_identities_provider" ON "public"."iam_identities" ("project_id", "environment", "provider", "provider_account_id") WHERE ((provider IS NOT NULL) AND (provider_account_id IS NOT NULL));
 CREATE INDEX "idx_iam_invites_hash" ON "public"."iam_invites" ("token_hash");
 CREATE INDEX "idx_iam_invites_project" ON "public"."iam_invites" ("project_id", "status");
 CREATE INDEX "idx_iam_jobs_project" ON "public"."iam_jobs" ("project_id");
@@ -483,9 +501,9 @@ CREATE INDEX "idx_iam_signing_keys_env" ON "public"."iam_signing_keys" ("project
 CREATE INDEX "idx_iam_sso_connections_project" ON "public"."iam_sso_connections" ("project_id");
 CREATE INDEX "idx_iam_token_profiles_project" ON "public"."iam_token_profiles" ("project_id");
 CREATE INDEX "idx_iam_users_project" ON "public"."iam_users" ("project_id");
-CREATE UNIQUE INDEX "uq_iam_users_email" ON "public"."iam_users" ("project_id", "primary_email") WHERE (primary_email IS NOT NULL);
-CREATE UNIQUE INDEX "uq_iam_users_phone" ON "public"."iam_users" ("project_id", "primary_phone") WHERE (primary_phone IS NOT NULL);
+CREATE UNIQUE INDEX "uq_iam_users_email" ON "public"."iam_users" ("project_id", "environment", "primary_email") WHERE (primary_email IS NOT NULL);
+CREATE UNIQUE INDEX "uq_iam_users_phone" ON "public"."iam_users" ("project_id", "environment", "primary_phone") WHERE (primary_phone IS NOT NULL);
 CREATE INDEX "idx_iam_webauthn_user" ON "public"."iam_webauthn_credentials" ("project_id", "user_id");
-CREATE UNIQUE INDEX "uq_iam_webauthn_cred" ON "public"."iam_webauthn_credentials" ("project_id", "credential_id");
+CREATE UNIQUE INDEX "uq_iam_webauthn_cred" ON "public"."iam_webauthn_credentials" ("project_id", "environment", "credential_id");
 CREATE INDEX "idx_iam_webhooks_project" ON "public"."iam_webhooks" ("project_id");
 

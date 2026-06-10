@@ -23,6 +23,7 @@ import (
 type IamIdentity struct {
 	ID                string           `db:"id,pk" `
 	ProjectID         string           `db:"project_id" `
+	Environment       string           `db:"environment" `
 	UserID            string           `db:"user_id" `
 	Type              string           `db:"type" `
 	Provider          null.Val[string] `db:"provider" `
@@ -44,7 +45,7 @@ type IamIdentitiesQuery = *psql.ViewQuery[*IamIdentity, IamIdentitySlice]
 
 func buildIamIdentityColumns(tableName string) iamIdentityColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "user_id", "type", "provider", "provider_account_id", "email", "created_at", "data",
+		"id", "project_id", "environment", "user_id", "type", "provider", "provider_account_id", "email", "created_at", "data",
 	)
 
 	if tableName != "" {
@@ -56,6 +57,7 @@ func buildIamIdentityColumns(tableName string) iamIdentityColumns {
 		tableAlias:        tableName,
 		ID:                buildIamIdentityColumn(tableName, "id"),
 		ProjectID:         buildIamIdentityColumn(tableName, "project_id"),
+		Environment:       buildIamIdentityColumn(tableName, "environment"),
 		UserID:            buildIamIdentityColumn(tableName, "user_id"),
 		Type:              buildIamIdentityColumn(tableName, "type"),
 		Provider:          buildIamIdentityColumn(tableName, "provider"),
@@ -71,6 +73,7 @@ type iamIdentityColumns struct {
 	tableAlias        string
 	ID                iamIdentityColumn
 	ProjectID         iamIdentityColumn
+	Environment       iamIdentityColumn
 	UserID            iamIdentityColumn
 	Type              iamIdentityColumn
 	Provider          iamIdentityColumn
@@ -125,6 +128,7 @@ func (c iamIdentityColumn) ShouldOmitParens() bool {
 type IamIdentitySetter struct {
 	ID                *string           `db:"id,pk" `
 	ProjectID         *string           `db:"project_id" `
+	Environment       *string           `db:"environment" `
 	UserID            *string           `db:"user_id" `
 	Type              *string           `db:"type" `
 	Provider          *null.Val[string] `db:"provider" `
@@ -135,12 +139,15 @@ type IamIdentitySetter struct {
 }
 
 func (s IamIdentitySetter) SetColumns() []string {
-	vals := make([]string, 0, 9)
+	vals := make([]string, 0, 10)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.UserID != nil {
 		vals = append(vals, "user_id")
@@ -181,6 +188,14 @@ func (s IamIdentitySetter) Overwrite(t *IamIdentity) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.UserID != nil {
@@ -250,7 +265,7 @@ func (s *IamIdentitySetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 9)
+		vals := make([]bob.Expression, 10)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -273,30 +288,41 @@ func (s *IamIdentitySetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.UserID != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.UserID != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.UserID == nil {
 					return *new(string)
 				}
 				return *s.UserID
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.Type != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.Type == nil {
 					return *new(string)
 				}
 				return *s.Type
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.Provider != nil {
-			vals[4] = psql.Arg(func() null.Val[string] {
+			vals[5] = psql.Arg(func() null.Val[string] {
 				if s.Provider == nil {
 					return *new(null.Val[string])
 				}
@@ -304,11 +330,11 @@ func (s *IamIdentitySetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.ProviderAccountID != nil {
-			vals[5] = psql.Arg(func() null.Val[string] {
+			vals[6] = psql.Arg(func() null.Val[string] {
 				if s.ProviderAccountID == nil {
 					return *new(null.Val[string])
 				}
@@ -316,11 +342,11 @@ func (s *IamIdentitySetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.Email != nil {
-			vals[6] = psql.Arg(func() null.Val[string] {
+			vals[7] = psql.Arg(func() null.Val[string] {
 				if s.Email == nil {
 					return *new(null.Val[string])
 				}
@@ -328,29 +354,29 @@ func (s *IamIdentitySetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[7] = psql.Arg(func() time.Time {
+			vals[8] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[8] = psql.Arg(func() json.RawMessage {
+			vals[9] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[8] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -362,7 +388,7 @@ func (s IamIdentitySetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamIdentitySetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 9)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -375,6 +401,13 @@ func (s IamIdentitySetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -687,6 +720,7 @@ func (o IamIdentitySlice) ReloadAll(ctx context.Context, exec bob.Executor) erro
 type iamIdentityWhere[Q psql.Filterable] struct {
 	ID                psql.WhereMod[Q, string]
 	ProjectID         psql.WhereMod[Q, string]
+	Environment       psql.WhereMod[Q, string]
 	UserID            psql.WhereMod[Q, string]
 	Type              psql.WhereMod[Q, string]
 	Provider          psql.WhereNullMod[Q, string]
@@ -704,6 +738,7 @@ func buildIamIdentityWhere[Q psql.Filterable](cols iamIdentityColumns) iamIdenti
 	return iamIdentityWhere[Q]{
 		ID:                psql.Where[Q, string](cols.ID.Expression),
 		ProjectID:         psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment:       psql.Where[Q, string](cols.Environment.Expression),
 		UserID:            psql.Where[Q, string](cols.UserID.Expression),
 		Type:              psql.Where[Q, string](cols.Type.Expression),
 		Provider:          psql.WhereNull[Q, string](cols.Provider.Expression),

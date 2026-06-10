@@ -20,14 +20,15 @@ import (
 
 // IamFactor is an object representing the database table.
 type IamFactor struct {
-	ID        string          `db:"id,pk" `
-	ProjectID string          `db:"project_id" `
-	UserID    string          `db:"user_id" `
-	Type      string          `db:"type" `
-	Status    string          `db:"status" `
-	Secret    string          `db:"secret" `
-	CreatedAt time.Time       `db:"created_at" `
-	Data      json.RawMessage `db:"data" `
+	ID          string          `db:"id,pk" `
+	ProjectID   string          `db:"project_id" `
+	Environment string          `db:"environment" `
+	UserID      string          `db:"user_id" `
+	Type        string          `db:"type" `
+	Status      string          `db:"status" `
+	Secret      string          `db:"secret" `
+	CreatedAt   time.Time       `db:"created_at" `
+	Data        json.RawMessage `db:"data" `
 }
 
 // IamFactorSlice is an alias for a slice of pointers to IamFactor.
@@ -42,7 +43,7 @@ type IamFactorsQuery = *psql.ViewQuery[*IamFactor, IamFactorSlice]
 
 func buildIamFactorColumns(tableName string) iamFactorColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "user_id", "type", "status", "secret", "created_at", "data",
+		"id", "project_id", "environment", "user_id", "type", "status", "secret", "created_at", "data",
 	)
 
 	if tableName != "" {
@@ -54,6 +55,7 @@ func buildIamFactorColumns(tableName string) iamFactorColumns {
 		tableAlias:  tableName,
 		ID:          buildIamFactorColumn(tableName, "id"),
 		ProjectID:   buildIamFactorColumn(tableName, "project_id"),
+		Environment: buildIamFactorColumn(tableName, "environment"),
 		UserID:      buildIamFactorColumn(tableName, "user_id"),
 		Type:        buildIamFactorColumn(tableName, "type"),
 		Status:      buildIamFactorColumn(tableName, "status"),
@@ -65,15 +67,16 @@ func buildIamFactorColumns(tableName string) iamFactorColumns {
 
 type iamFactorColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamFactorColumn
-	ProjectID  iamFactorColumn
-	UserID     iamFactorColumn
-	Type       iamFactorColumn
-	Status     iamFactorColumn
-	Secret     iamFactorColumn
-	CreatedAt  iamFactorColumn
-	Data       iamFactorColumn
+	tableAlias  string
+	ID          iamFactorColumn
+	ProjectID   iamFactorColumn
+	Environment iamFactorColumn
+	UserID      iamFactorColumn
+	Type        iamFactorColumn
+	Status      iamFactorColumn
+	Secret      iamFactorColumn
+	CreatedAt   iamFactorColumn
+	Data        iamFactorColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -119,23 +122,27 @@ func (c iamFactorColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamFactorSetter struct {
-	ID        *string          `db:"id,pk" `
-	ProjectID *string          `db:"project_id" `
-	UserID    *string          `db:"user_id" `
-	Type      *string          `db:"type" `
-	Status    *string          `db:"status" `
-	Secret    *string          `db:"secret" `
-	CreatedAt *time.Time       `db:"created_at" `
-	Data      *json.RawMessage `db:"data" `
+	ID          *string          `db:"id,pk" `
+	ProjectID   *string          `db:"project_id" `
+	Environment *string          `db:"environment" `
+	UserID      *string          `db:"user_id" `
+	Type        *string          `db:"type" `
+	Status      *string          `db:"status" `
+	Secret      *string          `db:"secret" `
+	CreatedAt   *time.Time       `db:"created_at" `
+	Data        *json.RawMessage `db:"data" `
 }
 
 func (s IamFactorSetter) SetColumns() []string {
-	vals := make([]string, 0, 8)
+	vals := make([]string, 0, 9)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.UserID != nil {
 		vals = append(vals, "user_id")
@@ -173,6 +180,14 @@ func (s IamFactorSetter) Overwrite(t *IamFactor) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.UserID != nil {
@@ -231,7 +246,7 @@ func (s *IamFactorSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 8)
+		vals := make([]bob.Expression, 9)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -254,70 +269,81 @@ func (s *IamFactorSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.UserID != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.UserID != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.UserID == nil {
 					return *new(string)
 				}
 				return *s.UserID
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.Type != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.Type == nil {
 					return *new(string)
 				}
 				return *s.Type
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.Status != nil {
-			vals[4] = psql.Arg(func() string {
+			vals[5] = psql.Arg(func() string {
 				if s.Status == nil {
 					return *new(string)
 				}
 				return *s.Status
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.Secret != nil {
-			vals[5] = psql.Arg(func() string {
+			vals[6] = psql.Arg(func() string {
 				if s.Secret == nil {
 					return *new(string)
 				}
 				return *s.Secret
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[6] = psql.Arg(func() time.Time {
+			vals[7] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[7] = psql.Arg(func() json.RawMessage {
+			vals[8] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -329,7 +355,7 @@ func (s IamFactorSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamFactorSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 8)
+	exprs := make([]bob.Expression, 0, 9)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -342,6 +368,13 @@ func (s IamFactorSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -645,14 +678,15 @@ func (o IamFactorSlice) ReloadAll(ctx context.Context, exec bob.Executor) error 
 }
 
 type iamFactorWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	UserID    psql.WhereMod[Q, string]
-	Type      psql.WhereMod[Q, string]
-	Status    psql.WhereMod[Q, string]
-	Secret    psql.WhereMod[Q, string]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	UserID      psql.WhereMod[Q, string]
+	Type        psql.WhereMod[Q, string]
+	Status      psql.WhereMod[Q, string]
+	Secret      psql.WhereMod[Q, string]
+	CreatedAt   psql.WhereMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamFactorWhere[Q]) AliasedAs(alias string) iamFactorWhere[Q] {
@@ -661,13 +695,14 @@ func (iamFactorWhere[Q]) AliasedAs(alias string) iamFactorWhere[Q] {
 
 func buildIamFactorWhere[Q psql.Filterable](cols iamFactorColumns) iamFactorWhere[Q] {
 	return iamFactorWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		UserID:    psql.Where[Q, string](cols.UserID.Expression),
-		Type:      psql.Where[Q, string](cols.Type.Expression),
-		Status:    psql.Where[Q, string](cols.Status.Expression),
-		Secret:    psql.Where[Q, string](cols.Secret.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		UserID:      psql.Where[Q, string](cols.UserID.Expression),
+		Type:        psql.Where[Q, string](cols.Type.Expression),
+		Status:      psql.Where[Q, string](cols.Status.Expression),
+		Secret:      psql.Where[Q, string](cols.Secret.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

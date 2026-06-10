@@ -21,17 +21,18 @@ import (
 
 // IamFlow is an object representing the database table.
 type IamFlow struct {
-	ID        string           `db:"id,pk" `
-	ProjectID string           `db:"project_id" `
-	TokenHash string           `db:"token_hash" `
-	Kind      string           `db:"kind" `
-	Status    string           `db:"status" `
-	Step      string           `db:"step" `
-	UserID    null.Val[string] `db:"user_id" `
-	ExpiresAt time.Time        `db:"expires_at" `
-	CreatedAt time.Time        `db:"created_at" `
-	UpdatedAt time.Time        `db:"updated_at" `
-	Data      json.RawMessage  `db:"data" `
+	ID          string           `db:"id,pk" `
+	ProjectID   string           `db:"project_id" `
+	Environment string           `db:"environment" `
+	TokenHash   string           `db:"token_hash" `
+	Kind        string           `db:"kind" `
+	Status      string           `db:"status" `
+	Step        string           `db:"step" `
+	UserID      null.Val[string] `db:"user_id" `
+	ExpiresAt   time.Time        `db:"expires_at" `
+	CreatedAt   time.Time        `db:"created_at" `
+	UpdatedAt   time.Time        `db:"updated_at" `
+	Data        json.RawMessage  `db:"data" `
 }
 
 // IamFlowSlice is an alias for a slice of pointers to IamFlow.
@@ -46,7 +47,7 @@ type IamFlowsQuery = *psql.ViewQuery[*IamFlow, IamFlowSlice]
 
 func buildIamFlowColumns(tableName string) iamFlowColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "token_hash", "kind", "status", "step", "user_id", "expires_at", "created_at", "updated_at", "data",
+		"id", "project_id", "environment", "token_hash", "kind", "status", "step", "user_id", "expires_at", "created_at", "updated_at", "data",
 	)
 
 	if tableName != "" {
@@ -58,6 +59,7 @@ func buildIamFlowColumns(tableName string) iamFlowColumns {
 		tableAlias:  tableName,
 		ID:          buildIamFlowColumn(tableName, "id"),
 		ProjectID:   buildIamFlowColumn(tableName, "project_id"),
+		Environment: buildIamFlowColumn(tableName, "environment"),
 		TokenHash:   buildIamFlowColumn(tableName, "token_hash"),
 		Kind:        buildIamFlowColumn(tableName, "kind"),
 		Status:      buildIamFlowColumn(tableName, "status"),
@@ -72,18 +74,19 @@ func buildIamFlowColumns(tableName string) iamFlowColumns {
 
 type iamFlowColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamFlowColumn
-	ProjectID  iamFlowColumn
-	TokenHash  iamFlowColumn
-	Kind       iamFlowColumn
-	Status     iamFlowColumn
-	Step       iamFlowColumn
-	UserID     iamFlowColumn
-	ExpiresAt  iamFlowColumn
-	CreatedAt  iamFlowColumn
-	UpdatedAt  iamFlowColumn
-	Data       iamFlowColumn
+	tableAlias  string
+	ID          iamFlowColumn
+	ProjectID   iamFlowColumn
+	Environment iamFlowColumn
+	TokenHash   iamFlowColumn
+	Kind        iamFlowColumn
+	Status      iamFlowColumn
+	Step        iamFlowColumn
+	UserID      iamFlowColumn
+	ExpiresAt   iamFlowColumn
+	CreatedAt   iamFlowColumn
+	UpdatedAt   iamFlowColumn
+	Data        iamFlowColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -129,26 +132,30 @@ func (c iamFlowColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamFlowSetter struct {
-	ID        *string           `db:"id,pk" `
-	ProjectID *string           `db:"project_id" `
-	TokenHash *string           `db:"token_hash" `
-	Kind      *string           `db:"kind" `
-	Status    *string           `db:"status" `
-	Step      *string           `db:"step" `
-	UserID    *null.Val[string] `db:"user_id" `
-	ExpiresAt *time.Time        `db:"expires_at" `
-	CreatedAt *time.Time        `db:"created_at" `
-	UpdatedAt *time.Time        `db:"updated_at" `
-	Data      *json.RawMessage  `db:"data" `
+	ID          *string           `db:"id,pk" `
+	ProjectID   *string           `db:"project_id" `
+	Environment *string           `db:"environment" `
+	TokenHash   *string           `db:"token_hash" `
+	Kind        *string           `db:"kind" `
+	Status      *string           `db:"status" `
+	Step        *string           `db:"step" `
+	UserID      *null.Val[string] `db:"user_id" `
+	ExpiresAt   *time.Time        `db:"expires_at" `
+	CreatedAt   *time.Time        `db:"created_at" `
+	UpdatedAt   *time.Time        `db:"updated_at" `
+	Data        *json.RawMessage  `db:"data" `
 }
 
 func (s IamFlowSetter) SetColumns() []string {
-	vals := make([]string, 0, 11)
+	vals := make([]string, 0, 12)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
 	}
 	if s.TokenHash != nil {
 		vals = append(vals, "token_hash")
@@ -195,6 +202,14 @@ func (s IamFlowSetter) Overwrite(t *IamFlow) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
 		}()
 	}
 	if s.TokenHash != nil {
@@ -278,7 +293,7 @@ func (s *IamFlowSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 11)
+		vals := make([]bob.Expression, 12)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -301,52 +316,63 @@ func (s *IamFlowSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
-		if s.TokenHash != nil {
+		if s.Environment != nil {
 			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.TokenHash != nil {
+			vals[3] = psql.Arg(func() string {
 				if s.TokenHash == nil {
 					return *new(string)
 				}
 				return *s.TokenHash
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.Kind != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.Kind == nil {
 					return *new(string)
 				}
 				return *s.Kind
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.Status != nil {
-			vals[4] = psql.Arg(func() string {
+			vals[5] = psql.Arg(func() string {
 				if s.Status == nil {
 					return *new(string)
 				}
 				return *s.Status
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.Step != nil {
-			vals[5] = psql.Arg(func() string {
+			vals[6] = psql.Arg(func() string {
 				if s.Step == nil {
 					return *new(string)
 				}
 				return *s.Step
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.UserID != nil {
-			vals[6] = psql.Arg(func() null.Val[string] {
+			vals[7] = psql.Arg(func() null.Val[string] {
 				if s.UserID == nil {
 					return *new(null.Val[string])
 				}
@@ -354,51 +380,51 @@ func (s *IamFlowSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.ExpiresAt != nil {
-			vals[7] = psql.Arg(func() time.Time {
+			vals[8] = psql.Arg(func() time.Time {
 				if s.ExpiresAt == nil {
 					return *new(time.Time)
 				}
 				return *s.ExpiresAt
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[8] = psql.Arg(func() time.Time {
+			vals[9] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[8] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		if s.UpdatedAt != nil {
-			vals[9] = psql.Arg(func() time.Time {
+			vals[10] = psql.Arg(func() time.Time {
 				if s.UpdatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.UpdatedAt
 			}())
 		} else {
-			vals[9] = psql.Raw("DEFAULT")
+			vals[10] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[10] = psql.Arg(func() json.RawMessage {
+			vals[11] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[10] = psql.Raw("DEFAULT")
+			vals[11] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -410,7 +436,7 @@ func (s IamFlowSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamFlowSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 11)
+	exprs := make([]bob.Expression, 0, 12)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -423,6 +449,13 @@ func (s IamFlowSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
 		}})
 	}
 
@@ -747,17 +780,18 @@ func (o IamFlowSlice) ReloadAll(ctx context.Context, exec bob.Executor) error {
 }
 
 type iamFlowWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	TokenHash psql.WhereMod[Q, string]
-	Kind      psql.WhereMod[Q, string]
-	Status    psql.WhereMod[Q, string]
-	Step      psql.WhereMod[Q, string]
-	UserID    psql.WhereNullMod[Q, string]
-	ExpiresAt psql.WhereMod[Q, time.Time]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	UpdatedAt psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID          psql.WhereMod[Q, string]
+	ProjectID   psql.WhereMod[Q, string]
+	Environment psql.WhereMod[Q, string]
+	TokenHash   psql.WhereMod[Q, string]
+	Kind        psql.WhereMod[Q, string]
+	Status      psql.WhereMod[Q, string]
+	Step        psql.WhereMod[Q, string]
+	UserID      psql.WhereNullMod[Q, string]
+	ExpiresAt   psql.WhereMod[Q, time.Time]
+	CreatedAt   psql.WhereMod[Q, time.Time]
+	UpdatedAt   psql.WhereMod[Q, time.Time]
+	Data        psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamFlowWhere[Q]) AliasedAs(alias string) iamFlowWhere[Q] {
@@ -766,16 +800,17 @@ func (iamFlowWhere[Q]) AliasedAs(alias string) iamFlowWhere[Q] {
 
 func buildIamFlowWhere[Q psql.Filterable](cols iamFlowColumns) iamFlowWhere[Q] {
 	return iamFlowWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		TokenHash: psql.Where[Q, string](cols.TokenHash.Expression),
-		Kind:      psql.Where[Q, string](cols.Kind.Expression),
-		Status:    psql.Where[Q, string](cols.Status.Expression),
-		Step:      psql.Where[Q, string](cols.Step.Expression),
-		UserID:    psql.WhereNull[Q, string](cols.UserID.Expression),
-		ExpiresAt: psql.Where[Q, time.Time](cols.ExpiresAt.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		UpdatedAt: psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:          psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		TokenHash:   psql.Where[Q, string](cols.TokenHash.Expression),
+		Kind:        psql.Where[Q, string](cols.Kind.Expression),
+		Status:      psql.Where[Q, string](cols.Status.Expression),
+		Step:        psql.Where[Q, string](cols.Step.Expression),
+		UserID:      psql.WhereNull[Q, string](cols.UserID.Expression),
+		ExpiresAt:   psql.Where[Q, time.Time](cols.ExpiresAt.Expression),
+		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		UpdatedAt:   psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
+		Data:        psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }
