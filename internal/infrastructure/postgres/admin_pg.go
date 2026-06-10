@@ -1108,7 +1108,18 @@ func (a *pgAdminConfig) getConfigDoc(ctx context.Context, projectID, env, key st
 	}
 	doc := domain.AdminConfigDoc{}
 	if len(row.Data) > 0 {
-		if err := json.Unmarshal(row.Data, &doc); err != nil {
+		// Parse real JSON into raw per-key values. (json.Unmarshal into
+		// map[string]jx.Raw would base64-decode each value, the inverse of the
+		// old base64 write path — see putConfigDoc.)
+		d := jx.DecodeBytes(row.Data)
+		if err := d.Obj(func(d *jx.Decoder, key string) error {
+			raw, err := d.Raw()
+			if err != nil {
+				return err
+			}
+			doc[key] = jx.Raw(raw)
+			return nil
+		}); err != nil {
 			return nil, err
 		}
 	}
@@ -1118,7 +1129,15 @@ func (a *pgAdminConfig) getConfigDoc(ctx context.Context, projectID, env, key st
 // putConfigDoc upserts one iam_config(project, env, key) envelope from a doc.
 func (a *pgAdminConfig) putConfigDoc(ctx context.Context, projectID, env, key string, doc domain.AdminConfigDoc) (domain.AdminConfigDoc, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (domain.AdminConfigDoc, error) {
-		raw, err := json.Marshal(doc)
+		// Store REAL JSON. domain.AdminConfigDoc is map[string]jx.Raw; json.Marshal
+		// of that base64-encodes each value ([]byte semantics), which round-trips
+		// via getConfigDoc but is opaque to any plain-JSON reader (flow engine,
+		// public config). Convert through json.RawMessage so values stay raw JSON.
+		rawDoc := make(map[string]json.RawMessage, len(doc))
+		for k, v := range doc {
+			rawDoc[k] = json.RawMessage(v)
+		}
+		raw, err := json.Marshal(rawDoc)
 		if err != nil {
 			return nil, err
 		}

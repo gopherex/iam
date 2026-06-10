@@ -32,9 +32,15 @@ const platformDefaultEnvironment = "live"
 // iam_config(key=auth) data envelope. Columns on iam_config are lookup-only;
 // the policy itself lives in the jsonb blob.
 type platformAuthConfig struct {
-	Methods       []string `json:"methods"`
-	Locales       []string `json:"locales"`
-	DefaultLocale string   `json:"default_locale"`
+	Methods       []string                    `json:"methods"`
+	Locales       []string                    `json:"locales"`
+	DefaultLocale string                      `json:"default_locale"`
+	Registration  *platformRegistrationConfig `json:"registration"`
+}
+
+type platformRegistrationConfig struct {
+	Mode             string `json:"mode"`
+	PasswordStrategy string `json:"password_strategy"`
 }
 
 type platformConsentConfig struct {
@@ -92,6 +98,12 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 		}
 		if ac.DefaultLocale != "" {
 			cfg.DefaultLocale = ac.DefaultLocale
+		}
+		if ac.Registration != nil {
+			cfg.Registration = &domain.RegistrationInfo{
+				Mode:             ac.Registration.Mode,
+				PasswordStrategy: ac.Registration.PasswordStrategy,
+			}
 		}
 	}
 

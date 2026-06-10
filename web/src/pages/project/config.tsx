@@ -92,6 +92,20 @@ function AuthTab({ projectId, env }: { projectId: string; env: string }) {
     );
   }
 
+  function setPasswordStrategy(strategy: string) {
+    setForm((prev) =>
+      prev
+        ? {
+            ...prev,
+            registration: {
+              ...prev.registration,
+              password_strategy: strategy as RegistrationConfig['password_strategy'],
+            },
+          }
+        : prev,
+    );
+  }
+
   async function save() {
     if (!form) return;
     setBusy(true);
@@ -197,6 +211,32 @@ function AuthTab({ projectId, env }: { projectId: string; env: string }) {
                   ].join(' ')}
                 >
                   {mode.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 space-y-2">
+            <Label>Password collection</Label>
+            <p className="text-xs text-muted-foreground">
+              When to ask for the password during signup.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                ['password_first', 'At signup'],
+                ['after_verify', 'After email verified'],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setPasswordStrategy(value)}
+                  className={[
+                    'rounded-lg border px-3 py-2 text-sm transition-colors',
+                    (form.registration?.password_strategy ?? 'password_first') === value
+                      ? 'border-primary bg-primary/5 text-foreground font-medium'
+                      : 'border-border bg-transparent text-muted-foreground hover:border-primary/40 hover:text-foreground',
+                  ].join(' ')}
+                >
+                  {label}
                 </button>
               ))}
             </div>

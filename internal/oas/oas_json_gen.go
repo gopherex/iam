@@ -16593,6 +16593,39 @@ func (s *OptRegistrationConfigMode) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes RegistrationConfigPasswordStrategy as json.
+func (o OptRegistrationConfigPasswordStrategy) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes RegistrationConfigPasswordStrategy from json.
+func (o *OptRegistrationConfigPasswordStrategy) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptRegistrationConfigPasswordStrategy to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptRegistrationConfigPasswordStrategy) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptRegistrationConfigPasswordStrategy) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes RetentionPolicyInactiveUser as json.
 func (o OptRetentionPolicyInactiveUser) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -38850,10 +38883,17 @@ func (s *RegistrationConfig) encodeFields(e *jx.Encoder) {
 			s.Mode.Encode(e)
 		}
 	}
+	{
+		if s.PasswordStrategy.Set {
+			e.FieldStart("password_strategy")
+			s.PasswordStrategy.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfRegistrationConfig = [1]string{
+var jsonFieldsNameOfRegistrationConfig = [2]string{
 	0: "mode",
+	1: "password_strategy",
 }
 
 // Decode decodes RegistrationConfig from json.
@@ -38873,6 +38913,16 @@ func (s *RegistrationConfig) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"mode\"")
+			}
+		case "password_strategy":
+			if err := func() error {
+				s.PasswordStrategy.Reset()
+				if err := s.PasswordStrategy.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"password_strategy\"")
 			}
 		default:
 			return d.Skip()
@@ -38938,6 +38988,46 @@ func (s RegistrationConfigMode) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *RegistrationConfigMode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes RegistrationConfigPasswordStrategy as json.
+func (s RegistrationConfigPasswordStrategy) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes RegistrationConfigPasswordStrategy from json.
+func (s *RegistrationConfigPasswordStrategy) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegistrationConfigPasswordStrategy to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch RegistrationConfigPasswordStrategy(v) {
+	case RegistrationConfigPasswordStrategyPasswordFirst:
+		*s = RegistrationConfigPasswordStrategyPasswordFirst
+	case RegistrationConfigPasswordStrategyAfterVerify:
+		*s = RegistrationConfigPasswordStrategyAfterVerify
+	default:
+		*s = RegistrationConfigPasswordStrategy(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s RegistrationConfigPasswordStrategy) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegistrationConfigPasswordStrategy) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

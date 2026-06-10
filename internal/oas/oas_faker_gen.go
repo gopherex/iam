@@ -3454,6 +3454,15 @@ func (s *OptRegistrationConfigMode) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptRegistrationConfigPasswordStrategy) SetFake() {
+	var elem RegistrationConfigPasswordStrategy
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
 func (s *OptRetentionPolicyInactiveUser) SetFake() {
 	var elem RetentionPolicyInactiveUser
 	{
@@ -7276,11 +7285,21 @@ func (s *RegistrationConfig) SetFake() {
 			s.Mode.SetFake()
 		}
 	}
+	{
+		{
+			s.PasswordStrategy.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.
 func (s *RegistrationConfigMode) SetFake() {
 	*s = RegistrationConfigModeOpen
+}
+
+// SetFake set fake values.
+func (s *RegistrationConfigPasswordStrategy) SetFake() {
+	*s = RegistrationConfigPasswordStrategyPasswordFirst
 }
 
 // SetFake set fake values.

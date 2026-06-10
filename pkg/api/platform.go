@@ -86,6 +86,16 @@ func oasPublicConfig(c *domain.PublicConfig) *oas.PublicConfig {
 	if c.DefaultLocale != "" {
 		r.DefaultLocale = oas.NewOptString(c.DefaultLocale)
 	}
+	if c.Registration != nil {
+		reg := oas.RegistrationConfig{}
+		if c.Registration.Mode != "" {
+			reg.Mode = oas.NewOptRegistrationConfigMode(oas.RegistrationConfigMode(c.Registration.Mode))
+		}
+		if c.Registration.PasswordStrategy != "" {
+			reg.PasswordStrategy = oas.NewOptRegistrationConfigPasswordStrategy(oas.RegistrationConfigPasswordStrategy(c.Registration.PasswordStrategy))
+		}
+		r.Registration = oas.NewOptRegistrationConfig(reg)
+	}
 	for _, p := range c.Providers {
 		r.Providers = append(r.Providers, oas.PublicConfigProvidersItem{
 			ID:   oas.NewOptString(p.ID),

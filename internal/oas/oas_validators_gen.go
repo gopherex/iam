@@ -18176,6 +18176,24 @@ func (s *RegistrationConfig) Validate() error {
 			Error: err,
 		})
 	}
+	if err := func() error {
+		if value, ok := s.PasswordStrategy.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "password_strategy",
+			Error: err,
+		})
+	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -18191,6 +18209,17 @@ func (s RegistrationConfigMode) Validate() error {
 	case "request_access":
 		return nil
 	case "closed":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s RegistrationConfigPasswordStrategy) Validate() error {
+	switch s {
+	case "password_first":
+		return nil
+	case "after_verify":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

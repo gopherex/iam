@@ -98,6 +98,7 @@ type flowData struct {
 	ActiveChallenge  *domain.FlowActiveChallenge `json:"active_challenge,omitempty"`
 	ConsentsRequired []domain.FlowConsentRef     `json:"consents_required,omitempty"`
 	RegistrationMode string                      `json:"registration_mode,omitempty"`
+	PasswordStrategy string                      `json:"password_strategy,omitempty"`
 	Error            *domain.FlowError           `json:"error,omitempty"`
 }
 
@@ -163,6 +164,7 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 		ActiveChallenge:  data.ActiveChallenge,
 		ConsentsRequired: data.ConsentsRequired,
 		RegistrationMode: data.RegistrationMode,
+		PasswordStrategy: data.PasswordStrategy,
 		Error:            data.Error,
 	}
 	if uid, ok := row.UserID.Get(); ok {
@@ -180,6 +182,7 @@ func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *
 		ActiveChallenge:  f.ActiveChallenge,
 		ConsentsRequired: f.ConsentsRequired,
 		RegistrationMode: f.RegistrationMode,
+		PasswordStrategy: f.PasswordStrategy,
 		Error:            f.Error,
 	})
 	if err != nil {
@@ -212,6 +215,7 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 		ActiveChallenge:  f.ActiveChallenge,
 		ConsentsRequired: f.ConsentsRequired,
 		RegistrationMode: f.RegistrationMode,
+		PasswordStrategy: f.PasswordStrategy,
 		Error:            f.Error,
 	})
 	if err != nil {
@@ -477,12 +481,78 @@ func (a *pgCoreAuthFlows) Abandon(ctx context.Context, cmd domain.FlowAbandonCmd
 // advanceSignupCreate is called during Create for signup. It registers the user,
 // issues an email challenge, and persists the flow at step=verify_email.
 // Returns a FlowState with the initial token (new token from flowMintToken).
+// flowAuthConfig reads the project's signup policy (registration mode + password
+// strategy) from the auth config doc. Empty strings mean "unset" → open/default.
+// Reads the live environment (runtime is single-env until A2 wiring).
+func (a *pgCoreAuthFlows) flowAuthConfig(ctx context.Context, projectID string) (mode, passwordStrategy string) {
+	row, err := models.IamConfigs.Query(
+		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(coreAuthDefaultEnv))),
+		sm.Where(models.IamConfigs.Columns.Key.EQ(psql.Arg("auth"))),
+	).One(ctx, a.db.Bobx())
+	if err != nil || len(row.Data) == 0 {
+		return "", ""
+	}
+	var doc struct {
+		Registration struct {
+			Mode             string `json:"mode"`
+			PasswordStrategy string `json:"password_strategy"`
+		} `json:"registration"`
+	}
+	if unmarshal(row.Data, &doc) != nil {
+		return "", ""
+	}
+	return doc.Registration.Mode, doc.Registration.PasswordStrategy
+}
+
+// flowPersistAtStep mints a token and persists a fresh flow halted at a terminal
+// or waiting step (blocked / request_access), with no challenge issued.
+func (a *pgCoreAuthFlows) flowPersistAtStep(ctx context.Context, f *domain.Flow, step domain.FlowStep, ferr *domain.FlowError) (*domain.FlowState, error) {
+	f.Step = step
+	f.Error = ferr
+	token, hash, err := flowMintToken()
+	if err != nil {
+		return nil, fmt.Errorf("flow persist at %s: mint token: %w", step, err)
+	}
+	if err := a.flowInsert(ctx, f, hash, flowData{
+		Contact:          f.Contact,
+		Collected:        f.Collected,
+		RegistrationMode: f.RegistrationMode,
+		PasswordStrategy: f.PasswordStrategy,
+		Error:            ferr,
+	}); err != nil {
+		return nil, err
+	}
+	return &domain.FlowState{FlowToken: token, Flow: f}, nil
+}
+
 func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
-	// 1. Register the user (creates unverified account + bcrypt-hashes password).
+	// 0. Enforce the project's registration policy (read from auth config).
+	mode, pwStrategy := a.flowAuthConfig(ctx, f.ProjectID)
+	f.RegistrationMode = mode
+	f.PasswordStrategy = pwStrategy
+	switch mode {
+	case "closed":
+		return a.flowPersistAtStep(ctx, f, domain.FlowStepBlocked,
+			&domain.FlowError{Code: "registration_closed", Message: "Registration is closed."})
+	case "invite_only":
+		// Invite redemption lands in Phase 1b; until then, no public signup.
+		return a.flowPersistAtStep(ctx, f, domain.FlowStepBlocked,
+			&domain.FlowError{Code: "invite_required", Message: "An invitation is required to sign up."})
+	case "request_access":
+		return a.flowPersistAtStep(ctx, f, domain.FlowStepRequestAccess, nil)
+	}
+
+	// 1. Register the user. With the after_verify password strategy the account is
+	// created WITHOUT a password (set later at the set_password step).
+	password := cmd.Password
+	if pwStrategy == "after_verify" {
+		password = ""
+	}
 	acct, _, err := a.accounts.Register(ctx, domain.RegisterCmd{
 		ProjectID: f.ProjectID,
 		Email:     cmd.Email,
-		Password:  cmd.Password,
+		Password:  password,
 		Name:      cmd.Name,
 		Locale:    cmd.Locale,
 	})
@@ -517,9 +587,11 @@ func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flo
 		return nil, fmt.Errorf("flow signup create: mint token: %w", err)
 	}
 	if err := a.flowInsert(ctx, f, hash, flowData{
-		Contact:         f.Contact,
-		Collected:       f.Collected,
-		ActiveChallenge: f.ActiveChallenge,
+		Contact:          f.Contact,
+		Collected:        f.Collected,
+		ActiveChallenge:  f.ActiveChallenge,
+		RegistrationMode: f.RegistrationMode,
+		PasswordStrategy: f.PasswordStrategy,
 	}); err != nil {
 		return nil, err
 	}
@@ -534,6 +606,11 @@ func advanceSignup(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 			return nil, domain.ErrBadRequest.WithMessage("expected action verify_email")
 		}
 		return a.signupVerifyEmail(ctx, row, f, cmd)
+	case domain.FlowStepSetPassword:
+		if cmd.Action != "set_password" {
+			return nil, domain.ErrBadRequest.WithMessage("expected action set_password")
+		}
+		return a.signupSetPassword(ctx, row, f, cmd)
 	default:
 		return nil, domain.ErrBadRequest.WithMessage(fmt.Sprintf("unexpected step %q for signup", f.Step))
 	}
@@ -572,13 +649,82 @@ func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.Iam
 		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
 	}
 
-	// Success: complete the flow, rotate the token (§5 rule 2).
-	f.Status = domain.FlowStatusCompleted
-	f.Step = domain.FlowStepCompleted
+	// Email verified.
 	f.ActiveChallenge = nil
 	f.Error = nil
 	f.UserID = acct.ID
 
+	// after_verify strategy: the account has no password yet — advance to the
+	// set_password step instead of completing. The session minted by VerifyEmail
+	// is not surfaced; set_password mints the real one.
+	if f.PasswordStrategy == "after_verify" {
+		f.Step = domain.FlowStepSetPassword
+		if err := a.db.withTx(ctx, func(ctx context.Context) error {
+			return a.flowSave(ctx, row, f)
+		}); err != nil {
+			return nil, err
+		}
+		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
+	}
+
+	// Success: complete the flow, rotate the token (§5 rule 2).
+	f.Status = domain.FlowStatusCompleted
+	f.Step = domain.FlowStepCompleted
+
+	newToken, err := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
+		return a.flowRotate(ctx, row, f)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &domain.FlowState{FlowToken: newToken, Flow: f, Session: sess}, nil
+}
+
+// signupSetPassword handles the set_password step for the after_verify strategy:
+// it writes the account's first password credential, completes the flow, rotates
+// the token (privilege step §5 rule 2), and returns a fresh session.
+func (a *pgCoreAuthFlows) signupSetPassword(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+	if f.UserID == "" {
+		return nil, domain.ErrBadRequest.WithMessage("no verified user for signup")
+	}
+	password := cmd.Payload["password"]
+	if password == "" {
+		return nil, domain.ErrBadRequest.WithMessage("password is required")
+	}
+	pgCA, ok := a.accounts.(*pgCoreAuth)
+	if !ok {
+		return nil, fmt.Errorf("signup set_password: accounts is not *pgCoreAuth")
+	}
+
+	sess, err := withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Session, error) {
+		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), f.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("signup set_password: load user: %w", err)
+		}
+		acc, err := coreAuthLoadAccount(userRow, f.ProjectID)
+		if err != nil {
+			return nil, fmt.Errorf("signup set_password: parse account: %w", err)
+		}
+		hash, err := coreAuthHashPassword(password)
+		if err != nil {
+			return nil, fmt.Errorf("signup set_password: hash password: %w", err)
+		}
+		if err := pgCA.coreAuthUpsertPasswordCredential(ctx, acc.ProjectID, acc.ID, hash); err != nil {
+			return nil, fmt.Errorf("signup set_password: upsert credential: %w", err)
+		}
+		s, err := pgCA.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
+		if err != nil {
+			return nil, fmt.Errorf("signup set_password: mint session: %w", err)
+		}
+		return s, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	f.Status = domain.FlowStatusCompleted
+	f.Step = domain.FlowStepCompleted
+	f.Error = nil
 	newToken, err := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
 		return a.flowRotate(ctx, row, f)
 	})

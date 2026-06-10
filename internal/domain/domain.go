@@ -203,6 +203,14 @@ type PublicConfig struct {
 	Locales          []string
 	DefaultLocale    string
 	ConsentDocuments []ConsentDocument
+	Registration     *RegistrationInfo
+}
+
+// RegistrationInfo is the public view of a project's signup policy, so the app
+// can pre-block /register and show/hide the password field.
+type RegistrationInfo struct {
+	Mode             string // open | invite_only | request_access | closed
+	PasswordStrategy string // password_first | after_verify
 }
 
 type ConsentDocument struct {

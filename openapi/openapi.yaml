@@ -997,6 +997,15 @@ components:
           - invite_only
           - request_access
           - closed
+        password_strategy:
+          type: string
+          description: >-
+            When passwords are collected during signup. password_first (default)
+            collects the password up front; after_verify collects it only after
+            the email is verified.
+          enum:
+          - password_first
+          - after_verify
     PublicConfig:
       type: object
       properties:

@@ -10074,6 +10074,52 @@ func (o OptRegistrationConfigMode) Or(d RegistrationConfigMode) RegistrationConf
 	return d
 }
 
+// NewOptRegistrationConfigPasswordStrategy returns new OptRegistrationConfigPasswordStrategy with value set to v.
+func NewOptRegistrationConfigPasswordStrategy(v RegistrationConfigPasswordStrategy) OptRegistrationConfigPasswordStrategy {
+	return OptRegistrationConfigPasswordStrategy{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRegistrationConfigPasswordStrategy is optional RegistrationConfigPasswordStrategy.
+type OptRegistrationConfigPasswordStrategy struct {
+	Value RegistrationConfigPasswordStrategy
+	Set   bool
+}
+
+// IsSet returns true if OptRegistrationConfigPasswordStrategy was set.
+func (o OptRegistrationConfigPasswordStrategy) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRegistrationConfigPasswordStrategy) Reset() {
+	var v RegistrationConfigPasswordStrategy
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRegistrationConfigPasswordStrategy) SetTo(v RegistrationConfigPasswordStrategy) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRegistrationConfigPasswordStrategy) Get() (v RegistrationConfigPasswordStrategy, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRegistrationConfigPasswordStrategy) Or(d RegistrationConfigPasswordStrategy) RegistrationConfigPasswordStrategy {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptRetentionPolicyInactiveUser returns new OptRetentionPolicyInactiveUser with value set to v.
 func NewOptRetentionPolicyInactiveUser(v RetentionPolicyInactiveUser) OptRetentionPolicyInactiveUser {
 	return OptRetentionPolicyInactiveUser{
@@ -17646,6 +17692,9 @@ func (s *RefreshRequest) SetRefreshToken(val OptString) {
 // Ref: #/components/schemas/RegistrationConfig
 type RegistrationConfig struct {
 	Mode OptRegistrationConfigMode `json:"mode"`
+	// When passwords are collected during signup. password_first (default) collects the password up
+	// front; after_verify collects it only after the email is verified.
+	PasswordStrategy OptRegistrationConfigPasswordStrategy `json:"password_strategy"`
 }
 
 // GetMode returns the value of Mode.
@@ -17653,9 +17702,19 @@ func (s *RegistrationConfig) GetMode() OptRegistrationConfigMode {
 	return s.Mode
 }
 
+// GetPasswordStrategy returns the value of PasswordStrategy.
+func (s *RegistrationConfig) GetPasswordStrategy() OptRegistrationConfigPasswordStrategy {
+	return s.PasswordStrategy
+}
+
 // SetMode sets the value of Mode.
 func (s *RegistrationConfig) SetMode(val OptRegistrationConfigMode) {
 	s.Mode = val
+}
+
+// SetPasswordStrategy sets the value of PasswordStrategy.
+func (s *RegistrationConfig) SetPasswordStrategy(val OptRegistrationConfigPasswordStrategy) {
+	s.PasswordStrategy = val
 }
 
 type RegistrationConfigMode string
@@ -17707,6 +17766,49 @@ func (s *RegistrationConfigMode) UnmarshalText(data []byte) error {
 		return nil
 	case RegistrationConfigModeClosed:
 		*s = RegistrationConfigModeClosed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// When passwords are collected during signup. password_first (default) collects the password up
+// front; after_verify collects it only after the email is verified.
+type RegistrationConfigPasswordStrategy string
+
+const (
+	RegistrationConfigPasswordStrategyPasswordFirst RegistrationConfigPasswordStrategy = "password_first"
+	RegistrationConfigPasswordStrategyAfterVerify   RegistrationConfigPasswordStrategy = "after_verify"
+)
+
+// AllValues returns all RegistrationConfigPasswordStrategy values.
+func (RegistrationConfigPasswordStrategy) AllValues() []RegistrationConfigPasswordStrategy {
+	return []RegistrationConfigPasswordStrategy{
+		RegistrationConfigPasswordStrategyPasswordFirst,
+		RegistrationConfigPasswordStrategyAfterVerify,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s RegistrationConfigPasswordStrategy) MarshalText() ([]byte, error) {
+	switch s {
+	case RegistrationConfigPasswordStrategyPasswordFirst:
+		return []byte(s), nil
+	case RegistrationConfigPasswordStrategyAfterVerify:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *RegistrationConfigPasswordStrategy) UnmarshalText(data []byte) error {
+	switch RegistrationConfigPasswordStrategy(data) {
+	case RegistrationConfigPasswordStrategyPasswordFirst:
+		*s = RegistrationConfigPasswordStrategyPasswordFirst
+		return nil
+	case RegistrationConfigPasswordStrategyAfterVerify:
+		*s = RegistrationConfigPasswordStrategyAfterVerify
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

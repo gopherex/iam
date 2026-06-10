@@ -21,6 +21,7 @@ type Flow struct {
 	ActiveChallenge  *FlowActiveChallenge
 	ConsentsRequired []FlowConsentRef
 	RegistrationMode string // open | request_access | invite_only | closed
+	PasswordStrategy string // password_first | after_verify
 	Error            *FlowError
 }
 
