@@ -24,6 +24,7 @@ import {
   postV1AuthWebauthnLoginOptions,
   postV1AuthWebauthnLoginVerify,
   getV1ConfigPublic,
+  getV1UsersMe,
   type AuthResultOrNextStep,
   type ClientOptions as GeneratedClientOptions,
   type ConsentAcceptance,
@@ -510,6 +511,31 @@ export class IamAuth {
       body: { challenge_id: data.challenge_id ?? '', credential: encodeAssertion(cred) },
     });
     return this.handle(r);
+  }
+
+  /**
+   * Accept a completed flow's SessionTokens into the auth client.
+   * Called by FlowController when the flow reaches `status: completed`.
+   * Fetches the current user profile using the new access token, then emits
+   * SIGNED_IN. If the user fetch fails the session is still persisted so the
+   * app can recover on next load.
+   */
+  async acceptFlowSession(tokens: SessionTokens): Promise<void> {
+    // Temporarily store a minimal session so the authenticated getV1UsersMe
+    // request can attach the bearer.
+    const placeholder: User = { id: '', kind: 'human', status: 'active' };
+    const tempSession = toSession(tokens, placeholder);
+    this.session = tempSession;
+
+    // Fetch the real user using the new access token.
+    const meResult = await getV1UsersMe({
+      client: this.client,
+    });
+    const user: User =
+      !meResult.error && meResult.data ? (meResult.data as User) : placeholder;
+
+    const session = toSession(tokens, user);
+    await this.setSession(session, 'SIGNED_IN');
   }
 
   /** Force a token refresh now. Returns the refreshed session or null. */

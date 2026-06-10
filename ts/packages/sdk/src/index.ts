@@ -23,3 +23,11 @@ export type {
   Subscription,
 } from './auth/types';
 export { MemoryStorage } from './auth/storage';
+export { createFlowController } from './auth/flow';
+export type {
+  FlowController,
+  FlowControllerOptions,
+  FlowChangeCallback,
+  FlowKind,
+} from './auth/flow';
+// Note: FlowState is exported from './gen' via the wildcard export above.

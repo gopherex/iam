@@ -3,6 +3,7 @@ import { RequireAuth } from '@/components/require-auth';
 import { Toaster } from '@/components/ui/sonner';
 import { OperatorLayout } from '@/layout/operator-layout';
 import { ProjectLayout } from '@/layout/project-layout';
+import { FlowPage } from '@/pages/flow';
 import { LoginPage } from '@/pages/login';
 import { ProjectsPage } from '@/pages/projects';
 import { AccessRequestsPage } from '@/pages/project/access-requests';
@@ -22,6 +23,7 @@ export function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/flow" element={<FlowPage />} />
 
         <Route element={<RequireAuth />}>
           <Route element={<OperatorLayout />}>
