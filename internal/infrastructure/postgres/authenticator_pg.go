@@ -39,6 +39,11 @@ import (
 // emit "live").
 const authDefaultEnv = "live"
 
+// activityThrottle bounds how often a session's last_active_at is bumped on the
+// authenticated read path: at most one write per session per this interval, so
+// "last seen" stays fresh without a DB write on every request.
+const activityThrottle = 60 * time.Second
+
 // pgAuthenticator validates credentials and resolves principals.
 type pgAuthenticator struct {
 	db        *DB
@@ -95,6 +100,13 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 		}
 		if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
 			return nil, domain.ErrUnauthorized
+		}
+		// Activity tracking: bump last_active_at, throttled so authenticated
+		// requests don't write on every call. Best-effort — a failed bump must
+		// never fail authentication.
+		if now := nowUTC(); now.Sub(row.LastActiveAt) > activityThrottle {
+			la := now
+			_ = row.Update(ctx, a.db.Bobx(), &models.IamSessionSetter{LastActiveAt: &la})
 		}
 	}
 	return &domain.Principal{
