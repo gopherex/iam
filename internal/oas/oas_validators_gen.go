@@ -14419,7 +14419,7 @@ func (s *PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK) Va
 				if err := (validate.String{
 					MinLength:     0,
 					MinLengthSet:  false,
-					MaxLength:     1024,
+					MaxLength:     8192,
 					MaxLengthSet:  true,
 					Email:         false,
 					Hostname:      false,

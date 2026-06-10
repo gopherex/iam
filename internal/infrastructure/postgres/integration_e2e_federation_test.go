@@ -351,17 +351,11 @@ func TestE2EFederationConnectionTestAndRotateCertificate(t *testing.T) {
 		t.Fatalf("/test: unexpected status %d; body: %s", r.Status, r.Body)
 	}
 
-	// /rotate-certificate: must return a new PEM string.
-	// KNOWN BUG: the OpenAPI spec declares maxLength:1024 for the certificate field, but an
-	// RSA-2048 self-signed PEM certificate is ~1600-1700 characters. ogen validates the
-	// response body against the schema before writing it, so the response validator rejects the
-	// generated certificate and returns a 400 bad_request (via ErrorHandler) instead of 200.
-	// Fix: increase maxLength in openapi.yaml to at least 4096 for the certificate field.
+	// /rotate-certificate: must return a new PEM string. The certificate field's
+	// openapi maxLength was raised to 8192 so the RSA-2048 PEM (~1600 chars) is no
+	// longer rejected by the ogen response validator.
 	rotatePath := fmt.Sprintf("/v1/projects/%s/admin/sso/connections/%s/rotate-certificate", projectID, connID)
 	r = e2eReq(t, ctx, http.MethodPost, ts.URL+rotatePath, nil, hdr)
-	if r.Status == http.StatusBadRequest {
-		t.Skip("KNOWN BUG: rotate-certificate returns 400 because ogen response validator rejects the RSA-2048 PEM (~1600 chars) against maxLength:1024 declared in openapi.yaml — increase maxLength to ≥4096")
-	}
 	e2eWantStatus(t, r, http.StatusOK)
 	var rotResp struct {
 		Certificate string `json:"certificate"`

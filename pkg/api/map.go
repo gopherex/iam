@@ -34,6 +34,19 @@ func oasUser(a *domain.Account) oas.User {
 	if a.PrimaryPhone != "" {
 		u.PrimaryPhone = oas.NewOptNilString(a.PrimaryPhone)
 	}
+	// Surface the editable profile (name/locale) so PATCH /v1/users/me and reads
+	// reflect the stored values. Locale is only set when non-empty: an empty
+	// string fails the oas locale pattern on response validation.
+	if a.Name != "" || a.Locale != "" {
+		var prof oas.CoreProfile
+		if a.Name != "" {
+			prof.Name = oas.NewOptNilString(a.Name)
+		}
+		if a.Locale != "" {
+			prof.Locale = oas.NewOptString(a.Locale)
+		}
+		u.Profile = oas.NewOptCoreProfile(prof)
+	}
 	return u
 }
 

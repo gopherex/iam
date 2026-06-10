@@ -47,12 +47,8 @@ func TestE2EAccountGetMe(t *testing.T) {
 	})
 }
 
-// TestE2EAccountPatchMe verifies PATCH /v1/users/me — profile update.
-//
-// BUG: oasUser (pkg/api/map.go) does not populate the User.Profile field, so
-// name / locale / avatar_url updates are persisted in the DB but do NOT surface
-// in the response body. The test therefore verifies only that the endpoint
-// returns 200 with a well-formed user object; it does NOT assert user.profile.name.
+// TestE2EAccountPatchMe verifies PATCH /v1/users/me — profile update round-trips
+// (oasUser now populates User.Profile from the stored name/locale).
 func TestE2EAccountPatchMe(t *testing.T) {
 	ctx := context.Background()
 	ts := e2eServer(t)
@@ -65,14 +61,19 @@ func TestE2EAccountPatchMe(t *testing.T) {
 		e2eWantStatus(t, r, http.StatusOK)
 		var resp struct {
 			User struct {
-				ID string `json:"id"`
+				ID      string `json:"id"`
+				Profile struct {
+					Name string `json:"name"`
+				} `json:"profile"`
 			} `json:"user"`
 		}
 		e2eDecode(t, r, &resp)
 		if resp.User.ID != acct.ID {
 			t.Errorf("user.id = %q, want %q", resp.User.ID, acct.ID)
 		}
-		// NOTE: resp.User.Profile.Name is not populated due to the bug above.
+		if resp.User.Profile.Name != "Updated Name" {
+			t.Errorf("user.profile.name = %q, want %q", resp.User.Profile.Name, "Updated Name")
+		}
 	})
 
 	t.Run("no auth returns 401", func(t *testing.T) {

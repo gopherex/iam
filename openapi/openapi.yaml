@@ -5653,7 +5653,7 @@ paths:
                 properties:
                   certificate:
                     type: string
-                    maxLength: 1024
+                    maxLength: 8192
         default:
           $ref: '#/components/responses/Default'
       security:
