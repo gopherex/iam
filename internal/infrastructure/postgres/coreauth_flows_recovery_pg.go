@@ -85,17 +85,18 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 			return nil, fmt.Errorf("recovery create: random token: %w", tokenErr)
 		}
 		ch := coreAuthChallengeData{
-			ID:        newUUID(),
-			ProjectID: cmd.ProjectID,
-			Type:      "password_reset",
-			Purpose:   "reset",
-			AccountID: acc.ID,
-			Subject:   cmd.Email,
-			CodeHash:  coreAuthSHA256(code),
-			TokenHash: coreAuthSHA256(token),
-			Locale:    cmd.Locale,
-			ExpiresAt: now.Add(coreAuthChallengeTTL),
-			CreatedAt: now,
+			ID:          newUUID(),
+			ProjectID:   cmd.ProjectID,
+			Environment: f.Environment,
+			Type:        "password_reset",
+			Purpose:     "reset",
+			AccountID:   acc.ID,
+			Subject:     cmd.Email,
+			CodeHash:    coreAuthSHA256(code),
+			TokenHash:   coreAuthSHA256(token),
+			Locale:      cmd.Locale,
+			ExpiresAt:   now.Add(coreAuthChallengeTTL),
+			CreatedAt:   now,
 		}
 
 		if err := a.db.withTx(ctx, func(ctx context.Context) error {
@@ -105,7 +106,7 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 			return pgCA.emitter.Emit(ctx, domain.Event{
 				Type:        "password.reset_requested",
 				ProjectID:   cmd.ProjectID,
-				Environment: coreAuthDefaultEnv,
+				Environment: f.Environment,
 				AggregateID: acc.ID,
 				Payload: map[string]any{
 					"code":         code,
@@ -311,7 +312,7 @@ func (a *pgCoreAuthFlows) recoverySetPassword(ctx context.Context, row *models.I
 		if err := pgCA.emitter.Emit(ctx, domain.Event{
 			Type:        "password.reset",
 			ProjectID:   acc.ProjectID,
-			Environment: coreAuthDefaultEnv,
+			Environment: f.Environment,
 			AggregateID: acc.ID,
 			Payload:     acc,
 		}); err != nil {

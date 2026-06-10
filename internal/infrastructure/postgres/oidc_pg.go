@@ -280,14 +280,19 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 		rm := json.RawMessage(codeData)
 		uid := null.From(cmd.AccountID)
 		cid := null.From(in.ClientID)
+		acEnv, err := effectiveEnv(ctx, a.db, row.ProjectID, oidcDefaultEnv)
+		if err != nil {
+			return "", err
+		}
 		setter := &models.IamAuthCodeSetter{
-			ID:        ptr(newUUID()),
-			ProjectID: &row.ProjectID,
-			CodeHash:  ptr(oidcHashToken(code)),
-			ClientID:  &cid,
-			UserID:    &uid,
-			ExpiresAt: ptr(nowUTC().Add(10 * time.Minute)),
-			Data:      &rm,
+			ID:          ptr(newUUID()),
+			ProjectID:   &row.ProjectID,
+			Environment: &acEnv,
+			CodeHash:    ptr(oidcHashToken(code)),
+			ClientID:    &cid,
+			UserID:      &uid,
+			ExpiresAt:   ptr(nowUTC().Add(10 * time.Minute)),
+			Data:        &rm,
 		}
 		authCodeRow, err := models.IamAuthCodes.Insert(setter).One(ctx, a.db.Bobx())
 		if err != nil {
@@ -362,18 +367,23 @@ func (a *pgOIDCGrants) Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (st
 // persistGrant upserts a remembered grant for (project, user, client). Helper
 // shared by Consent; assumes an ambient transaction.
 func (a *pgOIDCGrants) persistGrant(ctx context.Context, projectID string, g *domain.Grant) error {
+	env, err := effectiveEnv(ctx, a.db, projectID, oidcDefaultEnv)
+	if err != nil {
+		return err
+	}
 	raw, err := marshal(g)
 	if err != nil {
 		return err
 	}
 	rm := json.RawMessage(raw)
 	setter := &models.IamOauthGrantSetter{
-		ID:        &g.ID,
-		ProjectID: &projectID,
-		UserID:    &g.AccountID,
-		ClientID:  &g.ClientID,
-		GrantedAt: ptr(g.GrantedAt),
-		Data:      &rm,
+		ID:          &g.ID,
+		ProjectID:   &projectID,
+		Environment: &env,
+		UserID:      &g.AccountID,
+		ClientID:    &g.ClientID,
+		GrantedAt:   ptr(g.GrantedAt),
+		Data:        &rm,
 	}
 	if _, err := models.IamOauthGrants.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {

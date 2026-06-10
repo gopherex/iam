@@ -2569,6 +2569,20 @@ func (c *Client) sendDeleteV1AuthFlowsByFlowToken(ctx context.Context, params De
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -10453,6 +10467,20 @@ func (c *Client) sendGetV1AuthFlowsByFlowToken(ctx context.Context, params GetV1
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -10563,6 +10591,20 @@ func (c *Client) sendGetV1AuthFlowsCurrent(ctx context.Context, params GetV1Auth
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -11800,6 +11842,20 @@ func (c *Client) sendGetV1AuthOauthProviders(ctx context.Context, params GetV1Au
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -12180,6 +12236,20 @@ func (c *Client) sendGetV1ConfigPublic(ctx context.Context, params GetV1ConfigPu
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -12290,6 +12360,20 @@ func (c *Client) sendGetV1Csrf(ctx context.Context, params GetV1CsrfParams, requ
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -12422,6 +12506,20 @@ func (c *Client) sendGetV1Device(ctx context.Context, params GetV1DeviceParams, 
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -13025,6 +13123,20 @@ func (c *Client) sendGetV1OauthInteractionByInteractionId(ctx context.Context, p
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -22515,6 +22627,20 @@ func (c *Client) sendGetV1SsoConnectionsResolve(ctx context.Context, params GetV
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -30382,6 +30508,20 @@ func (c *Client) sendPostV1AuthAccessRequests(ctx context.Context, request *Post
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -30798,6 +30938,20 @@ func (c *Client) sendPostV1AuthEmailVerificationStart(ctx context.Context, reque
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -30920,6 +31074,20 @@ func (c *Client) sendPostV1AuthEmailVerificationVerify(ctx context.Context, requ
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -31047,6 +31215,20 @@ func (c *Client) sendPostV1AuthFlows(ctx context.Context, request *FlowCreateReq
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -31180,6 +31362,20 @@ func (c *Client) sendPostV1AuthFlowsByFlowTokenResend(ctx context.Context, param
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -31329,6 +31525,20 @@ func (c *Client) sendPostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, reque
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -31442,6 +31652,20 @@ func (c *Client) sendPostV1AuthGuest(ctx context.Context, request *PostV1AuthGue
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -31864,6 +32088,20 @@ func (c *Client) sendPostV1AuthImpersonateRedeem(ctx context.Context, request *P
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -31990,6 +32228,20 @@ func (c *Client) sendPostV1AuthMagicLinkStart(ctx context.Context, request *Magi
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -32112,6 +32364,20 @@ func (c *Client) sendPostV1AuthMagicLinkVerify(ctx context.Context, request *Mag
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -32245,6 +32511,20 @@ func (c *Client) sendPostV1AuthMfaChallenge(ctx context.Context, request OptPost
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -32652,6 +32932,20 @@ func (c *Client) sendPostV1AuthMfaRecoveryCodesVerify(ctx context.Context, reque
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -33220,6 +33514,20 @@ func (c *Client) sendPostV1AuthMfaVerify(ctx context.Context, request *PostV1Aut
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -33811,6 +34119,20 @@ func (c *Client) sendPostV1AuthOauthExchange(ctx context.Context, request *PostV
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -33937,6 +34259,20 @@ func (c *Client) sendPostV1AuthOtpStart(ctx context.Context, request *OtpStartRe
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -34059,6 +34395,20 @@ func (c *Client) sendPostV1AuthOtpVerify(ctx context.Context, request *OtpVerify
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -34334,6 +34684,20 @@ func (c *Client) sendPostV1AuthPasswordCheck(ctx context.Context, request *PostV
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -34460,6 +34824,20 @@ func (c *Client) sendPostV1AuthPasswordForgot(ctx context.Context, request *Pass
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -34582,6 +34960,20 @@ func (c *Client) sendPostV1AuthPasswordReset(ctx context.Context, request *Passw
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -35147,6 +35539,20 @@ func (c *Client) sendPostV1AuthPhoneVerificationStart(ctx context.Context, reque
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -35269,6 +35675,20 @@ func (c *Client) sendPostV1AuthPhoneVerificationVerify(ctx context.Context, requ
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -35689,6 +36109,20 @@ func (c *Client) sendPostV1AuthSignInPassword(ctx context.Context, request *Pass
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -36087,6 +36521,20 @@ func (c *Client) sendPostV1AuthSignUp(ctx context.Context, request *SignUpReques
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -36209,6 +36657,20 @@ func (c *Client) sendPostV1AuthTokenExchange(ctx context.Context, request *CodeE
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -36342,6 +36804,20 @@ func (c *Client) sendPostV1AuthTokenRefresh(ctx context.Context, request OptRefr
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -36498,6 +36974,20 @@ func (c *Client) sendPostV1AuthWebauthnLoginOptions(ctx context.Context, request
 			return res, errors.Wrap(err, "encode header")
 		}
 	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
 
 	if err := c.onRequest(ctx, r); err != nil {
 		return res, errors.Wrap(err, "client edit request")
@@ -36620,6 +37110,20 @@ func (c *Client) sendPostV1AuthWebauthnLoginVerify(ctx context.Context, request 
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}
@@ -48073,6 +48577,20 @@ func (c *Client) sendPostV1SsoExchange(ctx context.Context, request *PostV1SsoEx
 		}
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XClientID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode header")
 		}

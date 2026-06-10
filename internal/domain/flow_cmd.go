@@ -5,15 +5,16 @@ import "time"
 // Flow is the server-side resumable auth flow aggregate. Clients hold only the
 // opaque FlowToken; all state lives here (§4 data model).
 type Flow struct {
-	ID        string
-	ProjectID string
-	Kind      FlowKind
-	Status    FlowStatus
-	Step      FlowStep
-	UserID    string    // set once the user is created / resolved
-	ExpiresAt time.Time // whole-flow TTL (30m)
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID          string
+	ProjectID   string
+	Environment string // runtime environment the flow operates in (test/live/…)
+	Kind        FlowKind
+	Status      FlowStatus
+	Step        FlowStep
+	UserID      string    // set once the user is created / resolved
+	ExpiresAt   time.Time // whole-flow TTL (30m)
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 
 	// Data fields (stored in the jsonb `data` column).
 	Contact          FlowContact

@@ -253,6 +253,10 @@ func (a *pgWebAuthnAccounts) consumeChallenge(ctx context.Context, row *models.I
 // code_hash column keys on the library challenge value for lookup; the Challenge
 // aggregate returned to the caller mirrors the publicKey options.
 func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctype string, publicKey map[string]any, session *gowebauthn.SessionData, accountID string) (*domain.Challenge, error) {
+	env, err := effectiveEnv(ctx, a.db, projectID, webauthnSignerEnv)
+	if err != nil {
+		return nil, err
+	}
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Challenge, error) {
 		sessionRaw, err := json.Marshal(session)
 		if err != nil {
@@ -276,13 +280,14 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 		rm := json.RawMessage(data)
 		hash := null.From(webauthnHash(session.Challenge))
 		setter := &models.IamChallengeSetter{
-			ID:        &ch.ID,
-			ProjectID: &projectID,
-			Type:      &ctype,
-			CodeHash:  &hash,
-			ExpiresAt: ptr(ch.ExpiresAt),
-			Consumed:  ptr(false),
-			Data:      &rm,
+			ID:          &ch.ID,
+			ProjectID:   &projectID,
+			Environment: &env,
+			Type:        &ctype,
+			CodeHash:    &hash,
+			ExpiresAt:   ptr(ch.ExpiresAt),
+			Consumed:    ptr(false),
+			Data:        &rm,
 		}
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
@@ -290,7 +295,7 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "webauthn.challenge.created",
 			ProjectID:   projectID,
-			Environment: "",
+			Environment: env,
 			AggregateID: ch.ID,
 			Payload:     ch,
 		}); err != nil {
@@ -708,9 +713,14 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 		}
 		rm := json.RawMessage(data)
 		pubKey := null.From(libCred.PublicKey)
+		credEnv := userRow.Environment
+		if credEnv == "" {
+			credEnv = webauthnSignerEnv
+		}
 		setter := &models.IamWebauthnCredentialSetter{
 			ID:           &credID,
 			ProjectID:    &projectID,
+			Environment:  &credEnv,
 			UserID:       &accountID,
 			CredentialID: &credID,
 			PublicKey:    &pubKey,

@@ -73,7 +73,7 @@ var (
 		"GET": "Authorization",
 	}
 	rn216AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn218AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
@@ -82,29 +82,29 @@ var (
 		"POST": "Authorization,Content-Type",
 	}
 	rn221AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn222AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn223AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn103AllowedHeaders = map[string]string{
-		"GET": "X-Client-Id",
+		"GET": "X-Client-Id,X-Environment",
 	}
 	rn10AllowedHeaders = map[string]string{
-		"DELETE": "X-Client-Id",
-		"GET":    "X-Client-Id",
+		"DELETE": "X-Client-Id,X-Environment",
+		"GET":    "X-Client-Id,X-Environment",
 	}
 	rn224AllowedHeaders = map[string]string{
-		"POST": "X-Client-Id",
+		"POST": "X-Client-Id,X-Environment",
 	}
 	rn226AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn227AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn104AllowedHeaders = map[string]string{
 		"GET": "Authorization",
@@ -119,16 +119,16 @@ var (
 		"DELETE": "Authorization",
 	}
 	rn232AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn234AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn235AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn237AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn238AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
@@ -143,7 +143,7 @@ var (
 		"POST": "Authorization,Content-Type",
 	}
 	rn241AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn242AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
@@ -155,7 +155,7 @@ var (
 		"POST": "Authorization,Content-Type",
 	}
 	rn246AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn247AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
@@ -164,10 +164,10 @@ var (
 		"POST": "Authorization,Content-Type",
 	}
 	rn251AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn116AllowedHeaders = map[string]string{
-		"GET": "X-Client-Id",
+		"GET": "X-Client-Id,X-Environment",
 	}
 	rn114AllowedHeaders = map[string]string{
 		"GET": "Authorization",
@@ -176,22 +176,22 @@ var (
 		"POST": "Authorization,Content-Type",
 	}
 	rn253AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn255AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn256AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
 	}
 	rn258AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn260AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn261AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn262AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
@@ -203,10 +203,10 @@ var (
 		"POST": "Authorization,Content-Type",
 	}
 	rn268AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn270AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn117AllowedHeaders = map[string]string{
 		"GET": "Authorization",
@@ -218,7 +218,7 @@ var (
 		"POST": "Authorization,Content-Type",
 	}
 	rn275AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn277AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
@@ -227,13 +227,13 @@ var (
 		"POST": "Authorization,Content-Type",
 	}
 	rn279AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn280AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn282AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn118AllowedHeaders = map[string]string{
 		"GET": "Authorization",
@@ -243,10 +243,10 @@ var (
 		"PATCH":  "Authorization,Content-Type",
 	}
 	rn284AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn286AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn287AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
@@ -258,13 +258,13 @@ var (
 		"POST": "Content-Type",
 	}
 	rn119AllowedHeaders = map[string]string{
-		"GET": "X-Client-Id",
+		"GET": "X-Client-Id,X-Environment",
 	}
 	rn121AllowedHeaders = map[string]string{
-		"GET": "X-Client-Id",
+		"GET": "X-Client-Id,X-Environment",
 	}
 	rn122AllowedHeaders = map[string]string{
-		"GET": "X-Client-Id",
+		"GET": "X-Client-Id,X-Environment",
 	}
 	rn291AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
@@ -279,7 +279,7 @@ var (
 		"DELETE": "Authorization",
 	}
 	rn130AllowedHeaders = map[string]string{
-		"GET": "X-Client-Id",
+		"GET": "X-Client-Id,X-Environment",
 	}
 	rn294AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
@@ -651,10 +651,10 @@ var (
 		"POST": "Authorization,Content-Type",
 	}
 	rn185AllowedHeaders = map[string]string{
-		"GET": "X-Client-Id",
+		"GET": "X-Client-Id,X-Environment",
 	}
 	rn351AllowedHeaders = map[string]string{
-		"POST": "Content-Type,X-Client-Id",
+		"POST": "Content-Type,X-Client-Id,X-Environment",
 	}
 	rn352AllowedHeaders = map[string]string{
 		"POST": "Content-Type",

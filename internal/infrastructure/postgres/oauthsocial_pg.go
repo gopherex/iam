@@ -875,8 +875,13 @@ func (a *pgOAuthSocial) fetchUserInfo(ctx context.Context, cfg *oauth2.Config, t
 // findIdentity loads the OAuth identity for a (project, provider, providerAccountID)
 // triple, mapping no-rows to domain.ErrNotFound. Tenant-scoped by project_id.
 func (a *pgOAuthSocial) findIdentity(ctx context.Context, projectID, provider, providerAccountID string) (*models.IamIdentity, error) {
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
 	rows, err := models.IamIdentities.Query(
 		sm.Where(models.IamIdentities.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamIdentities.Columns.Environment.EQ(psql.Arg(env))),
 		sm.Where(models.IamIdentities.Columns.Provider.EQ(psql.Arg(provider))),
 		sm.Where(models.IamIdentities.Columns.ProviderAccountID.EQ(psql.Arg(providerAccountID))),
 	).All(ctx, a.db.Bobx())
@@ -892,17 +897,22 @@ func (a *pgOAuthSocial) findIdentity(ctx context.Context, projectID, provider, p
 // insertIdentity writes a provider link row for an account. Lookup columns carry
 // the provider correlation; the domain Identity is stored in the data envelope.
 func (a *pgOAuthSocial) insertIdentity(ctx context.Context, ident *domain.Identity, projectID, userID string) error {
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return err
+	}
 	raw, err := marshal(ident)
 	if err != nil {
 		return err
 	}
 	rm := json.RawMessage(raw)
 	setter := &models.IamIdentitySetter{
-		ID:        &ident.ID,
-		ProjectID: &projectID,
-		UserID:    &userID,
-		Type:      ptr(ident.Type),
-		Data:      &rm,
+		ID:          &ident.ID,
+		ProjectID:   &projectID,
+		Environment: &env,
+		UserID:      &userID,
+		Type:        ptr(ident.Type),
+		Data:        &rm,
 	}
 	if ident.Provider != "" {
 		v := null.From(ident.Provider)
@@ -927,6 +937,10 @@ func (a *pgOAuthSocial) insertIdentity(ctx context.Context, ident *domain.Identi
 
 // createSocialAccount provisions a new account for a first-time social login.
 func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, email string) (*domain.Account, error) {
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
 	acct := &domain.Account{
 		ID:            newUUID(),
 		ProjectID:     projectID,
@@ -943,11 +957,12 @@ func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, emai
 	}
 	rm := json.RawMessage(raw)
 	setter := &models.IamUserSetter{
-		ID:        &acct.ID,
-		ProjectID: &acct.ProjectID,
-		Kind:      ptr(acct.Kind),
-		Status:    ptr(acct.Status),
-		Data:      &rm,
+		ID:          &acct.ID,
+		ProjectID:   &acct.ProjectID,
+		Environment: &env,
+		Kind:        ptr(acct.Kind),
+		Status:      ptr(acct.Status),
+		Data:        &rm,
 	}
 	if acct.PrimaryEmail != "" {
 		v := null.From(acct.PrimaryEmail)
@@ -1037,11 +1052,12 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 	}
 	rm := json.RawMessage(raw)
 	setter := &models.IamSessionSetter{
-		ID:        &sess.ID,
-		ProjectID: &sess.ProjectID,
-		UserID:    &sess.AccountID,
-		Aal:       ptr(int32(sess.AAL)),
-		Data:      &rm,
+		ID:          &sess.ID,
+		ProjectID:   &sess.ProjectID,
+		Environment: &signEnv,
+		UserID:      &sess.AccountID,
+		Aal:         ptr(int32(sess.AAL)),
+		Data:        &rm,
 	}
 	if _, err := models.IamSessions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		return nil, err

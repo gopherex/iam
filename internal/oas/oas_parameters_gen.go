@@ -470,7 +470,10 @@ func decodeDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams(args [2]string
 // DeleteV1AuthFlowsByFlowTokenParams is parameters of deleteV1AuthFlowsByFlowToken operation.
 type DeleteV1AuthFlowsByFlowTokenParams struct {
 	XClientID string
-	FlowToken string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
+	FlowToken    string
 }
 
 func unpackDeleteV1AuthFlowsByFlowTokenParams(packed middleware.Parameters) (params DeleteV1AuthFlowsByFlowTokenParams) {
@@ -480,6 +483,15 @@ func unpackDeleteV1AuthFlowsByFlowTokenParams(packed middleware.Parameters) (par
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -543,6 +555,72 @@ func decodeDeleteV1AuthFlowsByFlowTokenParams(args [1]string, argsEscaped bool, 
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -957,7 +1035,8 @@ func decodeDeleteV1OauthGrantsByGrantIdParams(args [1]string, argsEscaped bool, 
 
 // DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams is parameters of deleteV1ProjectsByProjectIdAdminApiKeysByKeyId operation.
 type DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	KeyID        string
@@ -1193,7 +1272,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams(args [2]string, 
 
 // DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams is parameters of deleteV1ProjectsByProjectIdAdminAppsByAppId operation.
 type DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	AppID        string
@@ -1432,7 +1512,8 @@ type DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams struct {
 	ProjectID string
 	AppID     string
 	SecretID  string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -1740,7 +1821,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams(ar
 type DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams struct {
 	ProjectID string
 	DomainID  string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -1974,7 +2056,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams(args [2]strin
 
 // DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams is parameters of deleteV1ProjectsByProjectIdAdminEmailProvidersById operation.
 type DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -2210,7 +2293,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams(args [2]stri
 
 // DeleteV1ProjectsByProjectIdAdminHooksByIdParams is parameters of deleteV1ProjectsByProjectIdAdminHooksById operation.
 type DeleteV1ProjectsByProjectIdAdminHooksByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -2448,7 +2532,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminHooksByIdParams(args [2]string, argsE
 type DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams struct {
 	ProjectID string
 	KeyID     string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -2682,7 +2767,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams(args [2]string, arg
 
 // DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams is parameters of deleteV1ProjectsByProjectIdAdminOauthProvidersById operation.
 type DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -2920,7 +3006,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams(args [2]stri
 type DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams struct {
 	ProjectID string
 	BlockID   string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -3154,7 +3241,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams(args [
 
 // DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams is parameters of deleteV1ProjectsByProjectIdAdminRiskRulesByRuleId operation.
 type DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	RuleID       string
@@ -3390,7 +3478,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams(args [2]strin
 
 // DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams is parameters of deleteV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
 type DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	SaID         string
@@ -3629,7 +3718,8 @@ type DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParam
 	ProjectID string
 	SaID      string
 	SecretID  string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -3935,7 +4025,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretI
 
 // DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams is parameters of deleteV1ProjectsByProjectIdAdminSmsProvidersById operation.
 type DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -4171,7 +4262,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams(args [2]string
 
 // DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams is parameters of deleteV1ProjectsByProjectIdAdminSsoConnectionsById operation.
 type DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -4410,7 +4502,8 @@ type DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenIdParams
 	ProjectID string
 	ID        string
 	TokenID   string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -4716,7 +4809,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensByTokenId
 
 // DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams is parameters of deleteV1ProjectsByProjectIdAdminTokenProfilesById operation.
 type DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -4953,7 +5047,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams(args [2]strin
 // DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams is parameters of deleteV1ProjectsByProjectIdAdminUsersByUserId operation.
 type DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams struct {
 	Hard OptBool `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	UserID       string
@@ -5243,7 +5338,8 @@ type DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams struct {
 	ProjectID string
 	UserID    string
 	GrantID   string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -5552,7 +5648,8 @@ type DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams s
 	ProjectID  string
 	UserID     string
 	IdentityID string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -5861,7 +5958,8 @@ type DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams stru
 	ProjectID string
 	UserID    string
 	SessionID string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -6167,7 +6265,8 @@ func decodeDeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParam
 
 // DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams is parameters of deleteV1ProjectsByProjectIdAdminWebhooksById operation.
 type DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -8999,7 +9098,10 @@ func decodeGetV1AuthEmailVerificationCallbackParams(args [0]string, argsEscaped 
 // GetV1AuthFlowsByFlowTokenParams is parameters of getV1AuthFlowsByFlowToken operation.
 type GetV1AuthFlowsByFlowTokenParams struct {
 	XClientID string
-	FlowToken string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
+	FlowToken    string
 }
 
 func unpackGetV1AuthFlowsByFlowTokenParams(packed middleware.Parameters) (params GetV1AuthFlowsByFlowTokenParams) {
@@ -9009,6 +9111,15 @@ func unpackGetV1AuthFlowsByFlowTokenParams(packed middleware.Parameters) (params
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -9072,6 +9183,72 @@ func decodeGetV1AuthFlowsByFlowTokenParams(args [1]string, argsEscaped bool, r *
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -9147,6 +9324,9 @@ func decodeGetV1AuthFlowsByFlowTokenParams(args [1]string, argsEscaped bool, r *
 // GetV1AuthFlowsCurrentParams is parameters of getV1AuthFlowsCurrent operation.
 type GetV1AuthFlowsCurrentParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 	// Flow_token in cookie mode; the current flow is resolved from it.
 	IamFlow OptString `json:",omitempty,omitzero"`
 }
@@ -9158,6 +9338,15 @@ func unpackGetV1AuthFlowsCurrentParams(packed middleware.Parameters) (params Get
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -9224,6 +9413,72 @@ func decodeGetV1AuthFlowsCurrentParams(args [0]string, argsEscaped bool, r *http
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -10614,6 +10869,9 @@ func decodeGetV1AuthOauthByProviderStartParams(args [1]string, argsEscaped bool,
 // GetV1AuthOauthProvidersParams is parameters of getV1AuthOauthProviders operation.
 type GetV1AuthOauthProvidersParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackGetV1AuthOauthProvidersParams(packed middleware.Parameters) (params GetV1AuthOauthProvidersParams) {
@@ -10623,6 +10881,15 @@ func unpackGetV1AuthOauthProvidersParams(packed middleware.Parameters) (params G
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -10683,12 +10950,81 @@ func decodeGetV1AuthOauthProvidersParams(args [0]string, argsEscaped bool, r *ht
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // GetV1ConfigPublicParams is parameters of getV1ConfigPublic operation.
 type GetV1ConfigPublicParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackGetV1ConfigPublicParams(packed middleware.Parameters) (params GetV1ConfigPublicParams) {
@@ -10698,6 +11034,15 @@ func unpackGetV1ConfigPublicParams(packed middleware.Parameters) (params GetV1Co
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -10758,12 +11103,81 @@ func decodeGetV1ConfigPublicParams(args [0]string, argsEscaped bool, r *http.Req
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // GetV1CsrfParams is parameters of getV1Csrf operation.
 type GetV1CsrfParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackGetV1CsrfParams(packed middleware.Parameters) (params GetV1CsrfParams) {
@@ -10773,6 +11187,15 @@ func unpackGetV1CsrfParams(packed middleware.Parameters) (params GetV1CsrfParams
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -10833,13 +11256,82 @@ func decodeGetV1CsrfParams(args [0]string, argsEscaped bool, r *http.Request) (p
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // GetV1DeviceParams is parameters of getV1Device operation.
 type GetV1DeviceParams struct {
 	XClientID string
-	UserCode  string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
+	UserCode     string
 }
 
 func unpackGetV1DeviceParams(packed middleware.Parameters) (params GetV1DeviceParams) {
@@ -10849,6 +11341,15 @@ func unpackGetV1DeviceParams(packed middleware.Parameters) (params GetV1DevicePa
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -10913,6 +11414,72 @@ func decodeGetV1DeviceParams(args [0]string, argsEscaped bool, r *http.Request) 
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -11150,7 +11717,10 @@ func decodeGetV1OauthGrantsParams(args [0]string, argsEscaped bool, r *http.Requ
 
 // GetV1OauthInteractionByInteractionIdParams is parameters of getV1OauthInteractionByInteractionId operation.
 type GetV1OauthInteractionByInteractionIdParams struct {
-	XClientID     string
+	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment  OptString `json:",omitempty,omitzero"`
 	InteractionID string
 }
 
@@ -11161,6 +11731,15 @@ func unpackGetV1OauthInteractionByInteractionIdParams(packed middleware.Paramete
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -11224,6 +11803,72 @@ func decodeGetV1OauthInteractionByInteractionIdParams(args [1]string, argsEscape
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -11301,7 +11946,8 @@ type GetV1ProjectsByProjectIdAdminAccessRequestsParams struct {
 	ProjectID string
 	Status    OptString `json:",omitempty,omitzero"`
 	Cursor    OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -11618,7 +12264,8 @@ func decodeGetV1ProjectsByProjectIdAdminAccessRequestsParams(args [1]string, arg
 
 // GetV1ProjectsByProjectIdAdminApiKeysParams is parameters of getV1ProjectsByProjectIdAdminApiKeys operation.
 type GetV1ProjectsByProjectIdAdminApiKeysParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -11783,7 +12430,8 @@ func decodeGetV1ProjectsByProjectIdAdminApiKeysParams(args [1]string, argsEscape
 type GetV1ProjectsByProjectIdAdminAppsParams struct {
 	Cursor OptString `json:",omitempty,omitzero"`
 	Limit  OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -12104,7 +12752,8 @@ func decodeGetV1ProjectsByProjectIdAdminAppsParams(args [1]string, argsEscaped b
 
 // GetV1ProjectsByProjectIdAdminAppsByAppIdParams is parameters of getV1ProjectsByProjectIdAdminAppsByAppId operation.
 type GetV1ProjectsByProjectIdAdminAppsByAppIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	AppID        string
@@ -12346,7 +12995,8 @@ type GetV1ProjectsByProjectIdAdminAuditLogsParams struct {
 	Type      OptString `json:",omitempty,omitzero"`
 	Cursor    OptString `json:",omitempty,omitzero"`
 	Limit     OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -12899,7 +13549,8 @@ func decodeGetV1ProjectsByProjectIdAdminAuditLogsParams(args [1]string, argsEsca
 type GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams struct {
 	ProjectID string
 	AuditID   string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -13133,7 +13784,8 @@ func decodeGetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams(args [2]string,
 
 // GetV1ProjectsByProjectIdAdminConfigAuthParams is parameters of getV1ProjectsByProjectIdAdminConfigAuth operation.
 type GetV1ProjectsByProjectIdAdminConfigAuthParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -13296,7 +13948,8 @@ func decodeGetV1ProjectsByProjectIdAdminConfigAuthParams(args [1]string, argsEsc
 
 // GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams is parameters of getV1ProjectsByProjectIdAdminConfigMfaPolicy operation.
 type GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -13459,7 +14112,8 @@ func decodeGetV1ProjectsByProjectIdAdminConfigMfaPolicyParams(args [1]string, ar
 
 // GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams is parameters of getV1ProjectsByProjectIdAdminConfigPasswordPolicy operation.
 type GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -13622,7 +14276,8 @@ func decodeGetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams(args [1]strin
 
 // GetV1ProjectsByProjectIdAdminConfigRateLimitsParams is parameters of getV1ProjectsByProjectIdAdminConfigRateLimits operation.
 type GetV1ProjectsByProjectIdAdminConfigRateLimitsParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -13785,7 +14440,8 @@ func decodeGetV1ProjectsByProjectIdAdminConfigRateLimitsParams(args [1]string, a
 
 // GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams is parameters of getV1ProjectsByProjectIdAdminConfigSessionPolicy operation.
 type GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -13948,7 +14604,8 @@ func decodeGetV1ProjectsByProjectIdAdminConfigSessionPolicyParams(args [1]string
 
 // GetV1ProjectsByProjectIdAdminConsentsParams is parameters of getV1ProjectsByProjectIdAdminConsents operation.
 type GetV1ProjectsByProjectIdAdminConsentsParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -14113,7 +14770,8 @@ func decodeGetV1ProjectsByProjectIdAdminConsentsParams(args [1]string, argsEscap
 type GetV1ProjectsByProjectIdAdminDomainsParams struct {
 	Cursor OptString `json:",omitempty,omitzero"`
 	Limit  OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -14434,7 +15092,8 @@ func decodeGetV1ProjectsByProjectIdAdminDomainsParams(args [1]string, argsEscape
 
 // GetV1ProjectsByProjectIdAdminEmailProvidersParams is parameters of getV1ProjectsByProjectIdAdminEmailProviders operation.
 type GetV1ProjectsByProjectIdAdminEmailProvidersParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -14598,7 +15257,8 @@ func decodeGetV1ProjectsByProjectIdAdminEmailProvidersParams(args [1]string, arg
 // GetV1ProjectsByProjectIdAdminEmailTemplatesParams is parameters of getV1ProjectsByProjectIdAdminEmailTemplates operation.
 type GetV1ProjectsByProjectIdAdminEmailTemplatesParams struct {
 	ProjectID string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -14765,7 +15425,8 @@ type GetV1ProjectsByProjectIdAdminEventsParams struct {
 	UserID    OptString `json:",omitempty,omitzero"`
 	Cursor    OptString `json:",omitempty,omitzero"`
 	Limit     OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -15241,7 +15902,8 @@ func decodeGetV1ProjectsByProjectIdAdminEventsParams(args [1]string, argsEscaped
 type GetV1ProjectsByProjectIdAdminExportsByJobIdParams struct {
 	ProjectID string
 	JobID     string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -15475,7 +16137,8 @@ func decodeGetV1ProjectsByProjectIdAdminExportsByJobIdParams(args [2]string, arg
 
 // GetV1ProjectsByProjectIdAdminFeaturesParams is parameters of getV1ProjectsByProjectIdAdminFeatures operation.
 type GetV1ProjectsByProjectIdAdminFeaturesParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -15640,7 +16303,8 @@ func decodeGetV1ProjectsByProjectIdAdminFeaturesParams(args [1]string, argsEscap
 type GetV1ProjectsByProjectIdAdminHooksParams struct {
 	Cursor OptString `json:",omitempty,omitzero"`
 	Limit  OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -15961,7 +16625,8 @@ func decodeGetV1ProjectsByProjectIdAdminHooksParams(args [1]string, argsEscaped 
 
 // GetV1ProjectsByProjectIdAdminI18nByLocaleParams is parameters of getV1ProjectsByProjectIdAdminI18nByLocale operation.
 type GetV1ProjectsByProjectIdAdminI18nByLocaleParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	Locale       string
@@ -16197,7 +16862,8 @@ func decodeGetV1ProjectsByProjectIdAdminI18nByLocaleParams(args [2]string, argsE
 
 // GetV1ProjectsByProjectIdAdminInvitesParams is parameters of getV1ProjectsByProjectIdAdminInvites operation.
 type GetV1ProjectsByProjectIdAdminInvitesParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -16365,7 +17031,8 @@ type GetV1ProjectsByProjectIdAdminJobsParams struct {
 	Status    OptString `json:",omitempty,omitzero"`
 	Cursor    OptString `json:",omitempty,omitzero"`
 	Limit     OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -16841,7 +17508,8 @@ func decodeGetV1ProjectsByProjectIdAdminJobsParams(args [1]string, argsEscaped b
 type GetV1ProjectsByProjectIdAdminJobsByJobIdParams struct {
 	ProjectID string
 	JobID     string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -17076,7 +17744,8 @@ func decodeGetV1ProjectsByProjectIdAdminJobsByJobIdParams(args [2]string, argsEs
 // GetV1ProjectsByProjectIdAdminJwksParams is parameters of getV1ProjectsByProjectIdAdminJwks operation.
 type GetV1ProjectsByProjectIdAdminJwksParams struct {
 	ProjectID string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -17238,7 +17907,8 @@ func decodeGetV1ProjectsByProjectIdAdminJwksParams(args [1]string, argsEscaped b
 
 // GetV1ProjectsByProjectIdAdminOauthProvidersParams is parameters of getV1ProjectsByProjectIdAdminOauthProviders operation.
 type GetV1ProjectsByProjectIdAdminOauthProvidersParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -17401,7 +18071,8 @@ func decodeGetV1ProjectsByProjectIdAdminOauthProvidersParams(args [1]string, arg
 
 // GetV1ProjectsByProjectIdAdminRetentionPolicyParams is parameters of getV1ProjectsByProjectIdAdminRetentionPolicy operation.
 type GetV1ProjectsByProjectIdAdminRetentionPolicyParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -17570,7 +18241,8 @@ type GetV1ProjectsByProjectIdAdminRiskEventsParams struct {
 	Type      OptString `json:",omitempty,omitzero"`
 	Cursor    OptString `json:",omitempty,omitzero"`
 	Limit     OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -18123,7 +18795,8 @@ func decodeGetV1ProjectsByProjectIdAdminRiskEventsParams(args [1]string, argsEsc
 type GetV1ProjectsByProjectIdAdminRiskRulesParams struct {
 	Cursor OptString `json:",omitempty,omitzero"`
 	Limit  OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -18446,7 +19119,8 @@ func decodeGetV1ProjectsByProjectIdAdminRiskRulesParams(args [1]string, argsEsca
 type GetV1ProjectsByProjectIdAdminServiceAccountsParams struct {
 	Cursor OptString `json:",omitempty,omitzero"`
 	Limit  OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -18767,7 +19441,8 @@ func decodeGetV1ProjectsByProjectIdAdminServiceAccountsParams(args [1]string, ar
 
 // GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams is parameters of getV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
 type GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	SaID         string
@@ -19003,7 +19678,8 @@ func decodeGetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams(args [2]stri
 
 // GetV1ProjectsByProjectIdAdminSmsProvidersParams is parameters of getV1ProjectsByProjectIdAdminSmsProviders operation.
 type GetV1ProjectsByProjectIdAdminSmsProvidersParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -19168,7 +19844,8 @@ func decodeGetV1ProjectsByProjectIdAdminSmsProvidersParams(args [1]string, argsE
 type GetV1ProjectsByProjectIdAdminSsoConnectionsParams struct {
 	Cursor OptString `json:",omitempty,omitzero"`
 	Limit  OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -19489,7 +20166,8 @@ func decodeGetV1ProjectsByProjectIdAdminSsoConnectionsParams(args [1]string, arg
 
 // GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams is parameters of getV1ProjectsByProjectIdAdminSsoConnectionsById operation.
 type GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -19725,7 +20403,8 @@ func decodeGetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams(args [2]string,
 
 // GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams is parameters of getV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens operation.
 type GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -19963,7 +20642,8 @@ func decodeGetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams(args 
 type GetV1ProjectsByProjectIdAdminTokenProfilesParams struct {
 	Cursor OptString `json:",omitempty,omitzero"`
 	Limit  OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -20290,7 +20970,8 @@ type GetV1ProjectsByProjectIdAdminUsersParams struct {
 	Kind   OptString `json:",omitempty,omitzero"`
 	Cursor OptString `json:",omitempty,omitzero"`
 	Limit  OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -20919,7 +21600,8 @@ func decodeGetV1ProjectsByProjectIdAdminUsersParams(args [1]string, argsEscaped 
 
 // GetV1ProjectsByProjectIdAdminUsersByUserIdParams is parameters of getV1ProjectsByProjectIdAdminUsersByUserId operation.
 type GetV1ProjectsByProjectIdAdminUsersByUserIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	UserID       string
@@ -21159,7 +21841,8 @@ type GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams struct {
 	UserID    string
 	Cursor    OptString `json:",omitempty,omitzero"`
 	Limit     OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -21553,7 +22236,8 @@ func decodeGetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams(args [2]string
 type GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -21791,7 +22475,8 @@ type GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams struct {
 	UserID    string
 	Cursor    OptString `json:",omitempty,omitzero"`
 	Limit     OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -22186,7 +22871,8 @@ type GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams struct {
 	ProjectID string
 	WebhookID OptString `json:",omitempty,omitzero"`
 	Status    OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -22505,7 +23191,8 @@ func decodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesParams(args [1]string, 
 type GetV1ProjectsByProjectIdAdminWebhooksParams struct {
 	Cursor OptString `json:",omitempty,omitzero"`
 	Limit  OptInt    `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -22826,7 +23513,8 @@ func decodeGetV1ProjectsByProjectIdAdminWebhooksParams(args [1]string, argsEscap
 
 // GetV1ProjectsByProjectIdAdminWebhooksByIdParams is parameters of getV1ProjectsByProjectIdAdminWebhooksById operation.
 type GetV1ProjectsByProjectIdAdminWebhooksByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -23730,7 +24418,10 @@ func decodeGetV1ScimV2ByConnectionIdUsersByScimUserIdParams(args [2]string, args
 // GetV1SsoConnectionsResolveParams is parameters of getV1SsoConnectionsResolve operation.
 type GetV1SsoConnectionsResolveParams struct {
 	XClientID string
-	Email     string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
+	Email        string
 }
 
 func unpackGetV1SsoConnectionsResolveParams(packed middleware.Parameters) (params GetV1SsoConnectionsResolveParams) {
@@ -23740,6 +24431,15 @@ func unpackGetV1SsoConnectionsResolveParams(packed middleware.Parameters) (param
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -23804,6 +24504,72 @@ func decodeGetV1SsoConnectionsResolveParams(args [0]string, argsEscaped bool, r 
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -24718,7 +25484,8 @@ func decodeGetV1SsoSamlByConnectionIdMetadataParams(args [1]string, argsEscaped 
 type GetV1TestMessagesParams struct {
 	Channel OptString `json:",omitempty,omitzero"`
 	To      OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -25553,7 +26320,8 @@ func decodePatchV1AuthWebauthnCredentialsByCredentialIdParams(args [1]string, ar
 
 // PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams is parameters of patchV1ProjectsByProjectIdAdminApiKeysByKeyId operation.
 type PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	KeyID        string
@@ -25789,7 +26557,8 @@ func decodePatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams(args [2]string, a
 
 // PatchV1ProjectsByProjectIdAdminAppsByAppIdParams is parameters of patchV1ProjectsByProjectIdAdminAppsByAppId operation.
 type PatchV1ProjectsByProjectIdAdminAppsByAppIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	AppID        string
@@ -26025,7 +26794,8 @@ func decodePatchV1ProjectsByProjectIdAdminAppsByAppIdParams(args [2]string, args
 
 // PatchV1ProjectsByProjectIdAdminConfigAuthParams is parameters of patchV1ProjectsByProjectIdAdminConfigAuth operation.
 type PatchV1ProjectsByProjectIdAdminConfigAuthParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -26188,7 +26958,8 @@ func decodePatchV1ProjectsByProjectIdAdminConfigAuthParams(args [1]string, argsE
 
 // PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams is parameters of patchV1ProjectsByProjectIdAdminConfigMfaPolicy operation.
 type PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -26351,7 +27122,8 @@ func decodePatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams(args [1]string, 
 
 // PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams is parameters of patchV1ProjectsByProjectIdAdminConfigPasswordPolicy operation.
 type PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -26514,7 +27286,8 @@ func decodePatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams(args [1]str
 
 // PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams is parameters of patchV1ProjectsByProjectIdAdminConfigRateLimits operation.
 type PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -26677,7 +27450,8 @@ func decodePatchV1ProjectsByProjectIdAdminConfigRateLimitsParams(args [1]string,
 
 // PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams is parameters of patchV1ProjectsByProjectIdAdminConfigSessionPolicy operation.
 type PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -26840,7 +27614,8 @@ func decodePatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams(args [1]stri
 
 // PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams is parameters of patchV1ProjectsByProjectIdAdminEmailProvidersById operation.
 type PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -27076,7 +27851,8 @@ func decodePatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams(args [2]strin
 
 // PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams is parameters of patchV1ProjectsByProjectIdAdminEmailTemplatesById operation.
 type PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -27312,7 +28088,8 @@ func decodePatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams(args [2]strin
 
 // PatchV1ProjectsByProjectIdAdminHooksByIdParams is parameters of patchV1ProjectsByProjectIdAdminHooksById operation.
 type PatchV1ProjectsByProjectIdAdminHooksByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -27548,7 +28325,8 @@ func decodePatchV1ProjectsByProjectIdAdminHooksByIdParams(args [2]string, argsEs
 
 // PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams is parameters of patchV1ProjectsByProjectIdAdminOauthProvidersById operation.
 type PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -27784,7 +28562,8 @@ func decodePatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams(args [2]strin
 
 // PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams is parameters of patchV1ProjectsByProjectIdAdminRiskRulesByRuleId operation.
 type PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	RuleID       string
@@ -28020,7 +28799,8 @@ func decodePatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams(args [2]string
 
 // PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams is parameters of patchV1ProjectsByProjectIdAdminServiceAccountsBySaId operation.
 type PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	SaID         string
@@ -28256,7 +29036,8 @@ func decodePatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams(args [2]st
 
 // PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams is parameters of patchV1ProjectsByProjectIdAdminSmsProvidersById operation.
 type PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -28492,7 +29273,8 @@ func decodePatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams(args [2]string,
 
 // PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams is parameters of patchV1ProjectsByProjectIdAdminSsoConnectionsById operation.
 type PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -28728,7 +29510,8 @@ func decodePatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams(args [2]strin
 
 // PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams is parameters of patchV1ProjectsByProjectIdAdminTokenProfilesById operation.
 type PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -28964,7 +29747,8 @@ func decodePatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams(args [2]string
 
 // PatchV1ProjectsByProjectIdAdminUsersByUserIdParams is parameters of patchV1ProjectsByProjectIdAdminUsersByUserId operation.
 type PatchV1ProjectsByProjectIdAdminUsersByUserIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	UserID       string
@@ -29200,7 +29984,8 @@ func decodePatchV1ProjectsByProjectIdAdminUsersByUserIdParams(args [2]string, ar
 
 // PatchV1ProjectsByProjectIdAdminWebhooksByIdParams is parameters of patchV1ProjectsByProjectIdAdminWebhooksById operation.
 type PatchV1ProjectsByProjectIdAdminWebhooksByIdParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -30424,6 +31209,9 @@ func decodePostMgmtV1ProjectsByProjectIdEnvironmentsParams(args [1]string, argsE
 // PostV1AuthAccessRequestsParams is parameters of postV1AuthAccessRequests operation.
 type PostV1AuthAccessRequestsParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthAccessRequestsParams(packed middleware.Parameters) (params PostV1AuthAccessRequestsParams) {
@@ -30433,6 +31221,15 @@ func unpackPostV1AuthAccessRequestsParams(packed middleware.Parameters) (params 
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -30493,12 +31290,81 @@ func decodePostV1AuthAccessRequestsParams(args [0]string, argsEscaped bool, r *h
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthEmailVerificationStartParams is parameters of postV1AuthEmailVerificationStart operation.
 type PostV1AuthEmailVerificationStartParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthEmailVerificationStartParams(packed middleware.Parameters) (params PostV1AuthEmailVerificationStartParams) {
@@ -30508,6 +31374,15 @@ func unpackPostV1AuthEmailVerificationStartParams(packed middleware.Parameters) 
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -30568,12 +31443,81 @@ func decodePostV1AuthEmailVerificationStartParams(args [0]string, argsEscaped bo
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthEmailVerificationVerifyParams is parameters of postV1AuthEmailVerificationVerify operation.
 type PostV1AuthEmailVerificationVerifyParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthEmailVerificationVerifyParams(packed middleware.Parameters) (params PostV1AuthEmailVerificationVerifyParams) {
@@ -30583,6 +31527,15 @@ func unpackPostV1AuthEmailVerificationVerifyParams(packed middleware.Parameters)
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -30643,12 +31596,81 @@ func decodePostV1AuthEmailVerificationVerifyParams(args [0]string, argsEscaped b
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthFlowsParams is parameters of postV1AuthFlows operation.
 type PostV1AuthFlowsParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthFlowsParams(packed middleware.Parameters) (params PostV1AuthFlowsParams) {
@@ -30658,6 +31680,15 @@ func unpackPostV1AuthFlowsParams(packed middleware.Parameters) (params PostV1Aut
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -30718,13 +31749,82 @@ func decodePostV1AuthFlowsParams(args [0]string, argsEscaped bool, r *http.Reque
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthFlowsByFlowTokenResendParams is parameters of postV1AuthFlowsByFlowTokenResend operation.
 type PostV1AuthFlowsByFlowTokenResendParams struct {
 	XClientID string
-	FlowToken string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
+	FlowToken    string
 }
 
 func unpackPostV1AuthFlowsByFlowTokenResendParams(packed middleware.Parameters) (params PostV1AuthFlowsByFlowTokenResendParams) {
@@ -30734,6 +31834,15 @@ func unpackPostV1AuthFlowsByFlowTokenResendParams(packed middleware.Parameters) 
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -30797,6 +31906,72 @@ func decodePostV1AuthFlowsByFlowTokenResendParams(args [1]string, argsEscaped bo
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -30872,7 +32047,10 @@ func decodePostV1AuthFlowsByFlowTokenResendParams(args [1]string, argsEscaped bo
 // PostV1AuthFlowsByFlowTokenSubmitParams is parameters of postV1AuthFlowsByFlowTokenSubmit operation.
 type PostV1AuthFlowsByFlowTokenSubmitParams struct {
 	XClientID string
-	FlowToken string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
+	FlowToken    string
 }
 
 func unpackPostV1AuthFlowsByFlowTokenSubmitParams(packed middleware.Parameters) (params PostV1AuthFlowsByFlowTokenSubmitParams) {
@@ -30882,6 +32060,15 @@ func unpackPostV1AuthFlowsByFlowTokenSubmitParams(packed middleware.Parameters) 
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -30945,6 +32132,72 @@ func decodePostV1AuthFlowsByFlowTokenSubmitParams(args [1]string, argsEscaped bo
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -31020,6 +32273,9 @@ func decodePostV1AuthFlowsByFlowTokenSubmitParams(args [1]string, argsEscaped bo
 // PostV1AuthGuestParams is parameters of postV1AuthGuest operation.
 type PostV1AuthGuestParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthGuestParams(packed middleware.Parameters) (params PostV1AuthGuestParams) {
@@ -31029,6 +32285,15 @@ func unpackPostV1AuthGuestParams(packed middleware.Parameters) (params PostV1Aut
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31089,12 +32354,81 @@ func decodePostV1AuthGuestParams(args [0]string, argsEscaped bool, r *http.Reque
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthImpersonateRedeemParams is parameters of postV1AuthImpersonateRedeem operation.
 type PostV1AuthImpersonateRedeemParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthImpersonateRedeemParams(packed middleware.Parameters) (params PostV1AuthImpersonateRedeemParams) {
@@ -31104,6 +32438,15 @@ func unpackPostV1AuthImpersonateRedeemParams(packed middleware.Parameters) (para
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31164,12 +32507,81 @@ func decodePostV1AuthImpersonateRedeemParams(args [0]string, argsEscaped bool, r
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthMagicLinkStartParams is parameters of postV1AuthMagicLinkStart operation.
 type PostV1AuthMagicLinkStartParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthMagicLinkStartParams(packed middleware.Parameters) (params PostV1AuthMagicLinkStartParams) {
@@ -31179,6 +32591,15 @@ func unpackPostV1AuthMagicLinkStartParams(packed middleware.Parameters) (params 
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31239,12 +32660,81 @@ func decodePostV1AuthMagicLinkStartParams(args [0]string, argsEscaped bool, r *h
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthMagicLinkVerifyParams is parameters of postV1AuthMagicLinkVerify operation.
 type PostV1AuthMagicLinkVerifyParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthMagicLinkVerifyParams(packed middleware.Parameters) (params PostV1AuthMagicLinkVerifyParams) {
@@ -31254,6 +32744,15 @@ func unpackPostV1AuthMagicLinkVerifyParams(packed middleware.Parameters) (params
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31314,12 +32813,81 @@ func decodePostV1AuthMagicLinkVerifyParams(args [0]string, argsEscaped bool, r *
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthMfaChallengeParams is parameters of postV1AuthMfaChallenge operation.
 type PostV1AuthMfaChallengeParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthMfaChallengeParams(packed middleware.Parameters) (params PostV1AuthMfaChallengeParams) {
@@ -31329,6 +32897,15 @@ func unpackPostV1AuthMfaChallengeParams(packed middleware.Parameters) (params Po
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31389,12 +32966,81 @@ func decodePostV1AuthMfaChallengeParams(args [0]string, argsEscaped bool, r *htt
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthMfaRecoveryCodesVerifyParams is parameters of postV1AuthMfaRecoveryCodesVerify operation.
 type PostV1AuthMfaRecoveryCodesVerifyParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthMfaRecoveryCodesVerifyParams(packed middleware.Parameters) (params PostV1AuthMfaRecoveryCodesVerifyParams) {
@@ -31404,6 +33050,15 @@ func unpackPostV1AuthMfaRecoveryCodesVerifyParams(packed middleware.Parameters) 
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31464,12 +33119,81 @@ func decodePostV1AuthMfaRecoveryCodesVerifyParams(args [0]string, argsEscaped bo
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthMfaVerifyParams is parameters of postV1AuthMfaVerify operation.
 type PostV1AuthMfaVerifyParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthMfaVerifyParams(packed middleware.Parameters) (params PostV1AuthMfaVerifyParams) {
@@ -31479,6 +33203,15 @@ func unpackPostV1AuthMfaVerifyParams(packed middleware.Parameters) (params PostV
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31535,6 +33268,72 @@ func decodePostV1AuthMfaVerifyParams(args [0]string, argsEscaped bool, r *http.R
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -31630,6 +33429,9 @@ func decodePostV1AuthOauthByProviderUnlinkParams(args [1]string, argsEscaped boo
 // PostV1AuthOauthExchangeParams is parameters of postV1AuthOauthExchange operation.
 type PostV1AuthOauthExchangeParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthOauthExchangeParams(packed middleware.Parameters) (params PostV1AuthOauthExchangeParams) {
@@ -31639,6 +33441,15 @@ func unpackPostV1AuthOauthExchangeParams(packed middleware.Parameters) (params P
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31699,12 +33510,81 @@ func decodePostV1AuthOauthExchangeParams(args [0]string, argsEscaped bool, r *ht
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthOtpStartParams is parameters of postV1AuthOtpStart operation.
 type PostV1AuthOtpStartParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthOtpStartParams(packed middleware.Parameters) (params PostV1AuthOtpStartParams) {
@@ -31714,6 +33594,15 @@ func unpackPostV1AuthOtpStartParams(packed middleware.Parameters) (params PostV1
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31774,12 +33663,81 @@ func decodePostV1AuthOtpStartParams(args [0]string, argsEscaped bool, r *http.Re
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthOtpVerifyParams is parameters of postV1AuthOtpVerify operation.
 type PostV1AuthOtpVerifyParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthOtpVerifyParams(packed middleware.Parameters) (params PostV1AuthOtpVerifyParams) {
@@ -31789,6 +33747,15 @@ func unpackPostV1AuthOtpVerifyParams(packed middleware.Parameters) (params PostV
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31849,12 +33816,81 @@ func decodePostV1AuthOtpVerifyParams(args [0]string, argsEscaped bool, r *http.R
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthPasswordCheckParams is parameters of postV1AuthPasswordCheck operation.
 type PostV1AuthPasswordCheckParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthPasswordCheckParams(packed middleware.Parameters) (params PostV1AuthPasswordCheckParams) {
@@ -31864,6 +33900,15 @@ func unpackPostV1AuthPasswordCheckParams(packed middleware.Parameters) (params P
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31924,12 +33969,81 @@ func decodePostV1AuthPasswordCheckParams(args [0]string, argsEscaped bool, r *ht
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthPasswordForgotParams is parameters of postV1AuthPasswordForgot operation.
 type PostV1AuthPasswordForgotParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthPasswordForgotParams(packed middleware.Parameters) (params PostV1AuthPasswordForgotParams) {
@@ -31939,6 +34053,15 @@ func unpackPostV1AuthPasswordForgotParams(packed middleware.Parameters) (params 
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -31999,12 +34122,81 @@ func decodePostV1AuthPasswordForgotParams(args [0]string, argsEscaped bool, r *h
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthPasswordResetParams is parameters of postV1AuthPasswordReset operation.
 type PostV1AuthPasswordResetParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthPasswordResetParams(packed middleware.Parameters) (params PostV1AuthPasswordResetParams) {
@@ -32014,6 +34206,15 @@ func unpackPostV1AuthPasswordResetParams(packed middleware.Parameters) (params P
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -32074,12 +34275,81 @@ func decodePostV1AuthPasswordResetParams(args [0]string, argsEscaped bool, r *ht
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthPhoneVerificationStartParams is parameters of postV1AuthPhoneVerificationStart operation.
 type PostV1AuthPhoneVerificationStartParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthPhoneVerificationStartParams(packed middleware.Parameters) (params PostV1AuthPhoneVerificationStartParams) {
@@ -32089,6 +34359,15 @@ func unpackPostV1AuthPhoneVerificationStartParams(packed middleware.Parameters) 
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -32149,12 +34428,81 @@ func decodePostV1AuthPhoneVerificationStartParams(args [0]string, argsEscaped bo
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthPhoneVerificationVerifyParams is parameters of postV1AuthPhoneVerificationVerify operation.
 type PostV1AuthPhoneVerificationVerifyParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthPhoneVerificationVerifyParams(packed middleware.Parameters) (params PostV1AuthPhoneVerificationVerifyParams) {
@@ -32164,6 +34512,15 @@ func unpackPostV1AuthPhoneVerificationVerifyParams(packed middleware.Parameters)
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -32224,12 +34581,81 @@ func decodePostV1AuthPhoneVerificationVerifyParams(args [0]string, argsEscaped b
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthSignInPasswordParams is parameters of postV1AuthSignInPassword operation.
 type PostV1AuthSignInPasswordParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthSignInPasswordParams(packed middleware.Parameters) (params PostV1AuthSignInPasswordParams) {
@@ -32239,6 +34665,15 @@ func unpackPostV1AuthSignInPasswordParams(packed middleware.Parameters) (params 
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -32299,12 +34734,81 @@ func decodePostV1AuthSignInPasswordParams(args [0]string, argsEscaped bool, r *h
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthSignUpParams is parameters of postV1AuthSignUp operation.
 type PostV1AuthSignUpParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthSignUpParams(packed middleware.Parameters) (params PostV1AuthSignUpParams) {
@@ -32314,6 +34818,15 @@ func unpackPostV1AuthSignUpParams(packed middleware.Parameters) (params PostV1Au
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -32374,12 +34887,81 @@ func decodePostV1AuthSignUpParams(args [0]string, argsEscaped bool, r *http.Requ
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthTokenExchangeParams is parameters of postV1AuthTokenExchange operation.
 type PostV1AuthTokenExchangeParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthTokenExchangeParams(packed middleware.Parameters) (params PostV1AuthTokenExchangeParams) {
@@ -32389,6 +34971,15 @@ func unpackPostV1AuthTokenExchangeParams(packed middleware.Parameters) (params P
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -32449,12 +35040,81 @@ func decodePostV1AuthTokenExchangeParams(args [0]string, argsEscaped bool, r *ht
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthTokenRefreshParams is parameters of postV1AuthTokenRefresh operation.
 type PostV1AuthTokenRefreshParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 	// Refresh token in cookie mode (used when the body omits it).
 	IamRefresh OptString `json:",omitempty,omitzero"`
 }
@@ -32466,6 +35126,15 @@ func unpackPostV1AuthTokenRefreshParams(packed middleware.Parameters) (params Po
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -32532,6 +35201,72 @@ func decodePostV1AuthTokenRefreshParams(args [0]string, argsEscaped bool, r *htt
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -32608,6 +35343,9 @@ func decodePostV1AuthTokenRefreshParams(args [0]string, argsEscaped bool, r *htt
 // PostV1AuthWebauthnLoginOptionsParams is parameters of postV1AuthWebauthnLoginOptions operation.
 type PostV1AuthWebauthnLoginOptionsParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthWebauthnLoginOptionsParams(packed middleware.Parameters) (params PostV1AuthWebauthnLoginOptionsParams) {
@@ -32617,6 +35355,15 @@ func unpackPostV1AuthWebauthnLoginOptionsParams(packed middleware.Parameters) (p
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -32677,12 +35424,81 @@ func decodePostV1AuthWebauthnLoginOptionsParams(args [0]string, argsEscaped bool
 			Err:  err,
 		}
 	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // PostV1AuthWebauthnLoginVerifyParams is parameters of postV1AuthWebauthnLoginVerify operation.
 type PostV1AuthWebauthnLoginVerifyParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1AuthWebauthnLoginVerifyParams(packed middleware.Parameters) (params PostV1AuthWebauthnLoginVerifyParams) {
@@ -32692,6 +35508,15 @@ func unpackPostV1AuthWebauthnLoginVerifyParams(packed middleware.Parameters) (pa
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -32748,6 +35573,72 @@ func decodePostV1AuthWebauthnLoginVerifyParams(args [0]string, argsEscaped bool,
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -33014,7 +35905,8 @@ func decodePostV1OauthInteractionByInteractionIdRejectParams(args [1]string, arg
 type PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams struct {
 	ProjectID string
 	ID        string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -33250,7 +36142,8 @@ func decodePostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams(args [2
 type PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams struct {
 	ProjectID string
 	ID        string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -33486,7 +36379,8 @@ func decodePostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams(args [2]st
 type PostV1ProjectsByProjectIdAdminApiKeysParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -33726,7 +36620,8 @@ func decodePostV1ProjectsByProjectIdAdminApiKeysParams(args [1]string, argsEscap
 type PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams struct {
 	ProjectID string
 	KeyID     string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -33962,7 +36857,8 @@ func decodePostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams(args [2]stri
 type PostV1ProjectsByProjectIdAdminAppsParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -34204,7 +37100,8 @@ type PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams struct {
 	AppID     string
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -34514,7 +37411,8 @@ func decodePostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams(args [2]string
 // PostV1ProjectsByProjectIdAdminAuditExportParams is parameters of postV1ProjectsByProjectIdAdminAuditExport operation.
 type PostV1ProjectsByProjectIdAdminAuditExportParams struct {
 	ProjectID string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -34678,7 +37576,8 @@ func decodePostV1ProjectsByProjectIdAdminAuditExportParams(args [1]string, argsE
 type PostV1ProjectsByProjectIdAdminDomainsParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -34918,7 +37817,8 @@ func decodePostV1ProjectsByProjectIdAdminDomainsParams(args [1]string, argsEscap
 type PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams struct {
 	ProjectID string
 	DomainID  string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -35154,7 +38054,8 @@ func decodePostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams(args [2]s
 type PostV1ProjectsByProjectIdAdminEmailProvidersParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -35394,7 +38295,8 @@ func decodePostV1ProjectsByProjectIdAdminEmailProvidersParams(args [1]string, ar
 type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams struct {
 	ProjectID string
 	ID        string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -35630,7 +38532,8 @@ func decodePostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams(args [2
 type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams struct {
 	ProjectID string
 	ID        string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -35866,7 +38769,8 @@ func decodePostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams(args [
 type PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams struct {
 	ProjectID string
 	EventID   string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -36102,7 +39006,8 @@ func decodePostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams(args [2]str
 type PostV1ProjectsByProjectIdAdminHooksParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -36342,7 +39247,8 @@ func decodePostV1ProjectsByProjectIdAdminHooksParams(args [1]string, argsEscaped
 type PostV1ProjectsByProjectIdAdminHooksByIdTestParams struct {
 	ProjectID string
 	ID        string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -36577,7 +39483,8 @@ func decodePostV1ProjectsByProjectIdAdminHooksByIdTestParams(args [2]string, arg
 // PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams is parameters of postV1ProjectsByProjectIdAdminImportPasswordHashesVerify operation.
 type PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams struct {
 	ProjectID string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -36740,7 +39647,8 @@ func decodePostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams(args [
 // PostV1ProjectsByProjectIdAdminImportUsersParams is parameters of postV1ProjectsByProjectIdAdminImportUsers operation.
 type PostV1ProjectsByProjectIdAdminImportUsersParams struct {
 	ProjectID string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -36904,7 +39812,8 @@ func decodePostV1ProjectsByProjectIdAdminImportUsersParams(args [1]string, argsE
 type PostV1ProjectsByProjectIdAdminInvitesParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -37142,7 +40051,8 @@ func decodePostV1ProjectsByProjectIdAdminInvitesParams(args [1]string, argsEscap
 
 // PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeParams is parameters of postV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke operation.
 type PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	InviteID     string
@@ -37380,7 +40290,8 @@ func decodePostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeParams(args [2]s
 type PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams struct {
 	ProjectID string
 	JobID     string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -37616,7 +40527,8 @@ func decodePostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams(args [2]string,
 type PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams struct {
 	ProjectID string
 	KeyID     string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -37851,7 +40763,8 @@ func decodePostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams(args [2]strin
 // PostV1ProjectsByProjectIdAdminJwksRotateParams is parameters of postV1ProjectsByProjectIdAdminJwksRotate operation.
 type PostV1ProjectsByProjectIdAdminJwksRotateParams struct {
 	ProjectID string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -38015,7 +40928,8 @@ func decodePostV1ProjectsByProjectIdAdminJwksRotateParams(args [1]string, argsEs
 type PostV1ProjectsByProjectIdAdminOauthProvidersParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -38254,7 +41168,8 @@ func decodePostV1ProjectsByProjectIdAdminOauthProvidersParams(args [1]string, ar
 // PostV1ProjectsByProjectIdAdminRateLimitBlocksParams is parameters of postV1ProjectsByProjectIdAdminRateLimitBlocks operation.
 type PostV1ProjectsByProjectIdAdminRateLimitBlocksParams struct {
 	ProjectID string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -38418,7 +41333,8 @@ func decodePostV1ProjectsByProjectIdAdminRateLimitBlocksParams(args [1]string, a
 type PostV1ProjectsByProjectIdAdminRiskRulesParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -38658,7 +41574,8 @@ func decodePostV1ProjectsByProjectIdAdminRiskRulesParams(args [1]string, argsEsc
 type PostV1ProjectsByProjectIdAdminServiceAccountsParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -38898,7 +41815,8 @@ func decodePostV1ProjectsByProjectIdAdminServiceAccountsParams(args [1]string, a
 type PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	SaID         string
@@ -39211,7 +42129,8 @@ func decodePostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams(args
 type PostV1ProjectsByProjectIdAdminSmsProvidersParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -39451,7 +42370,8 @@ func decodePostV1ProjectsByProjectIdAdminSmsProvidersParams(args [1]string, args
 type PostV1ProjectsByProjectIdAdminSsoConnectionsParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -39691,7 +42611,8 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsParams(args [1]string, ar
 type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateParams struct {
 	ProjectID string
 	ID        string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -39927,7 +42848,8 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificatePara
 type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	ID           string
@@ -40240,7 +43162,8 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensParams(args
 type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams struct {
 	ProjectID string
 	ID        string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -40476,7 +43399,8 @@ func decodePostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestParams(args [2]st
 type PostV1ProjectsByProjectIdAdminTokenProfilesParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -40716,7 +43640,8 @@ func decodePostV1ProjectsByProjectIdAdminTokenProfilesParams(args [1]string, arg
 type PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams struct {
 	ProjectID string
 	ID        string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -40952,7 +43877,8 @@ func decodePostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams(args [2]
 type PostV1ProjectsByProjectIdAdminUsersParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -41192,7 +44118,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersParams(args [1]string, argsEscaped
 type PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -41428,7 +44355,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams(args [2]st
 type PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -41664,7 +44592,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdBanParams(args [2]string, 
 type PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -41900,7 +44829,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdExportParams(args [2]strin
 type PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -42136,7 +45066,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams(args [2]
 type PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -42372,7 +45303,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams(args [2]str
 type PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -42608,7 +45540,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams(args [2]str
 type PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -42844,7 +45777,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams(args 
 type PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -43080,7 +46014,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams(args [2]string
 type PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -43316,7 +46251,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams(args [2]
 type PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams struct {
 	ProjectID string
 	UserID    string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -43552,7 +46488,8 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams(args [2]
 type PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams struct {
 	ProjectID  string
 	DeliveryID string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -43788,7 +46725,8 @@ func decodePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParam
 type PostV1ProjectsByProjectIdAdminWebhooksParams struct {
 	// Optional key to safely retry a create without duplicating it.
 	IdempotencyKey OptString `json:",omitempty,omitzero"`
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -44028,7 +46966,8 @@ func decodePostV1ProjectsByProjectIdAdminWebhooksParams(args [1]string, argsEsca
 type PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams struct {
 	ProjectID string
 	ID        string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -44264,7 +47203,8 @@ func decodePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams(args [2]
 type PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams struct {
 	ProjectID string
 	ID        string
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -44754,6 +47694,9 @@ func decodePostV1SessionsBySessionIdTrustParams(args [1]string, argsEscaped bool
 // PostV1SsoExchangeParams is parameters of postV1SsoExchange operation.
 type PostV1SsoExchangeParams struct {
 	XClientID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
 func unpackPostV1SsoExchangeParams(packed middleware.Parameters) (params PostV1SsoExchangeParams) {
@@ -44763,6 +47706,15 @@ func unpackPostV1SsoExchangeParams(packed middleware.Parameters) (params PostV1S
 			In:   "header",
 		}
 		params.XClientID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
 	}
 	return params
 }
@@ -44819,6 +47771,72 @@ func decodePostV1SsoExchangeParams(args [0]string, argsEscaped bool, r *http.Req
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Client-Id",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
 			In:   "header",
 			Err:  err,
 		}
@@ -44998,7 +48016,8 @@ func decodePostV1SsoSamlByConnectionIdSloParams(args [1]string, argsEscaped bool
 
 // PostV1TestClockParams is parameters of postV1TestClock operation.
 type PostV1TestClockParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -45088,7 +48107,8 @@ func decodePostV1TestClockParams(args [0]string, argsEscaped bool, r *http.Reque
 
 // PostV1TestResetParams is parameters of postV1TestReset operation.
 type PostV1TestResetParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -45178,7 +48198,8 @@ func decodePostV1TestResetParams(args [0]string, argsEscaped bool, r *http.Reque
 
 // PostV1TestSeedParams is parameters of postV1TestSeed operation.
 type PostV1TestSeedParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 }
 
@@ -45268,7 +48289,8 @@ func decodePostV1TestSeedParams(args [0]string, argsEscaped bool, r *http.Reques
 
 // PutV1ProjectsByProjectIdAdminConsentsParams is parameters of putV1ProjectsByProjectIdAdminConsents operation.
 type PutV1ProjectsByProjectIdAdminConsentsParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -45431,7 +48453,8 @@ func decodePutV1ProjectsByProjectIdAdminConsentsParams(args [1]string, argsEscap
 
 // PutV1ProjectsByProjectIdAdminFeaturesParams is parameters of putV1ProjectsByProjectIdAdminFeatures operation.
 type PutV1ProjectsByProjectIdAdminFeaturesParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }
@@ -45594,7 +48617,8 @@ func decodePutV1ProjectsByProjectIdAdminFeaturesParams(args [1]string, argsEscap
 
 // PutV1ProjectsByProjectIdAdminI18nByLocaleParams is parameters of putV1ProjectsByProjectIdAdminI18nByLocale operation.
 type PutV1ProjectsByProjectIdAdminI18nByLocaleParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 	Locale       string
@@ -45830,7 +48854,8 @@ func decodePutV1ProjectsByProjectIdAdminI18nByLocaleParams(args [2]string, argsE
 
 // PutV1ProjectsByProjectIdAdminRetentionPolicyParams is parameters of putV1ProjectsByProjectIdAdminRetentionPolicy operation.
 type PutV1ProjectsByProjectIdAdminRetentionPolicyParams struct {
-	// Selects the environment for admin calls.
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
 	ProjectID    string
 }

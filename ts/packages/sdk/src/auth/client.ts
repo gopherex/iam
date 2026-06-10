@@ -95,12 +95,15 @@ export class IamConfig {
   constructor(
     private readonly client: Client,
     private readonly clientId: string,
+    private readonly environment?: string,
   ) {}
 
   async getPublicConfig(): Promise<{ data: PublicConfig | null; error: IamAuthError | null }> {
+    const headers: { 'X-Client-Id': string; 'X-Environment'?: string } = { 'X-Client-Id': this.clientId };
+    if (this.environment) headers['X-Environment'] = this.environment;
     const r = await getV1ConfigPublic({
       client: this.client,
-      headers: { 'X-Client-Id': this.clientId },
+      headers,
     });
     if (r.error) return { data: null, error: authError(r) };
     return { data: r.data ?? null, error: null };
@@ -127,6 +130,7 @@ export class IamAuth {
   private storage: StorageAdapter;
   private storageKey: string;
   private clientId: string;
+  private environment?: string;
   private persist: boolean;
   private autoRefresh: boolean;
   private marginMs: number;
@@ -138,6 +142,7 @@ export class IamAuth {
 
   constructor(opts: IamClientOptions) {
     this.clientId = opts.clientId;
+    this.environment = opts.environment;
     this.persist = opts.persistSession ?? true;
     this.storage = opts.storage ?? (this.persist ? defaultStorage() : new MemoryStorage());
     this.storageKey = opts.storageKey ?? 'iam.session';
@@ -660,8 +665,10 @@ export class IamAuth {
   // ----- engine -----
 
   /** @internal — shared with the account/mfa/webauthn namespaces. */
-  headers(): { 'X-Client-Id': string } {
-    return { 'X-Client-Id': this.clientId };
+  headers(): { 'X-Client-Id': string; 'X-Environment'?: string } {
+    const h: { 'X-Client-Id': string; 'X-Environment'?: string } = { 'X-Client-Id': this.clientId };
+    if (this.environment) h['X-Environment'] = this.environment;
+    return h;
   }
 
   private async handle(result: { data?: unknown; error?: unknown; response?: Response }): Promise<AuthResponse> {
@@ -803,6 +810,9 @@ export class IamAuth {
       if (this.clientId && !request.headers.has('X-Client-Id')) {
         request.headers.set('X-Client-Id', this.clientId);
       }
+      if (this.environment && !request.headers.has('X-Environment')) {
+        request.headers.set('X-Environment', this.environment);
+      }
       return request;
     });
     this.client.interceptors.response.use(async (response: Response, request: Request) => {
@@ -885,13 +895,13 @@ export function createIamClient(options: IamClientOptions): {
   const headers = () => auth.headers();
   return {
     auth,
-    config: new IamConfig(auth.client, options.clientId),
+    config: new IamConfig(auth.client, options.clientId, options.environment),
     client: auth.client,
     account: new IamAccount(auth.client, headers),
     mfa: new IamMfa(auth.client, headers),
     webauthn: new IamWebAuthn(auth.client, headers),
     tokens: new IamTokens(auth.client, headers),
     oidc: new IamOidc(auth.client, headers),
-    flow: createFlowController({ baseUrl: options.baseUrl, clientId: options.clientId, auth }),
+    flow: createFlowController({ baseUrl: options.baseUrl, clientId: options.clientId, environment: options.environment, auth }),
   };
 }

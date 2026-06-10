@@ -69,6 +69,12 @@ export interface IamClientOptions {
   baseUrl: string;
   /** Public client id sent as X-Client-Id on auth calls. */
   clientId: string;
+  /**
+   * Project environment sent as X-Environment on every auth call, giving
+   * Stripe-like test/live data isolation (e.g. "test", "live", "staging").
+   * Defaults to the project's "live" environment when omitted.
+   */
+  environment?: string;
   /** Session store (default: localStorage in the browser, in-memory otherwise). */
   storage?: StorageAdapter;
   /** Storage key for the persisted session (default: "iam.session"). */

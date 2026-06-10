@@ -53,6 +53,12 @@ type platformConsentConfig struct {
 func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID string) (*domain.PublicConfig, error) {
 	_ = clientID // reserved for per-client config overrides
 
+	// Resolve the request environment so test/live carry distinct public config.
+	env, err := effectiveEnv(ctx, a.db, projectID, platformDefaultEnvironment)
+	if err != nil {
+		return nil, err
+	}
+
 	// Project envelope: name + supported locales (tenant boundary).
 	projRow, err := models.FindIamProject(ctx, a.db.Bobx(), projectID)
 	if err != nil {
@@ -76,10 +82,10 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 		cfg.DefaultLocale = proj.DefaultLocale
 	}
 
-	// Auth config envelope: iam_config(project_id, environment=live, key=auth).
+	// Auth config envelope: iam_config(project_id, environment, key=auth).
 	authRow, err := models.IamConfigs.Query(
 		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
-		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(platformDefaultEnvironment))),
+		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(env))),
 		sm.Where(models.IamConfigs.Columns.Key.EQ(psql.Arg("auth"))),
 	).One(ctx, a.db.Bobx())
 	if err != nil {
@@ -121,7 +127,7 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 
 	consentRow, err := models.IamConfigs.Query(
 		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
-		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(platformDefaultEnvironment))),
+		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(env))),
 		sm.Where(models.IamConfigs.Columns.Key.EQ(psql.Arg("consent"))),
 	).One(ctx, a.db.Bobx())
 	if err != nil {

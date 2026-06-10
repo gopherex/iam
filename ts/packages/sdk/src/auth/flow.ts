@@ -34,6 +34,11 @@ export interface FlowControllerOptions {
   /** Public client id sent as X-Client-Id on every call. */
   clientId: string;
   /**
+   * Project environment sent as X-Environment on every flow call (test/live
+   * isolation). Defaults to the project's "live" environment when omitted.
+   */
+  environment?: string;
+  /**
    * If provided, the controller will call `auth.acceptFlowSession(tokens, user)`
    * when the flow completes, triggering SIGNED_IN across the app.
    */
@@ -146,7 +151,11 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
     createConfig<GeneratedClientOptions>({ baseUrl: opts.baseUrl }),
   );
 
-  const headers = (): { 'X-Client-Id': string } => ({ 'X-Client-Id': opts.clientId });
+  const headers = (): { 'X-Client-Id': string; 'X-Environment'?: string } => {
+    const h: { 'X-Client-Id': string; 'X-Environment'?: string } = { 'X-Client-Id': opts.clientId };
+    if (opts.environment) h['X-Environment'] = opts.environment;
+    return h;
+  };
 
   let currentState: FlowState | null = null;
   const listeners = new Set<FlowChangeCallback>();

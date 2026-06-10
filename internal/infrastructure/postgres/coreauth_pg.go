@@ -193,32 +193,34 @@ type coreAuthCredential struct {
 // coreAuthRefreshToken is the refresh-token aggregate stored in the
 // iam_refresh_tokens `data` jsonb envelope. The hash column mirrors Hash.
 type coreAuthRefreshToken struct {
-	ID        string    `json:"id"`
-	ProjectID string    `json:"project_id"`
-	UserID    string    `json:"user_id"`
-	SessionID string    `json:"session_id"`
-	Hash      string    `json:"hash"`
-	Revoked   bool      `json:"revoked"`
-	ExpiresAt time.Time `json:"expires_at"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+	ProjectID   string    `json:"project_id"`
+	Environment string    `json:"environment,omitempty"`
+	UserID      string    `json:"user_id"`
+	SessionID   string    `json:"session_id"`
+	Hash        string    `json:"hash"`
+	Revoked     bool      `json:"revoked"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // coreAuthChallengeData is the challenge aggregate stored in the iam_challenges
 // `data` jsonb envelope. CodeHash / Token carry the verifiable material.
 type coreAuthChallengeData struct {
-	ID         string    `json:"id"`
-	ProjectID  string    `json:"project_id"`
-	Type       string    `json:"type"`    // email | phone | password_reset | email_change | phone_change
-	Purpose    string    `json:"purpose"` // verify | change | reset | step_up
-	AccountID  string    `json:"account_id"`
-	Subject    string    `json:"subject"`    // contact being challenged
-	CodeHash   string    `json:"code_hash"`  // sha256 of the numeric code
-	TokenHash  string    `json:"token_hash"` // sha256 of the opaque link token
-	RedirectTo string    `json:"redirect_to"`
-	Locale     string    `json:"locale"`
-	Channel    string    `json:"channel"`
-	ExpiresAt  time.Time `json:"expires_at"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+	ProjectID   string    `json:"project_id"`
+	Environment string    `json:"environment,omitempty"`
+	Type        string    `json:"type"`    // email | phone | password_reset | email_change | phone_change
+	Purpose     string    `json:"purpose"` // verify | change | reset | step_up
+	AccountID   string    `json:"account_id"`
+	Subject     string    `json:"subject"`    // contact being challenged
+	CodeHash    string    `json:"code_hash"`  // sha256 of the numeric code
+	TokenHash   string    `json:"token_hash"` // sha256 of the opaque link token
+	RedirectTo  string    `json:"redirect_to"`
+	Locale      string    `json:"locale"`
+	Channel     string    `json:"channel"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // coreAuthCodeData is the auth-code aggregate stored in the iam_auth_codes
@@ -285,8 +287,13 @@ func coreAuthAccountActive(acc *domain.Account) error {
 // not-found domain error. The unique index on (project_id, primary_email) makes
 // this a single-row lookup.
 func (a *pgCoreAuth) coreAuthFindUserByEmail(ctx context.Context, projectID, email string) (*models.IamUser, error) {
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
 	row, err := models.IamUsers.Query(
 		sm.Where(models.IamUsers.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamUsers.Columns.Environment.EQ(psql.Arg(env))),
 		sm.Where(models.IamUsers.Columns.PrimaryEmail.EQ(psql.Arg(email))),
 	).One(ctx, a.db.Bobx())
 	if err != nil {
@@ -301,8 +308,13 @@ func (a *pgCoreAuth) coreAuthFindUserByEmail(ctx context.Context, projectID, ema
 // coreAuthFindPasswordCredential returns the password iam_credentials row for a
 // user (tenant-scoped) or a not-found domain error.
 func (a *pgCoreAuth) coreAuthFindPasswordCredential(ctx context.Context, projectID, userID string) (*models.IamCredential, error) {
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
 	row, err := models.IamCredentials.Query(
 		sm.Where(models.IamCredentials.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamCredentials.Columns.Environment.EQ(psql.Arg(env))),
 		sm.Where(models.IamCredentials.Columns.UserID.EQ(psql.Arg(userID))),
 		sm.Where(models.IamCredentials.Columns.Type.EQ(psql.Arg(coreAuthCredentialPassword))),
 	).One(ctx, a.db.Bobx())
@@ -383,6 +395,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	sessSetter := &models.IamSessionSetter{
 		ID:           &sess.ID,
 		ProjectID:    &sess.ProjectID,
+		Environment:  &signEnv,
 		UserID:       &sess.AccountID,
 		Aal:          ptr(int32(aal)),
 		Trusted:      ptr(false),
@@ -399,14 +412,15 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	}
 
 	rt := coreAuthRefreshToken{
-		ID:        newUUID(),
-		ProjectID: acc.ProjectID,
-		UserID:    acc.ID,
-		SessionID: sessionID,
-		Hash:      refreshHash,
-		Revoked:   false,
-		ExpiresAt: now.Add(coreAuthRefreshTTL),
-		CreatedAt: now,
+		ID:          newUUID(),
+		ProjectID:   acc.ProjectID,
+		Environment: signEnv,
+		UserID:      acc.ID,
+		SessionID:   sessionID,
+		Hash:        refreshHash,
+		Revoked:     false,
+		ExpiresAt:   now.Add(coreAuthRefreshTTL),
+		CreatedAt:   now,
 	}
 	if err := a.coreAuthInsertRefreshToken(ctx, rt); err != nil {
 		return nil, err
@@ -414,7 +428,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "session.created",
 		ProjectID:   sess.ProjectID,
-		Environment: coreAuthDefaultEnv,
+		Environment: signEnv,
 		AggregateID: sess.ID,
 		Payload:     sess,
 	}); err != nil {
@@ -507,19 +521,30 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		return nil, err
 	}
 	rt := coreAuthRefreshToken{
-		ID:        newUUID(),
-		ProjectID: acc.ProjectID,
-		UserID:    acc.ID,
-		SessionID: row.ID,
-		Hash:      coreAuthSHA256(refreshPlain),
-		Revoked:   false,
-		ExpiresAt: now.Add(coreAuthRefreshTTL),
-		CreatedAt: now,
+		ID:          newUUID(),
+		ProjectID:   acc.ProjectID,
+		Environment: signEnv,
+		UserID:      acc.ID,
+		SessionID:   row.ID,
+		Hash:        coreAuthSHA256(refreshPlain),
+		Revoked:     false,
+		ExpiresAt:   now.Add(coreAuthRefreshTTL),
+		CreatedAt:   now,
 	}
 	if err := a.coreAuthInsertRefreshToken(ctx, rt); err != nil {
 		return nil, err
 	}
 	return sess, nil
+}
+
+// refreshTokenEnv returns the environment column value for a refresh-token row,
+// defaulting to the runtime default when the struct predates env tagging.
+func refreshTokenEnv(rt *coreAuthRefreshToken) *string {
+	env := rt.Environment
+	if env == "" {
+		env = coreAuthDefaultEnv
+	}
+	return &env
 }
 
 // coreAuthInsertRefreshToken persists a refresh-token envelope row. MUST run
@@ -531,15 +556,16 @@ func (a *pgCoreAuth) coreAuthInsertRefreshToken(ctx context.Context, rt coreAuth
 	}
 	rm := json.RawMessage(raw)
 	setter := &models.IamRefreshTokenSetter{
-		ID:        &rt.ID,
-		ProjectID: &rt.ProjectID,
-		UserID:    &rt.UserID,
-		SessionID: &rt.SessionID,
-		Hash:      &rt.Hash,
-		Revoked:   &rt.Revoked,
-		ExpiresAt: ptr(null.From(rt.ExpiresAt)),
-		CreatedAt: &rt.CreatedAt,
-		Data:      &rm,
+		ID:          &rt.ID,
+		ProjectID:   &rt.ProjectID,
+		Environment: refreshTokenEnv(&rt),
+		UserID:      &rt.UserID,
+		SessionID:   &rt.SessionID,
+		Hash:        &rt.Hash,
+		Revoked:     &rt.Revoked,
+		ExpiresAt:   ptr(null.From(rt.ExpiresAt)),
+		CreatedAt:   &rt.CreatedAt,
+		Data:        &rm,
 	}
 	if _, err := models.IamRefreshTokens.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		return err
@@ -555,14 +581,19 @@ func (a *pgCoreAuth) coreAuthInsertChallenge(ctx context.Context, ch coreAuthCha
 		return nil, err
 	}
 	rm := json.RawMessage(raw)
+	chEnv := ch.Environment
+	if chEnv == "" {
+		chEnv = coreAuthDefaultEnv
+	}
 	setter := &models.IamChallengeSetter{
-		ID:        &ch.ID,
-		ProjectID: &ch.ProjectID,
-		Type:      &ch.Type,
-		ExpiresAt: &ch.ExpiresAt,
-		Consumed:  ptr(false),
-		CreatedAt: &ch.CreatedAt,
-		Data:      &rm,
+		ID:          &ch.ID,
+		ProjectID:   &ch.ProjectID,
+		Environment: &chEnv,
+		Type:        &ch.Type,
+		ExpiresAt:   &ch.ExpiresAt,
+		Consumed:    ptr(false),
+		CreatedAt:   &ch.CreatedAt,
+		Data:        &rm,
 	}
 	if ch.Subject != "" {
 		setter.Subject = ptr(null.From(ch.Subject))
@@ -576,7 +607,7 @@ func (a *pgCoreAuth) coreAuthInsertChallenge(ctx context.Context, ch coreAuthCha
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "challenge.created",
 		ProjectID:   ch.ProjectID,
-		Environment: coreAuthDefaultEnv,
+		Environment: chEnv,
 		AggregateID: ch.ID,
 		Payload:     ch,
 	}); err != nil {
@@ -605,21 +636,26 @@ func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.Core
 	if err != nil {
 		return nil, err
 	}
+	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
 	now := nowUTC()
 	ch := coreAuthChallengeData{
-		ID:         newUUID(),
-		ProjectID:  cmd.ProjectID,
-		Type:       chType,
-		Purpose:    purpose,
-		AccountID:  cmd.AccountID,
-		Subject:    contact,
-		CodeHash:   coreAuthSHA256(code),
-		TokenHash:  coreAuthSHA256(token),
-		RedirectTo: cmd.RedirectTo,
-		Locale:     cmd.Locale,
-		Channel:    cmd.Channel,
-		ExpiresAt:  now.Add(coreAuthChallengeTTL),
-		CreatedAt:  now,
+		ID:          newUUID(),
+		ProjectID:   cmd.ProjectID,
+		Environment: env,
+		Type:        chType,
+		Purpose:     purpose,
+		AccountID:   cmd.AccountID,
+		Subject:     contact,
+		CodeHash:    coreAuthSHA256(code),
+		TokenHash:   coreAuthSHA256(token),
+		RedirectTo:  cmd.RedirectTo,
+		Locale:      cmd.Locale,
+		Channel:     cmd.Channel,
+		ExpiresAt:   now.Add(coreAuthChallengeTTL),
+		CreatedAt:   now,
 	}
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Challenge, error) {
 		out, err := a.coreAuthInsertChallenge(ctx, ch)
@@ -629,7 +665,7 @@ func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.Core
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        chType + ".verification.requested",
 			ProjectID:   ch.ProjectID,
-			Environment: coreAuthDefaultEnv,
+			Environment: ch.Environment,
 			AggregateID: ch.ID,
 			Payload: map[string]any{
 				"code":         code,
@@ -900,6 +936,10 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 		acc  *domain.Account
 		sess *domain.Session
 	}
+	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, nil, err
+	}
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (regResult, error) {
 		now := nowUTC()
 		acc := &domain.Account{
@@ -921,13 +961,14 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 		}
 		rmAcc := json.RawMessage(rawAcc)
 		userSetter := &models.IamUserSetter{
-			ID:        &acc.ID,
-			ProjectID: &acc.ProjectID,
-			Kind:      ptr(acc.Kind),
-			Status:    ptr(acc.Status),
-			CreatedAt: &now,
-			UpdatedAt: &now,
-			Data:      &rmAcc,
+			ID:          &acc.ID,
+			ProjectID:   &acc.ProjectID,
+			Environment: &env,
+			Kind:        ptr(acc.Kind),
+			Status:      ptr(acc.Status),
+			CreatedAt:   &now,
+			UpdatedAt:   &now,
+			Data:        &rmAcc,
 		}
 		if acc.PrimaryEmail != "" {
 			userSetter.PrimaryEmail = ptr(null.From(acc.PrimaryEmail))
@@ -946,12 +987,13 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 		}
 		for _, c := range cmd.Consents {
 			if _, err := models.IamConsents.Insert(&models.IamConsentSetter{
-				ID:         ptr(newUUID()),
-				ProjectID:  ptr(acc.ProjectID),
-				UserID:     ptr(acc.ID),
-				DocKey:     ptr(c.Key),
-				Version:    ptr(c.Version),
-				AcceptedAt: ptr(now),
+				ID:          ptr(newUUID()),
+				ProjectID:   ptr(acc.ProjectID),
+				Environment: &env,
+				UserID:      ptr(acc.ID),
+				DocKey:      ptr(c.Key),
+				Version:     ptr(c.Version),
+				AcceptedAt:  ptr(now),
 			}).One(ctx, a.db.Bobx()); err != nil {
 				return regResult{}, err
 			}
@@ -978,14 +1020,15 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 			}
 			rmCred := json.RawMessage(rawCred)
 			credSetter := &models.IamCredentialSetter{
-				ID:        &cred.ID,
-				ProjectID: &cred.ProjectID,
-				UserID:    &cred.UserID,
-				Type:      ptr(cred.Type),
-				Secret:    &cred.Hash,
-				CreatedAt: &now,
-				UpdatedAt: &now,
-				Data:      &rmCred,
+				ID:          &cred.ID,
+				ProjectID:   &cred.ProjectID,
+				Environment: &env,
+				UserID:      &cred.UserID,
+				Type:        ptr(cred.Type),
+				Secret:      &cred.Hash,
+				CreatedAt:   &now,
+				UpdatedAt:   &now,
+				Data:        &rmCred,
 			}
 			if _, err := models.IamCredentials.Insert(credSetter).One(ctx, a.db.Bobx()); err != nil {
 				return regResult{}, err
@@ -1309,6 +1352,10 @@ func (a *pgCoreAuth) CreateGuest(ctx context.Context, projectID string) (*domain
 		acc  *domain.Account
 		sess *domain.Session
 	}
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, nil, err
+	}
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (guestResult, error) {
 		now := nowUTC()
 		acc := &domain.Account{
@@ -1325,13 +1372,14 @@ func (a *pgCoreAuth) CreateGuest(ctx context.Context, projectID string) (*domain
 		}
 		rm := json.RawMessage(raw)
 		setter := &models.IamUserSetter{
-			ID:        &acc.ID,
-			ProjectID: &acc.ProjectID,
-			Kind:      ptr(acc.Kind),
-			Status:    ptr(acc.Status),
-			CreatedAt: &now,
-			UpdatedAt: &now,
-			Data:      &rm,
+			ID:          &acc.ID,
+			ProjectID:   &acc.ProjectID,
+			Environment: &env,
+			Kind:        ptr(acc.Kind),
+			Status:      ptr(acc.Status),
+			CreatedAt:   &now,
+			UpdatedAt:   &now,
+			Data:        &rm,
 		}
 		if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return guestResult{}, err
@@ -1343,7 +1391,7 @@ func (a *pgCoreAuth) CreateGuest(ctx context.Context, projectID string) (*domain
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "guest.created",
 			ProjectID:   acc.ProjectID,
-			Environment: coreAuthDefaultEnv,
+			Environment: env,
 			AggregateID: acc.ID,
 			Payload:     acc,
 		}); err != nil {
@@ -1664,8 +1712,12 @@ func (a *pgCoreAuth) VerifyCaptcha(ctx context.Context, projectID, provider, tok
 		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
 	}
 
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
 	var cfg coreAuthCaptchaConfig
-	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, coreAuthDefaultEnv, "captcha")
+	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, env, "captcha")
 	if err != nil {
 		if errors.Is(translatePgErr("config", err), ErrNotFound) {
 			return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
@@ -1846,8 +1898,13 @@ func (a *pgCoreAuth) VerifyPhone(ctx context.Context, cmd domain.CoreAuthVerifyC
 
 // coreAuthFindUserByPhone returns the iam_users row for (projectID, phone).
 func (a *pgCoreAuth) coreAuthFindUserByPhone(ctx context.Context, projectID, phone string) (*models.IamUser, error) {
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
 	row, err := models.IamUsers.Query(
 		sm.Where(models.IamUsers.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamUsers.Columns.Environment.EQ(psql.Arg(env))),
 		sm.Where(models.IamUsers.Columns.PrimaryPhone.EQ(psql.Arg(phone))),
 	).One(ctx, a.db.Bobx())
 	if err != nil {
@@ -2044,8 +2101,13 @@ func (a *pgCoreAuth) ResetPassword(ctx context.Context, cmd domain.CoreAuthPassw
 // credential for a user. MUST run inside an open transaction.
 func (a *pgCoreAuth) coreAuthUpsertPasswordCredential(ctx context.Context, projectID, userID, hash string) error {
 	now := nowUTC()
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return err
+	}
 	row, err := models.IamCredentials.Query(
 		sm.Where(models.IamCredentials.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamCredentials.Columns.Environment.EQ(psql.Arg(env))),
 		sm.Where(models.IamCredentials.Columns.UserID.EQ(psql.Arg(userID))),
 		sm.Where(models.IamCredentials.Columns.Type.EQ(psql.Arg(coreAuthCredentialPassword))),
 	).One(ctx, a.db.Bobx())
@@ -2069,14 +2131,15 @@ func (a *pgCoreAuth) coreAuthUpsertPasswordCredential(ctx context.Context, proje
 		}
 		rm := json.RawMessage(raw)
 		setter := &models.IamCredentialSetter{
-			ID:        &cred.ID,
-			ProjectID: &cred.ProjectID,
-			UserID:    &cred.UserID,
-			Type:      ptr(cred.Type),
-			Secret:    &cred.Hash,
-			CreatedAt: &now,
-			UpdatedAt: &now,
-			Data:      &rm,
+			ID:          &cred.ID,
+			ProjectID:   &cred.ProjectID,
+			Environment: &env,
+			UserID:      &cred.UserID,
+			Type:        ptr(cred.Type),
+			Secret:      &cred.Hash,
+			CreatedAt:   &now,
+			UpdatedAt:   &now,
+			Data:        &rm,
 		}
 		if _, err := models.IamCredentials.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return err
@@ -2168,7 +2231,11 @@ type coreAuthPasswordPolicy struct {
 // read errors propagate.
 func (a *pgCoreAuth) coreAuthLoadPasswordPolicy(ctx context.Context, projectID string) (coreAuthPasswordPolicy, error) {
 	pol := coreAuthPasswordPolicy{MinLength: 8}
-	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, coreAuthDefaultEnv, "password_policy")
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return pol, err
+	}
+	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, env, "password_policy")
 	if err != nil {
 		if errors.Is(translatePgErr("config", err), ErrNotFound) {
 			return pol, nil
@@ -2385,6 +2452,10 @@ func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAut
 	if cmd.ProjectID == "" || strings.TrimSpace(cmd.Email) == "" {
 		return nil, domain.ErrValidation.WithMessage("project and email are required")
 	}
+	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.CoreAuthAccessRequest, error) {
 		now := nowUTC()
 		ar := &domain.CoreAuthAccessRequest{
@@ -2400,13 +2471,14 @@ func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAut
 		}
 		rm := json.RawMessage(raw)
 		setter := &models.IamAccessRequestSetter{
-			ID:        &ar.ID,
-			ProjectID: &ar.ProjectID,
-			Email:     &ar.Email,
-			Status:    ptr(ar.Status),
-			CreatedAt: &now,
-			UpdatedAt: &now,
-			Data:      &rm,
+			ID:          &ar.ID,
+			ProjectID:   &ar.ProjectID,
+			Environment: &env,
+			Email:       &ar.Email,
+			Status:      ptr(ar.Status),
+			CreatedAt:   &now,
+			UpdatedAt:   &now,
+			Data:        &rm,
 		}
 		if _, err := models.IamAccessRequests.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
@@ -2417,7 +2489,7 @@ func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAut
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "access_request.created",
 			ProjectID:   ar.ProjectID,
-			Environment: coreAuthDefaultEnv,
+			Environment: env,
 			AggregateID: ar.ID,
 			Payload:     ar,
 		}); err != nil {

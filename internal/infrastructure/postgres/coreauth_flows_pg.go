@@ -129,6 +129,15 @@ func (a *pgCoreAuthFlows) flowLoad(ctx context.Context, projectID, token string)
 	if row.ProjectID != projectID {
 		return nil, nil, domain.ErrFlowNotFound
 	}
+	// Environment boundary: a flow created in one environment is invisible from
+	// another (test/live isolation). The request env is resolved from ctx.
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, nil, err
+	}
+	if flowRowEnv(row) != env {
+		return nil, nil, domain.ErrFlowNotFound
+	}
 	// Status must be pending.
 	if row.Status != flowStatusPending {
 		return nil, nil, domain.ErrFlowNotFound
@@ -153,6 +162,7 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 	f := &domain.Flow{
 		ID:               row.ID,
 		ProjectID:        row.ProjectID,
+		Environment:      flowRowEnv(row),
 		Kind:             domain.FlowKind(row.Kind),
 		Status:           domain.FlowStatus(row.Status),
 		Step:             domain.FlowStep(row.Step),
@@ -238,23 +248,37 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 	return newToken, nil
 }
 
+// flowRowEnv returns the environment a flow row belongs to, defaulting to the
+// runtime default for rows written before env tagging.
+func flowRowEnv(row *models.IamFlow) string {
+	if row.Environment == "" {
+		return coreAuthDefaultEnv
+	}
+	return row.Environment
+}
+
 // flowInsert creates a new iam_flows row.
 func (a *pgCoreAuthFlows) flowInsert(ctx context.Context, f *domain.Flow, hash string, data flowData) error {
 	rm, err := flowDataRM(data)
 	if err != nil {
 		return err
 	}
+	flowEnv := f.Environment
+	if flowEnv == "" {
+		flowEnv = coreAuthDefaultEnv
+	}
 	setter := &models.IamFlowSetter{
-		ID:        &f.ID,
-		ProjectID: &f.ProjectID,
-		TokenHash: &hash,
-		Kind:      ptr(string(f.Kind)),
-		Status:    ptr(string(f.Status)),
-		Step:      ptr(string(f.Step)),
-		ExpiresAt: &f.ExpiresAt,
-		CreatedAt: &f.CreatedAt,
-		UpdatedAt: &f.UpdatedAt,
-		Data:      &rm,
+		ID:          &f.ID,
+		ProjectID:   &f.ProjectID,
+		Environment: &flowEnv,
+		TokenHash:   &hash,
+		Kind:        ptr(string(f.Kind)),
+		Status:      ptr(string(f.Status)),
+		Step:        ptr(string(f.Step)),
+		ExpiresAt:   &f.ExpiresAt,
+		CreatedAt:   &f.CreatedAt,
+		UpdatedAt:   &f.UpdatedAt,
+		Data:        &rm,
 	}
 	if f.UserID != "" {
 		uid := null.From(f.UserID)
@@ -282,24 +306,28 @@ var flowCreators = map[domain.FlowKind]flowCreateFn{
 }
 
 func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
 	now := nowUTC()
 	f := &domain.Flow{
-		ID:        newUUID(),
-		ProjectID: cmd.ProjectID,
-		Kind:      cmd.Kind,
-		Status:    domain.FlowStatusPending,
-		Step:      domain.FlowStepCollectCredentials,
-		ExpiresAt: now.Add(flowTTL),
-		CreatedAt: now,
-		UpdatedAt: now,
-		Contact:   domain.FlowContact{Email: cmd.Email},
+		ID:          newUUID(),
+		ProjectID:   cmd.ProjectID,
+		Environment: env,
+		Kind:        cmd.Kind,
+		Status:      domain.FlowStatusPending,
+		Step:        domain.FlowStepCollectCredentials,
+		ExpiresAt:   now.Add(flowTTL),
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		Contact:     domain.FlowContact{Email: cmd.Email},
 		Collected: domain.FlowCollected{
 			Name:        cmd.Name,
 			HasPassword: cmd.Password != "",
 		},
 	}
 	var state *domain.FlowState
-	var err error
 	if create, ok := flowCreators[cmd.Kind]; ok {
 		state, err = create(ctx, a, f, cmd)
 	} else {
@@ -483,11 +511,16 @@ func (a *pgCoreAuthFlows) Abandon(ctx context.Context, cmd domain.FlowAbandonCmd
 // Returns a FlowState with the initial token (new token from flowMintToken).
 // flowAuthConfig reads the project's signup policy (registration mode + password
 // strategy) from the auth config doc. Empty strings mean "unset" → open/default.
-// Reads the live environment (runtime is single-env until A2 wiring).
+// Config is resolved under the request's effective environment so test/live can
+// carry different registration policies.
 func (a *pgCoreAuthFlows) flowAuthConfig(ctx context.Context, projectID string) (mode, passwordStrategy string) {
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return "", ""
+	}
 	row, err := models.IamConfigs.Query(
 		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
-		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(coreAuthDefaultEnv))),
+		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(env))),
 		sm.Where(models.IamConfigs.Columns.Key.EQ(psql.Arg("auth"))),
 	).One(ctx, a.db.Bobx())
 	if err != nil || len(row.Data) == 0 {
@@ -632,10 +665,14 @@ func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *d
 }
 
 // flowFindRedeemableInvite looks up an invite by its raw token and validates it
-// for (project, env=live, status=pending, unexpired, email match for email-bound
-// invites). Returns (row, true, nil) when redeemable; (nil, false, nil) for any
-// validation miss; (nil, false, err) only on an unexpected DB error.
+// for (project, request env, status=pending, unexpired, email match for
+// email-bound invites). Returns (row, true, nil) when redeemable; (nil, false,
+// nil) for any validation miss; (nil, false, err) only on an unexpected DB error.
 func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectID, rawToken, email string) (*models.IamInvite, bool, error) {
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, false, err
+	}
 	hash := inviteHashToken(rawToken)
 	rows, err := models.IamInvites.Query(
 		sm.Where(models.IamInvites.Columns.TokenHash.EQ(psql.Arg(hash))),
@@ -650,7 +687,7 @@ func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectI
 	if row.ProjectID != projectID {
 		return nil, false, nil
 	}
-	if row.Environment != coreAuthDefaultEnv {
+	if row.Environment != env {
 		return nil, false, nil
 	}
 	if row.Status != inviteStatusPend {

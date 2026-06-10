@@ -898,6 +898,10 @@ func (a *pgMFAAccounts) mfaResolveAccount(ctx context.Context, accountID string)
 // mfaInsertChallenge persists a challenge envelope. subject carries the owning
 // account; data carries the flow material (factor id, code hash, webauthn opts).
 func (a *pgMFAAccounts) mfaInsertChallenge(ctx context.Context, projectID, accountID string, ch *domain.Challenge, data mfaChallengeData) error {
+	env, err := effectiveEnv(ctx, a.db, projectID, mfaDefaultEnv)
+	if err != nil {
+		return err
+	}
 	raw, err := marshal(data)
 	if err != nil {
 		return err
@@ -905,14 +909,15 @@ func (a *pgMFAAccounts) mfaInsertChallenge(ctx context.Context, projectID, accou
 	rm := json.RawMessage(raw)
 	subject := null.From(accountID)
 	setter := &models.IamChallengeSetter{
-		ID:        ptr(ch.ID),
-		ProjectID: ptr(projectID),
-		Type:      ptr(ch.Type),
-		Subject:   &subject,
-		ExpiresAt: ptr(ch.ExpiresAt),
-		Consumed:  ptr(false),
-		CreatedAt: ptr(nowUTC()),
-		Data:      &rm,
+		ID:          ptr(ch.ID),
+		ProjectID:   ptr(projectID),
+		Environment: &env,
+		Type:        ptr(ch.Type),
+		Subject:     &subject,
+		ExpiresAt:   ptr(ch.ExpiresAt),
+		Consumed:    ptr(false),
+		CreatedAt:   ptr(nowUTC()),
+		Data:        &rm,
 	}
 	if data.FlowTokenHash != "" {
 		ch := null.From(data.FlowTokenHash)
@@ -1008,6 +1013,10 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 
 // mfaInsertFactorFor persists a factor envelope for an explicit account id.
 func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accountID string, f *domain.Factor, secret string) error {
+	env, err := effectiveEnv(ctx, a.db, projectID, mfaDefaultEnv)
+	if err != nil {
+		return err
+	}
 	raw, err := marshal(f)
 	if err != nil {
 		return err
@@ -1018,14 +1027,15 @@ func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accou
 		return err
 	}
 	setter := &models.IamFactorSetter{
-		ID:        ptr(f.ID),
-		ProjectID: ptr(projectID),
-		UserID:    ptr(accountID),
-		Type:      ptr(f.Type),
-		Status:    ptr(f.Status),
-		Secret:    ptr(encSecret),
-		CreatedAt: ptr(nowUTC()),
-		Data:      &rm,
+		ID:          ptr(f.ID),
+		ProjectID:   ptr(projectID),
+		Environment: &env,
+		UserID:      ptr(accountID),
+		Type:        ptr(f.Type),
+		Status:      ptr(f.Status),
+		Secret:      ptr(encSecret),
+		CreatedAt:   ptr(nowUTC()),
+		Data:        &rm,
 	}
 	if _, err := models.IamFactors.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {

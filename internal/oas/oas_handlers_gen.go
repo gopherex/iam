@@ -749,6 +749,10 @@ func (s *Server) handleDeleteV1AuthFlowsByFlowTokenRequest(args [1]string, argsE
 					In:   "header",
 				}: params.XClientID,
 				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
+				{
 					Name: "flow_token",
 					In:   "path",
 				}: params.FlowToken,
@@ -9884,6 +9888,10 @@ func (s *Server) handleGetV1AuthFlowsByFlowTokenRequest(args [1]string, argsEsca
 					In:   "header",
 				}: params.XClientID,
 				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
+				{
 					Name: "flow_token",
 					In:   "path",
 				}: params.FlowToken,
@@ -10041,6 +10049,10 @@ func (s *Server) handleGetV1AuthFlowsCurrentRequest(args [0]string, argsEscaped 
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 				{
 					Name: "iam_flow",
 					In:   "cookie",
@@ -11433,6 +11445,10 @@ func (s *Server) handleGetV1AuthOauthProvidersRequest(args [0]string, argsEscape
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -11957,6 +11973,10 @@ func (s *Server) handleGetV1ConfigPublicRequest(args [0]string, argsEscaped bool
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -12111,6 +12131,10 @@ func (s *Server) handleGetV1CsrfRequest(args [0]string, argsEscaped bool, w http
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -12265,6 +12289,10 @@ func (s *Server) handleGetV1DeviceRequest(args [0]string, argsEscaped bool, w ht
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 				{
 					Name: "user_code",
 					In:   "query",
@@ -13032,6 +13060,10 @@ func (s *Server) handleGetV1OauthInteractionByInteractionIdRequest(args [1]strin
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 				{
 					Name: "interaction_id",
 					In:   "path",
@@ -23397,6 +23429,10 @@ func (s *Server) handleGetV1SsoConnectionsResolveRequest(args [0]string, argsEsc
 					In:   "header",
 				}: params.XClientID,
 				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
+				{
 					Name: "email",
 					In:   "query",
 				}: params.Email,
@@ -33113,6 +33149,10 @@ func (s *Server) handlePostV1AuthAccessRequestsRequest(args [0]string, argsEscap
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -33682,6 +33722,10 @@ func (s *Server) handlePostV1AuthEmailVerificationStartRequest(args [0]string, a
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -33851,6 +33895,10 @@ func (s *Server) handlePostV1AuthEmailVerificationVerifyRequest(args [0]string, 
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -34021,6 +34069,10 @@ func (s *Server) handlePostV1AuthFlowsRequest(args [0]string, argsEscaped bool, 
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -34175,6 +34227,10 @@ func (s *Server) handlePostV1AuthFlowsByFlowTokenResendRequest(args [1]string, a
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 				{
 					Name: "flow_token",
 					In:   "path",
@@ -34349,6 +34405,10 @@ func (s *Server) handlePostV1AuthFlowsByFlowTokenSubmitRequest(args [1]string, a
 					In:   "header",
 				}: params.XClientID,
 				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
+				{
 					Name: "flow_token",
 					In:   "path",
 				}: params.FlowToken,
@@ -34521,6 +34581,10 @@ func (s *Server) handlePostV1AuthGuestRequest(args [0]string, argsEscaped bool, 
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -35092,6 +35156,10 @@ func (s *Server) handlePostV1AuthImpersonateRedeemRequest(args [0]string, argsEs
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -35261,6 +35329,10 @@ func (s *Server) handlePostV1AuthMagicLinkStartRequest(args [0]string, argsEscap
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -35430,6 +35502,10 @@ func (s *Server) handlePostV1AuthMagicLinkVerifyRequest(args [0]string, argsEsca
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -35599,6 +35675,10 @@ func (s *Server) handlePostV1AuthMfaChallengeRequest(args [0]string, argsEscaped
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -36168,6 +36248,10 @@ func (s *Server) handlePostV1AuthMfaRecoveryCodesVerifyRequest(args [0]string, a
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -36937,6 +37021,10 @@ func (s *Server) handlePostV1AuthMfaVerifyRequest(args [0]string, argsEscaped bo
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -37721,6 +37809,10 @@ func (s *Server) handlePostV1AuthOauthExchangeRequest(args [0]string, argsEscape
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -37890,6 +37982,10 @@ func (s *Server) handlePostV1AuthOtpStartRequest(args [0]string, argsEscaped boo
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -38059,6 +38155,10 @@ func (s *Server) handlePostV1AuthOtpVerifyRequest(args [0]string, argsEscaped bo
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -38428,6 +38528,10 @@ func (s *Server) handlePostV1AuthPasswordCheckRequest(args [0]string, argsEscape
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -38597,6 +38701,10 @@ func (s *Server) handlePostV1AuthPasswordForgotRequest(args [0]string, argsEscap
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -38766,6 +38874,10 @@ func (s *Server) handlePostV1AuthPasswordResetRequest(args [0]string, argsEscape
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -39535,6 +39647,10 @@ func (s *Server) handlePostV1AuthPhoneVerificationStartRequest(args [0]string, a
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -39704,6 +39820,10 @@ func (s *Server) handlePostV1AuthPhoneVerificationVerifyRequest(args [0]string, 
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -40273,6 +40393,10 @@ func (s *Server) handlePostV1AuthSignInPasswordRequest(args [0]string, argsEscap
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -40842,6 +40966,10 @@ func (s *Server) handlePostV1AuthSignUpRequest(args [0]string, argsEscaped bool,
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -41011,6 +41139,10 @@ func (s *Server) handlePostV1AuthTokenExchangeRequest(args [0]string, argsEscape
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -41180,6 +41312,10 @@ func (s *Server) handlePostV1AuthTokenRefreshRequest(args [0]string, argsEscaped
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 				{
 					Name: "iam_refresh",
 					In:   "cookie",
@@ -41353,6 +41489,10 @@ func (s *Server) handlePostV1AuthWebauthnLoginOptionsRequest(args [0]string, arg
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -41522,6 +41662,10 @@ func (s *Server) handlePostV1AuthWebauthnLoginVerifyRequest(args [0]string, args
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
@@ -54813,6 +54957,10 @@ func (s *Server) handlePostV1SsoExchangeRequest(args [0]string, argsEscaped bool
 					Name: "X-Client-Id",
 					In:   "header",
 				}: params.XClientID,
+				{
+					Name: "X-Environment",
+					In:   "header",
+				}: params.XEnvironment,
 			},
 			Raw: r,
 		}
