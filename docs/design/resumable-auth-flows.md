@@ -125,8 +125,14 @@ current step (always includes `resend` when a challenge is active).
   at submit with a neutral `error`.
 - **recovery**: `collect_credentials`(email) → `verify_email`(OTP) → `set_password`
   → `completed`. Orchestrates password/forgot + reset.
-- **email_change**: requires an authenticated principal at `create`; `verify_email`
-  (new address) → `completed`. Orchestrates email/change/start+verify.
+- **email_change**: DEFERRED / out of the flow engine. It is a POST-auth
+  self-service action (needs the current principal), but the flow resource is
+  public (`security: []`, the flow_token is a pre-auth credential). Shoehorning an
+  authenticated mutation into a pre-auth flow is an anti-pattern. The existing
+  dedicated endpoints `/v1/auth/email/change/start` + `/verify` (authenticated)
+  remain the supported path. The `email_change` kind stays reserved in the enum;
+  the engine returns `not_implemented` for it. Revisit only if a unified
+  authenticated-flow variant is wanted later.
 
 ## 8. API contract (openapi-first → ogen regen)
 
