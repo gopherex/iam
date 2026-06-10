@@ -54,6 +54,9 @@ export interface FlowController {
    * @param params.email Optional — pre-filled credential
    * @param params.password Optional — pre-filled credential
    * @param params.name  Optional — display name for signup
+   * @param params.redirectTo Optional — per-flow override for the cross-device
+   *   "continue" deep-link base. Honoured only when its origin matches the
+   *   project's configured app_base_url; otherwise ignored server-side.
    */
   start(params: {
     kind: FlowKind;
@@ -61,6 +64,7 @@ export interface FlowController {
     password?: string;
     name?: string;
     captchaToken?: string;
+    redirectTo?: string;
   }): Promise<{ state: FlowState | null; error: IamAuthError | null }>;
 
   /**
@@ -243,6 +247,7 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
           password: params.password,
           name: params.name,
           captcha_token: params.captchaToken,
+          redirect_to: params.redirectTo,
         },
       });
       return handleState(r);

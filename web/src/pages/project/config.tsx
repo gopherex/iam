@@ -142,6 +142,38 @@ function AuthTab({ projectId, env }: { projectId: string; env: string }) {
         </CardContent>
       </Card>
 
+      {/* Application */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Application</CardTitle>
+          <CardDescription>
+            Public base URL of this project&rsquo;s hosted auth UI. Used to build the cross-device
+            &ldquo;continue on another device&rdquo; deep-link (<code>&lt;base&gt;/continue?flow=…</code>).
+            Leave empty to disable that email.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-1.5">
+            <Label htmlFor="app-base-url">App base URL</Label>
+            <Input
+              id="app-base-url"
+              type="url"
+              placeholder="https://auth.example.com"
+              value={form.app_base_url ?? ''}
+              onChange={(e) =>
+                setForm((p) => (p ? { ...p, app_base_url: e.target.value || undefined } : p))
+              }
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="justify-end">
+          <Button onClick={save} disabled={busy}>
+            {busy && <Loader2 className="size-4 animate-spin" />}
+            Save
+          </Button>
+        </CardFooter>
+      </Card>
+
       {/* Registration */}
       <Card>
         <CardHeader>
