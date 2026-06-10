@@ -31,6 +31,9 @@ go.work.sum
 .idea/
 # .vscode/
 
+# Agent worktrees / session artifacts
+.claude/
+
 # Build artifacts
 /bin/
 openapi/.build/
