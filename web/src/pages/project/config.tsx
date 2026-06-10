@@ -23,9 +23,11 @@ import {
   patchV1ProjectsByProjectIdAdminConfigSessionPolicy,
   putV1ProjectsByProjectIdAdminConsents,
 } from '@gopherex/iam-sdk';
+import { useStore } from '@nanostores/react';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { $environment } from '@/stores/auth';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/page-header';
 import { ErrorState, LoadingState } from '@/components/states';
@@ -42,8 +44,6 @@ import { useApi } from '@/lib/use-api';
 // ---------------------------------------------------------------------------
 // Shared constants
 // ---------------------------------------------------------------------------
-
-const DEFAULT_ENV = 'live';
 
 const ENV_HEADER = (env: string) => ({ 'X-Environment': env } as const);
 
@@ -938,50 +938,20 @@ function TermsTab({ projectId, env }: { projectId: string; env: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Environment selector
-// ---------------------------------------------------------------------------
-
-const COMMON_ENVS = ['live', 'staging', 'dev'];
-
-function EnvPicker({ env, onChange }: { env: string; onChange: (e: string) => void }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-muted-foreground">Environment:</span>
-      <div className="flex rounded-lg border border-border bg-muted p-[3px]">
-        {COMMON_ENVS.map((e) => (
-          <button
-            key={e}
-            type="button"
-            onClick={() => onChange(e)}
-            className={[
-              'rounded-md px-2.5 py-0.5 text-sm transition-colors',
-              e === env
-                ? 'bg-background font-medium text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
-            ].join(' ')}
-          >
-            {e}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Page root
 // ---------------------------------------------------------------------------
 
 export function ConfigPage() {
   const { projectId } = useParams();
-  const [env, setEnv] = useState(DEFAULT_ENV);
+  // Environment comes from the global header switcher ($environment); no
+  // per-page picker (the header one is authoritative).
+  const env = useStore($environment);
 
   return (
     <div>
       <PageHeader
         title="Configuration"
-        description="Auth methods, security policies, and rate limits — per environment."
-        actions={<EnvPicker env={env} onChange={setEnv} />}
+        description="Auth methods, security policies, and rate limits — per environment (selected in the header)."
       />
 
       <Tabs defaultValue="auth">

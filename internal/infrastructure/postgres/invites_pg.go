@@ -162,6 +162,7 @@ func (a *pgInvites) Create(ctx context.Context, cmd domain.InviteCreateCmd) (*do
 func (a *pgInvites) List(ctx context.Context, cmd domain.InviteListCmd) ([]domain.Invite, error) {
 	rows, err := models.IamInvites.Query(
 		sm.Where(models.IamInvites.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
+		sm.Where(models.IamInvites.Columns.Environment.EQ(psql.Arg(adminEnv(cmd.Environment)))),
 		sm.OrderBy(models.IamInvites.Columns.CreatedAt).Desc(),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
@@ -185,7 +186,7 @@ func (a *pgInvites) Revoke(ctx context.Context, cmd domain.InviteRevokeCmd) erro
 			}
 			return err
 		}
-		if row.ProjectID != cmd.ProjectID {
+		if row.ProjectID != cmd.ProjectID || row.Environment != adminEnv(cmd.Environment) {
 			return domain.ErrNotFound
 		}
 		now := nowUTC()

@@ -20,36 +20,36 @@ import (
 )
 
 type AdminUsers interface {
-	List(ctx context.Context, projectID string) ([]domain.Account, error)
-	Get(ctx context.Context, projectID, accountID string) (*domain.Account, error)
+	List(ctx context.Context, projectID, environment string) ([]domain.Account, error)
+	Get(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error)
 	Create(ctx context.Context, cmd domain.RegisterCmd) (*domain.Account, error)
 	Update(ctx context.Context, cmd domain.AdminUserUpdateCmd) (*domain.Account, error)
-	Ban(ctx context.Context, projectID, accountID string) error
+	Ban(ctx context.Context, projectID, environment, accountID string) error
 	BanWith(ctx context.Context, cmd domain.AdminUserBanCmd) (*domain.Account, error)
-	Unban(ctx context.Context, projectID, accountID string) (*domain.Account, error)
-	Delete(ctx context.Context, projectID, accountID string) error
-	VerifyEmail(ctx context.Context, projectID, accountID string) (*domain.Account, error)
-	VerifyPhone(ctx context.Context, projectID, accountID string) (*domain.Account, error)
+	Unban(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error)
+	Delete(ctx context.Context, projectID, environment, accountID string) error
+	VerifyEmail(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error)
+	VerifyPhone(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error)
 	SetPassword(ctx context.Context, cmd domain.AdminUserPasswordCmd) error
 	Anonymize(ctx context.Context, cmd domain.AdminUserAnonymizeCmd) error
-	Export(ctx context.Context, projectID, accountID string) (jobID string, err error)
+	Export(ctx context.Context, projectID, environment, accountID string) (jobID string, err error)
 	Impersonate(ctx context.Context, cmd domain.AdminUserImpersonateCmd) (*domain.AdminImpersonation, error)
-	ResetMFA(ctx context.Context, projectID, accountID string, factorIDs []string) (removed int, err error)
-	ListIdentities(ctx context.Context, projectID, accountID string) ([]domain.Identity, error)
-	DeleteIdentity(ctx context.Context, projectID, accountID, identityID string) error
-	ListSessions(ctx context.Context, projectID, accountID string) ([]domain.Session, error)
-	DeleteSession(ctx context.Context, projectID, accountID, sessionID string) error
+	ResetMFA(ctx context.Context, projectID, environment, accountID string, factorIDs []string) (removed int, err error)
+	ListIdentities(ctx context.Context, projectID, environment, accountID string) ([]domain.Identity, error)
+	DeleteIdentity(ctx context.Context, projectID, environment, accountID, identityID string) error
+	ListSessions(ctx context.Context, projectID, environment, accountID string) ([]domain.Session, error)
+	DeleteSession(ctx context.Context, projectID, environment, accountID, sessionID string) error
 	RevokeSessions(ctx context.Context, cmd domain.AdminUserSessionsRevokeCmd) (revoked int, err error)
 }
 
 type AdminApps interface {
-	List(ctx context.Context, projectID string) ([]domain.AppClient, error)
+	List(ctx context.Context, projectID, environment string) ([]domain.AppClient, error)
 	Create(ctx context.Context, cmd domain.AppClientCmd) (*domain.AppClient, error)
-	Get(ctx context.Context, projectID, appID string) (*domain.AppClient, error)
-	Update(ctx context.Context, projectID, appID string, patch map[string]any) (*domain.AppClient, error)
-	Delete(ctx context.Context, projectID, appID string) error
-	AddSecret(ctx context.Context, projectID, appID, name string) (*domain.AdminSecret, error)
-	DeleteSecret(ctx context.Context, projectID, appID, secretID string) error
+	Get(ctx context.Context, projectID, environment, appID string) (*domain.AppClient, error)
+	Update(ctx context.Context, projectID, environment, appID string, patch map[string]any) (*domain.AppClient, error)
+	Delete(ctx context.Context, projectID, environment, appID string) error
+	AddSecret(ctx context.Context, projectID, environment, appID, name string) (*domain.AdminSecret, error)
+	DeleteSecret(ctx context.Context, projectID, environment, appID, secretID string) error
 }
 
 // AdminServiceAccounts is the machine-identity slice exposed to project admins.
@@ -180,7 +180,7 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.C
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	if err := s.deps.Apps.Delete(ctx, params.ProjectID, params.AppID); err != nil {
+	if err := s.deps.Apps.Delete(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.AppID); err != nil {
 		return nil, err
 	}
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
@@ -190,7 +190,7 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecre
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	if err := s.deps.Apps.DeleteSecret(ctx, params.ProjectID, params.AppID, params.SecretID); err != nil {
+	if err := s.deps.Apps.DeleteSecret(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.AppID, params.SecretID); err != nil {
 		return nil, err
 	}
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
@@ -248,7 +248,7 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	if err := s.deps.Users.Delete(ctx, params.ProjectID, params.UserID); err != nil {
+	if err := s.deps.Users.Delete(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID); err != nil {
 		return nil, err
 	}
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
@@ -258,7 +258,7 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesBy
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	if err := s.deps.Users.DeleteIdentity(ctx, params.ProjectID, params.UserID, params.IdentityID); err != nil {
+	if err := s.deps.Users.DeleteIdentity(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID, params.IdentityID); err != nil {
 		return nil, err
 	}
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
@@ -268,7 +268,7 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySe
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	if err := s.deps.Users.DeleteSession(ctx, params.ProjectID, params.UserID, params.SessionID); err != nil {
+	if err := s.deps.Users.DeleteSession(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID, params.SessionID); err != nil {
 		return nil, err
 	}
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
@@ -305,7 +305,7 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminApps(ctx context.Context, pa
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	apps, err := s.deps.Apps.List(ctx, params.ProjectID)
+	apps, err := s.deps.Apps.List(ctx, params.ProjectID, params.XEnvironment.Or("live"))
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Cont
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	app, err := s.deps.Apps.Get(ctx, params.ProjectID, params.AppID)
+	app, err := s.deps.Apps.Get(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.AppID)
 	if err != nil {
 		return nil, err
 	}
@@ -486,7 +486,7 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, p
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	accts, err := s.deps.Users.List(ctx, params.ProjectID)
+	accts, err := s.deps.Users.List(ctx, params.ProjectID, params.XEnvironment.Or("live"))
 	if err != nil {
 		return nil, err
 	}
@@ -501,7 +501,7 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Co
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	acct, err := s.deps.Users.Get(ctx, params.ProjectID, params.UserID)
+	acct, err := s.deps.Users.Get(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -514,7 +514,7 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx 
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	ids, err := s.deps.Users.ListIdentities(ctx, params.ProjectID, params.UserID)
+	ids, err := s.deps.Users.ListIdentities(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -529,7 +529,7 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx co
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	sessions, err := s.deps.Users.ListSessions(ctx, params.ProjectID, params.UserID)
+	sessions, err := s.deps.Users.ListSessions(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -544,7 +544,7 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Co
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	app, err := s.deps.Apps.Update(ctx, params.ProjectID, params.AppID, oasRawPatch(req))
+	app, err := s.deps.Apps.Update(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.AppID, oasRawPatch(req))
 	if err != nil {
 		return nil, err
 	}
@@ -721,10 +721,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.
 		return nil, err
 	}
 	cmd := domain.AdminUserUpdateCmd{
-		ProjectID: params.ProjectID,
-		AccountID: params.UserID,
-		Name:      oasRawString(req, "name"),
-		Locale:    oasRawString(req, "locale"),
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or("live"),
+		AccountID:   params.UserID,
+		Name:        oasRawString(req, "name"),
+		Locale:      oasRawString(req, "locale"),
 	}
 	acct, err := s.deps.Users.Update(ctx, cmd)
 	if err != nil {
@@ -781,6 +782,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, r
 	}
 	cmd := domain.AppClientCmd{
 		ProjectID:    params.ProjectID,
+		Environment:  params.XEnvironment.Or("live"),
 		Name:         req.Name,
 		Type:         string(req.Type),
 		RedirectURIs: req.RedirectUris,
@@ -798,7 +800,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx cont
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	secret, err := s.deps.Apps.AddSecret(ctx, params.ProjectID, params.AppID, req.Name)
+	secret, err := s.deps.Apps.AddSecret(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.AppID, req.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -962,10 +964,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, 
 		return nil, err
 	}
 	cmd := domain.RegisterCmd{
-		ProjectID: params.ProjectID,
-		Email:     req.Email.Or(""),
-		Phone:     req.Phone.Or(""),
-		Password:  req.Password.Or(""),
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or("live"),
+		Email:       req.Email.Or(""),
+		Phone:       req.Phone.Or(""),
+		Password:    req.Password.Or(""),
 	}
 	acct, err := s.deps.Users.Create(ctx, cmd)
 	if err != nil {
@@ -980,7 +983,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx 
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	cmd := domain.AdminUserAnonymizeCmd{ProjectID: params.ProjectID, AccountID: params.UserID}
+	cmd := domain.AdminUserAnonymizeCmd{ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"), AccountID: params.UserID}
 	if v, ok := req.Get(); ok {
 		cmd.Reason = v.Reason.Or("")
 	}
@@ -995,10 +998,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx contex
 		return nil, err
 	}
 	cmd := domain.AdminUserBanCmd{
-		ProjectID: params.ProjectID,
-		AccountID: params.UserID,
-		Reason:    req.Reason.Or(""),
-		Until:     req.Until.Or(time.Time{}),
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or("live"),
+		AccountID:   params.UserID,
+		Reason:      req.Reason.Or(""),
+		Until:       req.Until.Or(time.Time{}),
 	}
 	acct, err := s.deps.Users.BanWith(ctx, cmd)
 	if err != nil {
@@ -1013,7 +1017,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx con
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	jobID, err := s.deps.Users.Export(ctx, params.ProjectID, params.UserID)
+	jobID, err := s.deps.Users.Export(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -1029,6 +1033,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ct
 	}
 	res, err := s.deps.Users.Impersonate(ctx, domain.AdminUserImpersonateCmd{
 		ProjectID:       params.ProjectID,
+		Environment:     params.XEnvironment.Or("live"),
 		AccountID:       params.UserID,
 		ActorID:         p.AccountID,
 		Reason:          req.Reason,
@@ -1053,7 +1058,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx c
 			factorIDs = ids
 		}
 	}
-	removed, err := s.deps.Users.ResetMFA(ctx, params.ProjectID, params.UserID, factorIDs)
+	removed, err := s.deps.Users.ResetMFA(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID, factorIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -1068,6 +1073,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx c
 	}
 	err := s.deps.Users.SetPassword(ctx, domain.AdminUserPasswordCmd{
 		ProjectID:      params.ProjectID,
+		Environment:    params.XEnvironment.Or("live"),
 		AccountID:      params.UserID,
 		Password:       req.Password,
 		RevokeSessions: req.RevokeSessions.Or(false),
@@ -1082,7 +1088,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	cmd := domain.AdminUserSessionsRevokeCmd{ProjectID: params.ProjectID, AccountID: params.UserID}
+	cmd := domain.AdminUserSessionsRevokeCmd{ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"), AccountID: params.UserID}
 	if v, ok := req.Get(); ok {
 		cmd.ExceptSessionID = v.ExceptSessionID.Or("")
 		cmd.Reason = v.Reason.Or("")
@@ -1100,7 +1106,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx cont
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	acct, err := s.deps.Users.Unban(ctx, params.ProjectID, params.UserID)
+	acct, err := s.deps.Users.Unban(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -1113,7 +1119,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ct
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	acct, err := s.deps.Users.VerifyEmail(ctx, params.ProjectID, params.UserID)
+	acct, err := s.deps.Users.VerifyEmail(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -1126,7 +1132,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ct
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
-	acct, err := s.deps.Users.VerifyPhone(ctx, params.ProjectID, params.UserID)
+	acct, err := s.deps.Users.VerifyPhone(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID)
 	if err != nil {
 		return nil, err
 	}

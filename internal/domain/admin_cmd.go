@@ -21,23 +21,26 @@ type AdminConfigDoc = map[string]jx.Raw
 
 // AdminUserUpdateCmd is a partial profile update applied by a project admin.
 type AdminUserUpdateCmd struct {
-	ProjectID string
-	AccountID string
-	Name      string
-	Locale    string
+	ProjectID   string
+	Environment string
+	AccountID   string
+	Name        string
+	Locale      string
 }
 
 // AdminUserBanCmd bans a user, optionally with a reason and an expiry.
 type AdminUserBanCmd struct {
-	ProjectID string
-	AccountID string
-	Reason    string
-	Until     time.Time
+	ProjectID   string
+	Environment string
+	AccountID   string
+	Reason      string
+	Until       time.Time
 }
 
 // AdminUserPasswordCmd sets a user's password out-of-band.
 type AdminUserPasswordCmd struct {
 	ProjectID      string
+	Environment    string
 	AccountID      string
 	Password       string
 	RevokeSessions bool
@@ -46,6 +49,7 @@ type AdminUserPasswordCmd struct {
 // AdminUserImpersonateCmd mints a time-boxed impersonation link.
 type AdminUserImpersonateCmd struct {
 	ProjectID       string
+	Environment     string
 	AccountID       string
 	ActorID         string // the admin performing the impersonation
 	Reason          string
@@ -61,6 +65,7 @@ type AdminImpersonation struct {
 // AdminUserSessionsRevokeCmd revokes a user's sessions, optionally keeping one.
 type AdminUserSessionsRevokeCmd struct {
 	ProjectID       string
+	Environment     string
 	AccountID       string
 	ExceptSessionID string
 	Reason          string
@@ -68,9 +73,10 @@ type AdminUserSessionsRevokeCmd struct {
 
 // AdminUserAnonymizeCmd anonymizes (GDPR erase) a user.
 type AdminUserAnonymizeCmd struct {
-	ProjectID string
-	AccountID string
-	Reason    string
+	ProjectID   string
+	Environment string
+	AccountID   string
+	Reason      string
 }
 
 // ----- Service accounts -----

@@ -226,13 +226,14 @@ type ConsentDocument struct {
 // ===== Commands (multi-field inputs to aggregate operations) =====
 
 type RegisterCmd struct {
-	ProjectID string
-	Email     string
-	Phone     string
-	Password  string
-	Name      string
-	Locale    string
-	Consents  []AccountConsentAcceptance
+	ProjectID   string
+	Environment string
+	Email       string
+	Phone       string
+	Password    string
+	Name        string
+	Locale      string
+	Consents    []AccountConsentAcceptance
 }
 
 type ProfileUpdateCmd struct {
@@ -264,6 +265,7 @@ type APIKeyCmd struct {
 
 type AppClientCmd struct {
 	ProjectID    string
+	Environment  string
 	Name         string
 	Type         string
 	RedirectURIs []string

@@ -112,8 +112,8 @@ func NewPgAdminUsers(db *DB, emitter Emitter) *pgAdminUsers {
 
 var _ api.AdminUsers = (*pgAdminUsers)(nil)
 
-// findUser loads a user row enforcing the tenant boundary.
-func (a *pgAdminUsers) findUser(ctx context.Context, projectID, accountID string) (*models.IamUser, *domain.Account, error) {
+// findUser loads a user row enforcing the (project, environment) tenant boundary.
+func (a *pgAdminUsers) findUser(ctx context.Context, projectID, environment, accountID string) (*models.IamUser, *domain.Account, error) {
 	row, err := models.FindIamUser(ctx, a.db.Bobx(), accountID)
 	if err != nil {
 		if adminIsNotFound(translatePgErr("user", err)) {
@@ -121,7 +121,7 @@ func (a *pgAdminUsers) findUser(ctx context.Context, projectID, accountID string
 		}
 		return nil, nil, err
 	}
-	if row.ProjectID != projectID {
+	if row.ProjectID != projectID || row.Environment != adminEnv(environment) {
 		return nil, nil, domain.ErrUserNotFound
 	}
 	var acc domain.Account
@@ -131,9 +131,10 @@ func (a *pgAdminUsers) findUser(ctx context.Context, projectID, accountID string
 	return row, &acc, nil
 }
 
-func (a *pgAdminUsers) List(ctx context.Context, projectID string) ([]domain.Account, error) {
+func (a *pgAdminUsers) List(ctx context.Context, projectID, environment string) ([]domain.Account, error) {
 	rows, err := models.IamUsers.Query(
 		sm.Where(models.IamUsers.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamUsers.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
 		return nil, err
@@ -149,14 +150,15 @@ func (a *pgAdminUsers) List(ctx context.Context, projectID string) ([]domain.Acc
 	return out, nil
 }
 
-func (a *pgAdminUsers) Get(ctx context.Context, projectID, accountID string) (*domain.Account, error) {
-	_, acc, err := a.findUser(ctx, projectID, accountID)
+func (a *pgAdminUsers) Get(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error) {
+	_, acc, err := a.findUser(ctx, projectID, environment, accountID)
 	return acc, err
 }
 
 func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*domain.Account, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
 		now := nowUTC()
+		env := adminEnv(cmd.Environment)
 		acc := &domain.Account{
 			ID:           newUUID(),
 			ProjectID:    cmd.ProjectID,
@@ -174,11 +176,12 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 		}
 		rm := json.RawMessage(raw)
 		setter := &models.IamUserSetter{
-			ID:        &acc.ID,
-			ProjectID: &acc.ProjectID,
-			Kind:      ptr(acc.Kind),
-			Status:    ptr(acc.Status),
-			Data:      &rm,
+			ID:          &acc.ID,
+			ProjectID:   &acc.ProjectID,
+			Environment: &env,
+			Kind:        ptr(acc.Kind),
+			Status:      ptr(acc.Status),
+			Data:        &rm,
 		}
 		if acc.PrimaryEmail != "" {
 			v := null.From(acc.PrimaryEmail)
@@ -222,7 +225,7 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.created",
 			ProjectID:   acc.ProjectID,
-			Environment: "",
+			Environment: env,
 			AggregateID: acc.ID,
 			Payload:     acc,
 		}); err != nil {
@@ -234,7 +237,7 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 
 func (a *pgAdminUsers) Update(ctx context.Context, cmd domain.AdminUserUpdateCmd) (*domain.Account, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
-		row, acc, err := a.findUser(ctx, cmd.ProjectID, cmd.AccountID)
+		row, acc, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID)
 		if err != nil {
 			return nil, err
 		}
@@ -261,14 +264,14 @@ func (a *pgAdminUsers) Update(ctx context.Context, cmd domain.AdminUserUpdateCmd
 	})
 }
 
-func (a *pgAdminUsers) Ban(ctx context.Context, projectID, accountID string) error {
-	_, err := a.BanWith(ctx, domain.AdminUserBanCmd{ProjectID: projectID, AccountID: accountID})
+func (a *pgAdminUsers) Ban(ctx context.Context, projectID, environment, accountID string) error {
+	_, err := a.BanWith(ctx, domain.AdminUserBanCmd{ProjectID: projectID, Environment: environment, AccountID: accountID})
 	return err
 }
 
 func (a *pgAdminUsers) BanWith(ctx context.Context, cmd domain.AdminUserBanCmd) (*domain.Account, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
-		row, acc, err := a.findUser(ctx, cmd.ProjectID, cmd.AccountID)
+		row, acc, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID)
 		if err != nil {
 			return nil, err
 		}
@@ -297,9 +300,9 @@ func (a *pgAdminUsers) BanWith(ctx context.Context, cmd domain.AdminUserBanCmd) 
 	})
 }
 
-func (a *pgAdminUsers) Unban(ctx context.Context, projectID, accountID string) (*domain.Account, error) {
+func (a *pgAdminUsers) Unban(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
-		row, acc, err := a.findUser(ctx, projectID, accountID)
+		row, acc, err := a.findUser(ctx, projectID, environment, accountID)
 		if err != nil {
 			return nil, err
 		}
@@ -321,9 +324,9 @@ func (a *pgAdminUsers) Unban(ctx context.Context, projectID, accountID string) (
 	})
 }
 
-func (a *pgAdminUsers) Delete(ctx context.Context, projectID, accountID string) error {
+func (a *pgAdminUsers) Delete(ctx context.Context, projectID, environment, accountID string) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
-		row, _, err := a.findUser(ctx, projectID, accountID)
+		row, _, err := a.findUser(ctx, projectID, environment, accountID)
 		if err != nil {
 			return err
 		}
@@ -343,9 +346,9 @@ func (a *pgAdminUsers) Delete(ctx context.Context, projectID, accountID string) 
 	})
 }
 
-func (a *pgAdminUsers) VerifyEmail(ctx context.Context, projectID, accountID string) (*domain.Account, error) {
+func (a *pgAdminUsers) VerifyEmail(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
-		row, acc, err := a.findUser(ctx, projectID, accountID)
+		row, acc, err := a.findUser(ctx, projectID, environment, accountID)
 		if err != nil {
 			return nil, err
 		}
@@ -367,9 +370,9 @@ func (a *pgAdminUsers) VerifyEmail(ctx context.Context, projectID, accountID str
 	})
 }
 
-func (a *pgAdminUsers) VerifyPhone(ctx context.Context, projectID, accountID string) (*domain.Account, error) {
+func (a *pgAdminUsers) VerifyPhone(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
-		row, acc, err := a.findUser(ctx, projectID, accountID)
+		row, acc, err := a.findUser(ctx, projectID, environment, accountID)
 		if err != nil {
 			return nil, err
 		}
@@ -395,7 +398,7 @@ func (a *pgAdminUsers) VerifyPhone(ctx context.Context, projectID, accountID str
 func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPasswordCmd) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		// Tenant boundary.
-		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.AccountID); err != nil {
+		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID); err != nil {
 			return err
 		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(cmd.Password), bcrypt.DefaultCost)
@@ -437,7 +440,7 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 			}
 		}
 		if cmd.RevokeSessions {
-			if _, err := a.revokeSessions(ctx, cmd.ProjectID, cmd.AccountID, ""); err != nil {
+			if _, err := a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, ""); err != nil {
 				return err
 			}
 		}
@@ -456,7 +459,7 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 
 func (a *pgAdminUsers) Anonymize(ctx context.Context, cmd domain.AdminUserAnonymizeCmd) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
-		row, acc, err := a.findUser(ctx, cmd.ProjectID, cmd.AccountID)
+		row, acc, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID)
 		if err != nil {
 			return err
 		}
@@ -496,9 +499,9 @@ func (a *pgAdminUsers) Anonymize(ctx context.Context, cmd domain.AdminUserAnonym
 	})
 }
 
-func (a *pgAdminUsers) Export(ctx context.Context, projectID, accountID string) (string, error) {
+func (a *pgAdminUsers) Export(ctx context.Context, projectID, environment, accountID string) (string, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
-		if _, _, err := a.findUser(ctx, projectID, accountID); err != nil {
+		if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 			return "", err
 		}
 		jobID := newUUID()
@@ -532,7 +535,8 @@ func (a *pgAdminUsers) Export(ctx context.Context, projectID, accountID string) 
 
 func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpersonateCmd) (*domain.AdminImpersonation, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminImpersonation, error) {
-		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.AccountID); err != nil {
+		env := adminEnv(cmd.Environment)
+		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID); err != nil {
 			return nil, err
 		}
 		ttl := cmd.DurationSeconds
@@ -543,13 +547,13 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 		// Short-TTL signed impersonation JWT (jwx, project Signer): typ=impersonation,
 		// sub=target user, act=admin actor. Persist only its hash so the challenge row
 		// can gate single-use redemption.
-		token, err := a.db.Signer().Sign(ctx, cmd.ProjectID, adminDefaultEnvironment, map[string]any{
+		token, err := a.db.Signer().Sign(ctx, cmd.ProjectID, env, map[string]any{
 			"iss": cmd.ProjectID,
 			"sub": cmd.AccountID,
 			"pid": cmd.ProjectID,
 			"act": cmd.ActorID,
 			"typ": "impersonation",
-			"env": adminDefaultEnvironment,
+			"env": env,
 		}, time.Duration(ttl)*time.Second)
 		if err != nil {
 			return nil, err
@@ -582,7 +586,7 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.impersonation_started",
 			ProjectID:   cmd.ProjectID,
-			Environment: adminDefaultEnvironment,
+			Environment: env,
 			AggregateID: cmd.AccountID,
 			Payload:     map[string]any{"user_id": cmd.AccountID, "actor_id": cmd.ActorID, "project_id": cmd.ProjectID, "reason": cmd.Reason},
 		}); err != nil {
@@ -595,13 +599,14 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 	})
 }
 
-func (a *pgAdminUsers) ResetMFA(ctx context.Context, projectID, accountID string, factorIDs []string) (int, error) {
+func (a *pgAdminUsers) ResetMFA(ctx context.Context, projectID, environment, accountID string, factorIDs []string) (int, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (int, error) {
-		if _, _, err := a.findUser(ctx, projectID, accountID); err != nil {
+		if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 			return 0, err
 		}
 		factors, err := models.IamFactors.Query(
 			sm.Where(models.IamFactors.Columns.ProjectID.EQ(psql.Arg(projectID))),
+			sm.Where(models.IamFactors.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
 			sm.Where(models.IamFactors.Columns.UserID.EQ(psql.Arg(accountID))),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
@@ -636,12 +641,13 @@ func (a *pgAdminUsers) ResetMFA(ctx context.Context, projectID, accountID string
 	})
 }
 
-func (a *pgAdminUsers) ListIdentities(ctx context.Context, projectID, accountID string) ([]domain.Identity, error) {
-	if _, _, err := a.findUser(ctx, projectID, accountID); err != nil {
+func (a *pgAdminUsers) ListIdentities(ctx context.Context, projectID, environment, accountID string) ([]domain.Identity, error) {
+	if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 		return nil, err
 	}
 	rows, err := models.IamIdentities.Query(
 		sm.Where(models.IamIdentities.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamIdentities.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
 		sm.Where(models.IamIdentities.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
@@ -658,7 +664,7 @@ func (a *pgAdminUsers) ListIdentities(ctx context.Context, projectID, accountID 
 	return out, nil
 }
 
-func (a *pgAdminUsers) DeleteIdentity(ctx context.Context, projectID, accountID, identityID string) error {
+func (a *pgAdminUsers) DeleteIdentity(ctx context.Context, projectID, environment, accountID, identityID string) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		row, err := models.FindIamIdentity(ctx, a.db.Bobx(), identityID)
 		if err != nil {
@@ -667,7 +673,7 @@ func (a *pgAdminUsers) DeleteIdentity(ctx context.Context, projectID, accountID,
 			}
 			return err
 		}
-		if row.ProjectID != projectID || row.UserID != accountID {
+		if row.ProjectID != projectID || row.Environment != adminEnv(environment) || row.UserID != accountID {
 			return domain.ErrNotFound
 		}
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
@@ -686,12 +692,13 @@ func (a *pgAdminUsers) DeleteIdentity(ctx context.Context, projectID, accountID,
 	})
 }
 
-func (a *pgAdminUsers) ListSessions(ctx context.Context, projectID, accountID string) ([]domain.Session, error) {
-	if _, _, err := a.findUser(ctx, projectID, accountID); err != nil {
+func (a *pgAdminUsers) ListSessions(ctx context.Context, projectID, environment, accountID string) ([]domain.Session, error) {
+	if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 		return nil, err
 	}
 	rows, err := models.IamSessions.Query(
 		sm.Where(models.IamSessions.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamSessions.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
 		sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
@@ -710,7 +717,7 @@ func (a *pgAdminUsers) ListSessions(ctx context.Context, projectID, accountID st
 	return out, nil
 }
 
-func (a *pgAdminUsers) DeleteSession(ctx context.Context, projectID, accountID, sessionID string) error {
+func (a *pgAdminUsers) DeleteSession(ctx context.Context, projectID, environment, accountID, sessionID string) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		row, err := models.FindIamSession(ctx, a.db.Bobx(), sessionID)
 		if err != nil {
@@ -719,7 +726,7 @@ func (a *pgAdminUsers) DeleteSession(ctx context.Context, projectID, accountID, 
 			}
 			return err
 		}
-		if row.ProjectID != projectID || row.UserID != accountID {
+		if row.ProjectID != projectID || row.Environment != adminEnv(environment) || row.UserID != accountID {
 			return domain.ErrSessionNotFound
 		}
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
@@ -740,18 +747,19 @@ func (a *pgAdminUsers) DeleteSession(ctx context.Context, projectID, accountID, 
 
 func (a *pgAdminUsers) RevokeSessions(ctx context.Context, cmd domain.AdminUserSessionsRevokeCmd) (int, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (int, error) {
-		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.AccountID); err != nil {
+		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID); err != nil {
 			return 0, err
 		}
-		return a.revokeSessions(ctx, cmd.ProjectID, cmd.AccountID, cmd.ExceptSessionID)
+		return a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, cmd.ExceptSessionID)
 	})
 }
 
 // revokeSessions deletes all sessions for a user except optionally one. The
 // caller is responsible for the tenant boundary check and the transaction.
-func (a *pgAdminUsers) revokeSessions(ctx context.Context, projectID, accountID, exceptID string) (int, error) {
+func (a *pgAdminUsers) revokeSessions(ctx context.Context, projectID, environment, accountID, exceptID string) (int, error) {
 	rows, err := models.IamSessions.Query(
 		sm.Where(models.IamSessions.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamSessions.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
 		sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
@@ -840,7 +848,7 @@ func NewPgAdminApps(db *DB, emitter Emitter) *pgAdminApps {
 
 var _ api.AdminApps = (*pgAdminApps)(nil)
 
-func (a *pgAdminApps) findApp(ctx context.Context, projectID, appID string) (*models.IamAppClient, *domain.AppClient, error) {
+func (a *pgAdminApps) findApp(ctx context.Context, projectID, environment, appID string) (*models.IamAppClient, *domain.AppClient, error) {
 	row, err := models.FindIamAppClient(ctx, a.db.Bobx(), appID)
 	if err != nil {
 		if adminIsNotFound(translatePgErr("app_client", err)) {
@@ -848,7 +856,7 @@ func (a *pgAdminApps) findApp(ctx context.Context, projectID, appID string) (*mo
 		}
 		return nil, nil, err
 	}
-	if row.ProjectID != projectID {
+	if row.ProjectID != projectID || row.Environment != adminEnv(environment) {
 		return nil, nil, domain.ErrClientNotFound
 	}
 	var app domain.AppClient
@@ -858,9 +866,10 @@ func (a *pgAdminApps) findApp(ctx context.Context, projectID, appID string) (*mo
 	return row, &app, nil
 }
 
-func (a *pgAdminApps) List(ctx context.Context, projectID string) ([]domain.AppClient, error) {
+func (a *pgAdminApps) List(ctx context.Context, projectID, environment string) ([]domain.AppClient, error) {
 	rows, err := models.IamAppClients.Query(
 		sm.Where(models.IamAppClients.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamAppClients.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
 		return nil, err
@@ -876,8 +885,8 @@ func (a *pgAdminApps) List(ctx context.Context, projectID string) ([]domain.AppC
 	return out, nil
 }
 
-func (a *pgAdminApps) Get(ctx context.Context, projectID, appID string) (*domain.AppClient, error) {
-	_, app, err := a.findApp(ctx, projectID, appID)
+func (a *pgAdminApps) Get(ctx context.Context, projectID, environment, appID string) (*domain.AppClient, error) {
+	_, app, err := a.findApp(ctx, projectID, environment, appID)
 	return app, err
 }
 
@@ -888,7 +897,7 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 			ProjectID:    cmd.ProjectID,
 			Name:         cmd.Name,
 			Type:         cmd.Type,
-			Environment:  adminDefaultEnvironment,
+			Environment:  adminEnv(cmd.Environment),
 			RedirectURIs: cmd.RedirectURIs,
 		}
 		raw, err := marshal(app)
@@ -922,9 +931,9 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 	})
 }
 
-func (a *pgAdminApps) Update(ctx context.Context, projectID, appID string, patch map[string]any) (*domain.AppClient, error) {
+func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID string, patch map[string]any) (*domain.AppClient, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AppClient, error) {
-		row, app, err := a.findApp(ctx, projectID, appID)
+		row, app, err := a.findApp(ctx, projectID, environment, appID)
 		if err != nil {
 			return nil, err
 		}
@@ -971,9 +980,9 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, appID string, patch
 	})
 }
 
-func (a *pgAdminApps) Delete(ctx context.Context, projectID, appID string) error {
+func (a *pgAdminApps) Delete(ctx context.Context, projectID, environment, appID string) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
-		row, _, err := a.findApp(ctx, projectID, appID)
+		row, _, err := a.findApp(ctx, projectID, environment, appID)
 		if err != nil {
 			return err
 		}
@@ -1006,9 +1015,9 @@ func (a *pgAdminApps) Delete(ctx context.Context, projectID, appID string) error
 	})
 }
 
-func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, appID, name string) (*domain.AdminSecret, error) {
+func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, environment, appID, name string) (*domain.AdminSecret, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminSecret, error) {
-		if _, _, err := a.findApp(ctx, projectID, appID); err != nil {
+		if _, _, err := a.findApp(ctx, projectID, environment, appID); err != nil {
 			return nil, err
 		}
 		// Mint an opaque client secret; persist only its sha256 hash.
@@ -1049,7 +1058,7 @@ func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, appID, name stri
 	})
 }
 
-func (a *pgAdminApps) DeleteSecret(ctx context.Context, projectID, appID, secretID string) error {
+func (a *pgAdminApps) DeleteSecret(ctx context.Context, projectID, environment, appID, secretID string) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		row, err := models.FindIamAppSecret(ctx, a.db.Bobx(), secretID)
 		if err != nil {
@@ -2280,6 +2289,7 @@ func (a *pgAdminAccessRequests) findRequest(ctx context.Context, projectID, requ
 func (a *pgAdminAccessRequests) List(ctx context.Context, cmd domain.AdminAccessRequestListCmd) (*domain.AdminAccessRequestPage, error) {
 	mods := []bob.Mod[*dialect.SelectQuery]{
 		sm.Where(models.IamAccessRequests.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
+		sm.Where(models.IamAccessRequests.Columns.Environment.EQ(psql.Arg(adminEnv(cmd.Environment)))),
 	}
 	if cmd.Status != "" {
 		mods = append(mods, sm.Where(models.IamAccessRequests.Columns.Status.EQ(psql.Arg(cmd.Status))))
