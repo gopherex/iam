@@ -69,3 +69,7 @@ export type {
 } from './auth/webauthn';
 export { IamTokens } from './auth/tokens';
 export { IamOidc } from './auth/oidc';
+// Admin invitation management (project-admin token; separate from the user
+// client). Redemption is iam.flow.redeemInvite on the user client.
+export { IamInvitesAdmin, createIamInvitesAdmin } from './auth/invites';
+export type { IamInvitesAdminOptions } from './auth/invites';

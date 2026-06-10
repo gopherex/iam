@@ -72,7 +72,23 @@ export interface FlowController {
     redirectTo?: string;
     /** Preferred language for this flow's emails (e.g. 'ru'). */
     locale?: string;
+    /**
+     * Invitation token (inv_…) to redeem when the project's registration mode is
+     * invite_only. Without a valid token an invite_only signup is blocked
+     * (step:blocked, error:invite_required).
+     */
+    inviteToken?: string;
   }): Promise<{ state: FlowState | null; error: IamAuthError | null }>;
+
+  /**
+   * Redeem an invitation: start a signup flow carrying the invite token. Shortcut
+   * for start({ kind: 'signup', inviteToken, ... }) — the only way to register
+   * when the project's registration mode is invite_only.
+   */
+  redeemInvite(
+    inviteToken: string,
+    params?: { email?: string; password?: string; name?: string; locale?: string },
+  ): Promise<{ state: FlowState | null; error: IamAuthError | null }>;
 
   /**
    * Submit an action for the current step.
@@ -260,9 +276,14 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
           captcha_token: params.captchaToken,
           redirect_to: params.redirectTo,
           locale: params.locale,
+          invite_token: params.inviteToken,
         },
       });
       return handleState(r);
+    },
+
+    async redeemInvite(inviteToken, params) {
+      return controller.start({ kind: 'signup', inviteToken, ...params });
     },
 
     async submit(action, payload) {
