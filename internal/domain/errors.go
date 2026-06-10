@@ -90,6 +90,8 @@ var (
 	// 410 — gone / single-use consumed.
 	ErrChallengeExpired = newErr(http.StatusGone, "challenge_expired", "The challenge has expired.")
 	ErrTokenUsed        = newErr(http.StatusGone, "token_already_used", "The token has already been used.")
+	ErrFlowNotFound     = newErr(http.StatusGone, "flow_not_found", "Flow not found or expired.")
+	ErrFlowExpired      = newErr(http.StatusGone, "flow_expired", "The flow has expired.")
 
 	// 422 — validation.
 	ErrValidation     = newErr(http.StatusUnprocessableEntity, "validation_failed", "Validation failed.")
@@ -101,7 +103,11 @@ var (
 	ErrUnsupportedGrant = newErr(http.StatusBadRequest, "unsupported_grant", "Unsupported grant type.")
 
 	// 429 — throttled.
-	ErrRateLimited = newErr(http.StatusTooManyRequests, "rate_limited", "Too many requests.")
+	ErrRateLimited       = newErr(http.StatusTooManyRequests, "rate_limited", "Too many requests.")
+	ErrFlowResendTooSoon = newErr(http.StatusTooManyRequests, "flow_resend_too_soon", "Please wait before resending.")
+
+	// 501 — not implemented.
+	ErrNotImplemented = newErr(http.StatusNotImplemented, "not_implemented", "Not implemented.")
 
 	// 502/503/500 — downstream / server.
 	ErrProviderError      = newErr(http.StatusBadGateway, "provider_error", "Upstream provider error.")

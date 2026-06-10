@@ -111,6 +111,20 @@ type IamChallenges struct {
 	Data      json.RawMessage
 }
 
+type IamFlows struct {
+	ID        string
+	ProjectID string
+	TokenHash string
+	Kind      string
+	Status    string
+	Step      string
+	UserID    *string
+	ExpiresAt time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
 type IamConsents struct {
 	ID         string
 	ProjectID  string

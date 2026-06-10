@@ -26,6 +26,7 @@ func Where[Q psql.Filterable]() struct {
 	IamWebauthnCredentials iamWebauthnCredentialWhere[Q]
 	IamRecoveryCodes       iamRecoveryCodeWhere[Q]
 	IamChallenges          iamChallengeWhere[Q]
+	IamFlows               iamFlowWhere[Q]
 	IamConsents            iamConsentWhere[Q]
 	IamServiceAccounts     iamServiceAccountWhere[Q]
 	IamAPIKeys             iamAPIKeyWhere[Q]
@@ -68,6 +69,7 @@ func Where[Q psql.Filterable]() struct {
 		IamWebauthnCredentials iamWebauthnCredentialWhere[Q]
 		IamRecoveryCodes       iamRecoveryCodeWhere[Q]
 		IamChallenges          iamChallengeWhere[Q]
+		IamFlows               iamFlowWhere[Q]
 		IamConsents            iamConsentWhere[Q]
 		IamServiceAccounts     iamServiceAccountWhere[Q]
 		IamAPIKeys             iamAPIKeyWhere[Q]
@@ -109,6 +111,7 @@ func Where[Q psql.Filterable]() struct {
 		IamWebauthnCredentials: buildIamWebauthnCredentialWhere[Q](IamWebauthnCredentials.Columns),
 		IamRecoveryCodes:       buildIamRecoveryCodeWhere[Q](IamRecoveryCodes.Columns),
 		IamChallenges:          buildIamChallengeWhere[Q](IamChallenges.Columns),
+		IamFlows:               buildIamFlowWhere[Q](IamFlows.Columns),
 		IamConsents:            buildIamConsentWhere[Q](IamConsents.Columns),
 		IamServiceAccounts:     buildIamServiceAccountWhere[Q](IamServiceAccounts.Columns),
 		IamAPIKeys:             buildIamAPIKeyWhere[Q](IamAPIKeys.Columns),

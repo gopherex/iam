@@ -136,6 +136,21 @@ CREATE TABLE iam_challenges (
 );
 CREATE INDEX idx_iam_challenges_subject ON iam_challenges (project_id, subject);
 
+CREATE TABLE iam_flows (
+  id          text PRIMARY KEY,
+  project_id  text NOT NULL,
+  token_hash  text NOT NULL UNIQUE,
+  kind        text NOT NULL,
+  status      text NOT NULL,
+  step        text NOT NULL,
+  user_id     text,
+  expires_at  timestamptz NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  data        jsonb NOT NULL
+);
+CREATE INDEX iam_flows_project_idx ON iam_flows (project_id);
+
 CREATE TABLE iam_consents (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
