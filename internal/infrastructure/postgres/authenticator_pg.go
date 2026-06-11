@@ -48,12 +48,13 @@ const activityThrottle = 60 * time.Second
 type pgAuthenticator struct {
 	db        *DB
 	masterKey string
+	cfg       *configReader
 }
 
 // NewAuthenticator builds the Postgres-backed Authenticator. masterKey is the
 // platform operator credential (empty disables the masterKey scheme).
 func NewAuthenticator(db *DB, masterKey string) *pgAuthenticator {
-	return &pgAuthenticator{db: db, masterKey: masterKey}
+	return &pgAuthenticator{db: db, masterKey: masterKey, cfg: NewConfigReader(db, 0)}
 }
 
 var _ api.Authenticator = (*pgAuthenticator)(nil)
@@ -100,6 +101,19 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 		}
 		if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
 			return nil, domain.ErrUnauthorized
+		}
+		// Idle / absolute timeout from session_policy (in the session's own env, so
+		// the request's X-Environment can't pick a weaker policy). Enforced here so
+		// the access-token path honors them too, not only refresh — otherwise a
+		// session whose access token is rotated stays usable past its idle window.
+		if sp, err := a.cfg.SessionPolicyForEnv(ctx, row.ProjectID, row.Environment); err == nil {
+			now := nowUTC()
+			if sp.IdleTimeout > 0 && now.Sub(row.LastActiveAt) > sp.IdleTimeout {
+				return nil, domain.ErrUnauthorized
+			}
+			if sp.AbsoluteTimeout > 0 && now.Sub(row.CreatedAt) > sp.AbsoluteTimeout {
+				return nil, domain.ErrUnauthorized
+			}
 		}
 		// Activity tracking: bump last_active_at, throttled so authenticated
 		// requests don't write on every call. Best-effort — a failed bump must
