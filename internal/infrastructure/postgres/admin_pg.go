@@ -1180,6 +1180,17 @@ func (a *pgAdminConfig) getConfigDoc(ctx context.Context, projectID, env, key st
 	return doc, nil
 }
 
+// configDocToRawJSON flattens a domain.AdminConfigDoc (map[string]jx.Raw) into a
+// single plain-JSON object, identical to what putConfigDoc persists. Used to feed
+// the configspec validators their canonical bytes before write (fail-closed).
+func configDocToRawJSON(doc domain.AdminConfigDoc) ([]byte, error) {
+	rawDoc := make(map[string]json.RawMessage, len(doc))
+	for k, v := range doc {
+		rawDoc[k] = json.RawMessage(v)
+	}
+	return json.Marshal(rawDoc)
+}
+
 // putConfigDoc upserts one iam_config(project, env, key) envelope from a doc.
 func (a *pgAdminConfig) putConfigDoc(ctx context.Context, projectID, env, key string, doc domain.AdminConfigDoc) (domain.AdminConfigDoc, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (domain.AdminConfigDoc, error) {
@@ -1240,6 +1251,17 @@ func (a *pgAdminConfig) GetAuthConfig(ctx context.Context, cmd domain.AdminConfi
 }
 
 func (a *pgAdminConfig) UpdateAuthConfig(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
+	raw, err := configDocToRawJSON(cmd.Doc)
+	if err != nil {
+		return nil, err
+	}
+	spec, err := domain.ParseAuthConfig(raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := spec.Validate(); err != nil {
+		return nil, err
+	}
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "auth", cmd.Doc)
 }
 
@@ -1248,6 +1270,17 @@ func (a *pgAdminConfig) GetPasswordPolicy(ctx context.Context, cmd domain.AdminC
 }
 
 func (a *pgAdminConfig) UpdatePasswordPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
+	raw, err := configDocToRawJSON(cmd.Doc)
+	if err != nil {
+		return nil, err
+	}
+	spec, err := domain.ParsePasswordPolicy(raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := spec.Validate(); err != nil {
+		return nil, err
+	}
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "password_policy", cmd.Doc)
 }
 
@@ -1256,18 +1289,51 @@ func (a *pgAdminConfig) GetSessionPolicy(ctx context.Context, cmd domain.AdminCo
 }
 
 func (a *pgAdminConfig) UpdateSessionPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
+	raw, err := configDocToRawJSON(cmd.Doc)
+	if err != nil {
+		return nil, err
+	}
+	spec, err := domain.ParseSessionPolicy(raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := spec.Validate(); err != nil {
+		return nil, err
+	}
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "session_policy", cmd.Doc)
 }
 func (a *pgAdminConfig) GetRateLimits(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
 	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "rate_limits")
 }
 func (a *pgAdminConfig) UpdateRateLimits(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
+	raw, err := configDocToRawJSON(cmd.Doc)
+	if err != nil {
+		return nil, err
+	}
+	spec, err := domain.ParseRateLimits(raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := spec.Validate(); err != nil {
+		return nil, err
+	}
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "rate_limits", cmd.Doc)
 }
 func (a *pgAdminConfig) GetMfaPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
 	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "mfa_policy")
 }
 func (a *pgAdminConfig) UpdateMfaPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
+	raw, err := configDocToRawJSON(cmd.Doc)
+	if err != nil {
+		return nil, err
+	}
+	spec, err := domain.ParseMFAPolicy(raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := spec.Validate(); err != nil {
+		return nil, err
+	}
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "mfa_policy", cmd.Doc)
 }
 
@@ -1276,6 +1342,17 @@ func (a *pgAdminConfig) GetConsent(ctx context.Context, cmd domain.AdminConfigGe
 }
 
 func (a *pgAdminConfig) PutConsent(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
+	raw, err := configDocToRawJSON(cmd.Doc)
+	if err != nil {
+		return nil, err
+	}
+	spec, err := domain.ParseConsentConfig(raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := spec.Validate(); err != nil {
+		return nil, err
+	}
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "consent", cmd.Doc)
 }
 
@@ -1301,6 +1378,9 @@ func (a *pgAdminConfig) GetFeatures(ctx context.Context, cmd domain.AdminConfigG
 }
 
 func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeaturesUpdateCmd) (map[string]bool, error) {
+	if err := domain.FeaturesSpec(cmd.Features).Validate(); err != nil {
+		return nil, err
+	}
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]bool, error) {
 		raw, err := json.Marshal(cmd.Features)
 		if err != nil {
@@ -1433,6 +1513,9 @@ func adminProviderToDomain(cipher Cipher, row *models.IamProvider) (domain.Admin
 }
 
 func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
+	if err := (domain.ProviderConfigSpec{Kind: kind, Type: cmd.Type}).Validate(); err != nil {
+		return nil, err
+	}
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminProvider, error) {
 		id := cmd.ID
 		if id == "" {
@@ -1476,6 +1559,9 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 }
 
 func (a *pgAdminConfig) updateProvider(ctx context.Context, kind string, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
+	if err := (domain.ProviderConfigSpec{Kind: kind, Type: cmd.Type}).Validate(); err != nil {
+		return nil, err
+	}
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminProvider, error) {
 		row, err := models.FindIamProvider(ctx, a.db.Bobx(), cmd.ID)
 		if err != nil {

@@ -98,7 +98,17 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 		if err := unmarshal(authRow.Data, &ac); err != nil {
 			return nil, err
 		}
-		cfg.Methods = ac.Methods
+		// Honest public config: advertise only auth methods that are actually
+		// implemented end-to-end. Unsupported/legacy values persisted in the
+		// envelope are filtered out rather than promised to clients. Order from
+		// the stored doc is preserved.
+		methods := make([]string, 0, len(ac.Methods))
+		for _, m := range ac.Methods {
+			if domain.SupportedAuthMethods.Has(m) {
+				methods = append(methods, m)
+			}
+		}
+		cfg.Methods = methods
 		if len(ac.Locales) > 0 {
 			cfg.Locales = ac.Locales
 		}
