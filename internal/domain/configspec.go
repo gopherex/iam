@@ -58,11 +58,13 @@ func (s stringSet) List() []string { return append([]string(nil), s.order...) }
 //   - oauth      — social/OIDC via iam_providers rows (a methods entry is decorative)
 //   - passkey    — WebAuthn ceremony endpoints + iam_webauthn_credentials
 //   - magic_link — /v1/auth/magic-link/{start,verify}
+//   - phone      — phone OTP login/signup over /v1/auth/otp/{start,verify}
+//     (channel=sms|whatsapp; resolves/creates by primary_phone)
 //
-// `username` and `phone` (as a first-class login method) are intentionally
-// ABSENT: no route/handler/credential exists. To add a method: implement it
-// end-to-end, then add it here.
-var SupportedAuthMethods = newStringSet("email", "oauth", "passkey", "magic_link")
+// `username` (as a first-class login method) is intentionally ABSENT: no
+// route/handler/credential exists. To add a method: implement it end-to-end,
+// then add it here.
+var SupportedAuthMethods = newStringSet("email", "oauth", "passkey", "magic_link", "phone")
 
 // SupportedMFAFactors is the canonical set of values accepted in the mfa_policy
 // doc `allowed_factors[]`. All five are implemented end-to-end. Note two policy
@@ -136,10 +138,11 @@ var RateLimitEndpoints = newStringSet(
 var EmailProviderTypes = newStringSet("smtp")
 
 // SMSProviderTypes is the canonical set for iam_providers (kind=sms) `type`.
-// EMPTY: there is no SMS sender anywhere — SMS providers are CRUD-only today, so
-// creating one would be a no-op. To support SMS: implement a sender, then
-// populate this set.
-var SMSProviderTypes = newStringSet()
+// "generic" (HTTP webhook), "twilio", and "aws_sns" (AWS SNS / any SNS-compatible
+// endpoint such as Yandex Cloud Notifications via a custom endpoint) are realized.
+// The runtime sender skips every other type silently. To add a sender: implement
+// the sender, then add it here.
+var SMSProviderTypes = newStringSet("generic", "twilio", "aws_sns")
 
 // FeatureKeys is the canonical namespace for the features doc (map[string]bool).
 // Only keys backed by a working subsystem are listed. To add a feature: wire the
@@ -147,6 +150,7 @@ var SMSProviderTypes = newStringSet()
 var FeatureKeys = newStringSet(
 	"password",
 	"otp",
+	"phone_login",
 	"magic_link",
 	"webauthn",
 	"oauth",
@@ -459,6 +463,41 @@ func (c MFAPolicySpec) Validate() error {
 	return nil
 }
 
+// MFAPolicyFactorName maps an internal/DB factor type to the value used in the
+// mfa_policy `allowed_factors[]` doc (see SupportedMFAFactors). Two names differ
+// from the DB representation:
+//   - DB "email"             -> policy "email_otp"
+//   - the recovery-codes subsystem ("recovery"/"backup_codes") -> "backup_codes"
+//
+// All other factors (totp/sms/webauthn) map 1:1.
+func MFAPolicyFactorName(dbFactorType string) string {
+	switch dbFactorType {
+	case "email":
+		return "email_otp"
+	case "recovery", "backup_codes":
+		return "backup_codes"
+	default:
+		return dbFactorType
+	}
+}
+
+// FactorAllowed reports whether the given internal/DB factor type may be
+// enrolled under this policy. An unset (nil) or empty AllowedFactors means the
+// policy does not gate enrollment — every implemented factor is allowed
+// (backward compatible: a project with no mfa_policy doc behaves as before).
+func (c MFAPolicySpec) FactorAllowed(dbFactorType string) bool {
+	if len(c.AllowedFactors) == 0 {
+		return true
+	}
+	name := MFAPolicyFactorName(dbFactorType)
+	for _, f := range c.AllowedFactors {
+		if f == name {
+			return true
+		}
+	}
+	return false
+}
+
 // ---------------------------------------------------------------------------
 // rate_limits doc — iam_config key="rate_limits"
 // ---------------------------------------------------------------------------
@@ -691,8 +730,8 @@ type ProviderConfigSpec struct {
 	Type string
 }
 
-// Validate rejects unsupported provider types fail-closed. SMS is rejected
-// wholesale because no sender exists.
+// Validate rejects unsupported provider types fail-closed, checking the type
+// against the realized registry for the given kind (email/sms).
 func (c ProviderConfigSpec) Validate() error {
 	typ := strings.ToLower(strings.TrimSpace(c.Type))
 	if typ == "" {
@@ -706,9 +745,10 @@ func (c ProviderConfigSpec) Validate() error {
 			}).WithMessage("unsupported email provider type: " + typ)
 		}
 	case "sms":
-		// SMSProviderTypes is empty by design.
 		if !SMSProviderTypes.Has(typ) {
-			return ErrValidation.WithMessage("sms providers are not supported")
+			return ErrValidation.WithDetails(map[string]any{
+				"field": "type", "value": typ, "allowed": SMSProviderTypes.List(),
+			}).WithMessage("unsupported sms provider type: " + typ)
 		}
 	default:
 		return ErrValidation.WithMessage("unknown provider kind: " + c.Kind)

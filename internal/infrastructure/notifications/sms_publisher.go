@@ -138,13 +138,18 @@ func (p *Publisher) publishSMS(ctx context.Context, ev eventEnvelope, job smsJob
 var errNoSMSProvider = errors.New("notifications: no enabled sms provider")
 
 type smsConfig struct {
-	Type       string // "generic" | "twilio"
-	URL        string // generic: webhook URL; twilio: Messages endpoint (derived)
-	From       string // sender id / phone
-	Username   string // twilio: account SID  | generic: basic-auth user (optional)
-	Password   string // twilio: auth token   | generic: basic-auth pass (optional)
-	AuthToken  string // generic: bearer token (optional)
-	HTTPClient *http.Client
+	Type      string // "generic" | "twilio" | "aws_sns"
+	URL       string // generic: webhook URL; twilio: Messages endpoint (derived)
+	From      string // sender id / phone
+	Username  string // twilio: account SID  | generic: basic-auth user (optional)
+	Password  string // twilio: auth token   | generic: basic-auth pass (optional)
+	AuthToken string // generic: bearer token (optional)
+	// aws_sns (AWS SNS or any SNS-compatible endpoint, e.g. Yandex Cloud):
+	Region          string // e.g. "ru-central1" / "us-east-1"
+	AccessKeyID     string // service-account static access key id
+	SecretAccessKey string // service-account static secret
+	Endpoint        string // override host (Yandex: https://notifications.yandexcloud.net); default AWS
+	HTTPClient      *http.Client
 }
 
 // smsProvider loads the enabled kind=sms provider for the project, decrypts its
@@ -252,6 +257,42 @@ func decodeSMSConfig(cipher postgres.Cipher, typ string, raw map[string]json.Raw
 		if err != nil || u.Scheme != "https" || u.Host == "" {
 			return nil, errors.New("notifications: generic sms url must be a valid https URL")
 		}
+	case "aws_sns":
+		cfg.Region = strings.TrimSpace(rawString(raw, "region"))
+		cfg.Endpoint = strings.TrimSpace(rawString(raw, "endpoint"))
+		// access_key_id and secret_access_key are encrypted at rest; decrypt them.
+		if v := rawString(raw, "access_key_id"); v != "" {
+			dec, err := cipher.Decrypt(v)
+			if err != nil {
+				return nil, err
+			}
+			cfg.AccessKeyID = dec
+		}
+		if v := rawString(raw, "secret_access_key"); v != "" {
+			dec, err := cipher.Decrypt(v)
+			if err != nil {
+				return nil, err
+			}
+			cfg.SecretAccessKey = dec
+		} else if cfg.SecretAccessKey == "" {
+			// Fall back to the generic secret slot decrypted above (secret_key etc).
+			cfg.SecretAccessKey = cfg.Password
+		}
+		if cfg.Endpoint == "" {
+			if cfg.Region == "" {
+				return nil, errors.New("notifications: aws_sns requires region (or an explicit endpoint)")
+			}
+			cfg.Endpoint = "https://sns." + cfg.Region + ".amazonaws.com"
+		}
+		if u, err := url.Parse(cfg.Endpoint); err != nil || u.Scheme != "https" || u.Host == "" {
+			return nil, errors.New("notifications: aws_sns endpoint must be a valid https URL")
+		}
+		if cfg.AccessKeyID == "" || cfg.SecretAccessKey == "" {
+			return nil, errors.New("notifications: aws_sns requires access_key_id and secret_access_key")
+		}
+		if cfg.Region == "" {
+			cfg.Region = "ru-central1"
+		}
 	default:
 		return nil, fmt.Errorf("notifications: unsupported sms provider type %q", typ)
 	}
@@ -272,6 +313,8 @@ func (c *smsConfig) send(ctx context.Context, to, text string) error {
 		return c.sendTwilio(ctx, to, text)
 	case "generic":
 		return c.sendGeneric(ctx, to, text)
+	case "aws_sns":
+		return c.sendAwsSNS(ctx, to, text)
 	default:
 		return fmt.Errorf("notifications: unsupported sms provider type %q", c.Type)
 	}

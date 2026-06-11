@@ -17,19 +17,20 @@ import (
 // providerSecretKeys are the config keys whose values are treated as secrets and
 // encrypted at rest. Matched case-insensitively.
 var providerSecretKeys = map[string]struct{}{
-	"password":      {},
-	"api_key":       {},
-	"apikey":        {},
-	"secret":        {},
-	"secret_key":    {},
-	"client_secret": {},
-	"auth_token":    {},
-	"token":         {},
-	"private_key":   {},
-	"access_key":    {},
-	"access_key_id": {},
-	"access_token":  {},
-	"sasl_password": {},
+	"password":          {},
+	"api_key":           {},
+	"apikey":            {},
+	"secret":            {},
+	"secret_key":        {},
+	"secret_access_key": {},
+	"client_secret":     {},
+	"auth_token":        {},
+	"token":             {},
+	"private_key":       {},
+	"access_key":        {},
+	"access_key_id":     {},
+	"access_token":      {},
+	"sasl_password":     {},
 }
 
 // providerConfigCrypt applies transform (Encrypt or Decrypt) to the string value
