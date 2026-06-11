@@ -99,7 +99,7 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 			p.log.Info("flow continue email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
 			return nil
 		}
-		link := flowContinueURL(base, stringValue(ev.Payload, "flow_token"))
+		link := flowContinueURL(base, stringValue(ev.Payload, "flow_token"), stringValue(ev.Payload, "token"))
 		if link == "" {
 			return nil
 		}
@@ -333,8 +333,9 @@ func sameOrigin(a, b string) bool {
 }
 
 // flowContinueURL builds the cross-device resume deep-link
-// <base>/continue?flow=<flow_token>. Returns "" on a bad base or empty token.
-func flowContinueURL(rawBase, flowToken string) string {
+// <base>/continue?flow=<flow_token>[&token=<proof>]. Returns "" on a bad base
+// or empty flow token.
+func flowContinueURL(rawBase, flowToken, proofToken string) string {
 	if rawBase == "" || flowToken == "" {
 		return ""
 	}
@@ -345,6 +346,9 @@ func flowContinueURL(rawBase, flowToken string) string {
 	u.Path = strings.TrimRight(u.Path, "/") + "/continue"
 	q := u.Query()
 	q.Set("flow", flowToken)
+	if proofToken != "" {
+		q.Set("token", proofToken)
+	}
 	u.RawQuery = q.Encode()
 	return u.String()
 }

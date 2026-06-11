@@ -195,6 +195,12 @@ func TestE2EFlowSignupHappyPath(t *testing.T) {
 	if code == "" {
 		t.Fatal("no code captured from emitter")
 	}
+	if got := e2eEmitter.payloadFor(challengeID, "flow_token"); got != token1 {
+		t.Fatalf("flow email flow_token = %q, want %q", got, token1)
+	}
+	if got := e2eEmitter.payloadFor(challengeID, "token"); got == "" {
+		t.Fatal("flow email proof token is empty")
+	}
 
 	// 3. Submit verify_email.
 	fs2, r2 := flowSubmit(t, ctx, ts, projectID, token1, "verify_email", map[string]any{"code": code})
@@ -247,6 +253,9 @@ func TestE2EFlowSignupVerifyEmailTokenPath(t *testing.T) {
 	emailToken := e2eEmitter.payloadFor(challengeID, "token")
 	if emailToken == "" {
 		t.Fatalf("email verification token not captured for challenge %s", challengeID)
+	}
+	if got := e2eEmitter.payloadFor(challengeID, "flow_token"); got != token1 {
+		t.Fatalf("flow email flow_token = %q, want %q", got, token1)
 	}
 
 	fs2, r2 := flowSubmit(t, ctx, ts, projectID, token1, "verify_email", map[string]any{"token": emailToken})

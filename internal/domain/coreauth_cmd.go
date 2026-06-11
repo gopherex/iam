@@ -7,12 +7,13 @@ package domain
 // CoreAuthVerifyStartCmd starts an email or phone verification/change flow.
 // One challenge is minted and (for email/phone) a code or link is dispatched.
 type CoreAuthVerifyStartCmd struct {
-	ProjectID  string
-	AccountID  string // empty for unauthenticated start (public verification)
-	Contact    string // the email or phone to verify; empty -> use the account's primary
-	RedirectTo string
-	Locale     string
-	Channel    string // sms | whatsapp (phone only)
+	ProjectID     string
+	AccountID     string // empty for unauthenticated start (public verification)
+	Contact       string // the email or phone to verify; empty -> use the account's primary
+	RedirectTo    string
+	Locale        string
+	Channel       string // sms | whatsapp (phone only)
+	SuppressEmail bool   // flow engine sends a combined flow+proof email itself
 }
 
 // CoreAuthVerifyConsumeCmd consumes a verification/change challenge. A challenge

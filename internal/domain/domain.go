@@ -91,6 +91,12 @@ type Challenge struct {
 	ID        string
 	Type      string
 	ExpiresAt time.Time
+	// Code and Token are transient delivery proofs returned only inside the
+	// current process so higher-level flows can build a single email containing
+	// both the manual code and the one-click proof link. They must never be
+	// serialized or exposed by API mappers.
+	Code  string `json:"-"`
+	Token string `json:"-"`
 	// PublicKey carries WebAuthn / provisioning material when relevant.
 	PublicKey map[string]any
 }

@@ -1985,6 +1985,8 @@ func adminTemplateData(in map[string]jx.Raw) map[string]any {
 		"to":               "user@example.com",
 		"project_name":     "IAM",
 		"challenge_id":     "chl_sample",
+		"flow_token":       "ftk_sample",
+		"continue_url":     "https://example.test/continue?flow=ftk_sample&token=sample-token",
 		"template_id":      "sample",
 		"reset_url":        "https://example.test/reset?token=sample-token",
 		"magic_link":       "https://example.test/auth/magic?token=sample-token",

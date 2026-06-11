@@ -716,6 +716,11 @@ func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.Core
 		if err != nil {
 			return nil, err
 		}
+		out.Code = code
+		out.Token = token
+		if cmd.SuppressEmail {
+			return out, nil
+		}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        chType + ".verification.requested",
 			ProjectID:   ch.ProjectID,

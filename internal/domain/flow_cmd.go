@@ -18,6 +18,7 @@ type Flow struct {
 
 	// Data fields (stored in the jsonb `data` column).
 	Locale           string
+	RedirectTo       string
 	Contact          FlowContact
 	Collected        FlowCollected
 	ActiveChallenge  *FlowActiveChallenge
@@ -107,6 +108,11 @@ type FlowActiveChallenge struct {
 	ExpiresAt    time.Time `json:"expires_at"`
 	ResendAt     time.Time `json:"resend_at"`
 	AttemptsLeft int       `json:"attempts_left"`
+	// Code and Token are transient delivery proofs for flow emails. They are
+	// available only immediately after challenge issue/reissue and are never
+	// persisted in iam_flows.data.
+	Code  string `json:"-"`
+	Token string `json:"-"`
 	// PublicKey carries WebAuthn PublicKeyCredentialRequestOptions for the
 	// passkey method (so the client can call navigator.credentials.get()).
 	PublicKey map[string]any `json:"public_key,omitempty"`

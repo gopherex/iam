@@ -102,6 +102,7 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 			Subject:     cmd.Email,
 			CodeHash:    coreAuthSHA256(code),
 			TokenHash:   coreAuthSHA256(token),
+			RedirectTo:  cmd.RedirectTo,
 			Locale:      cmd.Locale,
 			ExpiresAt:   now.Add(coreAuthChallengeTTL),
 			CreatedAt:   now,
@@ -111,22 +112,7 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 			if _, insErr := pgCA.coreAuthInsertChallenge(ctx, ch); insErr != nil {
 				return insErr
 			}
-			return pgCA.emitter.Emit(ctx, domain.Event{
-				Type:        "password.reset_requested",
-				ProjectID:   cmd.ProjectID,
-				Environment: f.Environment,
-				AggregateID: acc.ID,
-				Payload: map[string]any{
-					"code":         code,
-					"token":        token,
-					"account_id":   acc.ID,
-					"challenge_id": ch.ID,
-					"contact":      ch.Subject,
-					"to":           ch.Subject,
-					"locale":       cmd.Locale,
-					"purpose":      ch.Purpose,
-				},
-			})
+			return nil
 		}); err != nil {
 			return nil, fmt.Errorf("recovery create: issue challenge: %w", err)
 		}
@@ -137,6 +123,8 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 			ExpiresAt:    ch.ExpiresAt,
 			ResendAt:     now.Add(flowResendCooloff),
 			AttemptsLeft: flowMaxAttempts,
+			Code:         code,
+			Token:        token,
 		}
 	} else {
 		// Unknown email: synthesise a fake descriptor (random ID, no DB row).

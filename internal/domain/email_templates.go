@@ -31,64 +31,128 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 		Key:  "email_verification",
 		Name: "Email verification",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "Verify your email", Text: "Use code {{.code}}{{with .link}} or open {{.}}{{end}} to verify your email."},
-			"ru": {Subject: "Подтвердите вашу почту", Text: "Введите код {{.code}}{{with .link}} или откройте {{.}}{{end}}, чтобы подтвердить почту."},
+			"en": {
+				Subject: "Verify your email",
+				Text:    "Use code {{.code}} to verify your email.{{with .link}}\nOr open this link: {{.}}{{end}}",
+				HTML:    `<p>Use code <strong>{{.code}}</strong> to verify your email.</p>{{with .link}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+			},
+			"ru": {
+				Subject: "Подтвердите вашу почту",
+				Text:    "Введите код {{.code}}, чтобы подтвердить почту.{{with .link}}\nИли откройте ссылку: {{.}}{{end}}",
+				HTML:    `<p>Введите код <strong>{{.code}}</strong>, чтобы подтвердить почту.</p>{{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+			},
 		},
 	},
 	{
 		Key:  "otp",
 		Name: "Sign-in code (OTP)",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "Your sign-in code", Text: "Your code is {{.code}}."},
-			"ru": {Subject: "Код для входа", Text: "Ваш код: {{.code}}."},
+			"en": {
+				Subject: "Your sign-in code",
+				Text:    "Your code is {{.code}}.",
+				HTML:    `<p>Your code is <strong>{{.code}}</strong>.</p>`,
+			},
+			"ru": {
+				Subject: "Код для входа",
+				Text:    "Ваш код: {{.code}}.",
+				HTML:    `<p>Ваш код: <strong>{{.code}}</strong>.</p>`,
+			},
 		},
 	},
 	{
 		Key:  "magic_link",
 		Name: "Magic link",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "Your sign-in link", Text: "Open this link to sign in: {{.link}}", HTML: `<p>Open this link to sign in: <a href="{{.link}}">{{.link}}</a></p>`},
-			"ru": {Subject: "Ссылка для входа", Text: "Откройте ссылку, чтобы войти: {{.link}}", HTML: `<p>Откройте ссылку, чтобы войти: <a href="{{.link}}">{{.link}}</a></p>`},
+			"en": {
+				Subject: "Your sign-in link",
+				Text:    "Open this link to sign in: {{.link}}",
+				HTML:    `<p>Open this link to sign in: <a href="{{.link}}">{{.link}}</a></p>`,
+			},
+			"ru": {
+				Subject: "Ссылка для входа",
+				Text:    "Откройте ссылку, чтобы войти: {{.link}}",
+				HTML:    `<p>Откройте ссылку, чтобы войти: <a href="{{.link}}">{{.link}}</a></p>`,
+			},
 		},
 	},
 	{
 		Key:  "email_change",
 		Name: "Email change",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "Confirm your new email", Text: "Use code {{.code}}{{with .link}} or open {{.}}{{end}} to confirm your new email."},
-			"ru": {Subject: "Подтвердите новую почту", Text: "Введите код {{.code}}{{with .link}} или откройте {{.}}{{end}}, чтобы подтвердить новую почту."},
+			"en": {
+				Subject: "Confirm your new email",
+				Text:    "Use code {{.code}} to confirm your new email.{{with .link}}\nOr open this link: {{.}}{{end}}",
+				HTML:    `<p>Use code <strong>{{.code}}</strong> to confirm your new email.</p>{{with .link}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+			},
+			"ru": {
+				Subject: "Подтвердите новую почту",
+				Text:    "Введите код {{.code}}, чтобы подтвердить новую почту.{{with .link}}\nИли откройте ссылку: {{.}}{{end}}",
+				HTML:    `<p>Введите код <strong>{{.code}}</strong>, чтобы подтвердить новую почту.</p>{{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+			},
 		},
 	},
 	{
 		Key:  "password_reset",
 		Name: "Password reset",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "Reset your password", Text: "Use code {{.code}}{{with .link}} or open {{.}}{{end}} to reset your password."},
-			"ru": {Subject: "Сброс пароля", Text: "Введите код {{.code}}{{with .link}} или откройте {{.}}{{end}}, чтобы сбросить пароль."},
+			"en": {
+				Subject: "Reset your password",
+				Text:    "Use code {{.code}} to reset your password.{{with .link}}\nOr open this link: {{.}}{{end}}",
+				HTML:    `<p>Use code <strong>{{.code}}</strong> to reset your password.</p>{{with .link}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+			},
+			"ru": {
+				Subject: "Сброс пароля",
+				Text:    "Введите код {{.code}}, чтобы сбросить пароль.{{with .link}}\nИли откройте ссылку: {{.}}{{end}}",
+				HTML:    `<p>Введите код <strong>{{.code}}</strong>, чтобы сбросить пароль.</p>{{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+			},
 		},
 	},
 	{
 		Key:  "mfa_email",
 		Name: "MFA code",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "Your MFA code", Text: "Your MFA code is {{.code}}."},
-			"ru": {Subject: "Код двухфакторной аутентификации", Text: "Ваш код подтверждения: {{.code}}."},
+			"en": {
+				Subject: "Your MFA code",
+				Text:    "Your MFA code is {{.code}}.",
+				HTML:    `<p>Your MFA code is <strong>{{.code}}</strong>.</p>`,
+			},
+			"ru": {
+				Subject: "Код двухфакторной аутентификации",
+				Text:    "Ваш код подтверждения: {{.code}}.",
+				HTML:    `<p>Ваш код подтверждения: <strong>{{.code}}</strong>.</p>`,
+			},
 		},
 	},
 	{
 		Key:  "flow_continue",
 		Name: "Continue on another device",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "Continue where you left off", Text: "Continue on this or another device: {{.continue_url}}", HTML: `<p>Continue where you left off: <a href="{{.continue_url}}">{{.continue_url}}</a></p>`},
-			"ru": {Subject: "Продолжите с того же места", Text: "Продолжите на этом или другом устройстве: {{.continue_url}}", HTML: `<p>Продолжите с того же места: <a href="{{.continue_url}}">{{.continue_url}}</a></p>`},
+			"en": {
+				Subject: "Continue where you left off",
+				Text:    "Use code {{.code}} to continue.{{with .continue_url}}\nOr open this link: {{.}}{{end}}",
+				HTML:    `<p>Use code <strong>{{.code}}</strong> to continue.</p>{{with .continue_url}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+			},
+			"ru": {
+				Subject: "Продолжите с того же места",
+				Text:    "Введите код {{.code}}, чтобы продолжить.{{with .continue_url}}\nИли откройте ссылку: {{.}}{{end}}",
+				HTML:    `<p>Введите код <strong>{{.code}}</strong>, чтобы продолжить.</p>{{with .continue_url}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+			},
 		},
 	},
 	{
 		Key:  "invite",
 		Name: "Invitation",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "You're invited", Text: "You've been invited. Accept your invitation: {{.invite_url}} (or use code {{.invite_token}})", HTML: `<p>You've been invited. <a href="{{.invite_url}}">Accept your invitation</a>.</p>`},
-			"ru": {Subject: "Вас пригласили", Text: "Вас пригласили. Примите приглашение: {{.invite_url}} (или используйте код {{.invite_token}})", HTML: `<p>Вас пригласили. <a href="{{.invite_url}}">Примите приглашение</a>.</p>`},
+			"en": {
+				Subject: "You're invited",
+				Text:    "You've been invited. Accept your invitation: {{.invite_url}} (or use code {{.invite_token}})",
+				HTML:    `<p>You've been invited.</p>{{with .invite_url}}<p>Accept your invitation: <a href="{{.}}">{{.}}</a></p>{{end}}<p>Alternatively, use code <strong>{{.invite_token}}</strong>.</p>`,
+			},
+			"ru": {
+				Subject: "Вас пригласили",
+				Text:    "Вас пригласили. Примите приглашение: {{.invite_url}} (или используйте код {{.invite_token}})",
+				HTML:    `<p>Вас пригласили.</p>{{with .invite_url}}<p>Примите приглашение по ссылке: <a href="{{.}}">{{.}}</a></p>{{end}}<p>Или используйте код <strong>{{.invite_token}}</strong>.</p>`,
+			},
 		},
 	},
 }

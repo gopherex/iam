@@ -102,6 +102,7 @@ func flowCompareToken(token, storedHash string) bool {
 // flowData is the jsonb payload in iam_flows.data.
 type flowData struct {
 	Locale           string                            `json:"locale,omitempty"`
+	RedirectTo       string                            `json:"redirect_to,omitempty"`
 	Contact          domain.FlowContact                `json:"contact"`
 	Collected        domain.FlowCollected              `json:"collected"`
 	ActiveChallenge  *domain.FlowActiveChallenge       `json:"active_challenge,omitempty"`
@@ -182,6 +183,7 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 		CreatedAt:        row.CreatedAt,
 		UpdatedAt:        row.UpdatedAt,
 		Locale:           data.Locale,
+		RedirectTo:       data.RedirectTo,
 		Contact:          data.Contact,
 		Collected:        data.Collected,
 		ActiveChallenge:  data.ActiveChallenge,
@@ -204,6 +206,7 @@ func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *
 	now := nowUTC()
 	rm, err := flowDataRM(flowData{
 		Locale:           f.Locale,
+		RedirectTo:       f.RedirectTo,
 		Contact:          f.Contact,
 		Collected:        f.Collected,
 		ActiveChallenge:  f.ActiveChallenge,
@@ -241,6 +244,7 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 	now := nowUTC()
 	rm, err := flowDataRM(flowData{
 		Locale:           f.Locale,
+		RedirectTo:       f.RedirectTo,
 		Contact:          f.Contact,
 		Collected:        f.Collected,
 		ActiveChallenge:  f.ActiveChallenge,
@@ -285,6 +289,9 @@ func flowRowEnv(row *models.IamFlow) string {
 func (a *pgCoreAuthFlows) flowInsert(ctx context.Context, f *domain.Flow, hash string, data flowData) error {
 	if data.Locale == "" {
 		data.Locale = f.Locale
+	}
+	if data.RedirectTo == "" {
+		data.RedirectTo = f.RedirectTo
 	}
 	rm, err := flowDataRM(data)
 	if err != nil {
@@ -349,6 +356,7 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 		CreatedAt:   now,
 		UpdatedAt:   now,
 		Locale:      cmd.Locale,
+		RedirectTo:  cmd.RedirectTo,
 		Contact:     domain.FlowContact{Email: cmd.Email, Phone: cmd.Phone},
 		Collected: domain.FlowCollected{
 			Name:        cmd.Name,
@@ -370,10 +378,11 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 	return state, nil
 }
 
-// emitFlowContinue fires a best-effort cross-device "continue" deep-link email
-// for still-pending email-bearing flows (signup/recovery). The notification
-// layer turns flow_token into <app_base_url>/continue?flow=… ; a send/emit
-// failure must not fail flow creation, so the error is swallowed.
+// emitFlowContinue fires a best-effort flow proof email for still-pending
+// email-bearing flows (signup/recovery). The notification layer turns
+// flow_token+token into <app_base_url>/continue?flow=…&token=… so clients can
+// resume the flow and auto-submit the one-time proof. A send/emit failure must
+// not fail flow creation, so the error is swallowed.
 func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.FlowState, redirectTo, locale string) {
 	f := state.Flow
 	if f.Status != domain.FlowStatusPending || f.Contact.Email == "" {
@@ -382,11 +391,22 @@ func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.Fl
 	if f.Kind != domain.FlowKindSignup && f.Kind != domain.FlowKindRecovery {
 		return
 	}
+	ac := f.ActiveChallenge
+	if ac == nil || ac.Channel != "email" || ac.Code == "" || ac.Token == "" {
+		return
+	}
+	if redirectTo == "" {
+		redirectTo = f.RedirectTo
+	}
 	payload := map[string]any{
-		"flow_token": state.FlowToken,
-		"kind":       string(f.Kind),
-		"to":         f.Contact.Email,
-		"contact":    f.Contact.Email,
+		"flow_token":   state.FlowToken,
+		"token":        ac.Token,
+		"code":         ac.Code,
+		"challenge_id": ac.ChallengeID,
+		"kind":         string(f.Kind),
+		"purpose":      string(f.Kind),
+		"to":           f.Contact.Email,
+		"contact":      f.Contact.Email,
 	}
 	// Per-flow base override; the notification layer validates its origin against
 	// the project before honouring it, falling back to app_base_url.
@@ -401,6 +421,7 @@ func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.Fl
 	_ = a.emitter.Emit(ctx, domain.Event{
 		Type:        "auth.flow.continue",
 		ProjectID:   f.ProjectID,
+		Environment: f.Environment,
 		AggregateID: f.ID,
 		Payload:     payload,
 	})
@@ -519,17 +540,19 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 	// Re-issue the active challenge by its channel / the flow's method. Email is
 	// the default (signup verify, recovery email, signup); sms re-issues an OTP;
 	// magic_link re-issues a fresh link.
-	chID, channel, expiresAt, err := a.flowReissueChallenge(ctx, f, ac)
+	ch, channel, err := a.flowReissueChallenge(ctx, f, ac)
 	if err != nil {
 		return nil, err
 	}
 	now := nowUTC()
 	f.ActiveChallenge = &domain.FlowActiveChallenge{
-		ChallengeID:  chID,
+		ChallengeID:  ch.ID,
 		Channel:      channel,
-		ExpiresAt:    expiresAt,
+		ExpiresAt:    ch.ExpiresAt,
 		ResendAt:     now.Add(flowResendCooloff),
 		AttemptsLeft: flowMaxAttempts,
+		Code:         ch.Code,
+		Token:        ch.Token,
 	}
 	f.Error = nil
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
@@ -537,7 +560,9 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 	}); err != nil {
 		return nil, err
 	}
-	return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
+	state := &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}
+	a.emitFlowContinue(ctx, state, f.RedirectTo, f.Locale)
+	return state, nil
 }
 
 // flowReissueChallenge re-issues the flow's active challenge using the channel
@@ -545,12 +570,12 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 // new challenge id, channel and expiry. Email re-issues a verification (or
 // password_reset for recovery) code; sms re-issues an OTP via the passwordless
 // adapter; magic_link re-issues a fresh link.
-func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Flow, ac *domain.FlowActiveChallenge) (chID, channel string, expiresAt time.Time, err error) {
+func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Flow, ac *domain.FlowActiveChallenge) (*domain.Challenge, string, error) {
 	switch {
 	case ac.Channel == "sms" || f.Method == domain.FlowMethodPhoneOTP:
 		core, ok := a.accounts.(*pgCoreAuth)
 		if !ok {
-			return "", "", time.Time{}, fmt.Errorf("flow resend: accounts is not *pgCoreAuth")
+			return nil, "", fmt.Errorf("flow resend: accounts is not *pgCoreAuth")
 		}
 		pl := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
 		purpose := "signin"
@@ -559,33 +584,89 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 		}
 		ch, serr := pl.StartOTP(ctx, f.ProjectID, f.Contact.Phone, "sms", purpose, f.Locale)
 		if serr != nil {
-			return "", "", time.Time{}, serr
+			return nil, "", serr
 		}
-		return ch.ID, "sms", ch.ExpiresAt, nil
+		return ch, "sms", nil
 	case f.Method == domain.FlowMethodMagicLink:
 		core, ok := a.accounts.(*pgCoreAuth)
 		if !ok {
-			return "", "", time.Time{}, fmt.Errorf("flow resend: accounts is not *pgCoreAuth")
+			return nil, "", fmt.Errorf("flow resend: accounts is not *pgCoreAuth")
 		}
 		pl := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
 		ch, serr := pl.StartMagicLink(ctx, f.ProjectID, f.Contact.Email, "", f.Locale)
 		if serr != nil {
-			return "", "", time.Time{}, serr
+			return nil, "", serr
 		}
-		return ch.ID, "email", ch.ExpiresAt, nil
+		return ch, "email", nil
 	default:
-		// Email verification (signup / recovery email path).
+		if f.Kind == domain.FlowKindRecovery {
+			ch, serr := a.flowIssueRecoveryEmailChallenge(ctx, f)
+			if serr != nil {
+				return nil, "", serr
+			}
+			return ch, "email", nil
+		}
+		// Email verification (signup email path).
 		ch, serr := a.accounts.StartEmailVerification(ctx, domain.CoreAuthVerifyStartCmd{
-			ProjectID: f.ProjectID,
-			AccountID: f.UserID,
-			Contact:   f.Contact.Email,
-			Locale:    f.Locale,
+			ProjectID:     f.ProjectID,
+			AccountID:     f.UserID,
+			Contact:       f.Contact.Email,
+			Locale:        f.Locale,
+			SuppressEmail: true,
 		})
 		if serr != nil {
-			return "", "", time.Time{}, serr
+			return nil, "", serr
 		}
-		return ch.ID, "email", ch.ExpiresAt, nil
+		return ch, "email", nil
 	}
+}
+
+func (a *pgCoreAuthFlows) flowIssueRecoveryEmailChallenge(ctx context.Context, f *domain.Flow) (*domain.Challenge, error) {
+	if f.UserID == "" {
+		return &domain.Challenge{ID: newUUID(), Type: "password_reset", ExpiresAt: nowUTC().Add(coreAuthChallengeTTL)}, nil
+	}
+	pgCA, ok := a.accounts.(*pgCoreAuth)
+	if !ok {
+		return nil, fmt.Errorf("flow recovery challenge: accounts is not *pgCoreAuth")
+	}
+	code, err := coreAuthRandomCode()
+	if err != nil {
+		return nil, fmt.Errorf("flow recovery challenge: random code: %w", err)
+	}
+	token, err := coreAuthRandomToken()
+	if err != nil {
+		return nil, fmt.Errorf("flow recovery challenge: random token: %w", err)
+	}
+	now := nowUTC()
+	data := coreAuthChallengeData{
+		ID:          newUUID(),
+		ProjectID:   f.ProjectID,
+		Environment: f.Environment,
+		Type:        "password_reset",
+		Purpose:     "reset",
+		AccountID:   f.UserID,
+		Subject:     f.Contact.Email,
+		CodeHash:    coreAuthSHA256(code),
+		TokenHash:   coreAuthSHA256(token),
+		RedirectTo:  f.RedirectTo,
+		Locale:      f.Locale,
+		ExpiresAt:   now.Add(coreAuthChallengeTTL),
+		CreatedAt:   now,
+	}
+	var ch *domain.Challenge
+	if err := a.db.withTx(ctx, func(ctx context.Context) error {
+		inserted, insErr := pgCA.coreAuthInsertChallenge(ctx, data)
+		if insErr != nil {
+			return insErr
+		}
+		ch = inserted
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	ch.Code = code
+	ch.Token = token
+	return ch, nil
 }
 
 // ─── Abandon ─────────────────────────────────────────────────────────────────
@@ -717,10 +798,11 @@ func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *d
 
 	// 2. Issue email verification challenge (auto-issued per §7).
 	ch, err := a.accounts.StartEmailVerification(ctx, domain.CoreAuthVerifyStartCmd{
-		ProjectID: f.ProjectID,
-		AccountID: acct.ID,
-		Contact:   acct.PrimaryEmail,
-		Locale:    cmd.Locale,
+		ProjectID:     f.ProjectID,
+		AccountID:     acct.ID,
+		Contact:       acct.PrimaryEmail,
+		Locale:        cmd.Locale,
+		SuppressEmail: true,
 	})
 	if err != nil {
 		return nil, err
@@ -732,6 +814,8 @@ func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *d
 		ExpiresAt:    ch.ExpiresAt,
 		ResendAt:     now.Add(flowResendCooloff),
 		AttemptsLeft: flowMaxAttempts,
+		Code:         ch.Code,
+		Token:        ch.Token,
 	}
 
 	// 3. Mint token and persist the flow row.

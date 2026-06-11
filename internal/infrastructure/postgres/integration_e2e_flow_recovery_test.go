@@ -63,6 +63,12 @@ func TestE2EFlowRecoveryHappyPath(t *testing.T) {
 	if code == "" {
 		t.Fatal("verify_email: no OTP code captured from emitter")
 	}
+	if got := e2eEmitter.payloadFor(challengeID, "flow_token"); got != token1 {
+		t.Fatalf("flow email flow_token = %q, want %q", got, token1)
+	}
+	if got := e2eEmitter.payloadFor(challengeID, "token"); got == "" {
+		t.Fatal("flow email proof token is empty")
+	}
 
 	// 4. Submit verify_email with the correct code.
 	fs2, r2 := flowSubmit(t, ctx, ts, projectID, token1, "verify_email", map[string]any{"code": code})
@@ -148,6 +154,9 @@ func TestE2EFlowRecoveryVerifyEmailTokenPath(t *testing.T) {
 	emailToken := e2eEmitter.payloadFor(challengeID, "token")
 	if emailToken == "" {
 		t.Fatalf("password reset token not captured for challenge %s", challengeID)
+	}
+	if got := e2eEmitter.payloadFor(challengeID, "flow_token"); got != token1 {
+		t.Fatalf("flow email flow_token = %q, want %q", got, token1)
 	}
 
 	fs2, r2 := flowSubmit(t, ctx, ts, projectID, token1, "verify_email", map[string]any{"token": emailToken})
