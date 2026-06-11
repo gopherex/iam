@@ -515,6 +515,20 @@ func TestFlowChallenge_EncodeDecode(t *testing.T) {
 	var typ2 FlowChallenge
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestFlowChallengePublicKey_EncodeDecode(t *testing.T) {
+	var typ FlowChallengePublicKey
+	typ = make(FlowChallengePublicKey)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowChallengePublicKey
+	typ2 = make(FlowChallengePublicKey)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestFlowContact_EncodeDecode(t *testing.T) {
 	var typ FlowContact
 	typ.SetFake()
@@ -4189,6 +4203,32 @@ func TestPostV1ProjectsByProjectIdAdminServiceAccountsReq_EncodeDecode(t *testin
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 PostV1ProjectsByProjectIdAdminServiceAccountsReq
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq_EncodeDecode(t *testing.T) {
+	var typ PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData_EncodeDecode(t *testing.T) {
+	var typ PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData
+	typ = make(PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData
+	typ2 = make(PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestPostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK_EncodeDecode(t *testing.T) {

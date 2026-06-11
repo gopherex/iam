@@ -254,6 +254,7 @@ const (
 	PostV1ProjectsByProjectIdAdminServiceAccountsOperation                          OperationName = "PostV1ProjectsByProjectIdAdminServiceAccounts"
 	PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsOperation             OperationName = "PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets"
 	PostV1ProjectsByProjectIdAdminSmsProvidersOperation                             OperationName = "PostV1ProjectsByProjectIdAdminSmsProviders"
+	PostV1ProjectsByProjectIdAdminSmsProvidersSendTestOperation                     OperationName = "PostV1ProjectsByProjectIdAdminSmsProvidersSendTest"
 	PostV1ProjectsByProjectIdAdminSsoConnectionsOperation                           OperationName = "PostV1ProjectsByProjectIdAdminSsoConnections"
 	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOperation      OperationName = "PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificate"
 	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOperation             OperationName = "PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokens"

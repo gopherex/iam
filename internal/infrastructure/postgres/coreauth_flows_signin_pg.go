@@ -47,6 +47,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -86,9 +87,101 @@ func createSignin(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd d
 		return a.createSigninPhoneOTP(ctx, f, cmd)
 	case domain.FlowMethodMagicLink:
 		return a.createSigninMagicLink(ctx, f, cmd)
+	case domain.FlowMethodPasskey:
+		return a.createSigninPasskey(ctx, f, cmd)
+	case domain.FlowMethodOAuth:
+		return a.createSigninOAuth(ctx, f, cmd)
 	default:
 		return nil, domain.ErrBadRequest.WithMessage(fmt.Sprintf("unsupported signin method %q", method))
 	}
+}
+
+// createSigninPasskey begins a WebAuthn assertion and halts at collect_credentials
+// with the PublicKeyCredentialRequestOptions surfaced in the challenge; the
+// client runs navigator.credentials.get() and submits the assertion back.
+func (a *pgCoreAuthFlows) createSigninPasskey(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+	if cmd.Email == "" {
+		return nil, domain.ErrBadRequest.WithMessage("email is required for passkey signin")
+	}
+	wa := NewPgWebAuthnAccounts(a.db, a.emitter)
+	ch, err := wa.BeginLogin(ctx, f.ProjectID, cmd.Email)
+	if err != nil {
+		return nil, err
+	}
+	now := nowUTC()
+	f.Step = domain.FlowStepCollectCredentials
+	f.ActiveChallenge = &domain.FlowActiveChallenge{
+		ChallengeID:  ch.ID,
+		Channel:      domain.FlowMethodPasskey,
+		PublicKey:    ch.PublicKey,
+		ExpiresAt:    ch.ExpiresAt,
+		ResendAt:     now.Add(flowResendCooloff),
+		AttemptsLeft: flowMaxAttempts,
+	}
+	token, hash, err := flowMintToken()
+	if err != nil {
+		return nil, fmt.Errorf("flow signin create (passkey): mint token: %w", err)
+	}
+	if err := a.flowInsert(ctx, f, hash, flowData{
+		Contact:          f.Contact,
+		Collected:        f.Collected,
+		ActiveChallenge:  f.ActiveChallenge,
+		Method:           f.Method,
+		AvailableMethods: f.AvailableMethods,
+	}); err != nil {
+		return nil, err
+	}
+	return &domain.FlowState{FlowToken: token, Flow: f}, nil
+}
+
+// createSigninOAuth starts an OAuth authorization and halts at collect_credentials
+// with the provider redirect URL surfaced in the challenge. The client redirects
+// the user, then resumes the flow with action=oauth_callback{code}. The CSRF
+// state is bound server-side by StartLogin; the flow_token itself authenticates
+// the resume.
+func (a *pgCoreAuthFlows) createSigninOAuth(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+	if cmd.Provider == "" {
+		return nil, domain.ErrBadRequest.WithMessage("provider is required for oauth signin")
+	}
+	os := NewPgOAuthSocial(a.db, a.emitter)
+	state, err := coreAuthRandomToken()
+	if err != nil {
+		return nil, err
+	}
+	url, err := os.StartLogin(ctx, domain.OAuthSocialStartCmd{
+		ProjectID:  f.ProjectID,
+		Provider:   cmd.Provider,
+		State:      state,
+		RedirectTo: cmd.RedirectTo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	now := nowUTC()
+	f.Step = domain.FlowStepCollectCredentials
+	f.ActiveChallenge = &domain.FlowActiveChallenge{
+		ChallengeID:  state,
+		Channel:      domain.FlowMethodOAuth,
+		RedirectURL:  url,
+		Provider:     cmd.Provider,
+		ExpiresAt:    now.Add(flowTTL),
+		ResendAt:     now.Add(flowResendCooloff),
+		AttemptsLeft: flowMaxAttempts,
+	}
+	token, hash, err := flowMintToken()
+	if err != nil {
+		return nil, fmt.Errorf("flow signin create (oauth): mint token: %w", err)
+	}
+	if err := a.flowInsert(ctx, f, hash, flowData{
+		Contact:          f.Contact,
+		Collected:        f.Collected,
+		ActiveChallenge:  f.ActiveChallenge,
+		Method:           f.Method,
+		AvailableMethods: f.AvailableMethods,
+	}); err != nil {
+		return nil, err
+	}
+	return &domain.FlowState{FlowToken: token, Flow: f}, nil
 }
 
 // createSigninPassword authenticates the password credential; if MFA is required
@@ -276,9 +369,61 @@ func advanceSignin(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 			return nil, domain.ErrBadRequest.WithMessage(`expected action "verify_email" at step verify_email`)
 		}
 		return a.signinVerifyMagicLink(ctx, row, f, cmd)
+	case domain.FlowStepCollectCredentials:
+		switch cmd.Action {
+		case "verify_passkey":
+			return a.signinVerifyPasskey(ctx, row, f, cmd)
+		case "oauth_callback":
+			return a.signinOAuthCallback(ctx, row, f, cmd)
+		default:
+			return nil, domain.ErrBadRequest.WithMessage(`expected action "verify_passkey" or "oauth_callback" at step collect_credentials`)
+		}
 	default:
 		return nil, domain.ErrBadRequest.WithMessage(fmt.Sprintf("unexpected step %q for signin", f.Step))
 	}
+}
+
+// signinVerifyPasskey finishes the WebAuthn assertion: it parses the credential
+// JSON the client submitted and, on success, completes the flow with the minted
+// session.
+func (a *pgCoreAuthFlows) signinVerifyPasskey(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+	ac := f.ActiveChallenge
+	if ac == nil {
+		return nil, domain.ErrBadRequest.WithMessage("no active passkey challenge")
+	}
+	raw := cmd.Payload["credential"]
+	if raw == "" {
+		return nil, domain.ErrBadRequest.WithMessage("credential is required")
+	}
+	var cred map[string]any
+	if err := json.Unmarshal([]byte(raw), &cred); err != nil {
+		return nil, domain.ErrBadRequest.WithMessage("credential must be a JSON object")
+	}
+	wa := NewPgWebAuthnAccounts(a.db, a.emitter)
+	_, sess, err := wa.FinishLogin(ctx, ac.ChallengeID, cred)
+	if err != nil {
+		return a.signinWrongCode(ctx, row, f, cmd, "Passkey verification failed.")
+	}
+	return a.signinCompleteWithSession(ctx, row, f, sess)
+}
+
+// signinOAuthCallback exchanges the provider authorization code (returned to the
+// client and submitted back) for a session, completing the flow.
+func (a *pgCoreAuthFlows) signinOAuthCallback(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+	ac := f.ActiveChallenge
+	if ac == nil {
+		return nil, domain.ErrBadRequest.WithMessage("no active oauth challenge")
+	}
+	code := cmd.Payload["code"]
+	if code == "" {
+		return nil, domain.ErrBadRequest.WithMessage("code is required")
+	}
+	os := NewPgOAuthSocial(a.db, a.emitter)
+	_, sess, err := os.CompleteLogin(ctx, f.ProjectID, ac.Provider, code)
+	if err != nil {
+		return a.signinWrongCode(ctx, row, f, cmd, "OAuth sign-in failed.")
+	}
+	return a.signinCompleteWithSession(ctx, row, f, sess)
 }
 
 // signinVerifyMFA verifies the MFA code via mfa.Verify. On success it rotates

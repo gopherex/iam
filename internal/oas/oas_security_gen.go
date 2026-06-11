@@ -167,6 +167,7 @@ var operationRolesAdminToken = map[string][]string{
 	PostV1ProjectsByProjectIdAdminServiceAccountsOperation:                          []string{},
 	PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsOperation:             []string{},
 	PostV1ProjectsByProjectIdAdminSmsProvidersOperation:                             []string{},
+	PostV1ProjectsByProjectIdAdminSmsProvidersSendTestOperation:                     []string{},
 	PostV1ProjectsByProjectIdAdminSsoConnectionsOperation:                           []string{},
 	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOperation:      []string{},
 	PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOperation:             []string{},

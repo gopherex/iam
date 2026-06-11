@@ -1894,6 +1894,12 @@ type FlowChallenge struct {
 	ExpiresAt    OptTimestamp `json:"expires_at"`
 	ResendAt     OptTimestamp `json:"resend_at"`
 	AttemptsLeft OptInt       `json:"attempts_left"`
+	// WebAuthn PublicKeyCredentialRequestOptions for the passkey method; the client passes these to
+	// navigator.credentials.get().
+	PublicKey OptFlowChallengePublicKey `json:"public_key"`
+	// Provider authorization URL for the oauth method; the client redirects the user here and resumes
+	// the flow with the returned code.
+	RedirectURL OptString `json:"redirect_url"`
 }
 
 // GetChannel returns the value of Channel.
@@ -1916,6 +1922,16 @@ func (s *FlowChallenge) GetAttemptsLeft() OptInt {
 	return s.AttemptsLeft
 }
 
+// GetPublicKey returns the value of PublicKey.
+func (s *FlowChallenge) GetPublicKey() OptFlowChallengePublicKey {
+	return s.PublicKey
+}
+
+// GetRedirectURL returns the value of RedirectURL.
+func (s *FlowChallenge) GetRedirectURL() OptString {
+	return s.RedirectURL
+}
+
 // SetChannel sets the value of Channel.
 func (s *FlowChallenge) SetChannel(val OptString) {
 	s.Channel = val
@@ -1934,6 +1950,29 @@ func (s *FlowChallenge) SetResendAt(val OptTimestamp) {
 // SetAttemptsLeft sets the value of AttemptsLeft.
 func (s *FlowChallenge) SetAttemptsLeft(val OptInt) {
 	s.AttemptsLeft = val
+}
+
+// SetPublicKey sets the value of PublicKey.
+func (s *FlowChallenge) SetPublicKey(val OptFlowChallengePublicKey) {
+	s.PublicKey = val
+}
+
+// SetRedirectURL sets the value of RedirectURL.
+func (s *FlowChallenge) SetRedirectURL(val OptString) {
+	s.RedirectURL = val
+}
+
+// WebAuthn PublicKeyCredentialRequestOptions for the passkey method; the client passes these to
+// navigator.credentials.get().
+type FlowChallengePublicKey map[string]jx.Raw
+
+func (s *FlowChallengePublicKey) init() FlowChallengePublicKey {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
 }
 
 // Masked contact so the client can render targets without storing them.
@@ -1966,12 +2005,14 @@ func (s *FlowContact) SetPhoneMasked(val OptString) {
 // Ref: #/components/schemas/FlowCreateRequest
 type FlowCreateRequest struct {
 	Kind FlowCreateRequestKind `json:"kind"`
-	// Authentication method to drive the flow. Signin supports password (default), phone_otp and
-	// magic_link. Recovery supports email (default) and phone_otp. Ignored for signup.
+	// Authentication method to drive the flow. Signin supports password (default), phone_otp, magic_link,
+	//  passkey and oauth. Recovery supports email (default) and phone_otp. Ignored for signup.
 	Method OptFlowCreateRequestMethod `json:"method"`
 	Email  OptString                  `json:"email"`
 	// E.164 phone number for the phone_otp method (signin/recovery).
-	Phone        OptString `json:"phone"`
+	Phone OptString `json:"phone"`
+	// OAuth provider id for the oauth signin method.
+	Provider     OptString `json:"provider"`
 	Password     OptString `json:"password"`
 	Name         OptString `json:"name"`
 	CaptchaToken OptString `json:"captcha_token"`
@@ -2007,6 +2048,11 @@ func (s *FlowCreateRequest) GetEmail() OptString {
 // GetPhone returns the value of Phone.
 func (s *FlowCreateRequest) GetPhone() OptString {
 	return s.Phone
+}
+
+// GetProvider returns the value of Provider.
+func (s *FlowCreateRequest) GetProvider() OptString {
+	return s.Provider
 }
 
 // GetPassword returns the value of Password.
@@ -2057,6 +2103,11 @@ func (s *FlowCreateRequest) SetEmail(val OptString) {
 // SetPhone sets the value of Phone.
 func (s *FlowCreateRequest) SetPhone(val OptString) {
 	s.Phone = val
+}
+
+// SetProvider sets the value of Provider.
+func (s *FlowCreateRequest) SetProvider(val OptString) {
+	s.Provider = val
 }
 
 // SetPassword sets the value of Password.
@@ -2144,14 +2195,17 @@ func (s *FlowCreateRequestKind) UnmarshalText(data []byte) error {
 	}
 }
 
-// Authentication method to drive the flow. Signin supports password (default), phone_otp and
-// magic_link. Recovery supports email (default) and phone_otp. Ignored for signup.
+// Authentication method to drive the flow. Signin supports password (default), phone_otp, magic_link,
+//
+//	passkey and oauth. Recovery supports email (default) and phone_otp. Ignored for signup.
 type FlowCreateRequestMethod string
 
 const (
 	FlowCreateRequestMethodPassword  FlowCreateRequestMethod = "password"
 	FlowCreateRequestMethodPhoneOtp  FlowCreateRequestMethod = "phone_otp"
 	FlowCreateRequestMethodMagicLink FlowCreateRequestMethod = "magic_link"
+	FlowCreateRequestMethodPasskey   FlowCreateRequestMethod = "passkey"
+	FlowCreateRequestMethodOAuth     FlowCreateRequestMethod = "oauth"
 )
 
 // AllValues returns all FlowCreateRequestMethod values.
@@ -2160,6 +2214,8 @@ func (FlowCreateRequestMethod) AllValues() []FlowCreateRequestMethod {
 		FlowCreateRequestMethodPassword,
 		FlowCreateRequestMethodPhoneOtp,
 		FlowCreateRequestMethodMagicLink,
+		FlowCreateRequestMethodPasskey,
+		FlowCreateRequestMethodOAuth,
 	}
 }
 
@@ -2171,6 +2227,10 @@ func (s FlowCreateRequestMethod) MarshalText() ([]byte, error) {
 	case FlowCreateRequestMethodPhoneOtp:
 		return []byte(s), nil
 	case FlowCreateRequestMethodMagicLink:
+		return []byte(s), nil
+	case FlowCreateRequestMethodPasskey:
+		return []byte(s), nil
+	case FlowCreateRequestMethodOAuth:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -2188,6 +2248,12 @@ func (s *FlowCreateRequestMethod) UnmarshalText(data []byte) error {
 		return nil
 	case FlowCreateRequestMethodMagicLink:
 		*s = FlowCreateRequestMethodMagicLink
+		return nil
+	case FlowCreateRequestMethodPasskey:
+		*s = FlowCreateRequestMethodPasskey
+		return nil
+	case FlowCreateRequestMethodOAuth:
+		*s = FlowCreateRequestMethodOAuth
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -6896,6 +6962,52 @@ func (o OptFlowChallenge) Or(d FlowChallenge) FlowChallenge {
 	return d
 }
 
+// NewOptFlowChallengePublicKey returns new OptFlowChallengePublicKey with value set to v.
+func NewOptFlowChallengePublicKey(v FlowChallengePublicKey) OptFlowChallengePublicKey {
+	return OptFlowChallengePublicKey{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFlowChallengePublicKey is optional FlowChallengePublicKey.
+type OptFlowChallengePublicKey struct {
+	Value FlowChallengePublicKey
+	Set   bool
+}
+
+// IsSet returns true if OptFlowChallengePublicKey was set.
+func (o OptFlowChallengePublicKey) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFlowChallengePublicKey) Reset() {
+	var v FlowChallengePublicKey
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFlowChallengePublicKey) SetTo(v FlowChallengePublicKey) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFlowChallengePublicKey) Get() (v FlowChallengePublicKey, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFlowChallengePublicKey) Or(d FlowChallengePublicKey) FlowChallengePublicKey {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptFlowContact returns new OptFlowContact with value set to v.
 func NewOptFlowContact(v FlowContact) OptFlowContact {
 	return OptFlowContact{
@@ -9514,6 +9626,52 @@ func (o OptPostV1ProjectsByProjectIdAdminJwksRotateReq) Get() (v PostV1ProjectsB
 
 // Or returns value if set, or given parameter if does not.
 func (o OptPostV1ProjectsByProjectIdAdminJwksRotateReq) Or(d PostV1ProjectsByProjectIdAdminJwksRotateReq) PostV1ProjectsByProjectIdAdminJwksRotateReq {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData returns new OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData with value set to v.
+func NewOptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData(v PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData {
+	return OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData is optional PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData.
+type OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData struct {
+	Value PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData
+	Set   bool
+}
+
+// IsSet returns true if OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData was set.
+func (o OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) Reset() {
+	var v PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) SetTo(v PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) Get() (v PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) Or(d PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -16193,6 +16351,65 @@ func (s *PostV1ProjectsByProjectIdAdminServiceAccountsReq) SetName(val string) {
 // SetScopes sets the value of Scopes.
 func (s *PostV1ProjectsByProjectIdAdminServiceAccountsReq) SetScopes(val []string) {
 	s.Scopes = val
+}
+
+type PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq struct {
+	// E.164 destination phone number.
+	To         string                                                       `json:"to"`
+	TemplateID OptString                                                    `json:"template_id"`
+	Locale     OptString                                                    `json:"locale"`
+	Data       OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData `json:"data"`
+}
+
+// GetTo returns the value of To.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) GetTo() string {
+	return s.To
+}
+
+// GetTemplateID returns the value of TemplateID.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) GetTemplateID() OptString {
+	return s.TemplateID
+}
+
+// GetLocale returns the value of Locale.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) GetLocale() OptString {
+	return s.Locale
+}
+
+// GetData returns the value of Data.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) GetData() OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData {
+	return s.Data
+}
+
+// SetTo sets the value of To.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) SetTo(val string) {
+	s.To = val
+}
+
+// SetTemplateID sets the value of TemplateID.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) SetTemplateID(val OptString) {
+	s.TemplateID = val
+}
+
+// SetLocale sets the value of Locale.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) SetLocale(val OptString) {
+	s.Locale = val
+}
+
+// SetData sets the value of Data.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) SetData(val OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) {
+	s.Data = val
+}
+
+type PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData map[string]jx.Raw
+
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) init() PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
 }
 
 type PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK struct {

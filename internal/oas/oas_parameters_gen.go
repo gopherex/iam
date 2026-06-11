@@ -42366,6 +42366,170 @@ func decodePostV1ProjectsByProjectIdAdminSmsProvidersParams(args [1]string, args
 	return params, nil
 }
 
+// PostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams is parameters of postV1ProjectsByProjectIdAdminSmsProvidersSendTest operation.
+type PostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams struct {
+	ProjectID string
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
+}
+
+func unpackPostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams(packed middleware.Parameters) (params PostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project_id",
+			In:   "path",
+		}
+		params.ProjectID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodePostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams(args [1]string, argsEscaped bool, r *http.Request) (params PostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode path: project_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ProjectID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     256,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.ProjectID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // PostV1ProjectsByProjectIdAdminSsoConnectionsParams is parameters of postV1ProjectsByProjectIdAdminSsoConnections operation.
 type PostV1ProjectsByProjectIdAdminSsoConnectionsParams struct {
 	// Optional key to safely retry a create without duplicating it.

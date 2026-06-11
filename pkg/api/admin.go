@@ -124,6 +124,7 @@ type AdminConfig interface {
 	UpdateEmailTemplate(ctx context.Context, cmd domain.AdminTemplateUpdateCmd) (map[string]jx.Raw, error)
 	PreviewEmailTemplate(ctx context.Context, cmd domain.AdminTemplatePreviewCmd) (*domain.AdminTemplatePreview, error)
 	SendTestEmail(ctx context.Context, cmd domain.AdminTemplateSendTestCmd) error
+	SendTestSMS(ctx context.Context, cmd domain.AdminTemplateSendTestCmd) error
 }
 
 // AdminKeys is the signing-key (JWKS) + token-profile administration slice.
@@ -898,6 +899,23 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(
 		ProjectID:   params.ProjectID,
 		Environment: params.XEnvironment.Or(""),
 		TemplateID:  params.ID,
+		To:          req.To,
+		Locale:      req.Locale.Or(""),
+		Data:        map[string]jx.Raw(req.Data.Or(nil)),
+	}); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminSmsProvidersSendTest(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq, params oas.PostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams) (r *oas.Ok, _ error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Config.SendTestSMS(ctx, domain.AdminTemplateSendTestCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		TemplateID:  req.TemplateID.Or(""),
 		To:          req.To,
 		Locale:      req.Locale.Or(""),
 		Data:        map[string]jx.Raw(req.Data.Or(nil)),

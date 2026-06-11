@@ -76,6 +76,8 @@ const (
 	FlowMethodPassword  = "password"
 	FlowMethodPhoneOTP  = "phone_otp"
 	FlowMethodMagicLink = "magic_link"
+	FlowMethodPasskey   = "passkey"
+	FlowMethodOAuth     = "oauth"
 	FlowMethodEmail     = "email" // recovery default channel
 )
 
@@ -99,10 +101,18 @@ type FlowCollected struct {
 // only the display / gate fields.
 type FlowActiveChallenge struct {
 	ChallengeID  string    `json:"challenge_id"`
-	Channel      string    `json:"channel"` // email | sms | whatsapp
+	Channel      string    `json:"channel"` // email | sms | whatsapp | passkey | oauth
 	ExpiresAt    time.Time `json:"expires_at"`
 	ResendAt     time.Time `json:"resend_at"`
 	AttemptsLeft int       `json:"attempts_left"`
+	// PublicKey carries WebAuthn PublicKeyCredentialRequestOptions for the
+	// passkey method (so the client can call navigator.credentials.get()).
+	PublicKey map[string]any `json:"public_key,omitempty"`
+	// RedirectURL is the provider authorization URL for the oauth method.
+	RedirectURL string `json:"redirect_url,omitempty"`
+	// Provider is the oauth provider id, carried so the callback step can
+	// complete the exchange. Internal only (not surfaced).
+	Provider string `json:"provider,omitempty"`
 }
 
 // FlowConsentRef is a consent document reference embedded in the flow data.
@@ -141,6 +151,8 @@ type FlowCreateCmd struct {
 	Method string
 	// Phone is the E.164 number for the phone_otp method.
 	Phone string
+	// Provider is the OAuth provider id for the oauth signin method.
+	Provider string
 	// RedirectTo optionally overrides the cross-device "continue" deep-link base
 	// for this flow. The notification layer only honours it when its origin
 	// (scheme+host) matches the project's configured app_base_url; otherwise it

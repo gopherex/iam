@@ -7,7 +7,10 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
+
+	"github.com/go-faster/jx"
 
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
@@ -63,6 +66,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.Flow
 		Method:       string(req.Method.Or("")),
 		Email:        req.Email.Or(""),
 		Phone:        req.Phone.Or(""),
+		Provider:     req.Provider.Or(""),
 		Password:     req.Password.Or(""),
 		Name:         req.Name.Or(""),
 		CaptchaToken: req.CaptchaToken.Or(""),
@@ -177,12 +181,25 @@ func oasFlowState(fs *domain.FlowState) *oas.FlowState {
 	}
 	// Active challenge (if any).
 	if ac := f.ActiveChallenge; ac != nil {
-		out.Challenge = oas.NewOptFlowChallenge(oas.FlowChallenge{
+		fc := oas.FlowChallenge{
 			Channel:      oas.NewOptString(ac.Channel),
 			ExpiresAt:    oas.NewOptTimestamp(oas.Timestamp(ac.ExpiresAt)),
 			ResendAt:     oas.NewOptTimestamp(oas.Timestamp(ac.ResendAt)),
 			AttemptsLeft: oas.NewOptInt(ac.AttemptsLeft),
-		})
+		}
+		if len(ac.PublicKey) > 0 {
+			pk := make(oas.FlowChallengePublicKey, len(ac.PublicKey))
+			for k, v := range ac.PublicKey {
+				if b, err := json.Marshal(v); err == nil {
+					pk[k] = jx.Raw(b)
+				}
+			}
+			fc.PublicKey = oas.NewOptFlowChallengePublicKey(pk)
+		}
+		if ac.RedirectURL != "" {
+			fc.RedirectURL = oas.NewOptString(ac.RedirectURL)
+		}
+		out.Challenge = oas.NewOptFlowChallenge(fc)
 	}
 	// Consents.
 	if len(f.ConsentsRequired) > 0 {

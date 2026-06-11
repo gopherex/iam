@@ -4156,13 +4156,27 @@ func (s *FlowChallenge) encodeFields(e *jx.Encoder) {
 			s.AttemptsLeft.Encode(e)
 		}
 	}
+	{
+		if s.PublicKey.Set {
+			e.FieldStart("public_key")
+			s.PublicKey.Encode(e)
+		}
+	}
+	{
+		if s.RedirectURL.Set {
+			e.FieldStart("redirect_url")
+			s.RedirectURL.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfFlowChallenge = [4]string{
+var jsonFieldsNameOfFlowChallenge = [6]string{
 	0: "channel",
 	1: "expires_at",
 	2: "resend_at",
 	3: "attempts_left",
+	4: "public_key",
+	5: "redirect_url",
 }
 
 // Decode decodes FlowChallenge from json.
@@ -4213,6 +4227,26 @@ func (s *FlowChallenge) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"attempts_left\"")
 			}
+		case "public_key":
+			if err := func() error {
+				s.PublicKey.Reset()
+				if err := s.PublicKey.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"public_key\"")
+			}
+		case "redirect_url":
+			if err := func() error {
+				s.RedirectURL.Reset()
+				if err := s.RedirectURL.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"redirect_url\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -4233,6 +4267,64 @@ func (s *FlowChallenge) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *FlowChallenge) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s FlowChallengePublicKey) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields implements json.Marshaler.
+func (s FlowChallengePublicKey) encodeFields(e *jx.Encoder) {
+	for k, elem := range s {
+		e.FieldStart(k)
+
+		if len(elem) != 0 {
+			e.Raw(elem)
+		}
+	}
+}
+
+// Decode decodes FlowChallengePublicKey from json.
+func (s *FlowChallengePublicKey) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FlowChallengePublicKey to nil")
+	}
+	m := s.init()
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		var elem jx.Raw
+		if err := func() error {
+			v, err := d.RawAppend(nil)
+			elem = jx.Raw(v)
+			if err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return errors.Wrapf(err, "decode field %q", k)
+		}
+		m[string(k)] = elem
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FlowChallengePublicKey")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s FlowChallengePublicKey) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FlowChallengePublicKey) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -4349,6 +4441,12 @@ func (s *FlowCreateRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Provider.Set {
+			e.FieldStart("provider")
+			s.Provider.Encode(e)
+		}
+	}
+	{
 		if s.Password.Set {
 			e.FieldStart("password")
 			s.Password.Encode(e)
@@ -4386,17 +4484,18 @@ func (s *FlowCreateRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfFlowCreateRequest = [10]string{
-	0: "kind",
-	1: "method",
-	2: "email",
-	3: "phone",
-	4: "password",
-	5: "name",
-	6: "captcha_token",
-	7: "redirect_to",
-	8: "locale",
-	9: "invite_token",
+var jsonFieldsNameOfFlowCreateRequest = [11]string{
+	0:  "kind",
+	1:  "method",
+	2:  "email",
+	3:  "phone",
+	4:  "provider",
+	5:  "password",
+	6:  "name",
+	7:  "captcha_token",
+	8:  "redirect_to",
+	9:  "locale",
+	10: "invite_token",
 }
 
 // Decode decodes FlowCreateRequest from json.
@@ -4447,6 +4546,16 @@ func (s *FlowCreateRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"phone\"")
+			}
+		case "provider":
+			if err := func() error {
+				s.Provider.Reset()
+				if err := s.Provider.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"provider\"")
 			}
 		case "password":
 			if err := func() error {
@@ -4631,6 +4740,10 @@ func (s *FlowCreateRequestMethod) Decode(d *jx.Decoder) error {
 		*s = FlowCreateRequestMethodPhoneOtp
 	case FlowCreateRequestMethodMagicLink:
 		*s = FlowCreateRequestMethodMagicLink
+	case FlowCreateRequestMethodPasskey:
+		*s = FlowCreateRequestMethodPasskey
+	case FlowCreateRequestMethodOAuth:
+		*s = FlowCreateRequestMethodOAuth
 	default:
 		*s = FlowCreateRequestMethod(v)
 	}
@@ -14731,6 +14844,40 @@ func (s *OptFlowChallenge) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes FlowChallengePublicKey as json.
+func (o OptFlowChallengePublicKey) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes FlowChallengePublicKey from json.
+func (o *OptFlowChallengePublicKey) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptFlowChallengePublicKey to nil")
+	}
+	o.Set = true
+	o.Value = make(FlowChallengePublicKey)
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptFlowChallengePublicKey) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptFlowChallengePublicKey) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes FlowContact as json.
 func (o OptFlowContact) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -16675,6 +16822,40 @@ func (s OptPostV1ProjectsByProjectIdAdminJwksRotateReq) MarshalJSON() ([]byte, e
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptPostV1ProjectsByProjectIdAdminJwksRotateReq) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData as json.
+func (o OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData from json.
+func (o *OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData to nil")
+	}
+	o.Set = true
+	o.Value = make(PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData)
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -33402,6 +33583,211 @@ func (s *PostV1ProjectsByProjectIdAdminServiceAccountsReq) MarshalJSON() ([]byte
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *PostV1ProjectsByProjectIdAdminServiceAccountsReq) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("to")
+		e.Str(s.To)
+	}
+	{
+		if s.TemplateID.Set {
+			e.FieldStart("template_id")
+			s.TemplateID.Encode(e)
+		}
+	}
+	{
+		if s.Locale.Set {
+			e.FieldStart("locale")
+			s.Locale.Encode(e)
+		}
+	}
+	{
+		if s.Data.Set {
+			e.FieldStart("data")
+			s.Data.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq = [4]string{
+	0: "to",
+	1: "template_id",
+	2: "locale",
+	3: "data",
+}
+
+// Decode decodes PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq from json.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "to":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.To = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"to\"")
+			}
+		case "template_id":
+			if err := func() error {
+				s.TemplateID.Reset()
+				if err := s.TemplateID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"template_id\"")
+			}
+		case "locale":
+			if err := func() error {
+				s.Locale.Reset()
+				if err := s.Locale.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"locale\"")
+			}
+		case "data":
+			if err := func() error {
+				s.Data.Reset()
+				if err := s.Data.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"data\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) {
+					name = jsonFieldsNameOfPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields implements json.Marshaler.
+func (s PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) encodeFields(e *jx.Encoder) {
+	for k, elem := range s {
+		e.FieldStart(k)
+
+		if len(elem) != 0 {
+			e.Raw(elem)
+		}
+	}
+}
+
+// Decode decodes PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData from json.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData to nil")
+	}
+	m := s.init()
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		var elem jx.Raw
+		if err := func() error {
+			v, err := d.RawAppend(nil)
+			elem = jx.Raw(v)
+			if err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return errors.Wrapf(err, "decode field %q", k)
+		}
+		m[string(k)] = elem
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

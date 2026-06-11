@@ -684,6 +684,12 @@ type AdminHandler interface {
 	//
 	// POST /v1/projects/{project_id}/admin/sms-providers
 	PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, req *SmsProvider, params PostV1ProjectsByProjectIdAdminSmsProvidersParams) (*SmsProvider, error)
+	// PostV1ProjectsByProjectIdAdminSmsProvidersSendTest implements postV1ProjectsByProjectIdAdminSmsProvidersSendTest operation.
+	//
+	// Send a test SMS via the enabled SMS provider.
+	//
+	// POST /v1/projects/{project_id}/admin/sms-providers/send-test
+	PostV1ProjectsByProjectIdAdminSmsProvidersSendTest(ctx context.Context, req *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq, params PostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams) (*Ok, error)
 	// PostV1ProjectsByProjectIdAdminTokenProfiles implements postV1ProjectsByProjectIdAdminTokenProfiles operation.
 	//
 	// Create a token profile.

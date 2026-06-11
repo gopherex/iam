@@ -2248,6 +2248,15 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSmsProviders(ctx conte
 	return r, ht.ErrNotImplemented
 }
 
+// PostV1ProjectsByProjectIdAdminSmsProvidersSendTest implements postV1ProjectsByProjectIdAdminSmsProvidersSendTest operation.
+//
+// Send a test SMS via the enabled SMS provider.
+//
+// POST /v1/projects/{project_id}/admin/sms-providers/send-test
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminSmsProvidersSendTest(ctx context.Context, req *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq, params PostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams) (r *Ok, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // PostV1ProjectsByProjectIdAdminSsoConnections implements postV1ProjectsByProjectIdAdminSsoConnections operation.
 //
 // Create an SSO connection.

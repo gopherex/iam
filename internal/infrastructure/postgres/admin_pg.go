@@ -1850,6 +1850,44 @@ func (a *pgAdminConfig) SendTestEmail(ctx context.Context, cmd domain.AdminTempl
 	return nil
 }
 
+// SendTestSMS emits a config.test_sms_requested event so the notification
+// publisher delivers a test SMS through the project's enabled SMS provider.
+// Mirrors SendTestEmail; the template defaults to "otp" and a sample code is
+// injected so the rendered body is non-empty.
+func (a *pgAdminConfig) SendTestSMS(ctx context.Context, cmd domain.AdminTemplateSendTestCmd) error {
+	ok, err := a.hasEnabledProvider(ctx, cmd.ProjectID, "sms")
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return domain.ErrValidation.WithMessage("enabled sms provider is required")
+	}
+	tmpl := cmd.TemplateID
+	if tmpl == "" {
+		tmpl = "otp"
+	}
+	data := adminTemplateData(cmd.Data)
+	if data == nil {
+		data = map[string]any{}
+	}
+	if _, has := data["code"]; !has {
+		data["code"] = "123456"
+	}
+	return a.emitter.Emit(ctx, domain.Event{
+		Type:        "config.test_sms_requested",
+		ProjectID:   cmd.ProjectID,
+		Environment: adminEnv(cmd.Environment),
+		AggregateID: tmpl,
+		Payload: map[string]any{
+			"project_id":    cmd.ProjectID,
+			"template_id":   tmpl,
+			"to":            cmd.To,
+			"locale":        cmd.Locale,
+			"template_data": data,
+		},
+	})
+}
+
 func (a *pgAdminConfig) hasEnabledProvider(ctx context.Context, projectID, kind string) (bool, error) {
 	rows, err := models.IamProviders.Query(
 		sm.Where(models.IamProviders.Columns.ProjectID.EQ(psql.Arg(projectID))),

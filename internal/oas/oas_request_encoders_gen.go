@@ -2172,6 +2172,20 @@ func encodePostV1ProjectsByProjectIdAdminSmsProvidersRequest(
 	return nil
 }
 
+func encodePostV1ProjectsByProjectIdAdminSmsProvidersSendTestRequest(
+	req *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodePostV1ProjectsByProjectIdAdminSsoConnectionsRequest(
 	req *PostV1ProjectsByProjectIdAdminSsoConnectionsReq,
 	r *http.Request,

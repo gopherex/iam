@@ -823,6 +823,27 @@ func (s *FlowChallenge) SetFake() {
 			s.AttemptsLeft.SetFake()
 		}
 	}
+	{
+		{
+			s.PublicKey.SetFake()
+		}
+	}
+	{
+		{
+			s.RedirectURL.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *FlowChallengePublicKey) SetFake() {
+	var (
+		elem jx.Raw
+		m    map[string]jx.Raw = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
+	}
 }
 
 // SetFake set fake values.
@@ -859,6 +880,11 @@ func (s *FlowCreateRequest) SetFake() {
 	{
 		{
 			s.Phone.SetFake()
+		}
+	}
+	{
+		{
+			s.Provider.SetFake()
 		}
 	}
 	{
@@ -2958,6 +2984,15 @@ func (s *OptFlowChallenge) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptFlowChallengePublicKey) SetFake() {
+	var elem FlowChallengePublicKey
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
 func (s *OptFlowContact) SetFake() {
 	var elem FlowContact
 	{
@@ -3413,6 +3448,15 @@ func (s *OptPostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReqParams) S
 // SetFake set fake values.
 func (s *OptPostV1ProjectsByProjectIdAdminJwksRotateReq) SetFake() {
 	var elem PostV1ProjectsByProjectIdAdminJwksRotateReq
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptPostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) SetFake() {
+	var elem PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData
 	{
 		elem.SetFake()
 	}
@@ -6310,6 +6354,41 @@ func (s *PostV1ProjectsByProjectIdAdminServiceAccountsReq) SetFake() {
 				s.Scopes = append(s.Scopes, elem)
 			}
 		}
+	}
+}
+
+// SetFake set fake values.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq) SetFake() {
+	{
+		{
+			s.To = "string"
+		}
+	}
+	{
+		{
+			s.TemplateID.SetFake()
+		}
+	}
+	{
+		{
+			s.Locale.SetFake()
+		}
+	}
+	{
+		{
+			s.Data.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReqData) SetFake() {
+	var (
+		elem jx.Raw
+		m    map[string]jx.Raw = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
 	}
 }
 
