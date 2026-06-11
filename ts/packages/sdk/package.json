@@ -1,6 +1,6 @@
 {
   "name": "@gopherex/iam-sdk",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "TypeScript SDK for the IAM API, generated from openapi/openapi.yaml.",
   "license": "UNLICENSED",
   "type": "module",
