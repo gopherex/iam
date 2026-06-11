@@ -1389,8 +1389,10 @@ func (a *pgAdminConfig) PutI18n(ctx context.Context, cmd domain.AdminI18nUpdateC
 // adminProviderData mirrors the provider config persisted in the iam_providers
 // data envelope; the kind/provider/enabled columns are lookup-only.
 type adminProviderData struct {
-	Type   string            `json:"type"`
-	Config map[string]jx.Raw `json:"config"`
+	Type string `json:"type"`
+	// Config is stored as json.RawMessage (not jx.Raw) so json.Marshal writes the
+	// values verbatim. jx.Raw is a bare []byte alias and would be base64-encoded.
+	Config map[string]json.RawMessage `json:"config"`
 }
 
 func (a *pgAdminConfig) listProviders(ctx context.Context, projectID, kind string) ([]domain.AdminProvider, error) {
@@ -1420,7 +1422,7 @@ func adminProviderToDomain(cipher Cipher, row *models.IamProvider) (domain.Admin
 			if d.Type != "" {
 				p.Type = d.Type
 			}
-			cfg, err := decryptProviderConfig(cipher, d.Config)
+			cfg, err := decryptProviderConfig(cipher, jsonToRaw(d.Config))
 			if err != nil {
 				return domain.AdminProvider{}, err
 			}
@@ -1440,7 +1442,7 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 		if err != nil {
 			return nil, err
 		}
-		d := adminProviderData{Type: cmd.Type, Config: encCfg}
+		d := adminProviderData{Type: cmd.Type, Config: rawToJSON(encCfg)}
 		raw, err := json.Marshal(d)
 		if err != nil {
 			return nil, err
@@ -1489,7 +1491,7 @@ func (a *pgAdminConfig) updateProvider(ctx context.Context, kind string, cmd dom
 		if err != nil {
 			return nil, err
 		}
-		d := adminProviderData{Type: cmd.Type, Config: encCfg}
+		d := adminProviderData{Type: cmd.Type, Config: rawToJSON(encCfg)}
 		raw, err := json.Marshal(d)
 		if err != nil {
 			return nil, err

@@ -14,19 +14,19 @@ import "time"
 type Event struct {
 	// ID is the unique event id (uuid). Consumers deduplicate on it because
 	// outbox delivery is at-least-once.
-	ID string
+	ID string `json:"id"`
 	// Type is the event name, "<aggregate>.<verb>" (e.g. "api_key.created").
-	Type string
+	Type string `json:"type"`
 	// ProjectID is the owning tenant; used as the outbox partition key so events
 	// for one project stay ordered.
-	ProjectID string
+	ProjectID string `json:"project_id"`
 	// Environment is the project environment (live/…); empty when not applicable.
-	Environment string
+	Environment string `json:"environment"`
 	// AggregateID is the id of the affected aggregate instance.
-	AggregateID string
+	AggregateID string `json:"aggregate_id"`
 	// OccurredAt is when the event happened (UTC).
-	OccurredAt time.Time
+	OccurredAt time.Time `json:"occurred_at"`
 	// Payload is the aggregate snapshot (or, for delivery events, the dispatch
 	// envelope). JSON-serialised into the outbox message body.
-	Payload any
+	Payload any `json:"payload"`
 }

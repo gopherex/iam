@@ -68,3 +68,31 @@ func encryptProviderConfig(c Cipher, cfg map[string]jx.Raw) (map[string]jx.Raw, 
 func decryptProviderConfig(c Cipher, cfg map[string]jx.Raw) (map[string]jx.Raw, error) {
 	return providerConfigCrypt(cfg, c.Decrypt)
 }
+
+// rawToJSON / jsonToRaw bridge the domain config map (jx.Raw) and the at-rest
+// storage map (json.RawMessage). jx.Raw is a plain []byte alias with no
+// MarshalJSON, so json.Marshal would base64-encode each value; json.RawMessage
+// marshals verbatim. Storing as json.RawMessage keeps iam_providers.data real
+// JSON so every reader (admin API and the notification publisher alike) gets the
+// clear config values, not base64.
+func rawToJSON(in map[string]jx.Raw) map[string]json.RawMessage {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]json.RawMessage, len(in))
+	for k, v := range in {
+		out[k] = json.RawMessage(v)
+	}
+	return out
+}
+
+func jsonToRaw(in map[string]json.RawMessage) map[string]jx.Raw {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]jx.Raw, len(in))
+	for k, v := range in {
+		out[k] = jx.Raw(v)
+	}
+	return out
+}
