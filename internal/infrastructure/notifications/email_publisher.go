@@ -438,10 +438,18 @@ func (p *Publisher) decodeSMTPConfig(raw map[string]json.RawMessage) (*smtpConfi
 		From:     rawString(raw, "from"),
 		FromName: rawString(raw, "from_name"),
 		Secure:   rawBool(raw, "secure") || rawBool(raw, "ssl"),
-		StartTLS: rawBool(raw, "start_tls") || rawBool(raw, "tls") || !rawBool(raw, "secure"),
 	}
 	if cfg.Port == 465 {
 		cfg.Secure = true
+	}
+	// STARTTLS defaults on for non-implicit-TLS connections (required at connect
+	// time — see connect). An operator can disable it explicitly (start_tls=false)
+	// ONLY for a trusted local relay without TLS (e.g. Mailpit).
+	cfg.StartTLS = !cfg.Secure
+	if v, ok := rawBoolOpt(raw, "start_tls"); ok {
+		cfg.StartTLS = v
+	} else if v, ok := rawBoolOpt(raw, "tls"); ok {
+		cfg.StartTLS = v
 	}
 	if cfg.From == "" {
 		cfg.From = cfg.Username
@@ -631,16 +639,19 @@ func (c *smtpConfig) connect(addr string) (*smtp.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Upgrade via STARTTLS only when the server advertises it (mirrors the proven
-	// komeet mailer). Avoids hard-failing against servers without STARTTLS (local
-	// catchers like Mailpit) while still encrypting whenever the server supports
-	// it — which any credentialed relay (e.g. Yandex Postbox :587) does.
+	// When STARTTLS is requested it is REQUIRED: if the server does not advertise
+	// it (or a MITM stripped the extension from EHLO), fail instead of silently
+	// sending AUTH credentials in cleartext (STARTTLS-stripping downgrade). A
+	// trusted local relay without TLS (e.g. Mailpit) must opt out explicitly with
+	// start_tls=false.
 	if c.StartTLS {
-		if ok, _ := client.Extension("STARTTLS"); ok {
-			if err := client.StartTLS(&tls.Config{ServerName: c.Host, MinVersion: tls.VersionTLS12}); err != nil {
-				_ = client.Close()
-				return nil, err
-			}
+		if ok, _ := client.Extension("STARTTLS"); !ok {
+			_ = client.Close()
+			return nil, fmt.Errorf("notifications: SMTP server %s does not advertise STARTTLS; set start_tls=false only for a trusted local relay", c.Host)
+		}
+		if err := client.StartTLS(&tls.Config{ServerName: c.Host, MinVersion: tls.VersionTLS12}); err != nil {
+			_ = client.Close()
+			return nil, err
 		}
 	}
 	return client, nil
@@ -660,6 +671,30 @@ func rawBool(raw map[string]json.RawMessage, key string) bool {
 		_ = json.Unmarshal(v, &b)
 	}
 	return b
+}
+
+// rawBoolOpt reports whether key is present (and its bool value), so callers can
+// distinguish "explicitly false" from "absent". Accepts JSON bool or "true"/
+// "false" string.
+func rawBoolOpt(raw map[string]json.RawMessage, key string) (val bool, present bool) {
+	v, ok := raw[key]
+	if !ok {
+		return false, false
+	}
+	var b bool
+	if json.Unmarshal(v, &b) == nil {
+		return b, true
+	}
+	var s string
+	if json.Unmarshal(v, &s) == nil {
+		switch strings.ToLower(strings.TrimSpace(s)) {
+		case "true", "1", "yes":
+			return true, true
+		case "false", "0", "no":
+			return false, true
+		}
+	}
+	return false, false
 }
 
 func rawInt(raw map[string]json.RawMessage, key string, fallback int) int {
