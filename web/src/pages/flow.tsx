@@ -760,7 +760,7 @@ export function FlowPage() {
                   error={inlineError}
                   onSubmit={(keys) =>
                     submit(firstAction('accept_consents', 'accept', 'submit'), {
-                      consents: keys.map((key) => {
+                      accept: keys.map((key) => {
                         const doc = (state.consents_required as ConsentRef[] | undefined)?.find((d) => d.key === key);
                         return { key, version: doc?.version ?? '' };
                       }),

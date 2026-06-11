@@ -4482,9 +4482,19 @@ func (s *FlowCreateRequest) encodeFields(e *jx.Encoder) {
 			s.InviteToken.Encode(e)
 		}
 	}
+	{
+		if s.Consents != nil {
+			e.FieldStart("consents")
+			e.ArrStart()
+			for _, elem := range s.Consents {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
 }
 
-var jsonFieldsNameOfFlowCreateRequest = [11]string{
+var jsonFieldsNameOfFlowCreateRequest = [12]string{
 	0:  "kind",
 	1:  "method",
 	2:  "email",
@@ -4496,6 +4506,7 @@ var jsonFieldsNameOfFlowCreateRequest = [11]string{
 	8:  "redirect_to",
 	9:  "locale",
 	10: "invite_token",
+	11: "consents",
 }
 
 // Decode decodes FlowCreateRequest from json.
@@ -4616,6 +4627,23 @@ func (s *FlowCreateRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"invite_token\"")
+			}
+		case "consents":
+			if err := func() error {
+				s.Consents = make([]ConsentAcceptance, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ConsentAcceptance
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Consents = append(s.Consents, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"consents\"")
 			}
 		default:
 			return d.Skip()

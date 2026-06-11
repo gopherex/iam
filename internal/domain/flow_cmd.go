@@ -21,6 +21,7 @@ type Flow struct {
 	Collected        FlowCollected
 	ActiveChallenge  *FlowActiveChallenge
 	ConsentsRequired []FlowConsentRef
+	ConsentsAccepted []AccountConsentAcceptance
 	RegistrationMode string // open | request_access | invite_only | closed
 	PasswordStrategy string // password_first | after_verify
 	Error            *FlowError
@@ -166,6 +167,9 @@ type FlowCreateCmd struct {
 	// for email-bound invites) lets the signup proceed and marks the invite
 	// accepted in the same flow-create transaction.
 	InviteToken string
+	// Consents carries signup-time consent acceptances collected by the client
+	// before the identity proof. The flow records them only after verification.
+	Consents []AccountConsentAcceptance
 }
 
 // FlowGetCmd retrieves a live flow by its opaque token (project-scoped).

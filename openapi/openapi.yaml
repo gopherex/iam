@@ -909,6 +909,16 @@ components:
             (matching the bound email when the invite is email-bound) lets the
             signup proceed and marks the invite accepted.
           maxLength: 512
+        consents:
+          type: array
+          description: >-
+            Consent document acceptances supplied when starting a signup flow,
+            typically from a terms checkbox. The server records them only after
+            the identity proof succeeds and still validates them against the
+            required consent documents.
+          items:
+            $ref: '#/components/schemas/ConsentAcceptance'
+          maxItems: 1000
     FlowSubmitRequest:
       type: object
       required:

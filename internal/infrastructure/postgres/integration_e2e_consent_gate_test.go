@@ -179,6 +179,55 @@ func TestE2EConsentGateFlowSignup(t *testing.T) {
 		}
 	})
 
+	t.Run("create-time consent checkbox completes after verification", func(t *testing.T) {
+		projectID, token := e2eProjectAdmin(t, ctx)
+		putConsent(t, ctx, ts, projectID, token, []map[string]any{requiredConsent("tos", "2026-06-01")})
+
+		email := "cgcb-" + newUUID()[:8] + "@example.com"
+		fs, r := flowCreate(t, ctx, ts, projectID, map[string]any{
+			"kind":     "signup",
+			"email":    email,
+			"password": "Sup3rStr0ng!Pass",
+			"name":     "CG",
+			"consents": []map[string]any{{"key": "tos", "version": "2026-06-01"}},
+		})
+		e2eWantStatus(t, r, http.StatusOK)
+		if fs.Step != "verify_email" {
+			t.Fatalf("create step = %q, want verify_email", fs.Step)
+		}
+		chID := findFlowChallengeID(t, ctx, fs.FlowToken)
+		code := captureCode(chID)
+		if code == "" {
+			t.Fatal("no verification code captured")
+		}
+
+		fs2, r2 := flowSubmitConsent(t, ctx, ts, projectID, fs.FlowToken, "verify_email", map[string]any{"code": code})
+		e2eWantStatus(t, r2, http.StatusOK)
+		if fs2.Status != "completed" || fs2.Step != "completed" {
+			t.Fatalf("status/step = %q/%q, want completed/completed", fs2.Status, fs2.Step)
+		}
+		if fs2.Session == nil || fs2.Session.AccessToken == "" {
+			t.Fatal("session not minted after verification with create-time consent")
+		}
+		userID := flowUserID(t, ctx, fs2.FlowToken, fs.FlowToken)
+		if n := countConsentRows(t, ctx, userID); n != 1 {
+			t.Fatalf("consent rows = %d, want 1", n)
+		}
+	})
+
+	t.Run("legacy consents payload alias completes flow", func(t *testing.T) {
+		projectID, token := e2eProjectAdmin(t, ctx)
+		putConsent(t, ctx, ts, projectID, token, []map[string]any{requiredConsent("tos", "2026-06-01")})
+
+		fs := reachAcceptConsents(t, projectID)
+		fs2, r := flowSubmitConsent(t, ctx, ts, projectID, fs.FlowToken, "accept_consents",
+			map[string]any{"consents": []map[string]string{{"key": "tos", "version": "2026-06-01"}}})
+		e2eWantStatus(t, r, http.StatusOK)
+		if fs2.Status != "completed" || fs2.Session == nil || fs2.Session.AccessToken == "" {
+			t.Fatalf("legacy consents alias did not complete: status=%q sess=%v", fs2.Status, fs2.Session)
+		}
+	})
+
 	t.Run("missing required consent stays pending with 403", func(t *testing.T) {
 		projectID, token := e2eProjectAdmin(t, ctx)
 		putConsent(t, ctx, ts, projectID, token, []map[string]any{requiredConsent("tos", "2026-06-01")})

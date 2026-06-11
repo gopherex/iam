@@ -917,6 +917,18 @@ func (s *FlowCreateRequest) SetFake() {
 			s.InviteToken.SetFake()
 		}
 	}
+	{
+		{
+			s.Consents = nil
+			for i := 0; i < 0; i++ {
+				var elem ConsentAcceptance
+				{
+					elem.SetFake()
+				}
+				s.Consents = append(s.Consents, elem)
+			}
+		}
+	}
 }
 
 // SetFake set fake values.

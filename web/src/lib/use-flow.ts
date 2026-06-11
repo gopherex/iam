@@ -16,6 +16,7 @@ import {
   type FlowController,
   type FlowState,
   type FlowKind,
+  type ConsentAcceptance,
 } from '@gopherex/iam-sdk';
 import { IamAuthError } from '@gopherex/iam-sdk';
 
@@ -29,6 +30,7 @@ export interface UseFlowReturn {
     password?: string;
     name?: string;
     captchaToken?: string;
+    consents?: Array<ConsentAcceptance>;
   }): Promise<void>;
   submit(action: string, payload?: Record<string, unknown>): Promise<void>;
   resend(): Promise<void>;
@@ -96,6 +98,7 @@ export function useFlow(opts?: { flowToken?: string }): UseFlowReturn {
       name?: string;
       captchaToken?: string;
       locale?: string;
+      consents?: Array<ConsentAcceptance>;
     }) => {
       setLoading(true);
       try {

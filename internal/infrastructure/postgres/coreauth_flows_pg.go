@@ -100,15 +100,16 @@ func flowCompareToken(token, storedHash string) bool {
 
 // flowData is the jsonb payload in iam_flows.data.
 type flowData struct {
-	Contact          domain.FlowContact          `json:"contact"`
-	Collected        domain.FlowCollected        `json:"collected"`
-	ActiveChallenge  *domain.FlowActiveChallenge `json:"active_challenge,omitempty"`
-	ConsentsRequired []domain.FlowConsentRef     `json:"consents_required,omitempty"`
-	RegistrationMode string                      `json:"registration_mode,omitempty"`
-	PasswordStrategy string                      `json:"password_strategy,omitempty"`
-	Error            *domain.FlowError           `json:"error,omitempty"`
-	Method           string                      `json:"method,omitempty"`
-	AvailableMethods []string                    `json:"available_methods,omitempty"`
+	Contact          domain.FlowContact                `json:"contact"`
+	Collected        domain.FlowCollected              `json:"collected"`
+	ActiveChallenge  *domain.FlowActiveChallenge       `json:"active_challenge,omitempty"`
+	ConsentsRequired []domain.FlowConsentRef           `json:"consents_required,omitempty"`
+	ConsentsAccepted []domain.AccountConsentAcceptance `json:"consents_accepted,omitempty"`
+	RegistrationMode string                            `json:"registration_mode,omitempty"`
+	PasswordStrategy string                            `json:"password_strategy,omitempty"`
+	Error            *domain.FlowError                 `json:"error,omitempty"`
+	Method           string                            `json:"method,omitempty"`
+	AvailableMethods []string                          `json:"available_methods,omitempty"`
 }
 
 // flowDataRM serializes a flowData into a json.RawMessage for the setter.
@@ -182,6 +183,7 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 		Collected:        data.Collected,
 		ActiveChallenge:  data.ActiveChallenge,
 		ConsentsRequired: data.ConsentsRequired,
+		ConsentsAccepted: data.ConsentsAccepted,
 		RegistrationMode: data.RegistrationMode,
 		PasswordStrategy: data.PasswordStrategy,
 		Error:            data.Error,
@@ -202,6 +204,7 @@ func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *
 		Collected:        f.Collected,
 		ActiveChallenge:  f.ActiveChallenge,
 		ConsentsRequired: f.ConsentsRequired,
+		ConsentsAccepted: f.ConsentsAccepted,
 		RegistrationMode: f.RegistrationMode,
 		PasswordStrategy: f.PasswordStrategy,
 		Error:            f.Error,
@@ -237,6 +240,7 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 		Collected:        f.Collected,
 		ActiveChallenge:  f.ActiveChallenge,
 		ConsentsRequired: f.ConsentsRequired,
+		ConsentsAccepted: f.ConsentsAccepted,
 		RegistrationMode: f.RegistrationMode,
 		PasswordStrategy: f.PasswordStrategy,
 		Error:            f.Error,
@@ -341,7 +345,8 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 			Name:        cmd.Name,
 			HasPassword: cmd.Password != "",
 		},
-		Method: cmd.Method,
+		ConsentsAccepted: cmd.Consents,
+		Method:           cmd.Method,
 	}
 	var state *domain.FlowState
 	if create, ok := flowCreators[cmd.Kind]; ok {
@@ -594,6 +599,7 @@ func (a *pgCoreAuthFlows) flowPersistAtStep(ctx context.Context, f *domain.Flow,
 	if err := a.flowInsert(ctx, f, hash, flowData{
 		Contact:          f.Contact,
 		Collected:        f.Collected,
+		ConsentsAccepted: f.ConsentsAccepted,
 		RegistrationMode: f.RegistrationMode,
 		PasswordStrategy: f.PasswordStrategy,
 		Error:            ferr,
@@ -706,6 +712,7 @@ func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *d
 		Collected:        f.Collected,
 		ActiveChallenge:  f.ActiveChallenge,
 		ConsentsRequired: f.ConsentsRequired,
+		ConsentsAccepted: f.ConsentsAccepted,
 		RegistrationMode: f.RegistrationMode,
 		PasswordStrategy: f.PasswordStrategy,
 	}); err != nil {
@@ -913,23 +920,178 @@ func (a *pgCoreAuthFlows) signupSetPassword(ctx context.Context, row *models.Iam
 	return a.flowCompleteOrGateConsents(ctx, row, f, cmd, sess)
 }
 
+func flowRequiredConsentDocs(f *domain.Flow) []consentRequiredDoc {
+	required := make([]consentRequiredDoc, 0, len(f.ConsentsRequired))
+	for _, r := range f.ConsentsRequired {
+		required = append(required, consentRequiredDoc{Key: r.Key, Version: r.Version})
+	}
+	return required
+}
+
+func mergeConsentAcceptances(lists ...[]domain.AccountConsentAcceptance) []domain.AccountConsentAcceptance {
+	var out []domain.AccountConsentAcceptance
+	seen := make(map[domain.FlowConsentRef]struct{})
+	for _, list := range lists {
+		for _, acc := range list {
+			ref := domain.FlowConsentRef{Key: acc.Key, Version: acc.Version}
+			if _, ok := seen[ref]; ok {
+				continue
+			}
+			seen[ref] = struct{}{}
+			out = append(out, acc)
+		}
+	}
+	return out
+}
+
+func (a *pgCoreAuthFlows) signupRevokeProvisionalSession(ctx context.Context, f *domain.Flow, sess *domain.Session) error {
+	if sess == nil {
+		return nil
+	}
+	pgCA, ok := a.accounts.(*pgCoreAuth)
+	if !ok {
+		return nil
+	}
+	if err := pgCA.coreAuthRevokeSession(ctx, f.ProjectID, sess.ID); err != nil && !errors.Is(err, domain.ErrSessionNotFound) {
+		return err
+	}
+	return nil
+}
+
+func (a *pgCoreAuthFlows) signupRecordAcceptedConsents(ctx context.Context, f *domain.Flow, accepted []domain.AccountConsentAcceptance) error {
+	accepted = mergeConsentAcceptances(accepted)
+	if len(accepted) == 0 {
+		return nil
+	}
+	pgCA, ok := a.accounts.(*pgCoreAuth)
+	if !ok {
+		return fmt.Errorf("signup record consents: accounts is not *pgCoreAuth")
+	}
+	localeByKey := pgCA.coreAuthConsentLocales(ctx, f.ProjectID, "")
+	env := f.Environment
+	if env == "" {
+		env = coreAuthDefaultEnv
+	}
+	configured, _ := a.cfg.ConsentConfig(ctx, f.ProjectID)
+	allowedConsent := make(map[string]struct{}, len(configured))
+	for _, d := range configured {
+		allowedConsent[d.Key+"\x00"+d.Version] = struct{}{}
+	}
+	now := nowUTC()
+	recorded := false
+	for _, acc := range accepted {
+		if _, ok := allowedConsent[acc.Key+"\x00"+acc.Version]; !ok {
+			continue
+		}
+		setter := &models.IamConsentSetter{
+			ID:          ptr(newUUID()),
+			ProjectID:   ptr(f.ProjectID),
+			Environment: &env,
+			UserID:      ptr(f.UserID),
+			DocKey:      ptr(acc.Key),
+			Version:     ptr(acc.Version),
+			AcceptedAt:  ptr(now),
+		}
+		if loc := localeByKey[acc.Key]; loc != "" {
+			setter.Locale = ptr(null.From(loc))
+		}
+		if _, err := models.IamConsents.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+			return fmt.Errorf("signup record consents: insert consent: %w", err)
+		}
+		recorded = true
+	}
+	if !recorded {
+		return nil
+	}
+	return a.emitter.Emit(ctx, domain.Event{
+		Type:        "account.consents_accepted",
+		ProjectID:   f.ProjectID,
+		Environment: env,
+		AggregateID: f.UserID,
+		Payload:     map[string]any{"account_id": f.UserID, "project_id": f.ProjectID, "accepted": accepted},
+	})
+}
+
+func (a *pgCoreAuthFlows) signupCompleteWithExistingSession(ctx context.Context, row *models.IamFlow, f *domain.Flow, accepted []domain.AccountConsentAcceptance, sess *domain.Session) (*domain.FlowState, error) {
+	f.ConsentsRequired = nil
+	f.ConsentsAccepted = nil
+	f.Status = domain.FlowStatusCompleted
+	f.Step = domain.FlowStepCompleted
+	f.Error = nil
+	newToken, err := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
+		if err := a.signupRecordAcceptedConsents(ctx, f, accepted); err != nil {
+			return "", err
+		}
+		return a.flowRotate(ctx, row, f)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &domain.FlowState{FlowToken: newToken, Flow: f, Session: sess}, nil
+}
+
+func (a *pgCoreAuthFlows) signupCompleteWithFreshSession(ctx context.Context, row *models.IamFlow, f *domain.Flow, accepted []domain.AccountConsentAcceptance) (*domain.FlowState, error) {
+	pgCA, ok := a.accounts.(*pgCoreAuth)
+	if !ok {
+		return nil, fmt.Errorf("signup complete with consents: accounts is not *pgCoreAuth")
+	}
+	f.ConsentsRequired = nil
+	f.ConsentsAccepted = nil
+	f.Status = domain.FlowStatusCompleted
+	f.Step = domain.FlowStepCompleted
+	f.Error = nil
+	type result struct {
+		token string
+		sess  *domain.Session
+	}
+	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
+		if err := a.signupRecordAcceptedConsents(ctx, f, accepted); err != nil {
+			return result{}, err
+		}
+		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), f.UserID)
+		if err != nil {
+			return result{}, fmt.Errorf("signup complete with consents: load user: %w", err)
+		}
+		acc, err := coreAuthLoadAccount(userRow, f.ProjectID)
+		if err != nil {
+			return result{}, fmt.Errorf("signup complete with consents: parse account: %w", err)
+		}
+		sess, err := pgCA.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
+		if err != nil {
+			return result{}, fmt.Errorf("signup complete with consents: mint session: %w", err)
+		}
+		token, err := a.flowRotate(ctx, row, f)
+		if err != nil {
+			return result{}, err
+		}
+		return result{token: token, sess: sess}, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &domain.FlowState{FlowToken: res.token, Flow: f, Session: res.sess}, nil
+}
+
 // flowCompleteOrGateConsents is the shared post-identity terminus for signup. If
 // the flow still has unaccepted required consents it halts at accept_consents
 // (no token rotation, no session surfaced — the user is not fully registered
-// yet); otherwise it completes the flow, rotates the token (§5 rule 2), and
-// surfaces sess, the session minted by the preceding identity step.
+// yet); otherwise it records accepted consents, completes the flow, rotates the
+// token (§5 rule 2), and surfaces a session.
 func (a *pgCoreAuthFlows) flowCompleteOrGateConsents(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd, sess *domain.Session) (*domain.FlowState, error) {
-	if len(f.ConsentsRequired) > 0 {
+	required := flowRequiredConsentDocs(f)
+	if len(required) > 0 {
+		if missing := missingRequiredConsents(required, f.ConsentsAccepted); len(missing) == 0 {
+			if err := a.signupRevokeProvisionalSession(ctx, f, sess); err != nil {
+				return nil, err
+			}
+			return a.signupCompleteWithFreshSession(ctx, row, f, f.ConsentsAccepted)
+		}
 		// The identity step (verify_email / set_password) already minted a session,
 		// but the user is NOT fully registered until required consents are accepted.
 		// Revoke that session now so no valid (even if unsurfaced) session/refresh
 		// token lingers for an unregistered user; accept_consents mints the real one.
-		if sess != nil {
-			if pgCA, ok := a.accounts.(*pgCoreAuth); ok {
-				if err := pgCA.coreAuthRevokeSession(ctx, f.ProjectID, sess.ID); err != nil && !errors.Is(err, domain.ErrSessionNotFound) {
-					return nil, err
-				}
-			}
+		if err := a.signupRevokeProvisionalSession(ctx, f, sess); err != nil {
+			return nil, err
 		}
 		f.Step = domain.FlowStepAcceptConsents
 		f.Error = nil
@@ -940,16 +1102,7 @@ func (a *pgCoreAuthFlows) flowCompleteOrGateConsents(ctx context.Context, row *m
 		}
 		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
 	}
-	f.Status = domain.FlowStatusCompleted
-	f.Step = domain.FlowStepCompleted
-	f.Error = nil
-	newToken, err := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
-		return a.flowRotate(ctx, row, f)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &domain.FlowState{FlowToken: newToken, Flow: f, Session: sess}, nil
+	return a.signupCompleteWithExistingSession(ctx, row, f, f.ConsentsAccepted, sess)
 }
 
 // signupAcceptConsents handles the accept_consents step: it validates that every
@@ -959,107 +1112,28 @@ func (a *pgCoreAuthFlows) flowCompleteOrGateConsents(ctx context.Context, row *m
 //
 // The submit payload carries acceptances under payload["accept"] as a JSON array
 // of {"key","version"} objects (e.g. payload: {"accept":[{"key":"tos",
-// "version":"2026-06-01"}]}). A client that can only send string scalars may
-// instead pass the array as a JSON-encoded string; both forms are accepted.
+// "version":"2026-06-01"}]}). Legacy clients that sent payload["consents"] are
+// accepted as an alias. A client that can only send string scalars may instead
+// pass the array as a JSON-encoded string; both forms are accepted.
 // Validation is against f.ConsentsRequired (server truth); a client cannot
 // bypass the gate by omitting or faking entries.
 func (a *pgCoreAuthFlows) signupAcceptConsents(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
 	if f.UserID == "" {
 		return nil, domain.ErrBadRequest.WithMessage("no verified user for signup")
 	}
-	accepted, err := parseConsentAccept(cmd.Payload["accept"])
+	rawAccept := cmd.Payload["accept"]
+	if rawAccept == "" {
+		rawAccept = cmd.Payload["consents"]
+	}
+	submitted, err := parseConsentAccept(rawAccept)
 	if err != nil {
 		return nil, err
 	}
+	accepted := mergeConsentAcceptances(f.ConsentsAccepted, submitted)
 
-	required := make([]consentRequiredDoc, 0, len(f.ConsentsRequired))
-	for _, r := range f.ConsentsRequired {
-		required = append(required, consentRequiredDoc{Key: r.Key, Version: r.Version})
-	}
+	required := flowRequiredConsentDocs(f)
 	if missing := missingRequiredConsents(required, accepted); len(missing) > 0 {
 		return nil, domain.ErrConsentRequired.WithDetails(consentRefDetails(missing))
 	}
-
-	pgCA, ok := a.accounts.(*pgCoreAuth)
-	if !ok {
-		return nil, fmt.Errorf("signup accept_consents: accounts is not *pgCoreAuth")
-	}
-	// Resolve a locale per key (best-effort; project default, no per-request
-	// locale at submit time) to stamp on the acceptance rows.
-	localeByKey := pgCA.coreAuthConsentLocales(ctx, f.ProjectID, "")
-
-	env := f.Environment
-	if env == "" {
-		env = coreAuthDefaultEnv
-	}
-
-	// Only persist acceptances for documents the project actually configures —
-	// a client may submit extra {key,version} pairs, which must not be recorded.
-	configured, _ := a.cfg.ConsentConfig(ctx, f.ProjectID)
-	allowedConsent := make(map[string]struct{}, len(configured))
-	for _, d := range configured {
-		allowedConsent[d.Key+"\x00"+d.Version] = struct{}{}
-	}
-
-	sess, err := withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Session, error) {
-		now := nowUTC()
-		for _, acc := range accepted {
-			if _, ok := allowedConsent[acc.Key+"\x00"+acc.Version]; !ok {
-				continue // ignore acceptances for unconfigured docs/versions
-			}
-			setter := &models.IamConsentSetter{
-				ID:          ptr(newUUID()),
-				ProjectID:   ptr(f.ProjectID),
-				Environment: &env,
-				UserID:      ptr(f.UserID),
-				DocKey:      ptr(acc.Key),
-				Version:     ptr(acc.Version),
-				AcceptedAt:  ptr(now),
-			}
-			if loc := localeByKey[acc.Key]; loc != "" {
-				setter.Locale = ptr(null.From(loc))
-			}
-			if _, err := models.IamConsents.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-				return nil, fmt.Errorf("signup accept_consents: insert consent: %w", err)
-			}
-		}
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "account.consents_accepted",
-			ProjectID:   f.ProjectID,
-			Environment: env,
-			AggregateID: f.UserID,
-			Payload:     map[string]any{"account_id": f.UserID, "project_id": f.ProjectID, "accepted": accepted},
-		}); err != nil {
-			return nil, err
-		}
-
-		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), f.UserID)
-		if err != nil {
-			return nil, fmt.Errorf("signup accept_consents: load user: %w", err)
-		}
-		acc, err := coreAuthLoadAccount(userRow, f.ProjectID)
-		if err != nil {
-			return nil, fmt.Errorf("signup accept_consents: parse account: %w", err)
-		}
-		s, err := pgCA.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
-		if err != nil {
-			return nil, fmt.Errorf("signup accept_consents: mint session: %w", err)
-		}
-		return s, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	f.ConsentsRequired = nil
-	f.Status = domain.FlowStatusCompleted
-	f.Step = domain.FlowStepCompleted
-	f.Error = nil
-	newToken, err := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
-		return a.flowRotate(ctx, row, f)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &domain.FlowState{FlowToken: newToken, Flow: f, Session: sess}, nil
+	return a.signupCompleteWithFreshSession(ctx, row, f, accepted)
 }

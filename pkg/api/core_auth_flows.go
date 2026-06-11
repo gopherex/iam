@@ -60,6 +60,10 @@ func flowHeaders(fs *domain.FlowState) *oas.FlowStateHeaders {
 
 // PostV1AuthFlows creates a new server-side resumable auth flow.
 func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.FlowCreateRequest, params oas.PostV1AuthFlowsParams) (*oas.FlowStateHeaders, error) {
+	consents := make([]domain.AccountConsentAcceptance, 0, len(req.Consents))
+	for _, c := range req.Consents {
+		consents = append(consents, domain.AccountConsentAcceptance{Key: c.Key, Version: c.Version})
+	}
 	fs, err := s.deps.Flows.Create(ctx, domain.FlowCreateCmd{
 		ProjectID:    params.XClientID,
 		Kind:         domain.FlowKind(req.Kind),
@@ -73,6 +77,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.Flow
 		RedirectTo:   req.RedirectTo.Or(""),
 		Locale:       req.Locale.Or(""),
 		InviteToken:  req.InviteToken.Or(""),
+		Consents:     consents,
 	})
 	if err != nil {
 		return nil, err

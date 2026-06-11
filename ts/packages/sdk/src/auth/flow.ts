@@ -19,6 +19,7 @@ import {
   postV1AuthFlowsByFlowTokenResend,
   deleteV1AuthFlowsByFlowToken,
   type FlowState,
+  type ConsentAcceptance,
   type ClientOptions as GeneratedClientOptions,
 } from '../gen';
 import { IamAuthError } from './types';
@@ -82,6 +83,11 @@ export interface FlowController {
     redirectTo?: string;
     /** Preferred language for this flow's emails (e.g. 'ru'). */
     locale?: string;
+    /**
+     * Signup-time consent acceptances collected from a terms checkbox. The
+     * server records them only after identity proof succeeds.
+     */
+    consents?: Array<ConsentAcceptance>;
     /**
      * Invitation token (inv_…) to redeem when the project's registration mode is
      * invite_only. Without a valid token an invite_only signup is blocked
@@ -290,6 +296,7 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
           redirect_to: params.redirectTo,
           locale: params.locale,
           invite_token: params.inviteToken,
+          consents: params.consents,
         },
       });
       return handleState(r);

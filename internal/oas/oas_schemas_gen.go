@@ -2028,6 +2028,10 @@ type FlowCreateRequest struct {
 	// valid, pending, unexpired token (matching the bound email when the invite is email-bound) lets the
 	// signup proceed and marks the invite accepted.
 	InviteToken OptString `json:"invite_token"`
+	// Consent document acceptances supplied when starting a signup flow, typically from a terms checkbox.
+	//  The server records them only after the identity proof succeeds and still validates them against
+	// the required consent documents.
+	Consents []ConsentAcceptance `json:"consents"`
 }
 
 // GetKind returns the value of Kind.
@@ -2085,6 +2089,11 @@ func (s *FlowCreateRequest) GetInviteToken() OptString {
 	return s.InviteToken
 }
 
+// GetConsents returns the value of Consents.
+func (s *FlowCreateRequest) GetConsents() []ConsentAcceptance {
+	return s.Consents
+}
+
 // SetKind sets the value of Kind.
 func (s *FlowCreateRequest) SetKind(val FlowCreateRequestKind) {
 	s.Kind = val
@@ -2138,6 +2147,11 @@ func (s *FlowCreateRequest) SetLocale(val OptString) {
 // SetInviteToken sets the value of InviteToken.
 func (s *FlowCreateRequest) SetInviteToken(val OptString) {
 	s.InviteToken = val
+}
+
+// SetConsents sets the value of Consents.
+func (s *FlowCreateRequest) SetConsents(val []ConsentAcceptance) {
+	s.Consents = val
 }
 
 type FlowCreateRequestKind string
