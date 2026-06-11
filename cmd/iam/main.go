@@ -169,6 +169,11 @@ func run() error {
 	// cookie-mode requests (evaluated before cookie auth, while there is no
 	// Authorization header); cookie auth promotes the session cookie to a Bearer
 	// header; then the generated API server.
+	// Trust forwarding headers (X-Forwarded-For/X-Real-IP) only from configured
+	// proxy networks; otherwise the real TCP peer is used so clients cannot spoof
+	// their IP to bypass IP-keyed rate limits.
+	api.SetTrustedProxies(cfg.Service.HTTP.TrustedProxies)
+
 	apiPipeline := api.RequestMetaMiddleware(
 		api.EnvironmentMiddleware(
 			api.CSRFMiddleware(postgres.NewPgPlatform(db))(
@@ -177,7 +182,9 @@ func run() error {
 	// union (app clients' allowed_origins), cached for 60s.
 	apiPipeline = api.CORSMiddleware(cfg.Service.CORS.AllowedOrigins, postgres.NewPgAdminApps(db, emitter), 60*time.Second)(apiPipeline)
 	apiPipeline = api.SecurityHeaders(apiPipeline)
-	apiPipeline = api.RateLimitMiddleware(apiPipeline)
+	// Rate limiting honors per-project overrides (iam_config key=rate_limits),
+	// falling back to the hardcoded defaults when a project has no doc.
+	apiPipeline = api.NewRateLimitMiddleware(postgres.NewPgRateLimits(db))(apiPipeline)
 
 	root := http.NewServeMux()
 	// API namespaces go to the generated server; everything else is the embedded
@@ -312,8 +319,12 @@ func buildSlogLogger() *slog.Logger {
 // buildHandler assembles the full IAM handler from the Postgres adapters, one
 // option per feature group.
 func buildHandler(db *postgres.DB, emitter postgres.Emitter) *api.Service {
-	platform := postgres.NewPgPlatform(db)          // implements PlatformConfig + PlatformCsrf
-	coreAuth := postgres.NewPgCoreAuth(db, emitter) // implements CoreAuthAccounts + CoreAuthTokens
+	platform := postgres.NewPgPlatform(db) // implements PlatformConfig + PlatformCsrf
+	// cfgReader is the shared runtime reader for project-config docs
+	// (password_policy / session_policy / auth / ...). One instance is injected
+	// into every enforcement adapter so its TTL cache is shared.
+	cfgReader := postgres.NewConfigReader(db, 30*time.Second)
+	coreAuth := postgres.NewPgCoreAuth(db, emitter, cfgReader) // implements CoreAuthAccounts + CoreAuthTokens
 
 	return api.New(
 		api.WithPlatform(api.NewPlatformService(api.PlatformDeps{
@@ -326,7 +337,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter) *api.Service {
 			MFA:      postgres.NewPgMFAAccounts(db, emitter),
 		})),
 		api.WithCoreAuthFlows(api.CoreAuthFlowDeps{
-			Flows: postgres.NewPgCoreAuthFlows(db, emitter, coreAuth),
+			Flows: postgres.NewPgCoreAuthFlows(db, emitter, coreAuth, cfgReader),
 		}),
 		api.WithPasswordless(api.NewPasswordlessService(api.PasswordlessDeps{
 			Accounts: postgres.NewPgPasswordlessAccounts(db, emitter),

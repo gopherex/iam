@@ -36,6 +36,14 @@ type HTTP struct {
 	// (a k8s sidecar port not exposed publicly); when empty or equal to Addr they
 	// are mounted under /healthz/ on the main server.
 	ProbeAddr string `mapstructure:"probe_addr" default:":8081"`
+	// TrustedProxies is the list of CIDR ranges (or bare IPs) of reverse
+	// proxies / load balancers in front of the service. The client IP is taken
+	// from X-Forwarded-For / X-Real-IP ONLY when the connecting peer is in this
+	// set; otherwise the real TCP peer (RemoteAddr) is used. Empty (default)
+	// means trust no proxy headers — required so a client cannot spoof its IP to
+	// bypass IP-keyed rate limiting. Set to the LB subnet in proxied deploys
+	// (e.g. "10.0.0.0/8"). Env: SERVICE_HTTP_TRUSTED_PROXIES (comma-separated).
+	TrustedProxies []string `mapstructure:"trusted_proxies"`
 }
 
 // Logger is the structured-logging config.
