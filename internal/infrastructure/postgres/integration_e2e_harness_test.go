@@ -111,7 +111,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 			Flows: NewPgCoreAuthFlows(testDB, em, coreAuth, nil),
 		}),
 		api.WithPasswordless(api.NewPasswordlessService(api.PasswordlessDeps{
-			Accounts: NewPgPasswordlessAccounts(testDB, em, NewConfigReader(testDB, time.Second)),
+			Accounts: NewPgPasswordlessAccounts(testDB, em, NewConfigReader(testDB, time.Second), coreAuth),
 		})),
 		api.WithOAuthSocial(api.NewOAuthSocialService(api.OAuthSocialDeps{
 			Accounts: NewPgOAuthSocial(testDB, em),

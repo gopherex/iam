@@ -345,7 +345,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter) *api.Service {
 			Flows: postgres.NewPgCoreAuthFlows(db, emitter, coreAuth, cfgReader),
 		}),
 		api.WithPasswordless(api.NewPasswordlessService(api.PasswordlessDeps{
-			Accounts: postgres.NewPgPasswordlessAccounts(db, emitter, cfgReader),
+			Accounts: postgres.NewPgPasswordlessAccounts(db, emitter, cfgReader, coreAuth),
 		})),
 		api.WithOAuthSocial(api.NewOAuthSocialService(api.OAuthSocialDeps{
 			Accounts: postgres.NewPgOAuthSocial(db, emitter),

@@ -37,13 +37,16 @@ type pgPasswordlessAccounts struct {
 	db      *DB
 	emitter Emitter
 	cfg     *configReader
+	core    *pgCoreAuth
 }
 
 // NewPgPasswordlessAccounts builds the Passwordless adapter over db. cfg is the
 // runtime config reader used to enforce registration mode and consent gating on
-// auto-provisioned passwordless signups.
-func NewPgPasswordlessAccounts(db *DB, emitter Emitter, cfg *configReader) *pgPasswordlessAccounts {
-	return &pgPasswordlessAccounts{db: db, emitter: emitter, cfg: cfg}
+// auto-provisioned passwordless signups; core mints sessions through the shared
+// path so passwordless logins honor session_policy and get a rotatable refresh
+// token.
+func NewPgPasswordlessAccounts(db *DB, emitter Emitter, cfg *configReader, core *pgCoreAuth) *pgPasswordlessAccounts {
+	return &pgPasswordlessAccounts{db: db, emitter: emitter, cfg: cfg, core: core}
 }
 
 var _ api.PasswordlessAccounts = (*pgPasswordlessAccounts)(nil)
@@ -677,85 +680,22 @@ func (a *pgPasswordlessAccounts) persistAccount(ctx context.Context, acc *domain
 	return nil
 }
 
-// createSession mints an authenticated session for acct. The access token is a
-// signed RS256 JWT (jwx Signer); the refresh token stays opaque (revocable).
+// createSession mints an authenticated session for acct through the shared core
+// path, so passwordless logins honor session_policy (access/refresh TTLs,
+// refresh horizon), persist a ROTATABLE refresh token in iam_refresh_tokens, and
+// record device metadata — exactly like password/OAuth logins. AMR records "otp"
+// plus the verification channel (sms) so downstream MFA/AAL policy can tell a
+// phone login from an email one. The session is bound to the challenge's
+// environment by overriding it on the context the core minter reads.
 func (a *pgPasswordlessAccounts) createSession(ctx context.Context, acct *domain.Account, channel, env string) (*domain.Session, error) {
-	now := nowUTC()
-	const expiresIn = 3600
-	sessionID := newUUID()
-	// AMR records "otp" plus the verification channel so downstream MFA/AAL
-	// policy can distinguish a phone (sms) login from an email one. Existing
-	// consumers that match AMR=["otp"] still see "otp".
 	amr := []string{"otp"}
 	if isPhoneChannel(channel) {
 		amr = append(amr, "sms")
 	}
-	if env == "" {
-		env = runtimeDefaultEnv
+	if env != "" {
+		ctx = api.WithEnvironment(ctx, env)
 	}
-	signEnv, err := resolveSignEnv(ctx, a.db, acct.ProjectID, env)
-	if err != nil {
-		return nil, err
-	}
-	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		"iss": acct.ProjectID,
-		"sub": acct.ID,
-		"sid": sessionID,
-		"pid": acct.ProjectID,
-		"aal": 1,
-		"amr": amr,
-		"typ": "access",
-		"env": signEnv,
-	}, time.Duration(expiresIn)*time.Second)
-	if err != nil {
-		return nil, err
-	}
-	refresh, err := randomOpaqueToken(32)
-	if err != nil {
-		return nil, err
-	}
-	sess := &domain.Session{
-		ID:           sessionID,
-		AccountID:    acct.ID,
-		ProjectID:    acct.ProjectID,
-		AMR:          amr,
-		AAL:          1,
-		AccessToken:  access,
-		RefreshToken: refresh,
-		ExpiresIn:    expiresIn,
-		CreatedAt:    now,
-	}
-	raw, err := marshal(sess)
-	if err != nil {
-		return nil, err
-	}
-	rm := json.RawMessage(raw)
-	expiresAt := null.From(now.Add(time.Duration(expiresIn) * time.Second))
-	setter := &models.IamSessionSetter{
-		ID:           &sess.ID,
-		ProjectID:    &sess.ProjectID,
-		Environment:  &env,
-		UserID:       &sess.AccountID,
-		Aal:          ptr(int32(sess.AAL)),
-		Trusted:      ptr(false),
-		ExpiresAt:    &expiresAt,
-		CreatedAt:    &now,
-		LastActiveAt: &now,
-		Data:         &rm,
-	}
-	if _, err := models.IamSessions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-		return nil, translatePgErr("session", err)
-	}
-	if err := a.emitter.Emit(ctx, domain.Event{
-		Type:        "auth.session.created",
-		ProjectID:   sess.ProjectID,
-		Environment: env,
-		AggregateID: sess.ID,
-		Payload:     sess,
-	}); err != nil {
-		return nil, err
-	}
-	return sess, nil
+	return a.core.coreAuthMintSession(ctx, acct, "", amr, 1)
 }
 
 // ===== local helpers (aggregate-prefixed) =====
