@@ -51,7 +51,13 @@ const ENV_HEADER = (env: string) => ({ 'X-Environment': env } as const);
 // Auth & Methods tab
 // ---------------------------------------------------------------------------
 
-const KNOWN_AUTH_METHODS = ['email', 'phone', 'username', 'oauth', 'magic_link', 'passkey'];
+// Must mirror domain.SupportedAuthMethods (internal/domain/configspec.go) — the
+// backend is the source of truth and rejects (422) any method not in that set.
+// Only methods with a working end-to-end login path belong here. `username` is
+// intentionally absent: nicknames/display names are a product-domain concern,
+// not an IAM auth identifier. `phone` will be added once phone-OTP login + an
+// SMS provider exist.
+const KNOWN_AUTH_METHODS = ['email', 'oauth', 'magic_link', 'passkey'];
 const REGISTRATION_MODES = ['open', 'invite_only', 'request_access', 'closed'] as const;
 
 function AuthTab({ projectId, env }: { projectId: string; env: string }) {
