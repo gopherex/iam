@@ -92,13 +92,21 @@ function isStoredSession(value: unknown): value is Session {
 }
 
 export class IamConfig {
+  private cached: PublicConfig | null = null;
+
   constructor(
     private readonly client: Client,
     private readonly clientId: string,
     private readonly environment?: string,
   ) {}
 
-  async getPublicConfig(): Promise<{ data: PublicConfig | null; error: IamAuthError | null }> {
+  /**
+   * Fetch the project's public config (enabled auth methods, providers, locales,
+   * required consents, registration policy). The result is cached after the
+   * first call; pass { force: true } to refetch.
+   */
+  async getPublicConfig(opts?: { force?: boolean }): Promise<{ data: PublicConfig | null; error: IamAuthError | null }> {
+    if (this.cached && !opts?.force) return { data: this.cached, error: null };
     const headers: { 'X-Client-Id': string; 'X-Environment'?: string } = { 'X-Client-Id': this.clientId };
     if (this.environment) headers['X-Environment'] = this.environment;
     const r = await getV1ConfigPublic({
@@ -106,7 +114,13 @@ export class IamConfig {
       headers,
     });
     if (r.error) return { data: null, error: authError(r) };
-    return { data: r.data ?? null, error: null };
+    this.cached = r.data ?? null;
+    return { data: this.cached, error: null };
+  }
+
+  /** The last-fetched public config, or null if getPublicConfig hasn't run yet. */
+  get current(): PublicConfig | null {
+    return this.cached;
   }
 }
 
@@ -230,7 +244,7 @@ export class IamAuth {
   /** Start an OTP flow (email/SMS); returns the challenge id to pass to verifyOtp. */
   async signInWithOtp(params: {
     identifier: string;
-    channel?: 'email' | 'sms' | 'whatsapp';
+    channel?: 'email' | 'sms';
     purpose?: 'signin' | 'signup' | 'verify';
   }): Promise<{ data: { challengeId: string } | null; error: IamAuthError | null }> {
     const r = await postV1AuthOtpStart({
@@ -890,12 +904,20 @@ export function createIamClient(options: IamClientOptions): {
   tokens: IamTokens;
   oidc: IamOidc;
   flow: FlowController;
+  /**
+   * One-shot bootstrap: restores the persisted session and fetches (and caches)
+   * the project's public config in parallel. Call once at app start to get
+   * everything needed to render — the current session plus the project's enabled
+   * auth methods / providers / consents.
+   */
+  init(): Promise<{ session: Session | null; config: PublicConfig | null; error: IamAuthError | null }>;
 } {
   const auth = new IamAuth(options);
   const headers = () => auth.headers();
+  const config = new IamConfig(auth.client, options.clientId, options.environment);
   return {
     auth,
-    config: new IamConfig(auth.client, options.clientId, options.environment),
+    config,
     client: auth.client,
     account: new IamAccount(auth.client, headers),
     mfa: new IamMfa(auth.client, headers),
@@ -903,5 +925,12 @@ export function createIamClient(options: IamClientOptions): {
     tokens: new IamTokens(auth.client, headers),
     oidc: new IamOidc(auth.client, headers),
     flow: createFlowController({ baseUrl: options.baseUrl, clientId: options.clientId, environment: options.environment, auth }),
+    async init() {
+      const [session, cfg] = await Promise.all([
+        auth.ready().then(() => auth.getSession()),
+        config.getPublicConfig(),
+      ]);
+      return { session, config: cfg.data, error: cfg.error };
+    },
   };
 }

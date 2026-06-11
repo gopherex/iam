@@ -65,7 +65,17 @@ export interface FlowController {
    */
   start(params: {
     kind: FlowKind;
+    /**
+     * Authentication method driving the flow. Signin supports password
+     * (default), phone_otp, magic_link, passkey and oauth. Recovery supports
+     * email (default) and phone_otp. Ignored for signup.
+     */
+    method?: 'password' | 'phone_otp' | 'magic_link' | 'passkey' | 'oauth';
     email?: string;
+    /** E.164 phone for the phone_otp method (signin/recovery). */
+    phone?: string;
+    /** OAuth provider id for the oauth signin method. */
+    provider?: string;
     password?: string;
     name?: string;
     captchaToken?: string;
@@ -270,7 +280,10 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
         headers: headers(),
         body: {
           kind: params.kind,
+          method: params.method,
           email: params.email,
+          phone: params.phone,
+          provider: params.provider,
           password: params.password,
           name: params.name,
           captcha_token: params.captchaToken,
