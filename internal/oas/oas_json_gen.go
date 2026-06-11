@@ -13001,13 +13001,20 @@ func (s *MagicLinkStartRequest) encodeFields(e *jx.Encoder) {
 			s.CaptchaToken.Encode(e)
 		}
 	}
+	{
+		if s.Locale.Set {
+			e.FieldStart("locale")
+			s.Locale.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfMagicLinkStartRequest = [4]string{
+var jsonFieldsNameOfMagicLinkStartRequest = [5]string{
 	0: "email",
 	1: "redirect_to",
 	2: "purpose",
 	3: "captcha_token",
+	4: "locale",
 }
 
 // Decode decodes MagicLinkStartRequest from json.
@@ -13062,6 +13069,16 @@ func (s *MagicLinkStartRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"captcha_token\"")
+			}
+		case "locale":
+			if err := func() error {
+				s.Locale.Reset()
+				if err := s.Locale.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"locale\"")
 			}
 		default:
 			return d.Skip()
@@ -18420,6 +18437,12 @@ func (s *OtpStartRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Locale.Set {
+			e.FieldStart("locale")
+			s.Locale.Encode(e)
+		}
+	}
+	{
 		if s.CaptchaToken.Set {
 			e.FieldStart("captcha_token")
 			s.CaptchaToken.Encode(e)
@@ -18427,12 +18450,13 @@ func (s *OtpStartRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfOtpStartRequest = [5]string{
+var jsonFieldsNameOfOtpStartRequest = [6]string{
 	0: "identifier",
 	1: "channel",
 	2: "purpose",
 	3: "redirect_to",
-	4: "captcha_token",
+	4: "locale",
+	5: "captcha_token",
 }
 
 // Decode decodes OtpStartRequest from json.
@@ -18485,6 +18509,16 @@ func (s *OtpStartRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"redirect_to\"")
+			}
+		case "locale":
+			if err := func() error {
+				s.Locale.Reset()
+				if err := s.Locale.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"locale\"")
 			}
 		case "captcha_token":
 			if err := func() error {
@@ -42187,6 +42221,12 @@ func (s *SignUpRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Locale.Set {
+			e.FieldStart("locale")
+			s.Locale.Encode(e)
+		}
+	}
+	{
 		if s.CaptchaToken.Set {
 			e.FieldStart("captcha_token")
 			s.CaptchaToken.Encode(e)
@@ -42200,7 +42240,7 @@ func (s *SignUpRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSignUpRequest = [9]string{
+var jsonFieldsNameOfSignUpRequest = [10]string{
 	0: "email",
 	1: "phone",
 	2: "password",
@@ -42208,8 +42248,9 @@ var jsonFieldsNameOfSignUpRequest = [9]string{
 	4: "metadata",
 	5: "invitation_token",
 	6: "consents",
-	7: "captcha_token",
-	8: "test",
+	7: "locale",
+	8: "captcha_token",
+	9: "test",
 }
 
 // Decode decodes SignUpRequest from json.
@@ -42297,6 +42338,16 @@ func (s *SignUpRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"consents\"")
+			}
+		case "locale":
+			if err := func() error {
+				s.Locale.Reset()
+				if err := s.Locale.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"locale\"")
 			}
 		case "captcha_token":
 			if err := func() error {

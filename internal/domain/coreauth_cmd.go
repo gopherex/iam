@@ -15,8 +15,9 @@ type CoreAuthVerifyStartCmd struct {
 	Channel    string // sms | whatsapp (phone only)
 }
 
-// CoreAuthVerifyConsumeCmd consumes a verification/change challenge. Exactly one
-// of (ChallengeID+Code) or Token identifies the challenge.
+// CoreAuthVerifyConsumeCmd consumes a verification/change challenge. A challenge
+// is identified by ChallengeID plus Code, by ChallengeID plus Token, or by Token
+// alone for standalone link callbacks.
 type CoreAuthVerifyConsumeCmd struct {
 	ProjectID   string
 	AccountID   string // empty for unauthenticated consume
@@ -35,7 +36,8 @@ type CoreAuthPasswordForgotCmd struct {
 }
 
 // CoreAuthPasswordResetCmd completes a password-reset flow with a fresh
-// password. Exactly one of Token or (ChallengeID+Code) identifies the request.
+// password. A reset is identified by ChallengeID plus Code, by ChallengeID plus
+// Token, or by Token alone for standalone reset links.
 type CoreAuthPasswordResetCmd struct {
 	ProjectID   string
 	Token       string

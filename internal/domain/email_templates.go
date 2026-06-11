@@ -31,8 +31,8 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 		Key:  "email_verification",
 		Name: "Email verification",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "Verify your email", Text: "Use code {{.code}} or open {{.link}} to verify your email."},
-			"ru": {Subject: "Подтвердите вашу почту", Text: "Введите код {{.code}} или откройте {{.link}}, чтобы подтвердить почту."},
+			"en": {Subject: "Verify your email", Text: "Use code {{.code}}{{with .link}} or open {{.}}{{end}} to verify your email."},
+			"ru": {Subject: "Подтвердите вашу почту", Text: "Введите код {{.code}}{{with .link}} или откройте {{.}}{{end}}, чтобы подтвердить почту."},
 		},
 	},
 	{
@@ -55,16 +55,16 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 		Key:  "email_change",
 		Name: "Email change",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "Confirm your new email", Text: "Use code {{.code}} or open {{.link}} to confirm your new email."},
-			"ru": {Subject: "Подтвердите новую почту", Text: "Введите код {{.code}} или откройте {{.link}}, чтобы подтвердить новую почту."},
+			"en": {Subject: "Confirm your new email", Text: "Use code {{.code}}{{with .link}} or open {{.}}{{end}} to confirm your new email."},
+			"ru": {Subject: "Подтвердите новую почту", Text: "Введите код {{.code}}{{with .link}} или откройте {{.}}{{end}}, чтобы подтвердить новую почту."},
 		},
 	},
 	{
 		Key:  "password_reset",
 		Name: "Password reset",
 		Locales: map[string]BuiltinEmailCopy{
-			"en": {Subject: "Reset your password", Text: "Use code {{.code}} or open {{.link}} to reset your password."},
-			"ru": {Subject: "Сброс пароля", Text: "Введите код {{.code}} или откройте {{.link}}, чтобы сбросить пароль."},
+			"en": {Subject: "Reset your password", Text: "Use code {{.code}}{{with .link}} or open {{.}}{{end}} to reset your password."},
+			"ru": {Subject: "Сброс пароля", Text: "Введите код {{.code}}{{with .link}} или откройте {{.}}{{end}}, чтобы сбросить пароль."},
 		},
 	},
 	{

@@ -29,6 +29,14 @@ import type { IamAuth } from './client';
 
 export type FlowKind = 'signup' | 'signin' | 'recovery' | 'email_change';
 
+export type FlowVerifyEmailParams =
+  | { code: string; token?: never }
+  | { code?: never; token: string };
+
+export interface FlowSetPasswordParams {
+  password: string;
+}
+
 export interface FlowControllerOptions {
   /** API base URL (same as IamClientOptions.baseUrl). */
   baseUrl: string;
@@ -40,7 +48,7 @@ export interface FlowControllerOptions {
    */
   environment?: string;
   /**
-   * If provided, the controller will call `auth.acceptFlowSession(tokens, user)`
+   * If provided, the controller will call `auth.acceptFlowSession(tokens)`
    * when the flow completes, triggering SIGNED_IN across the app.
    */
   auth?: IamAuth;
@@ -118,6 +126,19 @@ export interface FlowController {
   ): Promise<{ state: FlowState | null; error: IamAuthError | null }>;
 
   /**
+   * Verify the current email step with either the typed code from the message
+   * or an email-verification link token. This is a typed shortcut for
+   * submit('verify_email', ...).
+   */
+  verifyEmail(params: FlowVerifyEmailParams): Promise<{ state: FlowState | null; error: IamAuthError | null }>;
+
+  /**
+   * Submit the password collected at a set_password step. Used by recovery
+   * flows and signup configurations that collect a password after verification.
+   */
+  setPassword(params: FlowSetPasswordParams): Promise<{ state: FlowState | null; error: IamAuthError | null }>;
+
+  /**
    * Re-send the current challenge (email/SMS code).
    * Returns 429 error when rate-limited (resend_at not yet reached).
    */
@@ -164,6 +185,12 @@ function flowError(result: { error?: unknown; response?: Response }): IamAuthErr
     return new IamAuthError(env.error.message ?? env.error.code, env.error.code, status);
   }
   return new IamAuthError('flow request failed', 'flow_request_failed', status);
+}
+
+function normalizeError(error: unknown): IamAuthError {
+  if (error instanceof IamAuthError) return error;
+  if (error instanceof Error) return new IamAuthError(error.message, 'flow_request_failed');
+  return new IamAuthError('flow request failed', 'flow_request_failed');
 }
 
 // ---- factory ----
@@ -257,7 +284,13 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
       if (opts.auth) {
         // acceptFlowSession fetches the user profile with the new token and
         // emits SIGNED_IN, exactly like a normal sign-in would.
-        await opts.auth.acceptFlowSession(state.session);
+        try {
+          await opts.auth.acceptFlowSession(state.session);
+        } catch (error) {
+          const err = normalizeError(error);
+          if (!opts_?.suppressNotify) notify(state, err);
+          return { state, error: err };
+        }
       }
       clearToken();
       notify(state, null);
@@ -320,6 +353,14 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
         body: { action, payload },
       });
       return handleState(r);
+    },
+
+    async verifyEmail(params) {
+      return controller.submit('verify_email', params);
+    },
+
+    async setPassword(params) {
+      return controller.submit('set_password', { password: params.password });
     },
 
     async resend() {

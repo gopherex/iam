@@ -2613,6 +2613,11 @@ func (s *MagicLinkStartRequest) SetFake() {
 			s.CaptchaToken.SetFake()
 		}
 	}
+	{
+		{
+			s.Locale.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.
@@ -3900,6 +3905,11 @@ func (s *OtpStartRequest) SetFake() {
 	{
 		{
 			s.RedirectTo.SetFake()
+		}
+	}
+	{
+		{
+			s.Locale.SetFake()
 		}
 	}
 	{
@@ -7993,6 +8003,11 @@ func (s *SignUpRequest) SetFake() {
 				}
 				s.Consents = append(s.Consents, elem)
 			}
+		}
+	}
+	{
+		{
+			s.Locale.SetFake()
 		}
 	}
 	{

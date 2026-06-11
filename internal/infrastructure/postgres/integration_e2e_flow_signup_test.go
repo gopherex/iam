@@ -7,6 +7,8 @@ package postgres
 //
 // Coverage:
 //   - Happy path: create → verify_email → completed (session minted).
+//   - Link path: verify_email accepts the email verification token.
+//   - Security: email verification token must match the flow's active challenge.
 //   - Security: expired / foreign-project / unknown token → 410.
 //   - Wrong code: attempts decremented, status stays pending.
 //   - Resend before resend_at → 429.
@@ -217,6 +219,95 @@ func TestE2EFlowSignupHappyPath(t *testing.T) {
 	_, rOld := flowGet(t, ctx, ts, projectID, token1)
 	if rOld.Status != http.StatusGone && rOld.Status != http.StatusNotFound {
 		t.Errorf("old token: status = %d, want 410 or 404", rOld.Status)
+	}
+}
+
+// TestE2EFlowSignupVerifyEmailTokenPath verifies that a signup flow can consume
+// the opaque email-verification link token, not only the numeric code.
+func TestE2EFlowSignupVerifyEmailTokenPath(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID := e2eProject(t, ctx)
+	email := "flow-signup-token-" + newUUID()[:8] + "@example.com"
+
+	fs, r := flowCreate(t, ctx, ts, projectID, map[string]any{
+		"kind":        "signup",
+		"email":       email,
+		"password":    "Sup3rStr0ng!Pass",
+		"name":        "Flow Token User",
+		"redirect_to": "https://app.example.com/auth/verify-email",
+	})
+	e2eWantStatus(t, r, http.StatusOK)
+	if fs.Step != "verify_email" {
+		t.Fatalf("step = %q, want verify_email", fs.Step)
+	}
+	token1 := fs.FlowToken
+
+	challengeID := findFlowChallengeID(t, ctx, token1)
+	emailToken := e2eEmitter.payloadFor(challengeID, "token")
+	if emailToken == "" {
+		t.Fatalf("email verification token not captured for challenge %s", challengeID)
+	}
+
+	fs2, r2 := flowSubmit(t, ctx, ts, projectID, token1, "verify_email", map[string]any{"token": emailToken})
+	e2eWantStatus(t, r2, http.StatusOK)
+	if fs2.Status != "completed" {
+		t.Fatalf("status = %q, want completed", fs2.Status)
+	}
+	if fs2.Step != "completed" {
+		t.Fatalf("step = %q, want completed", fs2.Step)
+	}
+	if fs2.Session == nil || fs2.Session.AccessToken == "" {
+		t.Fatal("session not minted on token completion")
+	}
+	if fs2.FlowToken == token1 {
+		t.Error("token was NOT rotated after token verify_email")
+	}
+}
+
+// TestE2EFlowSignupVerifyEmailTokenBoundToChallenge verifies that a link token
+// from another signup challenge in the same project cannot advance this flow.
+func TestE2EFlowSignupVerifyEmailTokenBoundToChallenge(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID := e2eProject(t, ctx)
+
+	fsA, rA := flowCreate(t, ctx, ts, projectID, map[string]any{
+		"kind":     "signup",
+		"email":    "flow-token-a-" + newUUID()[:8] + "@example.com",
+		"password": "Sup3rStr0ng!Pass",
+		"name":     "Flow Token A",
+	})
+	e2eWantStatus(t, rA, http.StatusOK)
+	fsB, rB := flowCreate(t, ctx, ts, projectID, map[string]any{
+		"kind":     "signup",
+		"email":    "flow-token-b-" + newUUID()[:8] + "@example.com",
+		"password": "Sup3rStr0ng!Pass",
+		"name":     "Flow Token B",
+	})
+	e2eWantStatus(t, rB, http.StatusOK)
+
+	challengeB := findFlowChallengeID(t, ctx, fsB.FlowToken)
+	tokenB := e2eEmitter.payloadFor(challengeB, "token")
+	if tokenB == "" {
+		t.Fatalf("email verification token not captured for challenge %s", challengeB)
+	}
+
+	wrong, rWrong := flowSubmit(t, ctx, ts, projectID, fsA.FlowToken, "verify_email", map[string]any{"token": tokenB})
+	e2eWantStatus(t, rWrong, http.StatusOK)
+	if wrong.Status != "pending" {
+		t.Fatalf("wrong token status = %q, want pending", wrong.Status)
+	}
+	if wrong.Error == nil || wrong.Error.Code != "invalid_code" {
+		t.Fatalf("wrong token error = %+v, want invalid_code", wrong.Error)
+	}
+
+	// The foreign token must remain usable by its own flow; otherwise the failed
+	// attempt above consumed the wrong challenge.
+	ok, rOK := flowSubmit(t, ctx, ts, projectID, fsB.FlowToken, "verify_email", map[string]any{"token": tokenB})
+	e2eWantStatus(t, rOK, http.StatusOK)
+	if ok.Status != "completed" {
+		t.Fatalf("own token status = %q, want completed", ok.Status)
 	}
 }
 

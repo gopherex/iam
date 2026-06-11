@@ -16,9 +16,9 @@ import (
 )
 
 type PasswordlessAccounts interface {
-	StartOTP(ctx context.Context, projectID, identifier, channel, purpose string) (*domain.Challenge, error)
+	StartOTP(ctx context.Context, projectID, identifier, channel, purpose, locale string) (*domain.Challenge, error)
 	VerifyOTP(ctx context.Context, challengeID, code string) (*domain.Account, *domain.Session, error)
-	StartMagicLink(ctx context.Context, projectID, email, redirectTo string) (*domain.Challenge, error)
+	StartMagicLink(ctx context.Context, projectID, email, redirectTo, locale string) (*domain.Challenge, error)
 	VerifyMagicLink(ctx context.Context, token string) (*domain.Account, *domain.Session, error)
 }
 
@@ -38,7 +38,7 @@ func NewPasswordlessService(deps PasswordlessDeps) *PasswordlessService {
 var _ oas.Handler = (*PasswordlessService)(nil)
 
 func (s *PasswordlessService) PostV1AuthOtpStart(ctx context.Context, req *oas.OtpStartRequest, params oas.PostV1AuthOtpStartParams) (*oas.Challenge, error) {
-	ch, err := s.deps.Accounts.StartOTP(ctx, params.XClientID, req.Identifier, string(req.Channel), string(req.Purpose))
+	ch, err := s.deps.Accounts.StartOTP(ctx, params.XClientID, req.Identifier, string(req.Channel), string(req.Purpose), req.Locale.Or(""))
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (s *PasswordlessService) PostV1AuthOtpVerify(ctx context.Context, req *oas.
 }
 
 func (s *PasswordlessService) PostV1AuthMagicLinkStart(ctx context.Context, req *oas.MagicLinkStartRequest, params oas.PostV1AuthMagicLinkStartParams) (*oas.Challenge, error) {
-	ch, err := s.deps.Accounts.StartMagicLink(ctx, params.XClientID, req.Email, req.RedirectTo)
+	ch, err := s.deps.Accounts.StartMagicLink(ctx, params.XClientID, req.Email, req.RedirectTo, req.Locale.Or(""))
 	if err != nil {
 		return nil, err
 	}

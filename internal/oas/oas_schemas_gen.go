@@ -5353,6 +5353,7 @@ type MagicLinkStartRequest struct {
 	RedirectTo   string                       `json:"redirect_to"`
 	Purpose      MagicLinkStartRequestPurpose `json:"purpose"`
 	CaptchaToken OptNilString                 `json:"captcha_token"`
+	Locale       OptNilString                 `json:"locale"`
 }
 
 // GetEmail returns the value of Email.
@@ -5375,6 +5376,11 @@ func (s *MagicLinkStartRequest) GetCaptchaToken() OptNilString {
 	return s.CaptchaToken
 }
 
+// GetLocale returns the value of Locale.
+func (s *MagicLinkStartRequest) GetLocale() OptNilString {
+	return s.Locale
+}
+
 // SetEmail sets the value of Email.
 func (s *MagicLinkStartRequest) SetEmail(val string) {
 	s.Email = val
@@ -5393,6 +5399,11 @@ func (s *MagicLinkStartRequest) SetPurpose(val MagicLinkStartRequestPurpose) {
 // SetCaptchaToken sets the value of CaptchaToken.
 func (s *MagicLinkStartRequest) SetCaptchaToken(val OptNilString) {
 	s.CaptchaToken = val
+}
+
+// SetLocale sets the value of Locale.
+func (s *MagicLinkStartRequest) SetLocale(val OptNilString) {
+	s.Locale = val
 }
 
 type MagicLinkStartRequestPurpose string
@@ -11910,6 +11921,7 @@ type OtpStartRequest struct {
 	Channel      OtpStartRequestChannel `json:"channel"`
 	Purpose      OtpStartRequestPurpose `json:"purpose"`
 	RedirectTo   OptNilString           `json:"redirect_to"`
+	Locale       OptNilString           `json:"locale"`
 	CaptchaToken OptNilString           `json:"captcha_token"`
 }
 
@@ -11931,6 +11943,11 @@ func (s *OtpStartRequest) GetPurpose() OtpStartRequestPurpose {
 // GetRedirectTo returns the value of RedirectTo.
 func (s *OtpStartRequest) GetRedirectTo() OptNilString {
 	return s.RedirectTo
+}
+
+// GetLocale returns the value of Locale.
+func (s *OtpStartRequest) GetLocale() OptNilString {
+	return s.Locale
 }
 
 // GetCaptchaToken returns the value of CaptchaToken.
@@ -11956,6 +11973,11 @@ func (s *OtpStartRequest) SetPurpose(val OtpStartRequestPurpose) {
 // SetRedirectTo sets the value of RedirectTo.
 func (s *OtpStartRequest) SetRedirectTo(val OptNilString) {
 	s.RedirectTo = val
+}
+
+// SetLocale sets the value of Locale.
+func (s *OtpStartRequest) SetLocale(val OptNilString) {
+	s.Locale = val
 }
 
 // SetCaptchaToken sets the value of CaptchaToken.
@@ -19375,6 +19397,7 @@ type SignUpRequest struct {
 	Metadata        OptSignUpRequestMetadata `json:"metadata"`
 	InvitationToken OptNilString             `json:"invitation_token"`
 	Consents        []ConsentAcceptance      `json:"consents"`
+	Locale          OptNilString             `json:"locale"`
 	CaptchaToken    OptNilString             `json:"captcha_token"`
 	Test            OptBool                  `json:"test"`
 }
@@ -19412,6 +19435,11 @@ func (s *SignUpRequest) GetInvitationToken() OptNilString {
 // GetConsents returns the value of Consents.
 func (s *SignUpRequest) GetConsents() []ConsentAcceptance {
 	return s.Consents
+}
+
+// GetLocale returns the value of Locale.
+func (s *SignUpRequest) GetLocale() OptNilString {
+	return s.Locale
 }
 
 // GetCaptchaToken returns the value of CaptchaToken.
@@ -19457,6 +19485,11 @@ func (s *SignUpRequest) SetInvitationToken(val OptNilString) {
 // SetConsents sets the value of Consents.
 func (s *SignUpRequest) SetConsents(val []ConsentAcceptance) {
 	s.Consents = val
+}
+
+// SetLocale sets the value of Locale.
+func (s *SignUpRequest) SetLocale(val OptNilString) {
+	s.Locale = val
 }
 
 // SetCaptchaToken sets the value of CaptchaToken.

@@ -37,6 +37,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 )
 
@@ -160,6 +161,7 @@ func TestE2ECoreAuthSignUp(t *testing.T) {
 			map[string]any{
 				"email":    email,
 				"password": "Sup3rStr0ng!Pass",
+				"locale":   "ru",
 			},
 			map[string]string{
 				"X-Client-Id":   projectID,
@@ -171,7 +173,10 @@ func TestE2ECoreAuthSignUp(t *testing.T) {
 		var body struct {
 			ResultType string `json:"result_type"`
 			User       struct {
-				ID string `json:"id"`
+				ID      string `json:"id"`
+				Profile struct {
+					Locale string `json:"locale"`
+				} `json:"profile"`
 			} `json:"user"`
 			Session struct {
 				AccessToken string `json:"access_token"`
@@ -180,6 +185,9 @@ func TestE2ECoreAuthSignUp(t *testing.T) {
 		e2eDecode(t, r, &body)
 		if body.User.ID == "" {
 			t.Errorf("sign-up: missing user.id, body=%s", r.Body)
+		}
+		if body.User.Profile.Locale != "ru" {
+			t.Errorf("sign-up: user.profile.locale = %q, want ru; body=%s", body.User.Profile.Locale, r.Body)
 		}
 		if body.Session.AccessToken == "" {
 			t.Errorf("sign-up: missing session.access_token, body=%s", r.Body)
@@ -352,6 +360,29 @@ func TestE2EPasswordPolicyEnforcedOnChange(t *testing.T) {
 
 // ─── Core Auth — sign-in/password ────────────────────────────────────────────
 
+func e2eEventPayloadForRecipient(t *testing.T, eventType, to, field string) string {
+	t.Helper()
+	e2eEmitter.mu.Lock()
+	defer e2eEmitter.mu.Unlock()
+	for i := len(e2eEmitter.events) - 1; i >= 0; i-- {
+		ev := e2eEmitter.events[i]
+		if ev.Type != eventType {
+			continue
+		}
+		p, ok := ev.Payload.(map[string]any)
+		if !ok {
+			continue
+		}
+		if got, _ := p["to"].(string); got != to {
+			continue
+		}
+		if v, ok := p[field].(string); ok {
+			return v
+		}
+	}
+	return ""
+}
+
 // TestE2ECoreAuthSignInPassword tests password-based login.
 func TestE2ECoreAuthSignInPassword(t *testing.T) {
 	ts := e2eServer(t)
@@ -401,6 +432,54 @@ func TestE2ECoreAuthSignInPassword(t *testing.T) {
 		)
 		e2eWantStatus(t, r, 401)
 	})
+}
+
+// TestE2ECoreAuthPasswordResetTokenPath verifies the standalone password reset
+// link path: forgot emits an opaque token, reset consumes it and mints a session.
+func TestE2ECoreAuthPasswordResetTokenPath(t *testing.T) {
+	ts := e2eServer(t)
+	ctx := context.Background()
+	projectID := e2eProject(t, ctx)
+	email := fmt.Sprintf("reset-token+%s@example.com", newUUID())
+	newPassword := "N3wStr0ng!Pass99"
+
+	registerUser(t, ctx, projectID, email)
+
+	rForgot := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/password/forgot",
+		map[string]any{
+			"email":       email,
+			"redirect_to": "https://app.example.com/auth/reset-password",
+			"locale":      "ru",
+		},
+		map[string]string{"X-Client-Id": projectID, "X-Environment": "live"},
+	)
+	e2eWantStatus(t, rForgot, http.StatusOK)
+
+	resetToken := e2eEventPayloadForRecipient(t, "password.reset_requested", email, "token")
+	if resetToken == "" {
+		t.Fatal("password reset token not captured from emitter")
+	}
+
+	rReset := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/password/reset",
+		map[string]any{"token": resetToken, "new_password": newPassword},
+		map[string]string{"X-Client-Id": projectID, "X-Environment": "live"},
+	)
+	e2eWantStatus(t, rReset, http.StatusOK)
+	var body struct {
+		Session struct {
+			AccessToken string `json:"access_token"`
+		} `json:"session"`
+	}
+	e2eDecode(t, rReset, &body)
+	if body.Session.AccessToken == "" {
+		t.Fatalf("password reset token path: missing session access_token, body=%s", rReset.Body)
+	}
+
+	rSignIn := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/sign-in/password",
+		map[string]any{"email": email, "password": newPassword},
+		map[string]string{"X-Client-Id": projectID, "X-Environment": "live"},
+	)
+	e2eWantStatus(t, rSignIn, http.StatusOK)
 }
 
 // ─── Core Auth — token refresh ───────────────────────────────────────────────

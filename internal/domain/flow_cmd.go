@@ -17,6 +17,7 @@ type Flow struct {
 	UpdatedAt   time.Time
 
 	// Data fields (stored in the jsonb `data` column).
+	Locale           string
 	Contact          FlowContact
 	Collected        FlowCollected
 	ActiveChallenge  *FlowActiveChallenge

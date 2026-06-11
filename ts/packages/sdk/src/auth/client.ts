@@ -67,6 +67,14 @@ type Listener = (event: AuthChangeEvent, session: Session | null) => void;
 
 type ChallengeResponse = { data: { challengeId: string } | null; error: IamAuthError | null };
 
+export type EmailVerificationVerifyParams =
+  | { challengeId: string; code: string; token?: never }
+  | { challengeId?: never; code?: never; token: string };
+
+export type PasswordResetParams =
+  | { newPassword: string; challengeId: string; code: string; token?: never }
+  | { newPassword: string; challengeId?: never; code?: never; token: string };
+
 function toSession(tokens: SessionTokens, user: User): Session {
   return {
     access_token: tokens.access_token,
@@ -81,13 +89,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function hasUserId(value: unknown): value is User {
+  return isRecord(value) && typeof value.id === 'string' && value.id !== '';
+}
+
 function isStoredSession(value: unknown): value is Session {
   if (!isRecord(value)) return false;
   if (typeof value.access_token !== 'string' || value.access_token === '') return false;
   if (value.refresh_token !== undefined && typeof value.refresh_token !== 'string') return false;
   if (typeof value.token_type !== 'string' || value.token_type === '') return false;
   if (typeof value.expires_at !== 'number' || !Number.isFinite(value.expires_at)) return false;
-  if (!isRecord(value.user) || typeof value.user.id !== 'string' || value.user.id === '') return false;
+  if (!hasUserId(value.user)) return false;
   return true;
 }
 
@@ -225,6 +237,7 @@ export class IamAuth {
     name?: string;
     metadata?: Record<string, unknown>;
     consents?: Array<ConsentAcceptance>;
+    locale?: string;
   }): Promise<AuthResponse> {
     const r = await postV1AuthSignUp({
       client: this.client,
@@ -236,6 +249,7 @@ export class IamAuth {
         name: params.name ?? null,
         metadata: params.metadata,
         consents: params.consents ?? [],
+        locale: params.locale ?? null,
       },
     });
     return this.handle(r);
@@ -246,6 +260,7 @@ export class IamAuth {
     identifier: string;
     channel?: 'email' | 'sms';
     purpose?: 'signin' | 'signup' | 'verify';
+    locale?: string;
   }): Promise<{ data: { challengeId: string } | null; error: IamAuthError | null }> {
     const r = await postV1AuthOtpStart({
       client: this.client,
@@ -254,6 +269,7 @@ export class IamAuth {
         identifier: params.identifier,
         channel: params.channel ?? 'email',
         purpose: params.purpose ?? 'signin',
+        locale: params.locale ?? null,
       },
     });
     if (r.error) return { data: null, error: authError(r) };
@@ -274,11 +290,17 @@ export class IamAuth {
     email: string;
     redirectTo: string;
     purpose?: 'signin' | 'signup';
+    locale?: string;
   }): Promise<{ error: IamAuthError | null }> {
     const r = await postV1AuthMagicLinkStart({
       client: this.client,
       headers: this.headers(),
-      body: { email: params.email, redirect_to: params.redirectTo, purpose: params.purpose ?? 'signin' },
+      body: {
+        email: params.email,
+        redirect_to: params.redirectTo,
+        purpose: params.purpose ?? 'signin',
+        locale: params.locale ?? null,
+      },
     });
     return { error: r.error ? authError(r) : null };
   }
@@ -305,11 +327,14 @@ export class IamAuth {
     return this.challengeResult(r);
   }
 
-  async verifyEmail(params: { challengeId: string; code: string }): Promise<AuthResponse> {
+  async verifyEmail(params: EmailVerificationVerifyParams): Promise<AuthResponse> {
+    const byToken = 'token' in params;
     const r = await postV1AuthEmailVerificationVerify({
       client: this.client,
       headers: this.headers(),
-      body: { challenge_id: params.challengeId, code: params.code },
+      body: byToken
+        ? { challenge_id: null, code: null, token: params.token }
+        : { challenge_id: params.challengeId, code: params.code, token: null },
     });
     return this.handle(r);
   }
@@ -480,20 +505,16 @@ export class IamAuth {
     return { error: r.error ? authError(r) : null };
   }
 
-  async resetPassword(params: {
-    newPassword: string;
-    token?: string;
-    challengeId?: string;
-    code?: string;
-  }): Promise<AuthResponse> {
+  async resetPassword(params: PasswordResetParams): Promise<AuthResponse> {
+    const byToken = 'token' in params;
     const r = await postV1AuthPasswordReset({
       client: this.client,
       headers: this.headers(),
       body: {
         new_password: params.newPassword,
-        token: params.token ?? null,
-        challenge_id: params.challengeId ?? null,
-        code: params.code ?? null,
+        token: byToken ? params.token : null,
+        challenge_id: byToken ? null : params.challengeId,
+        code: byToken ? null : params.code,
       },
     });
     return this.handle(r);
@@ -615,25 +636,34 @@ export class IamAuth {
    * Accept a completed flow's SessionTokens into the auth client.
    * Called by FlowController when the flow reaches `status: completed`.
    * Fetches the current user profile using the new access token, then emits
-   * SIGNED_IN. If the user fetch fails the session is still persisted so the
-   * app can recover on next load.
+   * SIGNED_IN. If the user fetch fails, the flow session is not persisted.
    */
   async acceptFlowSession(tokens: SessionTokens): Promise<void> {
     // Temporarily store a minimal session so the authenticated getV1UsersMe
-    // request can attach the bearer.
+    // request can attach the bearer. Do not include the refresh token here:
+    // a retry refresh must never persist this placeholder user.
+    const previousSession = this.session;
     const placeholder: User = { id: '', kind: 'human', status: 'active' };
-    const tempSession = toSession(tokens, placeholder);
-    this.session = tempSession;
+    this.session = toSession({ ...tokens, refresh_token: undefined }, placeholder);
 
-    // Fetch the real user using the new access token.
-    const meResult = await getV1UsersMe({
-      client: this.client,
-    });
-    const user: User =
-      !meResult.error && meResult.data ? (meResult.data as User) : placeholder;
+    try {
+      // Fetch the real user using the new access token.
+      const meResult = await getV1UsersMe({
+        client: this.client,
+      });
+      if (meResult.error) throw authError(meResult);
 
-    const session = toSession(tokens, user);
-    await this.setSession(session, 'SIGNED_IN');
+      const user = (meResult.data as { user?: User } | undefined)?.user;
+      if (!hasUserId(user)) {
+        throw new IamAuthError('user missing in /v1/users/me response', 'invalid_response', meResult.response?.status);
+      }
+
+      const session = toSession(tokens, user);
+      await this.setSession(session, 'SIGNED_IN');
+    } catch (err) {
+      this.session = previousSession;
+      throw err;
+    }
   }
 
   /** Force a token refresh now. Returns the refreshed session or null. */

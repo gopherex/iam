@@ -12,6 +12,7 @@ export * from './gen';
 export { client } from './gen/client.gen';
 
 export { createIamClient, IamAuth, IamConfig } from './auth/client';
+export type { EmailVerificationVerifyParams, PasswordResetParams } from './auth/client';
 export { IamAuthError } from './auth/types';
 export type {
   AuthChangeEvent,
@@ -29,6 +30,8 @@ export type {
   FlowControllerOptions,
   FlowChangeCallback,
   FlowKind,
+  FlowSetPasswordParams,
+  FlowVerifyEmailParams,
 } from './auth/flow';
 // Note: FlowState is exported from './gen' via the wildcard export above.
 

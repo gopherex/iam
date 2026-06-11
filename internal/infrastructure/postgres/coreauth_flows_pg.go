@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -100,6 +101,7 @@ func flowCompareToken(token, storedHash string) bool {
 
 // flowData is the jsonb payload in iam_flows.data.
 type flowData struct {
+	Locale           string                            `json:"locale,omitempty"`
 	Contact          domain.FlowContact                `json:"contact"`
 	Collected        domain.FlowCollected              `json:"collected"`
 	ActiveChallenge  *domain.FlowActiveChallenge       `json:"active_challenge,omitempty"`
@@ -179,6 +181,7 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 		ExpiresAt:        row.ExpiresAt,
 		CreatedAt:        row.CreatedAt,
 		UpdatedAt:        row.UpdatedAt,
+		Locale:           data.Locale,
 		Contact:          data.Contact,
 		Collected:        data.Collected,
 		ActiveChallenge:  data.ActiveChallenge,
@@ -200,6 +203,7 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *domain.Flow) error {
 	now := nowUTC()
 	rm, err := flowDataRM(flowData{
+		Locale:           f.Locale,
 		Contact:          f.Contact,
 		Collected:        f.Collected,
 		ActiveChallenge:  f.ActiveChallenge,
@@ -236,6 +240,7 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 	}
 	now := nowUTC()
 	rm, err := flowDataRM(flowData{
+		Locale:           f.Locale,
 		Contact:          f.Contact,
 		Collected:        f.Collected,
 		ActiveChallenge:  f.ActiveChallenge,
@@ -278,6 +283,9 @@ func flowRowEnv(row *models.IamFlow) string {
 
 // flowInsert creates a new iam_flows row.
 func (a *pgCoreAuthFlows) flowInsert(ctx context.Context, f *domain.Flow, hash string, data flowData) error {
+	if data.Locale == "" {
+		data.Locale = f.Locale
+	}
 	rm, err := flowDataRM(data)
 	if err != nil {
 		return err
@@ -340,6 +348,7 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 		ExpiresAt:   now.Add(flowTTL),
 		CreatedAt:   now,
 		UpdatedAt:   now,
+		Locale:      cmd.Locale,
 		Contact:     domain.FlowContact{Email: cmd.Email, Phone: cmd.Phone},
 		Collected: domain.FlowCollected{
 			Name:        cmd.Name,
@@ -452,6 +461,28 @@ var flowAdvancers = map[domain.FlowKind]flowAdvanceFn{
 	domain.FlowKindEmailChange: advanceNotImplemented,
 }
 
+func flowVerificationSecret(payload map[string]string) (code string, token string) {
+	code = strings.TrimSpace(payload["code"])
+	token = strings.TrimSpace(payload["token"])
+	return code, token
+}
+
+func flowVerifyConsumeCmd(projectID, accountID, challengeID, code, token string) domain.CoreAuthVerifyConsumeCmd {
+	cmd := domain.CoreAuthVerifyConsumeCmd{
+		ProjectID:   projectID,
+		AccountID:   accountID,
+		ChallengeID: challengeID,
+	}
+	if code != "" {
+		cmd.Code = code
+	} else {
+		// In flow mode the link token must match the active challenge, not just
+		// any unconsumed token in the project.
+		cmd.Token = token
+	}
+	return cmd
+}
+
 func advanceNotImplemented(_ context.Context, _ *pgCoreAuthFlows, _ *models.IamFlow, _ *domain.Flow, _ domain.FlowSubmitCmd) (*domain.FlowState, error) {
 	return nil, domain.ErrNotImplemented
 }
@@ -526,7 +557,7 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 		if f.Kind == domain.FlowKindRecovery {
 			purpose = "recovery"
 		}
-		ch, serr := pl.StartOTP(ctx, f.ProjectID, f.Contact.Phone, "sms", purpose)
+		ch, serr := pl.StartOTP(ctx, f.ProjectID, f.Contact.Phone, "sms", purpose, f.Locale)
 		if serr != nil {
 			return "", "", time.Time{}, serr
 		}
@@ -537,7 +568,7 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 			return "", "", time.Time{}, fmt.Errorf("flow resend: accounts is not *pgCoreAuth")
 		}
 		pl := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
-		ch, serr := pl.StartMagicLink(ctx, f.ProjectID, f.Contact.Email, "")
+		ch, serr := pl.StartMagicLink(ctx, f.ProjectID, f.Contact.Email, "", f.Locale)
 		if serr != nil {
 			return "", "", time.Time{}, serr
 		}
@@ -548,6 +579,7 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 			ProjectID: f.ProjectID,
 			AccountID: f.UserID,
 			Contact:   f.Contact.Email,
+			Locale:    f.Locale,
 		})
 		if serr != nil {
 			return "", "", time.Time{}, serr
@@ -816,30 +848,25 @@ func advanceSignup(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 	}
 }
 
-// signupVerifyEmail verifies the email OTP code. On success it rotates the token,
-// completes the flow, and returns a session (§5 rules 2, 8).
+// signupVerifyEmail verifies the email OTP code or link token. On success it
+// rotates the token, completes the flow, and returns a session (§5 rules 2, 8).
 func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
 	ac := f.ActiveChallenge
 	if ac == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active email challenge")
 	}
-	code := cmd.Payload["code"]
-	if code == "" {
-		return nil, domain.ErrBadRequest.WithMessage("code is required")
+	code, token := flowVerificationSecret(cmd.Payload)
+	if code == "" && token == "" {
+		return nil, domain.ErrBadRequest.WithMessage("code or token is required")
 	}
 	if ac.AttemptsLeft <= 0 {
 		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
 	}
 
 	// VerifyEmail consumes the challenge and marks the account email_verified.
-	acct, sess, err := a.accounts.VerifyEmail(ctx, domain.CoreAuthVerifyConsumeCmd{
-		ProjectID:   f.ProjectID,
-		AccountID:   f.UserID,
-		ChallengeID: ac.ChallengeID,
-		Code:        code,
-	})
+	acct, sess, err := a.accounts.VerifyEmail(ctx, flowVerifyConsumeCmd(f.ProjectID, f.UserID, ac.ChallengeID, code, token))
 	if err != nil {
-		// Wrong code: decrement attempts, embed error in flow, stay pending (§5 rule 6).
+		// Wrong code/token: decrement attempts, embed error in flow, stay pending (§5 rule 6).
 		ac.AttemptsLeft--
 		f.Error = &domain.FlowError{Code: "invalid_code", Message: "The verification code is incorrect."}
 		// Best-effort save; ignore error to return the flow state.

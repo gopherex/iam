@@ -58,6 +58,7 @@ func TestE2EPasswordlessOTPStart(t *testing.T) {
 				"identifier": "otp-user@example.com",
 				"channel":    "email",
 				"purpose":    "signin",
+				"locale":     "ru",
 			},
 			map[string]string{"X-Client-Id": projectID},
 		)
@@ -66,6 +67,10 @@ func TestE2EPasswordlessOTPStart(t *testing.T) {
 		e2eDecode(t, r, &body)
 		if body["challenge_id"] == nil {
 			t.Fatalf("expected challenge_id in response, got: %s", r.Body)
+		}
+		challengeID, _ := body["challenge_id"].(string)
+		if got := e2eEmitter.payloadFor(challengeID, "locale"); got != "ru" {
+			t.Fatalf("emitted locale = %q, want ru", got)
 		}
 	})
 
@@ -167,6 +172,7 @@ func TestE2EPasswordlessMagicLinkStart(t *testing.T) {
 				"email":       "magic@example.com",
 				"redirect_to": "https://app.example.com/callback",
 				"purpose":     "signin",
+				"locale":      "ru",
 			},
 			map[string]string{"X-Client-Id": projectID},
 		)
@@ -175,6 +181,10 @@ func TestE2EPasswordlessMagicLinkStart(t *testing.T) {
 		e2eDecode(t, r, &body)
 		if body["challenge_id"] == nil {
 			t.Fatalf("expected challenge_id in response, got: %s", r.Body)
+		}
+		challengeID, _ := body["challenge_id"].(string)
+		if got := e2eEmitter.payloadFor(challengeID, "locale"); got != "ru" {
+			t.Fatalf("emitted locale = %q, want ru", got)
 		}
 	})
 

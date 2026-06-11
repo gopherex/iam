@@ -56,6 +56,50 @@ email/phone verification, password reset/update, step-up, and MFA challenge /
 verify. Plus `getSession`, `getUser`, `refreshSession`, `onAuthStateChange`,
 `signOut`.
 
+Pass `locale` (`'ru'`, `'en'`, `'ru-RU'`, etc.) on email-producing calls when
+the UI language is known. It is forwarded to email/OTP/magic-link/flow delivery;
+otherwise IAM falls back to the user's stored locale, then the project default,
+then English.
+
+```ts
+await iam.auth.signUp({ email: 'a@b.com', password: 'secret', locale: 'ru' });
+await iam.auth.signInWithOtp({ identifier: 'a@b.com', channel: 'email', locale: 'ru' });
+await iam.auth.signInWithMagicLink({
+  email: 'a@b.com',
+  redirectTo: `${window.location.origin}/auth/callback`,
+  locale: 'ru',
+});
+await iam.flow.start({ kind: 'signup', email: 'a@b.com', password: 'secret', locale: 'ru' });
+```
+
+Email verification can be completed by the numeric code or by the link token:
+
+```ts
+await iam.auth.verifyEmail({ challengeId, code: '260129' });
+await iam.auth.verifyEmail({ token });
+
+// For resumable flows, the typed helper submits the current verify_email step.
+await iam.flow.verifyEmail({ code: '260129' });
+await iam.flow.verifyEmail({ token });
+```
+
+Password reset supports the same code-or-link-token pattern:
+
+```ts
+await iam.auth.resetPasswordForEmail({
+  email: 'a@b.com',
+  redirectTo: `${window.location.origin}/auth/reset-password`,
+});
+
+await iam.auth.resetPassword({ token, newPassword: 'N3wStr0ng!Pass99' });
+await iam.auth.resetPassword({ challengeId, code: '260129', newPassword: 'N3wStr0ng!Pass99' });
+
+// Recovery flow callback: first consume the email link token, then collect the
+// new password on the set_password step.
+await iam.flow.verifyEmail({ token });
+await iam.flow.setPassword({ password: 'N3wStr0ng!Pass99' });
+```
+
 ## Persistence
 
 By default the SDK persists the session under `iam.session` in `localStorage`

@@ -73,6 +73,7 @@ type challengeEnvelope struct {
 	Purpose     string    `json:"purpose"`     // login | signin | signup | recovery | verify | ...
 	Subject     string    `json:"subject"`     // identifier being challenged
 	RedirectTo  string    `json:"redirect_to,omitempty"`
+	Locale      string    `json:"locale,omitempty"`
 	CodeHash    string    `json:"code_hash"`
 	ExpiresAt   time.Time `json:"expires_at"`
 	Consumed    bool      `json:"consumed"`
@@ -95,7 +96,7 @@ func isPhoneChannel(channel string) bool {
 
 // ===== OTP =====
 
-func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identifier, channel, purpose string) (*domain.Challenge, error) {
+func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identifier, channel, purpose, locale string) (*domain.Challenge, error) {
 	if projectID == "" || identifier == "" {
 		return nil, domain.ErrBadRequest
 	}
@@ -143,6 +144,7 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 		Channel:     channel,
 		Purpose:     purpose,
 		Subject:     identifier,
+		Locale:      locale,
 		CodeHash:    hashToken(code),
 		ExpiresAt:   now.Add(otpTTL),
 		Consumed:    false,
@@ -167,6 +169,7 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 				"account_id":   env.Subject,
 				"contact":      env.Subject,
 				"to":           env.Subject,
+				"locale":       env.Locale,
 				"challenge_id": env.ID,
 			},
 		})
@@ -251,7 +254,7 @@ func (a *pgPasswordlessAccounts) bumpAttempts(ctx context.Context, row *models.I
 
 // ===== Magic link =====
 
-func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, email, redirectTo string) (*domain.Challenge, error) {
+func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, email, redirectTo, locale string) (*domain.Challenge, error) {
 	if projectID == "" || email == "" {
 		return nil, domain.ErrBadRequest
 	}
@@ -273,6 +276,7 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 		Purpose:     "login",
 		Subject:     email,
 		RedirectTo:  redirectTo,
+		Locale:      locale,
 		CodeHash:    hashToken(token),
 		ExpiresAt:   now.Add(magicLinkTTL),
 		Consumed:    false,
@@ -294,6 +298,7 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 				"contact":      env.Subject,
 				"to":           env.Subject,
 				"redirect_to":  env.RedirectTo,
+				"locale":       env.Locale,
 				"purpose":      env.Purpose,
 				"challenge_id": env.ID,
 			},
@@ -551,6 +556,7 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByEmail(ctx context.Context, env
 		Status:        "active",
 		PrimaryEmail:  env.Subject,
 		EmailVerified: true,
+		Locale:        env.Locale,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
@@ -611,6 +617,7 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByPhone(ctx context.Context, env
 		Status:        "active",
 		PrimaryPhone:  env.Subject,
 		PhoneVerified: true,
+		Locale:        env.Locale,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}

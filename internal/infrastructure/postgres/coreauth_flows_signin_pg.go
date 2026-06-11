@@ -272,7 +272,7 @@ func (a *pgCoreAuthFlows) createSigninPhoneOTP(ctx context.Context, f *domain.Fl
 	if err != nil {
 		return nil, err
 	}
-	ch, err := pl.StartOTP(ctx, f.ProjectID, cmd.Phone, "sms", "signin")
+	ch, err := pl.StartOTP(ctx, f.ProjectID, cmd.Phone, "sms", "signin", cmd.Locale)
 	if err != nil {
 		return nil, err // ErrValidation (no provider) / ErrBadRequest (bad E.164)
 	}
@@ -290,7 +290,7 @@ func (a *pgCoreAuthFlows) createSigninMagicLink(ctx context.Context, f *domain.F
 	if err != nil {
 		return nil, err
 	}
-	ch, err := pl.StartMagicLink(ctx, f.ProjectID, cmd.Email, cmd.RedirectTo)
+	ch, err := pl.StartMagicLink(ctx, f.ProjectID, cmd.Email, cmd.RedirectTo, cmd.Locale)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +524,7 @@ func (a *pgCoreAuthFlows) signinSwitchMethod(ctx context.Context, row *models.Ia
 		if err != nil {
 			return nil, err
 		}
-		ch, err := pl.StartOTP(ctx, f.ProjectID, phone, "sms", "signin")
+		ch, err := pl.StartOTP(ctx, f.ProjectID, phone, "sms", "signin", f.Locale)
 		if err != nil {
 			return nil, err
 		}
@@ -538,7 +538,7 @@ func (a *pgCoreAuthFlows) signinSwitchMethod(ctx context.Context, row *models.Ia
 		if err != nil {
 			return nil, err
 		}
-		ch, err := pl.StartMagicLink(ctx, f.ProjectID, f.Contact.Email, cmd.Payload["redirect_to"])
+		ch, err := pl.StartMagicLink(ctx, f.ProjectID, f.Contact.Email, cmd.Payload["redirect_to"], f.Locale)
 		if err != nil {
 			return nil, err
 		}

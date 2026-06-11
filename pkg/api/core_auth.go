@@ -517,6 +517,7 @@ func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpR
 		Phone:     req.Phone.Or(""),
 		Password:  req.Password.Or(""),
 		Name:      req.Name.Or(""),
+		Locale:    req.Locale.Or(""),
 		Consents:  consents,
 	}
 	if err := cmd.Validate(); err != nil {

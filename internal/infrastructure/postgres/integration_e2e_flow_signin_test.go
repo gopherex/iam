@@ -314,6 +314,7 @@ func TestE2EFlowSigninMagicLink(t *testing.T) {
 		"kind":   "signin",
 		"method": "magic_link",
 		"email":  email,
+		"locale": "ru",
 	})
 	e2eWantStatus(t, r, http.StatusOK)
 	if fs.Status != "pending" {
@@ -332,6 +333,9 @@ func TestE2EFlowSigninMagicLink(t *testing.T) {
 	mlToken := e2eEmitter.payloadFor(challengeID, "token")
 	if mlToken == "" {
 		t.Fatalf("magic-link token not captured for challenge %s", challengeID)
+	}
+	if got := e2eEmitter.payloadFor(challengeID, "locale"); got != "ru" {
+		t.Fatalf("magic-link locale = %q, want ru", got)
 	}
 
 	// 3. Submit the token with the verify_email action.

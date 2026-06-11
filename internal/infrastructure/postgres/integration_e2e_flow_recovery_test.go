@@ -8,6 +8,7 @@ package postgres
 // Coverage:
 //   1. Happy path: register → create recovery → capture OTP → verify_email
 //      → set_password → completed + session; new password works for sign-in.
+//      verify_email also accepts the opaque email link token.
 //   2. Anti-enumeration: create recovery for an unknown email returns the
 //      SAME step=verify_email FlowState with no error; any submitted code
 //      fails verification identically.
@@ -119,6 +120,49 @@ func TestE2EFlowRecoveryHappyPath(t *testing.T) {
 		map[string]string{"X-Client-Id": projectID, "X-Environment": "live"})
 	if rSignInOld.Status == http.StatusOK {
 		t.Error("sign-in with OLD password should fail after recovery")
+	}
+}
+
+// TestE2EFlowRecoveryVerifyEmailTokenPath verifies that the recovery email link
+// token advances verify_email to set_password just like the numeric code.
+func TestE2EFlowRecoveryVerifyEmailTokenPath(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID := e2eProject(t, ctx)
+	email := fmt.Sprintf("recovery-token-%s@example.com", newUUID()[:8])
+
+	registerUser(t, ctx, projectID, email)
+
+	fs, r := flowCreate(t, ctx, ts, projectID, map[string]any{
+		"kind":        "recovery",
+		"email":       email,
+		"redirect_to": "https://app.example.com/auth/reset-password",
+	})
+	e2eWantStatus(t, r, http.StatusOK)
+	if fs.Step != "verify_email" {
+		t.Fatalf("create: step = %q, want verify_email", fs.Step)
+	}
+	token1 := fs.FlowToken
+
+	challengeID := findFlowChallengeID(t, ctx, token1)
+	emailToken := e2eEmitter.payloadFor(challengeID, "token")
+	if emailToken == "" {
+		t.Fatalf("password reset token not captured for challenge %s", challengeID)
+	}
+
+	fs2, r2 := flowSubmit(t, ctx, ts, projectID, token1, "verify_email", map[string]any{"token": emailToken})
+	e2eWantStatus(t, r2, http.StatusOK)
+	if fs2.Status != "pending" {
+		t.Fatalf("verify_email: status = %q, want pending", fs2.Status)
+	}
+	if fs2.Step != "set_password" {
+		t.Fatalf("verify_email: step = %q, want set_password", fs2.Step)
+	}
+	if fs2.Error != nil {
+		t.Fatalf("verify_email: unexpected error: %+v", fs2.Error)
+	}
+	if fs2.FlowToken != token1 {
+		t.Error("verify_email token path must not rotate until set_password")
 	}
 }
 

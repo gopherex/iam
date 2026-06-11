@@ -124,3 +124,26 @@ func TestRenderTemplate(t *testing.T) {
 		t.Fatalf("rendered = %q", got)
 	}
 }
+
+func TestEmailVerificationDefaultTemplateWithoutLink(t *testing.T) {
+	tpl := defaultTemplate("email_verification", "ru")
+	got, err := renderText(tpl["text"], map[string]any{"code": "260129"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "Введите код 260129, чтобы подтвердить почту." {
+		t.Fatalf("rendered without link = %q", got)
+	}
+
+	got, err = renderText(tpl["text"], map[string]any{
+		"code": "260129",
+		"link": "https://app.example.com/verify?token=tok_123",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "Введите код 260129 или откройте https://app.example.com/verify?token=tok_123, чтобы подтвердить почту."
+	if got != want {
+		t.Fatalf("rendered with link = %q", got)
+	}
+}
