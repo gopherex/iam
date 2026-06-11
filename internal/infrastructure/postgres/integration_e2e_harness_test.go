@@ -21,9 +21,32 @@ import (
 	"time"
 
 	"github.com/gopherex/iam/internal/domain"
+	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
 	"github.com/gopherex/iam/internal/oas"
 	"github.com/gopherex/iam/pkg/api"
 )
+
+// e2eEnableSMSProvider seeds an enabled kind=sms provider for projectID so the
+// phone-OTP pre-flight (which requires an enabled SMS provider before minting a
+// challenge) passes. Delivery itself is captured by the e2e emitter, so the
+// config need not point at a real gateway.
+func e2eEnableSMSProvider(t *testing.T, ctx context.Context, projectID string) {
+	t.Helper()
+	id := newUUID()
+	kind, prov := "sms", "generic"
+	enabled := true
+	data := json.RawMessage(`{"type":"generic","config":{"url":"https://sms.example.test/send"}}`)
+	if _, err := models.IamProviders.Insert(&models.IamProviderSetter{
+		ID:        &id,
+		ProjectID: &projectID,
+		Kind:      &kind,
+		Provider:  &prov,
+		Enabled:   &enabled,
+		Data:      &data,
+	}).One(ctx, testDB.Bobx()); err != nil {
+		t.Fatalf("seed sms provider: %v", err)
+	}
+}
 
 // e2eCaptureEmitter records emitted domain events so tests can recover the
 // plaintext OTP code / magic-link token that production only delivers out of
@@ -72,7 +95,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	em := e2eEmitter
 	platform := NewPgPlatform(testDB)
-	coreAuth := NewPgCoreAuth(testDB, em)
+	coreAuth := NewPgCoreAuth(testDB, em, nil)
 
 	handler := api.New(
 		api.WithPlatform(api.NewPlatformService(api.PlatformDeps{
@@ -85,10 +108,10 @@ func e2eServer(t *testing.T) *httptest.Server {
 			MFA:      NewPgMFAAccounts(testDB, em),
 		})),
 		api.WithCoreAuthFlows(api.CoreAuthFlowDeps{
-			Flows: NewPgCoreAuthFlows(testDB, em, coreAuth),
+			Flows: NewPgCoreAuthFlows(testDB, em, coreAuth, nil),
 		}),
 		api.WithPasswordless(api.NewPasswordlessService(api.PasswordlessDeps{
-			Accounts: NewPgPasswordlessAccounts(testDB, em),
+			Accounts: NewPgPasswordlessAccounts(testDB, em, NewConfigReader(testDB, time.Second)),
 		})),
 		api.WithOAuthSocial(api.NewOAuthSocialService(api.OAuthSocialDeps{
 			Accounts: NewPgOAuthSocial(testDB, em),

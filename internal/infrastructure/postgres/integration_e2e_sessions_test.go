@@ -6,6 +6,8 @@ import (
 	"context"
 	"net/http"
 	"testing"
+
+	"github.com/gopherex/iam/pkg/api"
 )
 
 // TestE2ESelfManagedSessions verifies a session captures device metadata at
@@ -16,6 +18,12 @@ func TestE2ESelfManagedSessions(t *testing.T) {
 	ts := e2eServer(t)
 	projectID := e2eProject(t, ctx)
 	email := "sess-" + newUUID()[:8] + "@example.com"
+
+	// Device IP is taken from X-Forwarded-For only behind a trusted proxy. Trust
+	// the loopback test peer and the LB hop (10.0.0.1) so the real client
+	// (203.0.113.7) is resolved; without this the forwarding header is ignored.
+	api.SetTrustedProxies([]string{"127.0.0.0/8", "::1/128", "10.0.0.0/8"})
+	t.Cleanup(func() { api.SetTrustedProxies(nil) })
 
 	// Sign up over HTTP so the request-meta middleware captures the device.
 	hdr := map[string]string{
@@ -71,7 +79,7 @@ func TestE2ESelfManagedSessions(t *testing.T) {
 			t.Fatalf("no current session flagged; body: %s", r.Body)
 		}
 		if cur.IP != "203.0.113.7" {
-			t.Errorf("ip = %q, want 203.0.113.7 (first X-Forwarded-For hop)", cur.IP)
+			t.Errorf("ip = %q, want 203.0.113.7 (real client behind trusted proxies)", cur.IP)
 		}
 		if cur.UserAgent != "ACME-App/2.1 (iPhone; iOS 18)" {
 			t.Errorf("user_agent = %q", cur.UserAgent)
