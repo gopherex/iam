@@ -631,10 +631,16 @@ func (c *smtpConfig) connect(addr string) (*smtp.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Upgrade via STARTTLS only when the server advertises it (mirrors the proven
+	// komeet mailer). Avoids hard-failing against servers without STARTTLS (local
+	// catchers like Mailpit) while still encrypting whenever the server supports
+	// it — which any credentialed relay (e.g. Yandex Postbox :587) does.
 	if c.StartTLS {
-		if err := client.StartTLS(&tls.Config{ServerName: c.Host, MinVersion: tls.VersionTLS12}); err != nil {
-			_ = client.Close()
-			return nil, err
+		if ok, _ := client.Extension("STARTTLS"); ok {
+			if err := client.StartTLS(&tls.Config{ServerName: c.Host, MinVersion: tls.VersionTLS12}); err != nil {
+				_ = client.Close()
+				return nil, err
+			}
 		}
 	}
 	return client, nil
