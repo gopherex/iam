@@ -16,7 +16,7 @@ import (
 // and allows a matching or absent fingerprint.
 func TestRefreshDeviceMismatch(t *testing.T) {
 	ctx := context.Background()
-	ca := NewPgCoreAuth(testDB, nopEmitter{})
+	ca := NewPgCoreAuth(testDB, nopEmitter{}, nil)
 	projectID := newUUID()
 	acct, _, err := ca.Register(ctx, domain.RegisterCmd{
 		ProjectID: projectID,
@@ -56,7 +56,7 @@ func TestRefreshDeviceMismatch(t *testing.T) {
 // device check is skipped (best-effort binding), so refresh still works.
 func TestRefreshNoFingerprintSkipsCheck(t *testing.T) {
 	ctx := context.Background()
-	ca := NewPgCoreAuth(testDB, nopEmitter{})
+	ca := NewPgCoreAuth(testDB, nopEmitter{}, nil)
 	projectID := newUUID()
 	acct, _, err := ca.Register(ctx, domain.RegisterCmd{
 		ProjectID: projectID,
@@ -83,7 +83,7 @@ func TestRefreshNoFingerprintSkipsCheck(t *testing.T) {
 // rather than rebuilding a fresh AAL1 session on every refresh.
 func TestRefreshPreservesSessionContext(t *testing.T) {
 	ctx := context.Background()
-	ca := NewPgCoreAuth(testDB, nopEmitter{})
+	ca := NewPgCoreAuth(testDB, nopEmitter{}, nil)
 	projectID := newUUID()
 	acct, _, err := ca.Register(ctx, domain.RegisterCmd{
 		ProjectID: projectID,

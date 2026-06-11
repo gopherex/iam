@@ -839,9 +839,25 @@ components:
           - signin
           - recovery
           - email_change
+        method:
+          type: string
+          description: >-
+            Authentication method to drive the flow. Signin supports
+            password (default), phone_otp and magic_link. Recovery supports
+            email (default) and phone_otp. Ignored for signup.
+          enum:
+          - password
+          - phone_otp
+          - magic_link
+          maxLength: 32
         email:
           type: string
           maxLength: 256
+        phone:
+          type: string
+          description: >-
+            E.164 phone number for the phone_otp method (signin/recovery).
+          maxLength: 64
         password:
           type: string
           maxLength: 1024

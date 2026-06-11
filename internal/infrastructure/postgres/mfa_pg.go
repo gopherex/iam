@@ -269,6 +269,9 @@ func (a *pgMFAAccounts) EnrollTOTP(ctx context.Context, accountID string) (*doma
 		if err != nil {
 			return nil, err
 		}
+		if err := a.mfaGateEnroll(ctx, acc.ProjectID, "totp"); err != nil {
+			return nil, err
+		}
 		count, err := a.mfaCountFactors(ctx, accountID)
 		if err != nil {
 			return nil, err
@@ -519,6 +522,9 @@ func (a *pgMFAAccounts) GenerateRecoveryCodes(ctx context.Context, accountID str
 		if err != nil {
 			return nil, err
 		}
+		if err := a.mfaGateEnroll(ctx, projectID, "recovery"); err != nil {
+			return nil, err
+		}
 		// Invalidate the previous batch so only the newest codes work.
 		if _, err := models.IamRecoveryCodes.Delete(
 			dm.Where(models.IamRecoveryCodes.Columns.UserID.EQ(psql.Arg(accountID))),
@@ -706,6 +712,9 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Challenge, error) {
 		projectID, err := a.mfaResolveProject(ctx, cmd.AccountID)
 		if err != nil {
+			return nil, err
+		}
+		if err := a.mfaGateEnroll(ctx, projectID, "webauthn"); err != nil {
 			return nil, err
 		}
 
@@ -945,6 +954,9 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 	out, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		projectID, err := a.mfaResolveProject(ctx, accountID)
 		if err != nil {
+			return result{}, err
+		}
+		if err := a.mfaGateEnroll(ctx, projectID, factorType); err != nil {
 			return result{}, err
 		}
 		count, err := a.mfaCountFactors(ctx, accountID)

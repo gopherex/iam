@@ -24,6 +24,14 @@ type Flow struct {
 	RegistrationMode string // open | request_access | invite_only | closed
 	PasswordStrategy string // password_first | after_verify
 	Error            *FlowError
+
+	// Method is the active authentication method driving the flow
+	// (password | phone_otp | magic_link). Empty defaults to password for
+	// signin and email for recovery.
+	Method string
+	// AvailableMethods is the set of alternate methods the client may switch to
+	// mid-flow (surfaced as next_actions). Server-computed at create time.
+	AvailableMethods []string
 }
 
 // FlowKind is the auth flow category, selecting the state machine.
@@ -61,6 +69,14 @@ const (
 	FlowStepAwaitingApproval   FlowStep = "awaiting_approval"
 	FlowStepCompleted          FlowStep = "completed"
 	FlowStepBlocked            FlowStep = "blocked"
+)
+
+// Flow authentication methods (FlowCreateCmd.Method / Flow.Method).
+const (
+	FlowMethodPassword  = "password"
+	FlowMethodPhoneOTP  = "phone_otp"
+	FlowMethodMagicLink = "magic_link"
+	FlowMethodEmail     = "email" // recovery default channel
 )
 
 // FlowContact holds the raw contact data (server-only; clients see only masked
@@ -120,6 +136,11 @@ type FlowCreateCmd struct {
 	Password     string
 	Name         string
 	CaptchaToken string
+	// Method selects the authentication method for the flow
+	// (password | phone_otp | magic_link). Empty means the kind's default.
+	Method string
+	// Phone is the E.164 number for the phone_otp method.
+	Phone string
 	// RedirectTo optionally overrides the cross-device "continue" deep-link base
 	// for this flow. The notification layer only honours it when its origin
 	// (scheme+host) matches the project's configured app_base_url; otherwise it

@@ -68,6 +68,13 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	if err := json.Unmarshal(msg.Payload, &ev); err != nil {
 		return err
 	}
+	// SMS-channel delivery events route to the SMS sender. The dispatch is
+	// disjoint from email: emailJobFromEvent returns false for channel=="sms"
+	// (otp/mfa), and smsJobFromEvent returns false for non-sms, so neither
+	// double-sends.
+	if sjob, ok := smsJobFromEvent(ev); ok {
+		return p.publishSMS(ctx, ev, sjob)
+	}
 	job, ok := emailJobFromEvent(ev)
 	if !ok {
 		p.log.Info("would publish",

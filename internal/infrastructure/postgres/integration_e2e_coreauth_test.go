@@ -229,6 +229,127 @@ func TestE2ECoreAuthSignUp(t *testing.T) {
 	})
 }
 
+// ─── Core Auth — password policy enforcement on writes ───────────────────────
+
+// e2eSetMinLength sets the project's password_policy.min_length via the admin
+// PATCH endpoint, failing the test if the write does not succeed.
+func e2eSetMinLength(t *testing.T, ctx context.Context, tsURL, projectID, token string, minLen int) {
+	t.Helper()
+	base := tsURL + "/v1/projects/" + projectID + "/admin"
+	r := e2eReq(t, ctx, "PATCH", base+"/config/password-policy",
+		map[string]any{"min_length": minLen}, e2eBearer(token))
+	e2eWantStatus(t, r, 200)
+}
+
+// TestE2EPasswordPolicyEnforcedOnRegister verifies that the project's
+// password_policy.min_length is actually applied on the real signup path, not
+// only on /password/check.
+func TestE2EPasswordPolicyEnforcedOnRegister(t *testing.T) {
+	ts := e2eServer(t)
+	ctx := context.Background()
+
+	t.Run("too_short_rejected_then_long_ok", func(t *testing.T) {
+		projectID, token := e2eProjectAdmin(t, ctx)
+		e2eSetMinLength(t, ctx, ts.URL, projectID, token, 12)
+
+		hdr := map[string]string{"X-Client-Id": projectID, "X-Environment": "live"}
+
+		// 8-char password fails policy (min_length 12) → 422 weak_password.
+		rShort := e2eReq(t, ctx, "POST", ts.URL+"/v1/auth/sign-up",
+			map[string]any{
+				"email":    fmt.Sprintf("ppshort+%s@example.com", newUUID()),
+				"password": "Ab1!Ab1!", // 8 chars
+			}, hdr)
+		e2eWantStatus(t, rShort, 422)
+		var ebody struct {
+			Error struct {
+				Code    string         `json:"code"`
+				Details map[string]any `json:"details"`
+			} `json:"error"`
+		}
+		e2eDecode(t, rShort, &ebody)
+		if ebody.Error.Code != "weak_password" {
+			t.Errorf("register too-short: code=%q, want weak_password, body=%s", ebody.Error.Code, rShort.Body)
+		}
+
+		// A 12-char password clears the policy → 200.
+		rOK := e2eReq(t, ctx, "POST", ts.URL+"/v1/auth/sign-up",
+			map[string]any{
+				"email":    fmt.Sprintf("pplong+%s@example.com", newUUID()),
+				"password": "Ab1!Ab1!Ab1!", // 12 chars
+			}, hdr)
+		e2eWantStatus(t, rOK, 200)
+	})
+
+	// Regression: with no policy row, the legacy default (min_length 8) applies.
+	t.Run("default_policy_8_char_floor", func(t *testing.T) {
+		projectID := e2eProject(t, ctx)
+		hdr := map[string]string{"X-Client-Id": projectID, "X-Environment": "live"}
+
+		// 7 chars < default 8 → 422.
+		rShort := e2eReq(t, ctx, "POST", ts.URL+"/v1/auth/sign-up",
+			map[string]any{
+				"email":    fmt.Sprintf("ppdef7+%s@example.com", newUUID()),
+				"password": "Ab1!Ab1", // 7 chars
+			}, hdr)
+		e2eWantStatus(t, rShort, 422)
+
+		// 8 chars == default 8 → 200 (existing behavior preserved).
+		rOK := e2eReq(t, ctx, "POST", ts.URL+"/v1/auth/sign-up",
+			map[string]any{
+				"email":    fmt.Sprintf("ppdef8+%s@example.com", newUUID()),
+				"password": "Ab1!Ab1!", // 8 chars
+			}, hdr)
+		e2eWantStatus(t, rOK, 200)
+	})
+}
+
+// TestE2EPasswordPolicyEnforcedOnChange verifies min_length is enforced on the
+// authenticated password-change path.
+func TestE2EPasswordPolicyEnforcedOnChange(t *testing.T) {
+	ts := e2eServer(t)
+	ctx := context.Background()
+
+	projectID, token := e2eProjectAdmin(t, ctx)
+	email := fmt.Sprintf("ppchange+%s@example.com", newUUID())
+	// Register a user BEFORE tightening the policy so the initial password
+	// (which is shorter than the new floor) still goes through.
+	_, sess := registerUser(t, ctx, projectID, email)
+
+	e2eSetMinLength(t, ctx, ts.URL, projectID, token, 16)
+
+	t.Run("too_short_new_password_rejected", func(t *testing.T) {
+		r := e2eReq(t, ctx, "POST", ts.URL+"/v1/auth/password/change",
+			map[string]any{
+				"current_password": "Sup3rStr0ng!Pass",
+				"new_password":     "Short1!Short1", // 13 chars < 16
+			},
+			e2eBearer(sess.AccessToken),
+		)
+		e2eWantStatus(t, r, 422)
+		var ebody struct {
+			Error struct {
+				Code string `json:"code"`
+			} `json:"error"`
+		}
+		e2eDecode(t, r, &ebody)
+		if ebody.Error.Code != "weak_password" {
+			t.Errorf("change too-short: code=%q, want weak_password, body=%s", ebody.Error.Code, r.Body)
+		}
+	})
+
+	t.Run("long_enough_new_password_ok", func(t *testing.T) {
+		r := e2eReq(t, ctx, "POST", ts.URL+"/v1/auth/password/change",
+			map[string]any{
+				"current_password": "Sup3rStr0ng!Pass",
+				"new_password":     "L0ng3n0ugh!Passw0rd", // 19 chars >= 16
+			},
+			e2eBearer(sess.AccessToken),
+		)
+		e2eWantStatus(t, r, 200)
+	})
+}
+
 // ─── Core Auth — sign-in/password ────────────────────────────────────────────
 
 // TestE2ECoreAuthSignInPassword tests password-based login.

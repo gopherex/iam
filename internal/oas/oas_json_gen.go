@@ -4331,9 +4331,21 @@ func (s *FlowCreateRequest) encodeFields(e *jx.Encoder) {
 		s.Kind.Encode(e)
 	}
 	{
+		if s.Method.Set {
+			e.FieldStart("method")
+			s.Method.Encode(e)
+		}
+	}
+	{
 		if s.Email.Set {
 			e.FieldStart("email")
 			s.Email.Encode(e)
+		}
+	}
+	{
+		if s.Phone.Set {
+			e.FieldStart("phone")
+			s.Phone.Encode(e)
 		}
 	}
 	{
@@ -4374,15 +4386,17 @@ func (s *FlowCreateRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfFlowCreateRequest = [8]string{
+var jsonFieldsNameOfFlowCreateRequest = [10]string{
 	0: "kind",
-	1: "email",
-	2: "password",
-	3: "name",
-	4: "captcha_token",
-	5: "redirect_to",
-	6: "locale",
-	7: "invite_token",
+	1: "method",
+	2: "email",
+	3: "phone",
+	4: "password",
+	5: "name",
+	6: "captcha_token",
+	7: "redirect_to",
+	8: "locale",
+	9: "invite_token",
 }
 
 // Decode decodes FlowCreateRequest from json.
@@ -4390,7 +4404,7 @@ func (s *FlowCreateRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode FlowCreateRequest to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -4404,6 +4418,16 @@ func (s *FlowCreateRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
+		case "method":
+			if err := func() error {
+				s.Method.Reset()
+				if err := s.Method.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"method\"")
+			}
 		case "email":
 			if err := func() error {
 				s.Email.Reset()
@@ -4413,6 +4437,16 @@ func (s *FlowCreateRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"email\"")
+			}
+		case "phone":
+			if err := func() error {
+				s.Phone.Reset()
+				if err := s.Phone.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"phone\"")
 			}
 		case "password":
 			if err := func() error {
@@ -4483,8 +4517,9 @@ func (s *FlowCreateRequest) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
+	for i, mask := range [2]uint8{
 		0b00000001,
+		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -4570,6 +4605,48 @@ func (s FlowCreateRequestKind) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *FlowCreateRequestKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FlowCreateRequestMethod as json.
+func (s FlowCreateRequestMethod) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes FlowCreateRequestMethod from json.
+func (s *FlowCreateRequestMethod) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FlowCreateRequestMethod to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch FlowCreateRequestMethod(v) {
+	case FlowCreateRequestMethodPassword:
+		*s = FlowCreateRequestMethodPassword
+	case FlowCreateRequestMethodPhoneOtp:
+		*s = FlowCreateRequestMethodPhoneOtp
+	case FlowCreateRequestMethodMagicLink:
+		*s = FlowCreateRequestMethodMagicLink
+	default:
+		*s = FlowCreateRequestMethod(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s FlowCreateRequestMethod) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FlowCreateRequestMethod) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -14683,6 +14760,39 @@ func (s OptFlowContact) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptFlowContact) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FlowCreateRequestMethod as json.
+func (o OptFlowCreateRequestMethod) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes FlowCreateRequestMethod from json.
+func (o *OptFlowCreateRequestMethod) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptFlowCreateRequestMethod to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptFlowCreateRequestMethod) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptFlowCreateRequestMethod) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

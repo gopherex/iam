@@ -107,6 +107,8 @@ type flowData struct {
 	RegistrationMode string                      `json:"registration_mode,omitempty"`
 	PasswordStrategy string                      `json:"password_strategy,omitempty"`
 	Error            *domain.FlowError           `json:"error,omitempty"`
+	Method           string                      `json:"method,omitempty"`
+	AvailableMethods []string                    `json:"available_methods,omitempty"`
 }
 
 // flowDataRM serializes a flowData into a json.RawMessage for the setter.
@@ -183,6 +185,8 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 		RegistrationMode: data.RegistrationMode,
 		PasswordStrategy: data.PasswordStrategy,
 		Error:            data.Error,
+		Method:           data.Method,
+		AvailableMethods: data.AvailableMethods,
 	}
 	if uid, ok := row.UserID.Get(); ok {
 		f.UserID = uid
@@ -201,6 +205,8 @@ func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *
 		RegistrationMode: f.RegistrationMode,
 		PasswordStrategy: f.PasswordStrategy,
 		Error:            f.Error,
+		Method:           f.Method,
+		AvailableMethods: f.AvailableMethods,
 	})
 	if err != nil {
 		return err
@@ -234,6 +240,8 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 		RegistrationMode: f.RegistrationMode,
 		PasswordStrategy: f.PasswordStrategy,
 		Error:            f.Error,
+		Method:           f.Method,
+		AvailableMethods: f.AvailableMethods,
 	})
 	if err != nil {
 		return "", err
@@ -328,11 +336,12 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 		ExpiresAt:   now.Add(flowTTL),
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		Contact:     domain.FlowContact{Email: cmd.Email},
+		Contact:     domain.FlowContact{Email: cmd.Email, Phone: cmd.Phone},
 		Collected: domain.FlowCollected{
 			Name:        cmd.Name,
 			HasPassword: cmd.Password != "",
 		},
+		Method: cmd.Method,
 	}
 	var state *domain.FlowState
 	if create, ok := flowCreators[cmd.Kind]; ok {
@@ -471,20 +480,18 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 			"resend_at": ac.ResendAt.Unix(),
 		})
 	}
-	// Re-issue email verification challenge.
-	ch, err := a.accounts.StartEmailVerification(ctx, domain.CoreAuthVerifyStartCmd{
-		ProjectID: f.ProjectID,
-		AccountID: f.UserID,
-		Contact:   f.Contact.Email,
-	})
+	// Re-issue the active challenge by its channel / the flow's method. Email is
+	// the default (signup verify, recovery email, signup); sms re-issues an OTP;
+	// magic_link re-issues a fresh link.
+	chID, channel, expiresAt, err := a.flowReissueChallenge(ctx, f, ac)
 	if err != nil {
 		return nil, err
 	}
 	now := nowUTC()
 	f.ActiveChallenge = &domain.FlowActiveChallenge{
-		ChallengeID:  ch.ID,
-		Channel:      "email",
-		ExpiresAt:    ch.ExpiresAt,
+		ChallengeID:  chID,
+		Channel:      channel,
+		ExpiresAt:    expiresAt,
 		ResendAt:     now.Add(flowResendCooloff),
 		AttemptsLeft: flowMaxAttempts,
 	}
@@ -495,6 +502,53 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 		return nil, err
 	}
 	return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
+}
+
+// flowReissueChallenge re-issues the flow's active challenge using the channel
+// recorded on the challenge (falling back to the flow method). It returns the
+// new challenge id, channel and expiry. Email re-issues a verification (or
+// password_reset for recovery) code; sms re-issues an OTP via the passwordless
+// adapter; magic_link re-issues a fresh link.
+func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Flow, ac *domain.FlowActiveChallenge) (chID, channel string, expiresAt time.Time, err error) {
+	switch {
+	case ac.Channel == "sms" || f.Method == domain.FlowMethodPhoneOTP:
+		core, ok := a.accounts.(*pgCoreAuth)
+		if !ok {
+			return "", "", time.Time{}, fmt.Errorf("flow resend: accounts is not *pgCoreAuth")
+		}
+		pl := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
+		purpose := "signin"
+		if f.Kind == domain.FlowKindRecovery {
+			purpose = "recovery"
+		}
+		ch, serr := pl.StartOTP(ctx, f.ProjectID, f.Contact.Phone, "sms", purpose)
+		if serr != nil {
+			return "", "", time.Time{}, serr
+		}
+		return ch.ID, "sms", ch.ExpiresAt, nil
+	case f.Method == domain.FlowMethodMagicLink:
+		core, ok := a.accounts.(*pgCoreAuth)
+		if !ok {
+			return "", "", time.Time{}, fmt.Errorf("flow resend: accounts is not *pgCoreAuth")
+		}
+		pl := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
+		ch, serr := pl.StartMagicLink(ctx, f.ProjectID, f.Contact.Email, "")
+		if serr != nil {
+			return "", "", time.Time{}, serr
+		}
+		return ch.ID, "email", ch.ExpiresAt, nil
+	default:
+		// Email verification (signup / recovery email path).
+		ch, serr := a.accounts.StartEmailVerification(ctx, domain.CoreAuthVerifyStartCmd{
+			ProjectID: f.ProjectID,
+			AccountID: f.UserID,
+			Contact:   f.Contact.Email,
+		})
+		if serr != nil {
+			return "", "", time.Time{}, serr
+		}
+		return ch.ID, "email", ch.ExpiresAt, nil
+	}
 }
 
 // ─── Abandon ─────────────────────────────────────────────────────────────────

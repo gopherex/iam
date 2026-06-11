@@ -1965,11 +1965,16 @@ func (s *FlowContact) SetPhoneMasked(val OptString) {
 
 // Ref: #/components/schemas/FlowCreateRequest
 type FlowCreateRequest struct {
-	Kind         FlowCreateRequestKind `json:"kind"`
-	Email        OptString             `json:"email"`
-	Password     OptString             `json:"password"`
-	Name         OptString             `json:"name"`
-	CaptchaToken OptString             `json:"captcha_token"`
+	Kind FlowCreateRequestKind `json:"kind"`
+	// Authentication method to drive the flow. Signin supports password (default), phone_otp and
+	// magic_link. Recovery supports email (default) and phone_otp. Ignored for signup.
+	Method OptFlowCreateRequestMethod `json:"method"`
+	Email  OptString                  `json:"email"`
+	// E.164 phone number for the phone_otp method (signin/recovery).
+	Phone        OptString `json:"phone"`
+	Password     OptString `json:"password"`
+	Name         OptString `json:"name"`
+	CaptchaToken OptString `json:"captcha_token"`
 	// Optional per-flow override for the cross-device "continue" deep-link base. Its origin
 	// (scheme+host) must match the project's configured app_base_url origin; otherwise it is ignored and
 	// app_base_url is used. This lets a flow target a specific path within the trusted origin without
@@ -1989,9 +1994,19 @@ func (s *FlowCreateRequest) GetKind() FlowCreateRequestKind {
 	return s.Kind
 }
 
+// GetMethod returns the value of Method.
+func (s *FlowCreateRequest) GetMethod() OptFlowCreateRequestMethod {
+	return s.Method
+}
+
 // GetEmail returns the value of Email.
 func (s *FlowCreateRequest) GetEmail() OptString {
 	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *FlowCreateRequest) GetPhone() OptString {
+	return s.Phone
 }
 
 // GetPassword returns the value of Password.
@@ -2029,9 +2044,19 @@ func (s *FlowCreateRequest) SetKind(val FlowCreateRequestKind) {
 	s.Kind = val
 }
 
+// SetMethod sets the value of Method.
+func (s *FlowCreateRequest) SetMethod(val OptFlowCreateRequestMethod) {
+	s.Method = val
+}
+
 // SetEmail sets the value of Email.
 func (s *FlowCreateRequest) SetEmail(val OptString) {
 	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *FlowCreateRequest) SetPhone(val OptString) {
+	s.Phone = val
 }
 
 // SetPassword sets the value of Password.
@@ -2113,6 +2138,56 @@ func (s *FlowCreateRequestKind) UnmarshalText(data []byte) error {
 		return nil
 	case FlowCreateRequestKindEmailChange:
 		*s = FlowCreateRequestKindEmailChange
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Authentication method to drive the flow. Signin supports password (default), phone_otp and
+// magic_link. Recovery supports email (default) and phone_otp. Ignored for signup.
+type FlowCreateRequestMethod string
+
+const (
+	FlowCreateRequestMethodPassword  FlowCreateRequestMethod = "password"
+	FlowCreateRequestMethodPhoneOtp  FlowCreateRequestMethod = "phone_otp"
+	FlowCreateRequestMethodMagicLink FlowCreateRequestMethod = "magic_link"
+)
+
+// AllValues returns all FlowCreateRequestMethod values.
+func (FlowCreateRequestMethod) AllValues() []FlowCreateRequestMethod {
+	return []FlowCreateRequestMethod{
+		FlowCreateRequestMethodPassword,
+		FlowCreateRequestMethodPhoneOtp,
+		FlowCreateRequestMethodMagicLink,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s FlowCreateRequestMethod) MarshalText() ([]byte, error) {
+	switch s {
+	case FlowCreateRequestMethodPassword:
+		return []byte(s), nil
+	case FlowCreateRequestMethodPhoneOtp:
+		return []byte(s), nil
+	case FlowCreateRequestMethodMagicLink:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *FlowCreateRequestMethod) UnmarshalText(data []byte) error {
+	switch FlowCreateRequestMethod(data) {
+	case FlowCreateRequestMethodPassword:
+		*s = FlowCreateRequestMethodPassword
+		return nil
+	case FlowCreateRequestMethodPhoneOtp:
+		*s = FlowCreateRequestMethodPhoneOtp
+		return nil
+	case FlowCreateRequestMethodMagicLink:
+		*s = FlowCreateRequestMethodMagicLink
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -6861,6 +6936,52 @@ func (o OptFlowContact) Get() (v FlowContact, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptFlowContact) Or(d FlowContact) FlowContact {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFlowCreateRequestMethod returns new OptFlowCreateRequestMethod with value set to v.
+func NewOptFlowCreateRequestMethod(v FlowCreateRequestMethod) OptFlowCreateRequestMethod {
+	return OptFlowCreateRequestMethod{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFlowCreateRequestMethod is optional FlowCreateRequestMethod.
+type OptFlowCreateRequestMethod struct {
+	Value FlowCreateRequestMethod
+	Set   bool
+}
+
+// IsSet returns true if OptFlowCreateRequestMethod was set.
+func (o OptFlowCreateRequestMethod) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFlowCreateRequestMethod) Reset() {
+	var v FlowCreateRequestMethod
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFlowCreateRequestMethod) SetTo(v FlowCreateRequestMethod) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFlowCreateRequestMethod) Get() (v FlowCreateRequestMethod, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFlowCreateRequestMethod) Or(d FlowCreateRequestMethod) FlowCreateRequestMethod {
 	if v, ok := o.Get(); ok {
 		return v
 	}

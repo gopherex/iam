@@ -16,7 +16,7 @@ import (
 // registerUser creates a fresh account + session in a new project.
 func registerUser(t *testing.T, ctx context.Context, projectID, email string) (*domain.Account, *domain.Session) {
 	t.Helper()
-	ca := NewPgCoreAuth(testDB, nopEmitter{})
+	ca := NewPgCoreAuth(testDB, nopEmitter{}, nil)
 	acct, sess, err := ca.Register(ctx, domain.RegisterCmd{
 		ProjectID: projectID,
 		Email:     email,
@@ -83,7 +83,7 @@ func TestImpersonationRedeemSingleUse(t *testing.T) {
 		t.Fatal("impersonation token must not authenticate as adminToken")
 	}
 
-	ca := NewPgCoreAuth(testDB, nopEmitter{})
+	ca := NewPgCoreAuth(testDB, nopEmitter{}, nil)
 	acct, sess, err := ca.RedeemImpersonation(ctx, token, "client-1")
 	if err != nil {
 		t.Fatalf("redeem: %v", err)

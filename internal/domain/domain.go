@@ -28,6 +28,7 @@ type Account struct {
 	PrimaryEmail  string
 	EmailVerified bool
 	PrimaryPhone  string
+	PhoneVerified bool
 	Name          string
 	Locale        string
 	CreatedAt     time.Time
@@ -238,6 +239,11 @@ type RegisterCmd struct {
 	Name        string
 	Locale      string
 	Consents    []AccountConsentAcceptance
+	// SkipConsentGate bypasses the up-front consent.required enforcement in
+	// Register. The resumable signup flow sets this because it enforces consent
+	// at its own accept_consents step (after identity proof), not at user
+	// creation. The non-flow POST /v1/auth/sign-up path leaves it false.
+	SkipConsentGate bool
 }
 
 type ProfileUpdateCmd struct {

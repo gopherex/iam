@@ -288,6 +288,9 @@ func (a *pgCoreAuthFlows) recoverySetPassword(ctx context.Context, row *models.I
 		if err != nil {
 			return setResult{}, fmt.Errorf("recovery set_password: parse account: %w", err)
 		}
+		if err := pgCA.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, password); err != nil {
+			return setResult{}, err
+		}
 
 		// Hash and write the new password credential (§5 rule 5: never stored in data).
 		hash, err := coreAuthHashPassword(password)

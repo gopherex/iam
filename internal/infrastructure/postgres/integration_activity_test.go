@@ -16,7 +16,7 @@ import (
 // the throttle, and leaves it alone within the throttle window.
 func TestActivityTrackingBumpsLastActive(t *testing.T) {
 	ctx := context.Background()
-	ca := NewPgCoreAuth(testDB, nopEmitter{})
+	ca := NewPgCoreAuth(testDB, nopEmitter{}, nil)
 	auth := NewAuthenticator(testDB, "")
 	projectID := newUUID()
 	_, sess, err := ca.Register(ctx, domain.RegisterCmd{

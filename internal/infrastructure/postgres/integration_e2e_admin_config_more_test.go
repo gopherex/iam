@@ -391,7 +391,9 @@ func TestE2EAdminConfigUpdateAuth(t *testing.T) {
 	projectID, token := e2eProjectAdmin(t, ctx)
 	base := ts.URL + "/v1/projects/" + projectID + "/admin"
 
-	body := map[string]any{"password_login": map[string]any{"enabled": true}}
+	// The auth doc is keyed by `methods` (an allow-list), not per-method objects;
+	// password login is expressed by including "email" in methods.
+	body := map[string]any{"methods": []string{"email"}}
 	r := e2eReq(t, ctx, http.MethodPatch, base+"/config/auth", body, e2eBearer(token))
 	if r.Status == http.StatusInternalServerError {
 		t.Skipf("real bug: PATCH config/auth returns 500; body: %s", r.Body)
@@ -646,7 +648,7 @@ func TestE2EAdminConfigRateLimits(t *testing.T) {
 	t.Run("patch then get round-trips rules", func(t *testing.T) {
 		body := map[string]any{
 			"rules": []map[string]any{
-				{"endpoint": "/v1/auth/sign-in", "action": "sign_in", "limit": 5, "window_seconds": 60, "by": "ip"},
+				{"endpoint": "/v1/auth/sign-in/password", "limit": 5, "window_seconds": 60, "by": "ip"},
 			},
 		}
 		r := e2eReq(t, ctx, http.MethodPatch, base, body, e2eBearer(token))
@@ -661,7 +663,7 @@ func TestE2EAdminConfigRateLimits(t *testing.T) {
 			} `json:"rules"`
 		}
 		e2eDecode(t, r, &resp)
-		if len(resp.Rules) != 1 || resp.Rules[0].Endpoint != "/v1/auth/sign-in" || resp.Rules[0].Limit != 5 {
+		if len(resp.Rules) != 1 || resp.Rules[0].Endpoint != "/v1/auth/sign-in/password" || resp.Rules[0].Limit != 5 {
 			t.Fatalf("rules not persisted: %+v", resp.Rules)
 		}
 	})

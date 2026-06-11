@@ -551,6 +551,18 @@ func TestFlowCreateRequestKind_EncodeDecode(t *testing.T) {
 	var typ2 FlowCreateRequestKind
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestFlowCreateRequestMethod_EncodeDecode(t *testing.T) {
+	var typ FlowCreateRequestMethod
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FlowCreateRequestMethod
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestFlowError_EncodeDecode(t *testing.T) {
 	var typ FlowError
 	typ.SetFake()

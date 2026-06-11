@@ -288,6 +288,55 @@ func TestMFAPolicySpec_Validate(t *testing.T) {
 	}
 }
 
+// TestMFAPolicyFactorName pins the DB<->policy factor-name mapping that the
+// enrollment gate relies on (email->email_otp, recovery/backup_codes->backup_codes,
+// the rest identity).
+func TestMFAPolicyFactorName(t *testing.T) {
+	t.Parallel()
+	cases := map[string]string{
+		"email":        "email_otp",
+		"recovery":     "backup_codes",
+		"backup_codes": "backup_codes",
+		"totp":         "totp",
+		"sms":          "sms",
+		"webauthn":     "webauthn",
+	}
+	for in, want := range cases {
+		if got := domain.MFAPolicyFactorName(in); got != want {
+			t.Errorf("MFAPolicyFactorName(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+// TestMFAPolicySpec_FactorAllowed covers the enrollment gate decision, including
+// the name-mapped factors and the "unset => allow all" backward-compat path.
+func TestMFAPolicySpec_FactorAllowed(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		spec    domain.MFAPolicySpec
+		db      string
+		allowed bool
+	}{
+		{"nil list allows everything", domain.MFAPolicySpec{}, "totp", true},
+		{"empty list allows everything", domain.MFAPolicySpec{AllowedFactors: []string{}}, "webauthn", true},
+		{"totp allowed", domain.MFAPolicySpec{AllowedFactors: []string{"totp"}}, "totp", true},
+		{"sms denied when only totp", domain.MFAPolicySpec{AllowedFactors: []string{"totp"}}, "sms", false},
+		{"email_otp permits db email", domain.MFAPolicySpec{AllowedFactors: []string{"email_otp"}}, "email", true},
+		{"email_otp denies totp", domain.MFAPolicySpec{AllowedFactors: []string{"email_otp"}}, "totp", false},
+		{"backup_codes permits db recovery", domain.MFAPolicySpec{AllowedFactors: []string{"backup_codes"}}, "recovery", true},
+		{"backup_codes denies webauthn", domain.MFAPolicySpec{AllowedFactors: []string{"backup_codes"}}, "webauthn", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := tt.spec.FactorAllowed(tt.db); got != tt.allowed {
+				t.Errorf("FactorAllowed(%q) = %v, want %v", tt.db, got, tt.allowed)
+			}
+		})
+	}
+}
+
 // ---------------------------------------------------------------------------
 // RateLimitsSpec
 // ---------------------------------------------------------------------------
@@ -460,7 +509,11 @@ func TestProviderConfigSpec_Validate(t *testing.T) {
 		{"email smtp case-insensitive valid", domain.ProviderConfigSpec{Kind: "EMAIL", Type: "SMTP"}, false},
 		{"email ses rejected (unimplemented)", domain.ProviderConfigSpec{Kind: "email", Type: "ses"}, true},
 		{"email empty type rejected", domain.ProviderConfigSpec{Kind: "email", Type: ""}, true},
-		{"sms rejected wholesale", domain.ProviderConfigSpec{Kind: "sms", Type: "twilio"}, true},
+		{"sms twilio valid", domain.ProviderConfigSpec{Kind: "sms", Type: "twilio"}, false},
+		{"sms generic valid", domain.ProviderConfigSpec{Kind: "sms", Type: "generic"}, false},
+		{"sms case-insensitive valid", domain.ProviderConfigSpec{Kind: "SMS", Type: "Generic"}, false},
+		{"sms unknown type rejected", domain.ProviderConfigSpec{Kind: "sms", Type: "carrier-pigeon"}, true},
+		{"sms empty type rejected", domain.ProviderConfigSpec{Kind: "sms", Type: ""}, true},
 		{"unknown kind rejected", domain.ProviderConfigSpec{Kind: "push", Type: "fcm"}, true},
 	}
 	for _, tt := range tests {
@@ -483,10 +536,31 @@ func TestProviderConfigSpec_Validate(t *testing.T) {
 // covered by the HTTP e2e suite.
 // ---------------------------------------------------------------------------
 
+// TestRateLimitEndpoints_PhoneOTP pins the phone-OTP endpoints in the
+// rate-limit registry. A rule targeting these paths must validate, since the
+// hardcoded limiter router classifies them (pkg/api/ratelimit.go). This guards
+// against the registry drifting away from the realized phone-login enforcement.
+func TestRateLimitEndpoints_PhoneOTP(t *testing.T) {
+	t.Parallel()
+	for _, ep := range []string{
+		"/v1/auth/otp/start",
+		"/v1/auth/otp/verify",
+		"/v1/auth/phone/verification/start",
+		"/v1/auth/phone/verification/verify",
+	} {
+		spec := domain.RateLimitsSpec{Rules: []domain.RateLimitRuleSpec{{
+			Endpoint: ptr(ep), By: ptr("ip"), Limit: ptr(10), WindowSeconds: ptr(60),
+		}}}
+		if err := spec.Validate(); err != nil {
+			t.Fatalf("rate-limit rule for %s rejected: %v", ep, err)
+		}
+	}
+}
+
 func TestSupportedAuthMethods_FilterContract(t *testing.T) {
 	t.Parallel()
 	stored := []string{"email", "username", "passkey", "phone", "magic_link", "oauth"}
-	want := []string{"email", "passkey", "magic_link", "oauth"}
+	want := []string{"email", "passkey", "phone", "magic_link", "oauth"}
 
 	var got []string
 	for _, m := range stored {

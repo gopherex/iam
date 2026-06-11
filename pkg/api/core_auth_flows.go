@@ -60,7 +60,9 @@ func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.Flow
 	fs, err := s.deps.Flows.Create(ctx, domain.FlowCreateCmd{
 		ProjectID:    params.XClientID,
 		Kind:         domain.FlowKind(req.Kind),
+		Method:       string(req.Method.Or("")),
 		Email:        req.Email.Or(""),
+		Phone:        req.Phone.Or(""),
 		Password:     req.Password.Or(""),
 		Name:         req.Name.Or(""),
 		CaptchaToken: req.CaptchaToken.Or(""),
@@ -217,8 +219,22 @@ func flowNextActions(f *domain.Flow) []string {
 	switch f.Step {
 	case domain.FlowStepCollectCredentials:
 		actions = []string{"submit"}
-	case domain.FlowStepVerifyEmail, domain.FlowStepVerifyPhone:
+	case domain.FlowStepVerifyEmail:
+		// Signin magic_link confirms via verify_email{token}; signup/recovery
+		// confirm an emailed code via verify_email{code}. Both use verify_email.
 		actions = []string{"verify_email"}
+		if f.ActiveChallenge != nil {
+			actions = append(actions, "resend")
+		}
+	case domain.FlowStepVerifyPhone:
+		// Signin phone_otp confirms via verify_otp{code}; recovery phone confirms
+		// via verify_email-equivalent — recovery keeps verify_email for parity with
+		// its email path, signin uses verify_otp.
+		if f.Kind == domain.FlowKindSignin {
+			actions = []string{"verify_otp"}
+		} else {
+			actions = []string{"verify_email"}
+		}
 		if f.ActiveChallenge != nil {
 			actions = append(actions, "resend")
 		}
@@ -230,6 +246,10 @@ func flowNextActions(f *domain.Flow) []string {
 		actions = []string{"accept_consents"}
 	case domain.FlowStepRequestAccess:
 		actions = []string{"submit_access_request"}
+	}
+	// Alternate methods the client may switch to mid-flow (§ multichannel).
+	if len(f.AvailableMethods) > 0 {
+		actions = append(actions, "switch_method")
 	}
 	return actions
 }

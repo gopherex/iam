@@ -55,9 +55,9 @@ const ENV_HEADER = (env: string) => ({ 'X-Environment': env } as const);
 // backend is the source of truth and rejects (422) any method not in that set.
 // Only methods with a working end-to-end login path belong here. `username` is
 // intentionally absent: nicknames/display names are a product-domain concern,
-// not an IAM auth identifier. `phone` will be added once phone-OTP login + an
-// SMS provider exist.
-const KNOWN_AUTH_METHODS = ['email', 'oauth', 'magic_link', 'passkey'];
+// not an IAM auth identifier. `phone` is phone-OTP login (sms/whatsapp channel)
+// over /v1/auth/otp/{start,verify}, backed by an SMS provider.
+const KNOWN_AUTH_METHODS = ['email', 'oauth', 'magic_link', 'passkey', 'phone'];
 const REGISTRATION_MODES = ['open', 'invite_only', 'request_access', 'closed'] as const;
 
 function AuthTab({ projectId, env }: { projectId: string; env: string }) {

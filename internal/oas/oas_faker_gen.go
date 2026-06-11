@@ -848,7 +848,17 @@ func (s *FlowCreateRequest) SetFake() {
 	}
 	{
 		{
+			s.Method.SetFake()
+		}
+	}
+	{
+		{
 			s.Email.SetFake()
+		}
+	}
+	{
+		{
+			s.Phone.SetFake()
 		}
 	}
 	{
@@ -886,6 +896,11 @@ func (s *FlowCreateRequest) SetFake() {
 // SetFake set fake values.
 func (s *FlowCreateRequestKind) SetFake() {
 	*s = FlowCreateRequestKindSignup
+}
+
+// SetFake set fake values.
+func (s *FlowCreateRequestMethod) SetFake() {
+	*s = FlowCreateRequestMethodPassword
 }
 
 // SetFake set fake values.
@@ -2945,6 +2960,15 @@ func (s *OptFlowChallenge) SetFake() {
 // SetFake set fake values.
 func (s *OptFlowContact) SetFake() {
 	var elem FlowContact
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptFlowCreateRequestMethod) SetFake() {
+	var elem FlowCreateRequestMethod
 	{
 		elem.SetFake()
 	}
