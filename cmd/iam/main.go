@@ -129,10 +129,15 @@ func run() error {
 	log.Info("migrations applied")
 
 	// ----- outbox (email publisher; enqueue joins the caller tx via db.TxDB) -----
+	// BatchSize=1: the relay marks the WHOLE claimed batch for retry when Publish
+	// returns an error, so batching delivery would re-send the messages already
+	// delivered earlier in the batch (duplicate OTP / email) on the retry. One
+	// message per claim isolates failures; concurrency preserves throughput.
 	ob, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, log.AppendName("outbox")),
 		outbox.WithInstanceID(build.InstanceID),
 		outbox.WithLogger(buildSlogLogger()),
 		outbox.WithPollInterval(time.Second),
+		outbox.WithBatchSize(1),
 	)
 	if err != nil {
 		log.Error("outbox init failed", xlog.Error("err", err))
