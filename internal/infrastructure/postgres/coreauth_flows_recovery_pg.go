@@ -32,6 +32,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/gopherex/iam/internal/domain"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
@@ -56,7 +57,14 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 		return nil, fmt.Errorf("recovery flow: accounts adapter is not *pgCoreAuth")
 	}
 
+	// Channel dispatch: phone-OTP recovery mirrors the email path with an SMS
+	// challenge; default is the email reset.
+	if cmd.Method == "phone_otp" {
+		return a.createRecoveryPhone(ctx, pgCA, f, cmd)
+	}
+
 	now := nowUTC()
+	f.Method = "email"
 	f.Step = domain.FlowStepVerifyEmail
 
 	// Try to locate the account. We handle the two paths identically on the
@@ -158,6 +166,118 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
 }
 
+// ─── create: phone-OTP channel ────────────────────────────────────────────────
+
+// createRecoveryPhone mirrors createRecovery over an SMS challenge. Same
+// anti-enumeration contract: a real phone gets a "phone" reset challenge; an
+// unknown phone gets a dangling fake descriptor. Requires an enabled SMS
+// provider (pre-flight) so the code can actually be delivered.
+func (a *pgCoreAuthFlows) createRecoveryPhone(ctx context.Context, pgCA *pgCoreAuth, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+	now := nowUTC()
+	f.Method = "phone_otp"
+	f.Step = domain.FlowStepVerifyPhone
+
+	phone := strings.TrimSpace(cmd.Phone)
+	if !e164.MatchString(phone) {
+		return nil, domain.ErrBadRequest.WithMessage("phone must be a valid E.164 number")
+	}
+	ok, err := providerEnabled(ctx, a.db, cmd.ProjectID, "sms")
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, domain.ErrValidation.WithMessage("an enabled sms provider is required for phone recovery")
+	}
+
+	var ac *domain.FlowActiveChallenge
+	userRow, err := pgCA.coreAuthFindUserByPhone(ctx, cmd.ProjectID, phone)
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return nil, fmt.Errorf("recovery create phone: lookup: %w", err)
+	}
+	if err == nil {
+		acc, loadErr := coreAuthLoadAccount(userRow, cmd.ProjectID)
+		if loadErr != nil {
+			return nil, fmt.Errorf("recovery create phone: load account: %w", loadErr)
+		}
+		f.UserID = acc.ID
+		code, codeErr := coreAuthRandomCode()
+		if codeErr != nil {
+			return nil, fmt.Errorf("recovery create phone: random code: %w", codeErr)
+		}
+		token, tokenErr := coreAuthRandomToken()
+		if tokenErr != nil {
+			return nil, fmt.Errorf("recovery create phone: random token: %w", tokenErr)
+		}
+		ch := coreAuthChallengeData{
+			ID:          newUUID(),
+			ProjectID:   cmd.ProjectID,
+			Environment: f.Environment,
+			Type:        "phone",
+			Purpose:     "reset",
+			AccountID:   acc.ID,
+			Subject:     phone,
+			CodeHash:    coreAuthSHA256(code),
+			TokenHash:   coreAuthSHA256(token),
+			Locale:      cmd.Locale,
+			ExpiresAt:   now.Add(coreAuthChallengeTTL),
+			CreatedAt:   now,
+		}
+		if err := a.db.withTx(ctx, func(ctx context.Context) error {
+			if _, insErr := pgCA.coreAuthInsertChallenge(ctx, ch); insErr != nil {
+				return insErr
+			}
+			return pgCA.emitter.Emit(ctx, domain.Event{
+				Type:        "phone.verification.requested",
+				ProjectID:   cmd.ProjectID,
+				Environment: f.Environment,
+				AggregateID: acc.ID,
+				Payload: map[string]any{
+					"code":         code,
+					"channel":      "sms",
+					"purpose":      "reset",
+					"account_id":   acc.ID,
+					"challenge_id": ch.ID,
+					"contact":      phone,
+					"to":           phone,
+					"locale":       cmd.Locale,
+				},
+			})
+		}); err != nil {
+			return nil, fmt.Errorf("recovery create phone: issue challenge: %w", err)
+		}
+		ac = &domain.FlowActiveChallenge{
+			ChallengeID:  ch.ID,
+			Channel:      "sms",
+			ExpiresAt:    ch.ExpiresAt,
+			ResendAt:     now.Add(flowResendCooloff),
+			AttemptsLeft: flowMaxAttempts,
+		}
+	} else {
+		ac = &domain.FlowActiveChallenge{
+			ChallengeID:  newUUID(), // dangling — no DB row
+			Channel:      "sms",
+			ExpiresAt:    now.Add(coreAuthChallengeTTL),
+			ResendAt:     now.Add(flowResendCooloff),
+			AttemptsLeft: flowMaxAttempts,
+		}
+	}
+	f.ActiveChallenge = ac
+
+	token, hash, err := flowMintToken()
+	if err != nil {
+		return nil, fmt.Errorf("recovery create phone: mint token: %w", err)
+	}
+	if err := a.flowInsert(ctx, f, hash, flowData{
+		Contact:         f.Contact,
+		Collected:       f.Collected,
+		ActiveChallenge: f.ActiveChallenge,
+		Method:          f.Method,
+	}); err != nil {
+		return nil, fmt.Errorf("recovery create phone: insert flow: %w", err)
+	}
+	return &domain.FlowState{FlowToken: token, Flow: f}, nil
+}
+
 // ─── advance ─────────────────────────────────────────────────────────────────
 
 // advanceRecovery routes Submit actions to the correct step handler.
@@ -168,6 +288,11 @@ func advanceRecovery(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlo
 			return nil, domain.ErrBadRequest.WithMessage("expected action verify_email")
 		}
 		return a.recoveryVerifyEmail(ctx, row, f, cmd)
+	case domain.FlowStepVerifyPhone:
+		if cmd.Action != "verify_phone" {
+			return nil, domain.ErrBadRequest.WithMessage("expected action verify_phone")
+		}
+		return a.recoveryVerifyPhone(ctx, row, f, cmd)
 	case domain.FlowStepSetPassword:
 		if cmd.Action != "set_password" {
 			return nil, domain.ErrBadRequest.WithMessage("expected action set_password")
@@ -240,6 +365,60 @@ func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.I
 	f.ActiveChallenge = nil
 	f.Error = nil
 
+	if err := a.db.withTx(ctx, func(ctx context.Context) error {
+		return a.flowSave(ctx, row, f)
+	}); err != nil {
+		return nil, err
+	}
+	return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
+}
+
+// ─── step: verify_phone ───────────────────────────────────────────────────────
+
+// recoveryVerifyPhone is recoveryVerifyEmail over an SMS "phone" challenge. On a
+// correct code it advances to set_password; wrong code decrements attempts and
+// stays pending (anti-enumeration identical to the email path).
+func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+	ac := f.ActiveChallenge
+	if ac == nil {
+		return nil, domain.ErrBadRequest.WithMessage("no active phone challenge")
+	}
+	code := cmd.Payload["code"]
+	if code == "" {
+		return nil, domain.ErrBadRequest.WithMessage("code is required")
+	}
+	if ac.AttemptsLeft <= 0 {
+		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
+	}
+	pgCA, ok := a.accounts.(*pgCoreAuth)
+	if !ok {
+		return nil, fmt.Errorf("recovery verify_phone: accounts is not *pgCoreAuth")
+	}
+
+	res, consumeErr := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
+		_, data, err := pgCA.coreAuthConsumeChallenge(ctx, f.ProjectID, domain.CoreAuthVerifyConsumeCmd{
+			ProjectID:   f.ProjectID,
+			ChallengeID: ac.ChallengeID,
+			Code:        code,
+		}, "phone")
+		if err != nil {
+			return "", err
+		}
+		return data.AccountID, nil
+	})
+	if consumeErr != nil {
+		ac.AttemptsLeft--
+		f.Error = &domain.FlowError{Code: "invalid_code", Message: "The verification code is incorrect."}
+		_ = a.db.withTx(ctx, func(ctx context.Context) error {
+			return a.flowSave(ctx, row, f)
+		})
+		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
+	}
+
+	f.UserID = res
+	f.Step = domain.FlowStepSetPassword
+	f.ActiveChallenge = nil
+	f.Error = nil
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
 		return a.flowSave(ctx, row, f)
 	}); err != nil {

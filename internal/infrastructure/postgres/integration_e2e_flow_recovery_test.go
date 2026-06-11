@@ -236,3 +236,53 @@ func TestE2EFlowRecoveryWrongCodeDecrementsAttempts(t *testing.T) {
 		t.Fatalf("after correct code: step = %q, want set_password", fs4.Step)
 	}
 }
+
+// TestE2EFlowRecoveryPhone exercises the phone-OTP recovery channel: a user with
+// a phone (created via phone-OTP signup) resets their password over SMS:
+// create{method:phone_otp} → verify_phone → set_password → completed + session.
+func TestE2EFlowRecoveryPhone(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID := e2eProject(t, ctx)
+	e2eEnableSMSProvider(t, ctx, projectID)
+	phone := fmt.Sprintf("+1415555%04d", 2000+len(t.Name())%7000)
+	hdr := map[string]string{"X-Client-Id": projectID}
+
+	// Provision a user with this phone via phone-OTP signup.
+	if _, _, status, body := phoneStartVerify(t, ctx, ts.URL, phone, "signup", hdr); status != http.StatusOK {
+		t.Fatalf("phone signup setup failed: %d %s", status, body)
+	}
+
+	// Create a phone recovery flow.
+	fs, r := flowCreate(t, ctx, ts, projectID, map[string]any{
+		"kind":   "recovery",
+		"method": "phone_otp",
+		"phone":  phone,
+	})
+	e2eWantStatus(t, r, http.StatusOK)
+	if fs.Step != "verify_phone" {
+		t.Fatalf("create: step = %q, want verify_phone", fs.Step)
+	}
+	token := fs.FlowToken
+
+	challengeID := findFlowChallengeID(t, ctx, token)
+	code := captureCode(challengeID)
+	if code == "" {
+		t.Fatal("verify_phone: no OTP code captured")
+	}
+	fs2, r2 := flowSubmit(t, ctx, ts, projectID, token, "verify_phone", map[string]any{"code": code})
+	e2eWantStatus(t, r2, http.StatusOK)
+	if fs2.Step != "set_password" {
+		t.Fatalf("verify_phone: step = %q, want set_password", fs2.Step)
+	}
+
+	fs3, r3 := flowSubmit(t, ctx, ts, projectID, fs2.FlowToken, "set_password",
+		map[string]any{"password": "N3wStr0ng!Pass99"})
+	e2eWantStatus(t, r3, http.StatusOK)
+	if fs3.Status != "completed" {
+		t.Fatalf("set_password: status = %q, want completed", fs3.Status)
+	}
+	if fs3.Session == nil || fs3.Session.AccessToken == "" {
+		t.Fatal("set_password: expected a session with access token")
+	}
+}
