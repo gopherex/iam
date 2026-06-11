@@ -34,6 +34,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/aarondl/opt/null"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -2358,20 +2359,26 @@ func (a *pgCoreAuth) CheckPassword(ctx context.Context, projectID, password stri
 	if err != nil {
 		return nil, err
 	}
-	res := &domain.CoreAuthPasswordCheckResult{Valid: true, Score: 4}
-	if len(password) < pol.MinLength {
+	res := &domain.CoreAuthPasswordCheckResult{Valid: true, Score: passwordStrengthScore(password)}
+	// Length is counted in characters (runes), not bytes, so a multibyte password
+	// is not over-credited; min_length is presented to admins as a char count.
+	if utf8.RuneCountInString(password) < pol.MinLength {
 		res.Valid = false
 		res.Score = 0
 		res.Violations = append(res.Violations, "too_short")
 	}
+	// A password that is only whitespace satisfies a byte/rune length floor but is
+	// trivially weak; reject it outright.
+	if strings.TrimSpace(password) == "" {
+		res.Valid = false
+		res.Score = 0
+		res.Violations = append(res.Violations, "blank")
+	}
 	if strings.ToLower(password) == password || strings.ToUpper(password) == password {
-		if res.Score > 0 {
-			res.Score--
-		}
 		res.Violations = append(res.Violations, "no_mixed_case")
 	}
-	// zxcvbn_min_score, when configured, is the floor the computed score must
-	// clear; falling short marks the password too weak.
+	// zxcvbn_min_score, when configured, is the floor the computed strength score
+	// must clear; falling short marks the password too weak.
 	if pol.ZxcvbnMinScore > 0 && res.Score < pol.ZxcvbnMinScore {
 		res.Valid = false
 		res.Violations = append(res.Violations, "too_weak")
