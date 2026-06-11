@@ -53,11 +53,18 @@ import (
 type pgCoreAuth struct {
 	db      *DB
 	emitter Emitter
+	cfg     *configReader
 }
 
-// NewPgCoreAuth builds the Postgres-backed Core Auth adapter.
-func NewPgCoreAuth(db *DB, emitter Emitter) *pgCoreAuth {
-	return &pgCoreAuth{db: db, emitter: emitter}
+// NewPgCoreAuth builds the Postgres-backed Core Auth adapter. cfg is the shared
+// runtime config reader used to resolve password_policy / session_policy at
+// request time; a nil cfg falls back to a fresh default-TTL reader so the
+// adapter is usable in isolation (e.g. tests).
+func NewPgCoreAuth(db *DB, emitter Emitter, cfg *configReader) *pgCoreAuth {
+	if cfg == nil {
+		cfg = NewConfigReader(db, 0)
+	}
+	return &pgCoreAuth{db: db, emitter: emitter, cfg: cfg}
 }
 
 var (
@@ -109,10 +116,10 @@ func (a *pgCoreAuth) coreAuthVerifyAccess(ctx context.Context, projectID, token 
 // ----- core-auth local constants -----
 
 const (
-	coreAuthDefaultSessionTTL   = 24 * time.Hour
-	coreAuthRefreshTTL          = 30 * 24 * time.Hour
-	coreAuthChallengeTTL        = 15 * time.Minute
-	coreAuthDefaultExpiresInSec = int(coreAuthDefaultSessionTTL / time.Second)
+	// coreAuthRefreshTTL is the default refresh-token lifetime used when no
+	// session_policy doc is set (see configReader.SessionPolicy defaults).
+	coreAuthRefreshTTL   = 30 * 24 * time.Hour
+	coreAuthChallengeTTL = 15 * time.Minute
 
 	coreAuthChallengeEmail = "email"
 	coreAuthChallengePhone = "phone"
@@ -339,6 +346,12 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	if aal <= 0 {
 		aal = 1
 	}
+	// Token lifetimes come from the project's session_policy (env-scoped); an
+	// absent doc yields the legacy defaults (access 30m, refresh 30d).
+	sp, err := a.cfg.SessionPolicy(ctx, acc.ProjectID)
+	if err != nil {
+		return nil, err
+	}
 	// Access token is a signed RS256 JWT (jwx); the project's active signing key
 	// is generated on first use.
 	signEnv, err := resolveSignEnv(ctx, a.db, acc.ProjectID, coreAuthDefaultEnv)
@@ -360,7 +373,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		"amr": amr,
 		"typ": "access",
 		"env": signEnv,
-	}, coreAuthAccessTTL)
+	}, sp.AccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -379,7 +392,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		AAL:          aal,
 		AccessToken:  accessToken,
 		RefreshToken: refreshPlain,
-		ExpiresIn:    coreAuthDefaultExpiresInSec,
+		ExpiresIn:    int(sp.AccessTTL / time.Second),
 		CreatedAt:    now,
 		IP:           meta.IP,
 		UserAgent:    meta.UserAgent,
@@ -399,7 +412,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		UserID:       &sess.AccountID,
 		Aal:          ptr(int32(aal)),
 		Trusted:      ptr(false),
-		ExpiresAt:    ptr(null.From(now.Add(coreAuthDefaultSessionTTL))),
+		ExpiresAt:    ptr(null.From(now.Add(coreAuthSessionLifetime(sp)))),
 		CreatedAt:    &now,
 		LastActiveAt: &now,
 		Data:         &rmSess,
@@ -419,7 +432,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		SessionID:   sessionID,
 		Hash:        refreshHash,
 		Revoked:     false,
-		ExpiresAt:   now.Add(coreAuthRefreshTTL),
+		ExpiresAt:   coreAuthRefreshHorizon(now, now, sp),
 		CreatedAt:   now,
 	}
 	if err := a.coreAuthInsertRefreshToken(ctx, rt); err != nil {
@@ -445,6 +458,10 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Account, row *models.IamSession) (*domain.Session, error) {
 	now := nowUTC()
 	prev, err := coreAuthLoadSession(row, row.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	sp, err := a.cfg.SessionPolicy(ctx, acc.ProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -476,7 +493,7 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		"amr": amr,
 		"typ": "access",
 		"env": signEnv,
-	}, coreAuthAccessTTL)
+	}, sp.AccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -493,7 +510,7 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		AAL:          aal,
 		AccessToken:  accessToken,
 		RefreshToken: refreshPlain,
-		ExpiresIn:    coreAuthDefaultExpiresInSec,
+		ExpiresIn:    int(sp.AccessTTL / time.Second),
 		CreatedAt:    prev.CreatedAt,
 		// Carry the device identity across refresh; refresh the IP/last-active
 		// from the current request when available.
@@ -512,10 +529,19 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		return nil, err
 	}
 	rmSess := json.RawMessage(rawSess)
-	// Keep the session row; only refresh last-active + the token snapshot. AAL,
-	// trusted, client_id columns are intentionally left untouched.
+	// New refresh horizon: now + refresh TTL, capped so it never extends the
+	// session past its absolute deadline. The absolute deadline is anchored on the
+	// immutable iam_sessions.created_at COLUMN (not the data-blob snapshot, which
+	// is rewritten each rotation) so it matches the absolute-timeout check in
+	// Refresh. The session row's expires_at is slid forward to the same horizon so
+	// coreAuthVerifyAccess liveness stays in sync.
+	refreshHorizon := coreAuthRefreshHorizon(now, row.CreatedAt, sp)
+	// Keep the session row; refresh last-active, slide expires_at to the new
+	// refresh horizon, and store the token snapshot. AAL, trusted, client_id
+	// columns are intentionally left untouched.
 	if err := row.Update(ctx, a.db.Bobx(), &models.IamSessionSetter{
 		LastActiveAt: &now,
+		ExpiresAt:    ptr(null.From(refreshHorizon)),
 		Data:         &rmSess,
 	}); err != nil {
 		return nil, err
@@ -528,13 +554,40 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		SessionID:   row.ID,
 		Hash:        coreAuthSHA256(refreshPlain),
 		Revoked:     false,
-		ExpiresAt:   now.Add(coreAuthRefreshTTL),
+		ExpiresAt:   refreshHorizon,
 		CreatedAt:   now,
 	}
 	if err := a.coreAuthInsertRefreshToken(ctx, rt); err != nil {
 		return nil, err
 	}
 	return sess, nil
+}
+
+// coreAuthSessionLifetime is how long the iam_session row stays valid: the
+// refresh-token lifetime, capped by the absolute timeout when one is configured.
+// With session_policy unset this equals coreAuthRefreshTTL (the legacy session
+// row lived 24h; widening it to the refresh lifetime keeps the row alive for as
+// long as the refresh token it anchors can be redeemed).
+func coreAuthSessionLifetime(sp EffectiveSessionPolicy) time.Duration {
+	life := sp.RefreshTTL
+	if sp.AbsoluteTimeout > 0 && sp.AbsoluteTimeout < life {
+		life = sp.AbsoluteTimeout
+	}
+	return life
+}
+
+// coreAuthRefreshHorizon is the expiry to stamp on a refresh token (and the
+// session row) at rotation: now + refresh TTL, but never past the session's
+// absolute deadline anchored on createdAt. With no absolute timeout configured
+// this is simply now + refresh TTL.
+func coreAuthRefreshHorizon(now, createdAt time.Time, sp EffectiveSessionPolicy) time.Time {
+	horizon := now.Add(sp.RefreshTTL)
+	if sp.AbsoluteTimeout > 0 {
+		if deadline := createdAt.Add(sp.AbsoluteTimeout); deadline.Before(horizon) {
+			horizon = deadline
+		}
+	}
+	return horizon
 }
 
 // refreshTokenEnv returns the environment column value for a refresh-token row,
@@ -932,6 +985,15 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 	if err := cmd.Validate(); err != nil {
 		return nil, nil, err
 	}
+	// Consent gate: reject up-front (before any user row is created) when the
+	// project requires a consent document the caller did not accept. A project
+	// without configured required consents is unaffected. The resumable flow
+	// path skips this — it enforces consent at its own accept_consents step.
+	if !cmd.SkipConsentGate {
+		if err := a.coreAuthCheckRequiredConsents(ctx, cmd.ProjectID, cmd.Locale, cmd.Consents); err != nil {
+			return nil, nil, err
+		}
+	}
 	type regResult struct {
 		acc  *domain.Account
 		sess *domain.Session
@@ -940,6 +1002,9 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 	if err != nil {
 		return nil, nil, err
 	}
+	// Resolve the locale to stamp on each accepted consent row from the consent
+	// config (best-effort; empty when unknown). Keyed by doc key.
+	consentLocale := a.coreAuthConsentLocales(ctx, cmd.ProjectID, cmd.Locale)
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (regResult, error) {
 		now := nowUTC()
 		acc := &domain.Account{
@@ -986,7 +1051,7 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 			return regResult{}, err
 		}
 		for _, c := range cmd.Consents {
-			if _, err := models.IamConsents.Insert(&models.IamConsentSetter{
+			setter := &models.IamConsentSetter{
 				ID:          ptr(newUUID()),
 				ProjectID:   ptr(acc.ProjectID),
 				Environment: &env,
@@ -994,13 +1059,20 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 				DocKey:      ptr(c.Key),
 				Version:     ptr(c.Version),
 				AcceptedAt:  ptr(now),
-			}).One(ctx, a.db.Bobx()); err != nil {
+			}
+			if loc := consentLocale[c.Key]; loc != "" {
+				setter.Locale = ptr(null.From(loc))
+			}
+			if _, err := models.IamConsents.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 				return regResult{}, err
 			}
 		}
 
 		// Password credential (bcrypt). Optional: phone-only sign-ups have none.
 		if cmd.Password != "" {
+			if err := a.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, cmd.Password); err != nil {
+				return regResult{}, err
+			}
 			hash, err := coreAuthHashPassword(cmd.Password)
 			if err != nil {
 				return regResult{}, err
@@ -1147,6 +1219,8 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 		acc      *domain.Account
 		sess     *domain.Session
 		mismatch bool
+		revoked  bool // presented token was already revoked (reuse) — map to ErrTokenRevoked
+		expired  bool // idle/absolute timeout tripped — map to ErrSessionExpired
 	}
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (refreshResult, error) {
 		row, err := models.IamRefreshTokens.Query(
@@ -1158,20 +1232,39 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 			}
 			return refreshResult{}, err
 		}
+		// Session policy gates the reuse-detection cascade and the idle/absolute
+		// timeouts below; an absent doc yields the legacy defaults (reuse detection
+		// off, no idle/absolute timeout). Resolve it in the TOKEN's environment,
+		// not the request's — otherwise a client could present a token with
+		// X-Environment set to a weaker-policy environment to dodge reuse detection
+		// and the idle/absolute timeouts.
+		sp, err := a.cfg.SessionPolicyForEnv(ctx, row.ProjectID, row.Environment)
+		if err != nil {
+			return refreshResult{}, err
+		}
 		if row.Revoked {
-			if err := a.coreAuthRevokeAllForUser(ctx, row.ProjectID, row.UserID); err != nil {
-				slog.Error("coreauth: failed to revoke all sessions on refresh token reuse", "err", err, "project_id", row.ProjectID, "user_id", row.UserID)
+			// Presenting an already-rotated (revoked) refresh token is always
+			// rejected — disabling reuse_detection must never re-enable replay. When
+			// reuse_detection is on, additionally treat it as theft: revoke every one
+			// of the user's sessions and emit token.reuse_detected. The cascade must
+			// PERSIST, so we commit this tx (returning a nil error with revoked=true)
+			// and surface ErrTokenRevoked to the caller outside the tx — returning the
+			// error here would roll the cascade back.
+			if sp.ReuseDetection {
+				if err := a.coreAuthRevokeAllForUser(ctx, row.ProjectID, row.UserID); err != nil {
+					return refreshResult{}, err
+				}
+				if err := a.emitter.Emit(ctx, domain.Event{
+					Type:        "token.reuse_detected",
+					ProjectID:   row.ProjectID,
+					Environment: coreAuthDefaultEnv,
+					AggregateID: row.UserID,
+					Payload:     map[string]any{"session_id": row.SessionID},
+				}); err != nil {
+					return refreshResult{}, err
+				}
 			}
-			if err := a.emitter.Emit(ctx, domain.Event{
-				Type:        "token.reuse_detected",
-				ProjectID:   row.ProjectID,
-				Environment: coreAuthDefaultEnv,
-				AggregateID: row.UserID,
-				Payload:     map[string]any{"session_id": row.SessionID},
-			}); err != nil {
-				slog.Error("coreauth: failed to emit token.reuse_detected event", "err", err, "project_id", row.ProjectID, "user_id", row.UserID)
-			}
-			return refreshResult{}, domain.ErrTokenRevoked
+			return refreshResult{revoked: true}, nil
 		}
 		if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
 			return refreshResult{}, domain.ErrTokenExpired
@@ -1232,6 +1325,34 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 			return refreshResult{mismatch: true}, nil
 		}
 
+		// Idle / absolute timeout enforcement (sliding-refresh model). The access
+		// token already self-expires after sp.AccessTTL; the session itself lives
+		// only while it keeps being refreshed within the idle window and under the
+		// absolute lifetime anchored at session creation. Both checks are gated on
+		// a configured (>0) timeout, so an absent/legacy doc enforces neither and
+		// behaviour is unchanged. When either fires we revoke the refresh token and
+		// the session (committing this tx) and refuse with ErrSessionExpired.
+		now := nowUTC()
+		var expired bool
+		if sp.AbsoluteTimeout > 0 && now.After(sessRow.CreatedAt.Add(sp.AbsoluteTimeout)) {
+			expired = true
+		}
+		if sp.IdleTimeout > 0 && now.After(sessRow.LastActiveAt.Add(sp.IdleTimeout)) {
+			expired = true
+		}
+		if expired {
+			if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
+				return refreshResult{}, err
+			}
+			if err := a.coreAuthRevokeSession(ctx, sessRow.ProjectID, sessRow.ID); err != nil &&
+				!errors.Is(err, domain.ErrSessionNotFound) {
+				return refreshResult{}, err
+			}
+			// Commit the revocation; surface ErrSessionExpired outside the tx so the
+			// revoke is not rolled back.
+			return refreshResult{expired: true}, nil
+		}
+
 		// Rotate the tokens in place: revoke the presented refresh token, then
 		// mint a new access + refresh pair bound to the SAME session, preserving
 		// its id, AAL (MFA elevation), AMR, and client. The session is not torn
@@ -1256,6 +1377,12 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 	})
 	if err != nil {
 		return nil, nil, err
+	}
+	if res.revoked {
+		return nil, nil, domain.ErrTokenRevoked
+	}
+	if res.expired {
+		return nil, nil, domain.ErrSessionExpired
 	}
 	if res.mismatch {
 		return nil, nil, domain.ErrSessionDeviceMismatch
@@ -2065,6 +2192,9 @@ func (a *pgCoreAuth) ResetPassword(ctx context.Context, cmd domain.CoreAuthPassw
 		if err != nil {
 			return resetResult{}, err
 		}
+		if err := a.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, cmd.NewPassword); err != nil {
+			return resetResult{}, err
+		}
 		hash, err := coreAuthHashPassword(cmd.NewPassword)
 		if err != nil {
 			return resetResult{}, err
@@ -2190,6 +2320,9 @@ func (a *pgCoreAuth) ChangePassword(ctx context.Context, cmd domain.CoreAuthPass
 		if !coreAuthCheckPassword(cred.Secret, cmd.CurrentPassword) {
 			return domain.ErrInvalidCredentials
 		}
+		if err := a.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, cmd.NewPassword); err != nil {
+			return err
+		}
 		hash, err := coreAuthHashPassword(cmd.NewPassword)
 		if err != nil {
 			return err
@@ -2215,51 +2348,13 @@ func (a *pgCoreAuth) ChangePassword(ctx context.Context, cmd domain.CoreAuthPass
 	})
 }
 
-// coreAuthPasswordPolicy is the iam_config(key=password_policy) data envelope.
-// All fields are optional; a missing config row (or absent field) falls back to
-// the package defaults in coreAuthLoadPasswordPolicy.
-type coreAuthPasswordPolicy struct {
-	MinLength      int  `json:"min_length"`
-	BreachedCheck  bool `json:"breached_check"`
-	History        int  `json:"history"`
-	ZxcvbnMinScore int  `json:"zxcvbn_min_score"`
-}
-
-// coreAuthLoadPasswordPolicy reads the iam_config(project, env=live,
-// key=password_policy) envelope and unmarshals its data jsonb into the policy
-// struct. A missing config row yields the sane default (min_length 8); other
-// read errors propagate.
-func (a *pgCoreAuth) coreAuthLoadPasswordPolicy(ctx context.Context, projectID string) (coreAuthPasswordPolicy, error) {
-	pol := coreAuthPasswordPolicy{MinLength: 8}
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
-	if err != nil {
-		return pol, err
-	}
-	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, env, "password_policy")
-	if err != nil {
-		if errors.Is(translatePgErr("config", err), ErrNotFound) {
-			return pol, nil
-		}
-		return pol, err
-	}
-	if len(row.Data) > 0 {
-		if err := unmarshal(row.Data, &pol); err != nil {
-			return pol, err
-		}
-	}
-	if pol.MinLength <= 0 {
-		pol.MinLength = 8
-	}
-	return pol, nil
-}
-
 // CheckPassword runs a stateless strength/policy check against the project's
 // password_policy (loaded from iam_config). The configured min_length is the
 // hard floor; any present rules (breached_check, zxcvbn_min_score) are applied
 // on top of the mixed-case heuristic. A missing policy row falls back to a sane
 // default (min_length 8). The result is returned without persistence.
 func (a *pgCoreAuth) CheckPassword(ctx context.Context, projectID, password string) (*domain.CoreAuthPasswordCheckResult, error) {
-	pol, err := a.coreAuthLoadPasswordPolicy(ctx, projectID)
+	pol, err := a.cfg.PasswordPolicy(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -2282,6 +2377,26 @@ func (a *pgCoreAuth) CheckPassword(ctx context.Context, projectID, password stri
 		res.Violations = append(res.Violations, "too_weak")
 	}
 	return res, nil
+}
+
+// coreAuthEnforcePasswordPolicy runs the project's password_policy against a
+// candidate plaintext on a WRITE path (register / reset / change / set_password).
+// Returns domain.ErrWeakPassword (422) with violation details when the password
+// fails. It reuses CheckPassword so the stateless /password/check endpoint and
+// the real write paths can never diverge on policy. A missing policy row falls
+// back to the same default (min_length 8) used by CheckPassword.
+func (a *pgCoreAuth) coreAuthEnforcePasswordPolicy(ctx context.Context, projectID, password string) error {
+	res, err := a.CheckPassword(ctx, projectID, password)
+	if err != nil {
+		return err
+	}
+	if !res.Valid {
+		return domain.ErrWeakPassword.WithDetails(map[string]any{
+			"violations": res.Violations,
+			"score":      res.Score,
+		})
+	}
+	return nil
 }
 
 // VerifyPassword re-asserts the current account's password for a sudo/step-up
