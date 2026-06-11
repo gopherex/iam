@@ -1006,6 +1006,13 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 	// Resolve the locale to stamp on each accepted consent row from the consent
 	// config (best-effort; empty when unknown). Keyed by doc key.
 	consentLocale := a.coreAuthConsentLocales(ctx, cmd.ProjectID, cmd.Locale)
+	// Only persist acceptances for documents the project configures; a client may
+	// submit extra {key,version} pairs which must not be recorded.
+	configuredConsent, _ := a.cfg.ConsentConfig(ctx, cmd.ProjectID)
+	allowedConsent := make(map[string]struct{}, len(configuredConsent))
+	for _, d := range configuredConsent {
+		allowedConsent[d.Key+"\x00"+d.Version] = struct{}{}
+	}
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (regResult, error) {
 		now := nowUTC()
 		acc := &domain.Account{
@@ -1052,6 +1059,9 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 			return regResult{}, err
 		}
 		for _, c := range cmd.Consents {
+			if _, ok := allowedConsent[c.Key+"\x00"+c.Version]; !ok {
+				continue // ignore acceptances for unconfigured docs/versions
+			}
 			setter := &models.IamConsentSetter{
 				ID:          ptr(newUUID()),
 				ProjectID:   ptr(acc.ProjectID),

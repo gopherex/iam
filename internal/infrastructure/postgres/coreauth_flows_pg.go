@@ -939,9 +939,20 @@ func (a *pgCoreAuthFlows) signupAcceptConsents(ctx context.Context, row *models.
 		env = coreAuthDefaultEnv
 	}
 
+	// Only persist acceptances for documents the project actually configures —
+	// a client may submit extra {key,version} pairs, which must not be recorded.
+	configured, _ := a.cfg.ConsentConfig(ctx, f.ProjectID)
+	allowedConsent := make(map[string]struct{}, len(configured))
+	for _, d := range configured {
+		allowedConsent[d.Key+"\x00"+d.Version] = struct{}{}
+	}
+
 	sess, err := withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Session, error) {
 		now := nowUTC()
 		for _, acc := range accepted {
+			if _, ok := allowedConsent[acc.Key+"\x00"+acc.Version]; !ok {
+				continue // ignore acceptances for unconfigured docs/versions
+			}
 			setter := &models.IamConsentSetter{
 				ID:          ptr(newUUID()),
 				ProjectID:   ptr(f.ProjectID),
