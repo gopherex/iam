@@ -90,13 +90,18 @@ export function ProjectLayout() {
   const adminToken = useStore($adminToken);
   const project = useStore($project);
   const [error, setError] = useState<Error | null>(null);
+  const [envReady, setEnvReady] = useState(false);
 
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
 
-    // Load the project's declared environments into the header switcher.
-    void loadEnvironments(projectId);
+    // Load the project's declared environments into the header switcher before
+    // project data pages fire env-scoped /v1/.../admin requests.
+    setEnvReady(false);
+    void loadEnvironments(projectId).then(() => {
+      if (!cancelled) setEnvReady(true);
+    });
 
     // Mint (or re-mint) the project admin token. The token has a 1h TTL, so a
     // long-lived panel session must re-mint before it expires or project calls
@@ -147,7 +152,7 @@ export function ProjectLayout() {
       </div>
     );
   }
-  if (!adminToken || project?.id !== projectId) {
+  if (!adminToken || project?.id !== projectId || !envReady) {
     return (
       <div className="grid min-h-svh place-items-center">
         <LoadingState label="Opening project…" />
