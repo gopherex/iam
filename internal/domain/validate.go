@@ -11,8 +11,20 @@ import (
 
 // Validate checks sign-up invariants: an identifier is required.
 func (c RegisterCmd) Validate() error {
-	if strings.TrimSpace(c.Email) == "" && strings.TrimSpace(c.Phone) == "" {
+	email := strings.TrimSpace(c.Email)
+	phone := strings.TrimSpace(c.Phone)
+	if email == "" && phone == "" {
 		return ErrValidation.WithMessage("email or phone is required")
+	}
+	if email != "" {
+		if err := ValidateEmail(email); err != nil {
+			return err
+		}
+	}
+	if phone != "" {
+		if err := ValidatePhone(phone); err != nil {
+			return err
+		}
 	}
 	return nil
 }

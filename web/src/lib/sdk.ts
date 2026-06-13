@@ -30,6 +30,15 @@ client.interceptors.request.use((request: Request) => {
 export interface ApiError extends Error {
   code?: string;
   status?: number;
+  details?: Record<string, unknown>;
+}
+
+interface ApiErrorEnvelope {
+  error?: {
+    code?: string;
+    message?: string;
+    details?: Record<string, unknown>;
+  };
 }
 
 /**
@@ -41,12 +50,13 @@ export async function call<T>(
 ): Promise<T> {
   const r = await promise;
   if (r.error || (r.response && !r.response.ok)) {
-    const env = r.error as { error?: { code?: string; message?: string } } | undefined;
+    const env = r.error as ApiErrorEnvelope | undefined;
     const err: ApiError = new Error(
       env?.error?.message ?? (r.error as Error)?.message ?? `Request failed (${r.response?.status ?? '?'})`,
     );
     err.code = env?.error?.code;
     err.status = r.response?.status;
+    err.details = env?.error?.details;
     throw err;
   }
   return r.data as T;

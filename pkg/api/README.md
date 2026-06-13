@@ -22,12 +22,14 @@ Two layers, both rendering the shared `ErrorEnvelope` (`{ error: { code, message
   `NewError` maps a `domain.Error` (stable `code` + HTTP status, see
   [`internal/domain/errors.go`](../../internal/domain/errors.go)) into the
   envelope; anything else becomes `500 internal_error`.
-- **Request-level errors → `ErrorHandler`**. ogen runs **code-generated schema
-  validation** on decode (the spec's `minLength`/`maxLength`/`pattern`/`format`/
-  `required`/`enum` constraints). Validation, parameter/body decode and security
-  failures are raised *before* the handler, so they bypass `NewError`; wire
-  `oas.WithErrorHandler(api.ErrorHandler)` to render them into the same
-  envelope (`validation_failed` / `unauthorized` / `bad_request`).
+- **Generated-server errors → `ErrorHandler`**. ogen runs **code-generated
+  schema validation** on decode (the spec's `minLength`/`maxLength`/`pattern`/
+  `format`/`required`/`enum` constraints). Validation, parameter/body decode
+  and security failures are raised *before* the handler, so they bypass
+  `NewError`; response validation/encoding failures happen *after* the handler
+  and also route through this hook. Wire `oas.WithErrorHandler(api.ErrorHandler)`
+  to render them into the same envelope (`validation_failed` / `unauthorized` /
+  `internal_error` with `details.stage=response_encode`).
 
 Add constraints to the OpenAPI schemas to get more validation for free — no
 handler code.

@@ -156,6 +156,9 @@ func (a *pgAdminUsers) Get(ctx context.Context, projectID, environment, accountI
 }
 
 func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*domain.Account, error) {
+	if err := cmd.Validate(); err != nil {
+		return nil, err
+	}
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
 		now := nowUTC()
 		env := adminEnv(cmd.Environment)

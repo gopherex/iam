@@ -15,8 +15,11 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 
+	"github.com/go-faster/jx"
 	"github.com/ogen-go/ogen/ogenerrors"
 
 	"github.com/gopherex/iam/internal/domain"
@@ -65,10 +68,31 @@ func (s *Service) NewError(_ context.Context, err error) *oas.DefaultStatusCode 
 	}
 	return &oas.DefaultStatusCode{
 		StatusCode: de.Status,
-		Response: oas.ErrorEnvelope{
-			Error: oas.ErrorEnvelopeError{Code: de.Code, Message: de.Message},
-		},
+		Response:   newOASErrorEnvelope(de),
 	}
+}
+
+func newOASErrorEnvelope(de *domain.Error) oas.ErrorEnvelope {
+	e := oas.ErrorEnvelopeError{Code: de.Code, Message: de.Message}
+	if details, ok := newOASDetails(de.Details); ok {
+		e.Details = oas.NewOptNilErrorEnvelopeErrorDetails(details)
+	}
+	return oas.ErrorEnvelope{Error: e}
+}
+
+func newOASDetails(details map[string]any) (oas.ErrorEnvelopeErrorDetails, bool) {
+	if len(details) == 0 {
+		return nil, false
+	}
+	out := make(oas.ErrorEnvelopeErrorDetails, len(details))
+	for key, value := range details {
+		raw, err := json.Marshal(value)
+		if err != nil {
+			raw, _ = json.Marshal(fmt.Sprint(value))
+		}
+		out[key] = jx.Raw(raw)
+	}
+	return out, true
 }
 
 // Option injects a group implementation into a Service.
