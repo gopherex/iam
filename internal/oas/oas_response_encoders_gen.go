@@ -2199,7 +2199,15 @@ func encodeGetV1ProjectsByProjectIdAdminUsersByUserIdSessionsResponse(response *
 	return nil
 }
 
-func encodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesResponse(response GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, w http.ResponseWriter, span trace.Span) error {
+func encodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesResponse(response *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -4816,7 +4824,15 @@ func encodePostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestResponse(resp
 	return nil
 }
 
-func encodePostV1ProjectsByProjectIdAdminEventsByEventIdReplayResponse(response PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, w http.ResponseWriter, span trace.Span) error {
+func encodePostV1ProjectsByProjectIdAdminEventsByEventIdReplayResponse(response *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -5476,7 +5492,15 @@ func encodePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneResponse(respon
 	return nil
 }
 
-func encodePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryResponse(response PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, w http.ResponseWriter, span trace.Span) error {
+func encodePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryResponse(response *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -5534,7 +5558,15 @@ func encodePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretResponse(respon
 	return nil
 }
 
-func encodePostV1ProjectsByProjectIdAdminWebhooksByIdTestResponse(response PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, w http.ResponseWriter, span trace.Span) error {
+func encodePostV1ProjectsByProjectIdAdminWebhooksByIdTestResponse(response *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))

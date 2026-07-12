@@ -22869,8 +22869,8 @@ func decodeGetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams(args [2]stri
 // GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams is parameters of getV1ProjectsByProjectIdAdminWebhookDeliveries operation.
 type GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams struct {
 	ProjectID string
-	WebhookID OptString `json:",omitempty,omitzero"`
-	Status    OptString `json:",omitempty,omitzero"`
+	WebhookID OptString                                               `json:",omitempty,omitzero"`
+	Status    OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus `json:",omitempty,omitzero"`
 	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
 	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
 	XEnvironment OptString `json:",omitempty,omitzero"`
@@ -22899,7 +22899,7 @@ func unpackGetV1ProjectsByProjectIdAdminWebhookDeliveriesParams(packed middlewar
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.Status = v.(OptString)
+			params.Status = v.(OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus)
 		}
 	}
 	{
@@ -23060,7 +23060,7 @@ func decodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesParams(args [1]string, 
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotStatusVal string
+				var paramsDotStatusVal GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
@@ -23072,7 +23072,7 @@ func decodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesParams(args [1]string, 
 						return err
 					}
 
-					paramsDotStatusVal = c
+					paramsDotStatusVal = GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus(c)
 					return nil
 				}(); err != nil {
 					return err
@@ -23085,20 +23085,8 @@ func decodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesParams(args [1]string, 
 			if err := func() error {
 				if value, ok := params.Status.Get(); ok {
 					if err := func() error {
-						if err := (validate.String{
-							MinLength:     0,
-							MinLengthSet:  false,
-							MaxLength:     1024,
-							MaxLengthSet:  true,
-							Email:         false,
-							Hostname:      false,
-							Regex:         nil,
-							MinNumeric:    0,
-							MinNumericSet: false,
-							MaxNumeric:    0,
-							MaxNumericSet: false,
-						}).Validate(string(value)); err != nil {
-							return errors.Wrap(err, "string")
+						if err := value.Validate(); err != nil {
+							return err
 						}
 						return nil
 					}(); err != nil {

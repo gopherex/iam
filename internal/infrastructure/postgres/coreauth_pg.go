@@ -77,7 +77,7 @@ const (
 	// coreAuthDefaultEnv is the environment whose signing key mints access
 	// tokens until per-environment resolution is wired from the client.
 	coreAuthDefaultEnv = "live"
-	coreAuthAccessTTL  = 30 * time.Minute
+	coreAuthAccessTTL  = 10 * time.Minute
 )
 
 // coreAuthVerifyAccess validates a signed access-token JWT (jwx) against the
@@ -337,7 +337,7 @@ func (a *pgCoreAuth) coreAuthFindPasswordCredential(ctx context.Context, project
 
 // coreAuthMintSession persists a fresh session + its refresh token inside an
 // open transaction and returns the populated domain Session. The access token
-// is a generated opaque string (real JWT minting is deferred).
+// is a signed JWT and the refresh token is an opaque, hashed-at-rest secret.
 //
 // MUST be called inside db.withTx / withTxRet (it issues multiple mutations).
 func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Account, clientID string, amr []string, aal int) (*domain.Session, error) {
@@ -348,7 +348,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		aal = 1
 	}
 	// Token lifetimes come from the project's session_policy (env-scoped); an
-	// absent doc yields the legacy defaults (access 30m, refresh 30d).
+	// absent doc yields the defaults (access 10m, refresh 30d).
 	sp, err := a.cfg.SessionPolicy(ctx, acc.ProjectID)
 	if err != nil {
 		return nil, err
@@ -363,8 +363,8 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	if aud == "" {
 		aud = acc.ProjectID
 	}
-	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, map[string]any{
-		"iss": "https://iam.gopherex.com/" + acc.ProjectID,
+	claims := map[string]any{
+		"iss": oidcIssuer(acc.ProjectID, signEnv),
 		"sub": acc.ID,
 		"sid": sessionID,
 		"jti": newUUID(),
@@ -374,7 +374,11 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		"amr": amr,
 		"typ": "access",
 		"env": signEnv,
-	}, sp.AccessTTL)
+	}
+	if clientID != "" {
+		claims["client_id"] = clientID
+	}
+	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, claims, sp.AccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -395,6 +399,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		RefreshToken: refreshPlain,
 		ExpiresIn:    int(sp.AccessTTL / time.Second),
 		CreatedAt:    now,
+		DeviceName:   meta.DeviceName,
 		IP:           meta.IP,
 		UserAgent:    meta.UserAgent,
 		Fingerprint:  meta.Fingerprint,
@@ -483,8 +488,8 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 	if aud == "" {
 		aud = acc.ProjectID
 	}
-	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, map[string]any{
-		"iss": "https://iam.gopherex.com/" + acc.ProjectID,
+	claims := map[string]any{
+		"iss": oidcIssuer(acc.ProjectID, signEnv),
 		"sub": acc.ID,
 		"sid": row.ID,
 		"jti": newUUID(),
@@ -494,7 +499,11 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		"amr": amr,
 		"typ": "access",
 		"env": signEnv,
-	}, sp.AccessTTL)
+	}
+	if clientID != "" {
+		claims["client_id"] = clientID
+	}
+	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, claims, sp.AccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -902,23 +911,7 @@ func (a *pgCoreAuth) coreAuthRevokeSession(ctx context.Context, projectID, sessi
 	if projectID != "" && row.ProjectID != projectID {
 		return domain.ErrSessionNotFound
 	}
-	if err := a.coreAuthRevokeRefreshTokensForSession(ctx, row.ProjectID, sessionID); err != nil {
-		return err
-	}
-	revokedProjectID := row.ProjectID
-	if err := row.Delete(ctx, a.db.Bobx()); err != nil {
-		return err
-	}
-	if err := a.emitter.Emit(ctx, domain.Event{
-		Type:        "session.revoked",
-		ProjectID:   revokedProjectID,
-		Environment: coreAuthDefaultEnv,
-		AggregateID: sessionID,
-		Payload:     map[string]any{"session_id": sessionID, "project_id": revokedProjectID},
-	}); err != nil {
-		return err
-	}
-	return nil
+	return revokeSessionRecord(ctx, a.db, a.emitter, row, "revoked")
 }
 
 // coreAuthRevokeAllForUser revokes all sessions and refresh tokens for a user
@@ -935,25 +928,6 @@ func (a *pgCoreAuth) coreAuthRevokeAllForUser(ctx context.Context, projectID, us
 	for _, s := range sessions {
 		if err := a.coreAuthRevokeSession(ctx, projectID, s.ID); err != nil {
 			slog.Error("coreauth: failed to revoke session during revoke-all", "err", err, "session_id", s.ID, "project_id", projectID, "user_id", userID)
-		}
-	}
-	return nil
-}
-
-// coreAuthRevokeRefreshTokensForSession flags every refresh token bound to a
-// session revoked. MUST run inside an open transaction.
-func (a *pgCoreAuth) coreAuthRevokeRefreshTokensForSession(ctx context.Context, projectID, sessionID string) error {
-	rows, err := models.IamRefreshTokens.Query(
-		sm.Where(models.IamRefreshTokens.Columns.ProjectID.EQ(psql.Arg(projectID))),
-		sm.Where(models.IamRefreshTokens.Columns.SessionID.EQ(psql.Arg(sessionID))),
-		sm.Where(models.IamRefreshTokens.Columns.Revoked.EQ(psql.Arg(false))),
-	).All(ctx, a.db.Bobx())
-	if err != nil {
-		return err
-	}
-	for _, row := range rows {
-		if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
-			return err
 		}
 	}
 	return nil
@@ -1950,7 +1924,7 @@ func (a *pgCoreAuth) VerifyEmailChange(ctx context.Context, cmd domain.CoreAuthV
 			return nil, err
 		}
 		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "email.changed",
+			Type:        domain.WebhookEventEmailChanged,
 			ProjectID:   acc.ProjectID,
 			Environment: coreAuthDefaultEnv,
 			AggregateID: acc.ID,
@@ -2788,15 +2762,6 @@ func (a *pgCoreAuth) Revoke(ctx context.Context, cmd domain.CoreAuthRevokeCmd) e
 				!errors.Is(err, domain.ErrSessionNotFound) {
 				return err
 			}
-			if err := a.emitter.Emit(ctx, domain.Event{
-				Type:        "session.revoked",
-				ProjectID:   "",
-				Environment: coreAuthDefaultEnv,
-				AggregateID: cmd.SessionID,
-				Payload:     map[string]any{"session_id": cmd.SessionID},
-			}); err != nil {
-				return err
-			}
 			return nil
 		}
 		// Refresh token by hash.
@@ -2861,15 +2826,23 @@ func (a *pgCoreAuth) CurrentClaims(ctx context.Context, sessionID string) (map[s
 	if err != nil {
 		return nil, err
 	}
+	env := row.Environment
+	if env == "" {
+		env = coreAuthDefaultEnv
+	}
 	claims := map[string]any{
 		"sub": sess.AccountID,
 		"sid": sess.ID,
 		"aal": sess.AAL,
 		"amr": sess.AMR,
-		"iss": row.ProjectID,
+		"iss": oidcIssuer(row.ProjectID, env),
+		"pid": row.ProjectID,
+		"env": env,
+		"typ": "access",
 	}
 	if sess.ClientID != "" {
 		claims["aud"] = sess.ClientID
+		claims["client_id"] = sess.ClientID
 	}
 	if v, ok := row.ExpiresAt.Get(); ok {
 		claims["exp"] = v.Unix()

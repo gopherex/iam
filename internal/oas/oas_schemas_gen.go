@@ -1664,71 +1664,82 @@ func (s *ErrorEnvelopeErrorDetails) init() ErrorEnvelopeErrorDetails {
 
 // Ref: #/components/schemas/Event
 type Event struct {
-	ID          OptString    `json:"id"`
-	Type        OptString    `json:"type"`
-	CreatedAt   OptTimestamp `json:"created_at"`
-	ProjectID   OptString    `json:"project_id"`
-	Environment OptString    `json:"environment"`
-	Data        OptEventData `json:"data"`
+	ID          string    `json:"id"`
+	Type        string    `json:"type"`
+	Version     int       `json:"version"`
+	CreatedAt   Timestamp `json:"created_at"`
+	ProjectID   string    `json:"project_id"`
+	Environment string    `json:"environment"`
+	Data        EventData `json:"data"`
 }
 
 // GetID returns the value of ID.
-func (s *Event) GetID() OptString {
+func (s *Event) GetID() string {
 	return s.ID
 }
 
 // GetType returns the value of Type.
-func (s *Event) GetType() OptString {
+func (s *Event) GetType() string {
 	return s.Type
 }
 
+// GetVersion returns the value of Version.
+func (s *Event) GetVersion() int {
+	return s.Version
+}
+
 // GetCreatedAt returns the value of CreatedAt.
-func (s *Event) GetCreatedAt() OptTimestamp {
+func (s *Event) GetCreatedAt() Timestamp {
 	return s.CreatedAt
 }
 
 // GetProjectID returns the value of ProjectID.
-func (s *Event) GetProjectID() OptString {
+func (s *Event) GetProjectID() string {
 	return s.ProjectID
 }
 
 // GetEnvironment returns the value of Environment.
-func (s *Event) GetEnvironment() OptString {
+func (s *Event) GetEnvironment() string {
 	return s.Environment
 }
 
 // GetData returns the value of Data.
-func (s *Event) GetData() OptEventData {
+func (s *Event) GetData() EventData {
 	return s.Data
 }
 
 // SetID sets the value of ID.
-func (s *Event) SetID(val OptString) {
+func (s *Event) SetID(val string) {
 	s.ID = val
 }
 
 // SetType sets the value of Type.
-func (s *Event) SetType(val OptString) {
+func (s *Event) SetType(val string) {
 	s.Type = val
 }
 
+// SetVersion sets the value of Version.
+func (s *Event) SetVersion(val int) {
+	s.Version = val
+}
+
 // SetCreatedAt sets the value of CreatedAt.
-func (s *Event) SetCreatedAt(val OptTimestamp) {
+func (s *Event) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
 }
 
 // SetProjectID sets the value of ProjectID.
-func (s *Event) SetProjectID(val OptString) {
+func (s *Event) SetProjectID(val string) {
 	s.ProjectID = val
 }
 
 // SetEnvironment sets the value of Environment.
-func (s *Event) SetEnvironment(val OptString) {
+func (s *Event) SetEnvironment(val string) {
 	s.Environment = val
 }
 
 // SetData sets the value of Data.
-func (s *Event) SetData(val OptEventData) {
+func (s *Event) SetData(val EventData) {
 	s.Data = val
 }
 
@@ -4288,15 +4299,66 @@ func (s *GetV1ProjectsByProjectIdAdminUsersOK) SetHasMore(val OptBool) {
 	s.HasMore = val
 }
 
-type GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK map[string]jx.Raw
+type GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK struct {
+	Data []WebhookDelivery `json:"data"`
+}
 
-func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK) init() GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK {
-	m := *s
-	if m == nil {
-		m = map[string]jx.Raw{}
-		*s = m
+// GetData returns the value of Data.
+func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK) GetData() []WebhookDelivery {
+	return s.Data
+}
+
+// SetData sets the value of Data.
+func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK) SetData(val []WebhookDelivery) {
+	s.Data = val
+}
+
+type GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus string
+
+const (
+	GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusPending   GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus = "pending"
+	GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusSucceeded GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus = "succeeded"
+	GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusFailed    GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus = "failed"
+)
+
+// AllValues returns all GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus values.
+func (GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) AllValues() []GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus {
+	return []GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus{
+		GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusPending,
+		GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusSucceeded,
+		GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusFailed,
 	}
-	return m
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusPending:
+		return []byte(s), nil
+	case GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusSucceeded:
+		return []byte(s), nil
+	case GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusFailed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) UnmarshalText(data []byte) error {
+	switch GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus(data) {
+	case GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusPending:
+		*s = GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusPending
+		return nil
+	case GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusSucceeded:
+		*s = GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusSucceeded
+		return nil
+	case GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusFailed:
+		*s = GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatusFailed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 type GetV1ProjectsByProjectIdAdminWebhooksByIdOK struct {
@@ -6711,52 +6773,6 @@ func (o OptEnvironment) Or(d Environment) Environment {
 	return d
 }
 
-// NewOptEventData returns new OptEventData with value set to v.
-func NewOptEventData(v EventData) OptEventData {
-	return OptEventData{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptEventData is optional EventData.
-type OptEventData struct {
-	Value EventData
-	Set   bool
-}
-
-// IsSet returns true if OptEventData was set.
-func (o OptEventData) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptEventData) Reset() {
-	var v EventData
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptEventData) SetTo(v EventData) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptEventData) Get() (v EventData, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptEventData) Or(d EventData) EventData {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptFactor returns new OptFactor with value set to v.
 func NewOptFactor(v Factor) OptFactor {
 	return OptFactor{
@@ -7395,6 +7411,52 @@ func (o OptGetV1OauthInteractionByInteractionIdOKStage) Get() (v GetV1OauthInter
 
 // Or returns value if set, or given parameter if does not.
 func (o OptGetV1OauthInteractionByInteractionIdOKStage) Or(d GetV1OauthInteractionByInteractionIdOKStage) GetV1OauthInteractionByInteractionIdOKStage {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus returns new OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus with value set to v.
+func NewOptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus(v GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus {
+	return OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus is optional GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus.
+type OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus struct {
+	Value GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus
+	Set   bool
+}
+
+// IsSet returns true if OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus was set.
+func (o OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) Reset() {
+	var v GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) SetTo(v GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) Get() (v GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) Or(d GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus) GetV1ProjectsByProjectIdAdminWebhookDeliveriesStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -8221,6 +8283,69 @@ func (o OptNilStringArray) Get() (v []string, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilStringArray) Or(d []string) []string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilTimestamp returns new OptNilTimestamp with value set to v.
+func NewOptNilTimestamp(v Timestamp) OptNilTimestamp {
+	return OptNilTimestamp{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilTimestamp is optional nullable Timestamp.
+type OptNilTimestamp struct {
+	Value Timestamp
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilTimestamp was set.
+func (o OptNilTimestamp) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilTimestamp) Reset() {
+	var v Timestamp
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilTimestamp) SetTo(v Timestamp) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilTimestamp) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilTimestamp) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v Timestamp
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilTimestamp) Get() (v Timestamp, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilTimestamp) Or(d Timestamp) Timestamp {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -12661,15 +12786,51 @@ func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK) SetWebhook(val OptWebhoo
 	s.Webhook = val
 }
 
-type PatchV1ProjectsByProjectIdAdminWebhooksByIdReq map[string]jx.Raw
+type PatchV1ProjectsByProjectIdAdminWebhooksByIdReq struct {
+	URL         OptString `json:"url"`
+	Events      []string  `json:"events"`
+	Description OptString `json:"description"`
+	Enabled     OptBool   `json:"enabled"`
+}
 
-func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) init() PatchV1ProjectsByProjectIdAdminWebhooksByIdReq {
-	m := *s
-	if m == nil {
-		m = map[string]jx.Raw{}
-		*s = m
-	}
-	return m
+// GetURL returns the value of URL.
+func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) GetURL() OptString {
+	return s.URL
+}
+
+// GetEvents returns the value of Events.
+func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) GetEvents() []string {
+	return s.Events
+}
+
+// GetDescription returns the value of Description.
+func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) GetDescription() OptString {
+	return s.Description
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) GetEnabled() OptBool {
+	return s.Enabled
+}
+
+// SetURL sets the value of URL.
+func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) SetURL(val OptString) {
+	s.URL = val
+}
+
+// SetEvents sets the value of Events.
+func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) SetEvents(val []string) {
+	s.Events = val
+}
+
+// SetDescription sets the value of Description.
+func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) SetEnabled(val OptBool) {
+	s.Enabled = val
 }
 
 type PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK map[string]jx.Raw
@@ -15807,15 +15968,18 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReqData) init()
 	return m
 }
 
-type PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK map[string]jx.Raw
+type PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK struct {
+	Deliveries []WebhookDelivery `json:"deliveries"`
+}
 
-func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK) init() PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK {
-	m := *s
-	if m == nil {
-		m = map[string]jx.Raw{}
-		*s = m
-	}
-	return m
+// GetDeliveries returns the value of Deliveries.
+func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK) GetDeliveries() []WebhookDelivery {
+	return s.Deliveries
+}
+
+// SetDeliveries sets the value of Deliveries.
+func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK) SetDeliveries(val []WebhookDelivery) {
+	s.Deliveries = val
 }
 
 type PostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq struct {
@@ -17106,15 +17270,18 @@ func (s *PostV1ProjectsByProjectIdAdminUsersReqMetadata) init() PostV1ProjectsBy
 	return m
 }
 
-type PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK map[string]jx.Raw
+type PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK struct {
+	Delivery WebhookDelivery `json:"delivery"`
+}
 
-func (s *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK) init() PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK {
-	m := *s
-	if m == nil {
-		m = map[string]jx.Raw{}
-		*s = m
-	}
-	return m
+// GetDelivery returns the value of Delivery.
+func (s *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK) GetDelivery() WebhookDelivery {
+	return s.Delivery
+}
+
+// SetDelivery sets the value of Delivery.
+func (s *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK) SetDelivery(val WebhookDelivery) {
+	s.Delivery = val
 }
 
 type PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK struct {
@@ -17131,15 +17298,18 @@ func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK) SetSigningSec
 	s.SigningSecret = val
 }
 
-type PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK map[string]jx.Raw
+type PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK struct {
+	Delivery WebhookDelivery `json:"delivery"`
+}
 
-func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK) init() PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK {
-	m := *s
-	if m == nil {
-		m = map[string]jx.Raw{}
-		*s = m
-	}
-	return m
+// GetDelivery returns the value of Delivery.
+func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK) GetDelivery() WebhookDelivery {
+	return s.Delivery
+}
+
+// SetDelivery sets the value of Delivery.
+func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK) SetDelivery(val WebhookDelivery) {
+	s.Delivery = val
 }
 
 type PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq struct {
@@ -20178,19 +20348,23 @@ func (s *WebAuthnCredential) SetLastUsedAt(val OptTimestamp) {
 
 // Ref: #/components/schemas/Webhook
 type Webhook struct {
-	ID      OptString `json:"id"`
-	URL     OptString `json:"url"`
-	Events  []string  `json:"events"`
-	Enabled OptBool   `json:"enabled"`
+	ID          string       `json:"id"`
+	URL         string       `json:"url"`
+	Events      []string     `json:"events"`
+	Enabled     bool         `json:"enabled"`
+	Description OptString    `json:"description"`
+	Environment OptString    `json:"environment"`
+	CreatedAt   OptTimestamp `json:"created_at"`
+	UpdatedAt   OptTimestamp `json:"updated_at"`
 }
 
 // GetID returns the value of ID.
-func (s *Webhook) GetID() OptString {
+func (s *Webhook) GetID() string {
 	return s.ID
 }
 
 // GetURL returns the value of URL.
-func (s *Webhook) GetURL() OptString {
+func (s *Webhook) GetURL() string {
 	return s.URL
 }
 
@@ -20200,17 +20374,37 @@ func (s *Webhook) GetEvents() []string {
 }
 
 // GetEnabled returns the value of Enabled.
-func (s *Webhook) GetEnabled() OptBool {
+func (s *Webhook) GetEnabled() bool {
 	return s.Enabled
 }
 
+// GetDescription returns the value of Description.
+func (s *Webhook) GetDescription() OptString {
+	return s.Description
+}
+
+// GetEnvironment returns the value of Environment.
+func (s *Webhook) GetEnvironment() OptString {
+	return s.Environment
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Webhook) GetCreatedAt() OptTimestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *Webhook) GetUpdatedAt() OptTimestamp {
+	return s.UpdatedAt
+}
+
 // SetID sets the value of ID.
-func (s *Webhook) SetID(val OptString) {
+func (s *Webhook) SetID(val string) {
 	s.ID = val
 }
 
 // SetURL sets the value of URL.
-func (s *Webhook) SetURL(val OptString) {
+func (s *Webhook) SetURL(val string) {
 	s.URL = val
 }
 
@@ -20220,6 +20414,232 @@ func (s *Webhook) SetEvents(val []string) {
 }
 
 // SetEnabled sets the value of Enabled.
-func (s *Webhook) SetEnabled(val OptBool) {
+func (s *Webhook) SetEnabled(val bool) {
 	s.Enabled = val
+}
+
+// SetDescription sets the value of Description.
+func (s *Webhook) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetEnvironment sets the value of Environment.
+func (s *Webhook) SetEnvironment(val OptString) {
+	s.Environment = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Webhook) SetCreatedAt(val OptTimestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *Webhook) SetUpdatedAt(val OptTimestamp) {
+	s.UpdatedAt = val
+}
+
+// Ref: #/components/schemas/WebhookDelivery
+type WebhookDelivery struct {
+	ID             string                `json:"id"`
+	WebhookID      string                `json:"webhook_id"`
+	EventID        string                `json:"event_id"`
+	EventType      string                `json:"event_type"`
+	Status         WebhookDeliveryStatus `json:"status"`
+	AttemptCount   int                   `json:"attempt_count"`
+	NextAttemptAt  OptNilTimestamp       `json:"next_attempt_at"`
+	LastAttemptAt  OptNilTimestamp       `json:"last_attempt_at"`
+	DeliveredAt    OptNilTimestamp       `json:"delivered_at"`
+	ResponseStatus OptNilInt             `json:"response_status"`
+	ResponseBody   OptNilString          `json:"response_body"`
+	LastError      OptNilString          `json:"last_error"`
+	CreatedAt      Timestamp             `json:"created_at"`
+	UpdatedAt      Timestamp             `json:"updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *WebhookDelivery) GetID() string {
+	return s.ID
+}
+
+// GetWebhookID returns the value of WebhookID.
+func (s *WebhookDelivery) GetWebhookID() string {
+	return s.WebhookID
+}
+
+// GetEventID returns the value of EventID.
+func (s *WebhookDelivery) GetEventID() string {
+	return s.EventID
+}
+
+// GetEventType returns the value of EventType.
+func (s *WebhookDelivery) GetEventType() string {
+	return s.EventType
+}
+
+// GetStatus returns the value of Status.
+func (s *WebhookDelivery) GetStatus() WebhookDeliveryStatus {
+	return s.Status
+}
+
+// GetAttemptCount returns the value of AttemptCount.
+func (s *WebhookDelivery) GetAttemptCount() int {
+	return s.AttemptCount
+}
+
+// GetNextAttemptAt returns the value of NextAttemptAt.
+func (s *WebhookDelivery) GetNextAttemptAt() OptNilTimestamp {
+	return s.NextAttemptAt
+}
+
+// GetLastAttemptAt returns the value of LastAttemptAt.
+func (s *WebhookDelivery) GetLastAttemptAt() OptNilTimestamp {
+	return s.LastAttemptAt
+}
+
+// GetDeliveredAt returns the value of DeliveredAt.
+func (s *WebhookDelivery) GetDeliveredAt() OptNilTimestamp {
+	return s.DeliveredAt
+}
+
+// GetResponseStatus returns the value of ResponseStatus.
+func (s *WebhookDelivery) GetResponseStatus() OptNilInt {
+	return s.ResponseStatus
+}
+
+// GetResponseBody returns the value of ResponseBody.
+func (s *WebhookDelivery) GetResponseBody() OptNilString {
+	return s.ResponseBody
+}
+
+// GetLastError returns the value of LastError.
+func (s *WebhookDelivery) GetLastError() OptNilString {
+	return s.LastError
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *WebhookDelivery) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *WebhookDelivery) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *WebhookDelivery) SetID(val string) {
+	s.ID = val
+}
+
+// SetWebhookID sets the value of WebhookID.
+func (s *WebhookDelivery) SetWebhookID(val string) {
+	s.WebhookID = val
+}
+
+// SetEventID sets the value of EventID.
+func (s *WebhookDelivery) SetEventID(val string) {
+	s.EventID = val
+}
+
+// SetEventType sets the value of EventType.
+func (s *WebhookDelivery) SetEventType(val string) {
+	s.EventType = val
+}
+
+// SetStatus sets the value of Status.
+func (s *WebhookDelivery) SetStatus(val WebhookDeliveryStatus) {
+	s.Status = val
+}
+
+// SetAttemptCount sets the value of AttemptCount.
+func (s *WebhookDelivery) SetAttemptCount(val int) {
+	s.AttemptCount = val
+}
+
+// SetNextAttemptAt sets the value of NextAttemptAt.
+func (s *WebhookDelivery) SetNextAttemptAt(val OptNilTimestamp) {
+	s.NextAttemptAt = val
+}
+
+// SetLastAttemptAt sets the value of LastAttemptAt.
+func (s *WebhookDelivery) SetLastAttemptAt(val OptNilTimestamp) {
+	s.LastAttemptAt = val
+}
+
+// SetDeliveredAt sets the value of DeliveredAt.
+func (s *WebhookDelivery) SetDeliveredAt(val OptNilTimestamp) {
+	s.DeliveredAt = val
+}
+
+// SetResponseStatus sets the value of ResponseStatus.
+func (s *WebhookDelivery) SetResponseStatus(val OptNilInt) {
+	s.ResponseStatus = val
+}
+
+// SetResponseBody sets the value of ResponseBody.
+func (s *WebhookDelivery) SetResponseBody(val OptNilString) {
+	s.ResponseBody = val
+}
+
+// SetLastError sets the value of LastError.
+func (s *WebhookDelivery) SetLastError(val OptNilString) {
+	s.LastError = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *WebhookDelivery) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *WebhookDelivery) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+type WebhookDeliveryStatus string
+
+const (
+	WebhookDeliveryStatusPending   WebhookDeliveryStatus = "pending"
+	WebhookDeliveryStatusSucceeded WebhookDeliveryStatus = "succeeded"
+	WebhookDeliveryStatusFailed    WebhookDeliveryStatus = "failed"
+)
+
+// AllValues returns all WebhookDeliveryStatus values.
+func (WebhookDeliveryStatus) AllValues() []WebhookDeliveryStatus {
+	return []WebhookDeliveryStatus{
+		WebhookDeliveryStatusPending,
+		WebhookDeliveryStatusSucceeded,
+		WebhookDeliveryStatusFailed,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WebhookDeliveryStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case WebhookDeliveryStatusPending:
+		return []byte(s), nil
+	case WebhookDeliveryStatusSucceeded:
+		return []byte(s), nil
+	case WebhookDeliveryStatusFailed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WebhookDeliveryStatus) UnmarshalText(data []byte) error {
+	switch WebhookDeliveryStatus(data) {
+	case WebhookDeliveryStatusPending:
+		*s = WebhookDeliveryStatusPending
+		return nil
+	case WebhookDeliveryStatusSucceeded:
+		*s = WebhookDeliveryStatusSucceeded
+		return nil
+	case WebhookDeliveryStatusFailed:
+		*s = WebhookDeliveryStatusFailed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }

@@ -58,7 +58,7 @@ type EffectivePasswordPolicy struct {
 // EffectiveSessionPolicy is the runtime view of session_policy. Defaults equal
 // the legacy package constants so an absent doc yields identical token lifetimes.
 type EffectiveSessionPolicy struct {
-	AccessTTL       time.Duration // default coreAuthAccessTTL (30m)
+	AccessTTL       time.Duration // default coreAuthAccessTTL (10m)
 	RefreshTTL      time.Duration // default coreAuthRefreshTTL (30d)
 	IdleTimeout     time.Duration // default 0 = disabled
 	AbsoluteTimeout time.Duration // default 0 = disabled
@@ -269,7 +269,7 @@ func (r *configReader) PasswordPolicy(ctx context.Context, projectID string) (Ef
 }
 
 // SessionPolicy returns the effective session policy. Defaults equal the legacy
-// constants (access 30m, refresh 30d, idle/absolute disabled). Values are
+// constants (access 10m, refresh 30d, idle/absolute disabled). Values are
 // clamped defensively: non-positive TTLs fall back to the default, and a refresh
 // TTL that does not exceed the access TTL is ignored (write-time validation
 // already enforces the ordering, but a legacy/hand-edited doc must not invert).

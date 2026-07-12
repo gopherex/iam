@@ -263,7 +263,7 @@ func TestSessionPolicyEnforcedOnMint(t *testing.T) {
 	ctx := context.Background()
 	projectID := newUUID()
 
-	// access_ttl 120s, refresh_ttl 600s (well below the 30m/30d defaults).
+	// access_ttl 120s, refresh_ttl 600s (well below the 10m/30d defaults).
 	seedConfig(t, ctx, projectID, runtimeDefaultEnv, "session_policy", map[string]any{
 		"access_ttl":  120,
 		"refresh_ttl": 600,
@@ -286,7 +286,7 @@ func TestSessionPolicyEnforcedOnMint(t *testing.T) {
 }
 
 // TestSessionPolicyDefaultMintUnchanged asserts back-compat: with no
-// session_policy doc, a minted session keeps the legacy access TTL (30m).
+// session_policy doc, a minted session keeps the default access TTL (10m).
 func TestSessionPolicyDefaultMintUnchanged(t *testing.T) {
 	ctx := context.Background()
 	projectID := newUUID()

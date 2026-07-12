@@ -290,10 +290,13 @@ func (a *pgAdminUsers) BanWith(ctx context.Context, cmd domain.AdminUserBanCmd) 
 		}); err != nil {
 			return nil, err
 		}
+		if _, err := a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, "", "user_banned"); err != nil {
+			return nil, err
+		}
 		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "user.banned",
+			Type:        domain.WebhookEventUserBanned,
 			ProjectID:   acc.ProjectID,
-			Environment: "",
+			Environment: adminEnv(cmd.Environment),
 			AggregateID: acc.ID,
 			Payload:     acc,
 		}); err != nil {
@@ -333,13 +336,16 @@ func (a *pgAdminUsers) Delete(ctx context.Context, projectID, environment, accou
 		if err != nil {
 			return err
 		}
+		if _, err := a.revokeSessions(ctx, projectID, environment, accountID, "", "user_deleted"); err != nil {
+			return err
+		}
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
 		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "user.deleted",
+			Type:        domain.WebhookEventUserDeleted,
 			ProjectID:   projectID,
-			Environment: "",
+			Environment: adminEnv(environment),
 			AggregateID: accountID,
 			Payload:     map[string]any{"id": accountID, "project_id": projectID},
 		}); err != nil {
@@ -443,7 +449,7 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 			}
 		}
 		if cmd.RevokeSessions {
-			if _, err := a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, ""); err != nil {
+			if _, err := a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, "", "password_changed"); err != nil {
 				return err
 			}
 		}
@@ -732,19 +738,7 @@ func (a *pgAdminUsers) DeleteSession(ctx context.Context, projectID, environment
 		if row.ProjectID != projectID || row.Environment != adminEnv(environment) || row.UserID != accountID {
 			return domain.ErrSessionNotFound
 		}
-		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
-			return err
-		}
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "user.session_revoked",
-			ProjectID:   projectID,
-			Environment: "",
-			AggregateID: sessionID,
-			Payload:     map[string]any{"id": sessionID, "user_id": accountID, "project_id": projectID},
-		}); err != nil {
-			return err
-		}
-		return nil
+		return revokeSessionRecord(ctx, a.db, a.emitter, row, "admin_request")
 	})
 }
 
@@ -753,13 +747,13 @@ func (a *pgAdminUsers) RevokeSessions(ctx context.Context, cmd domain.AdminUserS
 		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID); err != nil {
 			return 0, err
 		}
-		return a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, cmd.ExceptSessionID)
+		return a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, cmd.ExceptSessionID, cmd.Reason)
 	})
 }
 
 // revokeSessions deletes all sessions for a user except optionally one. The
 // caller is responsible for the tenant boundary check and the transaction.
-func (a *pgAdminUsers) revokeSessions(ctx context.Context, projectID, environment, accountID, exceptID string) (int, error) {
+func (a *pgAdminUsers) revokeSessions(ctx context.Context, projectID, environment, accountID, exceptID, reason string) (int, error) {
 	rows, err := models.IamSessions.Query(
 		sm.Where(models.IamSessions.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamSessions.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
@@ -773,7 +767,7 @@ func (a *pgAdminUsers) revokeSessions(ctx context.Context, projectID, environmen
 		if exceptID != "" && row.ID == exceptID {
 			continue
 		}
-		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
+		if err := revokeSessionRecord(ctx, a.db, a.emitter, row, reason); err != nil {
 			return revoked, err
 		}
 		revoked++

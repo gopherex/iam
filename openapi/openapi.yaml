@@ -1299,6 +1299,11 @@ components:
           $ref: '#/components/schemas/Timestamp'
     Webhook:
       type: object
+      required:
+      - id
+      - url
+      - events
+      - enabled
       properties:
         id:
           type: string
@@ -1314,6 +1319,79 @@ components:
           maxItems: 1000
         enabled:
           type: boolean
+        description:
+          type: string
+          maxLength: 1024
+        environment:
+          type: string
+          maxLength: 1024
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        updated_at:
+          $ref: '#/components/schemas/Timestamp'
+    WebhookDelivery:
+      type: object
+      required:
+      - id
+      - webhook_id
+      - event_id
+      - event_type
+      - status
+      - attempt_count
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          maxLength: 256
+        webhook_id:
+          type: string
+          maxLength: 256
+        event_id:
+          type: string
+          maxLength: 256
+        event_type:
+          type: string
+          maxLength: 1024
+        status:
+          type: string
+          enum:
+          - pending
+          - succeeded
+          - failed
+        attempt_count:
+          type: integer
+          minimum: 0
+        next_attempt_at:
+          oneOf:
+          - $ref: '#/components/schemas/Timestamp'
+          - type: 'null'
+        last_attempt_at:
+          oneOf:
+          - $ref: '#/components/schemas/Timestamp'
+          - type: 'null'
+        delivered_at:
+          oneOf:
+          - $ref: '#/components/schemas/Timestamp'
+          - type: 'null'
+        response_status:
+          type:
+          - integer
+          - 'null'
+        response_body:
+          type:
+          - string
+          - 'null'
+          maxLength: 16384
+        last_error:
+          type:
+          - string
+          - 'null'
+          maxLength: 4096
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        updated_at:
+          $ref: '#/components/schemas/Timestamp'
     Hook:
       type: object
       properties:
@@ -1391,6 +1469,14 @@ components:
           additionalProperties: true
     Event:
       type: object
+      required:
+      - id
+      - type
+      - version
+      - created_at
+      - project_id
+      - environment
+      - data
       properties:
         id:
           type: string
@@ -1400,6 +1486,9 @@ components:
           type: string
           example: user.created
           maxLength: 1024
+        version:
+          type: integer
+          minimum: 1
         created_at:
           $ref: '#/components/schemas/Timestamp'
         project_id:
@@ -10541,7 +10630,21 @@ paths:
           application/json:
             schema:
               type: object
-              additionalProperties: true
+              additionalProperties: false
+              properties:
+                url:
+                  type: string
+                  maxLength: 2048
+                events:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 1000
+                description:
+                  type: string
+                  maxLength: 1024
+                enabled:
+                  type: boolean
       responses:
         '200':
           description: Webhook.
@@ -10656,7 +10759,11 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties: true
+                required:
+                - delivery
+                properties:
+                  delivery:
+                    $ref: '#/components/schemas/WebhookDelivery'
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -10686,7 +10793,10 @@ paths:
         required: false
         schema:
           type: string
-          maxLength: 1024
+          enum:
+          - pending
+          - succeeded
+          - failed
       - $ref: '#/components/parameters/XEnvironment'
       responses:
         '200':
@@ -10695,7 +10805,14 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties: true
+                required:
+                - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookDelivery'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -10728,7 +10845,11 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties: true
+                required:
+                - delivery
+                properties:
+                  delivery:
+                    $ref: '#/components/schemas/WebhookDelivery'
         default:
           $ref: '#/components/responses/Default'
       security:
@@ -10818,7 +10939,14 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties: true
+                required:
+                - deliveries
+                properties:
+                  deliveries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookDelivery'
+                    maxItems: 1000
         default:
           $ref: '#/components/responses/Default'
       security:

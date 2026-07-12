@@ -20,6 +20,7 @@ source of truth: [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.1.0).
 | [`deployments/`](deployments) | Production deployment artifacts. |
 | [`docker-compose.yml`](docker-compose.yml) | Local dev environment (full infra). |
 | [`docs/rfc/`](docs/rfc) | Reference set of the standards IAM implements. |
+| [`docs/integrations/komeet.md`](docs/integrations/komeet.md) | Komeet token, device-session and webhook contract. |
 
 ## Quickstart
 

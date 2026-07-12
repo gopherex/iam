@@ -155,6 +155,21 @@ type AdminInvites interface {
 	Revoke(ctx context.Context, cmd domain.InviteRevokeCmd) error
 }
 
+// AdminWebhooks is the project-scoped public event delivery subsystem.
+type AdminWebhooks interface {
+	List(ctx context.Context, cmd domain.WebhookListCmd) ([]domain.Webhook, string, bool, error)
+	Get(ctx context.Context, projectID, environment, id string) (*domain.Webhook, error)
+	Create(ctx context.Context, cmd domain.WebhookCreateCmd) (*domain.Webhook, string, error)
+	Update(ctx context.Context, cmd domain.WebhookUpdateCmd) (*domain.Webhook, error)
+	Delete(ctx context.Context, projectID, environment, id string) error
+	RotateSecret(ctx context.Context, projectID, environment, id string) (string, error)
+	Test(ctx context.Context, projectID, environment, webhookID, eventType string) (*domain.WebhookDelivery, error)
+	ListDeliveries(ctx context.Context, cmd domain.WebhookDeliveryListCmd) ([]domain.WebhookDelivery, error)
+	RetryDelivery(ctx context.Context, projectID, environment, deliveryID string) (*domain.WebhookDelivery, error)
+	ListEvents(ctx context.Context, cmd domain.WebhookEventListCmd) (*domain.WebhookEventPage, error)
+	ReplayEvent(ctx context.Context, projectID, environment, eventID, webhookID string) ([]domain.WebhookDelivery, error)
+}
+
 // AdminDeps are the per-project administration ports.
 type AdminDeps struct {
 	Users           AdminUsers
@@ -166,6 +181,7 @@ type AdminDeps struct {
 	Keys            AdminKeys
 	AccessRequests  AdminAccessRequests
 	Invites         AdminInvites
+	Webhooks        AdminWebhooks
 }
 
 // AdminService implements the AdminHandler slice of oas.Handler.
@@ -178,6 +194,173 @@ type AdminService struct {
 func NewAdminService(deps AdminDeps) *AdminService { return &AdminService{deps: deps} }
 
 var _ oas.Handler = (*AdminService)(nil)
+
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams) (*oas.Ok, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	if err := s.deps.Webhooks.Delete(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.ID); err != nil {
+		return nil, err
+	}
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminWebhooksParams) (*oas.GetV1ProjectsByProjectIdAdminWebhooksOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	webhooks, next, hasMore, err := s.deps.Webhooks.List(ctx, domain.WebhookListCmd{
+		ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"),
+		Cursor: params.Cursor.Or(""), Limit: params.Limit.Or(50),
+	})
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.Webhook, 0, len(webhooks))
+	for i := range webhooks {
+		data = append(data, oasWebhook(&webhooks[i]))
+	}
+	out := &oas.GetV1ProjectsByProjectIdAdminWebhooksOK{Data: data, HasMore: oas.NewOptBool(hasMore)}
+	if next != "" {
+		out.NextCursor = oas.NewOptNilString(next)
+	}
+	return out, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminWebhooksByIdParams) (*oas.GetV1ProjectsByProjectIdAdminWebhooksByIdOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	webhook, err := s.deps.Webhooks.Get(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminWebhooksByIdOK{Webhook: oas.NewOptWebhook(oasWebhook(webhook))}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminWebhooksReq, params oas.PostV1ProjectsByProjectIdAdminWebhooksParams) (*oas.PostV1ProjectsByProjectIdAdminWebhooksCreated, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	webhook, secret, err := s.deps.Webhooks.Create(ctx, domain.WebhookCreateCmd{
+		ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"),
+		URL: req.URL, Events: req.Events, Description: req.Description.Or(""),
+		Enabled: req.Enabled.Or(true), IdempotencyKey: params.IdempotencyKey.Or(""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminWebhooksCreated{
+		Webhook: oas.NewOptWebhook(oasWebhook(webhook)), SigningSecret: oas.NewOptString(secret),
+	}, nil
+}
+
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, req *oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdParams) (*oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	cmd, err := webhookUpdateCmd(params.ProjectID, params.XEnvironment.Or("live"), params.ID, req)
+	if err != nil {
+		return nil, err
+	}
+	webhook, err := s.deps.Webhooks.Update(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdOK{Webhook: oas.NewOptWebhook(oasWebhook(webhook))}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams) (*oas.PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	secret, err := s.deps.Webhooks.RotateSecret(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK{SigningSecret: oas.NewOptString(secret)}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams) (*oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	delivery, err := s.deps.Webhooks.Test(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.ID, req.EventType.Or(""))
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK{Delivery: oasWebhookDelivery(delivery)}, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams) (*oas.GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	deliveries, err := s.deps.Webhooks.ListDeliveries(ctx, domain.WebhookDeliveryListCmd{
+		ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"),
+		WebhookID: params.WebhookID.Or(""), Status: string(params.Status.Or("")), Limit: 100,
+	})
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.WebhookDelivery, 0, len(deliveries))
+	for i := range deliveries {
+		data = append(data, oasWebhookDelivery(&deliveries[i]))
+	}
+	return &oas.GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK{Data: data}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams) (*oas.PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	delivery, err := s.deps.Webhooks.RetryDelivery(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.DeliveryID)
+	if err != nil {
+		return nil, err
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK{Delivery: oasWebhookDelivery(delivery)}, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminEvents(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminEventsParams) (*oas.GetV1ProjectsByProjectIdAdminEventsOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	page, err := s.deps.Webhooks.ListEvents(ctx, domain.WebhookEventListCmd{
+		ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"),
+		Type: params.Type.Or(""), UserID: params.UserID.Or(""), Cursor: params.Cursor.Or(""), Limit: params.Limit.Or(50),
+	})
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.Event, 0, len(page.Data))
+	for _, event := range page.Data {
+		data = append(data, oasPublicEvent(event))
+	}
+	out := &oas.GetV1ProjectsByProjectIdAdminEventsOK{Data: data, HasMore: oas.NewOptBool(page.HasMore)}
+	if page.NextCursor != "" {
+		out.NextCursor = oas.NewOptNilString(page.NextCursor)
+	}
+	return out, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params oas.PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams) (*oas.PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+	webhookID := ""
+	if value, ok := req.Get(); ok {
+		webhookID = value.WebhookID.Or("")
+	}
+	deliveries, err := s.deps.Webhooks.ReplayEvent(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.EventID, webhookID)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]oas.WebhookDelivery, 0, len(deliveries))
+	for i := range deliveries {
+		data = append(data, oasWebhookDelivery(&deliveries[i]))
+	}
+	return &oas.PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK{Deliveries: data}, nil
+}
 
 func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
@@ -1591,6 +1774,94 @@ func oasRawPatch[T ~map[string]jx.Raw](m T) map[string]any {
 		out[k] = v
 	}
 	return out
+}
+
+func oasWebhook(w *domain.Webhook) oas.Webhook {
+	out := oas.Webhook{
+		ID:      w.ID,
+		URL:     w.URL,
+		Events:  w.Events,
+		Enabled: w.Enabled,
+	}
+	if w.Description != "" {
+		out.Description = oas.NewOptString(w.Description)
+	}
+	if w.Environment != "" {
+		out.Environment = oas.NewOptString(w.Environment)
+	}
+	if !w.CreatedAt.IsZero() {
+		out.CreatedAt = oas.NewOptTimestamp(oas.Timestamp(w.CreatedAt))
+	}
+	if !w.UpdatedAt.IsZero() {
+		out.UpdatedAt = oas.NewOptTimestamp(oas.Timestamp(w.UpdatedAt))
+	}
+	return out
+}
+
+func oasPublicEvent(event domain.PublicEvent) oas.Event {
+	data := make(map[string]any, len(event.Data))
+	for key, value := range event.Data {
+		data[key] = value
+	}
+	return oas.Event{
+		ID:          event.ID,
+		Type:        event.Type,
+		Version:     event.Version,
+		CreatedAt:   oas.Timestamp(event.OccurredAt),
+		ProjectID:   event.ProjectID,
+		Environment: event.Environment,
+		Data:        oasRawMap[oas.EventData](data),
+	}
+}
+
+func oasWebhookDelivery(delivery *domain.WebhookDelivery) oas.WebhookDelivery {
+	out := oas.WebhookDelivery{
+		ID:           delivery.ID,
+		WebhookID:    delivery.WebhookID,
+		EventID:      delivery.EventID,
+		EventType:    delivery.EventType,
+		Status:       oas.WebhookDeliveryStatus(delivery.Status),
+		AttemptCount: delivery.AttemptCount,
+		CreatedAt:    oas.Timestamp(delivery.CreatedAt),
+		UpdatedAt:    oas.Timestamp(delivery.UpdatedAt),
+	}
+	if delivery.NextAttemptAt != nil {
+		out.NextAttemptAt = oas.NewOptNilTimestamp(oas.Timestamp(*delivery.NextAttemptAt))
+	}
+	if delivery.LastAttemptAt != nil {
+		out.LastAttemptAt = oas.NewOptNilTimestamp(oas.Timestamp(*delivery.LastAttemptAt))
+	}
+	if delivery.DeliveredAt != nil {
+		out.DeliveredAt = oas.NewOptNilTimestamp(oas.Timestamp(*delivery.DeliveredAt))
+	}
+	if delivery.ResponseStatus != nil {
+		out.ResponseStatus = oas.NewOptNilInt(*delivery.ResponseStatus)
+	}
+	if delivery.ResponseBody != "" {
+		out.ResponseBody = oas.NewOptNilString(delivery.ResponseBody)
+	}
+	if delivery.LastError != "" {
+		out.LastError = oas.NewOptNilString(delivery.LastError)
+	}
+	return out
+}
+
+func webhookUpdateCmd(projectID, environment, id string, req *oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) (domain.WebhookUpdateCmd, error) {
+	cmd := domain.WebhookUpdateCmd{ProjectID: projectID, Environment: environment, ID: id}
+	if value, ok := req.URL.Get(); ok {
+		cmd.URL = &value
+	}
+	if req.Events != nil {
+		events := append([]string(nil), req.Events...)
+		cmd.Events = &events
+	}
+	if value, ok := req.Description.Get(); ok {
+		cmd.Description = &value
+	}
+	if value, ok := req.Enabled.Get(); ok {
+		cmd.Enabled = &value
+	}
+	return cmd, nil
 }
 
 // oasAppClient maps a domain AppClient onto the generated oas.AppClient.

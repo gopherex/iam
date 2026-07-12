@@ -133,11 +133,14 @@ func run() error {
 	// returns an error, so batching delivery would re-send the messages already
 	// delivered earlier in the batch (duplicate OTP / email) on the retry. One
 	// message per claim isolates failures; concurrency preserves throughput.
-	ob, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, log.AppendName("outbox")),
+	webhooks := postgres.NewPgWebhooks(db, nil)
+	ob, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, webhooks, log.AppendName("outbox")),
 		outbox.WithInstanceID(build.InstanceID),
 		outbox.WithLogger(buildSlogLogger()),
 		outbox.WithPollInterval(time.Second),
 		outbox.WithBatchSize(1),
+		outbox.WithMaxAttempts(10),
+		outbox.WithRetryBackoff(outbox.ExpBackoff(time.Second, 5*time.Minute, true)),
 	)
 	if err != nil {
 		log.Error("outbox init failed", xlog.Error("err", err))
@@ -154,7 +157,7 @@ func run() error {
 	}
 
 	// ----- API handler (12 feature groups over Postgres adapters) -----
-	handler := buildHandler(db, emitter)
+	handler := buildHandler(db, emitter, webhooks)
 	auth := postgres.NewAuthenticator(db, cfg.Service.Auth.MasterKey)
 	srv, err := oas.NewServer(handler, api.NewSecurityHandler(auth), oas.WithErrorHandler(api.ErrorHandler))
 	if err != nil {
@@ -323,7 +326,7 @@ func buildSlogLogger() *slog.Logger {
 
 // buildHandler assembles the full IAM handler from the Postgres adapters, one
 // option per feature group.
-func buildHandler(db *postgres.DB, emitter postgres.Emitter) *api.Service {
+func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.PgWebhooks) *api.Service {
 	platform := postgres.NewPgPlatform(db) // implements PlatformConfig + PlatformCsrf
 	// cfgReader is the shared runtime reader for project-config docs
 	// (password_policy / session_policy / auth / ...). One instance is injected
@@ -380,6 +383,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter) *api.Service {
 			Keys:            postgres.NewPgAdminKeys(db, emitter),
 			AccessRequests:  postgres.NewPgAdminAccessRequests(db, emitter),
 			Invites:         postgres.NewPgInvites(db, emitter),
+			Webhooks:        webhooks,
 		})),
 		api.WithOperator(api.NewOperatorService(api.OperatorDeps{
 			Projects: postgres.NewPgOperator(db, emitter),

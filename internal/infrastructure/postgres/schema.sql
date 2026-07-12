@@ -454,14 +454,20 @@ CREATE INDEX idx_iam_email_templates_project ON iam_email_templates (project_id)
 -- ============================================================
 
 CREATE TABLE iam_webhooks (
-  id         text PRIMARY KEY,
-  project_id text NOT NULL,
-  enabled    boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  data       jsonb NOT NULL
+  id          text PRIMARY KEY,
+  project_id  text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
+  idempotency_key text NOT NULL DEFAULT '',
+  enabled     boolean NOT NULL DEFAULT true,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  data        jsonb NOT NULL
 );
 CREATE INDEX idx_iam_webhooks_project ON iam_webhooks (project_id);
+CREATE INDEX idx_iam_webhooks_project_env ON iam_webhooks (project_id, environment);
+CREATE UNIQUE INDEX idx_iam_webhooks_idempotency
+  ON iam_webhooks (project_id, environment, idempotency_key)
+  WHERE idempotency_key <> '';
 
 CREATE TABLE iam_hooks (
   id         text PRIMARY KEY,
@@ -545,12 +551,42 @@ CREATE TABLE iam_activity (
 CREATE INDEX idx_iam_activity_user ON iam_activity (project_id, user_id, at);
 
 CREATE TABLE iam_events (
-  id          text PRIMARY KEY,
-  project_id  text NOT NULL,
-  environment text NOT NULL DEFAULT 'live',
-  type        text NOT NULL,
-  published   boolean NOT NULL DEFAULT false,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  data        jsonb NOT NULL
+  id           text PRIMARY KEY,
+  project_id   text NOT NULL,
+  environment  text NOT NULL DEFAULT 'live',
+  aggregate_id text NOT NULL DEFAULT '',
+  user_id      text NOT NULL DEFAULT '',
+  type         text NOT NULL,
+  published    boolean NOT NULL DEFAULT false,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  data         jsonb NOT NULL
 );
 CREATE INDEX idx_iam_events_unpublished ON iam_events (created_at) WHERE published = false;
+CREATE INDEX idx_iam_events_project_created ON iam_events (project_id, environment, created_at DESC, id DESC);
+CREATE INDEX idx_iam_events_user_created ON iam_events (project_id, environment, user_id, created_at DESC) WHERE user_id <> '';
+
+CREATE TABLE iam_webhook_deliveries (
+  id              text PRIMARY KEY,
+  project_id      text NOT NULL,
+  environment     text NOT NULL DEFAULT 'live',
+  webhook_id      text NOT NULL,
+  event_id        text NOT NULL,
+  status          text NOT NULL DEFAULT 'pending'
+                  CHECK (status IN ('pending', 'succeeded', 'failed')),
+  attempt_count   integer NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+  next_attempt_at timestamptz,
+  last_attempt_at timestamptz,
+  delivered_at    timestamptz,
+  response_status integer,
+  response_body   text,
+  last_error      text,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  updated_at      timestamptz NOT NULL DEFAULT now(),
+  data            jsonb NOT NULL DEFAULT '{}'::jsonb,
+  UNIQUE (webhook_id, event_id)
+);
+CREATE INDEX idx_iam_webhook_deliveries_project_created
+  ON iam_webhook_deliveries (project_id, environment, created_at DESC, id DESC);
+CREATE INDEX idx_iam_webhook_deliveries_retry
+  ON iam_webhook_deliveries (status, next_attempt_at)
+  WHERE status IN ('pending', 'failed');

@@ -15,6 +15,8 @@ type Event struct {
 	// ID is the unique event id (uuid). Consumers deduplicate on it because
 	// outbox delivery is at-least-once.
 	ID string `json:"id"`
+	// Version is the schema version of this event. Emitters default it to 1.
+	Version int `json:"version"`
 	// Type is the event name, "<aggregate>.<verb>" (e.g. "api_key.created").
 	Type string `json:"type"`
 	// ProjectID is the owning tenant; used as the outbox partition key so events

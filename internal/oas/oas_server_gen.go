@@ -443,7 +443,7 @@ type AdminHandler interface {
 	// List deliveries.
 	//
 	// GET /v1/projects/{project_id}/admin/webhook-deliveries
-	GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams) (GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error)
+	GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams) (*GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error)
 	// GetV1ProjectsByProjectIdAdminWebhooks implements getV1ProjectsByProjectIdAdminWebhooks operation.
 	//
 	// List webhooks.
@@ -551,7 +551,7 @@ type AdminHandler interface {
 	// Update a webhook.
 	//
 	// PATCH /v1/projects/{project_id}/admin/webhooks/{id}
-	PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams) (*PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error)
+	PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, req *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams) (*PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error)
 	// PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove implements postV1ProjectsByProjectIdAdminAccessRequestsByIdApprove operation.
 	//
 	// Approve an access request.
@@ -605,7 +605,7 @@ type AdminHandler interface {
 	// Replay an event to webhooks.
 	//
 	// POST /v1/projects/{project_id}/admin/events/{event_id}/replay
-	PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams) (PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error)
+	PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams) (*PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error)
 	// PostV1ProjectsByProjectIdAdminHooks implements postV1ProjectsByProjectIdAdminHooks operation.
 	//
 	// Create a hook.
@@ -773,7 +773,7 @@ type AdminHandler interface {
 	// Retry a delivery.
 	//
 	// POST /v1/projects/{project_id}/admin/webhook-deliveries/{delivery_id}/retry
-	PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams) (PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error)
+	PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams) (*PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error)
 	// PostV1ProjectsByProjectIdAdminWebhooks implements postV1ProjectsByProjectIdAdminWebhooks operation.
 	//
 	// Create a webhook.
@@ -791,7 +791,7 @@ type AdminHandler interface {
 	// Send a test event.
 	//
 	// POST /v1/projects/{project_id}/admin/webhooks/{id}/test
-	PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, req *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams) (PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error)
+	PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, req *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams) (*PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error)
 	// PostV1TestClock implements postV1TestClock operation.
 	//
 	// Advance/reset the test clock.

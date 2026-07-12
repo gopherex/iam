@@ -50,7 +50,7 @@ const (
 	// tokens until per-environment resolution is wired from the client.
 	oidcDefaultEnv = "live"
 	// oidcAccessTTL is the lifetime of an issued access token.
-	oidcAccessTTL = time.Hour
+	oidcAccessTTL = 10 * time.Minute
 	// oidcIDTokenTTL is the lifetime of an issued id_token.
 	oidcIDTokenTTL = time.Hour
 	// oidcRefreshTTL is the lifetime of an issued refresh token.

@@ -8,7 +8,6 @@ import (
 // Default cookie lifetimes for the refresh handler (match the adapters' access /
 // refresh token TTLs).
 const (
-	cookieAccessTTL  = time.Hour
 	cookieRefreshTTL = 30 * 24 * time.Hour
 )
 

@@ -9,6 +9,7 @@ type RequestMeta struct {
 	IP          string
 	UserAgent   string
 	Fingerprint string
+	DeviceName  string
 }
 
 type requestMetaKey struct{}

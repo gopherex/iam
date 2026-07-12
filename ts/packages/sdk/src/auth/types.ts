@@ -75,6 +75,10 @@ export interface IamClientOptions {
    * Defaults to the project's "live" environment when omitted.
    */
   environment?: string;
+  /** Human-readable label persisted on newly created sessions. */
+  deviceName?: string;
+  /** Stable installation identifier used to detect refresh-token theft. */
+  deviceFingerprint?: string;
   /** Session store (default: localStorage in the browser, in-memory otherwise). */
   storage?: StorageAdapter;
   /** Storage key for the persisted session (default: "iam.session"). */

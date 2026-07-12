@@ -1063,7 +1063,7 @@ func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accou
 const mfaDefaultEnv = "live"
 
 // mfaAccessTTL bounds the minted access-token JWT.
-const mfaAccessTTL = 30 * time.Minute
+const mfaAccessTTL = 10 * time.Minute
 
 // mfaMintSession produces a session for a freshly verified (AAL2) account. The
 // access token is a signed RS256 JWT minted by the project Signer (jwx, carrying
@@ -1075,7 +1075,7 @@ func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account)
 		return nil, err
 	}
 	access, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, map[string]any{
-		"iss": acc.ProjectID,
+		"iss": oidcIssuer(acc.ProjectID, signEnv),
 		"sub": acc.ID,
 		"sid": sessionID,
 		"pid": acc.ProjectID,
@@ -1091,6 +1091,7 @@ func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account)
 	if err != nil {
 		return nil, err
 	}
+	meta := domain.RequestMetaFromContext(ctx)
 	return &domain.Session{
 		ID:           sessionID,
 		AccountID:    acc.ID,
@@ -1101,5 +1102,9 @@ func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account)
 		RefreshToken: refresh,
 		ExpiresIn:    int(mfaAccessTTL / time.Second),
 		CreatedAt:    nowUTC(),
+		DeviceName:   meta.DeviceName,
+		IP:           meta.IP,
+		UserAgent:    meta.UserAgent,
+		Fingerprint:  meta.Fingerprint,
 	}, nil
 }

@@ -61,7 +61,7 @@ type CORS struct {
 // override them.
 type Auth struct {
 	DefaultEnvironment string `mapstructure:"default_environment" default:"live" validate:"required"`
-	AccessTTLSec       int    `mapstructure:"access_ttl_sec" default:"1800" validate:"min=60"`
+	AccessTTLSec       int    `mapstructure:"access_ttl_sec" default:"600" validate:"min=60"`
 	RefreshTTLSec      int    `mapstructure:"refresh_ttl_sec" default:"2592000" validate:"min=60"`
 	// MasterKey is the platform operator (master-key) credential. When empty the
 	// masterKey security scheme rejects every request — operator endpoints are

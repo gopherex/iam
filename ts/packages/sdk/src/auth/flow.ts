@@ -47,6 +47,10 @@ export interface FlowControllerOptions {
    * isolation). Defaults to the project's "live" environment when omitted.
    */
   environment?: string;
+  /** Human-readable label persisted on a session minted by this flow. */
+  deviceName?: string;
+  /** Stable installation identifier bound to a session minted by this flow. */
+  deviceFingerprint?: string;
   /**
    * If provided, the controller will call `auth.acceptFlowSession(tokens)`
    * when the flow completes, triggering SIGNED_IN across the app.
@@ -210,9 +214,11 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
     createConfig<GeneratedClientOptions>({ baseUrl: opts.baseUrl }),
   );
 
-  const headers = (): { 'X-Client-Id': string; 'X-Environment'?: string } => {
-    const h: { 'X-Client-Id': string; 'X-Environment'?: string } = { 'X-Client-Id': opts.clientId };
+  const headers = (): { 'X-Client-Id': string; 'X-Environment'?: string; 'X-Device-Name'?: string; 'X-Device-Fingerprint'?: string } => {
+    const h: { 'X-Client-Id': string; 'X-Environment'?: string; 'X-Device-Name'?: string; 'X-Device-Fingerprint'?: string } = { 'X-Client-Id': opts.clientId };
     if (opts.environment) h['X-Environment'] = opts.environment;
+    if (opts.deviceName) h['X-Device-Name'] = opts.deviceName;
+    if (opts.deviceFingerprint) h['X-Device-Fingerprint'] = opts.deviceFingerprint;
     return h;
   };
 

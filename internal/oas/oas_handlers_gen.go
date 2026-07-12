@@ -21638,7 +21638,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhookDeliveriesRequest(arg
 
 	var rawBody []byte
 
-	var response GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK
+	var response *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -21671,7 +21671,7 @@ func (s *Server) handleGetV1ProjectsByProjectIdAdminWebhookDeliveriesRequest(arg
 		type (
 			Request  = struct{}
 			Params   = GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams
-			Response = GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK
+			Response = *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -29895,7 +29895,7 @@ func (s *Server) handlePatchV1ProjectsByProjectIdAdminWebhooksByIdRequest(args [
 		}
 
 		type (
-			Request  = PatchV1ProjectsByProjectIdAdminWebhooksByIdReq
+			Request  = *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq
 			Params   = PatchV1ProjectsByProjectIdAdminWebhooksByIdParams
 			Response = *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK
 		)
@@ -46066,7 +46066,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEventsByEventIdReplayReques
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK
+	var response *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -46095,7 +46095,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminEventsByEventIdReplayReques
 		type (
 			Request  = OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq
 			Params   = PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams
-			Response = PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK
+			Response = *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -53486,7 +53486,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDelivery
 
 	var rawBody []byte
 
-	var response PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK
+	var response *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -53515,7 +53515,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDelivery
 		type (
 			Request  = struct{}
 			Params   = PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams
-			Response = PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK
+			Response = *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -54140,7 +54140,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdTestRequest(arg
 		}
 	}()
 
-	var response PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK
+	var response *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -54169,7 +54169,7 @@ func (s *Server) handlePostV1ProjectsByProjectIdAdminWebhooksByIdTestRequest(arg
 		type (
 			Request  = *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq
 			Params   = PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams
-			Response = PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK
+			Response = *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK
 		)
 		response, err = middleware.HookMiddleware[
 			Request,

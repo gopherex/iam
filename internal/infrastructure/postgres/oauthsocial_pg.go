@@ -50,7 +50,7 @@ const (
 
 	// oauthSocialAccessTTL / oauthSocialRefreshTTL bound the minted access and
 	// refresh JWTs.
-	oauthSocialAccessTTL  = time.Hour
+	oauthSocialAccessTTL  = 10 * time.Minute
 	oauthSocialRefreshTTL = 30 * 24 * time.Hour
 
 	// oauthSocialExchangeCodeTTL bounds the single-use exchange code that maps a
@@ -1012,7 +1012,7 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 		return nil, err
 	}
 	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		"iss": acct.ProjectID,
+		"iss": oidcIssuer(acct.ProjectID, signEnv),
 		"sub": acct.ID,
 		"sid": sessionID,
 		"pid": acct.ProjectID,
@@ -1025,7 +1025,7 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 		return nil, err
 	}
 	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		"iss": acct.ProjectID,
+		"iss": oidcIssuer(acct.ProjectID, signEnv),
 		"sub": acct.ID,
 		"sid": sessionID,
 		"pid": acct.ProjectID,
@@ -1035,6 +1035,7 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 	if err != nil {
 		return nil, err
 	}
+	meta := domain.RequestMetaFromContext(ctx)
 	sess := &domain.Session{
 		ID:           sessionID,
 		AccountID:    acct.ID,
@@ -1045,6 +1046,10 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 		RefreshToken: refresh,
 		ExpiresIn:    int(oauthSocialAccessTTL / timeSecondDur),
 		CreatedAt:    nowUTC(),
+		DeviceName:   meta.DeviceName,
+		IP:           meta.IP,
+		UserAgent:    meta.UserAgent,
+		Fingerprint:  meta.Fingerprint,
 	}
 	raw, err := marshal(sess)
 	if err != nil {

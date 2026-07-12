@@ -230,15 +230,27 @@ func (a *pgAccountStore) Delete(ctx context.Context, projectID, accountID string
 		if err != nil {
 			return err
 		}
+		sessions, err := models.IamSessions.Query(
+			sm.Where(models.IamSessions.Columns.ProjectID.EQ(psql.Arg(projectID))),
+			sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(accountID))),
+		).All(ctx, a.db.Bobx())
+		if err != nil {
+			return err
+		}
+		for _, session := range sessions {
+			if err := revokeSessionRecord(ctx, a.db, a.emitter, session, "user_deleted"); err != nil {
+				return err
+			}
+		}
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
 		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "user.deleted",
+			Type:        domain.WebhookEventUserDeleted,
 			ProjectID:   projectID,
-			Environment: "",
+			Environment: row.Environment,
 			AggregateID: accountID,
-			Payload:     map[string]any{"id": accountID, "project_id": projectID},
+			Payload:     map[string]any{"user_id": accountID, "project_id": projectID},
 		}); err != nil {
 			return err
 		}
@@ -282,19 +294,7 @@ func (a *pgAccountStore) RevokeSession(ctx context.Context, accountID, sessionID
 		if err != nil {
 			return err
 		}
-		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
-			return err
-		}
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "session.revoked",
-			ProjectID:   row.ProjectID,
-			Environment: "",
-			AggregateID: row.ID,
-			Payload:     map[string]any{"id": row.ID, "project_id": row.ProjectID},
-		}); err != nil {
-			return err
-		}
-		return nil
+		return revokeSessionRecord(ctx, a.db, a.emitter, row, "user_request")
 	})
 }
 
@@ -392,8 +392,10 @@ func (a *pgAccountStore) RevokeSessions(ctx context.Context, cmd domain.AccountR
 		if len(victims) == 0 {
 			return 0, nil
 		}
-		if err := victims.DeleteAll(ctx, a.db.Bobx()); err != nil {
-			return 0, err
+		for _, victim := range victims {
+			if err := revokeSessionRecord(ctx, a.db, a.emitter, victim, "user_request"); err != nil {
+				return 0, err
+			}
 		}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "sessions.revoked",

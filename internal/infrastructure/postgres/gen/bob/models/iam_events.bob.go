@@ -23,6 +23,8 @@ type IamEvent struct {
 	ID          string          `db:"id,pk" `
 	ProjectID   string          `db:"project_id" `
 	Environment string          `db:"environment" `
+	AggregateID string          `db:"aggregate_id" `
+	UserID      string          `db:"user_id" `
 	Type        string          `db:"type" `
 	Published   bool            `db:"published" `
 	CreatedAt   time.Time       `db:"created_at" `
@@ -41,7 +43,7 @@ type IamEventsQuery = *psql.ViewQuery[*IamEvent, IamEventSlice]
 
 func buildIamEventColumns(tableName string) iamEventColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "environment", "type", "published", "created_at", "data",
+		"id", "project_id", "environment", "aggregate_id", "user_id", "type", "published", "created_at", "data",
 	)
 
 	if tableName != "" {
@@ -54,6 +56,8 @@ func buildIamEventColumns(tableName string) iamEventColumns {
 		ID:          buildIamEventColumn(tableName, "id"),
 		ProjectID:   buildIamEventColumn(tableName, "project_id"),
 		Environment: buildIamEventColumn(tableName, "environment"),
+		AggregateID: buildIamEventColumn(tableName, "aggregate_id"),
+		UserID:      buildIamEventColumn(tableName, "user_id"),
 		Type:        buildIamEventColumn(tableName, "type"),
 		Published:   buildIamEventColumn(tableName, "published"),
 		CreatedAt:   buildIamEventColumn(tableName, "created_at"),
@@ -67,6 +71,8 @@ type iamEventColumns struct {
 	ID          iamEventColumn
 	ProjectID   iamEventColumn
 	Environment iamEventColumn
+	AggregateID iamEventColumn
+	UserID      iamEventColumn
 	Type        iamEventColumn
 	Published   iamEventColumn
 	CreatedAt   iamEventColumn
@@ -119,6 +125,8 @@ type IamEventSetter struct {
 	ID          *string          `db:"id,pk" `
 	ProjectID   *string          `db:"project_id" `
 	Environment *string          `db:"environment" `
+	AggregateID *string          `db:"aggregate_id" `
+	UserID      *string          `db:"user_id" `
 	Type        *string          `db:"type" `
 	Published   *bool            `db:"published" `
 	CreatedAt   *time.Time       `db:"created_at" `
@@ -126,7 +134,7 @@ type IamEventSetter struct {
 }
 
 func (s IamEventSetter) SetColumns() []string {
-	vals := make([]string, 0, 7)
+	vals := make([]string, 0, 9)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
@@ -135,6 +143,12 @@ func (s IamEventSetter) SetColumns() []string {
 	}
 	if s.Environment != nil {
 		vals = append(vals, "environment")
+	}
+	if s.AggregateID != nil {
+		vals = append(vals, "aggregate_id")
+	}
+	if s.UserID != nil {
+		vals = append(vals, "user_id")
 	}
 	if s.Type != nil {
 		vals = append(vals, "type")
@@ -174,6 +188,22 @@ func (s IamEventSetter) Overwrite(t *IamEvent) {
 				return *new(string)
 			}
 			return *s.Environment
+		}()
+	}
+	if s.AggregateID != nil {
+		t.AggregateID = func() string {
+			if s.AggregateID == nil {
+				return *new(string)
+			}
+			return *s.AggregateID
+		}()
+	}
+	if s.UserID != nil {
+		t.UserID = func() string {
+			if s.UserID == nil {
+				return *new(string)
+			}
+			return *s.UserID
 		}()
 	}
 	if s.Type != nil {
@@ -216,7 +246,7 @@ func (s *IamEventSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 7)
+		vals := make([]bob.Expression, 9)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -250,48 +280,70 @@ func (s *IamEventSetter) Apply(q *dialect.InsertQuery) {
 			vals[2] = psql.Raw("DEFAULT")
 		}
 
-		if s.Type != nil {
+		if s.AggregateID != nil {
 			vals[3] = psql.Arg(func() string {
+				if s.AggregateID == nil {
+					return *new(string)
+				}
+				return *s.AggregateID
+			}())
+		} else {
+			vals[3] = psql.Raw("DEFAULT")
+		}
+
+		if s.UserID != nil {
+			vals[4] = psql.Arg(func() string {
+				if s.UserID == nil {
+					return *new(string)
+				}
+				return *s.UserID
+			}())
+		} else {
+			vals[4] = psql.Raw("DEFAULT")
+		}
+
+		if s.Type != nil {
+			vals[5] = psql.Arg(func() string {
 				if s.Type == nil {
 					return *new(string)
 				}
 				return *s.Type
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.Published != nil {
-			vals[4] = psql.Arg(func() bool {
+			vals[6] = psql.Arg(func() bool {
 				if s.Published == nil {
 					return *new(bool)
 				}
 				return *s.Published
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[5] = psql.Arg(func() time.Time {
+			vals[7] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[6] = psql.Arg(func() json.RawMessage {
+			vals[8] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -303,7 +355,7 @@ func (s IamEventSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamEventSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 7)
+	exprs := make([]bob.Expression, 0, 9)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -323,6 +375,20 @@ func (s IamEventSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "environment")...),
 			psql.Arg(s.Environment),
+		}})
+	}
+
+	if s.AggregateID != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "aggregate_id")...),
+			psql.Arg(s.AggregateID),
+		}})
+	}
+
+	if s.UserID != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "user_id")...),
+			psql.Arg(s.UserID),
 		}})
 	}
 
@@ -615,6 +681,8 @@ type iamEventWhere[Q psql.Filterable] struct {
 	ID          psql.WhereMod[Q, string]
 	ProjectID   psql.WhereMod[Q, string]
 	Environment psql.WhereMod[Q, string]
+	AggregateID psql.WhereMod[Q, string]
+	UserID      psql.WhereMod[Q, string]
 	Type        psql.WhereMod[Q, string]
 	Published   psql.WhereMod[Q, bool]
 	CreatedAt   psql.WhereMod[Q, time.Time]
@@ -630,6 +698,8 @@ func buildIamEventWhere[Q psql.Filterable](cols iamEventColumns) iamEventWhere[Q
 		ID:          psql.Where[Q, string](cols.ID.Expression),
 		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
 		Environment: psql.Where[Q, string](cols.Environment.Expression),
+		AggregateID: psql.Where[Q, string](cols.AggregateID.Expression),
+		UserID:      psql.Where[Q, string](cols.UserID.Expression),
 		Type:        psql.Where[Q, string](cols.Type.Expression),
 		Published:   psql.Where[Q, bool](cols.Published.Expression),
 		CreatedAt:   psql.Where[Q, time.Time](cols.CreatedAt.Expression),

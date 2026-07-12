@@ -1684,7 +1684,7 @@ func (s *Server) decodePatchV1ProjectsByProjectIdAdminUsersByUserIdRequest(r *ht
 }
 
 func (s *Server) decodePatchV1ProjectsByProjectIdAdminWebhooksByIdRequest(r *http.Request) (
-	req PatchV1ProjectsByProjectIdAdminWebhooksByIdReq,
+	req *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq,
 	rawBody []byte,
 	close func() error,
 	rerr error,
@@ -1748,7 +1748,15 @@ func (s *Server) decodePatchV1ProjectsByProjectIdAdminWebhooksByIdRequest(r *htt
 			}
 			return req, rawBody, close, err
 		}
-		return request, rawBody, close, nil
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, rawBody, close, errors.Wrap(err, "validate")
+		}
+		return &request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
 	}

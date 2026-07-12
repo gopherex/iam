@@ -561,7 +561,7 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 			return loginResult{}, err
 		}
 		accessToken, err := a.db.Signer().Sign(ctx, projectID, signEnv, map[string]any{
-			"iss": "https://iam.gopherex.com/" + projectID,
+			"iss": oidcIssuer(projectID, signEnv),
 			"sub": acct.ID,
 			"sid": sessionID,
 			"jti": newUUID(),

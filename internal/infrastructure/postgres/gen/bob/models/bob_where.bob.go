@@ -59,6 +59,7 @@ func Where[Q psql.Filterable]() struct {
 	IamBlocks              iamBlockWhere[Q]
 	IamActivities          iamActivityWhere[Q]
 	IamEvents              iamEventWhere[Q]
+	IamWebhookDeliveries   iamWebhookDeliveryWhere[Q]
 } {
 	return struct {
 		IamUsers               iamUserWhere[Q]
@@ -103,6 +104,7 @@ func Where[Q psql.Filterable]() struct {
 		IamBlocks              iamBlockWhere[Q]
 		IamActivities          iamActivityWhere[Q]
 		IamEvents              iamEventWhere[Q]
+		IamWebhookDeliveries   iamWebhookDeliveryWhere[Q]
 	}{
 		IamUsers:               buildIamUserWhere[Q](IamUsers.Columns),
 		IamCredentials:         buildIamCredentialWhere[Q](IamCredentials.Columns),
@@ -146,5 +148,6 @@ func Where[Q psql.Filterable]() struct {
 		IamBlocks:              buildIamBlockWhere[Q](IamBlocks.Columns),
 		IamActivities:          buildIamActivityWhere[Q](IamActivities.Columns),
 		IamEvents:              buildIamEventWhere[Q](IamEvents.Columns),
+		IamWebhookDeliveries:   buildIamWebhookDeliveryWhere[Q](IamWebhookDeliveries.Columns),
 	}
 }

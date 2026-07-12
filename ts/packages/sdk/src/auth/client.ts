@@ -157,6 +157,8 @@ export class IamAuth {
   private storageKey: string;
   private clientId: string;
   private environment?: string;
+  private deviceName?: string;
+  private deviceFingerprint?: string;
   private persist: boolean;
   private autoRefresh: boolean;
   private marginMs: number;
@@ -169,6 +171,8 @@ export class IamAuth {
   constructor(opts: IamClientOptions) {
     this.clientId = opts.clientId;
     this.environment = opts.environment;
+    this.deviceName = opts.deviceName;
+    this.deviceFingerprint = opts.deviceFingerprint;
     this.persist = opts.persistSession ?? true;
     this.storage = opts.storage ?? (this.persist ? defaultStorage() : new MemoryStorage());
     this.storageKey = opts.storageKey ?? 'iam.session';
@@ -709,9 +713,11 @@ export class IamAuth {
   // ----- engine -----
 
   /** @internal — shared with the account/mfa/webauthn namespaces. */
-  headers(): { 'X-Client-Id': string; 'X-Environment'?: string } {
-    const h: { 'X-Client-Id': string; 'X-Environment'?: string } = { 'X-Client-Id': this.clientId };
+  headers(): { 'X-Client-Id': string; 'X-Environment'?: string; 'X-Device-Name'?: string; 'X-Device-Fingerprint'?: string } {
+    const h: { 'X-Client-Id': string; 'X-Environment'?: string; 'X-Device-Name'?: string; 'X-Device-Fingerprint'?: string } = { 'X-Client-Id': this.clientId };
     if (this.environment) h['X-Environment'] = this.environment;
+    if (this.deviceName) h['X-Device-Name'] = this.deviceName;
+    if (this.deviceFingerprint) h['X-Device-Fingerprint'] = this.deviceFingerprint;
     return h;
   }
 
@@ -857,6 +863,12 @@ export class IamAuth {
       if (this.environment && !request.headers.has('X-Environment')) {
         request.headers.set('X-Environment', this.environment);
       }
+      if (this.deviceName && !request.headers.has('X-Device-Name')) {
+        request.headers.set('X-Device-Name', this.deviceName);
+      }
+      if (this.deviceFingerprint && !request.headers.has('X-Device-Fingerprint')) {
+        request.headers.set('X-Device-Fingerprint', this.deviceFingerprint);
+      }
       return request;
     });
     this.client.interceptors.response.use(async (response: Response, request: Request) => {
@@ -954,7 +966,14 @@ export function createIamClient(options: IamClientOptions): {
     webauthn: new IamWebAuthn(auth.client, headers),
     tokens: new IamTokens(auth.client, headers),
     oidc: new IamOidc(auth.client, headers),
-    flow: createFlowController({ baseUrl: options.baseUrl, clientId: options.clientId, environment: options.environment, auth }),
+    flow: createFlowController({
+      baseUrl: options.baseUrl,
+      clientId: options.clientId,
+      environment: options.environment,
+      deviceName: options.deviceName,
+      deviceFingerprint: options.deviceFingerprint,
+      auth,
+    }),
     async init() {
       const [session, cfg] = await Promise.all([
         auth.ready().then(() => auth.getSession()),

@@ -23,6 +23,7 @@ import (
 // isolate by using fresh UUID project ids, so a single migrated database is
 // reused across the package.
 var testDB *DB
+var testDSN string
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
@@ -49,6 +50,7 @@ func TestMain(m *testing.M) {
 		panic("migrate: " + err.Error())
 	}
 	testDB = db
+	testDSN = dsn
 
 	code := m.Run()
 

@@ -1451,7 +1451,6 @@ func TestGetV1ProjectsByProjectIdAdminUsersOK_EncodeDecode(t *testing.T) {
 }
 func TestGetV1ProjectsByProjectIdAdminWebhookDeliveriesOK_EncodeDecode(t *testing.T) {
 	var typ GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK
-	typ = make(GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK)
 	typ.SetFake()
 
 	e := jx.Encoder{}
@@ -1460,7 +1459,6 @@ func TestGetV1ProjectsByProjectIdAdminWebhookDeliveriesOK_EncodeDecode(t *testin
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK
-	typ2 = make(GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestGetV1ProjectsByProjectIdAdminWebhooksByIdOK_EncodeDecode(t *testing.T) {
@@ -2361,7 +2359,6 @@ func TestPatchV1ProjectsByProjectIdAdminWebhooksByIdOK_EncodeDecode(t *testing.T
 }
 func TestPatchV1ProjectsByProjectIdAdminWebhooksByIdReq_EncodeDecode(t *testing.T) {
 	var typ PatchV1ProjectsByProjectIdAdminWebhooksByIdReq
-	typ = make(PatchV1ProjectsByProjectIdAdminWebhooksByIdReq)
 	typ.SetFake()
 
 	e := jx.Encoder{}
@@ -2370,7 +2367,6 @@ func TestPatchV1ProjectsByProjectIdAdminWebhooksByIdReq_EncodeDecode(t *testing.
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 PatchV1ProjectsByProjectIdAdminWebhooksByIdReq
-	typ2 = make(PatchV1ProjectsByProjectIdAdminWebhooksByIdReq)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestPatchV1ScimV2ByConnectionIdGroupsByGroupIdOK_EncodeDecode(t *testing.T) {
@@ -3895,7 +3891,6 @@ func TestPostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReqData_EncodeD
 }
 func TestPostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK_EncodeDecode(t *testing.T) {
 	var typ PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK
-	typ = make(PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK)
 	typ.SetFake()
 
 	e := jx.Encoder{}
@@ -3904,7 +3899,6 @@ func TestPostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK_EncodeDecode(t *t
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK
-	typ2 = make(PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq_EncodeDecode(t *testing.T) {
@@ -4613,7 +4607,6 @@ func TestPostV1ProjectsByProjectIdAdminUsersReqMetadata_EncodeDecode(t *testing.
 }
 func TestPostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK_EncodeDecode(t *testing.T) {
 	var typ PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK
-	typ = make(PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK)
 	typ.SetFake()
 
 	e := jx.Encoder{}
@@ -4622,7 +4615,6 @@ func TestPostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK_Enco
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK
-	typ2 = make(PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestPostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK_EncodeDecode(t *testing.T) {
@@ -4639,7 +4631,6 @@ func TestPostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK_EncodeDecode(t
 }
 func TestPostV1ProjectsByProjectIdAdminWebhooksByIdTestOK_EncodeDecode(t *testing.T) {
 	var typ PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK
-	typ = make(PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK)
 	typ.SetFake()
 
 	e := jx.Encoder{}
@@ -4648,7 +4639,6 @@ func TestPostV1ProjectsByProjectIdAdminWebhooksByIdTestOK_EncodeDecode(t *testin
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK
-	typ2 = make(PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestPostV1ProjectsByProjectIdAdminWebhooksByIdTestReq_EncodeDecode(t *testing.T) {
@@ -5703,5 +5693,29 @@ func TestWebhook_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 Webhook
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestWebhookDelivery_EncodeDecode(t *testing.T) {
+	var typ WebhookDelivery
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 WebhookDelivery
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestWebhookDeliveryStatus_EncodeDecode(t *testing.T) {
+	var typ WebhookDeliveryStatus
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 WebhookDeliveryStatus
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }

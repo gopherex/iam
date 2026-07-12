@@ -999,7 +999,7 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(c
 // List deliveries.
 //
 // GET /v1/projects/{project_id}/admin/webhook-deliveries
-func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams) (r GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, _ error) {
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams) (r *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1359,7 +1359,7 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx con
 // Update a webhook.
 //
 // PATCH /v1/projects/{project_id}/admin/webhooks/{id}
-func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams) (r *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, _ error) {
+func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, req *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams) (r *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2109,7 +2109,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSend
 // Replay an event to webhooks.
 //
 // POST /v1/projects/{project_id}/admin/events/{event_id}/replay
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams) (r PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, req OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams) (r *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2415,7 +2415,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPho
 // Retry a delivery.
 //
 // POST /v1/projects/{project_id}/admin/webhook-deliveries/{delivery_id}/retry
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams) (r PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams) (r *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2442,7 +2442,7 @@ func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecr
 // Send a test event.
 //
 // POST /v1/projects/{project_id}/admin/webhooks/{id}/test
-func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, req *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams) (r PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, _ error) {
+func (UnimplementedHandler) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, req *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams) (r *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

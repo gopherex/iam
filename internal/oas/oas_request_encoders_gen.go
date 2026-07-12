@@ -335,7 +335,7 @@ func encodePatchV1ProjectsByProjectIdAdminUsersByUserIdRequest(
 }
 
 func encodePatchV1ProjectsByProjectIdAdminWebhooksByIdRequest(
-	req PatchV1ProjectsByProjectIdAdminWebhooksByIdReq,
+	req *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

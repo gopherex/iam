@@ -20,12 +20,14 @@ import (
 
 // IamWebhook is an object representing the database table.
 type IamWebhook struct {
-	ID        string          `db:"id,pk" `
-	ProjectID string          `db:"project_id" `
-	Enabled   bool            `db:"enabled" `
-	CreatedAt time.Time       `db:"created_at" `
-	UpdatedAt time.Time       `db:"updated_at" `
-	Data      json.RawMessage `db:"data" `
+	ID             string          `db:"id,pk" `
+	ProjectID      string          `db:"project_id" `
+	Environment    string          `db:"environment" `
+	IdempotencyKey string          `db:"idempotency_key" `
+	Enabled        bool            `db:"enabled" `
+	CreatedAt      time.Time       `db:"created_at" `
+	UpdatedAt      time.Time       `db:"updated_at" `
+	Data           json.RawMessage `db:"data" `
 }
 
 // IamWebhookSlice is an alias for a slice of pointers to IamWebhook.
@@ -40,7 +42,7 @@ type IamWebhooksQuery = *psql.ViewQuery[*IamWebhook, IamWebhookSlice]
 
 func buildIamWebhookColumns(tableName string) iamWebhookColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "enabled", "created_at", "updated_at", "data",
+		"id", "project_id", "environment", "idempotency_key", "enabled", "created_at", "updated_at", "data",
 	)
 
 	if tableName != "" {
@@ -48,26 +50,30 @@ func buildIamWebhookColumns(tableName string) iamWebhookColumns {
 	}
 
 	return iamWebhookColumns{
-		ColumnsExpr: columnsExpr,
-		tableAlias:  tableName,
-		ID:          buildIamWebhookColumn(tableName, "id"),
-		ProjectID:   buildIamWebhookColumn(tableName, "project_id"),
-		Enabled:     buildIamWebhookColumn(tableName, "enabled"),
-		CreatedAt:   buildIamWebhookColumn(tableName, "created_at"),
-		UpdatedAt:   buildIamWebhookColumn(tableName, "updated_at"),
-		Data:        buildIamWebhookColumn(tableName, "data"),
+		ColumnsExpr:    columnsExpr,
+		tableAlias:     tableName,
+		ID:             buildIamWebhookColumn(tableName, "id"),
+		ProjectID:      buildIamWebhookColumn(tableName, "project_id"),
+		Environment:    buildIamWebhookColumn(tableName, "environment"),
+		IdempotencyKey: buildIamWebhookColumn(tableName, "idempotency_key"),
+		Enabled:        buildIamWebhookColumn(tableName, "enabled"),
+		CreatedAt:      buildIamWebhookColumn(tableName, "created_at"),
+		UpdatedAt:      buildIamWebhookColumn(tableName, "updated_at"),
+		Data:           buildIamWebhookColumn(tableName, "data"),
 	}
 }
 
 type iamWebhookColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         iamWebhookColumn
-	ProjectID  iamWebhookColumn
-	Enabled    iamWebhookColumn
-	CreatedAt  iamWebhookColumn
-	UpdatedAt  iamWebhookColumn
-	Data       iamWebhookColumn
+	tableAlias     string
+	ID             iamWebhookColumn
+	ProjectID      iamWebhookColumn
+	Environment    iamWebhookColumn
+	IdempotencyKey iamWebhookColumn
+	Enabled        iamWebhookColumn
+	CreatedAt      iamWebhookColumn
+	UpdatedAt      iamWebhookColumn
+	Data           iamWebhookColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -113,21 +119,29 @@ func (c iamWebhookColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamWebhookSetter struct {
-	ID        *string          `db:"id,pk" `
-	ProjectID *string          `db:"project_id" `
-	Enabled   *bool            `db:"enabled" `
-	CreatedAt *time.Time       `db:"created_at" `
-	UpdatedAt *time.Time       `db:"updated_at" `
-	Data      *json.RawMessage `db:"data" `
+	ID             *string          `db:"id,pk" `
+	ProjectID      *string          `db:"project_id" `
+	Environment    *string          `db:"environment" `
+	IdempotencyKey *string          `db:"idempotency_key" `
+	Enabled        *bool            `db:"enabled" `
+	CreatedAt      *time.Time       `db:"created_at" `
+	UpdatedAt      *time.Time       `db:"updated_at" `
+	Data           *json.RawMessage `db:"data" `
 }
 
 func (s IamWebhookSetter) SetColumns() []string {
-	vals := make([]string, 0, 6)
+	vals := make([]string, 0, 8)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
 	if s.ProjectID != nil {
 		vals = append(vals, "project_id")
+	}
+	if s.Environment != nil {
+		vals = append(vals, "environment")
+	}
+	if s.IdempotencyKey != nil {
+		vals = append(vals, "idempotency_key")
 	}
 	if s.Enabled != nil {
 		vals = append(vals, "enabled")
@@ -159,6 +173,22 @@ func (s IamWebhookSetter) Overwrite(t *IamWebhook) {
 				return *new(string)
 			}
 			return *s.ProjectID
+		}()
+	}
+	if s.Environment != nil {
+		t.Environment = func() string {
+			if s.Environment == nil {
+				return *new(string)
+			}
+			return *s.Environment
+		}()
+	}
+	if s.IdempotencyKey != nil {
+		t.IdempotencyKey = func() string {
+			if s.IdempotencyKey == nil {
+				return *new(string)
+			}
+			return *s.IdempotencyKey
 		}()
 	}
 	if s.Enabled != nil {
@@ -201,7 +231,7 @@ func (s *IamWebhookSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 6)
+		vals := make([]bob.Expression, 8)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -224,48 +254,70 @@ func (s *IamWebhookSetter) Apply(q *dialect.InsertQuery) {
 			vals[1] = psql.Raw("DEFAULT")
 		}
 
+		if s.Environment != nil {
+			vals[2] = psql.Arg(func() string {
+				if s.Environment == nil {
+					return *new(string)
+				}
+				return *s.Environment
+			}())
+		} else {
+			vals[2] = psql.Raw("DEFAULT")
+		}
+
+		if s.IdempotencyKey != nil {
+			vals[3] = psql.Arg(func() string {
+				if s.IdempotencyKey == nil {
+					return *new(string)
+				}
+				return *s.IdempotencyKey
+			}())
+		} else {
+			vals[3] = psql.Raw("DEFAULT")
+		}
+
 		if s.Enabled != nil {
-			vals[2] = psql.Arg(func() bool {
+			vals[4] = psql.Arg(func() bool {
 				if s.Enabled == nil {
 					return *new(bool)
 				}
 				return *s.Enabled
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[3] = psql.Arg(func() time.Time {
+			vals[5] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.UpdatedAt != nil {
-			vals[4] = psql.Arg(func() time.Time {
+			vals[6] = psql.Arg(func() time.Time {
 				if s.UpdatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.UpdatedAt
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[5] = psql.Arg(func() json.RawMessage {
+			vals[7] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -277,7 +329,7 @@ func (s IamWebhookSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamWebhookSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 6)
+	exprs := make([]bob.Expression, 0, 8)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -290,6 +342,20 @@ func (s IamWebhookSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "project_id")...),
 			psql.Arg(s.ProjectID),
+		}})
+	}
+
+	if s.Environment != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "environment")...),
+			psql.Arg(s.Environment),
+		}})
+	}
+
+	if s.IdempotencyKey != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "idempotency_key")...),
+			psql.Arg(s.IdempotencyKey),
 		}})
 	}
 
@@ -579,12 +645,14 @@ func (o IamWebhookSlice) ReloadAll(ctx context.Context, exec bob.Executor) error
 }
 
 type iamWebhookWhere[Q psql.Filterable] struct {
-	ID        psql.WhereMod[Q, string]
-	ProjectID psql.WhereMod[Q, string]
-	Enabled   psql.WhereMod[Q, bool]
-	CreatedAt psql.WhereMod[Q, time.Time]
-	UpdatedAt psql.WhereMod[Q, time.Time]
-	Data      psql.WhereMod[Q, json.RawMessage]
+	ID             psql.WhereMod[Q, string]
+	ProjectID      psql.WhereMod[Q, string]
+	Environment    psql.WhereMod[Q, string]
+	IdempotencyKey psql.WhereMod[Q, string]
+	Enabled        psql.WhereMod[Q, bool]
+	CreatedAt      psql.WhereMod[Q, time.Time]
+	UpdatedAt      psql.WhereMod[Q, time.Time]
+	Data           psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamWebhookWhere[Q]) AliasedAs(alias string) iamWebhookWhere[Q] {
@@ -593,11 +661,13 @@ func (iamWebhookWhere[Q]) AliasedAs(alias string) iamWebhookWhere[Q] {
 
 func buildIamWebhookWhere[Q psql.Filterable](cols iamWebhookColumns) iamWebhookWhere[Q] {
 	return iamWebhookWhere[Q]{
-		ID:        psql.Where[Q, string](cols.ID.Expression),
-		ProjectID: psql.Where[Q, string](cols.ProjectID.Expression),
-		Enabled:   psql.Where[Q, bool](cols.Enabled.Expression),
-		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		UpdatedAt: psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
-		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		ID:             psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:      psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment:    psql.Where[Q, string](cols.Environment.Expression),
+		IdempotencyKey: psql.Where[Q, string](cols.IdempotencyKey.Expression),
+		Enabled:        psql.Where[Q, bool](cols.Enabled.Expression),
+		CreatedAt:      psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		UpdatedAt:      psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
+		Data:           psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

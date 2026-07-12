@@ -31,12 +31,13 @@ import (
 const defaultLocale = "en"
 
 type Publisher struct {
-	db  *postgres.DB
-	log *xlog.Logger
+	db       *postgres.DB
+	webhooks *postgres.PgWebhooks
+	log      *xlog.Logger
 }
 
-func NewPublisher(db *postgres.DB, log *xlog.Logger) *Publisher {
-	return &Publisher{db: db, log: log}
+func NewPublisher(db *postgres.DB, webhooks *postgres.PgWebhooks, log *xlog.Logger) *Publisher {
+	return &Publisher{db: db, webhooks: webhooks, log: log}
 }
 
 func (p *Publisher) Publish(ctx context.Context, msgs []outbox.Message) error {
@@ -68,6 +69,10 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	if err := json.Unmarshal(msg.Payload, &ev); err != nil {
 		return err
 	}
+	var domainEvent domain.Event
+	if err := json.Unmarshal(msg.Payload, &domainEvent); err != nil {
+		return err
+	}
 	// SMS-channel delivery events route to the SMS sender. The dispatch is
 	// disjoint from email: emailJobFromEvent returns false for channel=="sms"
 	// (otp/mfa), and smsJobFromEvent returns false for non-sms, so neither
@@ -77,11 +82,9 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	}
 	job, ok := emailJobFromEvent(ev)
 	if !ok {
-		p.log.Info("would publish",
-			xlog.String("id", msg.ID),
-			xlog.String("topic", msg.Topic),
-			xlog.String("type", msg.MessageType),
-		)
+		if p.webhooks != nil {
+			return p.webhooks.PublishEvent(ctx, domainEvent)
+		}
 		return nil
 	}
 	if job.To == "" {

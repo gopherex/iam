@@ -378,12 +378,14 @@ type IamEmailTemplates struct {
 }
 
 type IamWebhooks struct {
-	ID        string
-	ProjectID string
-	Enabled   bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
+	ID             string
+	ProjectID      string
+	Environment    string
+	IdempotencyKey string
+	Enabled        bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Data           json.RawMessage
 }
 
 type IamHooks struct {
@@ -460,8 +462,29 @@ type IamEvents struct {
 	ID          string
 	ProjectID   string
 	Environment string
+	AggregateID string
+	UserID      string
 	Type        string
 	Published   bool
 	CreatedAt   time.Time
 	Data        json.RawMessage
+}
+
+type IamWebhookDeliveries struct {
+	ID             string
+	ProjectID      string
+	Environment    string
+	WebhookID      string
+	EventID        string
+	Status         string
+	AttemptCount   int32
+	NextAttemptAt  *time.Time
+	LastAttemptAt  *time.Time
+	DeliveredAt    *time.Time
+	ResponseStatus *int32
+	ResponseBody   *string
+	LastError      *string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Data           json.RawMessage
 }

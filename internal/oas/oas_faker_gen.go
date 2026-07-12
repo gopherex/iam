@@ -726,12 +726,17 @@ func (s *ErrorEnvelopeErrorDetails) SetFake() {
 func (s *Event) SetFake() {
 	{
 		{
-			s.ID.SetFake()
+			s.ID = "string"
 		}
 	}
 	{
 		{
-			s.Type.SetFake()
+			s.Type = "string"
+		}
+	}
+	{
+		{
+			s.Version = int(0)
 		}
 	}
 	{
@@ -741,12 +746,12 @@ func (s *Event) SetFake() {
 	}
 	{
 		{
-			s.ProjectID.SetFake()
+			s.ProjectID = "string"
 		}
 	}
 	{
 		{
-			s.Environment.SetFake()
+			s.Environment = "string"
 		}
 	}
 	{
@@ -2126,12 +2131,17 @@ func (s *GetV1ProjectsByProjectIdAdminUsersOK) SetFake() {
 
 // SetFake set fake values.
 func (s *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK) SetFake() {
-	var (
-		elem jx.Raw
-		m    map[string]jx.Raw = s.init()
-	)
-	for i := 0; i < 0; i++ {
-		m[fmt.Sprintf("fake%d", i)] = elem
+	{
+		{
+			s.Data = nil
+			for i := 0; i < 0; i++ {
+				var elem WebhookDelivery
+				{
+					elem.SetFake()
+				}
+				s.Data = append(s.Data, elem)
+			}
+		}
 	}
 }
 
@@ -2947,15 +2957,6 @@ func (s *OptEnvironment) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *OptEventData) SetFake() {
-	var elem EventData
-	{
-		elem.SetFake()
-	}
-	s.SetTo(elem)
-}
-
-// SetFake set fake values.
 func (s *OptFactor) SetFake() {
 	var elem Factor
 	{
@@ -3188,6 +3189,12 @@ func (s *OptNilString) SetFake() {
 
 // SetFake set fake values.
 func (s *OptNilStringArray) SetFake() {
+	s.Null = true
+	s.Set = true
+}
+
+// SetFake set fake values.
+func (s *OptNilTimestamp) SetFake() {
 	s.Null = true
 	s.Set = true
 }
@@ -4316,12 +4323,32 @@ func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK) SetFake() {
 
 // SetFake set fake values.
 func (s *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) SetFake() {
-	var (
-		elem jx.Raw
-		m    map[string]jx.Raw = s.init()
-	)
-	for i := 0; i < 0; i++ {
-		m[fmt.Sprintf("fake%d", i)] = elem
+	{
+		{
+			s.URL.SetFake()
+		}
+	}
+	{
+		{
+			s.Events = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.Events = append(s.Events, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Description.SetFake()
+		}
+	}
+	{
+		{
+			s.Enabled.SetFake()
+		}
 	}
 }
 
@@ -6039,12 +6066,17 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReqData) SetFak
 
 // SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK) SetFake() {
-	var (
-		elem jx.Raw
-		m    map[string]jx.Raw = s.init()
-	)
-	for i := 0; i < 0; i++ {
-		m[fmt.Sprintf("fake%d", i)] = elem
+	{
+		{
+			s.Deliveries = nil
+			for i := 0; i < 0; i++ {
+				var elem WebhookDelivery
+				{
+					elem.SetFake()
+				}
+				s.Deliveries = append(s.Deliveries, elem)
+			}
+		}
 	}
 }
 
@@ -6801,12 +6833,10 @@ func (s *PostV1ProjectsByProjectIdAdminUsersReqMetadata) SetFake() {
 
 // SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK) SetFake() {
-	var (
-		elem jx.Raw
-		m    map[string]jx.Raw = s.init()
-	)
-	for i := 0; i < 0; i++ {
-		m[fmt.Sprintf("fake%d", i)] = elem
+	{
+		{
+			s.Delivery.SetFake()
+		}
 	}
 }
 
@@ -6821,12 +6851,10 @@ func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK) SetFake() {
 
 // SetFake set fake values.
 func (s *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK) SetFake() {
-	var (
-		elem jx.Raw
-		m    map[string]jx.Raw = s.init()
-	)
-	for i := 0; i < 0; i++ {
-		m[fmt.Sprintf("fake%d", i)] = elem
+	{
+		{
+			s.Delivery.SetFake()
+		}
 	}
 }
 
@@ -8293,12 +8321,12 @@ func (s *WebAuthnCredential) SetFake() {
 func (s *Webhook) SetFake() {
 	{
 		{
-			s.ID.SetFake()
+			s.ID = "string"
 		}
 	}
 	{
 		{
-			s.URL.SetFake()
+			s.URL = "string"
 		}
 	}
 	{
@@ -8315,7 +8343,106 @@ func (s *Webhook) SetFake() {
 	}
 	{
 		{
-			s.Enabled.SetFake()
+			s.Enabled = true
 		}
 	}
+	{
+		{
+			s.Description.SetFake()
+		}
+	}
+	{
+		{
+			s.Environment.SetFake()
+		}
+	}
+	{
+		{
+			s.CreatedAt.SetFake()
+		}
+	}
+	{
+		{
+			s.UpdatedAt.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *WebhookDelivery) SetFake() {
+	{
+		{
+			s.ID = "string"
+		}
+	}
+	{
+		{
+			s.WebhookID = "string"
+		}
+	}
+	{
+		{
+			s.EventID = "string"
+		}
+	}
+	{
+		{
+			s.EventType = "string"
+		}
+	}
+	{
+		{
+			s.Status.SetFake()
+		}
+	}
+	{
+		{
+			s.AttemptCount = int(0)
+		}
+	}
+	{
+		{
+			s.NextAttemptAt.SetFake()
+		}
+	}
+	{
+		{
+			s.LastAttemptAt.SetFake()
+		}
+	}
+	{
+		{
+			s.DeliveredAt.SetFake()
+		}
+	}
+	{
+		{
+			s.ResponseStatus.SetFake()
+		}
+	}
+	{
+		{
+			s.ResponseBody.SetFake()
+		}
+	}
+	{
+		{
+			s.LastError.SetFake()
+		}
+	}
+	{
+		{
+			s.CreatedAt.SetFake()
+		}
+	}
+	{
+		{
+			s.UpdatedAt.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *WebhookDeliveryStatus) SetFake() {
+	*s = WebhookDeliveryStatusPending
 }

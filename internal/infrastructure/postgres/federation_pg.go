@@ -1176,7 +1176,7 @@ const (
 
 	// fedAccessTTL / fedRefreshTTL bound the access and refresh JWTs minted for an
 	// SSO-provisioned session.
-	fedAccessTTL  = time.Hour
+	fedAccessTTL  = 10 * time.Minute
 	fedRefreshTTL = 30 * 24 * time.Hour
 
 	// fedExchangeCodeTTL bounds the single-use exchange code that maps a verified
@@ -1775,7 +1775,7 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 		return nil, err
 	}
 	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		"iss": acct.ProjectID,
+		"iss": oidcIssuer(acct.ProjectID, signEnv),
 		"sub": acct.ID,
 		"sid": sessionID,
 		"pid": acct.ProjectID,
@@ -1788,7 +1788,7 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 		return nil, err
 	}
 	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		"iss": acct.ProjectID,
+		"iss": oidcIssuer(acct.ProjectID, signEnv),
 		"sub": acct.ID,
 		"sid": sessionID,
 		"pid": acct.ProjectID,
@@ -1798,6 +1798,7 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 	if err != nil {
 		return nil, err
 	}
+	meta := domain.RequestMetaFromContext(ctx)
 	sess := &domain.Session{
 		ID:           sessionID,
 		AccountID:    acct.ID,
@@ -1808,6 +1809,10 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 		RefreshToken: refresh,
 		ExpiresIn:    int(fedAccessTTL / time.Second),
 		CreatedAt:    nowUTC(),
+		DeviceName:   meta.DeviceName,
+		IP:           meta.IP,
+		UserAgent:    meta.UserAgent,
+		Fingerprint:  meta.Fingerprint,
 	}
 	raw, err := marshal(sess)
 	if err != nil {

@@ -18,7 +18,7 @@ VERSION     ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo 
 COMMIT      ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 BUILD_TIME  ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 BUILD_LDFLAGS := -X '$(BUILD_PKG).ServiceName=$(SERVICE_NAME)' -X '$(BUILD_PKG).Version=$(VERSION)' -X '$(BUILD_PKG).Commit=$(COMMIT)' -X '$(BUILD_PKG).BuildTime=$(BUILD_TIME)'
-OGEN        := go run github.com/ogen-go/ogen/cmd/ogen@latest
+OGEN        := go run github.com/ogen-go/ogen/cmd/ogen@v1.20.3
 # ogen consumes OpenAPI 3.0; this is the down-projected build artifact.
 OPENAPI_30  := openapi/.build/openapi.3.0.yaml
 # Postgres store codegen (sqld toolchain): reads schema.sql + queries/*.sql,

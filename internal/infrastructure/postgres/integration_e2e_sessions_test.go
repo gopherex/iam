@@ -32,6 +32,7 @@ func TestE2ESelfManagedSessions(t *testing.T) {
 		"User-Agent":           "ACME-App/2.1 (iPhone; iOS 18)",
 		"X-Forwarded-For":      "203.0.113.7, 10.0.0.1",
 		"X-Device-Fingerprint": "fp-abc123",
+		"X-Device-Name":        "Komeet iOS, iPhone 15",
 	}
 	r := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/sign-up",
 		map[string]any{"email": email, "password": "Sup3rStr0ng!Pass", "name": "Sess"}, hdr)
@@ -55,6 +56,7 @@ func TestE2ESelfManagedSessions(t *testing.T) {
 				ID           string `json:"id"`
 				IP           string `json:"ip"`
 				UserAgent    string `json:"user_agent"`
+				DeviceName   string `json:"device_name"`
 				Current      bool   `json:"current"`
 				LastActiveAt string `json:"last_active_at"`
 			} `json:"data"`
@@ -67,6 +69,7 @@ func TestE2ESelfManagedSessions(t *testing.T) {
 			ID           string `json:"id"`
 			IP           string `json:"ip"`
 			UserAgent    string `json:"user_agent"`
+			DeviceName   string `json:"device_name"`
 			Current      bool   `json:"current"`
 			LastActiveAt string `json:"last_active_at"`
 		}
@@ -84,6 +87,9 @@ func TestE2ESelfManagedSessions(t *testing.T) {
 		if cur.UserAgent != "ACME-App/2.1 (iPhone; iOS 18)" {
 			t.Errorf("user_agent = %q", cur.UserAgent)
 		}
+		if cur.DeviceName != "Komeet iOS, iPhone 15" {
+			t.Errorf("device_name = %q", cur.DeviceName)
+		}
 		if cur.LastActiveAt == "" {
 			t.Error("last_active_at not set")
 		}
@@ -96,7 +102,8 @@ func TestE2ESelfManagedSessions(t *testing.T) {
 			Session struct {
 				Current   bool   `json:"current"`
 				IP        string `json:"ip"`
-				UserAgent string `json:"user_agent"`
+				UserAgent  string `json:"user_agent"`
+				DeviceName string `json:"device_name"`
 			} `json:"session"`
 		}
 		e2eDecode(t, r, &body)
@@ -105,6 +112,9 @@ func TestE2ESelfManagedSessions(t *testing.T) {
 		}
 		if body.Session.IP != "203.0.113.7" {
 			t.Errorf("current ip = %q", body.Session.IP)
+		}
+		if body.Session.DeviceName != "Komeet iOS, iPhone 15" {
+			t.Errorf("current device_name = %q", body.Session.DeviceName)
 		}
 	})
 }

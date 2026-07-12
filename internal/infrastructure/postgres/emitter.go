@@ -41,6 +41,9 @@ func (e *outboxEmitter) Emit(ctx context.Context, ev domain.Event) error {
 	if ev.ID == "" {
 		ev.ID = newUUID()
 	}
+	if ev.Version == 0 {
+		ev.Version = 1
+	}
 	if ev.OccurredAt.IsZero() {
 		ev.OccurredAt = nowUTC()
 	}

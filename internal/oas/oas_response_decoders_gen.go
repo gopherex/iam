@@ -10692,7 +10692,7 @@ func decodeGetV1ProjectsByProjectIdAdminUsersByUserIdSessionsResponse(resp *http
 	return res, errors.Wrap(defRes, "error")
 }
 
-func decodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesResponse(resp *http.Response) (res GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, _ error) {
+func decodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesResponse(resp *http.Response) (res *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -10725,7 +10725,16 @@ func decodeGetV1ProjectsByProjectIdAdminWebhookDeliveriesResponse(resp *http.Res
 				}
 				return res, err
 			}
-			return response, nil
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -22975,7 +22984,7 @@ func decodePostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestResponse(resp
 	return res, errors.Wrap(defRes, "error")
 }
 
-func decodePostV1ProjectsByProjectIdAdminEventsByEventIdReplayResponse(resp *http.Response) (res PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, _ error) {
+func decodePostV1ProjectsByProjectIdAdminEventsByEventIdReplayResponse(resp *http.Response) (res *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -23008,7 +23017,16 @@ func decodePostV1ProjectsByProjectIdAdminEventsByEventIdReplayResponse(resp *htt
 				}
 				return res, err
 			}
-			return response, nil
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -26310,7 +26328,7 @@ func decodePostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneResponse(resp *
 	return res, errors.Wrap(defRes, "error")
 }
 
-func decodePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryResponse(resp *http.Response) (res PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, _ error) {
+func decodePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryResponse(resp *http.Response) (res *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -26343,7 +26361,16 @@ func decodePostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryRespo
 				}
 				return res, err
 			}
-			return response, nil
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -26604,7 +26631,7 @@ func decodePostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretResponse(resp *
 	return res, errors.Wrap(defRes, "error")
 }
 
-func decodePostV1ProjectsByProjectIdAdminWebhooksByIdTestResponse(resp *http.Response) (res PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, _ error) {
+func decodePostV1ProjectsByProjectIdAdminWebhooksByIdTestResponse(resp *http.Response) (res *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -26637,7 +26664,16 @@ func decodePostV1ProjectsByProjectIdAdminWebhooksByIdTestResponse(resp *http.Res
 				}
 				return res, err
 			}
-			return response, nil
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}

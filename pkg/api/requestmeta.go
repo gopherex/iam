@@ -12,6 +12,10 @@ import (
 // present it is bound to the session for self-managed-session UIs.
 const DeviceFingerprintHeader = "X-Device-Fingerprint"
 
+// DeviceNameHeader carries the human-readable device label shown in session
+// management UIs. It is metadata, not an authentication factor.
+const DeviceNameHeader = "X-Device-Name"
+
 // RequestMetaMiddleware captures the originating device/network context (client
 // IP, User-Agent, optional fingerprint) into the request context so the
 // session-minting path can record it on the session. Place it early in the
@@ -21,10 +25,19 @@ func RequestMetaMiddleware(next http.Handler) http.Handler {
 		meta := domain.RequestMeta{
 			IP:          clientIP(r),
 			UserAgent:   r.Header.Get("User-Agent"),
-			Fingerprint: r.Header.Get(DeviceFingerprintHeader),
+			Fingerprint: truncateRunes(strings.TrimSpace(r.Header.Get(DeviceFingerprintHeader)), 256),
+			DeviceName:  truncateRunes(strings.TrimSpace(r.Header.Get(DeviceNameHeader)), 1024),
 		}
 		next.ServeHTTP(w, r.WithContext(domain.WithRequestMeta(r.Context(), meta)))
 	})
+}
+
+func truncateRunes(value string, limit int) string {
+	runes := []rune(value)
+	if len(runes) <= limit {
+		return value
+	}
+	return string(runes[:limit])
 }
 
 // trustedProxyNets is the set of reverse-proxy/LB networks whose forwarding

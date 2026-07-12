@@ -518,7 +518,7 @@ type AdminInvoker interface {
 	// List deliveries.
 	//
 	// GET /v1/projects/{project_id}/admin/webhook-deliveries
-	GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error)
+	GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error)
 	// GetV1ProjectsByProjectIdAdminWebhooks invokes getV1ProjectsByProjectIdAdminWebhooks operation.
 	//
 	// List webhooks.
@@ -626,7 +626,7 @@ type AdminInvoker interface {
 	// Update a webhook.
 	//
 	// PATCH /v1/projects/{project_id}/admin/webhooks/{id}
-	PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error)
+	PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error)
 	// PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove invokes postV1ProjectsByProjectIdAdminAccessRequestsByIdApprove operation.
 	//
 	// Approve an access request.
@@ -680,7 +680,7 @@ type AdminInvoker interface {
 	// Replay an event to webhooks.
 	//
 	// POST /v1/projects/{project_id}/admin/events/{event_id}/replay
-	PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error)
+	PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error)
 	// PostV1ProjectsByProjectIdAdminHooks invokes postV1ProjectsByProjectIdAdminHooks operation.
 	//
 	// Create a hook.
@@ -848,7 +848,7 @@ type AdminInvoker interface {
 	// Retry a delivery.
 	//
 	// POST /v1/projects/{project_id}/admin/webhook-deliveries/{delivery_id}/retry
-	PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error)
+	PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error)
 	// PostV1ProjectsByProjectIdAdminWebhooks invokes postV1ProjectsByProjectIdAdminWebhooks operation.
 	//
 	// Create a webhook.
@@ -866,7 +866,7 @@ type AdminInvoker interface {
 	// Send a test event.
 	//
 	// POST /v1/projects/{project_id}/admin/webhooks/{id}/test
-	PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error)
+	PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error)
 	// PostV1TestClock invokes postV1TestClock operation.
 	//
 	// Advance/reset the test clock.
@@ -20974,12 +20974,12 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx cont
 // List deliveries.
 //
 // GET /v1/projects/{project_id}/admin/webhook-deliveries
-func (c *Client) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, options ...RequestOption) (GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error) {
+func (c *Client) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error) {
 	res, err := c.sendGetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, requestOptions ...RequestOption) (res GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, err error) {
+func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams, requestOptions ...RequestOption) (res *GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getV1ProjectsByProjectIdAdminWebhookDeliveries"),
 		semconv.HTTPRequestMethodKey.String("GET"),
@@ -21078,7 +21078,7 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
 			if val, ok := params.Status.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
+				return e.EncodeValue(conv.StringToString(string(val)))
 			}
 			return nil
 		}); err != nil {
@@ -27903,12 +27903,21 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Co
 // Update a webhook.
 //
 // PATCH /v1/projects/{project_id}/admin/webhooks/{id}
-func (c *Client) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error) {
+func (c *Client) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error) {
 	res, err := c.sendPatchV1ProjectsByProjectIdAdminWebhooksById(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, err error) {
+func (c *Client) sendPatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, request *PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params PatchV1ProjectsByProjectIdAdminWebhooksByIdParams, requestOptions ...RequestOption) (res *PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminWebhooksById"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
@@ -40701,12 +40710,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ct
 // Replay an event to webhooks.
 //
 // POST /v1/projects/{project_id}/admin/events/{event_id}/replay
-func (c *Client) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, request OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if value, ok := request.Get(); ok {
@@ -47291,12 +47300,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx 
 // Retry a delivery.
 //
 // POST /v1/projects/{project_id}/admin/webhook-deliveries/{delivery_id}/retry
-func (c *Client) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("postV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -47862,12 +47871,12 @@ func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx 
 // Send a test event.
 //
 // POST /v1/projects/{project_id}/admin/webhooks/{id}/test
-func (c *Client) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, options ...RequestOption) (PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error) {
+func (c *Client) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, options ...RequestOption) (*PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error) {
 	res, err := c.sendPostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx, request, params, options...)
 	return res, err
 }
 
-func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, requestOptions ...RequestOption) (res PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, err error) {
+func (c *Client) sendPostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, request *PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams, requestOptions ...RequestOption) (res *PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, err error) {
 	// Validate request before sending.
 	if err := func() error {
 		if err := request.Validate(); err != nil {
