@@ -39,7 +39,7 @@ subscription:
 
 | Event | Data |
 | --- | --- |
-| `session.revoked` | `session_id`, `user_id`, `project_id`, `reason` |
+| `session.revoked` | `session_id`, `user_id`, `project_id` |
 | `user.banned` | `user_id`, `status=banned` |
 | `user.deleted` | `user_id` |
 | `email.changed` | `user_id`, `email`, `email_verified` |
@@ -57,22 +57,22 @@ during which deliveries include signatures made by both secrets.
 For each request IAM sends:
 
 ```text
-IAM-Event-ID: <event id>
-IAM-Webhook-ID: <webhook id>
-IAM-Webhook-Timestamp: <unix seconds>
-IAM-Webhook-Signature: t=<unix seconds>,v1=<hex hmac sha256>[,v1=<old-secret signature>]
+webhook-id: <event id>
+webhook-timestamp: <unix seconds>
+webhook-signature: v1,<base64 hmac sha256>[ v1,<old-secret signature>]
 ```
 
-The signed bytes are the ASCII timestamp, a dot, and the exact raw HTTP body:
+IAM uses the Standard Webhooks format. The signed bytes are the event id, a
+dot, the ASCII timestamp, a dot, and the exact raw HTTP body:
 
 ```text
-HMAC-SHA256(signing_secret, timestamp + "." + raw_body)
+HMAC-SHA256(signing_secret, event_id + "." + timestamp + "." + raw_body)
 ```
 
-Verify at least one `v1` value with a constant-time comparison before decoding
-or acting on the body. Reject timestamps outside the consumer's replay window
-(five minutes is recommended), and confirm the header timestamp equals the
-signed timestamp.
+Use `sdk.NewWebhookVerifier` to verify at least one `v1` value with a
+constant-time comparison before decoding the body. It rejects timestamps
+outside a five-minute window by default. Consumers own replay persistence and
+should record the verified event `id` before applying side effects.
 
 Non-2xx responses and network errors are retried with exponential backoff,
 capped at five minutes, for up to 10 outbox attempts. Successful deliveries are

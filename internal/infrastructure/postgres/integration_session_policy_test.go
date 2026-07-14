@@ -47,6 +47,23 @@ func (e *recordingEmitter) count(typ string) int {
 	return n
 }
 
+func (e *recordingEmitter) sessionRevoked() []domain.SessionRevokedPayload {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	var payloads []domain.SessionRevokedPayload
+	for _, ev := range e.events {
+		if ev.Type != domain.WebhookEventSessionRevoked {
+			continue
+		}
+		payload, ok := ev.Payload.(domain.SessionRevokedPayload)
+		if !ok {
+			continue
+		}
+		payloads = append(payloads, payload)
+	}
+	return payloads
+}
+
 // backdateSession moves a session's created_at / last_active_at into the past so
 // a time-based policy check trips deterministically.
 func backdateSession(t *testing.T, ctx context.Context, sessionID string, created, lastActive time.Time) {
@@ -214,6 +231,15 @@ func TestSessionPolicyReuseDetectionOn(t *testing.T) {
 	}
 	if rec.count("token.reuse_detected") != 1 {
 		t.Errorf("token.reuse_detected emitted %d times, want 1", rec.count("token.reuse_detected"))
+	}
+	payloads := rec.sessionRevoked()
+	if len(payloads) != 2 {
+		t.Fatalf("session.revoked count = %d, want 2", len(payloads))
+	}
+	for _, payload := range payloads {
+		if payload.SessionID == "" || payload.UserID != acct.ID || payload.ProjectID != projectID {
+			t.Fatalf("bad session.revoked payload: %+v", payload)
+		}
 	}
 	// Cascade revoked ALL of the user's sessions, including the untouched B.
 	if _, _, err := ca.Refresh(ctx, sB.RefreshToken); err == nil {

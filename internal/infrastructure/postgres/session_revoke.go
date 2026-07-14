@@ -14,7 +14,7 @@ import (
 // account and admin paths. Keeping it here prevents event-name/payload drift and
 // guarantees refresh tokens are invalidated before the session disappears.
 // The caller must already be inside a transaction.
-func revokeSessionRecord(ctx context.Context, db *DB, emitter Emitter, row *models.IamSession, reason string) error {
+func revokeSessionRecord(ctx context.Context, db *DB, emitter Emitter, row *models.IamSession, _ string) error {
 	refreshTokens, err := models.IamRefreshTokens.Query(
 		sm.Where(models.IamRefreshTokens.Columns.ProjectID.EQ(psql.Arg(row.ProjectID))),
 		sm.Where(models.IamRefreshTokens.Columns.SessionID.EQ(psql.Arg(row.ID))),
@@ -43,19 +43,15 @@ func revokeSessionRecord(ctx context.Context, db *DB, emitter Emitter, row *mode
 	if err := row.Delete(ctx, db.Bobx()); err != nil {
 		return err
 	}
-	payload := map[string]any{
-		"session_id": row.ID,
-		"user_id":    row.UserID,
-		"project_id": row.ProjectID,
-	}
-	if reason != "" {
-		payload["reason"] = reason
-	}
 	return emitter.Emit(ctx, domain.Event{
 		Type:        domain.WebhookEventSessionRevoked,
 		ProjectID:   row.ProjectID,
 		Environment: row.Environment,
 		AggregateID: row.ID,
-		Payload:     payload,
+		Payload: domain.SessionRevokedPayload{
+			SessionID: row.ID,
+			UserID:    row.UserID,
+			ProjectID: row.ProjectID,
+		},
 	})
 }

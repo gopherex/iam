@@ -21,6 +21,7 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 	var fail atomic.Bool
 	var calls atomic.Int32
 	var lastSignature atomic.Value
+	projectID := newUUID()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls.Add(1)
 		lastSignature.Store(r.Header.Get("IAM-Webhook-Signature"))
@@ -30,6 +31,11 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 		}
 		if event.ID == "" || event.Version != 1 {
 			t.Errorf("bad event envelope: %+v", event)
+		}
+		if event.Type == domain.WebhookEventSessionRevoked {
+			if event.Data["session_id"] == "" || event.Data["user_id"] == "" || event.Data["project_id"] != projectID {
+				t.Errorf("bad session.revoked data: %#v", event.Data)
+			}
 		}
 		if fail.Load() {
 			http.Error(w, "retry", http.StatusServiceUnavailable)
@@ -44,7 +50,6 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 	defer testDB.UseCipher(oldCipher)
 
 	service := NewPgWebhooks(testDB, server.Client())
-	projectID := newUUID()
 	idempotencyKey := newUUID()
 	created, secret, err := service.Create(ctx, domain.WebhookCreateCmd{
 		ProjectID: projectID, Environment: "live", URL: server.URL,
@@ -77,7 +82,7 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 	if err := service.PublishEvent(ctx, domain.Event{
 		ID: eventID, Type: domain.WebhookEventSessionRevoked, ProjectID: projectID,
 		Environment: "live", AggregateID: "s1", OccurredAt: time.Now().UTC(),
-		Payload: map[string]any{"session_id": "s1", "user_id": "u1", "reason": "test"},
+		Payload: domain.SessionRevokedPayload{SessionID: "s1", UserID: "u1", ProjectID: projectID},
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +90,7 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 	if err != nil || len(deliveries) != 1 || deliveries[0].Status != "succeeded" {
 		t.Fatalf("deliveries=%+v err=%v", deliveries, err)
 	}
-	if signature, _ := lastSignature.Load().(string); !strings.Contains(signature, "t=") || !strings.Contains(signature, "v1=") {
+	if signature, _ := lastSignature.Load().(string); !strings.Contains(signature, "v1,") {
 		t.Fatalf("bad signature header: %q", signature)
 	}
 
@@ -96,7 +101,7 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 	if _, err := service.Test(ctx, projectID, "live", created.ID, domain.WebhookEventSessionRevoked); err != nil {
 		t.Fatal(err)
 	}
-	if signature, _ := lastSignature.Load().(string); strings.Count(signature, "v1=") != 2 {
+	if signature, _ := lastSignature.Load().(string); strings.Count(signature, "v1,") != 2 {
 		t.Fatalf("rotation overlap must emit two signatures: %q", signature)
 	}
 
@@ -105,7 +110,7 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 	err = service.PublishEvent(ctx, domain.Event{
 		ID: failedEventID, Type: domain.WebhookEventSessionRevoked, ProjectID: projectID,
 		Environment: "live", AggregateID: "s2", OccurredAt: time.Now().UTC(),
-		Payload: map[string]any{"session_id": "s2", "user_id": "u1"},
+		Payload: domain.SessionRevokedPayload{SessionID: "s2", UserID: "u1", ProjectID: projectID},
 	})
 	if err == nil {
 		t.Fatal("failed endpoint must ask outbox for a retry")
@@ -128,4 +133,3 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 		t.Fatal(fmt.Sprintf("expected delivery calls, got %d", calls.Load()))
 	}
 }
-

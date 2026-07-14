@@ -5,7 +5,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -62,6 +62,14 @@ func normalizeWebhookLimit(limit int) int {
 		return webhookMaxPageLimit
 	}
 	return limit
+}
+
+func newWebhookSigningSecret() (string, error) {
+	token, err := coreAuthRandomToken()
+	if err != nil {
+		return "", err
+	}
+	return "whsec_" + base64.StdEncoding.EncodeToString([]byte(token)), nil
 }
 
 func validateWebhookURL(raw string) error {
@@ -225,7 +233,7 @@ func (a *PgWebhooks) Create(ctx context.Context, cmd domain.WebhookCreateCmd) (*
 			return nil, "", err
 		}
 	}
-	secret, err := coreAuthRandomToken()
+	secret, err := newWebhookSigningSecret()
 	if err != nil {
 		return nil, "", err
 	}
@@ -321,7 +329,7 @@ func (a *PgWebhooks) RotateSecret(ctx context.Context, projectID, environment, i
 		if err != nil {
 			return "", err
 		}
-		secret, err := coreAuthRandomToken()
+		secret, err := newWebhookSigningSecret()
 		if err != nil {
 			return "", err
 		}
@@ -362,18 +370,16 @@ func publicEventFromDomain(ev domain.Event) (domain.PublicEvent, string, bool) {
 	userID := ""
 	switch ev.Type {
 	case domain.WebhookEventSessionRevoked:
-		data = publicMap(ev.Payload)
-		if value := firstString(data, "session_id", "id"); value != "" {
-			data["session_id"] = value
-		} else {
-			data["session_id"] = ev.AggregateID
+		payload, ok := sessionRevokedPayload(ev.Payload)
+		if !ok || payload.SessionID == "" || payload.UserID == "" || payload.ProjectID != ev.ProjectID {
+			return domain.PublicEvent{}, "", false
 		}
-		delete(data, "id")
-		userID = firstString(data, "user_id", "account_id")
-		if userID != "" {
-			data["user_id"] = userID
+		userID = payload.UserID
+		data = map[string]any{
+			"session_id": payload.SessionID,
+			"user_id":    payload.UserID,
+			"project_id": payload.ProjectID,
 		}
-		delete(data, "account_id")
 	case domain.WebhookEventUserBanned:
 		account := accountFromPayload(ev.Payload)
 		userID = account.ID
@@ -404,6 +410,23 @@ func publicEventFromDomain(ev domain.Event) (domain.PublicEvent, string, bool) {
 		ID: ev.ID, Type: ev.Type, Version: ev.Version, OccurredAt: ev.OccurredAt,
 		ProjectID: ev.ProjectID, Environment: ev.Environment, Data: data,
 	}, userID, true
+}
+
+func sessionRevokedPayload(value any) (domain.SessionRevokedPayload, bool) {
+	switch payload := value.(type) {
+	case domain.SessionRevokedPayload:
+		return payload, true
+	case *domain.SessionRevokedPayload:
+		if payload != nil {
+			return *payload, true
+		}
+	}
+	data := publicMap(value)
+	return domain.SessionRevokedPayload{
+		SessionID: firstString(data, "session_id"),
+		UserID:    firstString(data, "user_id"),
+		ProjectID: firstString(data, "project_id"),
+	}, true
 }
 
 func accountFromPayload(payload any) domain.Account {
@@ -548,11 +571,11 @@ func (a *PgWebhooks) loadDeliveryParts(ctx context.Context, deliveryID string) (
 	return delivery, webhook, event, nil
 }
 
-func webhookSignature(secret string, timestamp int64, body []byte) string {
+func webhookSignature(secret, eventID string, timestamp int64, body []byte) string {
 	mac := hmac.New(sha256.New, []byte(secret))
-	_, _ = fmt.Fprintf(mac, "%d.", timestamp)
+	_, _ = fmt.Fprintf(mac, "%s.%d.", eventID, timestamp)
 	_, _ = mac.Write(body)
-	return hex.EncodeToString(mac.Sum(nil))
+	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
 
 func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool) (*domain.WebhookDelivery, error) {
@@ -568,9 +591,9 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 		return nil, err
 	}
 	timestamp := nowUTC().Unix()
-	signatures := []string{"t=" + fmt.Sprint(timestamp), "v1=" + webhookSignature(webhook.SigningSecret, timestamp, body)}
+	signatures := []string{"v1," + webhookSignature(webhook.SigningSecret, event.ID, timestamp, body)}
 	if webhook.PreviousSigningSecret != "" && nowUTC().Before(webhook.PreviousSecretValidUntil) {
-		signatures = append(signatures, "v1="+webhookSignature(webhook.PreviousSigningSecret, timestamp, body))
+		signatures = append(signatures, "v1,"+webhookSignature(webhook.PreviousSigningSecret, event.ID, timestamp, body))
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhook.URL, bytes.NewReader(body))
 	if err != nil {
@@ -578,10 +601,9 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "gopherex-iam-webhooks/1")
-	req.Header.Set("IAM-Event-ID", event.ID)
-	req.Header.Set("IAM-Webhook-ID", webhook.ID)
-	req.Header.Set("IAM-Webhook-Timestamp", fmt.Sprint(timestamp))
-	req.Header.Set("IAM-Webhook-Signature", strings.Join(signatures, ","))
+	req.Header.Set("webhook-id", event.ID)
+	req.Header.Set("webhook-timestamp", fmt.Sprint(timestamp))
+	req.Header.Set("webhook-signature", strings.Join(signatures, " "))
 
 	attemptedAt := nowUTC()
 	response, requestErr := a.httpClient.Do(req)

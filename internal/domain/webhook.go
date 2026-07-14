@@ -99,6 +99,14 @@ type PublicEvent struct {
 	Data        map[string]any `json:"data"`
 }
 
+// SessionRevokedPayload is the stable public payload for session.revoked.
+// SessionID is the exact session identifier placed in the JWT sid claim.
+type SessionRevokedPayload struct {
+	SessionID string `json:"session_id"`
+	UserID    string `json:"user_id"`
+	ProjectID string `json:"project_id"`
+}
+
 type WebhookEventListCmd struct {
 	ProjectID   string
 	Environment string
