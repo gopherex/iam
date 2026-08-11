@@ -21,7 +21,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -91,13 +90,6 @@ func flowMintToken() (token, hash string, err error) {
 func flowHashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
-}
-
-// flowCompareToken reports whether the supplied token matches the stored hash in
-// constant time (§5 rule 1). Kept for callers that want explicit compare.
-func flowCompareToken(token, storedHash string) bool {
-	h := flowHashToken(token)
-	return subtle.ConstantTimeCompare([]byte(h), []byte(storedHash)) == 1
 }
 
 // ─── data envelope ──────────────────────────────────────────────────────────

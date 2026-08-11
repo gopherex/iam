@@ -15,7 +15,6 @@ package postgres
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -249,17 +248,6 @@ func (a *pgWebAuthnAccounts) loadLibraryCredentials(ctx context.Context, account
 }
 
 // ----- challenge persistence helpers -----
-
-// webauthnRandomChallenge mints a fresh, URL-safe random challenge string for
-// the publicKey options (crypto/rand, never predictable).
-func webauthnRandomChallenge() (string, error) {
-	buf := make([]byte, 32)
-	if _, err := rand.Read(buf); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(buf), nil
-}
 
 // webauthnHash returns the sha256 hex digest of an opaque value; only digests
 // are persisted, never the plaintext challenge/credential material.

@@ -1232,9 +1232,6 @@ func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accou
 // access-token JWT.
 const mfaDefaultEnv = "live"
 
-// mfaAccessTTL bounds the minted access-token JWT.
-const mfaAccessTTL = 10 * time.Minute
-
 // mfaMintSession produces and PERSISTS a session for a freshly verified (AAL2)
 // account by delegating to core-auth's canonical minter. Previously this built a
 // session with a signed access JWT but never wrote iam_sessions / a refresh-token

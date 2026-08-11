@@ -40,14 +40,6 @@ import (
 )
 
 const (
-	// oauthSocialDefaultEnv is the environment whose signing key mints the access
-	// token for a social login session.
-	oauthSocialDefaultEnv = "live"
-
-	// timeSecondDur is time.Second, used to derive ExpiresIn (seconds) from the
-	// access-token TTL.
-	timeSecondDur = time.Second
-
 	// oauthSocialAccessTTL / oauthSocialRefreshTTL bound the minted access and
 	// refresh JWTs.
 	oauthSocialAccessTTL  = 10 * time.Minute
