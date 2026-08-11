@@ -890,6 +890,13 @@ func (a *pgOAuthSocial) loadOAuthConfig(ctx context.Context, projectID, provider
 	}
 
 	d := raw.resolved()
+	// The admin surface stores the client secret AES-GCM-encrypted; decrypt it
+	// here. A legacy/IaC-provisioned cleartext secret fails to decrypt and is
+	// used as-is, so both storage forms work during the transition.
+	if dec, decErr := a.db.Cipher.Decrypt(d.ClientSecret); decErr == nil {
+		d.ClientSecret = dec
+	}
+
 	if d.ClientID == "" || d.AuthURL == "" || d.TokenURL == "" {
 		return nil, nil, domain.ErrProviderError.WithMessage("oauth provider misconfigured: missing client_id/auth_url/token_url")
 	}

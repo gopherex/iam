@@ -183,6 +183,18 @@ type AdminProvider struct {
 	Enabled bool
 }
 
+// AdminOAuthProvider is a configured OAuth social login provider (google,
+// github, …). ClientSecret is write-only: it is accepted on create/update but
+// never returned on read (empty).
+type AdminOAuthProvider struct {
+	ID           string
+	Provider     string
+	ClientID     string
+	ClientSecret string
+	Scopes       []string
+	Enabled      bool
+}
+
 // AdminProviderCmd creates or replaces a notification provider.
 type AdminProviderCmd struct {
 	ProjectID   string

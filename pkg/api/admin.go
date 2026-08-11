@@ -118,6 +118,10 @@ type AdminConfig interface {
 	CreateSmsProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error)
 	UpdateSmsProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error)
 	DeleteSmsProvider(ctx context.Context, cmd domain.AdminProviderDeleteCmd) error
+	ListOAuthProviders(ctx context.Context, projectID string) ([]domain.AdminOAuthProvider, error)
+	CreateOAuthProvider(ctx context.Context, projectID string, p domain.AdminOAuthProvider) (domain.AdminOAuthProvider, error)
+	UpdateOAuthProvider(ctx context.Context, projectID, id string, p domain.AdminOAuthProvider) (domain.AdminOAuthProvider, error)
+	DeleteOAuthProvider(ctx context.Context, projectID, id string) error
 
 	// Email templates.
 	ListEmailTemplates(ctx context.Context, cmd domain.AdminConfigGetCmd) (map[string]jx.Raw, error)
@@ -668,6 +672,94 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminEmailProviders(ctx context.C
 	}
 
 	return &oas.GetV1ProjectsByProjectIdAdminEmailProvidersOK{Data: data}, nil
+}
+
+func oasAdminOAuthProvider(p domain.AdminOAuthProvider) oas.OAuthProviderConfig {
+	out := oas.OAuthProviderConfig{
+		Provider: p.Provider,
+		Scopes:   p.Scopes,
+		Enabled:  oas.NewOptBool(p.Enabled),
+	}
+	if p.ID != "" {
+		out.ID = oas.NewOptString(p.ID)
+	}
+
+	if p.ClientID != "" {
+		out.ClientID = oas.NewOptString(p.ClientID)
+	}
+	// ClientSecret is write-only; never echoed back.
+	return out
+}
+
+func adminOAuthProviderFromReq(req *oas.OAuthProviderConfig) domain.AdminOAuthProvider {
+	return domain.AdminOAuthProvider{
+		ID:           req.ID.Or(""),
+		Provider:     req.Provider,
+		ClientID:     req.ClientID.Or(""),
+		ClientSecret: req.ClientSecret.Or(""),
+		Scopes:       req.Scopes,
+		Enabled:      req.Enabled.Or(false),
+	}
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminOauthProvidersParams) (*oas.GetV1ProjectsByProjectIdAdminOauthProvidersOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	provs, err := s.deps.Config.ListOAuthProviders(ctx, params.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]oas.OAuthProviderConfig, 0, len(provs))
+	for i := range provs {
+		data = append(data, oasAdminOAuthProvider(provs[i]))
+	}
+
+	return &oas.GetV1ProjectsByProjectIdAdminOauthProvidersOK{Data: data}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, req *oas.OAuthProviderConfig, params oas.PostV1ProjectsByProjectIdAdminOauthProvidersParams) (*oas.OAuthProviderConfig, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	prov, err := s.deps.Config.CreateOAuthProvider(ctx, params.ProjectID, adminOAuthProviderFromReq(req))
+	if err != nil {
+		return nil, err
+	}
+
+	out := oasAdminOAuthProvider(prov)
+
+	return &out, nil
+}
+
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, req *oas.OAuthProviderConfig, params oas.PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams) (*oas.OAuthProviderConfig, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	prov, err := s.deps.Config.UpdateOAuthProvider(ctx, params.ProjectID, params.ID, adminOAuthProviderFromReq(req))
+	if err != nil {
+		return nil, err
+	}
+
+	out := oasAdminOAuthProvider(prov)
+
+	return &out, nil
+}
+
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams) (*oas.Ok, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	if err := s.deps.Config.DeleteOAuthProvider(ctx, params.ProjectID, params.ID); err != nil {
+		return nil, err
+	}
+
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminEmailTemplatesParams) (r oas.GetV1ProjectsByProjectIdAdminEmailTemplatesOK, _ error) {
