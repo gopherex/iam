@@ -187,6 +187,14 @@ type AdminDeps struct {
 	Invites         AdminInvites
 	Webhooks        AdminWebhooks
 	Grants          AdminGrants
+	Audit           AdminAudit
+}
+
+// AdminAudit reads the tenant audit log and enqueues export jobs.
+type AdminAudit interface {
+	List(ctx context.Context, cmd domain.AuditLogListCmd) ([]domain.AuditLogEntry, string, bool, error)
+	Get(ctx context.Context, projectID, id string) (*domain.AuditLogEntry, error)
+	CreateExport(ctx context.Context, cmd domain.AuditExportCmd) (jobID string, status string, err error)
 }
 
 // AdminGrants is the admin view over a user's OAuth consent grants. It reuses the
@@ -760,6 +768,95 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx co
 	}
 
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
+}
+
+func oasAuditLog(e domain.AuditLogEntry) oas.AuditLog {
+	out := oas.AuditLog{
+		ID:   oas.NewOptString(e.ID),
+		Type: oas.NewOptString(e.Type),
+		At:   oas.NewOptTimestamp(oas.Timestamp(e.At)),
+	}
+	if e.ActorID != "" {
+		out.ActorID = oas.NewOptNilString(e.ActorID)
+	}
+
+	if e.TargetID != "" {
+		out.TargetID = oas.NewOptNilString(e.TargetID)
+	}
+
+	if e.Data != nil {
+		out.Data = oas.NewOptAuditLogData(oas.AuditLogData(e.Data))
+	}
+
+	return out
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAuditLogsParams) (*oas.GetV1ProjectsByProjectIdAdminAuditLogsOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	entries, next, hasMore, err := s.deps.Audit.List(ctx, domain.AuditLogListCmd{
+		ProjectID: params.ProjectID,
+		ActorID:   params.ActorID.Or(""),
+		TargetID:  params.TargetID.Or(""),
+		Type:      params.Type.Or(""),
+		Cursor:    params.Cursor.Or(""),
+		Limit:     params.Limit.Or(0),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]oas.AuditLog, 0, len(entries))
+	for i := range entries {
+		data = append(data, oasAuditLog(entries[i]))
+	}
+
+	out := &oas.GetV1ProjectsByProjectIdAdminAuditLogsOK{Data: data, HasMore: oas.NewOptBool(hasMore)}
+	if next != "" {
+		out.NextCursor = oas.NewOptNilString(next)
+	}
+
+	return out, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams) (*oas.GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	entry, err := s.deps.Audit.Get(ctx, params.ProjectID, params.AuditID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &oas.GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK{AuditLog: oas.NewOptAuditLog(oasAuditLog(*entry))}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminAuditExportReq, params oas.PostV1ProjectsByProjectIdAdminAuditExportParams) (*oas.PostV1ProjectsByProjectIdAdminAuditExportOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	cmd := domain.AuditExportCmd{ProjectID: params.ProjectID, Format: req.Format.Or("json")}
+	if v, ok := req.From.Get(); ok {
+		cmd.From = v
+	}
+
+	if v, ok := req.To.Get(); ok {
+		cmd.To = v
+	}
+
+	jobID, status, err := s.deps.Audit.CreateExport(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return &oas.PostV1ProjectsByProjectIdAdminAuditExportOK{
+		JobID:  oas.NewOptString(jobID),
+		Status: oas.NewOptString(status),
+	}, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminEmailTemplatesParams) (r oas.GetV1ProjectsByProjectIdAdminEmailTemplatesOK, _ error) {

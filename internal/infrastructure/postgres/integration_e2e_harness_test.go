@@ -93,7 +93,10 @@ var e2eEmitter = &e2eCaptureEmitter{}
 // and would make assertions flaky.
 func e2eServer(t *testing.T) *httptest.Server {
 	t.Helper()
-	em := e2eEmitter
+	// Wrap the capture emitter with auditing so privileged mutations write audit
+	// rows (as production does); the capture emitter is still the inner sink, so
+	// payloadFor lookups keep working.
+	em := Emitter(NewAuditingEmitter(testDB, e2eEmitter))
 	platform := NewPgPlatform(testDB)
 	coreAuth := NewPgCoreAuth(testDB, em, nil)
 
@@ -147,6 +150,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 			AccessRequests:  NewPgAdminAccessRequests(testDB, em),
 			Invites:         NewPgInvites(testDB, em),
 			Grants:          NewPgOIDCGrants(testDB, em),
+			Audit:           NewPgAudit(testDB, em),
 		})),
 		api.WithOperator(api.NewOperatorService(api.OperatorDeps{
 			Projects: NewPgOperator(testDB, em),

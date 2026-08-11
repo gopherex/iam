@@ -154,7 +154,9 @@ func run() error {
 		return err
 	}
 
-	emitter := postgres.NewOutboxEmitter(ob)
+	// Wrap the emitter so privileged (admin/operator/service) mutations record an
+	// audit-log row in the same transaction as the mutation.
+	emitter := postgres.NewAuditingEmitter(db, postgres.NewOutboxEmitter(ob))
 
 	// ----- optional root seed (operator gets a project to manage) -----
 	if cfg.Service.Auth.SeedRoot {
@@ -422,6 +424,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 			Invites:         postgres.NewPgInvites(db, emitter),
 			Webhooks:        webhooks,
 			Grants:          postgres.NewPgOIDCGrants(db, emitter),
+			Audit:           postgres.NewPgAudit(db, emitter),
 		})),
 		api.WithOperator(api.NewOperatorService(api.OperatorDeps{
 			Projects: postgres.NewPgOperator(db, emitter),

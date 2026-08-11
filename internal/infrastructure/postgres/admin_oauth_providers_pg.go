@@ -89,6 +89,15 @@ func (a *pgAdminConfig) CreateOAuthProvider(ctx context.Context, projectID strin
 		p.ID = id
 		p.ClientSecret = ""
 
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:      "config.oauth_provider_created",
+			ProjectID: projectID,
+			AggregateID: id,
+			Payload:   map[string]any{"id": id, "provider": p.Provider},
+		}); err != nil {
+			return domain.AdminOAuthProvider{}, err
+		}
+
 		return p, nil
 	})
 }
@@ -132,6 +141,13 @@ func (a *pgAdminConfig) UpdateOAuthProvider(ctx context.Context, projectID, id s
 
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamProviderSetter{
 			Provider: &provider, Enabled: &p.Enabled, Data: &rm, UpdatedAt: &now,
+		}); err != nil {
+			return domain.AdminOAuthProvider{}, err
+		}
+
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type: "config.oauth_provider_updated", ProjectID: projectID, AggregateID: id,
+			Payload: map[string]any{"id": id, "provider": provider},
 		}); err != nil {
 			return domain.AdminOAuthProvider{}, err
 		}
