@@ -65,3 +65,31 @@ func TestAccountLockoutResetsOnSuccess(t *testing.T) {
 		t.Fatalf("counter was not reset — locked too early: %v", err)
 	}
 }
+
+// TestMFAChallengeAttemptLimit verifies a single MFA challenge is consumed after
+// too many wrong codes, so it cannot be brute-forced indefinitely.
+func TestMFAChallengeAttemptLimit(t *testing.T) {
+	ctx := context.Background()
+	projectID := newUUID()
+	ca := NewPgCoreAuth(testDB, &recordingEmitter{}, NewConfigReader(testDB, time.Minute))
+	acct := registerForPolicy(t, ctx, ca, projectID)
+	factorID := e2eActiveEmailFactor(t, ctx, projectID, acct.ID, acct.PrimaryEmail)
+
+	mfa := NewPgMFAAccounts(testDB, e2eEmitter, nil)
+	ch, err := mfa.Challenge(ctx, acct.ID, factorID)
+	if err != nil {
+		t.Fatalf("issue challenge: %v", err)
+	}
+
+	for i := range mfaMaxVerifyAttempts {
+		if _, _, err := mfa.Verify(ctx, ch.ID, "000000"); !errors.Is(err, domain.ErrMFAInvalid) {
+			t.Fatalf("wrong attempt %d: got %v, want mfa_invalid", i+1, err)
+		}
+	}
+
+	// Challenge is now consumed: further verification is rejected outright, even
+	// with the (unknown here) correct code.
+	if _, _, err := mfa.Verify(ctx, ch.ID, "000000"); !errors.Is(err, domain.ErrChallengeInvalid) {
+		t.Fatalf("after %d wrong attempts: got %v, want challenge_invalid", mfaMaxVerifyAttempts, err)
+	}
+}

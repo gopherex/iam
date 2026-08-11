@@ -92,7 +92,12 @@ type mfaChallengeData struct {
 	FlowTokenHash string         `json:"flow_token_hash,omitempty"`
 	PublicKey     map[string]any `json:"public_key,omitempty"`
 	Session       []byte         `json:"session,omitempty"`
+	Attempts      int            `json:"attempts,omitempty"`
 }
+
+// mfaMaxVerifyAttempts bounds wrong-code guesses against a single MFA challenge
+// before it is consumed, mirroring the passwordless OTP and flow limits.
+const mfaMaxVerifyAttempts = 5
 
 // ===== helpers (mfa-prefixed) =====
 
@@ -460,6 +465,29 @@ func (a *pgMFAAccounts) ChallengeWithFlow(ctx context.Context, projectID, flowTo
 	return a.Challenge(ctx, accountID, factorID)
 }
 
+// mfaBumpChallengeAttempts records a wrong-code guess on the challenge and, at
+// the limit, consumes it so it cannot be retried. It writes on the pool rather
+// than the caller's transaction because Verify returns an error on a wrong code,
+// which rolls that transaction back — a counter written through it would never
+// advance. Best-effort: a write error only costs one un-counted guess.
+func (a *pgMFAAccounts) mfaBumpChallengeAttempts(ctx context.Context, challengeID string, data mfaChallengeData) {
+	data.Attempts++
+
+	raw, err := marshal(data)
+	if err != nil {
+		return
+	}
+
+	if data.Attempts >= mfaMaxVerifyAttempts {
+		_, _ = a.db.Pool.Exec(ctx,
+			`UPDATE iam_challenges SET data = $1, consumed = true WHERE id = $2`, raw, challengeID)
+
+		return
+	}
+
+	_, _ = a.db.Pool.Exec(ctx, `UPDATE iam_challenges SET data = $1 WHERE id = $2`, raw, challengeID)
+}
+
 // mfaPrimaryFactorID prefers factors needing no out-of-band delivery.
 func mfaPrimaryFactorID(factors []domain.Factor) string {
 	for _, f := range factors {
@@ -507,19 +535,24 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 				return result{}, err
 			}
 		}
+
+		if data.Attempts >= mfaMaxVerifyAttempts {
+			return result{}, domain.ErrChallengeInvalid
+		}
 		// Code verification:
 		//   - delivery factors (email/sms) compare the sha256 of the supplied code
 		//     against the stored code hash;
 		//   - TOTP validates the supplied code against the factor's shared
 		//     secret with the RFC 6238 library.
+		var codeOK bool
+
 		switch row.Type {
 		case "email", "sms":
-			if data.FlowTokenHash == "" || subtle.ConstantTimeCompare([]byte(mfaSha256Hex(code)), []byte(data.FlowTokenHash)) != 1 {
-				return result{}, domain.ErrMFAInvalid
-			}
+			codeOK = data.FlowTokenHash != "" &&
+				subtle.ConstantTimeCompare([]byte(mfaSha256Hex(code)), []byte(data.FlowTokenHash)) == 1
 		default:
 			// TOTP: load the factor's shared secret and check the supplied code
-			// with the RFC 6238 library. An invalid/expired code is ErrMFAInvalid.
+			// with the RFC 6238 library.
 			if data.FactorID == "" {
 				return result{}, domain.ErrMFAInvalid
 			}
@@ -538,9 +571,15 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 				return result{}, domain.ErrMFAInvalid
 			}
 
-			if !totp.Validate(code, secret) {
-				return result{}, domain.ErrMFAInvalid
-			}
+			codeOK = totp.Validate(code, secret)
+		}
+
+		if !codeOK {
+			// Count the wrong guess on the pool (this tx rolls back on the returned
+			// error); at the limit the challenge is consumed so it can't be retried.
+			a.mfaBumpChallengeAttempts(ctx, row.ID, data)
+
+			return result{}, domain.ErrMFAInvalid
 		}
 
 		if err := a.mfaConsumeChallenge(ctx, row); err != nil {
