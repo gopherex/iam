@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 	"time"
 
@@ -73,6 +74,79 @@ func (db *DB) gcSweepAll(ctx context.Context, log *xlog.Logger) {
 		if n := tag.RowsAffected(); n > 0 {
 			log.Info("gc swept expired rows",
 				xlog.String("table", s.table), xlog.String("rows", strconv.FormatInt(n, 10)))
+		}
+	}
+
+	db.gcRetentionSweep(ctx, log)
+}
+
+// gcRetentionSweep prunes audit logs and events past each project's configured
+// retention window (iam_config key=retention). audit_log_retention_days /
+// event_retention_days of 0 or absent means "keep" (no pruning).
+func (db *DB) gcRetentionSweep(ctx context.Context, log *xlog.Logger) {
+	rows, err := db.Pool.Query(ctx, `SELECT project_id, data FROM iam_config WHERE key = 'retention'`)
+	if err != nil {
+		if ctx.Err() == nil {
+			log.Warn("gc retention scan failed", xlog.Error("err", err))
+		}
+
+		return
+	}
+
+	type policy struct {
+		project   string
+		auditDays int
+		eventDays int
+	}
+
+	var policies []policy
+
+	for rows.Next() {
+		var (
+			pid string
+			raw []byte
+		)
+
+		if err := rows.Scan(&pid, &raw); err != nil {
+			continue
+		}
+
+		var d struct {
+			AuditLogRetentionDays *int `json:"audit_log_retention_days"`
+			EventRetentionDays    *int `json:"event_retention_days"`
+		}
+
+		_ = json.Unmarshal(raw, &d)
+
+		p := policy{project: pid}
+		if d.AuditLogRetentionDays != nil {
+			p.auditDays = *d.AuditLogRetentionDays
+		}
+
+		if d.EventRetentionDays != nil {
+			p.eventDays = *d.EventRetentionDays
+		}
+
+		policies = append(policies, p)
+	}
+
+	rows.Close()
+
+	for _, p := range policies {
+		if ctx.Err() != nil {
+			return
+		}
+
+		if p.auditDays > 0 {
+			_, _ = db.Pool.Exec(ctx,
+				`DELETE FROM iam_audit_logs WHERE project_id = $1 AND at < now() - make_interval(days => $2)`,
+				p.project, p.auditDays)
+		}
+
+		if p.eventDays > 0 {
+			_, _ = db.Pool.Exec(ctx,
+				`DELETE FROM iam_events WHERE project_id = $1 AND created_at < now() - make_interval(days => $2)`,
+				p.project, p.eventDays)
 		}
 	}
 }

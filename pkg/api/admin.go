@@ -122,6 +122,8 @@ type AdminConfig interface {
 	CreateOAuthProvider(ctx context.Context, projectID string, p domain.AdminOAuthProvider) (domain.AdminOAuthProvider, error)
 	UpdateOAuthProvider(ctx context.Context, projectID, id string, p domain.AdminOAuthProvider) (domain.AdminOAuthProvider, error)
 	DeleteOAuthProvider(ctx context.Context, projectID, id string) error
+	GetRetentionPolicy(ctx context.Context, projectID string) ([]byte, error)
+	PutRetentionPolicy(ctx context.Context, projectID string, raw []byte) error
 
 	// Email templates.
 	ListEmailTemplates(ctx context.Context, cmd domain.AdminConfigGetCmd) (map[string]jx.Raw, error)
@@ -789,6 +791,43 @@ func oasAuditLog(e domain.AuditLogEntry) oas.AuditLog {
 	}
 
 	return out
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminRetentionPolicyParams) (*oas.RetentionPolicy, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	raw, err := s.deps.Config.GetRetentionPolicy(ctx, params.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	var out oas.RetentionPolicy
+	if len(raw) > 0 {
+		if err := out.UnmarshalJSON(raw); err != nil {
+			return nil, err
+		}
+	}
+
+	return &out, nil
+}
+
+func (s *AdminService) PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, req *oas.RetentionPolicy, params oas.PutV1ProjectsByProjectIdAdminRetentionPolicyParams) (*oas.RetentionPolicy, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	raw, err := req.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.deps.Config.PutRetentionPolicy(ctx, params.ProjectID, raw); err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAuditLogsParams) (*oas.GetV1ProjectsByProjectIdAdminAuditLogsOK, error) {
