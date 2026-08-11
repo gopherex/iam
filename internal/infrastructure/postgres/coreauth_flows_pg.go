@@ -373,6 +373,15 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 		return nil, err
 	}
 
+	// Captcha gate on the unauthenticated entry point. email_change is a
+	// post-auth action and is excluded; signup/signin/recovery are the
+	// abuse-prone kinds. No-op unless the project configured a captcha secret.
+	if cmd.Kind != domain.FlowKindEmailChange {
+		if err := a.accounts.EnforceCaptcha(ctx, cmd.ProjectID, cmd.CaptchaToken, string(cmd.Kind)); err != nil {
+			return nil, err
+		}
+	}
+
 	now := nowUTC()
 	f := &domain.Flow{
 		ID:          newUUID(),

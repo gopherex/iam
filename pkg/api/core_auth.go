@@ -34,6 +34,11 @@ type CoreAuthAccounts interface {
 	VerifyEmail(ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd) (*domain.Account, *domain.Session, error)
 	VerifyEmailCallback(ctx context.Context, cmd domain.CoreAuthEmailVerificationCallbackCmd) (*domain.CoreAuthEmailVerificationCallbackResult, error)
 	VerifyCaptcha(ctx context.Context, projectID, provider, token, action string) (*domain.CoreAuthCaptchaVerifyResult, error)
+	// EnforceCaptcha is the gate applied at public auth entry points (sign-up,
+	// password-forgot, flow create). It is a no-op for projects that have not
+	// configured a captcha secret; otherwise a missing token yields
+	// ErrCaptchaRequired and a failed verification yields ErrCaptchaInvalid.
+	EnforceCaptcha(ctx context.Context, projectID, token, action string) error
 	StartEmailChange(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd) (*domain.Challenge, error)
 	VerifyEmailChange(ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd) (*domain.Account, error)
 	CancelEmailChange(ctx context.Context, token string) error
@@ -286,6 +291,10 @@ func (s *CoreAuthService) PostV1AuthPasswordCheck(ctx context.Context, req *oas.
 
 func (s *CoreAuthService) PostV1AuthPasswordForgot(ctx context.Context, req *oas.PasswordForgotRequest, params oas.PostV1AuthPasswordForgotParams) (*oas.Ok, error) {
 	// Public op (security: []): project from X-Client-Id.
+	if err := s.deps.Accounts.EnforceCaptcha(ctx, params.XClientID, req.CaptchaToken.Or(""), "recovery"); err != nil {
+		return nil, err
+	}
+
 	if err := s.deps.Accounts.ForgotPassword(ctx, domain.CoreAuthPasswordForgotCmd{
 		ProjectID:    params.XClientID,
 		Email:        req.Email,
@@ -561,6 +570,10 @@ func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpR
 	consents := make([]domain.AccountConsentAcceptance, 0, len(req.Consents))
 	for _, c := range req.Consents {
 		consents = append(consents, domain.AccountConsentAcceptance{Key: c.Key, Version: c.Version})
+	}
+
+	if err := s.deps.Accounts.EnforceCaptcha(ctx, params.XClientID, req.CaptchaToken.Or(""), "signup"); err != nil {
+		return nil, err
 	}
 
 	cmd := domain.RegisterCmd{

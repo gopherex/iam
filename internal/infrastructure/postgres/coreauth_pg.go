@@ -2074,6 +2074,66 @@ func coreAuthCaptchaVerifyURL(provider, override string) string {
 // policy decision made upstream). With a provider configured, the token is
 // POSTed (form-encoded) to the siteverify URL and the JSON response mapped to
 // the result; an HTTP/parse failure yields Valid:false (never a request error).
+// coreAuthCaptchaConfigured reports whether the project has a usable captcha
+// secret configured. It is the "is captcha required" predicate: configuring a
+// secret opts the project into enforcement; absence leaves captcha opt-in.
+func (a *pgCoreAuth) coreAuthCaptchaConfigured(ctx context.Context, projectID string) (bool, error) {
+	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	if err != nil {
+		return false, err
+	}
+
+	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, env, "captcha")
+	if err != nil {
+		if errors.Is(translatePgErr("config", err), ErrNotFound) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	if len(row.Data) == 0 {
+		return false, nil
+	}
+
+	var cfg coreAuthCaptchaConfig
+	if err := unmarshal(row.Data, &cfg); err != nil {
+		return false, err
+	}
+
+	return cfg.Secret != "", nil
+}
+
+// EnforceCaptcha gates a public auth entry point. It is a no-op for projects
+// with no captcha secret; otherwise a missing token is ErrCaptchaRequired and a
+// failed verification is ErrCaptchaInvalid. Callers apply it at sign-up,
+// password-forgot and flow create — the abuse-prone unauthenticated boundaries.
+func (a *pgCoreAuth) EnforceCaptcha(ctx context.Context, projectID, token, action string) error {
+	required, err := a.coreAuthCaptchaConfigured(ctx, projectID)
+	if err != nil {
+		return err
+	}
+
+	if !required {
+		return nil
+	}
+
+	if strings.TrimSpace(token) == "" {
+		return domain.ErrCaptchaRequired
+	}
+
+	res, err := a.VerifyCaptcha(ctx, projectID, "", token, action)
+	if err != nil {
+		return err
+	}
+
+	if res == nil || !res.Valid {
+		return domain.ErrCaptchaInvalid
+	}
+
+	return nil
+}
+
 func (a *pgCoreAuth) VerifyCaptcha(ctx context.Context, projectID, provider, token, action string) (*domain.CoreAuthCaptchaVerifyResult, error) {
 	_ = action
 

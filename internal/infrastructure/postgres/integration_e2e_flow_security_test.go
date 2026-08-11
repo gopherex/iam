@@ -666,3 +666,38 @@ func TestE2EFlowSecurityNoSessionBeforeMFA(t *testing.T) {
 		t.Fatal("§5 rule 8: session NOT present after MFA verify — should be minted at completion")
 	}
 }
+
+// ─── captcha enforcement ──────────────────────────────────────────────────────
+
+// TestE2EFlowCaptchaEnforced verifies that once a project configures a captcha
+// secret, the unauthenticated auth entry points reject requests with no captcha
+// token (regression for "CAPTCHA plumbed but never enforced"). Projects with no
+// captcha secret are unaffected, which the other signup/flow tests already cover.
+func TestE2EFlowCaptchaEnforced(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID := e2eProject(t, ctx)
+
+	// Opt the project into captcha by configuring a secret.
+	seedConfig(t, ctx, projectID, runtimeDefaultEnv, "captcha", map[string]any{
+		"provider": "turnstile",
+		"secret":   "test-secret",
+	})
+
+	// Flow signup with no captcha_token → 403 captcha_required.
+	_, r := flowCreate(t, ctx, ts, projectID, map[string]any{
+		"kind":     "signup",
+		"email":    fmt.Sprintf("captcha-%s@example.com", newUUID()[:8]),
+		"password": "Sup3rStr0ng!Pass",
+	})
+	e2eWantStatus(t, r, http.StatusForbidden)
+
+	// Direct sign-up with no captcha_token → 403 captcha_required.
+	rSignup := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/sign-up",
+		map[string]any{
+			"email":    fmt.Sprintf("captcha2-%s@example.com", newUUID()[:8]),
+			"password": "Sup3rStr0ng!Pass",
+		},
+		map[string]string{"X-Client-Id": projectID, "X-Environment": "live"})
+	e2eWantStatus(t, rSignup, http.StatusForbidden)
+}
