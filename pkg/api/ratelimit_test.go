@@ -316,6 +316,37 @@ func TestRateLimitMiddlewareReaderErrorFailsOpen(t *testing.T) {
 	}
 }
 
+func TestRateLimitClassifiesFlowAndSensitivePaths(t *testing.T) {
+	cases := []struct {
+		path    string
+		limited bool
+	}{
+		// The resumable auth flow — primary sign-in/OTP/recovery surface.
+		{"/v1/auth/flows", true},
+		{"/v1/auth/flows/ftk_abc123/submit", true},
+		{"/v1/auth/flows/ftk_abc123/resend", true},
+		// Reads / abandon on a flow are not credential guessing.
+		{"/v1/auth/flows/current", false},
+		{"/v1/auth/flows/ftk_abc123", false},
+		// Newly-classified sensitive verification endpoints.
+		{"/v1/auth/mfa/recovery-codes/verify", true},
+		{"/v1/auth/session/step-up", true},
+		{"/v1/auth/impersonate/redeem", true},
+		{"/v1/auth/identities/merge/confirm", true},
+		// Unrelated path stays unlimited.
+		{"/v1/projects/p/admin/users", false},
+	}
+
+	for _, c := range cases {
+		req := httptest.NewRequest(http.MethodPost, c.path, nil)
+
+		_, _, ok := rateLimitForRequest(req)
+		if ok != c.limited {
+			t.Errorf("rateLimitForRequest(%q) limited = %v, want %v", c.path, ok, c.limited)
+		}
+	}
+}
+
 func TestRateLimitRuleCacheTTL(t *testing.T) {
 	reader := &fakeRateLimitReader{byKey: map[string][]RateLimitRule{
 		"P|live": {{Endpoint: "/v1/auth/sign-in/password", Limit: 1000, Window: time.Minute, By: "ip"}},

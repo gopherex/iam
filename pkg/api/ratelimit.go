@@ -11,6 +11,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -306,7 +307,7 @@ func rateLimitForRequest(r *http.Request) (*rateLimiter, string, bool) {
 		return guestLimiter, "Too many guest accounts created.", true
 	}
 
-	if isSensitiveRateLimitedPath(path) {
+	if isSensitiveRateLimitedPath(path) || isFlowGuessPath(path) {
 		return sensitiveLimiter, "Too many attempts. Try again later.", true
 	}
 
@@ -333,15 +334,37 @@ func isSensitiveRateLimitedPath(path string) bool {
 		"/v1/auth/magic-link/verify",
 		"/v1/auth/mfa/challenge",
 		"/v1/auth/mfa/verify",
+		"/v1/auth/mfa/recovery-codes/verify",
 		"/v1/auth/webauthn/login/options",
 		"/v1/auth/webauthn/login/verify",
 		"/v1/auth/webauthn/register/options",
 		"/v1/auth/webauthn/register/verify",
+		"/v1/auth/flows",
+		"/v1/auth/session/step-up",
+		"/v1/auth/impersonate/redeem",
+		"/v1/auth/identities/merge/confirm",
 		"/v1/challenges/captcha/verify":
 		return true
 	default:
 		return false
 	}
+}
+
+// isFlowGuessPath matches the credential-verification legs of the resumable auth
+// flow: POST /v1/auth/flows/{flow_token}/submit (password / OTP / MFA / magic-link
+// / recovery-code verification) and .../resend. The flow_token segment is
+// variable, so these can never match an exact-path list — without this the entire
+// flow API (the primary sign-in path used by the SDK and web app) was exempt from
+// rate limiting, allowing unbounded password and OTP guessing.
+func isFlowGuessPath(path string) bool {
+	const prefix = "/v1/auth/flows/"
+	if !strings.HasPrefix(path, prefix) {
+		return false
+	}
+
+	rest := path[len(prefix):]
+
+	return strings.HasSuffix(rest, "/submit") || strings.HasSuffix(rest, "/resend")
 }
 
 func isAuthRateLimitedPath(path string) bool {
