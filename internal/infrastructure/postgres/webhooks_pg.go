@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -29,6 +30,7 @@ const (
 	webhookResponseBodyLimit = 16 << 10
 	webhookDefaultPageLimit  = 50
 	webhookMaxPageLimit      = 200
+	webhookMaxRedirects      = 3
 )
 
 type webhookData struct {
@@ -50,10 +52,67 @@ type PgWebhooks struct {
 
 func NewPgWebhooks(db *DB, client *http.Client) *PgWebhooks {
 	if client == nil {
-		client = &http.Client{Timeout: webhookHTTPTimeout}
+		client = newWebhookHTTPClient(webhookHTTPTimeout)
 	}
 
 	return &PgWebhooks{db: db, httpClient: client}
+}
+
+// newWebhookHTTPClient builds the delivery client with SSRF protection: a dialer
+// Control hook rejects connections whose resolved IP is private, link-local,
+// unique-local, CGNAT, unspecified or multicast — so a webhook URL (or a redirect
+// it returns) cannot be used to reach cloud metadata (169.254.169.254), internal
+// services, or the cluster network. The check runs at connect time on the
+// actually-resolved IP, closing the DNS-rebinding TOCTOU that host-string
+// validation alone leaves open. Loopback stays reachable as the documented
+// http-development escape hatch (see validateWebhookURL). Redirects are capped.
+func newWebhookHTTPClient(timeout time.Duration) *http.Client {
+	dialer := &net.Dialer{
+		Control: func(_, address string, _ syscall.RawConn) error {
+			host, _, err := net.SplitHostPort(address)
+			if err != nil {
+				return err
+			}
+
+			if ip := net.ParseIP(host); ip != nil && isBlockedWebhookIP(ip) {
+				return fmt.Errorf("webhook: refusing to connect to non-public address %s", ip)
+			}
+
+			return nil
+		},
+	}
+
+	return &http.Client{
+		Timeout:   timeout,
+		Transport: &http.Transport{DialContext: dialer.DialContext},
+		CheckRedirect: func(_ *http.Request, via []*http.Request) error {
+			if len(via) >= webhookMaxRedirects {
+				return errors.New("webhook: too many redirects")
+			}
+
+			return nil
+		},
+	}
+}
+
+// isBlockedWebhookIP reports whether ip is a non-public destination a webhook
+// must never reach. Loopback is intentionally allowed (dev escape hatch).
+func isBlockedWebhookIP(ip net.IP) bool {
+	if ip.IsLoopback() {
+		return false
+	}
+
+	if ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() ||
+		ip.IsMulticast() || ip.IsInterfaceLocalMulticast() || ip.IsPrivate() {
+		return true
+	}
+
+	// RFC 6598 carrier-grade NAT (100.64.0.0/10) is not covered by IsPrivate.
+	if ip4 := ip.To4(); ip4 != nil && ip4[0] == 100 && ip4[1] >= 64 && ip4[1] <= 127 {
+		return true
+	}
+
+	return false
 }
 
 func normalizeWebhookLimit(limit int) int {

@@ -845,12 +845,19 @@ func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flo
 	return a.flowSignupRegisterAndPersist(ctx, f, cmd, pwStrategy)
 }
 
-// advanceSignupCreateAccepted runs the invite_only success path: it marks the
-// redeemed invite accepted (same ambient transaction; a later register error
-// rolls it back) and then proceeds with the normal signup.
+// advanceSignupCreateAccepted runs the invite_only success path: it atomically
+// claims the redeemed invite (only one concurrent request can win) and then
+// proceeds with the normal signup. Losing the claim race is surfaced as
+// invite_invalid so a single-use invite can never yield multiple accounts.
 func (a *pgCoreAuthFlows) advanceSignupCreateAccepted(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd, inviteRow *models.IamInvite) (*domain.FlowState, error) {
-	if err := a.flowMarkInviteAccepted(ctx, inviteRow); err != nil {
+	claimed, err := a.flowMarkInviteAccepted(ctx, inviteRow)
+	if err != nil {
 		return nil, err
+	}
+
+	if !claimed {
+		return a.flowPersistAtStep(ctx, f, domain.FlowStepBlocked,
+			&domain.FlowError{Code: "invite_invalid", Message: "The invitation is invalid or expired."})
 	}
 
 	return a.flowSignupRegisterAndPersist(ctx, f, cmd, f.PasswordStrategy)
@@ -1003,16 +1010,22 @@ func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectI
 	return row, true, nil
 }
 
-// flowMarkInviteAccepted sets status=accepted + accepted_at=now on a redeemed
-// invite, joining the caller's (ambient) transaction.
-func (a *pgCoreAuthFlows) flowMarkInviteAccepted(ctx context.Context, row *models.IamInvite) error {
+// flowMarkInviteAccepted atomically claims a pending invite: the UPDATE succeeds
+// only while status is still 'pending', so two concurrent redemptions of the same
+// single-use token cannot both proceed (the check-then-set race that let one
+// invite yield N accounts). Returns claimed=false when the invite was already
+// consumed (0 rows affected).
+func (a *pgCoreAuthFlows) flowMarkInviteAccepted(ctx context.Context, row *models.IamInvite) (bool, error) {
 	now := nowUTC()
 
-	return row.Update(ctx, a.db.Bobx(), &models.IamInviteSetter{
-		Status:     ptr(inviteStatusAccept),
-		AcceptedAt: ptr(null.From(now)),
-		UpdatedAt:  &now,
-	})
+	res, err := a.db.TxDB.Exec(ctx,
+		`UPDATE iam_invites SET status = $1, accepted_at = $2, updated_at = $2 WHERE id = $3 AND status = $4`,
+		inviteStatusAccept, now, row.ID, inviteStatusPend)
+	if err != nil {
+		return false, err
+	}
+
+	return res.RowsAffected() > 0, nil
 }
 
 // advanceSignup handles Submit for signup flows.
