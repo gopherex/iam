@@ -14,6 +14,7 @@ package postgres
 
 import (
 	"context"
+	"strings"
 
 	"github.com/gopherex/iam/internal/domain"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
@@ -32,6 +33,20 @@ const runtimeDefaultEnv = "live"
 // rejected with domain.ErrBadRequest so a client cannot create rows under an
 // arbitrary environment name.
 func effectiveEnv(ctx context.Context, db *DB, projectID, fallback string) (string, error) {
+	// An authenticated principal is bound to the environment its credential was
+	// minted in (the token's env claim). The X-Environment header must not
+	// override it, or a token minted for one environment could operate on
+	// another's data — a cross-environment downgrade. Reject an explicit
+	// mismatch; otherwise scope to the principal's own environment.
+	if p, ok := api.PrincipalFrom(ctx); ok && p != nil && p.Environment != "" {
+		reqEnv := api.EnvironmentFromContext(ctx)
+		if reqEnv != "" && !strings.EqualFold(reqEnv, p.Environment) {
+			return "", domain.ErrForbidden.WithMessage("environment mismatch: token is scoped to a different environment")
+		}
+
+		return p.Environment, nil
+	}
+
 	env := api.EnvironmentFromContext(ctx)
 	if env == "" || env == fallback {
 		return fallback, nil

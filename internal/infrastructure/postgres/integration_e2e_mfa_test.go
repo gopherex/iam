@@ -161,6 +161,16 @@ func TestE2EMFATOTPEnroll(t *testing.T) {
 		r := e2eReq(t, ctx, http.MethodPost, url, map[string]any{}, nil)
 		e2eWantStatus(t, r, http.StatusUnauthorized)
 	})
+
+	t.Run("mismatched X-Environment returns 403", func(t *testing.T) {
+		// The token was minted for "live"; enroll resolves the acting account via
+		// effectiveEnv, so presenting the token with a different X-Environment
+		// must be rejected (cross-environment downgrade) rather than operating on
+		// another environment's data.
+		r := e2eReq(t, ctx, http.MethodPost, url, map[string]any{},
+			map[string]string{"Authorization": "Bearer " + sess.AccessToken, "X-Environment": "staging"})
+		e2eWantStatus(t, r, http.StatusForbidden)
+	})
 }
 
 // TestE2EMFATOTPVerify verifies POST /v1/auth/mfa/totp/verify.

@@ -438,8 +438,18 @@ func (a *pgWebAuthnAccounts) BeginLogin(ctx context.Context, projectID, email st
 		return nil, domain.ErrInvalidCredentials
 	}
 
+	// Scope the lookup to the request's environment. Without it a passkey
+	// enrolled in one environment could drive a login resolved against a
+	// same-email row in another (cross-environment resolution). The partial
+	// unique on (project, env, email) then leaves at most one row.
+	env, err := effectiveEnv(ctx, a.db, projectID, webauthnSignerEnv)
+	if err != nil {
+		return nil, err
+	}
+
 	rows, err := models.IamUsers.Query(
 		sm.Where(models.IamUsers.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamUsers.Columns.Environment.EQ(psql.Arg(env))),
 		sm.Where(models.IamUsers.Columns.PrimaryEmail.EQ(psql.Arg(email))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
