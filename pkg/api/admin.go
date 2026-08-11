@@ -182,6 +182,14 @@ type AdminDeps struct {
 	AccessRequests  AdminAccessRequests
 	Invites         AdminInvites
 	Webhooks        AdminWebhooks
+	Grants          AdminGrants
+}
+
+// AdminGrants is the admin view over a user's OAuth consent grants. It reuses the
+// runtime grants store (grants are keyed by the account's unique id).
+type AdminGrants interface {
+	ListGrants(ctx context.Context, accountID string) ([]domain.Grant, error)
+	RevokeGrant(ctx context.Context, accountID, grantID string) error
 }
 
 // AdminService implements the AdminHandler slice of oas.Handler.
@@ -804,6 +812,36 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx 
 	}
 
 	return &oas.GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK{Data: data}, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	grants, err := s.deps.Grants.ListGrants(ctx, params.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]oas.OAuthGrant, 0, len(grants))
+	for i := range grants {
+		data = append(data, oasOAuthGrant(grants[i]))
+	}
+
+	return &oas.GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK{Data: data}, nil
+}
+
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams) (*oas.Ok, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	if err := s.deps.Grants.RevokeGrant(ctx, params.UserID, params.GrantID); err != nil {
+		return nil, err
+	}
+
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK, error) {
