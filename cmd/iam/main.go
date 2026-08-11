@@ -430,6 +430,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 			Grants:          postgres.NewPgOIDCGrants(db, emitter),
 			Audit:           postgres.NewPgAudit(db, emitter),
 			Jobs:            postgres.NewPgJobs(db, emitter),
+			Hooks:           postgres.NewPgHooks(db, emitter),
 		})),
 		api.WithOperator(api.NewOperatorService(api.OperatorDeps{
 			Projects: postgres.NewPgOperator(db, emitter),

@@ -1104,6 +1104,33 @@ func (a *pgCoreAuth) coreAuthPersistCredentialLock(ctx context.Context, cred *mo
 	return err
 }
 
+// coreAuthInvokeUserCreateHooks runs the project's before_user_create blocking
+// hooks. It fails closed: a hook that denies (non-2xx) or errors and is not
+// fail_open blocks registration with ErrForbidden.
+func (a *pgCoreAuth) coreAuthInvokeUserCreateHooks(ctx context.Context, cmd domain.RegisterCmd) error {
+	payload, err := json.Marshal(map[string]any{
+		"type":       "before_user_create",
+		"project_id": cmd.ProjectID,
+		"email":      cmd.Email,
+		"phone":      cmd.Phone,
+		"name":       cmd.Name,
+	})
+	if err != nil {
+		return err
+	}
+
+	allowed, err := NewPgHooks(a.db, a.emitter).InvokeHooks(ctx, cmd.ProjectID, "before_user_create", payload)
+	if err != nil {
+		return err
+	}
+
+	if !allowed {
+		return domain.ErrForbidden.WithMessage("registration blocked by a before_user_create hook")
+	}
+
+	return nil
+}
+
 // coreAuthMarkRefreshRevoked flips a refresh-token row's revoked flag (column +
 // envelope). MUST run inside an open transaction.
 func (a *pgCoreAuth) coreAuthMarkRefreshRevoked(ctx context.Context, row *models.IamRefreshToken) error {
@@ -1149,6 +1176,13 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 		if err := a.coreAuthCheckRequiredConsents(ctx, cmd.ProjectID, cmd.Locale, cmd.Consents); err != nil {
 			return nil, nil, err
 		}
+	}
+	// before_user_create blocking hooks: a project-registered signed HTTP
+	// callback may veto account creation. Invoked BEFORE the transaction (it
+	// makes a network round-trip that must not hold the tx open) and fails closed
+	// — a project with no such hook is unaffected.
+	if err := a.coreAuthInvokeUserCreateHooks(ctx, cmd); err != nil {
+		return nil, nil, err
 	}
 
 	type regResult struct {

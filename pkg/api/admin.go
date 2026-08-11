@@ -191,6 +191,18 @@ type AdminDeps struct {
 	Grants          AdminGrants
 	Audit           AdminAudit
 	Jobs            AdminJobs
+	Hooks           AdminHooks
+}
+
+// AdminHooks manages blocking auth hooks (signed HTTP callbacks at auth decision
+// points) and test-fires them.
+type AdminHooks interface {
+	List(ctx context.Context, projectID string) ([]domain.AdminHook, error)
+	Get(ctx context.Context, projectID, id string) (*domain.AdminHook, error)
+	Create(ctx context.Context, projectID string, h domain.AdminHook) (domain.AdminHook, error)
+	Update(ctx context.Context, projectID, id string, h domain.AdminHook) (domain.AdminHook, error)
+	Delete(ctx context.Context, projectID, id string) error
+	Test(ctx context.Context, projectID, id string, payload []byte) (status int, body string, durationMs int, err error)
 }
 
 // AdminJobs manages async background jobs (bulk import, exports) and verifies
@@ -802,6 +814,170 @@ func oasAuditLog(e domain.AuditLogEntry) oas.AuditLog {
 	}
 
 	return out
+}
+
+func oasHook(h domain.AdminHook) oas.Hook {
+	out := oas.Hook{
+		ID:        oas.NewOptString(h.ID),
+		URL:       oas.NewOptString(h.URL),
+		TimeoutMs: oas.NewOptInt(h.TimeoutMs),
+		Enabled:   oas.NewOptBool(h.Enabled),
+	}
+
+	var ht oas.HookType
+	if err := ht.UnmarshalText([]byte(h.Type)); err == nil {
+		out.Type = oas.NewOptHookType(ht)
+	}
+
+	return out
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminHooks(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminHooksParams) (*oas.GetV1ProjectsByProjectIdAdminHooksOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	hooks, err := s.deps.Hooks.List(ctx, params.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]oas.Hook, 0, len(hooks))
+	for i := range hooks {
+		data = append(data, oasHook(hooks[i]))
+	}
+
+	return &oas.GetV1ProjectsByProjectIdAdminHooksOK{Data: data, HasMore: oas.NewOptBool(false)}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminHooks(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminHooksReq, params oas.PostV1ProjectsByProjectIdAdminHooksParams) (*oas.PostV1ProjectsByProjectIdAdminHooksCreated, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	created, err := s.deps.Hooks.Create(ctx, params.ProjectID, domain.AdminHook{
+		Type: req.Type, URL: req.URL, TimeoutMs: req.TimeoutMs.Or(0), Enabled: req.Enabled.Or(true),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &oas.PostV1ProjectsByProjectIdAdminHooksCreated{
+		Hook:          oas.NewOptHook(oasHook(created)),
+		SigningSecret: oas.NewOptString(created.SigningSecret),
+	}, nil
+}
+
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminHooksById(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminHooksByIdReq, params oas.PatchV1ProjectsByProjectIdAdminHooksByIdParams) (*oas.PatchV1ProjectsByProjectIdAdminHooksByIdOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	cur, err := s.deps.Hooks.Get(ctx, params.ProjectID, params.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	patch := decodeHookPatch(req)
+	merged := *cur
+
+	if patch.Type != nil {
+		merged.Type = *patch.Type
+	}
+
+	if patch.URL != nil {
+		merged.URL = *patch.URL
+	}
+
+	if patch.TimeoutMs != nil {
+		merged.TimeoutMs = *patch.TimeoutMs
+	}
+
+	if patch.Enabled != nil {
+		merged.Enabled = *patch.Enabled
+	}
+
+	if patch.FailOpen != nil {
+		merged.FailOpen = *patch.FailOpen
+	}
+
+	updated, err := s.deps.Hooks.Update(ctx, params.ProjectID, params.ID, merged)
+	if err != nil {
+		return nil, err
+	}
+
+	return &oas.PatchV1ProjectsByProjectIdAdminHooksByIdOK{Hook: oas.NewOptHook(oasHook(updated))}, nil
+}
+
+type hookPatch struct {
+	Type      *string `json:"type"`
+	URL       *string `json:"url"`
+	TimeoutMs *int    `json:"timeout_ms"`
+	Enabled   *bool   `json:"enabled"`
+	FailOpen  *bool   `json:"fail_open"`
+}
+
+func decodeHookPatch(req oas.PatchV1ProjectsByProjectIdAdminHooksByIdReq) hookPatch {
+	m := make(map[string]json.RawMessage, len(req))
+	for k, v := range req {
+		m[k] = json.RawMessage(v)
+	}
+
+	raw, err := json.Marshal(m)
+	if err != nil {
+		return hookPatch{}
+	}
+
+	var p hookPatch
+	_ = json.Unmarshal(raw, &p)
+
+	return p
+}
+
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminHooksByIdParams) (*oas.Ok, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	if err := s.deps.Hooks.Delete(ctx, params.ProjectID, params.ID); err != nil {
+		return nil, err
+	}
+
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq, params oas.PostV1ProjectsByProjectIdAdminHooksByIdTestParams) (*oas.PostV1ProjectsByProjectIdAdminHooksByIdTestOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	var payload []byte
+	if v, ok := req.Get(); ok {
+		if p, ok := v.Payload.Get(); ok {
+			m := make(map[string]json.RawMessage, len(p))
+			for k, raw := range p {
+				m[k] = json.RawMessage(raw)
+			}
+
+			payload, _ = json.Marshal(m)
+		}
+	}
+
+	status, body, durMs, err := s.deps.Hooks.Test(ctx, params.ProjectID, params.ID, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	out := &oas.PostV1ProjectsByProjectIdAdminHooksByIdTestOK{
+		Status:     oas.NewOptInt(status),
+		DurationMs: oas.NewOptInt(durMs),
+	}
+
+	bodyJSON, _ := json.Marshal(body)
+	resp := oas.PostV1ProjectsByProjectIdAdminHooksByIdTestOKResponse{"body": jx.Raw(bodyJSON)}
+	out.Response = oas.NewOptPostV1ProjectsByProjectIdAdminHooksByIdTestOKResponse(resp)
+
+	return out, nil
 }
 
 func oasJob(j domain.AdminJob) oas.Job {
