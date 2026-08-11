@@ -11,6 +11,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/go-faster/jx"
@@ -193,6 +194,16 @@ type AdminDeps struct {
 	Jobs            AdminJobs
 	Hooks           AdminHooks
 	Risk            AdminRisk
+	TestMode        AdminTestMode
+}
+
+// AdminTestMode backs the /v1/test/* endpoints (seed / reset / clock / messages)
+// used by the SDK and test harness. Optional — nil disables test mode.
+type AdminTestMode interface {
+	Seed(ctx context.Context, projectID, env string, spec map[string]any) error
+	Reset(ctx context.Context, projectID, env string) (int64, error)
+	Clock(ctx context.Context, projectID, env string, advanceSeconds int, reset bool) error
+	Messages(ctx context.Context, projectID, env, channel, to string) ([]map[string]any, error)
 }
 
 // AdminRisk manages declarative risk rules, risk events, and manual rate-limit
@@ -827,6 +838,104 @@ func oasAuditLog(e domain.AuditLogEntry) oas.AuditLog {
 	}
 
 	return out
+}
+
+// adminTestGate authorizes a /v1/test/* call: an authenticated principal is
+// required and the environment must be non-live — test mode must never touch
+// live data. Returns the caller's project and the resolved (non-live) env.
+func (s *AdminService) adminTestGate(ctx context.Context, env string) (string, string, error) {
+	if s.deps.TestMode == nil {
+		return "", "", domain.ErrNotImplemented
+	}
+
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return "", "", err
+	}
+
+	if env == "" || strings.EqualFold(env, "live") {
+		return "", "", domain.ErrForbidden.WithMessage("test mode is not available in the live environment")
+	}
+
+	if p.ProjectID == "" {
+		return "", "", domain.ErrForbidden.WithMessage("test mode requires a project-scoped credential")
+	}
+
+	return p.ProjectID, env, nil
+}
+
+func (s *AdminService) PostV1TestSeed(ctx context.Context, req oas.PostV1TestSeedReq, params oas.PostV1TestSeedParams) (*oas.Ok, error) {
+	projectID, env, err := s.adminTestGate(ctx, params.XEnvironment.Or(""))
+	if err != nil {
+		return nil, err
+	}
+
+	rawMap := make(map[string]json.RawMessage, len(req))
+	for k, v := range req {
+		rawMap[k] = json.RawMessage(v)
+	}
+
+	blob, _ := json.Marshal(rawMap)
+
+	spec := map[string]any{}
+	_ = json.Unmarshal(blob, &spec)
+
+	if err := s.deps.TestMode.Seed(ctx, projectID, env, spec); err != nil {
+		return nil, err
+	}
+
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
+}
+
+func (s *AdminService) PostV1TestReset(ctx context.Context, params oas.PostV1TestResetParams) (oas.PostV1TestResetOK, error) {
+	projectID, env, err := s.adminTestGate(ctx, params.XEnvironment.Or(""))
+	if err != nil {
+		return nil, err
+	}
+
+	deleted, err := s.deps.TestMode.Reset(ctx, projectID, env)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, _ := json.Marshal(map[string]any{"ok": true, "deleted": deleted})
+
+	out := oas.PostV1TestResetOK{}
+	_ = out.UnmarshalJSON(raw)
+
+	return out, nil
+}
+
+func (s *AdminService) PostV1TestClock(ctx context.Context, req *oas.PostV1TestClockReq, params oas.PostV1TestClockParams) (*oas.Ok, error) {
+	projectID, env, err := s.adminTestGate(ctx, params.XEnvironment.Or(""))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.deps.TestMode.Clock(ctx, projectID, env, req.AdvanceSeconds.Or(0), req.Reset.Or(false)); err != nil {
+		return nil, err
+	}
+
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
+}
+
+func (s *AdminService) GetV1TestMessages(ctx context.Context, params oas.GetV1TestMessagesParams) (oas.GetV1TestMessagesOK, error) {
+	projectID, env, err := s.adminTestGate(ctx, params.XEnvironment.Or(""))
+	if err != nil {
+		return nil, err
+	}
+
+	msgs, err := s.deps.TestMode.Messages(ctx, projectID, env, params.Channel.Or(""), params.To.Or(""))
+	if err != nil {
+		return nil, err
+	}
+
+	raw, _ := json.Marshal(map[string]any{"data": msgs})
+
+	out := oas.GetV1TestMessagesOK{}
+	_ = out.UnmarshalJSON(raw)
+
+	return out, nil
 }
 
 func oasRiskRule(r domain.AdminRiskRule) oas.RiskRule {
