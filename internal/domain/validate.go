@@ -12,20 +12,24 @@ import (
 // Validate checks sign-up invariants: an identifier is required.
 func (c RegisterCmd) Validate() error {
 	email := strings.TrimSpace(c.Email)
+
 	phone := strings.TrimSpace(c.Phone)
 	if email == "" && phone == "" {
 		return ErrValidation.WithMessage("email or phone is required")
 	}
+
 	if email != "" {
 		if err := ValidateEmail(email); err != nil {
 			return err
 		}
 	}
+
 	if phone != "" {
 		if err := ValidatePhone(phone); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -34,6 +38,7 @@ func (c ProfileUpdateCmd) Validate() error {
 	if c.AccountID == "" || c.ProjectID == "" {
 		return ErrValidation.WithMessage("project and account are required")
 	}
+
 	return nil
 }
 
@@ -42,6 +47,7 @@ func (c ProjectCmd) Validate() error {
 	if strings.TrimSpace(c.Name) == "" {
 		return ErrValidation.WithMessage("project name is required")
 	}
+
 	return nil
 }
 
@@ -50,6 +56,7 @@ func (c ConnectionCmd) Validate() error {
 	if c.ProjectID == "" || c.Type == "" {
 		return ErrValidation.WithMessage("project and connection type are required")
 	}
+
 	return nil
 }
 
@@ -61,6 +68,7 @@ func ValidatePhone(phone string) error {
 	if !phoneE164Re.MatchString(phone) {
 		return ErrValidation.WithMessage("phone must be in E.164 format (+<country><number>, 7-15 digits)")
 	}
+
 	return nil
 }
 
@@ -73,5 +81,6 @@ func ValidateEmail(email string) error {
 	if !emailRe.MatchString(email) {
 		return ErrValidation.WithMessage("email format is invalid")
 	}
+
 	return nil
 }

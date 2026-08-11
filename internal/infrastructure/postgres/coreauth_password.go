@@ -28,6 +28,7 @@ var commonPasswordBases = map[string]struct{}{
 // other) in pw.
 func passwordCharClasses(pw string) int {
 	var lower, upper, digit, other bool
+
 	for _, r := range pw {
 		switch {
 		case unicode.IsLower(r):
@@ -40,12 +41,15 @@ func passwordCharClasses(pw string) int {
 			other = true
 		}
 	}
+
 	n := 0
+
 	for _, ok := range []bool{lower, upper, digit, other} {
 		if ok {
 			n++
 		}
 	}
+
 	return n
 }
 
@@ -55,6 +59,7 @@ func passwordCharClasses(pw string) int {
 func passwordBase(pw string) string {
 	b := strings.ToLower(strings.TrimSpace(pw))
 	b = strings.TrimRight(b, "0123456789!@#$%^&*._-")
+
 	return b
 }
 
@@ -64,6 +69,7 @@ func hasObviousSequence(pw string) bool {
 	if pw == "" {
 		return false
 	}
+
 	lower := strings.ToLower(pw)
 	for _, seq := range []string{"0123456789", "abcdefghijklmnopqrstuvwxyz", "qwertyuiop", "asdfghjkl", "zxcvbnm"} {
 		if len(lower) >= 4 && strings.Contains(seq, lower) {
@@ -73,12 +79,14 @@ func hasObviousSequence(pw string) bool {
 	// All-same character.
 	first, _ := utf8.DecodeRuneInString(pw)
 	allSame := true
+
 	for _, r := range pw {
 		if r != first {
 			allSame = false
 			break
 		}
 	}
+
 	return allSame
 }
 
@@ -89,10 +97,13 @@ func passwordStrengthScore(pw string) int {
 	if n == 0 {
 		return 0
 	}
+
 	if _, common := commonPasswordBases[passwordBase(pw)]; common {
 		return 0
 	}
+
 	score := 0
+
 	switch {
 	case n >= 16:
 		score = 3
@@ -109,11 +120,14 @@ func passwordStrengthScore(pw string) int {
 	if hasObviousSequence(pw) {
 		score -= 2
 	}
+
 	if score < 0 {
 		score = 0
 	}
+
 	if score > 4 {
 		score = 4
 	}
+
 	return score
 }

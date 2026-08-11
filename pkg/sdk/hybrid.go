@@ -28,9 +28,11 @@ func (v *HybridVerifier) Verify(ctx context.Context, token string) (*VerifyResul
 	if err == nil && res.Valid {
 		return res, nil
 	}
+
 	if err == nil && res.Error != "" && res.Error != "invalid_token" {
 		return res, nil
 	}
+
 	return v.remote.Verify(ctx, token)
 }
 
@@ -40,12 +42,15 @@ func (v *HybridVerifier) Authenticate(ctx context.Context, token string) (*Princ
 	if err != nil {
 		return nil, err
 	}
+
 	if !res.Valid {
 		if res.Error != "" {
 			return nil, fmt.Errorf("%w: %s", ErrInvalidToken, res.Error)
 		}
+
 		return nil, ErrInvalidToken
 	}
+
 	return &res.Principal, nil
 }
 

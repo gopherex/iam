@@ -46,6 +46,7 @@ func (p *Publisher) Publish(ctx context.Context, msgs []outbox.Message) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -69,6 +70,7 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	if err := json.Unmarshal(msg.Payload, &ev); err != nil {
 		return err
 	}
+
 	var domainEvent domain.Event
 	if err := json.Unmarshal(msg.Payload, &domainEvent); err != nil {
 		return err
@@ -80,13 +82,16 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	if sjob, ok := smsJobFromEvent(ev); ok {
 		return p.publishSMS(ctx, ev, sjob)
 	}
+
 	job, ok := emailJobFromEvent(ev)
 	if !ok {
 		if p.webhooks != nil {
 			return p.webhooks.PublishEvent(ctx, domainEvent)
 		}
+
 		return nil
 	}
+
 	if job.To == "" {
 		return fmt.Errorf("notifications: email event %s has no recipient", ev.Type)
 	}
@@ -102,10 +107,12 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 			p.log.Info("flow continue email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
 			return nil
 		}
+
 		link := flowContinueURL(base, stringValue(ev.Payload, "flow_token"), stringValue(ev.Payload, "token"))
 		if link == "" {
 			return nil
 		}
+
 		job.Data["continue_url"] = link
 		job.Data["link"] = link
 	}
@@ -117,32 +124,40 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 			p.log.Info("invite email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
 			return nil
 		}
+
 		token := stringValue(ev.Payload, "invite_token")
+
 		link := inviteURL(base, token)
 		if link == "" {
 			return nil
 		}
+
 		job.Data["invite_url"] = link
 		job.Data["invite_token"] = token
 		job.Data["link"] = link
 	}
+
 	provider, err := p.smtpProvider(ctx, ev.ProjectID)
 	if err != nil {
 		return err
 	}
+
 	rendered, err := p.renderTemplate(ctx, ev.ProjectID, job)
 	if err != nil {
 		return err
 	}
+
 	if err := provider.send(job.To, rendered); err != nil {
 		return err
 	}
+
 	p.log.Info("email sent",
 		xlog.String("event", ev.Type),
 		xlog.String("project_id", ev.ProjectID),
 		xlog.String("template_id", job.TemplateID),
 		xlog.String("to", job.To),
 	)
+
 	return nil
 }
 
@@ -159,6 +174,7 @@ func emailJobFromEvent(ev eventEnvelope) (emailJob, bool) {
 		if stringValue(ev.Payload, "channel") != "email" {
 			return emailJob{}, false
 		}
+
 		job.TemplateID = "otp"
 		job.To = recipient(ev.Payload)
 	case "auth.magiclink.started":
@@ -169,6 +185,7 @@ func emailJobFromEvent(ev eventEnvelope) (emailJob, bool) {
 		if stringValue(ev.Payload, "purpose") == "change" {
 			job.TemplateID = "email_change"
 		}
+
 		job.To = recipient(ev.Payload)
 	case "password.reset_requested":
 		job.TemplateID = "password_reset"
@@ -177,6 +194,7 @@ func emailJobFromEvent(ev eventEnvelope) (emailJob, bool) {
 		if stringValue(ev.Payload, "channel") != "email" {
 			return emailJob{}, false
 		}
+
 		job.TemplateID = "mfa_email"
 		job.To = recipient(ev.Payload)
 	case "auth.flow.continue":
@@ -192,28 +210,34 @@ func emailJobFromEvent(ev eventEnvelope) (emailJob, bool) {
 	default:
 		return emailJob{}, false
 	}
+
 	if link := linkWithToken(stringValue(ev.Payload, "redirect_to"), stringValue(ev.Payload, "token")); link != "" {
 		job.Data["link"] = link
 		job.Data["magic_link"] = link
 		job.Data["reset_url"] = link
 		job.Data["verification_url"] = link
 	}
+
 	job.Data["to"] = job.To
 	job.Data["email"] = job.To
 	job.Data["template_id"] = job.TemplateID
+
 	return job, true
 }
 
 func payloadData(payload map[string]any) map[string]any {
 	out := map[string]any{}
+
 	if raw, ok := payload["template_data"].(map[string]any); ok {
 		for k, v := range raw {
 			out[k] = v
 		}
 	}
+
 	for k, v := range payload {
 		out[k] = v
 	}
+
 	return out
 }
 
@@ -224,6 +248,7 @@ func recipient(payload map[string]any) string {
 			return v
 		}
 	}
+
 	return ""
 }
 
@@ -249,9 +274,11 @@ func (p *Publisher) resolveContinueBase(ctx context.Context, ev eventEnvelope) s
 		if base != "" && sameOrigin(redirectTo, base) {
 			return redirectTo
 		}
+
 		p.log.Info("flow continue: redirect_to origin not allowed; using app_base_url",
 			xlog.String("project_id", ev.ProjectID))
 	}
+
 	return base
 }
 
@@ -262,14 +289,17 @@ func (p *Publisher) resolveLocale(ctx context.Context, ev eventEnvelope, reqLoca
 	if reqLocale != "" {
 		return reqLocale
 	}
+
 	if accID := stringValue(ev.Payload, "account_id"); accID != "" {
 		if loc := p.accountLocale(ctx, accID); loc != "" {
 			return loc
 		}
 	}
+
 	if loc := p.projectDefaultLocale(ctx, ev.ProjectID); loc != "" {
 		return loc
 	}
+
 	return defaultLocale
 }
 
@@ -279,12 +309,14 @@ func (p *Publisher) accountLocale(ctx context.Context, accountID string) string 
 	if err != nil || len(row.Data) == 0 {
 		return ""
 	}
+
 	var env struct {
 		Locale string `json:"Locale"`
 	}
 	if json.Unmarshal(row.Data, &env) != nil {
 		return ""
 	}
+
 	return env.Locale
 }
 
@@ -294,12 +326,14 @@ func (p *Publisher) projectDefaultLocale(ctx context.Context, projectID string) 
 	if err != nil || len(row.Data) == 0 {
 		return ""
 	}
+
 	var env struct {
 		DefaultLocale string `json:"DefaultLocale"`
 	}
 	if json.Unmarshal(row.Data, &env) != nil {
 		return ""
 	}
+
 	return env.DefaultLocale
 }
 
@@ -309,6 +343,7 @@ func (p *Publisher) projectAppBaseURL(ctx context.Context, projectID, env string
 	if env == "" {
 		env = "live"
 	}
+
 	row, err := models.IamConfigs.Query(
 		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(env))),
@@ -317,21 +352,26 @@ func (p *Publisher) projectAppBaseURL(ctx context.Context, projectID, env string
 	if err != nil || len(row.Data) == 0 {
 		return ""
 	}
+
 	var doc map[string]any
 	if json.Unmarshal(row.Data, &doc) != nil {
 		return ""
 	}
+
 	s, _ := doc["app_base_url"].(string)
+
 	return strings.TrimSpace(s)
 }
 
 // sameOrigin reports whether two URLs share scheme + host (incl. port).
 func sameOrigin(a, b string) bool {
 	ua, err1 := url.Parse(a)
+
 	ub, err2 := url.Parse(b)
 	if err1 != nil || err2 != nil || ua.Scheme == "" || ua.Host == "" || ub.Scheme == "" || ub.Host == "" {
 		return false
 	}
+
 	return strings.EqualFold(ua.Scheme, ub.Scheme) && strings.EqualFold(ua.Host, ub.Host)
 }
 
@@ -342,17 +382,22 @@ func flowContinueURL(rawBase, flowToken, proofToken string) string {
 	if rawBase == "" || flowToken == "" {
 		return ""
 	}
+
 	u, err := url.Parse(rawBase)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return ""
 	}
+
 	u.Path = strings.TrimRight(u.Path, "/") + "/continue"
 	q := u.Query()
 	q.Set("flow", flowToken)
+
 	if proofToken != "" {
 		q.Set("token", proofToken)
 	}
+
 	u.RawQuery = q.Encode()
+
 	return u.String()
 }
 
@@ -362,14 +407,17 @@ func inviteURL(rawBase, token string) string {
 	if rawBase == "" || token == "" {
 		return ""
 	}
+
 	u, err := url.Parse(rawBase)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return ""
 	}
+
 	u.Path = strings.TrimRight(u.Path, "/") + "/invite"
 	q := u.Query()
 	q.Set("token", token)
 	u.RawQuery = q.Encode()
+
 	return u.String()
 }
 
@@ -377,21 +425,27 @@ func linkWithToken(rawBase, token string) string {
 	if rawBase == "" || token == "" {
 		return ""
 	}
+
 	u, err := url.Parse(rawBase)
 	if err != nil {
 		return ""
 	}
+
 	if u.Scheme != "http" && u.Scheme != "https" {
 		return ""
 	}
+
 	if u.Host == "" {
 		return ""
 	}
+
 	q := u.Query()
 	if q.Get("token") == "" {
 		q.Set("token", token)
 	}
+
 	u.RawQuery = q.Encode()
+
 	return u.String()
 }
 
@@ -420,6 +474,7 @@ func (p *Publisher) smtpProvider(ctx context.Context, projectID string) (*smtpCo
 	if err != nil {
 		return nil, err
 	}
+
 	for _, row := range rows {
 		var d providerData
 		if len(row.Data) > 0 {
@@ -427,19 +482,24 @@ func (p *Publisher) smtpProvider(ctx context.Context, projectID string) (*smtpCo
 				return nil, err
 			}
 		}
+
 		typ := row.Provider
 		if d.Type != "" {
 			typ = d.Type
 		}
+
 		if !strings.EqualFold(typ, "smtp") {
 			continue
 		}
+
 		cfg, err := p.decodeSMTPConfig(d.Config)
 		if err != nil {
 			return nil, err
 		}
+
 		return cfg, nil
 	}
+
 	return nil, errors.New("notifications: enabled smtp provider is required")
 }
 
@@ -465,23 +525,28 @@ func (p *Publisher) decodeSMTPConfig(raw map[string]json.RawMessage) (*smtpConfi
 	} else if v, ok := rawBoolOpt(raw, "tls"); ok {
 		cfg.StartTLS = v
 	}
+
 	if cfg.From == "" {
 		cfg.From = cfg.Username
 	}
+
 	for _, key := range []string{"password", "api_key", "secret", "token", "access_token", "auth_token"} {
 		if v := rawString(raw, key); v != "" {
 			dec, err := p.db.Cipher.Decrypt(v)
 			if err != nil {
 				return nil, err
 			}
+
 			if key == "password" || cfg.Password == "" {
 				cfg.Password = dec
 			}
 		}
 	}
+
 	if cfg.Host == "" || cfg.From == "" {
 		return nil, errors.New("notifications: smtp host and from are required")
 	}
+
 	return cfg, nil
 }
 
@@ -496,18 +561,22 @@ func (p *Publisher) renderTemplate(ctx context.Context, projectID string, job em
 	if err != nil {
 		return renderedEmail{}, err
 	}
+
 	subject, err := renderText(body["subject"], job.Data)
 	if err != nil {
 		return renderedEmail{}, err
 	}
+
 	html, err := renderHTML(body["html"], job.Data)
 	if err != nil {
 		return renderedEmail{}, err
 	}
+
 	text, err := renderText(body["text"], job.Data)
 	if err != nil {
 		return renderedEmail{}, err
 	}
+
 	return renderedEmail{Subject: subject, HTML: html, Text: text}, nil
 }
 
@@ -524,16 +593,20 @@ func (p *Publisher) templateBody(ctx context.Context, projectID, key, locale str
 			sm.Where(models.IamEmailTemplates.Columns.Locale.EQ(psql.Arg(defaultLocale))),
 		).One(ctx, p.db.Bobx())
 	}
+
 	if err != nil {
 		return defaultTemplate(key, locale), nil
 	}
+
 	out := map[string]string{}
 	if len(row.Data) > 0 {
 		_ = json.Unmarshal(row.Data, &out)
 	}
+
 	if out["subject"] == "" && out["html"] == "" && out["text"] == "" {
 		return defaultTemplate(key, locale), nil
 	}
+
 	return out, nil
 }
 
@@ -541,14 +614,17 @@ func renderHTML(src string, data map[string]any) (string, error) {
 	if src == "" {
 		return "", nil
 	}
+
 	tpl, err := htmltemplate.New("email").Option("missingkey=zero").Parse(src)
 	if err != nil {
 		return "", err
 	}
+
 	var buf bytes.Buffer
 	if err := tpl.Execute(&buf, data); err != nil {
 		return "", err
 	}
+
 	return buf.String(), nil
 }
 
@@ -556,30 +632,36 @@ func renderText(src string, data map[string]any) (string, error) {
 	if src == "" {
 		return "", nil
 	}
+
 	tpl, err := template.New("email").Option("missingkey=zero").Parse(src)
 	if err != nil {
 		return "", err
 	}
+
 	var buf bytes.Buffer
 	if err := tpl.Execute(&buf, data); err != nil {
 		return "", err
 	}
+
 	return buf.String(), nil
 }
 
 // defaultTemplate returns the localized built-in copy for a template key from
-// the shared domain catalogue, falling back to email_verification for unknown
+// the shared domain catalog, falling back to email_verification for unknown
 // keys (mirrors the admin API so previews/tests match what is actually sent).
 func defaultTemplate(key, locale string) map[string]string {
 	t := domain.BuiltinEmailTemplateByKey(key)
 	if t == nil {
 		t = domain.BuiltinEmailTemplateByKey("email_verification")
 	}
+
 	c := t.Copy(locale)
+
 	out := map[string]string{"subject": c.Subject, "text": c.Text}
 	if c.HTML != "" {
 		out["html"] = c.HTML
 	}
+
 	return out
 }
 
@@ -594,6 +676,7 @@ func (c *smtpConfig) send(to string, msg renderedEmail) error {
 		"Date":         time.Now().Format(time.RFC1123Z),
 		"MIME-Version": "1.0",
 	}
+
 	body := msg.Text
 	if msg.HTML != "" {
 		headers["Content-Type"] = `text/html; charset="utf-8"`
@@ -601,6 +684,7 @@ func (c *smtpConfig) send(to string, msg renderedEmail) error {
 	} else {
 		headers["Content-Type"] = `text/plain; charset="utf-8"`
 	}
+
 	var raw bytes.Buffer
 	for k, v := range headers {
 		raw.WriteString(k)
@@ -608,6 +692,7 @@ func (c *smtpConfig) send(to string, msg renderedEmail) error {
 		raw.WriteString(v)
 		raw.WriteString("\r\n")
 	}
+
 	raw.WriteString("\r\n")
 	raw.WriteString(body)
 
@@ -616,28 +701,35 @@ func (c *smtpConfig) send(to string, msg renderedEmail) error {
 		return err
 	}
 	defer client.Close()
+
 	if c.Username != "" || c.Password != "" {
 		if err := client.Auth(smtp.PlainAuth("", c.Username, c.Password, c.Host)); err != nil {
 			return err
 		}
 	}
+
 	if err := client.Mail(c.From); err != nil {
 		return err
 	}
+
 	if err := client.Rcpt(to); err != nil {
 		return err
 	}
+
 	w, err := client.Data()
 	if err != nil {
 		return err
 	}
+
 	if _, err := w.Write(raw.Bytes()); err != nil {
 		_ = w.Close()
 		return err
 	}
+
 	if err := w.Close(); err != nil {
 		return err
 	}
+
 	return client.Quit()
 }
 
@@ -647,8 +739,10 @@ func (c *smtpConfig) connect(addr string) (*smtp.Client, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return smtp.NewClient(conn, c.Host)
 	}
+
 	client, err := smtp.Dial(addr)
 	if err != nil {
 		return nil, err
@@ -663,11 +757,13 @@ func (c *smtpConfig) connect(addr string) (*smtp.Client, error) {
 			_ = client.Close()
 			return nil, fmt.Errorf("notifications: SMTP server %s does not advertise STARTTLS; set start_tls=false only for a trusted local relay", c.Host)
 		}
+
 		if err := client.StartTLS(&tls.Config{ServerName: c.Host, MinVersion: tls.VersionTLS12}); err != nil {
 			_ = client.Close()
 			return nil, err
 		}
 	}
+
 	return client, nil
 }
 
@@ -676,6 +772,7 @@ func rawString(raw map[string]json.RawMessage, key string) string {
 	if b, ok := raw[key]; ok {
 		_ = json.Unmarshal(b, &s)
 	}
+
 	return s
 }
 
@@ -684,6 +781,7 @@ func rawBool(raw map[string]json.RawMessage, key string) bool {
 	if v, ok := raw[key]; ok {
 		_ = json.Unmarshal(v, &b)
 	}
+
 	return b
 }
 
@@ -695,10 +793,12 @@ func rawBoolOpt(raw map[string]json.RawMessage, key string) (val bool, present b
 	if !ok {
 		return false, false
 	}
+
 	var b bool
 	if json.Unmarshal(v, &b) == nil {
 		return b, true
 	}
+
 	var s string
 	if json.Unmarshal(v, &s) == nil {
 		switch strings.ToLower(strings.TrimSpace(s)) {
@@ -708,6 +808,7 @@ func rawBoolOpt(raw map[string]json.RawMessage, key string) (val bool, present b
 			return false, true
 		}
 	}
+
 	return false, false
 }
 
@@ -717,6 +818,7 @@ func rawInt(raw map[string]json.RawMessage, key string, fallback int) int {
 		if err := json.Unmarshal(b, &n); err == nil && n > 0 {
 			return n
 		}
+
 		var s string
 		if err := json.Unmarshal(b, &s); err == nil {
 			if parsed, err := strconv.Atoi(s); err == nil && parsed > 0 {
@@ -724,5 +826,6 @@ func rawInt(raw map[string]json.RawMessage, key string, fallback int) int {
 			}
 		}
 	}
+
 	return fallback
 }

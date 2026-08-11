@@ -42,6 +42,7 @@ func requirePrincipal(ctx context.Context) (*domain.Principal, error) {
 	if p, ok := PrincipalFrom(ctx); ok && p != nil {
 		return p, nil
 	}
+
 	return nil, domain.ErrUnauthorized
 }
 
@@ -56,13 +57,16 @@ func requireProjectAdmin(ctx context.Context, projectID string) (*domain.Princip
 	if err != nil {
 		return nil, err
 	}
+
 	if p.Kind == domain.PrincipalOperator {
 		return p, nil
 	}
+
 	if (p.Kind == domain.PrincipalAdmin || p.Kind == domain.PrincipalService) &&
 		p.ProjectID != "" && p.ProjectID == projectID {
 		return p, nil
 	}
+
 	return nil, domain.ErrForbidden
 }
 
@@ -72,9 +76,11 @@ func requireOperator(ctx context.Context) (*domain.Principal, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if p.Kind != domain.PrincipalOperator {
 		return nil, domain.ErrForbidden
 	}
+
 	return p, nil
 }
 
@@ -92,6 +98,7 @@ func (h securityHandler) auth(ctx context.Context, p *domain.Principal, err erro
 	if err != nil {
 		return ctx, err // ogen wraps as SecurityError -> ErrorHandler -> 401
 	}
+
 	return withPrincipal(ctx, p), nil
 }
 

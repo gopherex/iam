@@ -7,7 +7,7 @@ package postgres
 //
 // The service account aggregate is persisted as a `data jsonb` envelope; the
 // typed columns (project_id, name, disabled) are lookup-only and derived from
-// the marshalled struct. Every query is scoped by project_id (the tenant
+// the marshaled struct. Every query is scoped by project_id (the tenant
 // boundary). Reads run on db.Bobx(); every mutation is wrapped in
 // db.withTx / withTxRet (serializable + mandatory retry).
 //
@@ -50,15 +50,19 @@ func (a *pgAdminServiceAccounts) findSA(ctx context.Context, projectID, saID str
 		if adminIsNotFound(translatePgErr("service_account", err)) {
 			return nil, nil, domain.ErrNotFound
 		}
+
 		return nil, nil, err
 	}
+
 	if row.ProjectID != projectID {
 		return nil, nil, domain.ErrNotFound
 	}
+
 	var sa domain.ServiceAccount
 	if err := unmarshal(row.Data, &sa); err != nil {
 		return nil, nil, err
 	}
+
 	return row, &sa, nil
 }
 
@@ -70,14 +74,17 @@ func (a *pgAdminServiceAccounts) List(ctx context.Context, projectID string) ([]
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.ServiceAccount, 0, len(rows))
 	for _, row := range rows {
 		var sa domain.ServiceAccount
 		if err := unmarshal(row.Data, &sa); err != nil {
 			return nil, err
 		}
+
 		out = append(out, sa)
 	}
+
 	return out, nil
 }
 
@@ -97,10 +104,12 @@ func (a *pgAdminServiceAccounts) Create(ctx context.Context, cmd domain.ServiceA
 			Scopes:    cmd.Scopes,
 			Disabled:  false,
 		}
+
 		raw, err := marshal(sa)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if _, err := models.IamServiceAccounts.Insert(&models.IamServiceAccountSetter{
 			ID:        &sa.ID,
@@ -112,8 +121,10 @@ func (a *pgAdminServiceAccounts) Create(ctx context.Context, cmd domain.ServiceA
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.created",
 			ProjectID:   sa.ProjectID,
@@ -123,6 +134,7 @@ func (a *pgAdminServiceAccounts) Create(ctx context.Context, cmd domain.ServiceA
 		}); err != nil {
 			return nil, err
 		}
+
 		return sa, nil
 	})
 }
@@ -134,14 +146,18 @@ func (a *pgAdminServiceAccounts) Update(ctx context.Context, cmd domain.AdminSer
 		if err != nil {
 			return nil, err
 		}
+
 		if cmd.Scopes != nil {
 			sa.Scopes = cmd.Scopes
 		}
+
 		sa.Disabled = cmd.Disabled
+
 		raw, err := marshal(sa)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamServiceAccountSetter{
 			Disabled:  &sa.Disabled,
@@ -150,6 +166,7 @@ func (a *pgAdminServiceAccounts) Update(ctx context.Context, cmd domain.AdminSer
 		}); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.updated",
 			ProjectID:   sa.ProjectID,
@@ -159,6 +176,7 @@ func (a *pgAdminServiceAccounts) Update(ctx context.Context, cmd domain.AdminSer
 		}); err != nil {
 			return nil, err
 		}
+
 		return sa, nil
 	})
 }
@@ -178,14 +196,17 @@ func (a *pgAdminServiceAccounts) Delete(ctx context.Context, projectID, saID str
 		if err != nil {
 			return err
 		}
+
 		for _, s := range secrets {
 			if err := s.Delete(ctx, a.db.Bobx()); err != nil {
 				return err
 			}
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.deleted",
 			ProjectID:   projectID,
@@ -195,6 +216,7 @@ func (a *pgAdminServiceAccounts) Delete(ctx context.Context, projectID, saID str
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -212,15 +234,19 @@ func (a *pgAdminServiceAccounts) AddSecret(ctx context.Context, cmd domain.Admin
 		if err != nil {
 			return nil, err
 		}
+
 		secretID := newUUID()
+
 		meta := map[string]any{"name": cmd.Name}
 		if !cmd.ExpiresAt.IsZero() {
 			meta["expires_at"] = cmd.ExpiresAt.UTC()
 		}
+
 		mraw, err := marshal(meta)
 		if err != nil {
 			return nil, err
 		}
+
 		mrm := json.RawMessage(mraw)
 		if _, err := models.IamAppSecrets.Insert(&models.IamAppSecretSetter{
 			ID:        &secretID,
@@ -231,6 +257,7 @@ func (a *pgAdminServiceAccounts) AddSecret(ctx context.Context, cmd domain.Admin
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
+
 		result := &domain.AdminSecret{
 			SecretID:     secretID,
 			ClientID:     cmd.ServiceAccountID,
@@ -245,6 +272,7 @@ func (a *pgAdminServiceAccounts) AddSecret(ctx context.Context, cmd domain.Admin
 		}); err != nil {
 			return nil, err
 		}
+
 		return result, nil
 	})
 }
@@ -257,14 +285,18 @@ func (a *pgAdminServiceAccounts) DeleteSecret(ctx context.Context, projectID, sa
 			if adminIsNotFound(translatePgErr("app_secret", err)) {
 				return domain.ErrNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID || row.AppID != saID {
 			return domain.ErrNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.secret_deleted",
 			ProjectID:   projectID,
@@ -274,6 +306,7 @@ func (a *pgAdminServiceAccounts) DeleteSecret(ctx context.Context, projectID, sa
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }

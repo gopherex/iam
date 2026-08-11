@@ -66,6 +66,7 @@ func NewPgCoreAuthFlows(db *DB, emitter Emitter, accounts api.CoreAuthAccounts, 
 	if cfg == nil {
 		cfg = NewConfigReader(db, 0)
 	}
+
 	return &pgCoreAuthFlows{db: db, emitter: emitter, accounts: accounts, cfg: cfg}
 }
 
@@ -77,11 +78,13 @@ var _ api.CoreAuthFlows = (*pgCoreAuthFlows)(nil)
 func flowMintToken() (token, hash string, err error) {
 	b := make([]byte, 32) // 256 bits
 	if _, err = rand.Read(b); err != nil {
-		return
+		return token, hash, err
 	}
+
 	token = flowTokenPrefix + hex.EncodeToString(b)
 	hash = flowHashToken(token)
-	return
+
+	return token, hash, err
 }
 
 // flowHashToken returns sha256(token) in hex.
@@ -121,6 +124,7 @@ func flowDataRM(d flowData) (json.RawMessage, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return json.RawMessage(b), nil
 }
 
@@ -131,12 +135,14 @@ func flowDataRM(d flowData) (json.RawMessage, error) {
 func (a *pgCoreAuthFlows) flowLoad(ctx context.Context, projectID, token string) (*models.IamFlow, *domain.Flow, error) {
 	// Hash the incoming token before the DB call.
 	hash := flowHashToken(token)
+
 	rows, err := models.IamFlows.Query(
 		sm.Where(models.IamFlows.Columns.TokenHash.EQ(psql.Arg(hash))),
 	).All(ctx, a.db.Bobx())
 	if err != nil || len(rows) == 0 {
 		return nil, nil, domain.ErrFlowNotFound
 	}
+
 	row := rows[0]
 	// Tenant boundary.
 	if row.ProjectID != projectID {
@@ -148,6 +154,7 @@ func (a *pgCoreAuthFlows) flowLoad(ctx context.Context, projectID, token string)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if flowRowEnv(row) != env {
 		return nil, nil, domain.ErrFlowNotFound
 	}
@@ -159,10 +166,12 @@ func (a *pgCoreAuthFlows) flowLoad(ctx context.Context, projectID, token string)
 	if nowUTC().After(row.ExpiresAt) {
 		return nil, nil, domain.ErrFlowExpired
 	}
+
 	f, err := flowUnmarshalRow(row)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return row, f, nil
 }
 
@@ -172,6 +181,7 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 	if err := unmarshal(row.Data, &data); err != nil {
 		return nil, err
 	}
+
 	f := &domain.Flow{
 		ID:               row.ID,
 		ProjectID:        row.ProjectID,
@@ -198,12 +208,14 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 	if uid, ok := row.UserID.Get(); ok {
 		f.UserID = uid
 	}
+
 	return f, nil
 }
 
 // flowSave persists updated flow fields using the existing row (no token rotation).
 func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *domain.Flow) error {
 	now := nowUTC()
+
 	rm, err := flowDataRM(flowData{
 		Locale:           f.Locale,
 		RedirectTo:       f.RedirectTo,
@@ -221,6 +233,7 @@ func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *
 	if err != nil {
 		return err
 	}
+
 	setter := &models.IamFlowSetter{
 		Status:    ptr(string(f.Status)),
 		Step:      ptr(string(f.Step)),
@@ -230,7 +243,9 @@ func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *
 	if f.UserID != "" {
 		setter.UserID = ptr(null.From(f.UserID))
 	}
+
 	f.UpdatedAt = now
+
 	return row.Update(ctx, a.db.Bobx(), setter)
 }
 
@@ -241,7 +256,9 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 	if err != nil {
 		return "", fmt.Errorf("flow rotate: mint token: %w", err)
 	}
+
 	now := nowUTC()
+
 	rm, err := flowDataRM(flowData{
 		Locale:           f.Locale,
 		RedirectTo:       f.RedirectTo,
@@ -259,6 +276,7 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 	if err != nil {
 		return "", err
 	}
+
 	setter := &models.IamFlowSetter{
 		TokenHash: &newHash,
 		Status:    ptr(string(f.Status)),
@@ -269,10 +287,13 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 	if f.UserID != "" {
 		setter.UserID = ptr(null.From(f.UserID))
 	}
+
 	if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 		return "", err
 	}
+
 	f.UpdatedAt = now
+
 	return newToken, nil
 }
 
@@ -282,6 +303,7 @@ func flowRowEnv(row *models.IamFlow) string {
 	if row.Environment == "" {
 		return coreAuthDefaultEnv
 	}
+
 	return row.Environment
 }
 
@@ -290,17 +312,21 @@ func (a *pgCoreAuthFlows) flowInsert(ctx context.Context, f *domain.Flow, hash s
 	if data.Locale == "" {
 		data.Locale = f.Locale
 	}
+
 	if data.RedirectTo == "" {
 		data.RedirectTo = f.RedirectTo
 	}
+
 	rm, err := flowDataRM(data)
 	if err != nil {
 		return err
 	}
+
 	flowEnv := f.Environment
 	if flowEnv == "" {
 		flowEnv = coreAuthDefaultEnv
 	}
+
 	setter := &models.IamFlowSetter{
 		ID:          &f.ID,
 		ProjectID:   &f.ProjectID,
@@ -318,7 +344,9 @@ func (a *pgCoreAuthFlows) flowInsert(ctx context.Context, f *domain.Flow, hash s
 		uid := null.From(f.UserID)
 		setter.UserID = &uid
 	}
+
 	_, err = models.IamFlows.Insert(setter).One(ctx, a.db.Bobx())
+
 	return err
 }
 
@@ -344,6 +372,7 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 	if err != nil {
 		return nil, err
 	}
+
 	now := nowUTC()
 	f := &domain.Flow{
 		ID:          newUUID(),
@@ -365,16 +394,20 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 		ConsentsAccepted: cmd.Consents,
 		Method:           cmd.Method,
 	}
+
 	var state *domain.FlowState
 	if create, ok := flowCreators[cmd.Kind]; ok {
 		state, err = create(ctx, a, f, cmd)
 	} else {
 		state, err = a.flowCreateCollect(ctx, f)
 	}
+
 	if err != nil {
 		return nil, err
 	}
+
 	a.emitFlowContinue(ctx, state, cmd.RedirectTo, cmd.Locale)
+
 	return state, nil
 }
 
@@ -388,16 +421,20 @@ func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.Fl
 	if f.Status != domain.FlowStatusPending || f.Contact.Email == "" {
 		return
 	}
+
 	if f.Kind != domain.FlowKindSignup && f.Kind != domain.FlowKindRecovery {
 		return
 	}
+
 	ac := f.ActiveChallenge
 	if ac == nil || ac.Channel != "email" || ac.Code == "" || ac.Token == "" {
 		return
 	}
+
 	if redirectTo == "" {
 		redirectTo = f.RedirectTo
 	}
+
 	payload := map[string]any{
 		"flow_token":   state.FlowToken,
 		"token":        ac.Token,
@@ -409,7 +446,7 @@ func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.Fl
 		"contact":      f.Contact.Email,
 	}
 	// Per-flow base override; the notification layer validates its origin against
-	// the project before honouring it, falling back to app_base_url.
+	// the project before honoring it, falling back to app_base_url.
 	if redirectTo != "" {
 		payload["redirect_to"] = redirectTo
 	}
@@ -418,6 +455,7 @@ func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.Fl
 	if locale != "" {
 		payload["locale"] = locale
 	}
+
 	_ = a.emitter.Emit(ctx, domain.Event{
 		Type:        "auth.flow.continue",
 		ProjectID:   f.ProjectID,
@@ -434,12 +472,14 @@ func (a *pgCoreAuthFlows) flowCreateCollect(ctx context.Context, f *domain.Flow)
 	if err != nil {
 		return nil, fmt.Errorf("flow create: %w", err)
 	}
+
 	if err := a.flowInsert(ctx, f, hash, flowData{
 		Contact:   f.Contact,
 		Collected: f.Collected,
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
 }
 
@@ -450,6 +490,7 @@ func (a *pgCoreAuthFlows) Get(ctx context.Context, cmd domain.FlowGetCmd) (*doma
 	if err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
 }
 
@@ -485,6 +526,7 @@ var flowAdvancers = map[domain.FlowKind]flowAdvanceFn{
 func flowVerificationSecret(payload map[string]string) (code string, token string) {
 	code = strings.TrimSpace(payload["code"])
 	token = strings.TrimSpace(payload["token"])
+
 	return code, token
 }
 
@@ -501,6 +543,7 @@ func flowVerifyConsumeCmd(projectID, accountID, challengeID, code, token string)
 		// any unconsumed token in the project.
 		cmd.Token = token
 	}
+
 	return cmd
 }
 
@@ -513,10 +556,12 @@ func (a *pgCoreAuthFlows) Submit(ctx context.Context, cmd domain.FlowSubmitCmd) 
 	if err != nil {
 		return nil, err
 	}
+
 	advance, ok := flowAdvancers[f.Kind]
 	if !ok {
 		return nil, domain.ErrNotImplemented
 	}
+
 	return advance(ctx, a, row, f, cmd)
 }
 
@@ -527,6 +572,7 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 	if err != nil {
 		return nil, err
 	}
+
 	ac := f.ActiveChallenge
 	if ac == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active challenge to resend")
@@ -544,6 +590,7 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 	if err != nil {
 		return nil, err
 	}
+
 	now := nowUTC()
 	f.ActiveChallenge = &domain.FlowActiveChallenge{
 		ChallengeID:  ch.ID,
@@ -555,13 +602,16 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 		Token:        ch.Token,
 	}
 	f.Error = nil
+
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
 		return a.flowSave(ctx, row, f)
 	}); err != nil {
 		return nil, err
 	}
+
 	state := &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}
 	a.emitFlowContinue(ctx, state, f.RedirectTo, f.Locale)
+
 	return state, nil
 }
 
@@ -575,28 +625,35 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 	case ac.Channel == "sms" || f.Method == domain.FlowMethodPhoneOTP:
 		core, ok := a.accounts.(*pgCoreAuth)
 		if !ok {
-			return nil, "", fmt.Errorf("flow resend: accounts is not *pgCoreAuth")
+			return nil, "", errors.New("flow resend: accounts is not *pgCoreAuth")
 		}
+
 		pl := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
+
 		purpose := "signin"
 		if f.Kind == domain.FlowKindRecovery {
 			purpose = "recovery"
 		}
+
 		ch, serr := pl.StartOTP(ctx, f.ProjectID, f.Contact.Phone, "sms", purpose, f.Locale)
 		if serr != nil {
 			return nil, "", serr
 		}
+
 		return ch, "sms", nil
 	case f.Method == domain.FlowMethodMagicLink:
 		core, ok := a.accounts.(*pgCoreAuth)
 		if !ok {
-			return nil, "", fmt.Errorf("flow resend: accounts is not *pgCoreAuth")
+			return nil, "", errors.New("flow resend: accounts is not *pgCoreAuth")
 		}
+
 		pl := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
+
 		ch, serr := pl.StartMagicLink(ctx, f.ProjectID, f.Contact.Email, "", f.Locale)
 		if serr != nil {
 			return nil, "", serr
 		}
+
 		return ch, "email", nil
 	default:
 		if f.Kind == domain.FlowKindRecovery {
@@ -604,6 +661,7 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 			if serr != nil {
 				return nil, "", serr
 			}
+
 			return ch, "email", nil
 		}
 		// Email verification (signup email path).
@@ -617,6 +675,7 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 		if serr != nil {
 			return nil, "", serr
 		}
+
 		return ch, "email", nil
 	}
 }
@@ -625,18 +684,22 @@ func (a *pgCoreAuthFlows) flowIssueRecoveryEmailChallenge(ctx context.Context, f
 	if f.UserID == "" {
 		return &domain.Challenge{ID: newUUID(), Type: "password_reset", ExpiresAt: nowUTC().Add(coreAuthChallengeTTL)}, nil
 	}
+
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, fmt.Errorf("flow recovery challenge: accounts is not *pgCoreAuth")
+		return nil, errors.New("flow recovery challenge: accounts is not *pgCoreAuth")
 	}
+
 	code, err := coreAuthRandomCode()
 	if err != nil {
 		return nil, fmt.Errorf("flow recovery challenge: random code: %w", err)
 	}
+
 	token, err := coreAuthRandomToken()
 	if err != nil {
 		return nil, fmt.Errorf("flow recovery challenge: random token: %w", err)
 	}
+
 	now := nowUTC()
 	data := coreAuthChallengeData{
 		ID:          newUUID(),
@@ -653,19 +716,25 @@ func (a *pgCoreAuthFlows) flowIssueRecoveryEmailChallenge(ctx context.Context, f
 		ExpiresAt:   now.Add(coreAuthChallengeTTL),
 		CreatedAt:   now,
 	}
+
 	var ch *domain.Challenge
+
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
 		inserted, insErr := pgCA.coreAuthInsertChallenge(ctx, data)
 		if insErr != nil {
 			return insErr
 		}
+
 		ch = inserted
+
 		return nil
 	}); err != nil {
 		return nil, err
 	}
+
 	ch.Code = code
 	ch.Token = token
+
 	return ch, nil
 }
 
@@ -677,7 +746,9 @@ func (a *pgCoreAuthFlows) Abandon(ctx context.Context, cmd domain.FlowAbandonCmd
 		// Already gone — idempotent.
 		return nil
 	}
+
 	f.Status = domain.FlowStatusAborted
+
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		return a.flowSave(ctx, row, f)
 	})
@@ -697,6 +768,7 @@ func (a *pgCoreAuthFlows) flowAuthConfig(ctx context.Context, projectID string) 
 	if err != nil {
 		return "", ""
 	}
+
 	return cfg.RegistrationMode, cfg.PasswordStrategy
 }
 
@@ -705,10 +777,12 @@ func (a *pgCoreAuthFlows) flowAuthConfig(ctx context.Context, projectID string) 
 func (a *pgCoreAuthFlows) flowPersistAtStep(ctx context.Context, f *domain.Flow, step domain.FlowStep, ferr *domain.FlowError) (*domain.FlowState, error) {
 	f.Step = step
 	f.Error = ferr
+
 	token, hash, err := flowMintToken()
 	if err != nil {
 		return nil, fmt.Errorf("flow persist at %s: mint token: %w", step, err)
 	}
+
 	if err := a.flowInsert(ctx, f, hash, flowData{
 		Contact:          f.Contact,
 		Collected:        f.Collected,
@@ -719,6 +793,7 @@ func (a *pgCoreAuthFlows) flowPersistAtStep(ctx context.Context, f *domain.Flow,
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
 }
 
@@ -727,6 +802,7 @@ func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flo
 	mode, pwStrategy := a.flowAuthConfig(ctx, f.ProjectID)
 	f.RegistrationMode = mode
 	f.PasswordStrategy = pwStrategy
+
 	switch mode {
 	case "closed":
 		return a.flowPersistAtStep(ctx, f, domain.FlowStepBlocked,
@@ -740,10 +816,12 @@ func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flo
 			return a.flowPersistAtStep(ctx, f, domain.FlowStepBlocked,
 				&domain.FlowError{Code: "invite_required", Message: "An invitation is required to sign up."})
 		}
+
 		inviteRow, ok, err := a.flowFindRedeemableInvite(ctx, f.ProjectID, cmd.InviteToken, cmd.Email)
 		if err != nil {
 			return nil, err
 		}
+
 		if !ok {
 			return a.flowPersistAtStep(ctx, f, domain.FlowStepBlocked,
 				&domain.FlowError{Code: "invite_invalid", Message: "The invitation is invalid or expired."})
@@ -765,6 +843,7 @@ func (a *pgCoreAuthFlows) advanceSignupCreateAccepted(ctx context.Context, f *do
 	if err := a.flowMarkInviteAccepted(ctx, inviteRow); err != nil {
 		return nil, err
 	}
+
 	return a.flowSignupRegisterAndPersist(ctx, f, cmd, f.PasswordStrategy)
 }
 
@@ -778,6 +857,7 @@ func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *d
 	if pwStrategy == "after_verify" {
 		password = ""
 	}
+
 	acct, _, err := a.accounts.Register(ctx, domain.RegisterCmd{
 		ProjectID:       f.ProjectID,
 		Email:           cmd.Email,
@@ -789,6 +869,7 @@ func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *d
 	if err != nil {
 		return nil, err
 	}
+
 	f.UserID = acct.ID
 	f.Step = domain.FlowStepVerifyEmail
 
@@ -807,6 +888,7 @@ func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *d
 	if err != nil {
 		return nil, err
 	}
+
 	now := nowUTC()
 	f.ActiveChallenge = &domain.FlowActiveChallenge{
 		ChallengeID:  ch.ID,
@@ -823,6 +905,7 @@ func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *d
 	if err != nil {
 		return nil, fmt.Errorf("flow signup create: mint token: %w", err)
 	}
+
 	if err := a.flowInsert(ctx, f, hash, flowData{
 		Contact:          f.Contact,
 		Collected:        f.Collected,
@@ -834,28 +917,33 @@ func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *d
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
 }
 
 // flowRequiredConsents resolves the project's required consent documents to one
 // (key, version) ref per key under the request environment, picking the document
 // that best matches the requested locale. An absent/empty config yields nil —
-// the flow then completes without an accept_consents step (pre-gate behaviour).
+// the flow then completes without an accept_consents step (pre-gate behavior).
 // A config read error is swallowed to nil here, consistent with flowAuthConfig.
 func (a *pgCoreAuthFlows) flowRequiredConsents(ctx context.Context, projectID, locale string) []domain.FlowConsentRef {
 	docs, err := a.cfg.ConsentConfig(ctx, projectID)
 	if err != nil || len(docs) == 0 {
 		return nil
 	}
+
 	defLocale, _ := a.cfg.AuthConfig(ctx, projectID)
+
 	required := resolveRequiredConsents(docs, locale, defLocale.DefaultLocale)
 	if len(required) == 0 {
 		return nil
 	}
+
 	out := make([]domain.FlowConsentRef, 0, len(required))
 	for _, r := range required {
 		out = append(out, domain.FlowConsentRef{Key: r.Key, Version: r.Version})
 	}
+
 	return out
 }
 
@@ -868,26 +956,33 @@ func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectI
 	if err != nil {
 		return nil, false, err
 	}
+
 	hash := inviteHashToken(rawToken)
+
 	rows, err := models.IamInvites.Query(
 		sm.Where(models.IamInvites.Columns.TokenHash.EQ(psql.Arg(hash))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
 		return nil, false, err
 	}
+
 	if len(rows) == 0 {
 		return nil, false, nil
 	}
+
 	row := rows[0]
 	if row.ProjectID != projectID {
 		return nil, false, nil
 	}
+
 	if row.Environment != env {
 		return nil, false, nil
 	}
+
 	if row.Status != inviteStatusPend {
 		return nil, false, nil
 	}
+
 	if exp, ok := row.ExpiresAt.Get(); ok && nowUTC().After(exp) {
 		return nil, false, nil
 	}
@@ -895,6 +990,7 @@ func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectI
 	if bound, ok := row.Email.Get(); ok && bound != "" && bound != email {
 		return nil, false, nil
 	}
+
 	return row, true, nil
 }
 
@@ -902,6 +998,7 @@ func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectI
 // invite, joining the caller's (ambient) transaction.
 func (a *pgCoreAuthFlows) flowMarkInviteAccepted(ctx context.Context, row *models.IamInvite) error {
 	now := nowUTC()
+
 	return row.Update(ctx, a.db.Bobx(), &models.IamInviteSetter{
 		Status:     ptr(inviteStatusAccept),
 		AcceptedAt: ptr(null.From(now)),
@@ -916,16 +1013,19 @@ func advanceSignup(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 		if cmd.Action != "verify_email" {
 			return nil, domain.ErrBadRequest.WithMessage("expected action verify_email")
 		}
+
 		return a.signupVerifyEmail(ctx, row, f, cmd)
 	case domain.FlowStepSetPassword:
 		if cmd.Action != "set_password" {
 			return nil, domain.ErrBadRequest.WithMessage("expected action set_password")
 		}
+
 		return a.signupSetPassword(ctx, row, f, cmd)
 	case domain.FlowStepAcceptConsents:
 		if cmd.Action != "accept_consents" {
 			return nil, domain.ErrBadRequest.WithMessage("expected action accept_consents")
 		}
+
 		return a.signupAcceptConsents(ctx, row, f, cmd)
 	default:
 		return nil, domain.ErrBadRequest.WithMessage(fmt.Sprintf("unexpected step %q for signup", f.Step))
@@ -939,10 +1039,12 @@ func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.Iam
 	if ac == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active email challenge")
 	}
+
 	code, token := flowVerificationSecret(cmd.Payload)
 	if code == "" && token == "" {
 		return nil, domain.ErrBadRequest.WithMessage("code or token is required")
 	}
+
 	if ac.AttemptsLeft <= 0 {
 		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
 	}
@@ -957,6 +1059,7 @@ func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.Iam
 		_ = a.db.withTx(ctx, func(ctx context.Context) error {
 			return a.flowSave(ctx, row, f)
 		})
+
 		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
 	}
 
@@ -970,11 +1073,13 @@ func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.Iam
 	// is not surfaced; set_password mints the real one.
 	if f.PasswordStrategy == "after_verify" {
 		f.Step = domain.FlowStepSetPassword
+
 		if err := a.db.withTx(ctx, func(ctx context.Context) error {
 			return a.flowSave(ctx, row, f)
 		}); err != nil {
 			return nil, err
 		}
+
 		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
 	}
 
@@ -989,13 +1094,15 @@ func (a *pgCoreAuthFlows) signupSetPassword(ctx context.Context, row *models.Iam
 	if f.UserID == "" {
 		return nil, domain.ErrBadRequest.WithMessage("no verified user for signup")
 	}
+
 	password := cmd.Payload["password"]
 	if password == "" {
 		return nil, domain.ErrBadRequest.WithMessage("password is required")
 	}
+
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, fmt.Errorf("signup set_password: accounts is not *pgCoreAuth")
+		return nil, errors.New("signup set_password: accounts is not *pgCoreAuth")
 	}
 
 	sess, err := withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Session, error) {
@@ -1003,24 +1110,30 @@ func (a *pgCoreAuthFlows) signupSetPassword(ctx context.Context, row *models.Iam
 		if err != nil {
 			return nil, fmt.Errorf("signup set_password: load user: %w", err)
 		}
+
 		acc, err := coreAuthLoadAccount(userRow, f.ProjectID)
 		if err != nil {
 			return nil, fmt.Errorf("signup set_password: parse account: %w", err)
 		}
+
 		if err := pgCA.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, password); err != nil {
 			return nil, err
 		}
+
 		hash, err := coreAuthHashPassword(password)
 		if err != nil {
 			return nil, fmt.Errorf("signup set_password: hash password: %w", err)
 		}
+
 		if err := pgCA.coreAuthUpsertPasswordCredential(ctx, acc.ProjectID, acc.ID, hash); err != nil {
 			return nil, fmt.Errorf("signup set_password: upsert credential: %w", err)
 		}
+
 		s, err := pgCA.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
 		if err != nil {
 			return nil, fmt.Errorf("signup set_password: mint session: %w", err)
 		}
+
 		return s, nil
 	})
 	if err != nil {
@@ -1036,22 +1149,28 @@ func flowRequiredConsentDocs(f *domain.Flow) []consentRequiredDoc {
 	for _, r := range f.ConsentsRequired {
 		required = append(required, consentRequiredDoc{Key: r.Key, Version: r.Version})
 	}
+
 	return required
 }
 
 func mergeConsentAcceptances(lists ...[]domain.AccountConsentAcceptance) []domain.AccountConsentAcceptance {
 	var out []domain.AccountConsentAcceptance
+
 	seen := make(map[domain.FlowConsentRef]struct{})
+
 	for _, list := range lists {
 		for _, acc := range list {
-			ref := domain.FlowConsentRef{Key: acc.Key, Version: acc.Version}
+			ref := domain.FlowConsentRef(acc)
 			if _, ok := seen[ref]; ok {
 				continue
 			}
+
 			seen[ref] = struct{}{}
+
 			out = append(out, acc)
 		}
 	}
+
 	return out
 }
 
@@ -1059,13 +1178,16 @@ func (a *pgCoreAuthFlows) signupRevokeProvisionalSession(ctx context.Context, f 
 	if sess == nil {
 		return nil
 	}
+
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
 		return nil
 	}
+
 	if err := pgCA.coreAuthRevokeSession(ctx, f.ProjectID, sess.ID); err != nil && !errors.Is(err, domain.ErrSessionNotFound) {
 		return err
 	}
+
 	return nil
 }
 
@@ -1074,26 +1196,34 @@ func (a *pgCoreAuthFlows) signupRecordAcceptedConsents(ctx context.Context, f *d
 	if len(accepted) == 0 {
 		return nil
 	}
+
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return fmt.Errorf("signup record consents: accounts is not *pgCoreAuth")
+		return errors.New("signup record consents: accounts is not *pgCoreAuth")
 	}
+
 	localeByKey := pgCA.coreAuthConsentLocales(ctx, f.ProjectID, "")
+
 	env := f.Environment
 	if env == "" {
 		env = coreAuthDefaultEnv
 	}
+
 	configured, _ := a.cfg.ConsentConfig(ctx, f.ProjectID)
+
 	allowedConsent := make(map[string]struct{}, len(configured))
 	for _, d := range configured {
 		allowedConsent[d.Key+"\x00"+d.Version] = struct{}{}
 	}
+
 	now := nowUTC()
 	recorded := false
+
 	for _, acc := range accepted {
 		if _, ok := allowedConsent[acc.Key+"\x00"+acc.Version]; !ok {
 			continue
 		}
+
 		setter := &models.IamConsentSetter{
 			ID:          ptr(newUUID()),
 			ProjectID:   ptr(f.ProjectID),
@@ -1106,14 +1236,18 @@ func (a *pgCoreAuthFlows) signupRecordAcceptedConsents(ctx context.Context, f *d
 		if loc := localeByKey[acc.Key]; loc != "" {
 			setter.Locale = ptr(null.From(loc))
 		}
+
 		if _, err := models.IamConsents.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return fmt.Errorf("signup record consents: insert consent: %w", err)
 		}
+
 		recorded = true
 	}
+
 	if !recorded {
 		return nil
 	}
+
 	return a.emitter.Emit(ctx, domain.Event{
 		Type:        "account.consents_accepted",
 		ProjectID:   f.ProjectID,
@@ -1129,57 +1263,69 @@ func (a *pgCoreAuthFlows) signupCompleteWithExistingSession(ctx context.Context,
 	f.Status = domain.FlowStatusCompleted
 	f.Step = domain.FlowStepCompleted
 	f.Error = nil
+
 	newToken, err := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
 		if err := a.signupRecordAcceptedConsents(ctx, f, accepted); err != nil {
 			return "", err
 		}
+
 		return a.flowRotate(ctx, row, f)
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: newToken, Flow: f, Session: sess}, nil
 }
 
 func (a *pgCoreAuthFlows) signupCompleteWithFreshSession(ctx context.Context, row *models.IamFlow, f *domain.Flow, accepted []domain.AccountConsentAcceptance) (*domain.FlowState, error) {
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, fmt.Errorf("signup complete with consents: accounts is not *pgCoreAuth")
+		return nil, errors.New("signup complete with consents: accounts is not *pgCoreAuth")
 	}
+
 	f.ConsentsRequired = nil
 	f.ConsentsAccepted = nil
 	f.Status = domain.FlowStatusCompleted
 	f.Step = domain.FlowStepCompleted
 	f.Error = nil
+
 	type result struct {
 		token string
 		sess  *domain.Session
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		if err := a.signupRecordAcceptedConsents(ctx, f, accepted); err != nil {
 			return result{}, err
 		}
+
 		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), f.UserID)
 		if err != nil {
 			return result{}, fmt.Errorf("signup complete with consents: load user: %w", err)
 		}
+
 		acc, err := coreAuthLoadAccount(userRow, f.ProjectID)
 		if err != nil {
 			return result{}, fmt.Errorf("signup complete with consents: parse account: %w", err)
 		}
+
 		sess, err := pgCA.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
 		if err != nil {
 			return result{}, fmt.Errorf("signup complete with consents: mint session: %w", err)
 		}
+
 		token, err := a.flowRotate(ctx, row, f)
 		if err != nil {
 			return result{}, err
 		}
+
 		return result{token: token, sess: sess}, nil
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: res.token, Flow: f, Session: res.sess}, nil
 }
 
@@ -1195,6 +1341,7 @@ func (a *pgCoreAuthFlows) flowCompleteOrGateConsents(ctx context.Context, row *m
 			if err := a.signupRevokeProvisionalSession(ctx, f, sess); err != nil {
 				return nil, err
 			}
+
 			return a.signupCompleteWithFreshSession(ctx, row, f, f.ConsentsAccepted)
 		}
 		// The identity step (verify_email / set_password) already minted a session,
@@ -1204,15 +1351,19 @@ func (a *pgCoreAuthFlows) flowCompleteOrGateConsents(ctx context.Context, row *m
 		if err := a.signupRevokeProvisionalSession(ctx, f, sess); err != nil {
 			return nil, err
 		}
+
 		f.Step = domain.FlowStepAcceptConsents
 		f.Error = nil
+
 		if err := a.db.withTx(ctx, func(ctx context.Context) error {
 			return a.flowSave(ctx, row, f)
 		}); err != nil {
 			return nil, err
 		}
+
 		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
 	}
+
 	return a.signupCompleteWithExistingSession(ctx, row, f, f.ConsentsAccepted, sess)
 }
 
@@ -1232,19 +1383,23 @@ func (a *pgCoreAuthFlows) signupAcceptConsents(ctx context.Context, row *models.
 	if f.UserID == "" {
 		return nil, domain.ErrBadRequest.WithMessage("no verified user for signup")
 	}
+
 	rawAccept := cmd.Payload["accept"]
 	if rawAccept == "" {
 		rawAccept = cmd.Payload["consents"]
 	}
+
 	submitted, err := parseConsentAccept(rawAccept)
 	if err != nil {
 		return nil, err
 	}
+
 	accepted := mergeConsentAcceptances(f.ConsentsAccepted, submitted)
 
 	required := flowRequiredConsentDocs(f)
 	if missing := missingRequiredConsents(required, accepted); len(missing) > 0 {
 		return nil, domain.ErrConsentRequired.WithDetails(consentRefDetails(missing))
 	}
+
 	return a.signupCompleteWithFreshSession(ctx, row, f, accepted)
 }

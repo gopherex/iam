@@ -46,41 +46,54 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 	if err != nil {
 		return "", nil, err
 	}
+
 	for _, r := range rows {
 		if r.Status != "active" {
 			continue
 		}
+
 		pemStr, ok := r.PrivatePem.Get()
 		if !ok || pemStr == "" {
 			continue
 		}
+
 		decPem, err := s.db.Cipher.Decrypt(pemStr)
 		if err != nil {
 			return "", nil, err
 		}
+
 		priv, err := parsePrivatePEM(decPem)
 		if err != nil {
 			return "", nil, err
 		}
+
 		return r.Kid, priv, nil
 	}
 	// none active — generate one inside a tx.
-	var kid string
-	var priv *rsa.PrivateKey
+	var (
+		kid  string
+		priv *rsa.PrivateKey
+	)
+
 	err = s.db.withTx(ctx, func(ctx context.Context) error {
 		var genErr error
+
 		priv, genErr = rsa.GenerateKey(rand.Reader, 2048)
 		if genErr != nil {
 			return genErr
 		}
+
 		kid = newUUID()
 		pemStr := encodePrivatePEM(priv)
+
 		encPem, encErr := s.db.Cipher.Encrypt(pemStr)
 		if encErr != nil {
 			return encErr
 		}
+
 		pv := null.From(encPem)
 		raw := json.RawMessage(`{}`)
+
 		setter := &models.IamSigningKeySetter{
 			Kid:         &kid,
 			ProjectID:   &projectID,
@@ -94,11 +107,13 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 		if _, err := models.IamSigningKeys.Insert(setter).One(ctx, s.db.Bobx()); err != nil {
 			return err
 		}
+
 		return nil
 	})
 	if err != nil {
 		return "", nil, err
 	}
+
 	return kid, priv, nil
 }
 
@@ -109,29 +124,37 @@ func (s *Signer) Sign(ctx context.Context, projectID, env string, claims map[str
 	if err != nil {
 		return "", err
 	}
+
 	now := nowUTC()
+
 	b := jwt.NewBuilder().IssuedAt(now).Expiration(now.Add(ttl)).NotBefore(now)
 	for k, v := range claims {
 		b = b.Claim(k, v)
 	}
+
 	tok, err := b.Build()
 	if err != nil {
 		return "", err
 	}
+
 	key, err := jwk.Import(priv)
 	if err != nil {
 		return "", err
 	}
+
 	if err := key.Set(jwk.KeyIDKey, kid); err != nil {
 		return "", err
 	}
+
 	if err := key.Set(jwk.AlgorithmKey, jwa.RS256()); err != nil {
 		return "", err
 	}
+
 	signed, err := jwt.Sign(tok, jwt.WithKey(jwa.RS256(), key))
 	if err != nil {
 		return "", err
 	}
+
 	return string(signed), nil
 }
 
@@ -142,10 +165,12 @@ func (s *Signer) Verify(ctx context.Context, projectID, env, token string) (map[
 	if err != nil {
 		return nil, err
 	}
+
 	tok, err := jwt.Parse([]byte(token), jwt.WithKeySet(set), jwt.WithValidate(true))
 	if err != nil {
 		return nil, domain.ErrInvalidToken
 	}
+
 	return tokenClaims(tok)
 }
 
@@ -157,10 +182,12 @@ func (s *Signer) UnverifiedClaims(token string) map[string]any {
 	if err != nil {
 		return nil
 	}
+
 	m, err := tokenClaims(tok)
 	if err != nil {
 		return nil
 	}
+
 	return m
 }
 
@@ -171,14 +198,17 @@ func (s *Signer) JWKS(ctx context.Context, projectID, env string) (map[string]an
 	if err != nil {
 		return nil, err
 	}
+
 	buf, err := json.Marshal(set)
 	if err != nil {
 		return nil, err
 	}
+
 	var out map[string]any
 	if err := json.Unmarshal(buf, &out); err != nil {
 		return nil, err
 	}
+
 	return out, nil
 }
 
@@ -189,44 +219,55 @@ func (s *Signer) publicSet(ctx context.Context, projectID, env string) (jwk.Set,
 	if err != nil {
 		return nil, err
 	}
+
 	set := jwk.NewSet()
+
 	for _, r := range rows {
 		if r.Status == "retired" {
 			continue
 		}
+
 		pemStr, ok := r.PrivatePem.Get()
 		if !ok || pemStr == "" {
 			continue
 		}
+
 		decPem, err := s.db.Cipher.Decrypt(pemStr)
 		if err != nil {
 			continue
 		}
+
 		priv, err := parsePrivatePEM(decPem)
 		if err != nil {
 			continue
 		}
+
 		pub, err := jwk.PublicKeyOf(priv)
 		if err != nil {
 			continue
 		}
+
 		if err := pub.Set(jwk.KeyIDKey, r.Kid); err != nil {
 			slog.Error("webauthn: failed to set key ID on JWKS public key", "err", err, "kid", r.Kid)
 			continue
 		}
+
 		if err := pub.Set(jwk.AlgorithmKey, jwa.RS256()); err != nil {
 			slog.Error("webauthn: failed to set algorithm on JWKS public key", "err", err, "kid", r.Kid)
 			continue
 		}
+
 		if err := pub.Set(jwk.KeyUsageKey, "sig"); err != nil {
 			slog.Error("webauthn: failed to set key usage on JWKS public key", "err", err, "kid", r.Kid)
 			continue
 		}
+
 		if err := set.AddKey(pub); err != nil {
 			slog.Error("webauthn: failed to add public key to JWKS set", "err", err, "kid", r.Kid)
 			continue
 		}
 	}
+
 	return set, nil
 }
 
@@ -236,10 +277,12 @@ func tokenClaims(tok jwt.Token) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var m map[string]any
 	if err := json.Unmarshal(buf, &m); err != nil {
 		return nil, err
 	}
+
 	return m, nil
 }
 
@@ -248,6 +291,7 @@ func parsePrivatePEM(s string) (*rsa.PrivateKey, error) {
 	if block == nil {
 		return nil, domain.ErrInternal
 	}
+
 	return x509.ParsePKCS1PrivateKey(block.Bytes)
 }
 
@@ -263,5 +307,6 @@ func newRSAKeyPEM() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return encodePrivatePEM(k), nil
 }

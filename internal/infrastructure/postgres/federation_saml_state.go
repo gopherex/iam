@@ -36,22 +36,26 @@ func (a *pgFederationRuntime) fedStoreSamlRequest(ctx context.Context, projectID
 	if relayState == "" {
 		return nil // nothing to correlate (no SP-initiated state)
 	}
+
 	data, err := json.Marshal(map[string]string{"redirect": redirect, "connection_id": connectionID})
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(data)
 	id := newUUID()
 	typ := "saml_request"
 	sub := null.From(connectionID)
 	ch := null.From(fedHash(relayState))
 	exp := nowUTC().Add(fedSamlRequestTTL)
+
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		setter := &models.IamChallengeSetter{
 			ID: &id, ProjectID: &projectID, Type: &typ,
 			Subject: &sub, CodeHash: &ch, ExpiresAt: &exp, Data: &rm,
 		}
 		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
+
 		return err
 	})
 }
@@ -63,6 +67,7 @@ func (a *pgFederationRuntime) fedConsumeSamlRequest(ctx context.Context, project
 	if relayState == "" {
 		return false, nil
 	}
+
 	err = a.db.withTx(ctx, func(ctx context.Context) error {
 		row, qerr := models.IamChallenges.Query(
 			sm.Where(models.IamChallenges.Columns.ProjectID.EQ(psql.Arg(projectID))),
@@ -73,21 +78,28 @@ func (a *pgFederationRuntime) fedConsumeSamlRequest(ctx context.Context, project
 			if errors.Is(translatePgErr("saml_request", qerr), ErrNotFound) {
 				return nil // ok stays false
 			}
+
 			return qerr
 		}
+
 		if sub, _ := row.Subject.Get(); sub != connectionID {
 			return nil
 		}
+
 		if row.Consumed || nowUTC().After(row.ExpiresAt) {
 			return nil
 		}
+
 		consumed := true
 		if uerr := row.Update(ctx, a.db.Bobx(), &models.IamChallengeSetter{Consumed: &consumed}); uerr != nil {
 			return uerr
 		}
+
 		ok = true
+
 		return nil
 	})
+
 	return ok, err
 }
 
@@ -97,6 +109,7 @@ func (a *pgFederationRuntime) fedAssertNotReplayed(ctx context.Context, projectI
 	if assertionID == "" {
 		return domain.ErrSSOError
 	}
+
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		_, qerr := models.IamChallenges.Query(
 			sm.Where(models.IamChallenges.Columns.ProjectID.EQ(psql.Arg(projectID))),
@@ -106,13 +119,16 @@ func (a *pgFederationRuntime) fedAssertNotReplayed(ctx context.Context, projectI
 		if qerr == nil {
 			return domain.ErrSSOError.WithMessage("assertion replay")
 		}
+
 		if !errors.Is(translatePgErr("assertion", qerr), ErrNotFound) {
 			return qerr
 		}
+
 		exp := notOnOrAfter
 		if exp.IsZero() || exp.Before(nowUTC()) {
 			exp = nowUTC().Add(fedSamlRequestTTL)
 		}
+
 		id := newUUID()
 		typ := "saml_assertion"
 		sub := null.From(connectionID)
@@ -123,6 +139,7 @@ func (a *pgFederationRuntime) fedAssertNotReplayed(ctx context.Context, projectI
 			Subject: &sub, CodeHash: &ch, ExpiresAt: &exp, Data: &raw,
 		}
 		_, ierr := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
+
 		return ierr
 	})
 }

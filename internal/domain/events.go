@@ -29,6 +29,6 @@ type Event struct {
 	// OccurredAt is when the event happened (UTC).
 	OccurredAt time.Time `json:"occurred_at"`
 	// Payload is the aggregate snapshot (or, for delivery events, the dispatch
-	// envelope). JSON-serialised into the outbox message body.
+	// envelope). JSON-serialized into the outbox message body.
 	Payload any `json:"payload"`
 }

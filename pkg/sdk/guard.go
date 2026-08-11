@@ -27,6 +27,7 @@ func (p *Principal) HasScope(scope string) bool {
 	if p == nil || scope == "" {
 		return false
 	}
+
 	return slices.Contains(p.Scopes, scope)
 }
 
@@ -36,6 +37,7 @@ func (p *Principal) HasAnyScope(scopes ...string) bool {
 	if len(scopes) == 0 {
 		return true
 	}
+
 	return slices.ContainsFunc(scopes, p.HasScope)
 }
 
@@ -46,6 +48,7 @@ func (p *Principal) HasAllScopes(scopes ...string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -55,6 +58,7 @@ func (p *Principal) HasAMR(method string) bool {
 	if p == nil || method == "" {
 		return false
 	}
+
 	return slices.Contains(p.AMR, method)
 }
 
@@ -97,11 +101,13 @@ func newGuardConfig(opts []GuardOption) guardConfig {
 		onUnauthenticated: defaultHTTPErrorHandler,
 		onForbidden:       defaultForbiddenHandler,
 	}
+
 	for _, opt := range opts {
 		if opt != nil {
 			opt(&cfg)
 		}
 	}
+
 	return cfg
 }
 
@@ -109,6 +115,7 @@ func newGuardConfig(opts []GuardOption) guardConfig {
 // holds. It must be chained after an authentication middleware.
 func guard(ok func(*Principal) bool, opts ...GuardOption) func(http.Handler) http.Handler {
 	cfg := newGuardConfig(opts)
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			principal, present := PrincipalFrom(r.Context())
@@ -116,10 +123,12 @@ func guard(ok func(*Principal) bool, opts ...GuardOption) func(http.Handler) htt
 				cfg.onUnauthenticated(w, r, ErrMissingToken)
 				return
 			}
+
 			if !ok(principal) {
 				cfg.onForbidden(w, r, ErrForbidden)
 				return
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}

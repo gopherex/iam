@@ -38,10 +38,12 @@ func HTTPMiddlewareWithOptions(auth Authenticator, opts HTTPMiddlewareOptions) f
 	if extract == nil {
 		extract = BearerToken
 	}
+
 	handleError := opts.ErrorHandler
 	if handleError == nil {
 		handleError = defaultHTTPErrorHandler
 	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, ok := extract(r)
@@ -49,11 +51,13 @@ func HTTPMiddlewareWithOptions(auth Authenticator, opts HTTPMiddlewareOptions) f
 				handleError(w, r, ErrMissingToken)
 				return
 			}
+
 			principal, err := auth.Authenticate(r.Context(), token)
 			if err != nil {
 				handleError(w, r, err)
 				return
 			}
+
 			next.ServeHTTP(w, r.WithContext(WithPrincipal(r.Context(), principal)))
 		})
 	}

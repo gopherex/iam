@@ -98,6 +98,7 @@ func (s *CoreAuthService) GetV1AuthEmailChangeCancel(ctx context.Context, params
 	if err := s.deps.Accounts.CancelEmailChange(ctx, params.Token); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -112,10 +113,12 @@ func (s *CoreAuthService) GetV1AuthEmailVerificationCallback(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
+
 	out := &oas.GetV1AuthEmailVerificationCallbackFound{Location: optURI(res.RedirectURL)}
 	if res.SetCookie != "" {
 		out.SetCookie = []string{res.SetCookie}
 	}
+
 	return out, nil
 }
 
@@ -124,10 +127,12 @@ func (s *CoreAuthService) GetV1AuthSession(ctx context.Context) (*oas.GetV1AuthS
 	if err != nil {
 		return nil, err
 	}
+
 	acct, sess, err := s.deps.Accounts.GetSession(ctx, p.SessionID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1AuthSessionOK{
 		User:    oas.NewOptUser(oasUser(acct)),
 		Session: oas.NewOptSession(oasSession(sess)),
@@ -139,10 +144,12 @@ func (s *CoreAuthService) GetV1TokensCurrent(ctx context.Context) (*oas.GetV1Tok
 	if err != nil {
 		return nil, err
 	}
+
 	claims, err := s.deps.Tokens.CurrentClaims(ctx, p.SessionID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1TokensCurrentOK{
 		Claims: oas.NewOptGetV1TokensCurrentOKClaims(oasRawMap[oas.GetV1TokensCurrentOKClaims](claims)),
 	}, nil
@@ -159,6 +166,7 @@ func (s *CoreAuthService) PostV1AuthAccessRequests(ctx context.Context, req *oas
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthAccessRequestsOK{
 		Request: oas.NewOptAccessRequest(oasCoreAuthAccessRequest(ar)),
 	}, nil
@@ -169,6 +177,7 @@ func (s *CoreAuthService) PostV1AuthEmailChangeStart(ctx context.Context, req *o
 	if err != nil {
 		return nil, err
 	}
+
 	ch, err := s.deps.Accounts.StartEmailChange(ctx, domain.CoreAuthVerifyStartCmd{
 		ProjectID:  p.ProjectID,
 		AccountID:  p.AccountID,
@@ -179,6 +188,7 @@ func (s *CoreAuthService) PostV1AuthEmailChangeStart(ctx context.Context, req *o
 	if err != nil {
 		return nil, err
 	}
+
 	return oasChallenge(ch), nil
 }
 
@@ -187,6 +197,7 @@ func (s *CoreAuthService) PostV1AuthEmailChangeVerify(ctx context.Context, req *
 	if err != nil {
 		return nil, err
 	}
+
 	acct, err := s.deps.Accounts.VerifyEmailChange(ctx, domain.CoreAuthVerifyConsumeCmd{
 		ProjectID:   p.ProjectID,
 		AccountID:   p.AccountID,
@@ -197,6 +208,7 @@ func (s *CoreAuthService) PostV1AuthEmailChangeVerify(ctx context.Context, req *
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthEmailChangeVerifyOK{User: oas.NewOptUser(oasUser(acct))}, nil
 }
 
@@ -211,6 +223,7 @@ func (s *CoreAuthService) PostV1AuthEmailVerificationStart(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
+
 	return oasChallenge(ch), nil
 }
 
@@ -225,6 +238,7 @@ func (s *CoreAuthService) PostV1AuthEmailVerificationVerify(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -233,6 +247,7 @@ func (s *CoreAuthService) PostV1AuthGuest(ctx context.Context, req *oas.PostV1Au
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -241,6 +256,7 @@ func (s *CoreAuthService) PostV1AuthPasswordChange(ctx context.Context, req *oas
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Accounts.ChangePassword(ctx, domain.CoreAuthPasswordChangeCmd{
 		AccountID:           p.AccountID,
 		SessionID:           p.SessionID,
@@ -250,6 +266,7 @@ func (s *CoreAuthService) PostV1AuthPasswordChange(ctx context.Context, req *oas
 	}); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -259,6 +276,7 @@ func (s *CoreAuthService) PostV1AuthPasswordCheck(ctx context.Context, req *oas.
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthPasswordCheckOK{
 		Valid:      oas.NewOptBool(res.Valid),
 		Score:      oas.NewOptInt(res.Score),
@@ -277,6 +295,7 @@ func (s *CoreAuthService) PostV1AuthPasswordForgot(ctx context.Context, req *oas
 	}); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -293,6 +312,7 @@ func (s *CoreAuthService) PostV1AuthPasswordReset(ctx context.Context, req *oas.
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -301,6 +321,7 @@ func (s *CoreAuthService) PostV1AuthPasswordVerify(ctx context.Context, req *oas
 	if err != nil {
 		return nil, err
 	}
+
 	res, err := s.deps.Accounts.VerifyPassword(ctx, domain.CoreAuthPasswordChangeCmd{
 		AccountID:       p.AccountID,
 		SessionID:       p.SessionID,
@@ -309,6 +330,7 @@ func (s *CoreAuthService) PostV1AuthPasswordVerify(ctx context.Context, req *oas
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthPasswordVerifyOK{
 		Ok:  oas.NewOptBool(res.OK),
 		Aal: oas.NewOptInt(res.AAL),
@@ -321,6 +343,7 @@ func (s *CoreAuthService) PostV1AuthPhoneChangeStart(ctx context.Context, req *o
 	if err != nil {
 		return nil, err
 	}
+
 	ch, err := s.deps.Accounts.StartPhoneChange(ctx, domain.CoreAuthVerifyStartCmd{
 		ProjectID: p.ProjectID,
 		AccountID: p.AccountID,
@@ -330,6 +353,7 @@ func (s *CoreAuthService) PostV1AuthPhoneChangeStart(ctx context.Context, req *o
 	if err != nil {
 		return nil, err
 	}
+
 	return oasChallenge(ch), nil
 }
 
@@ -338,6 +362,7 @@ func (s *CoreAuthService) PostV1AuthPhoneChangeVerify(ctx context.Context, req *
 	if err != nil {
 		return nil, err
 	}
+
 	acct, err := s.deps.Accounts.VerifyPhoneChange(ctx, domain.CoreAuthVerifyConsumeCmd{
 		ProjectID:   p.ProjectID,
 		AccountID:   p.AccountID,
@@ -347,6 +372,7 @@ func (s *CoreAuthService) PostV1AuthPhoneChangeVerify(ctx context.Context, req *
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthPhoneChangeVerifyOK{User: oas.NewOptUser(oasUser(acct))}, nil
 }
 
@@ -361,6 +387,7 @@ func (s *CoreAuthService) PostV1AuthPhoneVerificationStart(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
+
 	return oasChallenge(ch), nil
 }
 
@@ -374,6 +401,7 @@ func (s *CoreAuthService) PostV1AuthPhoneVerificationVerify(ctx context.Context,
 	if err != nil {
 		return oas.PhoneVerifyResult{}, err
 	}
+
 	return oas.NewAuthResultPhoneVerifyResult(*authResult(acct, sess)), nil
 }
 
@@ -382,6 +410,7 @@ func (s *CoreAuthService) PostV1AuthSessionStepUp(ctx context.Context, req *oas.
 	if err != nil {
 		return oas.StepUpResult{}, err
 	}
+
 	cmd := domain.CoreAuthStepUpCmd{
 		AccountID:   p.AccountID,
 		SessionID:   p.SessionID,
@@ -392,21 +421,26 @@ func (s *CoreAuthService) PostV1AuthSessionStepUp(ctx context.Context, req *oas.
 		cmd.MaxAgeSeconds = v
 		cmd.HasMaxAge = true
 	}
+
 	res, err := s.deps.Accounts.StepUp(ctx, cmd)
 	if err != nil {
 		return oas.StepUpResult{}, err
 	}
+
 	if res.Satisfied {
 		return oas.NewOkResultStepUpResult(oas.OkResult{
 			Ok:         oas.NewOptBool(true),
 			ResultType: oas.OkResultResultTypeOk,
 		}), nil
 	}
+
 	next := oas.AuthNextStep{ResultType: oas.AuthNextStepResultTypeNextStep}
 	next.NextStep.SetTo(oas.NextStepStepUp)
+
 	if res.Challenge != nil {
 		next.FlowToken = oas.NewOptString(res.Challenge.ID)
 	}
+
 	return oas.NewAuthNextStepStepUpResult(next), nil
 }
 
@@ -415,10 +449,12 @@ func (s *CoreAuthService) PostV1AuthSessionSwitchGroup(ctx context.Context, req 
 	if err != nil {
 		return nil, err
 	}
+
 	acct, sess, err := s.deps.Accounts.SwitchGroup(ctx, p.AccountID, p.SessionID, req.GroupID)
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -427,6 +463,7 @@ func (s *CoreAuthService) PostV1AuthSignInPassword(ctx context.Context, req *oas
 	if err != nil {
 		return oas.AuthResultOrNextStep{}, err
 	}
+
 	if res.MFARequired {
 		// Issue a step-up challenge for the account's primary factor; its id is the
 		// flow_token the client presents to mfa/verify or recovery-codes/verify.
@@ -434,14 +471,17 @@ func (s *CoreAuthService) PostV1AuthSignInPassword(ctx context.Context, req *oas
 		if err != nil {
 			return oas.AuthResultOrNextStep{}, err
 		}
+
 		next := oas.AuthNextStep{
 			ResultType: oas.AuthNextStepResultTypeNextStep,
 			FlowToken:  oas.NewOptString(ch.ID),
 			Factors:    oasFactors(res.Factors),
 		}
 		next.NextStep.SetTo(oas.NextStepMfaRequired)
+
 		return oas.NewAuthNextStepAuthResultOrNextStep(next), nil
 	}
+
 	return oas.NewAuthResultAuthResultOrNextStep(*authResult(res.Account, res.Session)), nil
 }
 
@@ -453,9 +493,11 @@ func primaryFactorID(factors []domain.Factor) string {
 			return f.ID
 		}
 	}
+
 	if len(factors) > 0 {
 		return factors[0].ID
 	}
+
 	return ""
 }
 
@@ -471,8 +513,10 @@ func oasFactors(factors []domain.Factor) []oas.Factor {
 		if f.Hint != "" {
 			item.Hint = oas.NewOptNilString(f.Hint)
 		}
+
 		out = append(out, item)
 	}
+
 	return out
 }
 
@@ -481,13 +525,16 @@ func (s *CoreAuthService) PostV1AuthSignOut(ctx context.Context, req oas.OptPost
 	if err != nil {
 		return nil, err
 	}
+
 	everywhere := false
 	if v, ok := req.Get(); ok {
 		everywhere = v.Everywhere.Or(false)
 	}
+
 	if err := s.deps.Accounts.SignOut(ctx, p.SessionID, everywhere); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -496,14 +543,17 @@ func (s *CoreAuthService) PostV1AuthSignOutAll(ctx context.Context, req oas.OptP
 	if err != nil {
 		return nil, err
 	}
+
 	except := ""
 	if v, ok := req.Get(); ok && v.ExceptCurrent.Or(false) {
 		except = p.SessionID
 	}
+
 	n, err := s.deps.Accounts.SignOutAll(ctx, p.AccountID, except)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthSignOutAllOK{RevokedCount: oas.NewOptInt(n)}, nil
 }
 
@@ -512,6 +562,7 @@ func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpR
 	for _, c := range req.Consents {
 		consents = append(consents, domain.AccountConsentAcceptance{Key: c.Key, Version: c.Version})
 	}
+
 	cmd := domain.RegisterCmd{
 		ProjectID: params.XClientID,
 		Email:     req.Email.Or(""),
@@ -524,10 +575,12 @@ func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpR
 	if err := cmd.Validate(); err != nil {
 		return nil, err
 	}
+
 	acct, sess, err := s.deps.Accounts.Register(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -536,6 +589,7 @@ func (s *CoreAuthService) PostV1AuthTokenExchange(ctx context.Context, req *oas.
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -544,6 +598,7 @@ func (s *CoreAuthService) PostV1AuthImpersonateRedeem(ctx context.Context, req *
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -554,25 +609,30 @@ func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.Op
 	}
 	// Cookie mode: when the body omits the token, take it from the refresh cookie.
 	cookieMode := false
+
 	if rt == "" {
 		if v, ok := params.IamRefresh.Get(); ok && v != "" {
 			rt = v
 			cookieMode = true
 		}
 	}
+
 	if rt == "" {
 		return nil, domain.ErrInvalidToken.WithMessage("refresh_token is required")
 	}
+
 	acct, sess, err := s.deps.Accounts.Refresh(ctx, rt)
 	if err != nil {
 		return nil, err
 	}
+
 	out := &oas.AuthResultHeaders{Response: *authResult(acct, sess)}
 	// Rotate both cookies for a cookie-mode refresh; token-mode callers get the
 	// rotated tokens in the body only.
 	if cookieMode {
 		out.SetCookie = SessionCookies(sess.AccessToken, sess.RefreshToken, time.Duration(sess.ExpiresIn)*time.Second, cookieRefreshTTL)
 	}
+
 	return out, nil
 }
 
@@ -583,6 +643,7 @@ func (s *CoreAuthService) PostV1ChallengesCaptchaVerify(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ChallengesCaptchaVerifyOK{
 		Valid: oas.NewOptBool(res.Valid),
 		Score: oas.NewOptFloat64(res.Score),
@@ -594,10 +655,12 @@ func (s *CoreAuthService) PostV1TokensIntrospect(ctx context.Context, req *oas.P
 	if err != nil {
 		return nil, err
 	}
+
 	intro, err := s.deps.Tokens.Introspect(ctx, p.ProjectID, req.Token)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1TokensIntrospectOK{
 		Active:          oas.NewOptBool(intro.Active),
 		AdditionalProps: oasRawMap[oas.PostV1TokensIntrospectOKAdditional](intro.Claims),
@@ -608,6 +671,7 @@ func (s *CoreAuthService) PostV1TokensRevoke(ctx context.Context, req *oas.PostV
 	if _, err := requirePrincipal(ctx); err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Tokens.Revoke(ctx, domain.CoreAuthRevokeCmd{
 		Token:     req.Token.Or(""),
 		SessionID: req.SessionID.Or(""),
@@ -615,6 +679,7 @@ func (s *CoreAuthService) PostV1TokensRevoke(ctx context.Context, req *oas.PostV
 	}); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -623,10 +688,12 @@ func (s *CoreAuthService) PostV1TokensVerify(ctx context.Context, req *oas.PostV
 	if err != nil {
 		return nil, err
 	}
+
 	v, err := s.deps.Tokens.Verify(ctx, p.ProjectID, req.Token, req.Audience.Or(""))
 	if err != nil {
 		return nil, err
 	}
+
 	out := &oas.PostV1TokensVerifyOK{
 		Valid:  oas.NewOptBool(v.Valid),
 		Claims: oas.NewOptPostV1TokensVerifyOKClaims(oasRawMap[oas.PostV1TokensVerifyOKClaims](v.Claims)),
@@ -634,6 +701,7 @@ func (s *CoreAuthService) PostV1TokensVerify(ctx context.Context, req *oas.PostV
 	if v.Error != "" {
 		out.Error = oas.NewOptNilString(v.Error)
 	}
+
 	return out, nil
 }
 
@@ -648,8 +716,10 @@ func oasCoreAuthAccessRequest(ar *domain.CoreAuthAccessRequest) oas.AccessReques
 	if ar.Reason != "" {
 		out.Reason = oas.NewOptNilString(ar.Reason)
 	}
+
 	if ar.Status != "" {
 		out.Status = oas.NewOptAccessRequestStatus(oas.AccessRequestStatus(ar.Status))
 	}
+
 	return out
 }

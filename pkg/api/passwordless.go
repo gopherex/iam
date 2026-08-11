@@ -42,6 +42,7 @@ func (s *PasswordlessService) PostV1AuthOtpStart(ctx context.Context, req *oas.O
 	if err != nil {
 		return nil, err
 	}
+
 	return oasChallenge(ch), nil
 }
 
@@ -50,6 +51,7 @@ func (s *PasswordlessService) PostV1AuthOtpVerify(ctx context.Context, req *oas.
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -58,6 +60,7 @@ func (s *PasswordlessService) PostV1AuthMagicLinkStart(ctx context.Context, req 
 	if err != nil {
 		return nil, err
 	}
+
 	return oasChallenge(ch), nil
 }
 
@@ -66,5 +69,6 @@ func (s *PasswordlessService) PostV1AuthMagicLinkVerify(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }

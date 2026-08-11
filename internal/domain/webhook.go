@@ -9,7 +9,7 @@ const (
 	WebhookEventEmailChanged   = "email.changed"
 )
 
-// SupportedWebhookEvents is the deliberately small public event catalogue.
+// SupportedWebhookEvents is the deliberately small public event catalog.
 // Internal delivery events may contain credentials or one-time proofs and must
 // never become subscribable merely because they pass through the same outbox.
 var SupportedWebhookEvents = []string{

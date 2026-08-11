@@ -62,32 +62,40 @@ type LocalVerifier struct {
 func NewLocalVerifier(config LocalConfig) (*LocalVerifier, error) {
 	projectID := strings.TrimSpace(config.ProjectID)
 	environment := strings.TrimSpace(config.Environment)
+
 	issuer := strings.TrimSpace(config.Issuer)
 	if issuer == "" && projectID != "" && environment != "" {
 		issuer = issuerFor(projectID, environment)
 	}
+
 	jwksURL := strings.TrimSpace(config.JWKSURL)
 	if jwksURL == "" {
 		if projectID == "" {
 			return nil, errors.New("iam sdk: project id is required for local jwks url")
 		}
+
 		if environment == "" {
 			return nil, errors.New("iam sdk: environment is required for local jwks url")
 		}
+
 		var err error
+
 		jwksURL, err = buildJWKSURL(config.BaseURL, projectID, environment)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	cacheTTL := config.CacheTTL
 	if cacheTTL <= 0 {
 		cacheTTL = defaultJWKSCacheTTL
 	}
+
 	tokenType := strings.TrimSpace(config.TokenType)
 	if tokenType == "" {
 		tokenType = "access"
 	}
+
 	return &LocalVerifier{
 		jwksURL:     jwksURL,
 		projectID:   projectID,
@@ -106,20 +114,24 @@ func (v *LocalVerifier) Verify(ctx context.Context, token string) (*VerifyResult
 	if token == "" {
 		return nil, ErrMissingToken
 	}
+
 	tok, err := v.parse(ctx, token, false)
 	if err != nil {
 		tok, err = v.parse(ctx, token, true)
 	}
+
 	if err != nil {
 		return &VerifyResult{
 			Valid: false,
 			Error: "invalid_token",
 		}, nil
 	}
+
 	claims, err := tokenClaims(tok)
 	if err != nil {
 		return nil, err
 	}
+
 	if err := v.validateClaims(claims); err != nil {
 		return &VerifyResult{
 			Valid:  false,
@@ -127,11 +139,13 @@ func (v *LocalVerifier) Verify(ctx context.Context, token string) (*VerifyResult
 			Claims: claims,
 		}, nil
 	}
+
 	out := &VerifyResult{
 		Valid:  true,
 		Claims: claims,
 	}
 	out.Principal = principalFromClaims(claims)
+
 	return out, nil
 }
 
@@ -141,12 +155,15 @@ func (v *LocalVerifier) Authenticate(ctx context.Context, token string) (*Princi
 	if err != nil {
 		return nil, err
 	}
+
 	if !res.Valid {
 		if res.Error != "" {
 			return nil, fmt.Errorf("%w: %s", ErrInvalidToken, res.Error)
 		}
+
 		return nil, ErrInvalidToken
 	}
+
 	return &res.Principal, nil
 }
 
@@ -176,35 +193,45 @@ func (v *LocalVerifier) parse(ctx context.Context, token string, forceRefresh bo
 	if err != nil {
 		return nil, err
 	}
+
 	return jwt.Parse([]byte(token), jwt.WithKeySet(set), jwt.WithValidate(true))
 }
 
 func (v *LocalVerifier) keySetFor(ctx context.Context, forceRefresh bool) (jwk.Set, error) {
 	now := time.Now()
+
 	v.mu.RLock()
+
 	if !forceRefresh && v.keySet != nil && now.Before(v.expiresAt) {
 		set := v.keySet
 		v.mu.RUnlock()
+
 		return set, nil
 	}
+
 	v.mu.RUnlock()
 
 	v.mu.Lock()
 	defer v.mu.Unlock()
+
 	now = time.Now()
 	if !forceRefresh && v.keySet != nil && now.Before(v.expiresAt) {
 		return v.keySet, nil
 	}
+
 	opts := []jwk.FetchOption(nil)
 	if v.httpClient != nil {
 		opts = append(opts, jwk.WithHTTPClient(v.httpClient))
 	}
+
 	set, err := jwk.Fetch(ctx, v.jwksURL, opts...)
 	if err != nil {
 		return nil, err
 	}
+
 	v.keySet = set
 	v.expiresAt = now.Add(v.cacheTTL)
+
 	return set, nil
 }
 
@@ -212,30 +239,37 @@ func (v *LocalVerifier) validateClaims(claims Claims) error {
 	if v.tokenType != "" && claimString(claims, "typ") != v.tokenType {
 		return errors.New("invalid_token_type")
 	}
+
 	if v.issuer != "" && claimString(claims, "iss") != v.issuer {
 		return errors.New("invalid_issuer")
 	}
+
 	if v.projectID != "" {
 		pid := claimString(claims, "pid")
 		if pid == "" {
 			pid, _ = parseIssuer(claimString(claims, "iss"))
 		}
+
 		if pid != v.projectID {
 			return errors.New("invalid_project")
 		}
 	}
+
 	if v.environment != "" {
 		env := claimString(claims, "env")
 		if env == "" {
 			_, env = parseIssuer(claimString(claims, "iss"))
 		}
+
 		if env != v.environment {
 			return errors.New("invalid_environment")
 		}
 	}
+
 	if v.audience != "" && !claimContains(claims, "aud", v.audience) && !claimContains(claims, "client_id", v.audience) {
 		return errors.New("invalid_audience")
 	}
+
 	return nil
 }
 
@@ -244,10 +278,12 @@ func tokenClaims(tok jwt.Token) (Claims, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var claims Claims
 	if err := json.Unmarshal(buf, &claims); err != nil {
 		return nil, err
 	}
+
 	return claims, nil
 }
 
@@ -256,6 +292,7 @@ func buildJWKSURL(baseURL, projectID, environment string) (string, error) {
 	if baseURL == "" {
 		return "", errors.New("iam sdk: base url is required for local jwks url")
 	}
+
 	return url.JoinPath(baseURL, "p", projectID, "e", environment, ".well-known", "jwks.json")
 }
 
@@ -268,6 +305,7 @@ func parseIssuer(issuer string) (projectID, environment string) {
 	if len(parts) == 5 && parts[0] == "" && parts[1] == "p" && parts[3] == "e" {
 		return parts[2], parts[4]
 	}
+
 	return "", ""
 }
 
@@ -277,6 +315,7 @@ func claimContains(claims Claims, key string, want string) bool {
 		if v == want {
 			return true
 		}
+
 		for _, item := range strings.Fields(v) {
 			if item == want {
 				return true
@@ -295,5 +334,6 @@ func claimContains(claims Claims, key string, want string) bool {
 			}
 		}
 	}
+
 	return false
 }

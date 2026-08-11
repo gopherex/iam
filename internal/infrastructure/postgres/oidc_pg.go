@@ -82,6 +82,7 @@ func oidcHasScope(scopes []string, want string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -121,23 +122,29 @@ func oidcRandToken(nbytes int) (string, error) {
 	if _, err := rand.Read(buf); err != nil {
 		return "", err
 	}
+
 	return hex.EncodeToString(buf), nil
 }
 
 // oidcUserCode mints a short, human-enterable device user-code.
 func oidcUserCode() (string, error) {
 	const alphabet = "BCDFGHJKLMNPQRSTVWXZ23456789"
+
 	buf := make([]byte, 8)
 	if _, err := rand.Read(buf); err != nil {
 		return "", err
 	}
+
 	out := make([]byte, 0, 9)
+
 	for i, b := range buf {
 		if i == 4 {
 			out = append(out, '-')
 		}
+
 		out = append(out, alphabet[int(b)%len(alphabet)])
 	}
+
 	return string(out), nil
 }
 
@@ -151,10 +158,12 @@ func (a *pgOIDCGrants) ResolveInteraction(ctx context.Context, interactionID str
 	if err != nil {
 		return nil, translatePgErr("interaction", err)
 	}
+
 	var in domain.Interaction
 	if err := unmarshal(row.Data, &in); err != nil {
 		return nil, err
 	}
+
 	return &in, nil
 }
 
@@ -167,6 +176,7 @@ func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, account
 		if err != nil {
 			return translatePgErr("interaction", err)
 		}
+
 		if row.SessionID.GetOrZero() != sessionID {
 			return domain.ErrForbidden
 		}
@@ -176,16 +186,21 @@ func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, account
 		if err := unmarshal(row.Data, &env); err != nil {
 			return err
 		}
+
 		env.AccountID = accountID
+
 		raw, err := marshal(&env)
 		if err != nil {
 			return err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamInteractionSetter{Data: &rm}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.interaction.login_completed",
 			ProjectID:   row.ProjectID,
@@ -195,6 +210,7 @@ func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, account
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -208,9 +224,11 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 		if err != nil {
 			return "", translatePgErr("interaction", err)
 		}
+
 		if row.SessionID.GetOrZero() != cmd.SessionID {
 			return "", domain.ErrForbidden
 		}
+
 		var in domain.Interaction
 		if err := unmarshal(row.Data, &in); err != nil {
 			return "", err
@@ -227,6 +245,7 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			if err := a.persistGrant(ctx, row.ProjectID, &grant); err != nil {
 				return "", err
 			}
+
 			if err := a.emitter.Emit(ctx, domain.Event{
 				Type:        "oidc.grant.created",
 				ProjectID:   row.ProjectID,
@@ -242,6 +261,7 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return "", err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.interaction.consented",
 			ProjectID:   row.ProjectID,
@@ -261,10 +281,12 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 		if err != nil {
 			return "", err
 		}
+
 		scopes := cmd.GrantedScopes
 		if len(scopes) == 0 {
 			scopes = in.Scopes
 		}
+
 		codeData, err := marshal(struct {
 			Scopes      []string `json:"Scopes"`
 			RedirectURI string   `json:"RedirectURI"`
@@ -277,13 +299,16 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 		if err != nil {
 			return "", err
 		}
+
 		rm := json.RawMessage(codeData)
 		uid := null.From(cmd.AccountID)
 		cid := null.From(in.ClientID)
+
 		acEnv, err := effectiveEnv(ctx, a.db, row.ProjectID, oidcDefaultEnv)
 		if err != nil {
 			return "", err
 		}
+
 		setter := &models.IamAuthCodeSetter{
 			ID:          ptr(newUUID()),
 			ProjectID:   &row.ProjectID,
@@ -294,13 +319,16 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			ExpiresAt:   ptr(nowUTC().Add(10 * time.Minute)),
 			Data:        &rm,
 		}
+
 		authCodeRow, err := models.IamAuthCodes.Insert(setter).One(ctx, a.db.Bobx())
 		if err != nil {
 			if isUniqueViolation(err) {
 				return "", domain.ErrConflict
 			}
+
 			return "", err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.token.issued",
 			ProjectID:   row.ProjectID,
@@ -327,6 +355,7 @@ func oidcAppendQuery(rawurl, key, value string) string {
 	if strings.Contains(rawurl, "?") {
 		sep = "&"
 	}
+
 	return fmt.Sprintf("%s%s%s=%s", rawurl, sep, key, value)
 }
 
@@ -338,13 +367,16 @@ func (a *pgOIDCGrants) Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (st
 		if err != nil {
 			return "", translatePgErr("interaction", err)
 		}
+
 		var in domain.Interaction
 		if err := unmarshal(row.Data, &in); err != nil {
 			return "", err
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return "", err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.interaction.rejected",
 			ProjectID:   row.ProjectID,
@@ -354,10 +386,12 @@ func (a *pgOIDCGrants) Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (st
 		}); err != nil {
 			return "", err
 		}
+
 		errCode := cmd.Error
 		if errCode == "" {
 			errCode = "access_denied"
 		}
+
 		return fmt.Sprintf("%s?error=%s&error_description=%s", in.RedirectURI, errCode, cmd.ErrorDescription), nil
 	})
 }
@@ -371,11 +405,14 @@ func (a *pgOIDCGrants) persistGrant(ctx context.Context, projectID string, g *do
 	if err != nil {
 		return err
 	}
+
 	raw, err := marshal(g)
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamOauthGrantSetter{
 		ID:          &g.ID,
 		ProjectID:   &projectID,
@@ -389,8 +426,10 @@ func (a *pgOIDCGrants) persistGrant(ctx context.Context, projectID string, g *do
 		if isUniqueViolation(err) {
 			return domain.ErrConflict
 		}
+
 		return err
 	}
+
 	return nil
 }
 
@@ -402,14 +441,17 @@ func (a *pgOIDCGrants) ListGrants(ctx context.Context, accountID string) ([]doma
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Grant, 0, len(rows))
 	for _, row := range rows {
 		var g domain.Grant
 		if err := unmarshal(row.Data, &g); err != nil {
 			return nil, err
 		}
+
 		out = append(out, g)
 	}
+
 	return out, nil
 }
 
@@ -421,12 +463,15 @@ func (a *pgOIDCGrants) RevokeGrant(ctx context.Context, accountID, grantID strin
 		if err != nil {
 			return translatePgErr("grant", err)
 		}
+
 		if row.UserID != accountID {
 			return domain.ErrNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.grant.revoked",
 			ProjectID:   row.ProjectID,
@@ -436,6 +481,7 @@ func (a *pgOIDCGrants) RevokeGrant(ctx context.Context, accountID, grantID strin
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -455,15 +501,18 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 			RedirectURI: cmd.RedirectURI,
 			Nonce:       cmd.Nonce,
 		}
+
 		raw, err := marshal(&in)
 		if err != nil {
 			return "", err
 		}
+
 		rm := json.RawMessage(raw)
 		// project_id is unknown without a client lookup port; the client_id
 		// lookup column carries the routing key for the UI to resolve.
 		cid := null.From(cmd.ClientID)
 		exp := null.From(nowUTC().Add(10 * time.Minute))
+
 		setter := &models.IamInteractionSetter{
 			ID:        &in.ID,
 			ProjectID: ptr(cmd.ClientID), // routing key; project resolved by client at UI
@@ -474,6 +523,7 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 		if _, err := models.IamInteractions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return "", err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.interaction.created",
 			ProjectID:   cmd.ClientID, // project resolved by client at UI; clientID is the routing key
@@ -483,7 +533,8 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 		}); err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("/oauth/interaction/%s", in.ID), nil
+
+		return "/oauth/interaction/" + in.ID, nil
 	})
 }
 
@@ -492,7 +543,7 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 func (a *pgOIDCGrants) Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (string, error) {
 	// When an id_token_hint is supplied, verify its signature against the tenant
 	// named in its `iss` claim (peeked unverified for routing only) before
-	// honouring the request. An invalid hint is rejected; a valid one resolves
+	// honoring the request. An invalid hint is rejected; a valid one resolves
 	// the sub/sid of the session to terminate. The actual session termination is
 	// owned by the session store (a separate port not wired into this adapter),
 	// so we validate the hint here and emit the logout event downstream.
@@ -501,15 +552,19 @@ func (a *pgOIDCGrants) Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (st
 		if peek == nil {
 			return "", domain.ErrInvalidToken
 		}
+
 		projectID, env := oidcParseIssuer(peekString(peek, "iss"))
 		if projectID == "" {
 			return "", domain.ErrInvalidToken
 		}
+
 		claims, err := a.db.Signer().Verify(ctx, projectID, env, cmd.IDTokenHint)
 		if err != nil {
 			return "", err
 		}
+
 		sub := peekString(claims, "sub") // session subject to terminate
+
 		sid := peekString(claims, "sid") // session id to terminate
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.session.logout",
@@ -521,13 +576,16 @@ func (a *pgOIDCGrants) Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (st
 			return "", err
 		}
 	}
+
 	redirect := cmd.PostLogoutRedirectURI
 	if redirect == "" {
 		return "/", nil
 	}
+
 	if cmd.State != "" {
 		return fmt.Sprintf("%s?state=%s", redirect, cmd.State), nil
 	}
+
 	return redirect, nil
 }
 
@@ -553,15 +611,19 @@ func (a *pgOIDCGrants) BackchannelLogout(ctx context.Context, cmd domain.OIDCBac
 	if peek == nil {
 		return domain.ErrInvalidToken
 	}
+
 	projectID, env := oidcParseIssuer(peekString(peek, "iss"))
 	if projectID == "" {
 		return domain.ErrInvalidToken
 	}
+
 	claims, err := a.db.Signer().Verify(ctx, projectID, env, cmd.LogoutToken)
 	if err != nil {
 		return err
 	}
+
 	sub := peekString(claims, "sub") // session subject to terminate
+
 	sid := peekString(claims, "sid") // session id to terminate
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "oidc.session.backchannel_logout",
@@ -572,6 +634,7 @@ func (a *pgOIDCGrants) BackchannelLogout(ctx context.Context, cmd domain.OIDCBac
 	}); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -587,7 +650,9 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			if cmd.Code == "" {
 				return nil, domain.ErrBadRequest
 			}
+
 			hash := oidcHashToken(cmd.Code)
+
 			rows, err := models.IamAuthCodes.Query(
 				sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
 				sm.Limit(1),
@@ -595,13 +660,16 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			if err != nil {
 				return nil, err
 			}
+
 			if len(rows) == 0 {
 				return nil, domain.ErrInvalidToken
 			}
+
 			row := rows[0]
 			if row.Consumed {
 				return nil, domain.ErrTokenUsed
 			}
+
 			if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
 				return nil, domain.ErrTokenExpired
 			}
@@ -636,6 +704,7 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			if err := row.Update(ctx, a.db.Bobx(), &models.IamAuthCodeSetter{Consumed: &consumed}); err != nil {
 				return nil, err
 			}
+
 			tokenSubj := oidcTokenSubject{
 				projectID: row.ProjectID,
 				env:       oidcDefaultEnv,
@@ -658,12 +727,15 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			}); err != nil {
 				return nil, err
 			}
+
 			return a.mintTokenResponse(ctx, tokenSubj)
 		case "device_code":
 			if cmd.DeviceCode == "" {
 				return nil, domain.ErrBadRequest
 			}
+
 			hash := oidcHashToken(cmd.DeviceCode)
+
 			rows, err := models.IamDeviceCodes.Query(
 				sm.Where(models.IamDeviceCodes.Columns.DeviceCode.EQ(psql.Arg(hash))),
 				sm.Limit(1),
@@ -671,14 +743,18 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			if err != nil {
 				return nil, err
 			}
+
 			if len(rows) == 0 {
 				return nil, domain.ErrInvalidToken
 			}
+
 			row := rows[0]
 			switch row.Status {
 			case "approved":
 				var pending domain.OIDCDevicePending
+
 				_ = unmarshal(row.Data, &pending)
+
 				tokenSubj := oidcTokenSubject{
 					projectID: row.ProjectID,
 					env:       oidcDefaultEnv,
@@ -700,6 +776,7 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 				}); err != nil {
 					return nil, err
 				}
+
 				return a.mintTokenResponse(ctx, tokenSubj)
 			case "denied":
 				return nil, domain.ErrForbidden
@@ -719,17 +796,21 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			// never the token's self-asserted issuer: a token from another tenant
 			// fails signature verification against this project's keys.
 			projectID := cmd.ProjectID
+
 			env := cmd.Env
 			if env == "" {
 				env = oidcDefaultEnv
 			}
+
 			if projectID == "" {
 				return nil, domain.ErrInvalidToken
 			}
+
 			sub, clientID, scopes, err := a.verifyRefreshToken(ctx, projectID, env, cmd.RefreshToken)
 			if err != nil {
 				return nil, err
 			}
+
 			effectiveClientID := firstNonEmpty(clientID, cmd.ClientID)
 			if err := a.emitter.Emit(ctx, domain.Event{
 				Type:        "oidc.token.refreshed",
@@ -746,6 +827,7 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			}); err != nil {
 				return nil, err
 			}
+
 			return a.mintTokenResponse(ctx, oidcTokenSubject{
 				projectID: projectID,
 				env:       env,
@@ -767,14 +849,18 @@ func (a *pgOIDCGrants) verifyRefreshToken(ctx context.Context, projectID, env, t
 	if verr != nil {
 		return "", "", nil, verr
 	}
+
 	if typ, _ := claims["typ"].(string); typ != "refresh" {
 		return "", "", nil, domain.ErrInvalidToken
 	}
+
 	sub, _ = claims["sub"].(string)
+
 	clientID, _ = claims["client_id"].(string)
 	if s, ok := claims["scope"].(string); ok {
 		scopes = splitScopes(s)
 	}
+
 	return sub, clientID, scopes, nil
 }
 
@@ -786,6 +872,7 @@ func oidcParseIssuer(iss string) (projectID, env string) {
 	if len(parts) == 5 && parts[0] == "" && parts[1] == "p" && parts[3] == "e" {
 		return parts[2], parts[4]
 	}
+
 	return "", ""
 }
 
@@ -798,10 +885,12 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		// Without the tenant we cannot resolve a signing key.
 		return nil, domain.ErrBadRequest
 	}
+
 	env := sub.env
 	if env == "" {
 		env = oidcDefaultEnv
 	}
+
 	issuer := oidcIssuer(sub.projectID, env)
 	now := nowUTC()
 
@@ -833,6 +922,7 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		if err != nil {
 			return nil, err
 		}
+
 		resp.IDToken = idToken
 	}
 
@@ -850,6 +940,7 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		if err != nil {
 			return nil, err
 		}
+
 		resp.RefreshToken = refresh
 	}
 
@@ -872,11 +963,13 @@ func (a *pgOIDCGrants) mintIDToken(ctx context.Context, sub oidcTokenSubject, en
 		sub.clientID,
 		0, // skew
 	)
+
 	if accessToken != "" {
 		if h, err := oidc.ClaimHash(accessToken, jose.RS256); err == nil {
 			idc.AccessTokenHash = h
 		}
 	}
+
 	claims, err := oidcClaimsMap(idc)
 	if err != nil {
 		return "", err
@@ -887,6 +980,7 @@ func (a *pgOIDCGrants) mintIDToken(ctx context.Context, sub oidcTokenSubject, en
 	delete(claims, "iat")
 	delete(claims, "nbf")
 	claims["env"] = env
+
 	return a.db.Signer().Sign(ctx, sub.projectID, env, claims, oidcIDTokenTTL)
 }
 
@@ -897,10 +991,12 @@ func oidcClaimsMap(v any) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var m map[string]any
 	if err := json.Unmarshal(buf, &m); err != nil {
 		return nil, err
 	}
+
 	return m, nil
 }
 
@@ -911,6 +1007,7 @@ func firstNonEmpty(vals ...string) string {
 			return v
 		}
 	}
+
 	return ""
 }
 
@@ -931,14 +1028,17 @@ func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospect
 	if cmd.ProjectID == "" {
 		return inactive, nil
 	}
+
 	env := cmd.Env
 	if env == "" {
 		env = oidcDefaultEnv
 	}
+
 	claims, err := a.db.Signer().Verify(ctx, cmd.ProjectID, env, cmd.Token)
 	if err != nil {
 		return inactive, nil
 	}
+
 	if iss, _ := claims["iss"].(string); iss != oidcIssuer(cmd.ProjectID, env) {
 		return inactive, nil // issuer does not match the request tenant
 	}
@@ -947,28 +1047,36 @@ func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospect
 	if v, ok := claims["sub"].(string); ok {
 		resp.Subject = v
 	}
+
 	if v, ok := claims["client_id"].(string); ok {
 		resp.ClientID = v
 	}
+
 	if v, ok := claims["iss"].(string); ok {
 		resp.Issuer = v
 	}
+
 	if v, ok := claims["aud"].(string); ok && v != "" {
 		resp.Audience = oidc.Audience{v}
 	}
+
 	if v, ok := claims["scope"].(string); ok && v != "" {
 		resp.Scope = oidc.SpaceDelimitedArray(splitScopes(v))
 	}
+
 	resp.TokenType = "Bearer"
 	if v, ok := claims["exp"].(float64); ok {
 		resp.Expiration = oidc.FromTime(time.Unix(int64(v), 0))
 	}
+
 	if v, ok := claims["iat"].(float64); ok {
 		resp.IssuedAt = oidc.FromTime(time.Unix(int64(v), 0))
 	}
+
 	if v, ok := claims["nbf"].(float64); ok {
 		resp.NotBefore = oidc.FromTime(time.Unix(int64(v), 0))
 	}
+
 	return oidcClaimsMap(resp)
 }
 
@@ -978,8 +1086,10 @@ func (a *pgOIDCGrants) Revoke(ctx context.Context, cmd domain.OIDCRevokeCmd) err
 	if cmd.Token == "" {
 		return nil // RFC 7009: revoking an unknown token is a no-op success.
 	}
+
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		hash := oidcHashToken(cmd.Token)
+
 		rows, err := models.IamAuthCodes.Query(
 			sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
 			sm.Limit(1),
@@ -987,6 +1097,7 @@ func (a *pgOIDCGrants) Revoke(ctx context.Context, cmd domain.OIDCRevokeCmd) err
 		if err != nil {
 			return err
 		}
+
 		if len(rows) > 0 {
 			consumed := true
 			if err := rows[0].Update(ctx, a.db.Bobx(), &models.IamAuthCodeSetter{Consumed: &consumed}); err != nil {
@@ -1002,6 +1113,7 @@ func (a *pgOIDCGrants) Revoke(ctx context.Context, cmd domain.OIDCRevokeCmd) err
 		if len(rows) > 0 {
 			aggregateID = rows[0].ID
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.token.revoked",
 			ProjectID:   cmd.ProjectID,
@@ -1011,6 +1123,7 @@ func (a *pgOIDCGrants) Revoke(ctx context.Context, cmd domain.OIDCRevokeCmd) err
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -1022,13 +1135,18 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 		if err != nil {
 			return nil, err
 		}
+
 		requestURI := "urn:ietf:params:oauth:request_uri:" + opaque
+
 		raw, err := marshal(&cmd)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		const ttl = 90 // seconds, RFC 9126 recommended upper bound
+
 		cid := null.From(cmd.ClientID)
 		setter := &models.IamParRequestSetter{
 			ID:         ptr(newUUID()),
@@ -1038,13 +1156,16 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 			ExpiresAt:  ptr(nowUTC().Add(ttl * time.Second)),
 			Data:       &rm,
 		}
+
 		parRow, err := models.IamParRequests.Insert(setter).One(ctx, a.db.Bobx())
 		if err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		result := &domain.OIDCParResult{RequestURI: requestURI, ExpiresIn: ttl}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.par.created",
@@ -1055,6 +1176,7 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 		}); err != nil {
 			return nil, err
 		}
+
 		return result, nil
 	})
 }
@@ -1068,19 +1190,23 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 		if err != nil {
 			return nil, err
 		}
+
 		userCode, err := oidcUserCode()
 		if err != nil {
 			return nil, err
 		}
+
 		const ttl = 600 // 10 minutes
+
 		const interval = 5
+
 		expiresAt := nowUTC().Add(ttl * time.Second)
 
 		out := &domain.OIDCDeviceAuthorization{
 			DeviceCode:              deviceCode,
 			UserCode:                userCode,
 			VerificationURI:         "/device",
-			VerificationURIComplete: fmt.Sprintf("/device?user_code=%s", userCode),
+			VerificationURIComplete: "/device?user_code=" + userCode,
 			ExpiresIn:               ttl,
 			Interval:                interval,
 		}
@@ -1091,10 +1217,12 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 			Scopes:    splitScopes(cmd.Scope),
 			ExpiresAt: expiresAt,
 		}
+
 		raw, err := marshal(&pending)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		setter := &models.IamDeviceCodeSetter{
 			ID:         ptr(newUUID()),
@@ -1105,13 +1233,16 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 			ExpiresAt:  &expiresAt,
 			Data:       &rm,
 		}
+
 		deviceRow, err := models.IamDeviceCodes.Insert(setter).One(ctx, a.db.Bobx())
 		if err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.device.authorized",
 			ProjectID:   cmd.ClientID, // routing key; project resolved by client
@@ -1121,6 +1252,7 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 		}); err != nil {
 			return nil, err
 		}
+
 		return out, nil
 	})
 }
@@ -1155,17 +1287,22 @@ func (a *pgOIDCGrants) ResolveDevice(ctx context.Context, code domain.OIDCDevice
 	if err != nil {
 		return nil, err
 	}
+
 	if len(rows) == 0 {
 		return nil, domain.ErrNotFound
 	}
+
 	row := rows[0]
+
 	var pending domain.OIDCDevicePending
 	if err := unmarshal(row.Data, &pending); err != nil {
 		return nil, err
 	}
+
 	if pending.ExpiresAt.IsZero() {
 		pending.ExpiresAt = row.ExpiresAt
 	}
+
 	return &pending, nil
 }
 
@@ -1193,18 +1330,23 @@ func (a *pgOIDCGrants) deviceDecision(ctx context.Context, cmd domain.OIDCDevice
 		if err != nil {
 			return err
 		}
+
 		if len(rows) == 0 {
 			return domain.ErrNotFound
 		}
+
 		row := rows[0]
 		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
 			return domain.ErrTokenExpired
 		}
+
 		uid := null.From(cmd.AccountID)
+
 		setter := &models.IamDeviceCodeSetter{Status: &status, UserID: &uid}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.device.decided",
 			ProjectID:   cmd.ProjectID,
@@ -1219,6 +1361,7 @@ func (a *pgOIDCGrants) deviceDecision(ctx context.Context, cmd domain.OIDCDevice
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -1236,7 +1379,7 @@ func (a *pgOIDCGrants) JWKS(ctx context.Context, projectID, env string) (map[str
 
 // OpenIDConfiguration returns the discovery document for a project environment,
 // built from the zitadel DiscoveryConfiguration struct (spec-correct field
-// names) and marshalled to the generic map the oas layer emits. The signing
+// names) and marshaled to the generic map the oas layer emits. The signing
 // algorithm advertised matches the Signer (RS256).
 func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env string) (map[string]any, error) {
 	base := oidcIssuer(projectID, env)
@@ -1263,6 +1406,7 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 		BackChannelLogoutSupported:        true,
 		BackChannelLogoutSessionSupported: true,
 	}
+
 	m, err := oidcClaimsMap(cfg)
 	if err != nil {
 		return nil, err
@@ -1270,6 +1414,7 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 	// The pushed-authorization-request endpoint has no field on the discovery
 	// struct in this lib version; advertise it explicitly (RFC 9126).
 	m["pushed_authorization_request_endpoint"] = "/oauth2/par"
+
 	return m, nil
 }
 
@@ -1280,33 +1425,45 @@ func splitScopes(scope string) []string {
 	if scope == "" {
 		return nil
 	}
+
 	var out []string
+
 	cur := ""
+
 	for _, r := range scope {
 		if r == ' ' {
 			if cur != "" {
 				out = append(out, cur)
 				cur = ""
 			}
+
 			continue
 		}
+
 		cur += string(r)
 	}
+
 	if cur != "" {
 		out = append(out, cur)
 	}
+
 	return out
 }
 
 // joinScopes joins scopes into a space-delimited string.
 func joinScopes(scopes []string) string {
 	out := ""
+
+	var outSb1304 strings.Builder
 	for i, s := range scopes {
 		if i > 0 {
-			out += " "
+			outSb1304.WriteString(" ")
 		}
-		out += s
+
+		outSb1304.WriteString(s)
 	}
+	out += outSb1304.String()
+
 	return out
 }
 
@@ -1320,9 +1477,11 @@ func splitScopesFromData(data json.RawMessage) []string {
 	if err := json.Unmarshal(data, &env); err != nil {
 		return nil
 	}
+
 	if len(env.Scopes) > 0 {
 		return env.Scopes
 	}
+
 	return splitScopes(env.Scope)
 }
 
@@ -1340,6 +1499,7 @@ func parseAuthCodeData(data json.RawMessage) (authCodeData, error) {
 	if err := json.Unmarshal(data, &d); err != nil {
 		return d, domain.ErrBadRequest.WithMessage("corrupted auth code data")
 	}
+
 	return d, nil
 }
 
@@ -1356,27 +1516,34 @@ func (a *pgOIDCGrants) oidcVerifyClientSecret(ctx context.Context, clientID, cli
 	if clientID == "" {
 		return domain.ErrUnauthorized
 	}
+
 	row, err := models.FindIamAppClient(ctx, a.db.Bobx(), clientID)
 	if err != nil {
 		return domain.ErrUnauthorized
 	}
+
 	if !oidcIsConfidentialClient(row.Type) {
 		return nil
 	}
+
 	if clientSecret == "" {
 		return domain.ErrUnauthorized
 	}
+
 	var data struct {
 		ClientSecretHash string `json:"client_secret_hash"`
 	}
 	if err := json.Unmarshal(row.Data, &data); err != nil || data.ClientSecretHash == "" {
 		return domain.ErrUnauthorized
 	}
+
 	given := sha256.Sum256([]byte(clientSecret))
+
 	givenHex := hex.EncodeToString(given[:])
 	if subtle.ConstantTimeCompare([]byte(givenHex), []byte(data.ClientSecretHash)) != 1 {
 		return domain.ErrUnauthorized
 	}
+
 	return nil
 }
 
@@ -1392,8 +1559,10 @@ func (a *pgOIDCGrants) oidcVerifyConsent(ctx context.Context, projectID, userID,
 	if err != nil {
 		return err
 	}
+
 	if len(rows) == 0 {
 		return domain.ErrConsentRequired
 	}
+
 	return nil
 }

@@ -14,7 +14,7 @@ package postgres
 //     or an absent doc.
 //   - When a doc is ABSENT (or empty), the returned Effective* carries the exact
 //     hardcoded defaults the codebase used before this reader existed, so
-//     behaviour is byte-identical until an admin sets a doc.
+//     behavior is byte-identical until an admin sets a doc.
 //   - Reads are env-scoped through effectiveEnv (test/live carry distinct config)
 //     and memoized with a short TTL cache, copying the mechanics of
 //     pkg/api/cors.go originCache (RWMutex + exp + stale-on-error fail-safe),
@@ -118,6 +118,7 @@ func NewConfigReader(db *DB, ttl time.Duration) *configReader {
 	if ttl <= 0 {
 		ttl = configReaderDefaultTTL
 	}
+
 	return &configReader{
 		db:      db,
 		ttl:     ttl,
@@ -132,6 +133,7 @@ func (r *configReader) invalidate(projectID, env, key string) {
 	if r == nil {
 		return
 	}
+
 	r.mu.Lock()
 	delete(r.entries, cacheKey{projectID, env, key})
 	r.mu.Unlock()
@@ -141,8 +143,8 @@ func (r *configReader) invalidate(projectID, env, key string) {
 // (project, env, key). A returned nil slice with a nil error means the doc is
 // absent — callers apply defaults. An environment-resolution error (unknown
 // X-Environment) is a CLIENT error and is propagated; a config read error is
-// swallowed in favour of the last-good (or absent) cached value, copying the
-// stale-on-error behaviour of pkg/api/cors.go.
+// swallowed in favor of the last-good (or absent) cached value, copying the
+// stale-on-error behavior of pkg/api/cors.go.
 func (r *configReader) rawDoc(ctx context.Context, projectID, key string) ([]byte, error) {
 	// Env resolution is per-request and not cached: it is a cheap lookup and the
 	// client error it surfaces must always propagate.
@@ -150,6 +152,7 @@ func (r *configReader) rawDoc(ctx context.Context, projectID, key string) ([]byt
 	if err != nil {
 		return nil, err
 	}
+
 	return r.rawDocForEnv(ctx, projectID, env, key)
 }
 
@@ -170,6 +173,7 @@ func (r *configReader) rawDocStrict(ctx context.Context, projectID, key string) 
 	if err != nil {
 		return nil, err
 	}
+
 	return r.loadDoc(ctx, projectID, env, key, true)
 }
 
@@ -181,19 +185,25 @@ func (r *configReader) loadDoc(ctx context.Context, projectID, env, key string, 
 	if env == "" {
 		env = runtimeDefaultEnv
 	}
+
 	ck := cacheKey{projectID: projectID, env: env, key: key}
 
 	r.mu.RLock()
+
 	ent, ok := r.entries[ck]
 	if ok && time.Now().Before(ent.exp) {
 		raw := ent.raw
+
 		r.mu.RUnlock()
+
 		return raw, nil
 	}
+
 	r.mu.RUnlock()
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	if ent, ok := r.entries[ck]; ok && time.Now().Before(ent.exp) { // another goroutine refreshed
 		return ent.raw, nil
 	}
@@ -209,9 +219,12 @@ func (r *configReader) loadDoc(ctx context.Context, projectID, env, key string, 
 		prev := r.entries[ck]
 		prev.exp = time.Now().Add(5 * time.Second)
 		r.entries[ck] = prev
+
 		return prev.raw, nil
 	}
+
 	r.entries[ck] = cacheEntry{raw: raw, exp: time.Now().Add(r.ttl)}
+
 	return raw, nil
 }
 
@@ -223,14 +236,17 @@ func (r *configReader) fetch(ctx context.Context, projectID, env, key string) ([
 		if errors.Is(translatePgErr("config", err), ErrNotFound) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
+
 	if len(row.Data) == 0 {
 		return nil, nil
 	}
 	// Copy out of the row so the cached slice is not aliased to bob internals.
 	out := make([]byte, len(row.Data))
 	copy(out, row.Data)
+
 	return out, nil
 }
 
@@ -242,29 +258,37 @@ func (r *configReader) fetch(ctx context.Context, projectID, env, key string) ([
 // request environment. An absent doc yields MinLength=8 (the legacy default).
 func (r *configReader) PasswordPolicy(ctx context.Context, projectID string) (EffectivePasswordPolicy, error) {
 	eff := EffectivePasswordPolicy{MinLength: defaultPasswordMinLength}
+
 	raw, err := r.rawDoc(ctx, projectID, "password_policy")
 	if err != nil {
 		return eff, err
 	}
+
 	if len(raw) == 0 {
 		return eff, nil
 	}
+
 	var spec domain.PasswordPolicySpec
 	if unmarshal(raw, &spec) != nil {
 		return eff, nil // tolerant: fall back to defaults on a malformed doc
 	}
+
 	if spec.MinLength != nil && *spec.MinLength > 0 {
 		eff.MinLength = *spec.MinLength
 	}
+
 	if spec.ZxcvbnMinScore != nil && *spec.ZxcvbnMinScore >= 0 {
 		eff.ZxcvbnMinScore = *spec.ZxcvbnMinScore
 	}
+
 	if spec.BreachedCheck != nil {
 		eff.BreachedCheck = *spec.BreachedCheck
 	}
+
 	if spec.History != nil && *spec.History > 0 {
 		eff.History = *spec.History
 	}
+
 	return eff, nil
 }
 
@@ -278,6 +302,7 @@ func (r *configReader) SessionPolicy(ctx context.Context, projectID string) (Eff
 	if err != nil {
 		return defaultSessionPolicy(), err
 	}
+
 	return parseSessionPolicy(raw), nil
 }
 
@@ -289,6 +314,7 @@ func (r *configReader) SessionPolicyForEnv(ctx context.Context, projectID, env s
 	if err != nil {
 		return defaultSessionPolicy(), err
 	}
+
 	return parseSessionPolicy(raw), nil
 }
 
@@ -301,22 +327,28 @@ func parseSessionPolicy(raw []byte) EffectiveSessionPolicy {
 	if len(raw) == 0 {
 		return eff
 	}
+
 	var spec domain.SessionPolicySpec
 	if unmarshal(raw, &spec) != nil {
 		return eff
 	}
+
 	if spec.AccessTTL != nil && *spec.AccessTTL > 0 {
 		eff.AccessTTL = time.Duration(*spec.AccessTTL) * time.Second
 	}
+
 	if spec.RefreshTTL != nil && *spec.RefreshTTL > 0 {
 		eff.RefreshTTL = time.Duration(*spec.RefreshTTL) * time.Second
 	}
+
 	if spec.IdleTimeout != nil && *spec.IdleTimeout > 0 {
 		eff.IdleTimeout = time.Duration(*spec.IdleTimeout) * time.Second
 	}
+
 	if spec.AbsoluteTimeout != nil && *spec.AbsoluteTimeout > 0 {
 		eff.AbsoluteTimeout = time.Duration(*spec.AbsoluteTimeout) * time.Second
 	}
+
 	if spec.ReuseDetection != nil {
 		eff.ReuseDetection = *spec.ReuseDetection
 	}
@@ -327,6 +359,7 @@ func parseSessionPolicy(raw []byte) EffectiveSessionPolicy {
 			eff.AccessTTL = coreAuthAccessTTL
 		}
 	}
+
 	return eff
 }
 
@@ -334,30 +367,37 @@ func parseSessionPolicy(raw []byte) EffectiveSessionPolicy {
 // policy (no factors required/offered).
 func (r *configReader) MFAPolicy(ctx context.Context, projectID string) (EffectiveMFAPolicy, error) {
 	var eff EffectiveMFAPolicy
+
 	raw, err := r.rawDoc(ctx, projectID, "mfa_policy")
 	if err != nil {
 		return eff, err
 	}
+
 	if len(raw) == 0 {
 		return eff, nil
 	}
+
 	var spec domain.MFAPolicySpec
 	if unmarshal(raw, &spec) != nil {
 		return eff, nil
 	}
+
 	if spec.RequiredForAdmins != nil {
 		eff.RequiredForAdmins = *spec.RequiredForAdmins
 	}
+
 	if spec.RememberDevice != nil {
 		eff.RememberDevice = *spec.RememberDevice
 	}
+
 	eff.AllowedFactors = append([]string(nil), spec.AllowedFactors...)
+
 	return eff, nil
 }
 
 // ConsentConfig returns the project's consent documents for the request
 // environment. An absent/empty/malformed doc yields a nil slice — i.e. "no
-// consent configured", which preserves pre-gate behaviour (no required-consent
+// consent configured", which preserves pre-gate behavior (no required-consent
 // step). Reads are env-scoped + cached like every other accessor. A genuine DB
 // read error is swallowed to defaults (nil) here, matching the other typed
 // accessors; the gate callers decide their own fail-open/closed policy on the
@@ -369,13 +409,16 @@ func (r *configReader) ConsentConfig(ctx context.Context, projectID string) ([]d
 	if err != nil {
 		return nil, err
 	}
+
 	if len(raw) == 0 {
 		return nil, nil
 	}
+
 	var spec domain.ConsentConfigSpec
 	if unmarshal(raw, &spec) != nil {
 		return nil, nil // tolerant: a malformed doc gates nothing
 	}
+
 	return spec.Documents, nil
 }
 
@@ -384,36 +427,45 @@ func (r *configReader) ConsentConfig(ctx context.Context, projectID string) ([]d
 // contract. supported_locales and the legacy locales key are reconciled.
 func (r *configReader) AuthConfig(ctx context.Context, projectID string) (EffectiveAuthConfig, error) {
 	var eff EffectiveAuthConfig
+
 	raw, err := r.rawDoc(ctx, projectID, "auth")
 	if err != nil {
 		return eff, err
 	}
+
 	if len(raw) == 0 {
 		return eff, nil
 	}
+
 	var spec domain.AuthConfigSpec
 	if unmarshal(raw, &spec) != nil {
 		return eff, nil
 	}
+
 	eff.Methods = append([]string(nil), spec.Methods...)
 	if spec.Registration != nil {
 		if spec.Registration.Mode != nil {
 			eff.RegistrationMode = *spec.Registration.Mode
 		}
+
 		if spec.Registration.PasswordStrategy != nil {
 			eff.PasswordStrategy = *spec.Registration.PasswordStrategy
 		}
 	}
+
 	if spec.AppBaseURL != nil {
 		eff.AppBaseURL = *spec.AppBaseURL
 	}
+
 	if spec.DefaultLocale != nil {
 		eff.DefaultLocale = *spec.DefaultLocale
 	}
+
 	if len(spec.SupportedLocales) > 0 {
 		eff.SupportedLocales = append([]string(nil), spec.SupportedLocales...)
 	} else if len(spec.Locales) > 0 {
 		eff.SupportedLocales = append([]string(nil), spec.Locales...)
 	}
+
 	return eff, nil
 }

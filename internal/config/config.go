@@ -9,13 +9,13 @@ import "fmt"
 
 // Postgres is the connection config for the IAM store.
 type Postgres struct {
-	Host     string `mapstructure:"host" default:"localhost" validate:"required,hostname|ip"`
-	Port     int    `mapstructure:"port" default:"5432" validate:"required,min=1,max=65535"`
-	Username string `mapstructure:"username" default:"iam" validate:"required"`
-	Password string `mapstructure:"password" default:"iam" validate:"required"`
-	Database string `mapstructure:"database" default:"iam" validate:"required"`
-	SSLMode  string `mapstructure:"sslmode" default:"require" validate:"oneof=disable require verify-ca verify-full"`
-	LogLevel string `mapstructure:"log_level" default:"info" validate:"oneof=debug info warn error"`
+	Host     string `default:"localhost" mapstructure:"host"      validate:"required,hostname|ip"`
+	Port     int    `default:"5432"      mapstructure:"port"      validate:"required,min=1,max=65535"`
+	Username string `default:"iam"       mapstructure:"username"  validate:"required"`
+	Password string `default:"iam"       mapstructure:"password"  validate:"required"`
+	Database string `default:"iam"       mapstructure:"database"  validate:"required"`
+	SSLMode  string `default:"require"   mapstructure:"sslmode"   validate:"oneof=disable require verify-ca verify-full"`
+	LogLevel string `default:"info"      mapstructure:"log_level" validate:"oneof=debug info warn error"`
 }
 
 // DSN renders the libpq/pgx connection string.
@@ -27,15 +27,15 @@ func (c *Postgres) DSN() string {
 
 // HTTP is the inbound HTTP server config.
 type HTTP struct {
-	Addr            string `mapstructure:"addr" default:":8080" validate:"required"`
-	ReadTimeoutSec  int    `mapstructure:"read_timeout_sec" default:"15" validate:"min=1"`
-	WriteTimeoutSec int    `mapstructure:"write_timeout_sec" default:"30" validate:"min=1"`
-	ShutdownSec     int    `mapstructure:"shutdown_sec" default:"15" validate:"min=1"`
+	Addr            string `default:":8080" mapstructure:"addr"              validate:"required"`
+	ReadTimeoutSec  int    `default:"15"    mapstructure:"read_timeout_sec"  validate:"min=1"`
+	WriteTimeoutSec int    `default:"30"    mapstructure:"write_timeout_sec" validate:"min=1"`
+	ShutdownSec     int    `default:"15"    mapstructure:"shutdown_sec"      validate:"min=1"`
 	// ProbeAddr is the address for the liveness/readiness probe server. When set
 	// to a different address than Addr, probes are served on their own listener
 	// (a k8s sidecar port not exposed publicly); when empty or equal to Addr they
 	// are mounted under /healthz/ on the main server.
-	ProbeAddr string `mapstructure:"probe_addr" default:":8081"`
+	ProbeAddr string `default:":8081" mapstructure:"probe_addr"`
 	// TrustedProxies is the list of CIDR ranges (or bare IPs) of reverse
 	// proxies / load balancers in front of the service. The client IP is taken
 	// from X-Forwarded-For / X-Real-IP ONLY when the connecting peer is in this
@@ -48,8 +48,8 @@ type HTTP struct {
 
 // Logger is the structured-logging config.
 type Logger struct {
-	Level  string `mapstructure:"level" default:"info" validate:"oneof=debug info warn error"`
-	Format string `mapstructure:"format" default:"json" validate:"oneof=json text"`
+	Level  string `default:"info" mapstructure:"level"  validate:"oneof=debug info warn error"`
+	Format string `default:"json" mapstructure:"format" validate:"oneof=json text"`
 }
 
 // CORS is the browser cross-origin policy for runtime endpoints.
@@ -60,21 +60,21 @@ type CORS struct {
 // Auth holds IAM token/issuer defaults applied when an environment does not
 // override them.
 type Auth struct {
-	DefaultEnvironment string `mapstructure:"default_environment" default:"live" validate:"required"`
-	AccessTTLSec       int    `mapstructure:"access_ttl_sec" default:"600" validate:"min=60"`
-	RefreshTTLSec      int    `mapstructure:"refresh_ttl_sec" default:"2592000" validate:"min=60"`
+	DefaultEnvironment string `default:"live"    mapstructure:"default_environment" validate:"required"`
+	AccessTTLSec       int    `default:"600"     mapstructure:"access_ttl_sec"      validate:"min=60"`
+	RefreshTTLSec      int    `default:"2592000" mapstructure:"refresh_ttl_sec"     validate:"min=60"`
 	// MasterKey is the platform operator (master-key) credential. When empty the
 	// masterKey security scheme rejects every request — operator endpoints are
 	// disabled until a key is configured (set via MASTER_KEY / service.auth.master_key).
-	MasterKey string `mapstructure:"master_key" default:""`
+	MasterKey string `default:"" mapstructure:"master_key"`
 	// EncryptionKey is the base64-encoded 32-byte AES-256 key that encrypts
 	// reversible secrets at rest (signing-key PEMs, TOTP secrets). Empty disables
 	// at-rest encryption (passthrough). Set via SERVICE_AUTH_ENCRYPTION_KEY.
-	EncryptionKey string `mapstructure:"encryption_key" default:"" validate:"omitempty,base64"`
+	EncryptionKey string `default:"" mapstructure:"encryption_key" validate:"omitempty,base64"`
 	// SeedRoot, when true, ensures a root project exists on startup so the
 	// operator (master key) has something to manage. Development convenience;
 	// set via SERVICE_AUTH_SEED_ROOT.
-	SeedRoot bool `mapstructure:"seed_root" default:"false"`
+	SeedRoot bool `default:"false" mapstructure:"seed_root"`
 }
 
 // Infrastructure is the external-dependency config (datastores, …).

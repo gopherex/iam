@@ -52,6 +52,7 @@ func accountRandomToken(nbytes int) (string, error) {
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
+
 	return hex.EncodeToString(b), nil
 }
 
@@ -75,11 +76,14 @@ func (a *pgAccountStore) accountLoadUser(ctx context.Context, projectID, account
 		if isNoRows(err) {
 			return nil, domain.ErrUserNotFound
 		}
+
 		return nil, err
 	}
+
 	if row.ProjectID != projectID {
 		return nil, domain.ErrUserNotFound
 	}
+
 	return row, nil
 }
 
@@ -90,11 +94,14 @@ func (a *pgAccountStore) accountLoadSession(ctx context.Context, accountID, sess
 		if isNoRows(err) {
 			return nil, domain.ErrSessionNotFound
 		}
+
 		return nil, err
 	}
+
 	if row.UserID != accountID {
 		return nil, domain.ErrSessionNotFound
 	}
+
 	return row, nil
 }
 
@@ -109,17 +116,21 @@ func accountSessionToDomain(row *models.IamSession) (*domain.Session, error) {
 	// envelope columns win for the queryable fields
 	s.ID = row.ID
 	s.AccountID = row.UserID
+
 	s.ProjectID = row.ProjectID
 	if v, ok := row.ClientID.Get(); ok {
 		s.ClientID = v
 	}
+
 	s.AAL = int(row.Aal)
 	s.CreatedAt = row.CreatedAt
 	s.Trusted = row.Trusted
+
 	s.LastActiveAt = row.LastActiveAt
 	if v, ok := row.ExpiresAt.Get(); ok {
 		s.ExpiresIn = int(v.Sub(row.CreatedAt).Seconds())
 	}
+
 	return &s, nil
 }
 
@@ -131,17 +142,22 @@ func accountIdentityToDomain(row *models.IamIdentity) (*domain.Identity, error) 
 			return nil, err
 		}
 	}
+
 	id.ID = row.ID
+
 	id.Type = row.Type
 	if v, ok := row.Provider.Get(); ok {
 		id.Provider = v
 	}
+
 	if v, ok := row.ProviderAccountID.Get(); ok {
 		id.ProviderAccountID = v
 	}
+
 	if v, ok := row.Email.Get(); ok {
 		id.Email = v
 	}
+
 	return &id, nil
 }
 
@@ -153,10 +169,12 @@ func (a *pgAccountStore) Get(ctx context.Context, projectID, accountID string) (
 	if err != nil {
 		return nil, err
 	}
+
 	var acc domain.Account
 	if err := unmarshal(row.Data, &acc); err != nil {
 		return nil, err
 	}
+
 	return &acc, nil
 }
 
@@ -167,16 +185,20 @@ func (a *pgAccountStore) UpdateProfile(ctx context.Context, cmd domain.ProfileUp
 		if err != nil {
 			return nil, err
 		}
+
 		var acc domain.Account
 		if err := unmarshal(row.Data, &acc); err != nil {
 			return nil, err
 		}
+
 		if cmd.Name != "" {
 			acc.Name = cmd.Name
 		}
+
 		if cmd.Locale != "" {
 			acc.Locale = cmd.Locale
 		}
+
 		acc.UpdatedAt = nowUTC()
 
 		// Merge the typed account back over the existing envelope so non-Account
@@ -187,29 +209,37 @@ func (a *pgAccountStore) UpdateProfile(ctx context.Context, cmd domain.ProfileUp
 				return nil, err
 			}
 		}
+
 		accRaw, err := marshal(&acc)
 		if err != nil {
 			return nil, err
 		}
+
 		accMap := map[string]any{}
 		if err := unmarshal(accRaw, &accMap); err != nil {
 			return nil, err
 		}
+
 		for k, v := range accMap {
 			env[k] = v
 		}
+
 		if cmd.AvatarURL != "" {
 			env["avatar_url"] = cmd.AvatarURL
 		}
+
 		raw, err := marshal(env)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamUserSetter{Data: &rm, UpdatedAt: ptr(nowUTC())}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.profile_updated",
 			ProjectID:   cmd.ProjectID,
@@ -219,6 +249,7 @@ func (a *pgAccountStore) UpdateProfile(ctx context.Context, cmd domain.ProfileUp
 		}); err != nil {
 			return nil, err
 		}
+
 		return &acc, nil
 	})
 }
@@ -230,6 +261,7 @@ func (a *pgAccountStore) Delete(ctx context.Context, projectID, accountID string
 		if err != nil {
 			return err
 		}
+
 		sessions, err := models.IamSessions.Query(
 			sm.Where(models.IamSessions.Columns.ProjectID.EQ(psql.Arg(projectID))),
 			sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(accountID))),
@@ -237,14 +269,17 @@ func (a *pgAccountStore) Delete(ctx context.Context, projectID, accountID string
 		if err != nil {
 			return err
 		}
+
 		for _, session := range sessions {
 			if err := revokeSessionRecord(ctx, a.db, a.emitter, session, "user_deleted"); err != nil {
 				return err
 			}
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        domain.WebhookEventUserDeleted,
 			ProjectID:   projectID,
@@ -254,6 +289,7 @@ func (a *pgAccountStore) Delete(ctx context.Context, projectID, accountID string
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -267,14 +303,17 @@ func (a *pgAccountStore) ListSessions(ctx context.Context, accountID string) ([]
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Session, 0, len(rows))
 	for _, row := range rows {
 		s, err := accountSessionToDomain(row)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, *s)
 	}
+
 	return out, nil
 }
 
@@ -284,6 +323,7 @@ func (a *pgAccountStore) GetSession(ctx context.Context, accountID, sessionID st
 	if err != nil {
 		return nil, err
 	}
+
 	return accountSessionToDomain(row)
 }
 
@@ -294,6 +334,7 @@ func (a *pgAccountStore) RevokeSession(ctx context.Context, accountID, sessionID
 		if err != nil {
 			return err
 		}
+
 		return revokeSessionRecord(ctx, a.db, a.emitter, row, "user_request")
 	})
 }
@@ -313,23 +354,30 @@ func (a *pgAccountStore) RenameSession(ctx context.Context, cmd domain.AccountRe
 				return nil, err
 			}
 		}
+
 		if env == nil {
 			env = map[string]any{}
 		}
+
 		env["device_name"] = cmd.DeviceName
+
 		raw, err := marshal(env)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamSessionSetter{Data: &rm, LastActiveAt: ptr(nowUTC())}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		sess, err := accountSessionToDomain(row)
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "session.renamed",
 			ProjectID:   row.ProjectID,
@@ -339,6 +387,7 @@ func (a *pgAccountStore) RenameSession(ctx context.Context, cmd domain.AccountRe
 		}); err != nil {
 			return nil, err
 		}
+
 		return sess, nil
 	})
 }
@@ -350,16 +399,20 @@ func (a *pgAccountStore) TrustSession(ctx context.Context, cmd domain.AccountTru
 		if err != nil {
 			return nil, err
 		}
+
 		trusted := true
 		exp := null.From(nowUTC().Add(accountSeconds(cmd.DurationSeconds)))
+
 		setter := &models.IamSessionSetter{Trusted: &trusted, ExpiresAt: &exp}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		sess, err := accountSessionToDomain(row)
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "session.trusted",
 			ProjectID:   row.ProjectID,
@@ -369,6 +422,7 @@ func (a *pgAccountStore) TrustSession(ctx context.Context, cmd domain.AccountTru
 		}); err != nil {
 			return nil, err
 		}
+
 		return sess, nil
 	})
 }
@@ -382,21 +436,26 @@ func (a *pgAccountStore) RevokeSessions(ctx context.Context, cmd domain.AccountR
 		if err != nil {
 			return 0, err
 		}
+
 		victims := make(models.IamSessionSlice, 0, len(rows))
 		for _, row := range rows {
 			if cmd.ExceptCurrent && cmd.ExceptSessionID != "" && row.ID == cmd.ExceptSessionID {
 				continue
 			}
+
 			victims = append(victims, row)
 		}
+
 		if len(victims) == 0 {
 			return 0, nil
 		}
+
 		for _, victim := range victims {
 			if err := revokeSessionRecord(ctx, a.db, a.emitter, victim, "user_request"); err != nil {
 				return 0, err
 			}
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "sessions.revoked",
 			ProjectID:   victims[0].ProjectID,
@@ -406,6 +465,7 @@ func (a *pgAccountStore) RevokeSessions(ctx context.Context, cmd domain.AccountR
 		}); err != nil {
 			return 0, err
 		}
+
 		return len(victims), nil
 	})
 }
@@ -419,14 +479,17 @@ func (a *pgAccountStore) ListIdentities(ctx context.Context, accountID string) (
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Identity, 0, len(rows))
 	for _, row := range rows {
 		id, err := accountIdentityToDomain(row)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, *id)
 	}
+
 	return out, nil
 }
 
@@ -438,14 +501,18 @@ func (a *pgAccountStore) UnlinkIdentity(ctx context.Context, accountID, identity
 			if isNoRows(err) {
 				return domain.ErrNotFound
 			}
+
 			return err
 		}
+
 		if row.UserID != accountID {
 			return domain.ErrNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "identity.unlinked",
 			ProjectID:   row.ProjectID,
@@ -455,6 +522,7 @@ func (a *pgAccountStore) UnlinkIdentity(ctx context.Context, accountID, identity
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -466,11 +534,14 @@ func (a *pgAccountStore) Capabilities(ctx context.Context, projectID, accountID 
 	if err != nil {
 		return nil, err
 	}
+
 	var acc domain.Account
 	if err := unmarshal(row.Data, &acc); err != nil {
 		return nil, err
 	}
+
 	active := acc.Status == "active"
+
 	return map[string]bool{
 		"can_login":           active,
 		"can_update_profile":  active,
@@ -493,11 +564,13 @@ func (a *pgAccountStore) Activity(ctx context.Context, cmd domain.AccountActivit
 	if cmd.Type != "" {
 		qmods = append(qmods, sm.Where(models.IamActivities.Columns.Type.EQ(psql.Arg(cmd.Type))))
 	}
+
 	if cmd.Cursor != "" {
 		// keyset: rows strictly older than the cursor row's id (lexically safe
 		// for time-ordered uuids/ulids used as activity ids).
 		qmods = append(qmods, sm.Where(models.IamActivities.Columns.ID.LT(psql.Arg(cmd.Cursor))))
 	}
+
 	qmods = append(qmods,
 		sm.OrderBy(models.IamActivities.Columns.At).Desc(),
 		sm.Limit(limit+1),
@@ -513,6 +586,7 @@ func (a *pgAccountStore) Activity(ctx context.Context, cmd domain.AccountActivit
 		page.HasMore = true
 		rows = rows[:limit]
 	}
+
 	for _, row := range rows {
 		ev := domain.AccountActivityEvent{
 			ID:   row.ID,
@@ -527,14 +601,18 @@ func (a *pgAccountStore) Activity(ctx context.Context, cmd domain.AccountActivit
 			if err := unmarshal(row.Data, &env); err != nil {
 				return nil, err
 			}
+
 			ev.IP = env.IP
 			ev.Device = env.Device
 		}
+
 		page.Events = append(page.Events, ev)
 	}
+
 	if page.HasMore && len(page.Events) > 0 {
 		page.NextCursor = page.Events[len(page.Events)-1].ID
 	}
+
 	return page, nil
 }
 
@@ -547,6 +625,7 @@ func (a *pgAccountStore) Consents(ctx context.Context, accountID string) ([]doma
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.AccountConsent, 0, len(rows))
 	for _, row := range rows {
 		c := domain.AccountConsent{
@@ -557,8 +636,10 @@ func (a *pgAccountStore) Consents(ctx context.Context, accountID string) ([]doma
 		if v, ok := row.Locale.Get(); ok {
 			c.Locale = v
 		}
+
 		out = append(out, c)
 	}
+
 	return out, nil
 }
 
@@ -571,10 +652,13 @@ func (a *pgAccountStore) AcceptConsents(ctx context.Context, cmd domain.AccountA
 			if isNoRows(err) {
 				return struct{}{}, domain.ErrUserNotFound
 			}
+
 			return struct{}{}, err
 		}
+
 		for _, acc := range cmd.Accept {
 			now := nowUTC()
+
 			setter := &models.IamConsentSetter{
 				ID:         ptr(newUUID()),
 				ProjectID:  ptr(user.ProjectID),
@@ -587,6 +671,7 @@ func (a *pgAccountStore) AcceptConsents(ctx context.Context, cmd domain.AccountA
 				return struct{}{}, err
 			}
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "account.consents_accepted",
 			ProjectID:   user.ProjectID,
@@ -596,11 +681,13 @@ func (a *pgAccountStore) AcceptConsents(ctx context.Context, cmd domain.AccountA
 		}); err != nil {
 			return struct{}{}, err
 		}
+
 		return struct{}{}, nil
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return a.Consents(ctx, cmd.AccountID)
 }
 
@@ -612,8 +699,10 @@ func (a *pgAccountStore) StartExport(ctx context.Context, accountID string) (*do
 			if isNoRows(err) {
 				return nil, domain.ErrUserNotFound
 			}
+
 			return nil, err
 		}
+
 		jobID := newUUID()
 		job := &domain.AccountExportJob{JobID: jobID, Status: "pending"}
 
@@ -622,12 +711,15 @@ func (a *pgAccountStore) StartExport(ctx context.Context, accountID string) (*do
 			"account_id": accountID,
 			"status":     job.Status,
 		}
+
 		raw, err := marshal(env)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		now := nowUTC()
+
 		setter := &models.IamJobSetter{
 			ID:        ptr(jobID),
 			ProjectID: ptr(user.ProjectID),
@@ -640,6 +732,7 @@ func (a *pgAccountStore) StartExport(ctx context.Context, accountID string) (*do
 		if _, err := models.IamJobs.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "account.export_started",
 			ProjectID:   user.ProjectID,
@@ -649,6 +742,7 @@ func (a *pgAccountStore) StartExport(ctx context.Context, accountID string) (*do
 		}); err != nil {
 			return nil, err
 		}
+
 		return job, nil
 	})
 }
@@ -660,8 +754,10 @@ func (a *pgAccountStore) ExportStatus(ctx context.Context, accountID, jobID stri
 		if isNoRows(err) {
 			return nil, domain.ErrNotFound
 		}
+
 		return nil, err
 	}
+
 	var env struct {
 		JobID       string `json:"job_id"`
 		AccountID   string `json:"account_id"`
@@ -673,14 +769,17 @@ func (a *pgAccountStore) ExportStatus(ctx context.Context, accountID, jobID stri
 			return nil, err
 		}
 	}
+
 	if env.AccountID != accountID { // tenant/ownership boundary
 		return nil, domain.ErrNotFound
 	}
+
 	job := &domain.AccountExportJob{
 		JobID:       jobID,
 		Status:      row.Status,
 		DownloadURL: env.DownloadURL,
 	}
+
 	return job, nil
 }
 
@@ -694,12 +793,15 @@ func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.Acco
 			if isNoRows(err) {
 				return nil, domain.ErrUserNotFound
 			}
+
 			return nil, err
 		}
+
 		code, err := accountRandomCode()
 		if err != nil {
 			return nil, err
 		}
+
 		challengeID := newUUID()
 		expires := nowUTC().Add(accountSeconds(600)) // 10m
 
@@ -708,13 +810,16 @@ func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.Acco
 			"target_identifier": cmd.TargetIdentifier,
 			"purpose":           "identity_merge",
 		}
+
 		raw, err := marshal(env)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		codeHash := null.From(accountHashToken(code))
 		subject := null.From(cmd.TargetIdentifier)
+
 		setter := &models.IamChallengeSetter{
 			ID:        ptr(challengeID),
 			ProjectID: ptr(user.ProjectID),
@@ -729,6 +834,7 @@ func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.Acco
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
+
 		ch := &domain.Challenge{
 			ID:        challengeID,
 			Type:      "identity_merge",
@@ -743,6 +849,7 @@ func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.Acco
 		}); err != nil {
 			return nil, err
 		}
+
 		return ch, nil
 	})
 }
@@ -755,20 +862,25 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 		acc *domain.Account
 		ids []domain.Identity
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		ch, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
 		if err != nil {
 			if isNoRows(err) {
 				return result{}, domain.ErrChallengeInvalid
 			}
+
 			return result{}, err
 		}
+
 		if ch.Consumed {
 			return result{}, domain.ErrChallengeInvalid
 		}
+
 		if !ch.ExpiresAt.After(nowUTC()) {
 			return result{}, domain.ErrChallengeExpired
 		}
+
 		var env struct {
 			AccountID        string `json:"account_id"`
 			TargetIdentifier string `json:"target_identifier"`
@@ -778,9 +890,11 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 				return result{}, err
 			}
 		}
+
 		if env.AccountID != cmd.AccountID {
 			return result{}, domain.ErrChallengeInvalid
 		}
+
 		stored, ok := ch.CodeHash.Get()
 		if !ok || stored != accountHashToken(cmd.Code) {
 			return result{}, domain.ErrChallengeInvalid
@@ -799,6 +913,7 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 
 		// link the target identity to the account.
 		identEmail := null.From(env.TargetIdentifier)
+
 		idSetter := &models.IamIdentitySetter{
 			ID:        ptr(newUUID()),
 			ProjectID: ptr(ch.ProjectID),
@@ -811,12 +926,15 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 			if isUniqueViolation(err) {
 				return result{}, domain.ErrAlreadyLinked
 			}
+
 			return result{}, err
 		}
+
 		var acc domain.Account
 		if err := unmarshal(user.Data, &acc); err != nil {
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "account.identity_merged",
 			ProjectID:   ch.ProjectID,
@@ -826,6 +944,7 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 		}); err != nil {
 			return result{}, err
 		}
+
 		return result{acc: &acc}, nil
 	})
 	if err != nil {
@@ -836,6 +955,8 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 	if err != nil {
 		return nil, nil, err
 	}
+
 	res.ids = ids
+
 	return res.acc, res.ids, nil
 }

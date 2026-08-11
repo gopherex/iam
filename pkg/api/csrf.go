@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/gopherex/iam/internal/domain"
@@ -42,20 +43,27 @@ func CSRFMiddleware(v csrfVerifier) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			clientID := r.Header.Get("X-Client-ID")
-			token := r.Header.Get("X-CSRF-Token")
+
+			clientID := r.Header.Get("X-Client-Id")
+
+			token := r.Header.Get("X-Csrf-Token")
 			if clientID == "" || token == "" {
 				writeEnvelope(w, domain.ErrInvalidCsrf)
 				return
 			}
+
 			if err := v.VerifyCsrfToken(r.Context(), clientID, token); err != nil {
 				de := domain.ErrInvalidCsrf
-				if e, ok := err.(*domain.Error); ok {
+				e := &domain.Error{}
+				if errors.As(err, &e) {
 					de = e
 				}
+
 				writeEnvelope(w, de)
+
 				return
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -66,6 +74,7 @@ func csrfSafeMethod(method string) bool {
 	case http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodTrace:
 		return true
 	}
+
 	return false
 }
 

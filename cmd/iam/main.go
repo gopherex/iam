@@ -14,8 +14,8 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -48,6 +48,7 @@ func main() {
 
 func run() error {
 	configPath := flag.String("config", "", "path to config file (yaml/json/toml); overrides CONFIG_PATH discovery")
+
 	flag.Parse()
 
 	// ----- config -----
@@ -59,6 +60,7 @@ func run() error {
 	if *configPath != "" {
 		loadOpts = append(loadOpts, structconf.WithFile(*configPath))
 	}
+
 	cfg, err := structconf.Load[config.Config](loadOpts...)
 	if err != nil {
 		slog.Error("config load failed", "err", err)
@@ -89,6 +91,7 @@ func run() error {
 		log.Error("telemetry runtime instrumentation failed", xlog.Error("err", err))
 		return err
 	}
+
 	log.Info("starting", xlog.String("addr", cfg.Service.HTTP.Addr))
 
 	// ----- postgres -----
@@ -109,10 +112,12 @@ func run() error {
 		log.Error("encryption key invalid", xlog.Error("err", err))
 		return err
 	}
+
 	db.UseCipher(cph)
+
 	if cfg.Service.Auth.EncryptionKey == "" {
 		log.Error("secrets-at-rest encryption is DISABLED — set service.auth.encryption_key (base64 32-byte AES-256 key) before running in production")
-		return fmt.Errorf("service.auth.encryption_key is required")
+		return errors.New("service.auth.encryption_key is required")
 	}
 
 	if err := db.Migrate(ctx); err != nil {
@@ -126,6 +131,7 @@ func run() error {
 			return err
 		}
 	}
+
 	log.Info("migrations applied")
 
 	// ----- outbox (email publisher; enqueue joins the caller tx via db.TxDB) -----
@@ -134,6 +140,7 @@ func run() error {
 	// delivered earlier in the batch (duplicate OTP / email) on the retry. One
 	// message per claim isolates failures; concurrency preserves throughput.
 	webhooks := postgres.NewPgWebhooks(db, nil)
+
 	ob, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, webhooks, log.AppendName("outbox")),
 		outbox.WithInstanceID(build.InstanceID),
 		outbox.WithLogger(buildSlogLogger()),
@@ -146,6 +153,7 @@ func run() error {
 		log.Error("outbox init failed", xlog.Error("err", err))
 		return err
 	}
+
 	emitter := postgres.NewOutboxEmitter(ob)
 
 	// ----- optional root seed (operator gets a project to manage) -----
@@ -159,6 +167,7 @@ func run() error {
 	// ----- API handler (12 feature groups over Postgres adapters) -----
 	handler := buildHandler(db, emitter, webhooks)
 	auth := postgres.NewAuthenticator(db, cfg.Service.Auth.MasterKey)
+
 	srv, err := oas.NewServer(handler, api.NewSecurityHandler(auth), oas.WithErrorHandler(api.ErrorHandler))
 	if err != nil {
 		log.Error("server build failed", xlog.Error("err", err))
@@ -200,12 +209,14 @@ func run() error {
 	for _, prefix := range []string{"/v1/", "/mgmt/", "/oauth2/", "/p/"} {
 		root.Handle(prefix, apiPipeline)
 	}
+
 	root.Handle("/", api.SecurityHeaders(web.Handler()))
 
 	// Probes get their own listener when ProbeAddr differs from the API port (a
 	// k8s sidecar port not exposed publicly); otherwise they mount on the API
 	// server under /healthz/.
 	probeAddr := cfg.Service.HTTP.ProbeAddr
+
 	separateProbes := probeAddr != "" && probeAddr != cfg.Service.HTTP.Addr
 	if !separateProbes {
 		root.Handle("/healthz/", probeMux)
@@ -218,6 +229,7 @@ func run() error {
 		WriteTimeout:   time.Duration(cfg.Service.HTTP.WriteTimeoutSec) * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
+
 	var probeSrv *http.Server
 	if separateProbes {
 		probeSrv = &http.Server{Addr: probeAddr, Handler: probeMux}
@@ -235,6 +247,7 @@ func run() error {
 			if probeSrv != nil {
 				return probeSrv.Shutdown(ctx)
 			}
+
 			return nil
 		},
 		func(ctx context.Context) error { live.Set(false); return nil },
@@ -242,8 +255,10 @@ func run() error {
 			if telemetryShutdown == nil {
 				return nil
 			}
+
 			err := telemetryShutdown(ctx)
 			telemetryShutdown = nil
+
 			return err
 		},
 	)
@@ -253,17 +268,21 @@ func run() error {
 			log.Error("outbox relay stopped", xlog.Error("err", err))
 		}
 	})
+
 	if probeSrv != nil {
 		sd.Go(func(context.Context) {
 			log.Info("probes listening", xlog.String("addr", probeAddr))
-			if err := probeSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+
+			if err := probeSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				log.Error("probe serve failed", xlog.Error("err", err))
 			}
 		})
 	}
+
 	sd.Go(func(context.Context) {
 		log.Info("listening", xlog.String("addr", cfg.Service.HTTP.Addr))
-		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+
+		if err := httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Error("http serve failed", xlog.Error("err", err))
 		}
 	})
@@ -273,7 +292,9 @@ func run() error {
 		log.Error("shutdown completed with errors", xlog.Error("err", err))
 		return err
 	}
+
 	log.Info("stopped")
+
 	return nil
 }
 
@@ -283,24 +304,29 @@ func newLogger(c config.Logger) *xlog.Logger {
 	if err != nil {
 		level = xlog.InfoLevel
 	}
+
 	opts := []xlog.Option{xlog.WithLevel(level), xlog.WithCaller(true)}
 	otelCore := xlog.NewFilterCore(
 		xlogtrace.Core(logglobal.GetLoggerProvider().Logger(build.ServiceName)),
 		xlog.NewAtomicLevel(level),
 	)
+
 	var base *xlog.Logger
 	if c.Format == "text" {
 		base = xlog.NewConsole(opts...)
 	} else {
 		base = xlog.NewJSON(opts...)
 	}
+
 	opts = append(opts,
 		xlog.WithCore(xlog.NewTeeCore(base.Core(), otelCore)),
 	)
+
 	opts = append(opts, xlogtrace.Options(xlog.ErrorLevel)...)
 	if c.Format == "text" {
 		return xlog.NewConsole(opts...)
 	}
+
 	return xlog.NewJSON(opts...)
 }
 

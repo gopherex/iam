@@ -61,6 +61,7 @@ func (e *WebhookEvent) DecodeData(dst any) error {
 	if err := json.Unmarshal(e.Data, dst); err != nil {
 		return fmt.Errorf("%w: data: %w", ErrWebhookMalformedBody, err)
 	}
+
 	return nil
 }
 
@@ -70,13 +71,16 @@ func (e *WebhookEvent) SessionRevokedData() (SessionRevokedData, error) {
 	if e.Type != "session.revoked" {
 		return SessionRevokedData{}, fmt.Errorf("%w: expected session.revoked, got %q", ErrWebhookMalformedBody, e.Type)
 	}
+
 	var data SessionRevokedData
 	if err := e.DecodeData(&data); err != nil {
 		return SessionRevokedData{}, err
 	}
+
 	if data.SessionID == "" || data.UserID == "" || data.ProjectID == "" || data.ProjectID != e.ProjectID {
 		return SessionRevokedData{}, fmt.Errorf("%w: incomplete session.revoked data", ErrWebhookMalformedBody)
 	}
+
 	return data, nil
 }
 
@@ -88,17 +92,21 @@ func NewWebhookVerifier(config WebhookVerifierConfig) (*WebhookVerifier, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	maxSkew := config.MaxSkew
 	if maxSkew == 0 {
 		maxSkew = 5 * time.Minute
 	}
+
 	if maxSkew < 0 {
-		return nil, fmt.Errorf("iam sdk: webhook max skew must not be negative")
+		return nil, errors.New("iam sdk: webhook max skew must not be negative")
 	}
+
 	now := config.Now
 	if now == nil {
 		now = time.Now
 	}
+
 	return &WebhookVerifier{secret: secret, maxSkew: maxSkew, now: now}, nil
 }
 
@@ -108,67 +116,83 @@ func (v *WebhookVerifier) Verify(headers http.Header, body []byte) (*WebhookEven
 	if err != nil {
 		return nil, err
 	}
+
 	if delta := v.now().Sub(time.Unix(timestamp, 0)); delta > v.maxSkew || delta < -v.maxSkew {
 		return nil, ErrWebhookStaleTimestamp
 	}
+
 	mac := hmac.New(sha256.New, v.secret)
 	_, _ = fmt.Fprintf(mac, "%s.%d.", id, timestamp)
 	_, _ = mac.Write(body)
 	expected := mac.Sum(nil)
 	valid := false
+
 	for _, signature := range signatures {
 		decoded, err := base64.StdEncoding.DecodeString(signature)
 		if err == nil && hmac.Equal(expected, decoded) {
 			valid = true
 		}
 	}
+
 	if !valid {
 		return nil, ErrWebhookInvalidSignature
 	}
+
 	var event WebhookEvent
 	if err := json.Unmarshal(body, &event); err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrWebhookMalformedBody, err)
 	}
+
 	if event.ID == "" || event.ID != id || event.Type == "" || event.ProjectID == "" {
 		return nil, fmt.Errorf("%w: envelope does not match webhook-id", ErrWebhookMalformedBody)
 	}
+
 	return &event, nil
 }
 
 func decodeWebhookSecret(value string) ([]byte, error) {
 	value = strings.TrimSpace(value)
 	if value == "" {
-		return nil, fmt.Errorf("iam sdk: webhook signing secret is required")
+		return nil, errors.New("iam sdk: webhook signing secret is required")
 	}
+
 	if encoded, ok := strings.CutPrefix(value, "whsec_"); ok {
 		secret, err := base64.StdEncoding.DecodeString(encoded)
 		if err != nil || len(secret) == 0 {
-			return nil, fmt.Errorf("iam sdk: invalid webhook signing secret")
+			return nil, errors.New("iam sdk: invalid webhook signing secret")
 		}
+
 		return secret, nil
 	}
+
 	return []byte(value), nil
 }
 
 func parseWebhookHeaders(headers http.Header) (string, int64, []string, error) {
-	id := strings.TrimSpace(headers.Get("webhook-id"))
-	timestampText := strings.TrimSpace(headers.Get("webhook-timestamp"))
+	id := strings.TrimSpace(headers.Get("Webhook-Id"))
+
+	timestampText := strings.TrimSpace(headers.Get("Webhook-Timestamp"))
 	if id == "" || timestampText == "" {
 		return "", 0, nil, ErrWebhookMalformedHeaders
 	}
+
 	timestamp, err := strconv.ParseInt(timestampText, 10, 64)
 	if err != nil || timestamp < 0 {
 		return "", 0, nil, ErrWebhookMalformedHeaders
 	}
+
 	var signatures []string
-	for _, item := range strings.Fields(headers.Get("webhook-signature")) {
+
+	for _, item := range strings.Fields(headers.Get("Webhook-Signature")) {
 		version, signature, ok := strings.Cut(item, ",")
 		if ok && version == "v1" && signature != "" {
 			signatures = append(signatures, signature)
 		}
 	}
+
 	if len(signatures) == 0 {
 		return "", 0, nil, ErrWebhookMalformedHeaders
 	}
+
 	return id, timestamp, signatures, nil
 }

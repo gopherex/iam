@@ -18,6 +18,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"math/big"
 	"regexp"
 	"time"
@@ -121,6 +122,7 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 		if err != nil {
 			return nil, err
 		}
+
 		if !ok {
 			return nil, domain.ErrValidation.WithMessage("an enabled sms provider is required to send sms otp")
 		}
@@ -131,10 +133,12 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 	if err != nil {
 		return nil, err
 	}
+
 	code, err := randomNumericCode(otpCodeLen)
 	if err != nil {
 		return nil, err
 	}
+
 	now := nowUTC()
 	env := &challengeEnvelope{
 		ID:          newUUID(),
@@ -157,6 +161,7 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 		if err := a.insertChallenge(ctx, env); err != nil {
 			return err
 		}
+
 		return a.emitter.Emit(ctx, domain.Event{
 			Type:        "auth.otp.started",
 			ProjectID:   env.ProjectID,
@@ -176,6 +181,7 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 	}); err != nil {
 		return nil, err
 	}
+
 	return challengeFromEnvelope(env), nil
 }
 
@@ -188,14 +194,17 @@ func (a *pgPasswordlessAccounts) VerifyOTP(ctx context.Context, challengeID, cod
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if env.Attempts >= maxOTPAttempts {
 		_ = a.consume(ctx, row) // lock out a maxed-out challenge
 		return nil, nil, domain.ErrRateLimited
 	}
+
 	if !constantTimeMatch(env.CodeHash, hashToken(code)) {
 		if berr := a.bumpAttempts(ctx, row); berr != nil {
 			return nil, nil, berr
 		}
+
 		return nil, nil, domain.ErrInvalidOTP
 	}
 
@@ -206,16 +215,20 @@ func (a *pgPasswordlessAccounts) VerifyOTP(ctx context.Context, challengeID, cod
 		if err != nil {
 			return nil, err
 		}
+
 		if !constantTimeMatch(env.CodeHash, hashToken(code)) {
 			return nil, domain.ErrInvalidOTP
 		}
+
 		if err := a.consume(ctx, row); err != nil {
 			return nil, err
 		}
+
 		acct, sess, err := a.resolveAndSession(ctx, env)
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "auth.otp.verified",
 			ProjectID:   acct.ProjectID,
@@ -225,8 +238,10 @@ func (a *pgPasswordlessAccounts) VerifyOTP(ctx context.Context, challengeID, cod
 		}); err != nil {
 			return nil, err
 		}
+
 		return &verifyResult{acct: acct, sess: sess}, nil
 	})
+
 	return unpackVerify(res, err)
 }
 
@@ -238,16 +253,21 @@ func (a *pgPasswordlessAccounts) bumpAttempts(ctx context.Context, row *models.I
 		if err := unmarshal(row.Data, &env); err != nil {
 			return err
 		}
+
 		env.Attempts++
+
 		raw, err := marshal(&env)
 		if err != nil {
 			return err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamChallengeSetter{Data: &rm}
 		if env.Attempts >= maxOTPAttempts {
 			setter.Consumed = ptr(true)
 		}
+
 		return row.Update(ctx, a.db.Bobx(), setter)
 	})
 }
@@ -258,14 +278,17 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 	if projectID == "" || email == "" {
 		return nil, domain.ErrBadRequest
 	}
+
 	reqEnv, err := effectiveEnv(ctx, a.db, projectID, runtimeDefaultEnv)
 	if err != nil {
 		return nil, err
 	}
+
 	token, err := randomOpaqueToken(magicBytes)
 	if err != nil {
 		return nil, err
 	}
+
 	now := nowUTC()
 	env := &challengeEnvelope{
 		ID:          newUUID(),
@@ -287,6 +310,7 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 		if err := a.insertChallenge(ctx, env); err != nil {
 			return err
 		}
+
 		return a.emitter.Emit(ctx, domain.Event{
 			Type:        "auth.magiclink.started",
 			ProjectID:   env.ProjectID,
@@ -306,9 +330,11 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 	}); err != nil {
 		return nil, err
 	}
+
 	ch := challengeFromEnvelope(env)
 	// Hand the opaque token back to the caller once; the link is built upstream.
 	ch.PublicKey = map[string]any{"token": token, "redirect_to": redirectTo}
+
 	return ch, nil
 }
 
@@ -316,6 +342,7 @@ func (a *pgPasswordlessAccounts) VerifyMagicLink(ctx context.Context, token stri
 	if token == "" {
 		return nil, nil, domain.ErrInvalidToken
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (*verifyResult, error) {
 		// Magic-link verify carries only the opaque token: look the challenge up
 		// by its sha256 hash (the column is indexable and never stores plaintext).
@@ -323,23 +350,29 @@ func (a *pgPasswordlessAccounts) VerifyMagicLink(ctx context.Context, token stri
 		if err != nil {
 			return nil, err
 		}
+
 		var env challengeEnvelope
 		if err := unmarshal(row.Data, &env); err != nil {
 			return nil, err
 		}
+
 		if env.Consumed {
 			return nil, domain.ErrTokenUsed
 		}
+
 		if nowUTC().After(env.ExpiresAt) {
 			return nil, domain.ErrChallengeExpired
 		}
+
 		if err := a.consume(ctx, row); err != nil {
 			return nil, err
 		}
+
 		acct, sess, err := a.resolveAndSession(ctx, &env)
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "auth.magiclink.verified",
 			ProjectID:   acct.ProjectID,
@@ -349,8 +382,10 @@ func (a *pgPasswordlessAccounts) VerifyMagicLink(ctx context.Context, token stri
 		}); err != nil {
 			return nil, err
 		}
+
 		return &verifyResult{acct: acct, sess: sess}, nil
 	})
+
 	return unpackVerify(res, err)
 }
 
@@ -363,13 +398,16 @@ func (a *pgPasswordlessAccounts) insertChallenge(ctx context.Context, env *chall
 		if err != nil {
 			return err
 		}
+
 		rm := json.RawMessage(raw)
 		subject := null.From(env.Subject)
 		codeHash := null.From(env.CodeHash)
+
 		environment := env.Environment
 		if environment == "" {
 			environment = runtimeDefaultEnv
 		}
+
 		setter := &models.IamChallengeSetter{
 			ID:          &env.ID,
 			ProjectID:   &env.ProjectID,
@@ -385,6 +423,7 @@ func (a *pgPasswordlessAccounts) insertChallenge(ctx context.Context, env *chall
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return translatePgErr("challenge", err)
 		}
+
 		return nil
 	})
 }
@@ -397,21 +436,27 @@ func (a *pgPasswordlessAccounts) loadChallengeForVerify(ctx context.Context, cha
 		if isNoRows(err) {
 			return nil, nil, domain.ErrChallengeInvalid
 		}
+
 		return nil, nil, err
 	}
+
 	if row.Type != typ {
 		return nil, nil, domain.ErrChallengeInvalid
 	}
+
 	var env challengeEnvelope
 	if err := unmarshal(row.Data, &env); err != nil {
 		return nil, nil, err
 	}
+
 	if env.Consumed || row.Consumed {
 		return nil, nil, domain.ErrTokenUsed
 	}
+
 	if nowUTC().After(env.ExpiresAt) {
 		return nil, nil, domain.ErrChallengeExpired
 	}
+
 	return &env, row, nil
 }
 
@@ -427,8 +472,10 @@ func (a *pgPasswordlessAccounts) findUnconsumedByHash(ctx context.Context, typ, 
 		if isNoRows(err) {
 			return nil, domain.ErrInvalidToken
 		}
+
 		return nil, err
 	}
+
 	return row, nil
 }
 
@@ -439,16 +486,21 @@ func (a *pgPasswordlessAccounts) consume(ctx context.Context, row *models.IamCha
 	if err := unmarshal(row.Data, &env); err != nil {
 		return err
 	}
+
 	env.Consumed = true
+
 	raw, err := marshal(&env)
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamChallengeSetter{Consumed: ptr(true), Data: &rm}
 	if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -460,16 +512,20 @@ func (a *pgPasswordlessAccounts) resolveAndSession(ctx context.Context, env *cha
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if acct.Status == "suspended" {
 		return nil, nil, domain.ErrAccountSuspended
 	}
+
 	if acct.Status == "banned" {
 		return nil, nil, domain.ErrAccountBanned
 	}
+
 	sess, err := a.createSession(ctx, acct, env.Channel, env.envScope())
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return acct, sess, nil
 }
 
@@ -480,6 +536,7 @@ func (env *challengeEnvelope) envScope() string {
 	if env.Environment == "" {
 		return runtimeDefaultEnv
 	}
+
 	return env.Environment
 }
 
@@ -508,12 +565,14 @@ func (a *pgPasswordlessAccounts) resolveOrCreateUser(ctx context.Context, env *c
 	if isPhoneChannel(env.Channel) {
 		return a.resolveOrCreateByPhone(ctx, env)
 	}
+
 	return a.resolveOrCreateByEmail(ctx, env)
 }
 
 // resolveOrCreateByEmail handles the email / magic-link channels.
 func (a *pgPasswordlessAccounts) resolveOrCreateByEmail(ctx context.Context, env *challengeEnvelope) (*domain.Account, error) {
 	scope := env.envScope()
+
 	row, err := models.IamUsers.Query(
 		sm.Where(models.IamUsers.Columns.ProjectID.EQ(psql.Arg(env.ProjectID))),
 		sm.Where(models.IamUsers.Columns.Environment.EQ(psql.Arg(scope))),
@@ -531,11 +590,14 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByEmail(ctx context.Context, env
 				return nil, uerr
 			}
 		}
+
 		return &acc, nil
 	}
+
 	if !isNoRows(err) {
 		return nil, err
 	}
+
 	if !allowsSignup(env.Purpose) {
 		return nil, domain.ErrUserNotFound
 	}
@@ -561,13 +623,16 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByEmail(ctx context.Context, env
 		UpdatedAt:     now,
 	}
 	email := null.From(acc.PrimaryEmail)
+
 	setter := &models.IamUserSetter{PrimaryEmail: &email}
 	if err := a.insertUser(ctx, acc, scope, setter); err != nil {
 		if isUniqueViolation(err) {
 			return nil, domain.ErrEmailExists
 		}
+
 		return nil, err
 	}
+
 	return acc, nil
 }
 
@@ -575,6 +640,7 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByEmail(ctx context.Context, env
 // (project, environment, primary_phone) — the env-scoped unique index.
 func (a *pgPasswordlessAccounts) resolveOrCreateByPhone(ctx context.Context, env *challengeEnvelope) (*domain.Account, error) {
 	scope := env.envScope()
+
 	row, err := models.IamUsers.Query(
 		sm.Where(models.IamUsers.Columns.ProjectID.EQ(psql.Arg(env.ProjectID))),
 		sm.Where(models.IamUsers.Columns.Environment.EQ(psql.Arg(scope))),
@@ -592,11 +658,14 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByPhone(ctx context.Context, env
 				return nil, uerr
 			}
 		}
+
 		return &acc, nil
 	}
+
 	if !isNoRows(err) {
 		return nil, err
 	}
+
 	if !allowsSignup(env.Purpose) {
 		return nil, domain.ErrUserNotFound
 	}
@@ -622,13 +691,16 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByPhone(ctx context.Context, env
 		UpdatedAt:     now,
 	}
 	phone := null.From(acc.PrimaryPhone)
+
 	setter := &models.IamUserSetter{PrimaryPhone: &phone}
 	if err := a.insertUser(ctx, acc, scope, setter); err != nil {
 		if isUniqueViolation(err) {
 			return nil, domain.ErrPhoneExists
 		}
+
 		return nil, err
 	}
+
 	return acc, nil
 }
 
@@ -641,16 +713,19 @@ func (a *pgPasswordlessAccounts) insertUser(ctx context.Context, acc *domain.Acc
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
 	setter.ID = &acc.ID
 	setter.ProjectID = &acc.ProjectID
 	setter.Environment = &environment
 	setter.Kind = ptr(acc.Kind)
 	setter.Status = ptr(acc.Status)
+
 	setter.Data = &rm
 	if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		return err
 	}
+
 	return a.emitter.Emit(ctx, domain.Event{
 		Type:        "user.created",
 		ProjectID:   acc.ProjectID,
@@ -666,15 +741,19 @@ func (a *pgPasswordlessAccounts) persistAccount(ctx context.Context, acc *domain
 	if err != nil {
 		return translatePgErr("user", err)
 	}
+
 	raw, err := marshal(acc)
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamUserSetter{Data: &rm, UpdatedAt: ptr(nowUTC())}
 	if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 		return err
 	}
+
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "user.updated",
 		ProjectID:   acc.ProjectID,
@@ -684,6 +763,7 @@ func (a *pgPasswordlessAccounts) persistAccount(ctx context.Context, acc *domain
 	}); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -699,9 +779,11 @@ func (a *pgPasswordlessAccounts) createSession(ctx context.Context, acct *domain
 	if isPhoneChannel(channel) {
 		amr = append(amr, "sms")
 	}
+
 	if env != "" {
 		ctx = api.WithEnvironment(ctx, env)
 	}
+
 	return a.core.coreAuthMintSession(ctx, acct, "", amr, 1)
 }
 
@@ -719,6 +801,7 @@ func unpackVerify(r *verifyResult, err error) (*domain.Account, *domain.Session,
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return r.acct, r.sess, nil
 }
 
@@ -736,14 +819,17 @@ func constantTimeMatch(a, b string) bool {
 // randomNumericCode mints an n-digit numeric OTP from crypto/rand.
 func randomNumericCode(n int) (string, error) {
 	const digits = "0123456789"
+
 	buf := make([]byte, n)
 	for i := range buf {
 		idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
 		if err != nil {
 			return "", err
 		}
+
 		buf[i] = digits[idx.Int64()]
 	}
+
 	return string(buf), nil
 }
 
@@ -753,6 +839,7 @@ func randomOpaqueToken(nbytes int) (string, error) {
 	if _, err := rand.Read(buf); err != nil {
 		return "", err
 	}
+
 	return hex.EncodeToString(buf), nil
 }
 
@@ -777,6 +864,7 @@ func providerEnabled(ctx context.Context, db *DB, projectID, kind string) (bool,
 	if err != nil {
 		return false, err
 	}
+
 	return len(rows) > 0, nil
 }
 
@@ -791,26 +879,31 @@ func (a *pgPasswordlessAccounts) passwordlessSignupAllowed(ctx context.Context, 
 	if a.cfg == nil {
 		return true, nil
 	}
+
 	auth, err := a.cfg.AuthConfig(ctx, projectID)
 	if err != nil {
 		return false, err
 	}
+
 	if auth.RegistrationMode != "" && auth.RegistrationMode != "open" {
 		return false, nil
 	}
+
 	consents, err := a.cfg.ConsentConfig(ctx, projectID)
 	if err != nil {
 		return false, err
 	}
+
 	for _, d := range consents {
 		if d.Required != nil && *d.Required {
 			return false, nil
 		}
 	}
+
 	return true, nil
 }
 
 // isNoRows reports whether err is a bob/pgx no-rows result.
 func isNoRows(err error) bool {
-	return translatePgErr("", err) != err
+	return !errors.Is(translatePgErr("", err), err)
 }

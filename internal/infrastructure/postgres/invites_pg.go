@@ -39,11 +39,13 @@ const (
 func inviteMintToken() (token, hash string, err error) {
 	b := make([]byte, 32) // 256 bits
 	if _, err = rand.Read(b); err != nil {
-		return
+		return token, hash, err
 	}
+
 	token = inviteTokenPrefix + hex.EncodeToString(b)
 	hash = inviteHashToken(token)
-	return
+
+	return token, hash, err
 }
 
 // inviteHashToken returns sha256(token) in hex. Shared with the flow redeem path.
@@ -76,9 +78,11 @@ func inviteToDomain(row *models.IamInvite) domain.Invite {
 	if email, ok := row.Email.Get(); ok {
 		inv.Email = email
 	}
+
 	if exp, ok := row.ExpiresAt.Get(); ok {
 		inv.ExpiresAt = exp
 	}
+
 	return inv
 }
 
@@ -90,19 +94,24 @@ func (a *pgInvites) Create(ctx context.Context, cmd domain.InviteCreateCmd) (*do
 	if err != nil {
 		return nil, fmt.Errorf("invite create: mint token: %w", err)
 	}
+
 	now := nowUTC()
+
 	expires := cmd.ExpiresAt
 	if expires.IsZero() {
 		expires = now.Add(inviteDefaultTTL)
 	}
+
 	env := coreAuthDefaultEnv
 	if cmd.Environment != "" {
 		env = cmd.Environment
 	}
+
 	id := newUUID()
 
 	created, err := withTxRet(ctx, a.db, func(ctx context.Context) (*domain.InviteCreated, error) {
 		emptyData := json.RawMessage(`{}`)
+
 		setter := &models.IamInviteSetter{
 			ID:          &id,
 			ProjectID:   &cmd.ProjectID,
@@ -117,9 +126,11 @@ func (a *pgInvites) Create(ctx context.Context, cmd domain.InviteCreateCmd) (*do
 		if cmd.Email != "" {
 			setter.Email = ptr(null.From(cmd.Email))
 		}
+
 		if _, ierr := models.IamInvites.Insert(setter).One(ctx, a.db.Bobx()); ierr != nil {
 			return nil, ierr
 		}
+
 		out := &domain.InviteCreated{
 			Invite: domain.Invite{
 				ID:        id,
@@ -140,6 +151,7 @@ func (a *pgInvites) Create(ctx context.Context, cmd domain.InviteCreateCmd) (*do
 			if cmd.RedirectTo != "" {
 				payload["redirect_to"] = cmd.RedirectTo
 			}
+
 			if eerr := a.emitter.Emit(ctx, domain.Event{
 				Type:        "invite.created",
 				ProjectID:   cmd.ProjectID,
@@ -150,11 +162,13 @@ func (a *pgInvites) Create(ctx context.Context, cmd domain.InviteCreateCmd) (*do
 				return nil, eerr
 			}
 		}
+
 		return out, nil
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return created, nil
 }
 
@@ -168,10 +182,12 @@ func (a *pgInvites) List(ctx context.Context, cmd domain.InviteListCmd) ([]domai
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Invite, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, inviteToDomain(row))
 	}
+
 	return out, nil
 }
 
@@ -184,11 +200,14 @@ func (a *pgInvites) Revoke(ctx context.Context, cmd domain.InviteRevokeCmd) erro
 			if adminIsNotFound(err) {
 				return domain.ErrNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != cmd.ProjectID || row.Environment != adminEnv(cmd.Environment) {
 			return domain.ErrNotFound
 		}
+
 		now := nowUTC()
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamInviteSetter{
 			Status:    ptr(inviteStatusRevoke),
@@ -196,6 +215,7 @@ func (a *pgInvites) Revoke(ctx context.Context, cmd domain.InviteRevokeCmd) erro
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }

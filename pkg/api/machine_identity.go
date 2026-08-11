@@ -51,6 +51,7 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccounts(c
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	sa, err := s.deps.Keys.CreateServiceAccount(ctx, domain.ServiceAccountCmd{
 		ProjectID: params.ProjectID,
 		Name:      req.Name,
@@ -59,6 +60,7 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccounts(c
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ProjectsByProjectIdAdminServiceAccountsCreated{
 		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(sa)),
 	}, nil
@@ -70,10 +72,12 @@ func (s *MachineIdentityService) PostV1ServiceAccountsTokens(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
+
 	token, err := s.deps.Keys.MintToken(ctx, p.ProjectID, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ServiceAccountsTokensOK{
 		AccessToken: oas.NewOptString(token),
 		TokenType:   oas.NewOptString("Bearer"),
@@ -85,6 +89,7 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminApiKeys(ctx conte
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	key, secret, err := s.deps.Keys.CreateAPIKey(ctx, domain.APIKeyCmd{
 		ProjectID: params.ProjectID,
 		Name:      req.Name,
@@ -93,6 +98,7 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminApiKeys(ctx conte
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ProjectsByProjectIdAdminApiKeysCreated{
 		APIKey: oas.NewOptApiKey(oasApiKey(key)),
 		Secret: oas.NewOptString(secret),
@@ -104,9 +110,11 @@ func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Keys.RevokeAPIKey(ctx, params.ProjectID, params.KeyID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -115,6 +123,7 @@ func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminServiceAccounts(ct
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	page, err := s.deps.Keys.ListServiceAccounts(ctx, domain.MachineIDServiceAccountListCmd{
 		ProjectID: params.ProjectID,
 		Cursor:    params.Cursor.Or(""),
@@ -123,10 +132,12 @@ func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminServiceAccounts(ct
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.ServiceAccount, 0, len(page.Items))
 	for _, sa := range page.Items {
 		data = append(data, oasServiceAccount(sa))
 	}
+
 	return &oas.GetV1ProjectsByProjectIdAdminServiceAccountsOK{
 		Data:       data,
 		NextCursor: oas.NewOptNilString(page.NextCursor),
@@ -139,10 +150,12 @@ func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminServiceAccountsByS
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	sa, err := s.deps.Keys.GetServiceAccount(ctx, params.ProjectID, params.SaID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK{
 		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(sa)),
 	}, nil
@@ -153,6 +166,7 @@ func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminServiceAccountsB
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	cmd := domain.MachineIDServiceAccountPatchCmd{
 		ProjectID:        params.ProjectID,
 		ServiceAccountID: params.SaID,
@@ -161,10 +175,12 @@ func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminServiceAccountsB
 	if v, ok := req.Disabled.Get(); ok {
 		cmd.Disabled = &v
 	}
+
 	sa, err := s.deps.Keys.UpdateServiceAccount(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK{
 		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(sa)),
 	}, nil
@@ -175,9 +191,11 @@ func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminServiceAccounts
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Keys.DeleteServiceAccount(ctx, params.ProjectID, params.SaID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -186,6 +204,7 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccountsBy
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	cmd := domain.MachineIDSecretCmd{
 		ProjectID:        params.ProjectID,
 		ServiceAccountID: params.SaID,
@@ -194,10 +213,12 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccountsBy
 	if v, ok := req.ExpiresAt.Get(); ok {
 		cmd.ExpiresAt = &v
 	}
+
 	secret, err := s.deps.Keys.CreateServiceAccountSecret(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated{
 		SecretID:     oas.NewOptString(secret.SecretID),
 		ClientID:     oas.NewOptString(secret.ClientID),
@@ -210,9 +231,11 @@ func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminServiceAccounts
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Keys.RevokeServiceAccountSecret(ctx, params.ProjectID, params.SaID, params.SecretID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -221,14 +244,17 @@ func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminApiKeys(ctx contex
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	keys, err := s.deps.Keys.ListAPIKeys(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.ApiKey, 0, len(keys))
 	for _, k := range keys {
 		data = append(data, oasApiKey(k))
 	}
+
 	return &oas.GetV1ProjectsByProjectIdAdminApiKeysOK{Data: data}, nil
 }
 
@@ -237,6 +263,7 @@ func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(c
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	cmd := domain.MachineIDAPIKeyPatchCmd{
 		ProjectID: params.ProjectID,
 		KeyID:     params.KeyID,
@@ -246,10 +273,12 @@ func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(c
 	if v, ok := req.Disabled.Get(); ok {
 		cmd.Disabled = &v
 	}
+
 	key, err := s.deps.Keys.UpdateAPIKey(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK{
 		APIKey: oas.NewOptApiKey(oasApiKey(key)),
 	}, nil
@@ -260,10 +289,12 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRot
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	key, secret, err := s.deps.Keys.RotateAPIKey(ctx, params.ProjectID, params.KeyID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK{
 		APIKey: oas.NewOptApiKey(oasApiKey(key)),
 		Secret: oas.NewOptString(secret),

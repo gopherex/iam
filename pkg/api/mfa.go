@@ -50,9 +50,11 @@ func (s *MFAService) DeleteV1AuthMfaFactorsByFactorId(ctx context.Context, param
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Accounts.RemoveFactor(ctx, p.AccountID, params.FactorID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -61,14 +63,17 @@ func (s *MFAService) GetV1AuthMfaFactors(ctx context.Context) (*oas.GetV1AuthMfa
 	if err != nil {
 		return nil, err
 	}
+
 	factors, err := s.deps.Accounts.ListFactors(ctx, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]oas.Factor, 0, len(factors))
 	for i := range factors {
 		out = append(out, oasFactor(&factors[i]))
 	}
+
 	return &oas.GetV1AuthMfaFactorsOK{Data: out}, nil
 }
 
@@ -81,10 +86,12 @@ func (s *MFAService) PostV1AuthMfaChallenge(ctx context.Context, req oas.OptPost
 		flowToken = v.FlowToken.Or("")
 		factorID = v.FactorID.Or("")
 	}
+
 	ch, err := s.deps.Accounts.ChallengeWithFlow(ctx, params.XClientID, flowToken, factorID)
 	if err != nil {
 		return nil, err
 	}
+
 	return oasChallenge(ch), nil
 }
 
@@ -93,6 +100,7 @@ func (s *MFAService) PostV1AuthMfaEmailEnroll(ctx context.Context, req *oas.Post
 	if err != nil {
 		return nil, err
 	}
+
 	factor, ch, err := s.deps.Accounts.EnrollEmail(ctx, domain.MFAEmailEnrollCmd{
 		AccountID: p.AccountID,
 		Email:     req.Email,
@@ -100,13 +108,16 @@ func (s *MFAService) PostV1AuthMfaEmailEnroll(ctx context.Context, req *oas.Post
 	if err != nil {
 		return nil, err
 	}
+
 	out := &oas.PostV1AuthMfaEmailEnrollOK{}
 	if factor != nil {
 		out.FactorID = oas.NewOptString(factor.ID)
 	}
+
 	if ch != nil {
 		out.ChallengeID = oas.NewOptString(ch.ID)
 	}
+
 	return out, nil
 }
 
@@ -115,10 +126,12 @@ func (s *MFAService) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
+
 	codes, err := s.deps.Accounts.GenerateRecoveryCodes(ctx, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthMfaRecoveryCodesGenerateOK{Codes: codes}, nil
 }
 
@@ -126,6 +139,7 @@ func (s *MFAService) PostV1AuthMfaRecoveryCodesVerify(ctx context.Context, req *
 	if req.Code == "" {
 		return nil, domain.ErrValidation.WithMessage("code is required")
 	}
+
 	acct, sess, err := s.deps.Accounts.VerifyRecoveryCode(ctx, domain.MFARecoveryVerifyCmd{
 		ProjectID: params.XClientID,
 		FlowToken: req.FlowToken.Or(""),
@@ -134,6 +148,7 @@ func (s *MFAService) PostV1AuthMfaRecoveryCodesVerify(ctx context.Context, req *
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -142,6 +157,7 @@ func (s *MFAService) PostV1AuthMfaSmsEnroll(ctx context.Context, req *oas.PostV1
 	if err != nil {
 		return nil, err
 	}
+
 	factor, ch, err := s.deps.Accounts.EnrollSMS(ctx, domain.MFASmsEnrollCmd{
 		AccountID: p.AccountID,
 		Phone:     req.Phone,
@@ -149,13 +165,16 @@ func (s *MFAService) PostV1AuthMfaSmsEnroll(ctx context.Context, req *oas.PostV1
 	if err != nil {
 		return nil, err
 	}
+
 	out := &oas.PostV1AuthMfaSmsEnrollOK{}
 	if factor != nil {
 		out.FactorID = oas.NewOptString(factor.ID)
 	}
+
 	if ch != nil {
 		out.ChallengeID = oas.NewOptString(ch.ID)
 	}
+
 	return out, nil
 }
 
@@ -164,10 +183,12 @@ func (s *MFAService) PostV1AuthMfaTotpEnroll(ctx context.Context, req oas.OptPos
 	if err != nil {
 		return nil, err
 	}
+
 	factor, err := s.deps.Accounts.EnrollTOTP(ctx, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthMfaTotpEnrollOK{
 		FactorID: oas.NewOptString(factor.ID),
 	}, nil
@@ -178,6 +199,7 @@ func (s *MFAService) PostV1AuthMfaTotpVerify(ctx context.Context, req *oas.PostV
 	if err != nil {
 		return nil, err
 	}
+
 	factor, err := s.deps.Accounts.VerifyTOTP(ctx, domain.MFATotpVerifyCmd{
 		AccountID: p.AccountID,
 		FactorID:  req.FactorID,
@@ -186,6 +208,7 @@ func (s *MFAService) PostV1AuthMfaTotpVerify(ctx context.Context, req *oas.PostV
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthMfaTotpVerifyOK{
 		Factor: oas.NewOptFactor(oasFactor(factor)),
 	}, nil
@@ -196,10 +219,12 @@ func (s *MFAService) PostV1AuthMfaVerify(ctx context.Context, req *oas.PostV1Aut
 	if challengeID == "" {
 		return nil, domain.ErrValidation.WithMessage("challenge_id is required")
 	}
+
 	acct, sess, err := s.deps.Accounts.Verify(ctx, challengeID, req.Code.Or(""))
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -208,10 +233,12 @@ func (s *MFAService) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
+
 	name := ""
 	if v, ok := req.Get(); ok {
 		name = v.Name.Or("")
 	}
+
 	ch, err := s.deps.Accounts.EnrollWebAuthnOptions(ctx, domain.MFAWebAuthnEnrollOptionsCmd{
 		AccountID: p.AccountID,
 		Name:      name,
@@ -219,6 +246,7 @@ func (s *MFAService) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthMfaWebauthnEnrollOptionsOK{
 		ChallengeID: oas.NewOptString(ch.ID),
 		PublicKey:   oas.NewOptPostV1AuthMfaWebauthnEnrollOptionsOKPublicKey(oasRawMap[oas.PostV1AuthMfaWebauthnEnrollOptionsOKPublicKey](ch.PublicKey)),
@@ -230,6 +258,7 @@ func (s *MFAService) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, req 
 	if err != nil {
 		return nil, err
 	}
+
 	factor, err := s.deps.Accounts.EnrollWebAuthnVerify(ctx, domain.MFAWebAuthnEnrollVerifyCmd{
 		AccountID:   p.AccountID,
 		ChallengeID: req.ChallengeID,
@@ -238,6 +267,7 @@ func (s *MFAService) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, req 
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthMfaWebauthnEnrollVerifyOK{
 		Factor: oas.NewOptFactor(oasFactor(factor)),
 	}, nil
@@ -251,12 +281,15 @@ func oasFactor(f *domain.Factor) oas.Factor {
 	if f.Type != "" {
 		out.Type = oas.NewOptFactorType(oas.FactorType(f.Type))
 	}
+
 	if f.Status != "" {
 		out.Status = oas.NewOptFactorStatus(oas.FactorStatus(f.Status))
 	}
+
 	if f.Hint != "" {
 		out.Hint = oas.NewOptNilString(f.Hint)
 	}
+
 	return out
 }
 
@@ -269,5 +302,6 @@ func oasChallenge(c *domain.Challenge) *oas.Challenge {
 	if c.Type != "" {
 		out.Type = oas.NewOptString(c.Type)
 	}
+
 	return out
 }

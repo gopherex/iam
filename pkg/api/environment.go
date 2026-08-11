@@ -34,6 +34,7 @@ func EnvironmentMiddleware(next http.Handler) http.Handler {
 		if env := r.Header.Get(EnvironmentHeader); env != "" {
 			r = r.WithContext(WithEnvironment(r.Context(), env))
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }

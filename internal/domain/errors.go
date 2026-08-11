@@ -27,6 +27,7 @@ func (e *Error) Is(target error) bool {
 func (e *Error) WithMessage(msg string) *Error {
 	c := *e
 	c.Message = msg
+
 	return &c
 }
 
@@ -34,6 +35,7 @@ func (e *Error) WithMessage(msg string) *Error {
 func (e *Error) WithDetails(d map[string]any) *Error {
 	c := *e
 	c.Details = d
+
 	return &c
 }
 
@@ -41,7 +43,7 @@ func newErr(status int, code, msg string) *Error {
 	return &Error{Code: code, Message: msg, Status: status}
 }
 
-// The complete catalogue of domain errors. Branch with errors.Is.
+// The complete catalog of domain errors. Branch with errors.Is.
 var (
 	// 401 — authentication.
 	ErrInvalidCredentials    = newErr(http.StatusUnauthorized, "invalid_credentials", "Invalid credentials.")

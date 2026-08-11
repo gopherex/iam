@@ -69,9 +69,11 @@ func (s *AccountService) DeleteV1AuthIdentitiesByIdentityId(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Accounts.UnlinkIdentity(ctx, p.AccountID, params.IdentityID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -80,15 +82,18 @@ func (s *AccountService) DeleteV1Sessions(ctx context.Context, req oas.OptDelete
 	if err != nil {
 		return nil, err
 	}
+
 	cmd := domain.AccountRevokeSessionsCmd{AccountID: p.AccountID}
 	if v, ok := req.Get(); ok && v.ExceptCurrent.Or(false) {
 		cmd.ExceptCurrent = true
 		cmd.ExceptSessionID = p.SessionID
 	}
+
 	n, err := s.deps.Accounts.RevokeSessions(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.DeleteV1SessionsOK{RevokedCount: oas.NewOptInt(n)}, nil
 }
 
@@ -97,9 +102,11 @@ func (s *AccountService) DeleteV1SessionsBySessionId(ctx context.Context, params
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Accounts.RevokeSession(ctx, p.AccountID, params.SessionID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -108,9 +115,11 @@ func (s *AccountService) DeleteV1UsersMe(ctx context.Context, req oas.OptDeleteV
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Accounts.Delete(ctx, p.ProjectID, p.AccountID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -119,14 +128,17 @@ func (s *AccountService) GetV1AccountCapabilities(ctx context.Context) (*oas.Get
 	if err != nil {
 		return nil, err
 	}
+
 	caps, err := s.deps.Accounts.Capabilities(ctx, p.ProjectID, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	raw := make(map[string]any, len(caps))
 	for k, v := range caps {
 		raw[k] = v
 	}
+
 	return &oas.GetV1AccountCapabilitiesOK{
 		Capabilities: oas.NewOptGetV1AccountCapabilitiesOKCapabilities(
 			oasRawMap[oas.GetV1AccountCapabilitiesOKCapabilities](raw),
@@ -139,14 +151,17 @@ func (s *AccountService) GetV1AuthIdentities(ctx context.Context) (*oas.GetV1Aut
 	if err != nil {
 		return nil, err
 	}
+
 	ids, err := s.deps.Accounts.ListIdentities(ctx, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.Identity, 0, len(ids))
 	for i := range ids {
 		data = append(data, oasIdentity(&ids[i]))
 	}
+
 	return &oas.GetV1AuthIdentitiesOK{Data: data}, nil
 }
 
@@ -155,15 +170,18 @@ func (s *AccountService) GetV1Sessions(ctx context.Context) (*oas.GetV1SessionsO
 	if err != nil {
 		return nil, err
 	}
+
 	sessions, err := s.deps.Accounts.ListSessions(ctx, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.Session, 0, len(sessions))
 	for i := range sessions {
 		sessions[i].Current = sessions[i].ID == p.SessionID
 		data = append(data, oasSession(&sessions[i]))
 	}
+
 	return &oas.GetV1SessionsOK{Data: data}, nil
 }
 
@@ -172,11 +190,14 @@ func (s *AccountService) GetV1SessionsCurrent(ctx context.Context) (*oas.GetV1Se
 	if err != nil {
 		return nil, err
 	}
+
 	sess, err := s.deps.Accounts.GetSession(ctx, p.AccountID, p.SessionID)
 	if err != nil {
 		return nil, err
 	}
+
 	sess.Current = true
+
 	return &oas.GetV1SessionsCurrentOK{Session: oas.NewOptSession(oasSession(sess))}, nil
 }
 
@@ -185,10 +206,12 @@ func (s *AccountService) GetV1UsersMe(ctx context.Context) (*oas.GetV1UsersMeOK,
 	if err != nil {
 		return nil, err
 	}
+
 	acct, err := s.deps.Accounts.Get(ctx, p.ProjectID, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1UsersMeOK{User: oas.NewOptUser(oasUser(acct))}, nil
 }
 
@@ -197,6 +220,7 @@ func (s *AccountService) GetV1UsersMeActivity(ctx context.Context, params oas.Ge
 	if err != nil {
 		return nil, err
 	}
+
 	page, err := s.deps.Accounts.Activity(ctx, domain.AccountActivityCmd{
 		AccountID: p.AccountID,
 		Type:      params.Type.Or(""),
@@ -206,14 +230,17 @@ func (s *AccountService) GetV1UsersMeActivity(ctx context.Context, params oas.Ge
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.ActivityEvent, 0, len(page.Events))
 	for i := range page.Events {
 		data = append(data, oasAccountActivityEvent(&page.Events[i]))
 	}
+
 	out := &oas.GetV1UsersMeActivityOK{Data: data, HasMore: oas.NewOptBool(page.HasMore)}
 	if page.NextCursor != "" {
 		out.NextCursor = oas.NewOptNilString(page.NextCursor)
 	}
+
 	return out, nil
 }
 
@@ -222,14 +249,17 @@ func (s *AccountService) GetV1UsersMeConsents(ctx context.Context) (*oas.GetV1Us
 	if err != nil {
 		return nil, err
 	}
+
 	consents, err := s.deps.Accounts.Consents(ctx, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	items := make([]oas.GetV1UsersMeConsentsOKConsentsItem, 0, len(consents))
 	for i := range consents {
 		items = append(items, oasAccountConsent(&consents[i]))
 	}
+
 	return &oas.GetV1UsersMeConsentsOK{Consents: items}, nil
 }
 
@@ -238,14 +268,17 @@ func (s *AccountService) GetV1UsersMeExportByJobId(ctx context.Context, params o
 	if err != nil {
 		return nil, err
 	}
+
 	job, err := s.deps.Accounts.ExportStatus(ctx, p.AccountID, params.JobID)
 	if err != nil {
 		return nil, err
 	}
+
 	out := &oas.GetV1UsersMeExportByJobIdOK{Status: oas.NewOptString(job.Status)}
 	if job.DownloadURL != "" {
 		out.DownloadURL = oas.NewOptNilString(job.DownloadURL)
 	}
+
 	return out, nil
 }
 
@@ -254,6 +287,7 @@ func (s *AccountService) PatchV1SessionsBySessionId(ctx context.Context, req *oa
 	if err != nil {
 		return nil, err
 	}
+
 	sess, err := s.deps.Accounts.RenameSession(ctx, domain.AccountRenameSessionCmd{
 		AccountID:  p.AccountID,
 		SessionID:  params.SessionID,
@@ -262,6 +296,7 @@ func (s *AccountService) PatchV1SessionsBySessionId(ctx context.Context, req *oa
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PatchV1SessionsBySessionIdOK{Session: oas.NewOptSession(oasSession(sess))}, nil
 }
 
@@ -270,6 +305,7 @@ func (s *AccountService) PatchV1UsersMe(ctx context.Context, req *oas.PatchV1Use
 	if err != nil {
 		return nil, err
 	}
+
 	acct, err := s.deps.Accounts.UpdateProfile(ctx, domain.ProfileUpdateCmd{
 		ProjectID: p.ProjectID,
 		AccountID: p.AccountID,
@@ -280,6 +316,7 @@ func (s *AccountService) PatchV1UsersMe(ctx context.Context, req *oas.PatchV1Use
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PatchV1UsersMeOK{User: oas.NewOptUser(oasUser(acct))}, nil
 }
 
@@ -288,6 +325,7 @@ func (s *AccountService) PostV1AuthIdentitiesMergeConfirm(ctx context.Context, r
 	if err != nil {
 		return nil, err
 	}
+
 	acct, ids, err := s.deps.Accounts.ConfirmIdentityMerge(ctx, domain.AccountMergeConfirmCmd{
 		AccountID:   p.AccountID,
 		ChallengeID: req.ChallengeID,
@@ -296,10 +334,12 @@ func (s *AccountService) PostV1AuthIdentitiesMergeConfirm(ctx context.Context, r
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.Identity, 0, len(ids))
 	for i := range ids {
 		data = append(data, oasIdentity(&ids[i]))
 	}
+
 	return &oas.PostV1AuthIdentitiesMergeConfirmOK{
 		User:       oas.NewOptUser(oasUser(acct)),
 		Identities: data,
@@ -311,6 +351,7 @@ func (s *AccountService) PostV1AuthIdentitiesMergeStart(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
+
 	ch, err := s.deps.Accounts.StartIdentityMerge(ctx, domain.AccountMergeStartCmd{
 		AccountID:        p.AccountID,
 		TargetIdentifier: req.TargetIdentifier,
@@ -318,6 +359,7 @@ func (s *AccountService) PostV1AuthIdentitiesMergeStart(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthIdentitiesMergeStartOK{ChallengeID: oas.NewOptString(ch.ID)}, nil
 }
 
@@ -326,6 +368,7 @@ func (s *AccountService) PostV1SessionsBySessionIdTrust(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
+
 	sess, err := s.deps.Accounts.TrustSession(ctx, domain.AccountTrustSessionCmd{
 		AccountID:       p.AccountID,
 		SessionID:       params.SessionID,
@@ -334,6 +377,7 @@ func (s *AccountService) PostV1SessionsBySessionIdTrust(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1SessionsBySessionIdTrustOK{Session: oas.NewOptSession(oasSession(sess))}, nil
 }
 
@@ -342,10 +386,12 @@ func (s *AccountService) PostV1UsersMeConsents(ctx context.Context, req *oas.Pos
 	if err != nil {
 		return nil, err
 	}
+
 	accept := make([]domain.AccountConsentAcceptance, 0, len(req.Accept))
 	for _, a := range req.Accept {
 		accept = append(accept, domain.AccountConsentAcceptance{Key: a.Key, Version: a.Version})
 	}
+
 	consents, err := s.deps.Accounts.AcceptConsents(ctx, domain.AccountAcceptConsentsCmd{
 		AccountID: p.AccountID,
 		Accept:    accept,
@@ -353,10 +399,12 @@ func (s *AccountService) PostV1UsersMeConsents(ctx context.Context, req *oas.Pos
 	if err != nil {
 		return nil, err
 	}
+
 	items := make([]oas.PostV1UsersMeConsentsOKConsentsItem, 0, len(consents))
 	for i := range consents {
 		items = append(items, oasAccountConsentRaw(&consents[i]))
 	}
+
 	return &oas.PostV1UsersMeConsentsOK{Consents: items}, nil
 }
 
@@ -365,10 +413,12 @@ func (s *AccountService) PostV1UsersMeExport(ctx context.Context) (*oas.PostV1Us
 	if err != nil {
 		return nil, err
 	}
+
 	job, err := s.deps.Accounts.StartExport(ctx, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1UsersMeExportOK{JobID: oas.NewOptString(job.JobID)}, nil
 }
 
@@ -381,12 +431,15 @@ func oasIdentity(i *domain.Identity) oas.Identity {
 	if i.Provider != "" {
 		id.Provider = oas.NewOptNilString(i.Provider)
 	}
+
 	if i.ProviderAccountID != "" {
 		id.ProviderAccountID = oas.NewOptNilString(i.ProviderAccountID)
 	}
+
 	if i.Email != "" {
 		id.Email = oas.NewOptNilString(i.Email)
 	}
+
 	return id
 }
 
@@ -400,9 +453,11 @@ func oasAccountActivityEvent(e *domain.AccountActivityEvent) oas.ActivityEvent {
 	if e.IP != "" {
 		ev.IP = oas.NewOptNilString(e.IP)
 	}
+
 	if e.Device != "" {
 		ev.Device = oas.NewOptNilString(e.Device)
 	}
+
 	return ev
 }
 
@@ -418,9 +473,11 @@ func oasAccountConsent(c *domain.AccountConsent) oas.GetV1UsersMeConsentsOKConse
 	if c.Locale != "" {
 		item.Locale = oas.NewOptString(c.Locale)
 	}
+
 	if c.URL != "" {
 		item.URL = oas.NewOptNilString(c.URL)
 	}
+
 	return item
 }
 
@@ -433,11 +490,14 @@ func oasAccountConsentRaw(c *domain.AccountConsent) oas.PostV1UsersMeConsentsOKC
 	if !c.AcceptedAt.IsZero() {
 		raw["accepted_at"] = c.AcceptedAt
 	}
+
 	if c.URL != "" {
 		raw["url"] = c.URL
 	}
+
 	if c.Locale != "" {
 		raw["locale"] = c.Locale
 	}
+
 	return oasRawMap[oas.PostV1UsersMeConsentsOKConsentsItem](raw)
 }

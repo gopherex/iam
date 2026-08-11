@@ -9,9 +9,9 @@ type WebAuthnRenameCredentialCmd struct {
 }
 
 // WebAuthnCeremonyData is the persisted state of an in-flight WebAuthn ceremony.
-// It is marshalled into the iam_challenges `data` jsonb column. PublicKey holds
+// It is marshaled into the iam_challenges `data` jsonb column. PublicKey holds
 // the publicKey credential options surfaced to the browser (also mirrored on the
-// returned Challenge), while Session is the opaque marshalled go-webauthn
+// returned Challenge), while Session is the opaque marshaled go-webauthn
 // SessionData (challenge bytes, RP id, allowed credentials, user verification)
 // the library requires to verify the matching Finish* response. AccountID scopes
 // a registration ceremony to its owner.
@@ -23,9 +23,9 @@ type WebAuthnCeremonyData struct {
 
 // WebAuthnStoredCredential is the persisted form of a registered passkey. The
 // public, display-facing fields live on Credential; Library is the opaque
-// marshalled go-webauthn Credential (id, COSE public key, sign count, AAGUID,
+// marshaled go-webauthn Credential (id, COSE public key, sign count, AAGUID,
 // flags, attestation) the library needs to verify subsequent assertions. It is
-// marshalled into the iam_webauthn_credentials `data` jsonb column.
+// marshaled into the iam_webauthn_credentials `data` jsonb column.
 type WebAuthnStoredCredential struct {
 	Credential WebAuthnCredential `json:"credential"`
 	Library    []byte             `json:"library,omitempty"`

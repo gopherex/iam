@@ -78,6 +78,7 @@ func machineIDRandomToken(nbytes int) (string, error) {
 	if _, err := rand.Read(buf); err != nil {
 		return "", err
 	}
+
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }
 
@@ -94,15 +95,19 @@ func (a *PgMachineIdentities) loadServiceAccount(ctx context.Context, projectID,
 		if adminIsNotFound(err) { // a missing row is a domain not-found, not a 500
 			return nil, nil, domain.ErrNotFound
 		}
+
 		return nil, nil, translatePgErr("service_account", err)
 	}
+
 	if row.ProjectID != projectID { // tenant boundary
 		return nil, nil, domain.ErrNotFound
 	}
+
 	var env saEnvelope
 	if err := unmarshal(row.Data, &env); err != nil {
 		return nil, nil, err
 	}
+
 	return row, &env, nil
 }
 
@@ -112,7 +117,9 @@ func saSetterData(env *saEnvelope) (*json.RawMessage, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	rm := json.RawMessage(raw)
+
 	return &rm, nil
 }
 
@@ -129,10 +136,12 @@ func (a *PgMachineIdentities) CreateServiceAccount(ctx context.Context, cmd doma
 			Disabled:  false,
 		}
 		env := saEnvelope{ServiceAccount: sa}
+
 		data, err := saSetterData(&env)
 		if err != nil {
 			return nil, err
 		}
+
 		setter := &models.IamServiceAccountSetter{
 			ID:        &sa.ID,
 			ProjectID: &sa.ProjectID,
@@ -144,8 +153,10 @@ func (a *PgMachineIdentities) CreateServiceAccount(ctx context.Context, cmd doma
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.created",
 			ProjectID:   sa.ProjectID,
@@ -154,6 +165,7 @@ func (a *PgMachineIdentities) CreateServiceAccount(ctx context.Context, cmd doma
 		}); err != nil {
 			return nil, err
 		}
+
 		return &sa, nil
 	})
 }
@@ -166,16 +178,19 @@ func (a *PgMachineIdentities) ListServiceAccounts(ctx context.Context, cmd domai
 	if limit <= 0 || limit > 100 {
 		limit = 50
 	}
+
 	mods := []bob.Mod[*dialect.SelectQuery]{
 		sm.Where(models.IamServiceAccounts.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 	}
 	if cmd.Cursor != "" {
 		mods = append(mods, sm.Where(models.IamServiceAccounts.Columns.ID.GT(psql.Arg(cmd.Cursor))))
 	}
+
 	mods = append(mods,
 		sm.OrderBy(models.IamServiceAccounts.Columns.ID).Asc(),
 		sm.Limit(limit+1),
 	)
+
 	rows, err := models.IamServiceAccounts.Query(mods...).All(ctx, a.db.Bobx())
 	if err != nil {
 		return nil, err
@@ -186,17 +201,21 @@ func (a *PgMachineIdentities) ListServiceAccounts(ctx context.Context, cmd domai
 		page.HasMore = true
 		rows = rows[:limit]
 	}
+
 	for _, row := range rows {
 		var env saEnvelope
 		if err := unmarshal(row.Data, &env); err != nil {
 			return nil, err
 		}
+
 		sa := env.ServiceAccount
 		page.Items = append(page.Items, &sa)
 	}
+
 	if page.HasMore && len(page.Items) > 0 {
 		page.NextCursor = page.Items[len(page.Items)-1].ID
 	}
+
 	return page, nil
 }
 
@@ -206,7 +225,9 @@ func (a *PgMachineIdentities) GetServiceAccount(ctx context.Context, projectID, 
 	if err != nil {
 		return nil, err
 	}
+
 	sa := env.ServiceAccount
+
 	return &sa, nil
 }
 
@@ -217,16 +238,20 @@ func (a *PgMachineIdentities) UpdateServiceAccount(ctx context.Context, cmd doma
 		if err != nil {
 			return nil, err
 		}
+
 		if cmd.Scopes != nil {
 			env.Scopes = cmd.Scopes
 		}
+
 		if cmd.Disabled != nil {
 			env.Disabled = *cmd.Disabled
 		}
+
 		data, err := saSetterData(env)
 		if err != nil {
 			return nil, err
 		}
+
 		setter := &models.IamServiceAccountSetter{
 			Disabled:  &env.Disabled,
 			Data:      data,
@@ -235,6 +260,7 @@ func (a *PgMachineIdentities) UpdateServiceAccount(ctx context.Context, cmd doma
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		sa := env.ServiceAccount
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.updated",
@@ -244,6 +270,7 @@ func (a *PgMachineIdentities) UpdateServiceAccount(ctx context.Context, cmd doma
 		}); err != nil {
 			return nil, err
 		}
+
 		return &sa, nil
 	})
 }
@@ -255,9 +282,11 @@ func (a *PgMachineIdentities) DeleteServiceAccount(ctx context.Context, projectI
 		if err != nil {
 			return err
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.deleted",
 			ProjectID:   projectID,
@@ -266,6 +295,7 @@ func (a *PgMachineIdentities) DeleteServiceAccount(ctx context.Context, projectI
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -278,10 +308,12 @@ func (a *PgMachineIdentities) CreateServiceAccountSecret(ctx context.Context, cm
 		if err != nil {
 			return nil, err
 		}
+
 		plaintext, err := machineIDRandomToken(32)
 		if err != nil {
 			return nil, err
 		}
+
 		secretID := newUUID()
 		// ClientID identifies the service account for the client-credentials
 		// flow; the service-account id doubles as the client id.
@@ -295,14 +327,17 @@ func (a *PgMachineIdentities) CreateServiceAccountSecret(ctx context.Context, cm
 			ExpiresAt: cmd.ExpiresAt,
 		}
 		env.Secrets = append(env.Secrets, sec)
+
 		data, err := saSetterData(env)
 		if err != nil {
 			return nil, err
 		}
+
 		setter := &models.IamServiceAccountSetter{Data: data, UpdatedAt: ptr(nowUTC())}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.secret.created",
 			ProjectID:   cmd.ProjectID,
@@ -311,6 +346,7 @@ func (a *PgMachineIdentities) CreateServiceAccountSecret(ctx context.Context, cm
 		}); err != nil {
 			return nil, err
 		}
+
 		return &domain.MachineIDSecret{
 			SecretID:     secretID,
 			ClientID:     clientID,
@@ -326,25 +362,32 @@ func (a *PgMachineIdentities) RevokeServiceAccountSecret(ctx context.Context, pr
 		if err != nil {
 			return err
 		}
+
 		found := false
+
 		for i := range env.Secrets {
 			if env.Secrets[i].SecretID == secretID {
 				env.Secrets[i].Revoked = true
 				found = true
+
 				break
 			}
 		}
+
 		if !found {
 			return domain.ErrNotFound
 		}
+
 		data, err := saSetterData(env)
 		if err != nil {
 			return err
 		}
+
 		setter := &models.IamServiceAccountSetter{Data: data, UpdatedAt: ptr(nowUTC())}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.secret.revoked",
 			ProjectID:   projectID,
@@ -353,6 +396,7 @@ func (a *PgMachineIdentities) RevokeServiceAccountSecret(ctx context.Context, pr
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -365,13 +409,16 @@ func (a *PgMachineIdentities) MintToken(ctx context.Context, projectID, serviceA
 		if err != nil {
 			return "", err
 		}
+
 		if env.Disabled {
 			return "", domain.ErrForbidden
 		}
+
 		signEnv, err := resolveSignEnv(ctx, a.db, projectID, "live")
 		if err != nil {
 			return "", err
 		}
+
 		token, err := a.db.Signer().Sign(ctx, projectID, signEnv, map[string]any{
 			"iss":   projectID,
 			"sub":   serviceAccountID,
@@ -383,6 +430,7 @@ func (a *PgMachineIdentities) MintToken(ctx context.Context, projectID, serviceA
 		if err != nil {
 			return "", err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.token.minted",
 			ProjectID:   projectID,
@@ -391,6 +439,7 @@ func (a *PgMachineIdentities) MintToken(ctx context.Context, projectID, serviceA
 		}); err != nil {
 			return "", err
 		}
+
 		return token, nil
 	})
 }
@@ -410,15 +459,19 @@ func (a *PgMachineIdentities) loadAPIKey(ctx context.Context, projectID, keyID s
 		if adminIsNotFound(err) { // a missing row is a domain not-found, not a 500
 			return nil, nil, domain.ErrNotFound
 		}
+
 		return nil, nil, translatePgErr("api_key", err)
 	}
+
 	if row.ProjectID != projectID { // tenant boundary
 		return nil, nil, domain.ErrNotFound
 	}
+
 	var key domain.APIKey
 	if err := unmarshal(row.Data, &key); err != nil {
 		return nil, nil, err
 	}
+
 	return row, &key, nil
 }
 
@@ -429,12 +482,16 @@ func mintAPIKeySecret() (plaintext, prefix, hash string, err error) {
 	if err != nil {
 		return "", "", "", err
 	}
+
 	prefix = "iak_" + p
+
 	body, err := machineIDRandomToken(32)
 	if err != nil {
 		return "", "", "", err
 	}
+
 	plaintext = prefix + "." + body
+
 	return plaintext, prefix, machineIDHash(plaintext), nil
 }
 
@@ -444,11 +501,13 @@ func (a *PgMachineIdentities) CreateAPIKey(ctx context.Context, cmd domain.APIKe
 		key    *domain.APIKey
 		secret string
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		plaintext, prefix, hash, err := mintAPIKeySecret()
 		if err != nil {
 			return result{}, err
 		}
+
 		key := domain.APIKey{
 			ID:        newUUID(),
 			ProjectID: cmd.ProjectID,
@@ -457,11 +516,14 @@ func (a *PgMachineIdentities) CreateAPIKey(ctx context.Context, cmd domain.APIKe
 			Prefix:    prefix,
 			Disabled:  false,
 		}
+
 		raw, err := marshal(keyEnvelope{APIKey: key})
 		if err != nil {
 			return result{}, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamAPIKeySetter{
 			ID:        &key.ID,
 			ProjectID: &key.ProjectID,
@@ -474,8 +536,10 @@ func (a *PgMachineIdentities) CreateAPIKey(ctx context.Context, cmd domain.APIKe
 			if isUniqueViolation(err) {
 				return result{}, domain.ErrConflict
 			}
+
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "api_key.created",
 			ProjectID:   key.ProjectID,
@@ -484,11 +548,13 @@ func (a *PgMachineIdentities) CreateAPIKey(ctx context.Context, cmd domain.APIKe
 		}); err != nil {
 			return result{}, err
 		}
+
 		return result{key: &key, secret: plaintext}, nil
 	})
 	if err != nil {
 		return nil, "", err
 	}
+
 	return res.key, res.secret, nil
 }
 
@@ -501,15 +567,18 @@ func (a *PgMachineIdentities) ListAPIKeys(ctx context.Context, projectID string)
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]*domain.APIKey, 0, len(rows))
 	for _, row := range rows {
 		var key domain.APIKey
 		if err := unmarshal(row.Data, &key); err != nil {
 			return nil, err
 		}
+
 		k := key
 		out = append(out, &k)
 	}
+
 	return out, nil
 }
 
@@ -520,24 +589,31 @@ func (a *PgMachineIdentities) UpdateAPIKey(ctx context.Context, cmd domain.Machi
 		if err != nil {
 			return nil, err
 		}
+
 		if cmd.Name != "" {
 			key.Name = cmd.Name
 		}
+
 		if cmd.Scopes != nil {
 			key.Scopes = cmd.Scopes
 		}
+
 		if cmd.Disabled != nil {
 			key.Disabled = *cmd.Disabled
 		}
+
 		raw, err := marshal(keyEnvelope{APIKey: *key})
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamAPIKeySetter{Disabled: &key.Disabled, Data: &rm}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "api_key.updated",
 			ProjectID:   key.ProjectID,
@@ -546,6 +622,7 @@ func (a *PgMachineIdentities) UpdateAPIKey(ctx context.Context, cmd domain.Machi
 		}); err != nil {
 			return nil, err
 		}
+
 		return key, nil
 	})
 }
@@ -557,25 +634,32 @@ func (a *PgMachineIdentities) RotateAPIKey(ctx context.Context, projectID, keyID
 		key    *domain.APIKey
 		secret string
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		row, key, err := a.loadAPIKey(ctx, projectID, keyID)
 		if err != nil {
 			return result{}, err
 		}
+
 		plaintext, prefix, hash, err := mintAPIKeySecret()
 		if err != nil {
 			return result{}, err
 		}
+
 		key.Prefix = prefix
+
 		raw, err := marshal(keyEnvelope{APIKey: *key})
 		if err != nil {
 			return result{}, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamAPIKeySetter{Prefix: &prefix, Hash: &hash, Data: &rm}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "api_key.rotated",
 			ProjectID:   key.ProjectID,
@@ -584,11 +668,13 @@ func (a *PgMachineIdentities) RotateAPIKey(ctx context.Context, projectID, keyID
 		}); err != nil {
 			return result{}, err
 		}
+
 		return result{key: key, secret: plaintext}, nil
 	})
 	if err != nil {
 		return nil, "", err
 	}
+
 	return res.key, res.secret, nil
 }
 
@@ -599,9 +685,11 @@ func (a *PgMachineIdentities) RevokeAPIKey(ctx context.Context, projectID, keyID
 		if err != nil {
 			return err
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "api_key.revoked",
 			ProjectID:   projectID,
@@ -610,6 +698,7 @@ func (a *PgMachineIdentities) RevokeAPIKey(ctx context.Context, projectID, keyID
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }

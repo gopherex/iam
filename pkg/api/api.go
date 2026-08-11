@@ -56,8 +56,11 @@ var _ oas.Handler = (*Service)(nil)
 // is masked as a 500 internal_error.
 func (s *Service) NewError(_ context.Context, err error) *oas.DefaultStatusCode {
 	de := domain.ErrInternal
-	var d *domain.Error
-	var se *ogenerrors.SecurityError
+
+	var (
+		d  *domain.Error
+		se *ogenerrors.SecurityError
+	)
 	switch {
 	case errors.As(err, &d):
 		// A wrapped domain error (incl. a SecurityError around a bad credential).
@@ -66,6 +69,7 @@ func (s *Service) NewError(_ context.Context, err error) *oas.DefaultStatusCode 
 		// Missing / unparseable credential — no domain error inside.
 		de = domain.ErrUnauthorized
 	}
+
 	return &oas.DefaultStatusCode{
 		StatusCode: de.Status,
 		Response:   newOASErrorEnvelope(de),
@@ -77,6 +81,7 @@ func newOASErrorEnvelope(de *domain.Error) oas.ErrorEnvelope {
 	if details, ok := newOASDetails(de.Details); ok {
 		e.Details = oas.NewOptNilErrorEnvelopeErrorDetails(details)
 	}
+
 	return oas.ErrorEnvelope{Error: e}
 }
 
@@ -84,14 +89,17 @@ func newOASDetails(details map[string]any) (oas.ErrorEnvelopeErrorDetails, bool)
 	if len(details) == 0 {
 		return nil, false
 	}
+
 	out := make(oas.ErrorEnvelopeErrorDetails, len(details))
 	for key, value := range details {
 		raw, err := json.Marshal(value)
 		if err != nil {
 			raw, _ = json.Marshal(fmt.Sprint(value))
 		}
+
 		out[key] = jx.Raw(raw)
 	}
+
 	return out, true
 }
 
@@ -119,6 +127,7 @@ func New(opts ...Option) *Service {
 	for _, o := range opts {
 		o(s)
 	}
+
 	return s
 }
 

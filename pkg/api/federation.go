@@ -93,9 +93,11 @@ func (s *FederationService) DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ct
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Connections.DeleteDomain(ctx, params.ProjectID, params.DomainID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -103,9 +105,11 @@ func (s *FederationService) DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(c
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Connections.DeleteConnection(ctx, params.ProjectID, params.ID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -113,9 +117,11 @@ func (s *FederationService) DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdSc
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Connections.DeleteScimToken(ctx, params.ProjectID, params.ID, params.TokenID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -123,6 +129,7 @@ func (s *FederationService) DeleteV1ScimV2ByConnectionIdGroupsByGroupId(ctx cont
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return err
 	}
+
 	return s.deps.Scim.DeleteGroup(ctx, params.ConnectionID, params.GroupID)
 }
 
@@ -130,6 +137,7 @@ func (s *FederationService) DeleteV1ScimV2ByConnectionIdUsersByScimUserId(ctx co
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return err
 	}
+
 	return s.deps.Scim.DeleteUser(ctx, params.ConnectionID, params.ScimUserID)
 }
 
@@ -137,14 +145,17 @@ func (s *FederationService) GetV1ProjectsByProjectIdAdminDomains(ctx context.Con
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	doms, err := s.deps.Connections.ListDomains(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.Domain, 0, len(doms))
 	for i := range doms {
 		data = append(data, oasDomain(&doms[i]))
 	}
+
 	return &oas.GetV1ProjectsByProjectIdAdminDomainsOK{
 		Data:    data,
 		HasMore: oas.NewOptBool(false),
@@ -155,14 +166,17 @@ func (s *FederationService) GetV1ProjectsByProjectIdAdminSsoConnections(ctx cont
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	conns, err := s.deps.Connections.ListConnections(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.SSOConnection, 0, len(conns))
 	for i := range conns {
 		data = append(data, oasConnection(&conns[i]))
 	}
+
 	return &oas.GetV1ProjectsByProjectIdAdminSsoConnectionsOK{
 		Data: data,
 	}, nil
@@ -172,10 +186,12 @@ func (s *FederationService) GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx 
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	conn, err := s.deps.Connections.GetConnection(ctx, params.ProjectID, params.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK{
 		Connection: oas.NewOptSSOConnection(oasConnection(conn)),
 	}, nil
@@ -185,14 +201,17 @@ func (s *FederationService) GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimT
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	toks, err := s.deps.Connections.ListScimTokens(ctx, params.ProjectID, params.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOKDataItem, 0, len(toks))
 	for i := range toks {
 		data = append(data, oasRawMap[oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOKDataItem](oasFederationScimTokenMap(&toks[i])))
 	}
+
 	return &oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensOK{
 		Data: data,
 	}, nil
@@ -202,10 +221,12 @@ func (s *FederationService) GetV1ScimV2ByConnectionIdGroups(ctx context.Context,
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return nil, err
 	}
+
 	m, err := s.deps.Scim.ListGroups(ctx, domain.FederationScimListQuery{ConnectionID: params.ConnectionID})
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.GetV1ScimV2ByConnectionIdGroupsOK](m), nil
 }
 
@@ -213,10 +234,12 @@ func (s *FederationService) GetV1ScimV2ByConnectionIdGroupsByGroupId(ctx context
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return nil, err
 	}
+
 	m, err := s.deps.Scim.GetGroup(ctx, params.ConnectionID, params.GroupID)
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.GetV1ScimV2ByConnectionIdGroupsByGroupIdOK](m), nil
 }
 
@@ -224,6 +247,7 @@ func (s *FederationService) GetV1ScimV2ByConnectionIdUsers(ctx context.Context, 
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return nil, err
 	}
+
 	m, err := s.deps.Scim.ListUsers(ctx, domain.FederationScimListQuery{
 		ConnectionID: params.ConnectionID,
 		Filter:       params.Filter.Or(""),
@@ -233,6 +257,7 @@ func (s *FederationService) GetV1ScimV2ByConnectionIdUsers(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.GetV1ScimV2ByConnectionIdUsersOK](m), nil
 }
 
@@ -240,10 +265,12 @@ func (s *FederationService) GetV1ScimV2ByConnectionIdUsersByScimUserId(ctx conte
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return nil, err
 	}
+
 	m, err := s.deps.Scim.GetUser(ctx, params.ConnectionID, params.ScimUserID)
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.GetV1ScimV2ByConnectionIdUsersByScimUserIdOK](m), nil
 }
 
@@ -253,6 +280,7 @@ func (s *FederationService) GetV1SsoConnectionsResolve(ctx context.Context, para
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1SsoConnectionsResolveOK{
 		Connection: oas.NewOptSSOConnection(oasConnection(conn)),
 	}, nil
@@ -267,10 +295,12 @@ func (s *FederationService) GetV1SsoOidcByConnectionIdCallback(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
+
 	out := &oas.GetV1SsoOidcByConnectionIdCallbackFound{Location: optURI(red.URL)}
 	if len(red.Cookie) > 0 {
 		out.SetCookie = red.Cookie
 	}
+
 	return out, nil
 }
 
@@ -284,6 +314,7 @@ func (s *FederationService) GetV1SsoOidcByConnectionIdStart(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1SsoOidcByConnectionIdStartFound{Location: optURI(red.URL)}, nil
 }
 
@@ -296,6 +327,7 @@ func (s *FederationService) GetV1SsoSamlByConnectionIdLogin(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1SsoSamlByConnectionIdLoginFound{Location: optURI(red.URL)}, nil
 }
 
@@ -304,6 +336,7 @@ func (s *FederationService) GetV1SsoSamlByConnectionIdMetadata(ctx context.Conte
 	if err != nil {
 		return oas.GetV1SsoSamlByConnectionIdMetadataOK{}, err
 	}
+
 	return oas.GetV1SsoSamlByConnectionIdMetadataOK{Data: bytes.NewReader(xml)}, nil
 }
 
@@ -311,6 +344,7 @@ func (s *FederationService) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ct
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	conn, err := s.deps.Connections.UpdateConnection(ctx, domain.FederationConnectionUpdateCmd{
 		ProjectID: params.ProjectID,
 		ID:        params.ID,
@@ -319,6 +353,7 @@ func (s *FederationService) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ct
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK{
 		Connection: oas.NewOptSSOConnection(oasConnection(conn)),
 	}, nil
@@ -328,6 +363,7 @@ func (s *FederationService) PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx conte
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return nil, err
 	}
+
 	m, err := s.deps.Scim.PatchGroup(ctx, domain.FederationScimPatchCmd{
 		ConnectionID: params.ConnectionID,
 		ResourceID:   params.GroupID,
@@ -336,6 +372,7 @@ func (s *FederationService) PatchV1ScimV2ByConnectionIdGroupsByGroupId(ctx conte
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.PatchV1ScimV2ByConnectionIdGroupsByGroupIdOK](m), nil
 }
 
@@ -343,6 +380,7 @@ func (s *FederationService) PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx con
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return nil, err
 	}
+
 	m, err := s.deps.Scim.PatchUser(ctx, domain.FederationScimPatchCmd{
 		ConnectionID: params.ConnectionID,
 		ResourceID:   params.ScimUserID,
@@ -351,6 +389,7 @@ func (s *FederationService) PatchV1ScimV2ByConnectionIdUsersByScimUserId(ctx con
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.PatchV1ScimV2ByConnectionIdUsersByScimUserIdOK](m), nil
 }
 
@@ -358,10 +397,12 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminDomains(ctx context.Co
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	dom, err := s.deps.Connections.AddDomain(ctx, params.ProjectID, req.ConnectionID.Or(""), req.Domain)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ProjectsByProjectIdAdminDomainsCreated{
 		Domain: oas.NewOptDomain(oasDomain(dom)),
 	}, nil
@@ -371,10 +412,12 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerif
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	dom, err := s.deps.Connections.VerifyDomain(ctx, params.ProjectID, params.DomainID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK{
 		Domain: oas.NewOptDomain(oasDomain(dom)),
 	}, nil
@@ -384,16 +427,19 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnections(ctx con
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	cmd := domain.ConnectionCmd{
 		ProjectID: params.ProjectID,
 		Type:      string(req.Type),
 		Name:      req.Name,
 		Domains:   req.Domains,
 	}
+
 	conn, err := s.deps.Connections.CreateConnection(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ProjectsByProjectIdAdminSsoConnectionsCreated{
 		Connection: oas.NewOptSSOConnection(oasConnection(conn)),
 	}, nil
@@ -403,10 +449,12 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRota
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	cert, err := s.deps.Connections.RotateConnectionCertificate(ctx, params.ProjectID, params.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdRotateCertificateOK{
 		Certificate: oas.NewOptString(cert),
 	}, nil
@@ -416,6 +464,7 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScim
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	tok, secret, err := s.deps.Connections.CreateScimToken(ctx, domain.FederationScimTokenCmd{
 		ProjectID:    params.ProjectID,
 		ConnectionID: params.ID,
@@ -425,6 +474,7 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScim
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreated{
 		Token: oas.NewOptPostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreatedToken(oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdScimTokensCreatedToken{
 			ID:   oas.NewOptString(tok.ID),
@@ -438,10 +488,12 @@ func (s *FederationService) PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTest
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
+
 	testURL, err := s.deps.Connections.TestConnection(ctx, params.ProjectID, params.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1ProjectsByProjectIdAdminSsoConnectionsByIdTestOK{
 		TestURL: oas.NewOptString(testURL),
 	}, nil
@@ -451,6 +503,7 @@ func (s *FederationService) PostV1ScimV2ByConnectionIdGroups(ctx context.Context
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return nil, err
 	}
+
 	m, err := s.deps.Scim.CreateGroup(ctx, domain.FederationScimWriteCmd{
 		ConnectionID: params.ConnectionID,
 		Attributes:   anyMap(req),
@@ -458,6 +511,7 @@ func (s *FederationService) PostV1ScimV2ByConnectionIdGroups(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.PostV1ScimV2ByConnectionIdGroupsCreated](m), nil
 }
 
@@ -465,6 +519,7 @@ func (s *FederationService) PostV1ScimV2ByConnectionIdUsers(ctx context.Context,
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return nil, err
 	}
+
 	m, err := s.deps.Scim.CreateUser(ctx, domain.FederationScimWriteCmd{
 		ConnectionID: params.ConnectionID,
 		Attributes:   oasFederationScimUserMap(req),
@@ -472,6 +527,7 @@ func (s *FederationService) PostV1ScimV2ByConnectionIdUsers(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.PostV1ScimV2ByConnectionIdUsersCreated](m), nil
 }
 
@@ -481,11 +537,13 @@ func (s *FederationService) PostV1SsoExchange(ctx context.Context, req *oas.Post
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acc, sess), nil
 }
 
 func (s *FederationService) PostV1SsoSamlByConnectionIdAcs(ctx context.Context, req oas.OptPostV1SsoSamlByConnectionIdAcsReq, params oas.PostV1SsoSamlByConnectionIdAcsParams) (*oas.PostV1SsoSamlByConnectionIdAcsFound, error) {
 	body := req.Or(oas.PostV1SsoSamlByConnectionIdAcsReq{})
+
 	red, err := s.deps.Runtime.SamlAcs(ctx, domain.FederationSamlAcsCmd{
 		ConnectionID: params.ConnectionID,
 		SAMLResponse: body.SAMLResponse.Or(""),
@@ -494,10 +552,12 @@ func (s *FederationService) PostV1SsoSamlByConnectionIdAcs(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
+
 	out := &oas.PostV1SsoSamlByConnectionIdAcsFound{Location: optURI(red.URL)}
 	if len(red.Cookie) > 0 {
 		out.SetCookie = red.Cookie
 	}
+
 	return out, nil
 }
 
@@ -506,6 +566,7 @@ func (s *FederationService) PostV1SsoSamlByConnectionIdSlo(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1SsoSamlByConnectionIdSloFound{Location: optURI(red.URL)}, nil
 }
 
@@ -513,6 +574,7 @@ func (s *FederationService) PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return nil, err
 	}
+
 	m, err := s.deps.Scim.ReplaceGroup(ctx, domain.FederationScimWriteCmd{
 		ConnectionID: params.ConnectionID,
 		ResourceID:   params.GroupID,
@@ -521,6 +583,7 @@ func (s *FederationService) PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.PutV1ScimV2ByConnectionIdGroupsByGroupIdOK](m), nil
 }
 
@@ -528,6 +591,7 @@ func (s *FederationService) PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx conte
 	if err := requireScimConnection(ctx, params.ConnectionID); err != nil {
 		return nil, err
 	}
+
 	m, err := s.deps.Scim.ReplaceUser(ctx, domain.FederationScimWriteCmd{
 		ConnectionID: params.ConnectionID,
 		ResourceID:   params.ScimUserID,
@@ -536,6 +600,7 @@ func (s *FederationService) PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx conte
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.PutV1ScimV2ByConnectionIdUsersByScimUserIdOK](m), nil
 }
 
@@ -550,9 +615,11 @@ func oasConnection(c *domain.Connection) oas.SSOConnection {
 	if c.Type != "" {
 		out.Type = oas.NewOptSSOConnectionType(oas.SSOConnectionType(c.Type))
 	}
+
 	if c.ExternalRef != "" {
 		out.ExternalRef = oas.NewOptNilString(c.ExternalRef)
 	}
+
 	return out
 }
 
@@ -566,9 +633,11 @@ func oasFederationScimTokenMap(t *domain.ScimToken) map[string]any {
 	if t.ConnectionID != "" {
 		m["connection_id"] = t.ConnectionID
 	}
+
 	if !t.ExpiresAt.IsZero() {
 		m["expires_at"] = t.ExpiresAt.Format(time.RFC3339)
 	}
+
 	return m
 }
 
@@ -581,9 +650,11 @@ func requireScimConnection(ctx context.Context, connectionID string) error {
 	if err != nil {
 		return err
 	}
+
 	if p.Kind != domain.PrincipalSCIM || p.ConnectionID == "" || p.ConnectionID != connectionID {
 		return domain.ErrForbidden
 	}
+
 	return nil
 }
 
@@ -594,34 +665,44 @@ func oasFederationScimUserMap(u *oas.ScimUser) map[string]any {
 	if u == nil {
 		return m
 	}
+
 	if len(u.Schemas) > 0 {
 		m["schemas"] = u.Schemas
 	}
+
 	if v, ok := u.ID.Get(); ok {
 		m["id"] = v
 	}
+
 	if v, ok := u.UserName.Get(); ok {
 		m["userName"] = v
 	}
+
 	if v, ok := u.ExternalId.Get(); ok {
 		m["externalId"] = v
 	}
+
 	if v, ok := u.Active.Get(); ok {
 		m["active"] = v
 	}
+
 	if name, ok := u.Name.Get(); ok {
 		m["name"] = anyMap(name)
 	}
+
 	if len(u.Emails) > 0 {
 		emails := make([]map[string]any, 0, len(u.Emails))
 		for i := range u.Emails {
 			emails = append(emails, anyMap(u.Emails[i]))
 		}
+
 		m["emails"] = emails
 	}
+
 	for k, raw := range u.AdditionalProps {
 		m[k] = raw
 	}
+
 	return m
 }
 
@@ -634,8 +715,10 @@ func oasDomain(d *domain.Domain) oas.Domain {
 	if d.Status != "" {
 		out.Status = oas.NewOptDomainStatus(oas.DomainStatus(d.Status))
 	}
+
 	if d.ConnectionID != "" {
 		out.ConnectionID = oas.NewOptNilString(d.ConnectionID)
 	}
+
 	return out
 }

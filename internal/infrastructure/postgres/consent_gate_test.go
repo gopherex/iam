@@ -34,6 +34,7 @@ func TestResolveRequiredConsents_LocalePreference(t *testing.T) {
 			if len(got) != tc.wantNumReq {
 				t.Fatalf("required count = %d, want %d (%+v)", len(got), tc.wantNumReq, got)
 			}
+
 			if got[0].Key != "tos" || got[0].Version != tc.wantTosVer {
 				t.Fatalf("tos resolved = %s/%s, want tos/%s", got[0].Key, got[0].Version, tc.wantTosVer)
 			}
@@ -73,6 +74,7 @@ func TestMissingRequiredConsents(t *testing.T) {
 			{Key: "tos", Version: "v0"}, // wrong version
 			{Key: "privacy", Version: "p1"},
 		}
+
 		m := missingRequiredConsents(required, accepted)
 		if len(m) != 1 || m[0].Key != "tos" {
 			t.Fatalf("missing = %+v, want [tos]", m)

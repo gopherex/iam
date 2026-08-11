@@ -53,9 +53,11 @@ func (s *OperatorService) DeleteMgmtV1ProjectsByProjectId(ctx context.Context, p
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Projects.DeleteProject(ctx, params.ProjectID, params.Hard.Or(false)); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -63,9 +65,11 @@ func (s *OperatorService) DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ct
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Projects.RevokeAdminToken(ctx, params.ProjectID, params.TokenID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -73,9 +77,11 @@ func (s *OperatorService) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx c
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Projects.DeleteEnvironment(ctx, params.ProjectID, params.Env); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -83,14 +89,17 @@ func (s *OperatorService) GetMgmtV1Projects(ctx context.Context, params oas.GetM
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	projects, err := s.deps.Projects.ListProjects(ctx)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.Project, 0, len(projects))
 	for i := range projects {
 		data = append(data, oasProject(&projects[i]))
 	}
+
 	return &oas.GetMgmtV1ProjectsOK{Data: data}, nil
 }
 
@@ -98,10 +107,12 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectId(ctx context.Context, para
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	proj, err := s.deps.Projects.GetProject(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetMgmtV1ProjectsByProjectIdOK{
 		Project: oas.NewOptProject(oasProject(proj)),
 	}, nil
@@ -111,14 +122,17 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Co
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	tokens, err := s.deps.Projects.ListAdminTokens(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]any, 0, len(tokens))
 	for i := range tokens {
 		data = append(data, oasOperatorAdminToken(&tokens[i]))
 	}
+
 	return oasRawMap[oas.GetMgmtV1ProjectsByProjectIdAdminTokensOK](map[string]any{"data": data}), nil
 }
 
@@ -126,11 +140,14 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectIdConfigExport(ctx context.C
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	cfg, err := s.deps.Projects.ExportConfig(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
 	}
+
 	out := oasRawMap[oas.GetMgmtV1ProjectsByProjectIdConfigExportOKApplicationJSON](cfg)
+
 	return &out, nil
 }
 
@@ -138,14 +155,17 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.C
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	envs, err := s.deps.Projects.ListEnvironments(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.Environment, 0, len(envs))
 	for i := range envs {
 		data = append(data, oasEnvironment(&envs[i]))
 	}
+
 	return &oas.GetMgmtV1ProjectsByProjectIdEnvironmentsOK{Data: data}, nil
 }
 
@@ -153,10 +173,12 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx cont
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	env, err := s.deps.Projects.GetEnvironment(ctx, params.ProjectID, params.Env)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK{
 		Environment: oas.NewOptEnvironment(oasEnvironment(env)),
 	}, nil
@@ -166,10 +188,12 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Conte
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	features, err := s.deps.Projects.GetFeatures(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
 	}
+
 	return oas.GetMgmtV1ProjectsByProjectIdFeaturesOK(features), nil
 }
 
@@ -177,6 +201,7 @@ func (s *OperatorService) PatchMgmtV1ProjectsByProjectId(ctx context.Context, re
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	patch := anyMap(req)
 	cmd := domain.OperatorProjectPatchCmd{
 		ProjectID:     params.ProjectID,
@@ -184,10 +209,12 @@ func (s *OperatorService) PatchMgmtV1ProjectsByProjectId(ctx context.Context, re
 		Slug:          rawMapString(patch, "slug"),
 		DefaultLocale: rawMapString(patch, "default_locale"),
 	}
+
 	proj, err := s.deps.Projects.UpdateProject(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PatchMgmtV1ProjectsByProjectIdOK{
 		Project: oas.NewOptProject(oasProject(proj)),
 	}, nil
@@ -197,14 +224,17 @@ func (s *OperatorService) PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Con
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	cmd := domain.OperatorFeaturesCmd{
 		ProjectID: params.ProjectID,
 		Features:  map[string]bool(req),
 	}
+
 	features, err := s.deps.Projects.UpdateFeatures(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return oas.PatchMgmtV1ProjectsByProjectIdFeaturesOK(features), nil
 }
 
@@ -212,15 +242,18 @@ func (s *OperatorService) PostMgmtV1Projects(ctx context.Context, req *oas.PostM
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	cmd := domain.ProjectCmd{
 		Name:          req.Name,
 		Slug:          req.Slug.Or(""),
 		DefaultLocale: req.DefaultLocale.Or(""),
 	}
+
 	proj, err := s.deps.Projects.CreateProject(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostMgmtV1ProjectsCreated{
 		Project: oas.NewOptProject(oasProject(proj)),
 	}, nil
@@ -230,6 +263,7 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.C
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	cmd := domain.OperatorAdminTokenCmd{
 		ProjectID: params.ProjectID,
 		Name:      req.Name,
@@ -238,10 +272,12 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.C
 	if expiresAt, ok := req.ExpiresAt.Get(); ok {
 		cmd.ExpiresAt = expiresAt
 	}
+
 	token, expiresAt, err := s.deps.Projects.MintAdminToken(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostMgmtV1ProjectsByProjectIdAdminTokensOK{
 		AdminToken: oas.NewOptString(token),
 		ExpiresAt:  oas.NewOptTimestamp(oas.Timestamp(expiresAt)),
@@ -252,14 +288,17 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.C
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	cmd := domain.OperatorConfigCmd{
 		ProjectID: params.ProjectID,
 		Config:    anyMap(req),
 	}
+
 	result, err := s.deps.Projects.ApplyConfig(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.PostMgmtV1ProjectsByProjectIdConfigApplyOK](result), nil
 }
 
@@ -267,14 +306,17 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Co
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	cmd := domain.OperatorConfigCmd{
 		ProjectID: params.ProjectID,
 		Config:    anyMap(req),
 	}
+
 	result, err := s.deps.Projects.PlanConfig(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.PostMgmtV1ProjectsByProjectIdConfigPlanOK](result), nil
 }
 
@@ -282,14 +324,17 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.
 	if _, err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
+
 	cmd := domain.EnvironmentCmd{
 		ProjectID: params.ProjectID,
 		Name:      req.Name,
 	}
+
 	env, err := s.deps.Projects.CreateEnvironment(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostMgmtV1ProjectsByProjectIdEnvironmentsCreated{
 		Environment: oas.NewOptEnvironment(oasEnvironment(env)),
 	}, nil
@@ -310,6 +355,7 @@ func oasProject(p *domain.Project) oas.Project {
 	if p.DefaultLocale != "" {
 		out.DefaultLocale = oas.NewOptString(p.DefaultLocale)
 	}
+
 	return out
 }
 
@@ -334,15 +380,19 @@ func oasOperatorAdminToken(t *domain.OperatorAdminToken) map[string]any {
 	if t.Name != "" {
 		m["name"] = t.Name
 	}
+
 	if len(t.Scopes) > 0 {
 		m["scopes"] = t.Scopes
 	}
+
 	if !t.CreatedAt.IsZero() {
 		m["created_at"] = t.CreatedAt
 	}
+
 	if !t.ExpiresAt.IsZero() {
 		m["expires_at"] = t.ExpiresAt
 	}
+
 	return m
 }
 
@@ -354,5 +404,6 @@ func rawMapString(m map[string]any, key string) string {
 			return s
 		}
 	}
+
 	return ""
 }

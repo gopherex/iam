@@ -35,6 +35,7 @@ func oauthSafeRedirect(candidate, fallback string) string {
 	if strings.HasPrefix(candidate, "/") && !strings.HasPrefix(candidate, "//") {
 		return candidate
 	}
+
 	return fallback
 }
 
@@ -54,22 +55,26 @@ func (a *pgOAuthSocial) storeState(ctx context.Context, projectID, provider, sta
 	if state == "" {
 		return domain.ErrBadRequest.WithMessage("state is required")
 	}
+
 	data, err := json.Marshal(oauthStateData{Redirect: redirect, AccountID: accountID})
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(data)
 	id := newUUID()
 	typ := "oauth_state"
 	ch := null.From(oauthHashState(state))
 	sub := null.From(provider)
 	exp := nowUTC().Add(oauthStateTTL)
+
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		setter := &models.IamChallengeSetter{
 			ID: &id, ProjectID: &projectID, Type: &typ,
 			Subject: &sub, CodeHash: &ch, ExpiresAt: &exp, Data: &rm,
 		}
 		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
+
 		return err
 	})
 }
@@ -81,6 +86,7 @@ func (a *pgOAuthSocial) consumeState(ctx context.Context, projectID, provider, s
 	if state == "" {
 		return "", "", domain.ErrBadRequest.WithMessage("state is required")
 	}
+
 	err = a.db.withTx(ctx, func(ctx context.Context) error {
 		row, qerr := models.IamChallenges.Query(
 			sm.Where(models.IamChallenges.Columns.ProjectID.EQ(psql.Arg(projectID))),
@@ -91,26 +97,34 @@ func (a *pgOAuthSocial) consumeState(ctx context.Context, projectID, provider, s
 			if errors.Is(translatePgErr("state", qerr), ErrNotFound) {
 				return domain.ErrBadRequest.WithMessage("invalid state")
 			}
+
 			return qerr
 		}
+
 		if row.Consumed {
 			return domain.ErrBadRequest.WithMessage("state already used")
 		}
+
 		if nowUTC().After(row.ExpiresAt) {
 			return domain.ErrBadRequest.WithMessage("state expired")
 		}
+
 		if sub, _ := row.Subject.Get(); subtle.ConstantTimeCompare([]byte(sub), []byte(provider)) != 1 {
 			return domain.ErrBadRequest.WithMessage("state provider mismatch")
 		}
+
 		var d oauthStateData
 		if len(row.Data) > 0 {
 			if err := json.Unmarshal(row.Data, &d); err != nil {
 				return domain.ErrBadRequest.WithMessage("corrupted OAuth state data")
 			}
 		}
+
 		redirect, accountID = d.Redirect, d.AccountID
 		consumed := true
+
 		return row.Update(ctx, a.db.Bobx(), &models.IamChallengeSetter{Consumed: &consumed})
 	})
+
 	return redirect, accountID, err
 }

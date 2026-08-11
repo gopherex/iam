@@ -26,8 +26,10 @@ func resolveSignEnv(ctx context.Context, db *DB, projectID, fallback string) (st
 	if env == "" || env == fallback {
 		return fallback, nil
 	}
+
 	if _, err := models.FindIamEnvironment(ctx, db.Bobx(), projectID, env); err != nil {
 		return "", domain.ErrBadRequest.WithMessage("unknown environment: " + env)
 	}
+
 	return env, nil
 }

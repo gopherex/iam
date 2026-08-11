@@ -17,12 +17,15 @@ func TestEmailJobFromEventMagicLink(t *testing.T) {
 	if !ok {
 		t.Fatal("expected email job")
 	}
+
 	if job.TemplateID != "magic_link" {
 		t.Fatalf("template = %q", job.TemplateID)
 	}
+
 	if job.To != "user@example.com" {
 		t.Fatalf("to = %q", job.To)
 	}
+
 	if got := job.Data["link"]; got != "https://app.example.com/callback?token=tok_123" {
 		t.Fatalf("link = %v", got)
 	}
@@ -36,15 +39,19 @@ func TestEmailJobFromEventFlowContinue(t *testing.T) {
 	if !ok {
 		t.Fatal("expected email job")
 	}
+
 	if job.TemplateID != "flow_continue" {
 		t.Fatalf("template = %q", job.TemplateID)
 	}
+
 	if job.To != "user@example.com" {
 		t.Fatalf("to = %q", job.To)
 	}
+
 	if job.Data["token"] != "proof_123" {
 		t.Fatalf("token = %v", job.Data["token"])
 	}
+
 	if job.Data["code"] != "260129" {
 		t.Fatalf("code = %v", job.Data["code"])
 	}
@@ -62,6 +69,7 @@ func TestSameOrigin(t *testing.T) {
 			t.Errorf("sameOrigin(%q,%q) = false, want true", c.a, c.b)
 		}
 	}
+
 	deny := []struct{ a, b string }{
 		{"https://evil.com", "https://app.example.com"},             // foreign host (phishing)
 		{"http://app.example.com", "https://app.example.com"},       // scheme mismatch
@@ -81,6 +89,7 @@ func TestDefaultTemplateLocale(t *testing.T) {
 	if en["subject"] != "Your sign-in code" {
 		t.Fatalf("en subject = %q", en["subject"])
 	}
+
 	ru := defaultTemplate("otp", "ru")
 	if ru["subject"] != "Код для входа" {
 		t.Fatalf("ru subject = %q", ru["subject"])
@@ -103,15 +112,19 @@ func TestFlowContinueURL(t *testing.T) {
 	if got := flowContinueURL("https://app.example.com", "ftk_abc", "proof_123"); got != "https://app.example.com/continue?flow=ftk_abc&token=proof_123" {
 		t.Fatalf("url = %q", got)
 	}
+
 	if got := flowContinueURL("https://app.example.com", "ftk_abc", ""); got != "https://app.example.com/continue?flow=ftk_abc" {
 		t.Fatalf("url without proof = %q", got)
 	}
+
 	if flowContinueURL("", "ftk_abc", "proof_123") != "" {
 		t.Fatal("empty base must yield empty link")
 	}
+
 	if flowContinueURL("https://app.example.com", "", "proof_123") != "" {
 		t.Fatal("empty token must yield empty link")
 	}
+
 	if flowContinueURL("not-a-url", "ftk_abc", "proof_123") != "" {
 		t.Fatal("bad base must yield empty link")
 	}
@@ -132,6 +145,7 @@ func TestRenderTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if got != "Code: 123456" {
 		t.Fatalf("rendered = %q", got)
 	}
@@ -162,19 +176,23 @@ func TestCodeLinkDefaultTemplates(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.key+"/text_without_link", func(t *testing.T) {
 			tpl := defaultTemplate(tc.key, "ru")
+
 			got, err := renderText(tpl["text"], map[string]any{"code": "260129"})
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if got != tc.noLinkText {
 				t.Fatalf("rendered without link = %q", got)
 			}
+
 			if strings.Contains(got, "<no value>") {
 				t.Fatalf("rendered without link contains missing value marker: %q", got)
 			}
 		})
 		t.Run(tc.key+"/text_with_link", func(t *testing.T) {
 			tpl := defaultTemplate(tc.key, "ru")
+
 			got, err := renderText(tpl["text"], map[string]any{
 				"code": "260129",
 				"link": "https://app.example.com/verify?token=tok_123",
@@ -182,25 +200,30 @@ func TestCodeLinkDefaultTemplates(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if got != tc.withLinkText {
 				t.Fatalf("rendered with link = %q", got)
 			}
 		})
 		t.Run(tc.key+"/html_without_link", func(t *testing.T) {
 			tpl := defaultTemplate(tc.key, "ru")
+
 			got, err := renderHTML(tpl["html"], map[string]any{"code": "260129"})
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if !strings.Contains(got, "<strong>260129</strong>") {
 				t.Fatalf("rendered html without link must contain code: %q", got)
 			}
+
 			if strings.Contains(got, "<a ") || strings.Contains(got, "<no value>") {
 				t.Fatalf("rendered html without link must not contain link/missing marker: %q", got)
 			}
 		})
 		t.Run(tc.key+"/html_with_link", func(t *testing.T) {
 			tpl := defaultTemplate(tc.key, "ru")
+
 			got, err := renderHTML(tpl["html"], map[string]any{
 				"code": "260129",
 				"link": "https://app.example.com/verify?token=tok_123",
@@ -208,6 +231,7 @@ func TestCodeLinkDefaultTemplates(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if !strings.Contains(got, "<strong>260129</strong>") || !strings.Contains(got, "https://app.example.com/verify?token=tok_123") {
 				t.Fatalf("rendered html with link must contain code and link: %q", got)
 			}
@@ -217,13 +241,16 @@ func TestCodeLinkDefaultTemplates(t *testing.T) {
 
 func TestFlowContinueDefaultTemplate(t *testing.T) {
 	tpl := defaultTemplate("flow_continue", "ru")
+
 	got, err := renderText(tpl["text"], map[string]any{"code": "260129"})
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if got != "Введите код 260129, чтобы продолжить." {
 		t.Fatalf("rendered without link = %q", got)
 	}
+
 	if strings.Contains(got, "<no value>") {
 		t.Fatalf("rendered without link contains missing value marker: %q", got)
 	}
@@ -235,6 +262,7 @@ func TestFlowContinueDefaultTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	want := "Введите код 260129, чтобы продолжить.\nИли откройте ссылку: https://app.example.com/continue?flow=ftk_abc&token=proof_123"
 	if got != want {
 		t.Fatalf("rendered with link = %q", got)
@@ -247,6 +275,7 @@ func TestFlowContinueDefaultTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !strings.Contains(html, "<strong>260129</strong>") || !strings.Contains(html, "https://app.example.com/continue?flow=ftk_abc&amp;token=proof_123") {
 		t.Fatalf("rendered html with link must contain code and escaped link: %q", html)
 	}
@@ -254,12 +283,14 @@ func TestFlowContinueDefaultTemplate(t *testing.T) {
 
 func TestMagicLinkDefaultTemplate(t *testing.T) {
 	tpl := defaultTemplate("magic_link", "ru")
+
 	got, err := renderText(tpl["text"], map[string]any{
 		"link": "https://app.example.com/auth/magic?token=tok_123",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	want := "Откройте ссылку, чтобы войти: https://app.example.com/auth/magic?token=tok_123"
 	if got != want {
 		t.Fatalf("rendered text = %q", got)
@@ -271,6 +302,7 @@ func TestMagicLinkDefaultTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !strings.Contains(html, "https://app.example.com/auth/magic?token=tok_123") {
 		t.Fatalf("rendered html must contain link: %q", html)
 	}
@@ -278,6 +310,7 @@ func TestMagicLinkDefaultTemplate(t *testing.T) {
 
 func TestInviteDefaultTemplate(t *testing.T) {
 	tpl := defaultTemplate("invite", "ru")
+
 	got, err := renderText(tpl["text"], map[string]any{
 		"invite_token": "inv_abc",
 		"invite_url":   "https://app.example.com/invite?token=inv_abc",
@@ -285,6 +318,7 @@ func TestInviteDefaultTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	want := "Вас пригласили. Примите приглашение: https://app.example.com/invite?token=inv_abc (или используйте код inv_abc)"
 	if got != want {
 		t.Fatalf("rendered text = %q", got)
@@ -297,6 +331,7 @@ func TestInviteDefaultTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !strings.Contains(html, "https://app.example.com/invite?token=inv_abc") || !strings.Contains(html, "<strong>inv_abc</strong>") {
 		t.Fatalf("rendered html must contain link and code: %q", html)
 	}
@@ -304,10 +339,12 @@ func TestInviteDefaultTemplate(t *testing.T) {
 
 func TestOTPDefaultTemplate(t *testing.T) {
 	tpl := defaultTemplate("otp", "ru")
+
 	html, err := renderHTML(tpl["html"], map[string]any{"code": "260129"})
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !strings.Contains(html, "<strong>260129</strong>") {
 		t.Fatalf("rendered html must contain code: %q", html)
 	}

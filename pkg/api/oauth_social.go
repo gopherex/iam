@@ -60,10 +60,12 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderCallback(ctx context.Contex
 	if err != nil {
 		return nil, err
 	}
+
 	out := &oas.GetV1AuthOauthByProviderCallbackFound{Location: optURI(res.RedirectURL)}
 	if len(res.SetCookie) > 0 {
 		out.SetCookie = res.SetCookie
 	}
+
 	return out, nil
 }
 
@@ -76,6 +78,7 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkCallback(ctx context.Co
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1AuthOauthByProviderLinkCallbackFound{Location: optURI(url)}, nil
 }
 
@@ -86,6 +89,7 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkStart(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
+
 	url, err := s.deps.Accounts.StartLink(ctx, domain.OAuthSocialLinkStartCmd{
 		AccountID:  p.AccountID,
 		ProjectID:  p.ProjectID,
@@ -96,6 +100,7 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkStart(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1AuthOauthByProviderLinkStartFound{Location: optURI(url)}, nil
 }
 
@@ -114,6 +119,7 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderStart(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1AuthOauthByProviderStartFound{Location: optURI(url)}, nil
 }
 
@@ -122,10 +128,12 @@ func (s *OAuthSocialService) GetV1AuthOauthProviders(ctx context.Context, params
 	if err != nil {
 		return nil, err
 	}
+
 	items := make([]oas.GetV1AuthOauthProvidersOKProvidersItem, 0, len(providers))
 	for _, p := range providers {
 		items = append(items, oasOAuthProvider(p))
 	}
+
 	return &oas.GetV1AuthOauthProvidersOK{Providers: items}, nil
 }
 
@@ -134,9 +142,11 @@ func (s *OAuthSocialService) PostV1AuthOauthByProviderUnlink(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Accounts.Unlink(ctx, p.AccountID, req.IdentityID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -146,10 +156,12 @@ func (s *OAuthSocialService) PostV1AuthOauthExchange(ctx context.Context, req *o
 		Code:         req.Code,
 		CodeVerifier: req.CodeVerifier.Or(""),
 	}
+
 	acct, sess, err := s.deps.Accounts.Exchange(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 

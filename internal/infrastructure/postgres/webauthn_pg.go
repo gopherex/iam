@@ -76,7 +76,9 @@ func (a *pgWebAuthnAccounts) rpConfigFor(ctx context.Context, projectID string) 
 	if err != nil {
 		return nil, translatePgErr("project", err)
 	}
+
 	rpID, displayName, origins := webauthnRPFromProject(row)
+
 	w, err := gowebauthn.New(&gowebauthn.Config{
 		RPID:          rpID,
 		RPDisplayName: displayName,
@@ -85,6 +87,7 @@ func (a *pgWebAuthnAccounts) rpConfigFor(ctx context.Context, projectID string) 
 	if err != nil {
 		return nil, domain.ErrProviderError
 	}
+
 	return w, nil
 }
 
@@ -93,6 +96,7 @@ func (a *pgWebAuthnAccounts) rpConfigFor(ctx context.Context, projectID string) 
 func webauthnRPFromProject(row *models.IamProject) (rpID, displayName string, origins []string) {
 	rpID = webauthnDefaultRPID
 	origins = []string{webauthnDefaultRPOrigin}
+
 	displayName = row.Name
 	if displayName == "" {
 		displayName = row.Slug
@@ -102,9 +106,11 @@ func webauthnRPFromProject(row *models.IamProject) (rpID, displayName string, or
 	if len(row.Data) > 0 {
 		_ = json.Unmarshal(row.Data, &meta)
 	}
+
 	if id := webauthnMetaString(meta, "webauthnRpId", "rpId"); id != "" {
 		rpID = id
 	}
+
 	if o := webauthnMetaStrings(meta, "webauthnRpOrigins", "rpOrigins"); len(o) > 0 {
 		origins = o
 	} else if rpID != webauthnDefaultRPID {
@@ -118,6 +124,7 @@ func webauthnRPFromProject(row *models.IamProject) (rpID, displayName string, or
 		slog.Warn("webauthn: no RP config on project, using localhost defaults",
 			"project_slug", row.Slug, "project_id", row.ID)
 	}
+
 	return rpID, displayName, origins
 }
 
@@ -127,6 +134,7 @@ func webauthnMetaString(meta map[string]any, keys ...string) string {
 			return v
 		}
 	}
+
 	return ""
 }
 
@@ -136,16 +144,19 @@ func webauthnMetaStrings(meta map[string]any, keys ...string) []string {
 		if !ok {
 			continue
 		}
+
 		out := make([]string, 0, len(raw))
 		for _, item := range raw {
 			if s, ok := item.(string); ok && s != "" {
 				out = append(out, s)
 			}
 		}
+
 		if len(out) > 0 {
 			return out
 		}
 	}
+
 	return nil
 }
 
@@ -169,6 +180,7 @@ func webauthnUserName(a *domain.Account) string {
 	if a.PrimaryEmail != "" {
 		return a.PrimaryEmail
 	}
+
 	return a.ID
 }
 
@@ -176,6 +188,7 @@ func webauthnDisplayName(a *domain.Account) string {
 	if a.Name != "" {
 		return a.Name
 	}
+
 	return webauthnUserName(a)
 }
 
@@ -186,14 +199,17 @@ func (a *pgWebAuthnAccounts) loadWebauthnUser(ctx context.Context, accountID str
 	if err != nil {
 		return nil, translatePgErr("user", err)
 	}
+
 	var acct domain.Account
 	if err := unmarshal(userRow.Data, &acct); err != nil {
 		return nil, err
 	}
+
 	creds, err := a.loadLibraryCredentials(ctx, accountID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &webauthnUser{account: &acct, creds: creds}, nil
 }
 
@@ -206,21 +222,26 @@ func (a *pgWebAuthnAccounts) loadLibraryCredentials(ctx context.Context, account
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]gowebauthn.Credential, 0, len(rows))
 	for _, row := range rows {
 		var stored domain.WebAuthnStoredCredential
 		if err := unmarshal(row.Data, &stored); err != nil {
 			return nil, err
 		}
+
 		if len(stored.Library) == 0 {
 			continue
 		}
+
 		var lib gowebauthn.Credential
 		if err := json.Unmarshal(stored.Library, &lib); err != nil {
 			return nil, err
 		}
+
 		out = append(out, lib)
 	}
+
 	return out, nil
 }
 
@@ -233,6 +254,7 @@ func webauthnRandomChallenge() (string, error) {
 	if _, err := rand.Read(buf); err != nil {
 		return "", err
 	}
+
 	return hex.EncodeToString(buf), nil
 }
 
@@ -257,20 +279,24 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 	if err != nil {
 		return nil, err
 	}
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Challenge, error) {
 		sessionRaw, err := json.Marshal(session)
 		if err != nil {
 			return nil, err
 		}
+
 		cer := domain.WebAuthnCeremonyData{
 			PublicKey: publicKey,
 			Session:   sessionRaw,
 			AccountID: accountID,
 		}
+
 		data, err := marshal(cer)
 		if err != nil {
 			return nil, err
 		}
+
 		ch := &domain.Challenge{
 			ID:        newUUID(),
 			Type:      ctype,
@@ -279,6 +305,7 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 		}
 		rm := json.RawMessage(data)
 		hash := null.From(webauthnHash(session.Challenge))
+
 		setter := &models.IamChallengeSetter{
 			ID:          &ch.ID,
 			ProjectID:   &projectID,
@@ -292,6 +319,7 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "webauthn.challenge.created",
 			ProjectID:   projectID,
@@ -301,6 +329,7 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 		}); err != nil {
 			return nil, err
 		}
+
 		return ch, nil
 	})
 }
@@ -312,23 +341,29 @@ func (a *pgWebAuthnAccounts) loadCeremony(ctx context.Context, projectID, challe
 	if err != nil {
 		return nil, nil, nil, translatePgErr("challenge", err)
 	}
+
 	if row.ProjectID != projectID || row.Type != ctype { // tenant + ceremony boundary
 		return nil, nil, nil, domain.ErrChallengeInvalid
 	}
+
 	if row.Consumed {
 		return nil, nil, nil, domain.ErrChallengeInvalid
 	}
+
 	if nowUTC().After(row.ExpiresAt) {
 		return nil, nil, nil, domain.ErrChallengeExpired
 	}
+
 	var cer domain.WebAuthnCeremonyData
 	if err := unmarshal(row.Data, &cer); err != nil {
 		return nil, nil, nil, err
 	}
+
 	var session gowebauthn.SessionData
 	if err := json.Unmarshal(cer.Session, &session); err != nil {
 		return nil, nil, nil, domain.ErrChallengeInvalid
 	}
+
 	return row, &cer, &session, nil
 }
 
@@ -339,10 +374,12 @@ func webauthnOptionsMap(v any) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var out map[string]any
 	if err := json.Unmarshal(raw, &out); err != nil {
 		return nil, err
 	}
+
 	return out, nil
 }
 
@@ -353,6 +390,7 @@ func webauthnCredentialReader(credential map[string]any) (*bytes.Reader, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	return bytes.NewReader(raw), nil
 }
 
@@ -366,13 +404,16 @@ func (a *pgWebAuthnAccounts) loadCredential(ctx context.Context, accountID, cred
 	if err != nil {
 		return nil, nil, translatePgErr("webauthn_credential", err)
 	}
+
 	if row.UserID != accountID { // ownership boundary
 		return nil, nil, domain.ErrNotFound
 	}
+
 	var stored domain.WebAuthnStoredCredential
 	if err := unmarshal(row.Data, &stored); err != nil {
 		return nil, nil, err
 	}
+
 	return row, &stored, nil
 }
 
@@ -393,6 +434,7 @@ func (a *pgWebAuthnAccounts) BeginLogin(ctx context.Context, projectID, email st
 	if email == "" {
 		return nil, domain.ErrInvalidCredentials
 	}
+
 	rows, err := models.IamUsers.Query(
 		sm.Where(models.IamUsers.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamUsers.Columns.PrimaryEmail.EQ(psql.Arg(email))),
@@ -400,20 +442,25 @@ func (a *pgWebAuthnAccounts) BeginLogin(ctx context.Context, projectID, email st
 	if err != nil {
 		return nil, err
 	}
+
 	if len(rows) == 0 {
 		return nil, domain.ErrInvalidCredentials
 	}
+
 	var acct domain.Account
 	if err := unmarshal(rows[0].Data, &acct); err != nil {
 		return nil, err
 	}
+
 	creds, err := a.loadLibraryCredentials(ctx, acct.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	if len(creds) == 0 {
 		return nil, domain.ErrInvalidCredentials
 	}
+
 	user := &webauthnUser{account: &acct, creds: creds}
 
 	// BeginLogin mints the publicKey request options + the SessionData snapshot
@@ -423,10 +470,12 @@ func (a *pgWebAuthnAccounts) BeginLogin(ctx context.Context, projectID, email st
 	if err != nil {
 		return nil, domain.ErrProviderError
 	}
+
 	publicKey, err := webauthnOptionsMap(assertion.Response)
 	if err != nil {
 		return nil, err
 	}
+
 	return a.insertCeremony(ctx, projectID, "webauthn_login", publicKey, session, acct.ID)
 }
 
@@ -442,6 +491,7 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		acct *domain.Account
 		sess *domain.Session
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (loginResult, error) {
 		// We must locate the challenge to know which project we operate in.
 		// M-13 note: the challenge lookup is by primary key only (no projectID
@@ -454,12 +504,15 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		if err != nil {
 			return loginResult{}, translatePgErr("challenge", err)
 		}
+
 		if row.Type != "webauthn_login" || row.Consumed {
 			return loginResult{}, domain.ErrChallengeInvalid
 		}
+
 		if nowUTC().After(row.ExpiresAt) {
 			return loginResult{}, domain.ErrChallengeExpired
 		}
+
 		projectID := row.ProjectID
 
 		_, cer, session, err := a.loadCeremony(ctx, projectID, challengeID, "webauthn_login")
@@ -485,10 +538,12 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		if err != nil {
 			return loginResult{}, err
 		}
+
 		parsed, err := protocol.ParseCredentialRequestResponseBody(reader)
 		if err != nil {
 			return loginResult{}, domain.ErrMFAInvalid
 		}
+
 		validated, err := w.ValidateLogin(user, *session, parsed)
 		if err != nil {
 			return loginResult{}, domain.ErrMFAInvalid
@@ -498,10 +553,12 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		// library credential id is the raw byte id; our row keys on the base64url
 		// credential id surfaced to the client.
 		credID := base64.RawURLEncoding.EncodeToString(validated.ID)
+
 		credRow, err := models.FindIamWebauthnCredential(ctx, a.db.Bobx(), credID)
 		if err != nil {
 			return loginResult{}, translatePgErr("webauthn_credential", err)
 		}
+
 		if credRow.ProjectID != projectID || credRow.UserID != cer.AccountID {
 			return loginResult{}, domain.ErrMFAInvalid
 		}
@@ -518,25 +575,33 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 			}); err != nil {
 				slog.Error("webauthn: failed to emit clone_detected event", "err", err, "credential_id", credID)
 			}
+
 			return loginResult{}, domain.ErrMFAInvalid
 		}
+
 		var stored domain.WebAuthnStoredCredential
 		if err := unmarshal(credRow.Data, &stored); err != nil {
 			return loginResult{}, err
 		}
+
 		now := nowUTC()
 		stored.Credential.LastUsedAt = now
+
 		libRaw, err := json.Marshal(validated)
 		if err != nil {
 			return loginResult{}, err
 		}
+
 		stored.Library = libRaw
+
 		storedRaw, err := marshal(stored)
 		if err != nil {
 			return loginResult{}, err
 		}
+
 		rmStored := json.RawMessage(storedRaw)
 		used := null.From(now)
+
 		pk := null.From(validated.PublicKey)
 		if err := credRow.Update(ctx, a.db.Bobx(), &models.IamWebauthnCredentialSetter{
 			SignCount:  ptr(int64(validated.Authenticator.SignCount)),
@@ -556,10 +621,12 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		// Mint the session. The access token is a signed RS256 JWT from the
 		// project's active signing key (jwx); the refresh token stays opaque.
 		sessionID := newUUID()
+
 		signEnv, err := resolveSignEnv(ctx, a.db, projectID, webauthnSignerEnv)
 		if err != nil {
 			return loginResult{}, err
 		}
+
 		accessToken, err := a.db.Signer().Sign(ctx, projectID, signEnv, map[string]any{
 			"iss": oidcIssuer(projectID, signEnv),
 			"sub": acct.ID,
@@ -575,10 +642,12 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		if err != nil {
 			return loginResult{}, err
 		}
+
 		refresh, err := webauthnRandomChallenge()
 		if err != nil {
 			return loginResult{}, err
 		}
+
 		sess := &domain.Session{
 			ID:           sessionID,
 			AccountID:    acct.ID,
@@ -599,11 +668,13 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		}); err != nil {
 			return loginResult{}, err
 		}
+
 		return loginResult{acct: acct, sess: sess}, nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return res.acct, res.sess, nil
 }
 
@@ -613,12 +684,14 @@ func (a *pgWebAuthnAccounts) BeginRegistration(ctx context.Context, accountID st
 	if err != nil {
 		return nil, translatePgErr("user", err)
 	}
+
 	projectID := userRow.ProjectID
 
 	w, err := a.rpConfigFor(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
+
 	user, err := a.loadWebauthnUser(ctx, accountID)
 	if err != nil {
 		return nil, err
@@ -635,10 +708,12 @@ func (a *pgWebAuthnAccounts) BeginRegistration(ctx context.Context, accountID st
 	if err != nil {
 		return nil, domain.ErrProviderError
 	}
+
 	publicKey, err := webauthnOptionsMap(creation.Response)
 	if err != nil {
 		return nil, err
 	}
+
 	return a.insertCeremony(ctx, projectID, "webauthn_register", publicKey, session, accountID)
 }
 
@@ -652,12 +727,14 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 		if err != nil {
 			return nil, translatePgErr("user", err)
 		}
+
 		projectID := userRow.ProjectID
 
 		row, cer, session, err := a.loadCeremony(ctx, projectID, challengeID, "webauthn_register")
 		if err != nil {
 			return nil, err
 		}
+
 		if cer.AccountID != accountID {
 			return nil, domain.ErrChallengeInvalid
 		}
@@ -666,6 +743,7 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 		if err != nil {
 			return nil, err
 		}
+
 		user, err := a.loadWebauthnUser(ctx, accountID)
 		if err != nil {
 			return nil, err
@@ -685,10 +763,12 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 		if err != nil {
 			return nil, err
 		}
+
 		parsed, err := protocol.ParseCredentialCreationResponseBody(reader)
 		if err != nil {
 			return nil, domain.ErrMFAInvalid
 		}
+
 		libCred, err := w.CreateCredential(user, *session, parsed)
 		if err != nil {
 			return nil, domain.ErrMFAInvalid
@@ -702,21 +782,27 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 			Name:      name,
 			CreatedAt: now,
 		}
+
 		libRaw, err := json.Marshal(libCred)
 		if err != nil {
 			return nil, err
 		}
+
 		stored := domain.WebAuthnStoredCredential{Credential: cred, Library: libRaw}
+
 		data, err := marshal(stored)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(data)
 		pubKey := null.From(libCred.PublicKey)
+
 		credEnv := userRow.Environment
 		if credEnv == "" {
 			credEnv = webauthnSignerEnv
 		}
+
 		setter := &models.IamWebauthnCredentialSetter{
 			ID:           &credID,
 			ProjectID:    &projectID,
@@ -732,12 +818,14 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
 
 		if err := a.consumeChallenge(ctx, row); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "webauthn.credential.registered",
 			ProjectID:   projectID,
@@ -747,6 +835,7 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 		}); err != nil {
 			return nil, err
 		}
+
 		return &cred, nil
 	})
 }
@@ -759,19 +848,23 @@ func (a *pgWebAuthnAccounts) ListCredentials(ctx context.Context, accountID stri
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.WebAuthnCredential, 0, len(rows))
 	for _, row := range rows {
 		var stored domain.WebAuthnStoredCredential
 		if err := unmarshal(row.Data, &stored); err != nil {
 			return nil, err
 		}
+
 		cred := stored.Credential
 		// Reflect persisted ceremony timestamps onto the aggregate.
 		if row.LastUsedAt.IsValue() {
 			cred.LastUsedAt = row.LastUsedAt.GetOrZero()
 		}
+
 		out = append(out, cred)
 	}
+
 	return out, nil
 }
 
@@ -782,10 +875,12 @@ func (a *pgWebAuthnAccounts) RemoveCredential(ctx context.Context, accountID, cr
 		if err != nil {
 			return err
 		}
+
 		projectID := row.ProjectID
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "webauthn.credential.removed",
 			ProjectID:   projectID,
@@ -795,6 +890,7 @@ func (a *pgWebAuthnAccounts) RemoveCredential(ctx context.Context, accountID, cr
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -806,19 +902,24 @@ func (a *pgWebAuthnAccounts) RenameCredential(ctx context.Context, cmd domain.We
 		if err != nil {
 			return nil, err
 		}
+
 		stored.Credential.Name = cmd.Name
+
 		data, err := marshal(stored)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(data)
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamWebauthnCredentialSetter{Data: &rm}); err != nil {
 			return nil, err
 		}
+
 		cred := stored.Credential
 		if row.LastUsedAt.IsValue() {
 			cred.LastUsedAt = row.LastUsedAt.GetOrZero()
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "webauthn.credential.renamed",
 			ProjectID:   row.ProjectID,
@@ -828,6 +929,7 @@ func (a *pgWebAuthnAccounts) RenameCredential(ctx context.Context, cmd domain.We
 		}); err != nil {
 			return nil, err
 		}
+
 		return &cred, nil
 	})
 }

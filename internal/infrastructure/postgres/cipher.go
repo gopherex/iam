@@ -7,7 +7,7 @@ package postgres
 // they are already one-way.
 //
 // Format: an encrypted value is "enc:v1:<base64(nonce || ciphertext)>". Decrypt
-// recognises that prefix; any value without it is treated as legacy plaintext and
+// recognizes that prefix; any value without it is treated as legacy plaintext and
 // returned as-is, so encryption can be enabled on an existing database and rows
 // migrate lazily (re-encrypted on their next write).
 
@@ -46,6 +46,7 @@ func (identityCipher) Decrypt(value string) (string, error) {
 	if strings.HasPrefix(value, cipherPrefix) {
 		return "", errors.New("postgres: encrypted secret found but no encryption key is configured")
 	}
+
 	return value, nil
 }
 
@@ -58,21 +59,26 @@ func NewCipher(keyB64 string) (Cipher, error) {
 	if keyB64 == "" {
 		return NewIdentityCipher(), nil
 	}
+
 	key, err := base64.StdEncoding.DecodeString(keyB64)
 	if err != nil {
 		return nil, errors.New("postgres: encryption key must be base64-encoded")
 	}
+
 	if len(key) != 32 {
 		return nil, errors.New("postgres: encryption key must decode to 32 bytes (AES-256)")
 	}
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
+
 	aead, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
+
 	return &aesCipher{aead: aead}, nil
 }
 
@@ -81,7 +87,9 @@ func (c *aesCipher) Encrypt(plaintext string) (string, error) {
 	if _, err := rand.Read(nonce); err != nil {
 		return "", err
 	}
+
 	ct := c.aead.Seal(nonce, nonce, []byte(plaintext), nil)
+
 	return cipherPrefix + base64.StdEncoding.EncodeToString(ct), nil
 }
 
@@ -89,18 +97,23 @@ func (c *aesCipher) Decrypt(value string) (string, error) {
 	if !strings.HasPrefix(value, cipherPrefix) {
 		return value, nil // legacy plaintext
 	}
+
 	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(value, cipherPrefix))
 	if err != nil {
 		return "", err
 	}
+
 	ns := c.aead.NonceSize()
 	if len(raw) < ns {
 		return "", errors.New("postgres: ciphertext too short")
 	}
+
 	nonce, ct := raw[:ns], raw[ns:]
+
 	pt, err := c.aead.Open(nil, nonce, ct, nil)
 	if err != nil {
 		return "", err
 	}
+
 	return string(pt), nil
 }

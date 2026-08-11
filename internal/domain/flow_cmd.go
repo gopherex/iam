@@ -162,7 +162,7 @@ type FlowCreateCmd struct {
 	// Provider is the OAuth provider id for the oauth signin method.
 	Provider string
 	// RedirectTo optionally overrides the cross-device "continue" deep-link base
-	// for this flow. The notification layer only honours it when its origin
+	// for this flow. The notification layer only honors it when its origin
 	// (scheme+host) matches the project's configured app_base_url; otherwise it
 	// falls back to app_base_url.
 	RedirectTo string

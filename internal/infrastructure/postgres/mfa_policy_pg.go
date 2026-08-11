@@ -43,22 +43,27 @@ import (
 // the spec works directly.
 func (a *pgMFAAccounts) mfaLoadPolicy(ctx context.Context, projectID string) (domain.MFAPolicySpec, error) {
 	var pol domain.MFAPolicySpec
+
 	env, err := effectiveEnv(ctx, a.db, projectID, mfaDefaultEnv)
 	if err != nil {
 		return pol, err
 	}
+
 	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, env, "mfa_policy")
 	if err != nil {
 		if errors.Is(translatePgErr("config", err), ErrNotFound) {
 			return pol, nil // no policy => allow all (backward compatible)
 		}
+
 		return pol, err
 	}
+
 	if len(row.Data) > 0 {
 		if err := unmarshal(row.Data, &pol); err != nil {
 			return pol, err
 		}
 	}
+
 	return pol, nil
 }
 
@@ -67,7 +72,7 @@ func (a *pgMFAAccounts) mfaLoadPolicy(ctx context.Context, projectID string) (do
 // internal/DB factor name ("totp"/"sms"/"email"/"webauthn"/"recovery"); the
 // policy-name mapping (email->email_otp, recovery->backup_codes) is handled by
 // domain.MFAPolicySpec.FactorAllowed. A missing policy or an unset/empty
-// allowed_factors list allows every factor (no change from prior behaviour).
+// allowed_factors list allows every factor (no change from prior behavior).
 //
 // Only ENROLLMENT is gated. Challenge/verify of a factor enrolled before a
 // policy tightening must keep working so a policy change never locks users out.
@@ -76,9 +81,11 @@ func (a *pgMFAAccounts) mfaGateEnroll(ctx context.Context, projectID, dbFactorTy
 	if err != nil {
 		return err
 	}
+
 	if !pol.FactorAllowed(dbFactorType) {
 		return domain.ErrMFAFactorNotAllowed.WithMessage(
 			"MFA factor " + domain.MFAPolicyFactorName(dbFactorType) + " is not permitted by policy")
 	}
+
 	return nil
 }

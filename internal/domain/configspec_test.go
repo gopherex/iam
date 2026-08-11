@@ -15,15 +15,19 @@ func ptr[T any](v T) *T { return &v }
 // when it should fail, that the error is errors.Is(ErrValidation).
 func assertValidate(t *testing.T, name string, err error, wantErr bool) {
 	t.Helper()
+
 	if wantErr {
 		if err == nil {
 			t.Fatalf("%s: expected ErrValidation, got nil", name)
 		}
+
 		if !errors.Is(err, domain.ErrValidation) {
 			t.Fatalf("%s: expected errors.Is(err, ErrValidation), got %v", name, err)
 		}
+
 		return
 	}
+
 	if err != nil {
 		t.Fatalf("%s: expected no error, got %v", name, err)
 	}
@@ -35,6 +39,7 @@ func assertValidate(t *testing.T, name string, err error, wantErr bool) {
 
 func TestAuthConfigSpec_Validate(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name    string
 		spec    domain.AuthConfigSpec
@@ -111,7 +116,7 @@ func TestAuthConfigSpec_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "default_locale honours legacy locales key",
+			name:    "default_locale honors legacy locales key",
 			spec:    domain.AuthConfigSpec{DefaultLocale: ptr("ru"), Locales: []string{"en", "ru"}},
 			wantErr: false,
 		},
@@ -136,6 +141,7 @@ func TestAuthConfigSpec_Validate(t *testing.T) {
 
 func TestParseAuthConfig_RejectsUnknownFields(t *testing.T) {
 	t.Parallel()
+
 	_, err := domain.ParseAuthConfig([]byte(`{"methods":["email"],"bogus":true}`))
 	assertValidate(t, "unknown top-level field", err, true)
 
@@ -143,6 +149,7 @@ func TestParseAuthConfig_RejectsUnknownFields(t *testing.T) {
 	if err != nil {
 		t.Fatalf("valid doc should parse: %v", err)
 	}
+
 	if len(got.Methods) != 2 {
 		t.Fatalf("expected 2 methods, got %v", got.Methods)
 	}
@@ -154,6 +161,7 @@ func TestParseAuthConfig_RejectsUnknownFields(t *testing.T) {
 
 func TestPasswordPolicySpec_Validate(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name    string
 		spec    domain.PasswordPolicySpec
@@ -188,6 +196,7 @@ func TestPasswordPolicySpec_Validate(t *testing.T) {
 
 func TestSessionPolicySpec_Validate(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name    string
 		spec    domain.SessionPolicySpec
@@ -238,6 +247,7 @@ func TestSessionPolicySpec_Validate(t *testing.T) {
 
 func TestMFAPolicySpec_Validate(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name    string
 		spec    domain.MFAPolicySpec
@@ -293,6 +303,7 @@ func TestMFAPolicySpec_Validate(t *testing.T) {
 // the rest identity).
 func TestMFAPolicyFactorName(t *testing.T) {
 	t.Parallel()
+
 	cases := map[string]string{
 		"email":        "email_otp",
 		"recovery":     "backup_codes",
@@ -312,6 +323,7 @@ func TestMFAPolicyFactorName(t *testing.T) {
 // the name-mapped factors and the "unset => allow all" backward-compat path.
 func TestMFAPolicySpec_FactorAllowed(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name    string
 		spec    domain.MFAPolicySpec
@@ -330,6 +342,7 @@ func TestMFAPolicySpec_FactorAllowed(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
 			if got := tt.spec.FactorAllowed(tt.db); got != tt.allowed {
 				t.Errorf("FactorAllowed(%q) = %v, want %v", tt.db, got, tt.allowed)
 			}
@@ -343,6 +356,7 @@ func TestMFAPolicySpec_FactorAllowed(t *testing.T) {
 
 func TestRateLimitsSpec_Validate(t *testing.T) {
 	t.Parallel()
+
 	validRule := func() domain.RateLimitRuleSpec {
 		return domain.RateLimitRuleSpec{
 			Endpoint:      ptr("/v1/auth/sign-in/password"),
@@ -354,8 +368,10 @@ func TestRateLimitsSpec_Validate(t *testing.T) {
 	with := func(mut func(*domain.RateLimitRuleSpec)) domain.RateLimitsSpec {
 		r := validRule()
 		mut(&r)
+
 		return domain.RateLimitsSpec{Rules: []domain.RateLimitRuleSpec{r}}
 	}
+
 	tests := []struct {
 		name    string
 		spec    domain.RateLimitsSpec
@@ -394,6 +410,7 @@ func TestRateLimitsSpec_Validate(t *testing.T) {
 
 func TestConsentConfigSpec_Validate(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name    string
 		spec    domain.ConsentConfigSpec
@@ -476,6 +493,7 @@ func TestConsentConfigSpec_Validate(t *testing.T) {
 
 func TestFeaturesSpec_Validate(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name    string
 		spec    domain.FeaturesSpec
@@ -500,6 +518,7 @@ func TestFeaturesSpec_Validate(t *testing.T) {
 
 func TestProviderConfigSpec_Validate(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name    string
 		spec    domain.ProviderConfigSpec
@@ -542,6 +561,7 @@ func TestProviderConfigSpec_Validate(t *testing.T) {
 // against the registry drifting away from the realized phone-login enforcement.
 func TestRateLimitEndpoints_PhoneOTP(t *testing.T) {
 	t.Parallel()
+
 	for _, ep := range []string{
 		"/v1/auth/otp/start",
 		"/v1/auth/otp/verify",
@@ -559,18 +579,22 @@ func TestRateLimitEndpoints_PhoneOTP(t *testing.T) {
 
 func TestSupportedAuthMethods_FilterContract(t *testing.T) {
 	t.Parallel()
+
 	stored := []string{"email", "username", "passkey", "phone", "magic_link", "oauth"}
 	want := []string{"email", "passkey", "phone", "magic_link", "oauth"}
 
 	var got []string
+
 	for _, m := range stored {
 		if domain.SupportedAuthMethods.Has(m) {
 			got = append(got, m)
 		}
 	}
+
 	if len(got) != len(want) {
 		t.Fatalf("filtered methods = %v, want %v", got, want)
 	}
+
 	for i := range want {
 		if got[i] != want[i] {
 			t.Fatalf("filtered methods = %v, want %v (order preserved)", got, want)

@@ -22,21 +22,26 @@ func NormalizeOrigin(raw string) string {
 	if s == "" || s == "*" || strings.EqualFold(s, "null") {
 		return ""
 	}
+
 	u, err := url.Parse(s)
 	if err != nil || u.Host == "" {
 		return ""
 	}
+
 	scheme := strings.ToLower(u.Scheme)
 	if scheme != "http" && scheme != "https" {
 		return ""
 	}
+
 	if (u.Path != "" && u.Path != "/") || u.RawQuery != "" || u.Fragment != "" || u.User != nil {
 		return ""
 	}
+
 	host := strings.ToLower(u.Hostname())
 	if scheme == "http" && host != "localhost" && host != "127.0.0.1" && host != "::1" {
 		return ""
 	}
+
 	return scheme + "://" + strings.ToLower(u.Host)
 }
 
@@ -44,20 +49,25 @@ func NormalizeOrigin(raw string) string {
 // dropping invalid entries and capping the count.
 func NormalizeOrigins(in []string) []string {
 	seen := make(map[string]struct{}, len(in))
+
 	out := make([]string, 0, len(in))
 	for _, o := range in {
 		n := NormalizeOrigin(o)
 		if n == "" {
 			continue
 		}
+
 		if _, ok := seen[n]; ok {
 			continue
 		}
+
 		seen[n] = struct{}{}
+
 		out = append(out, n)
 		if len(out) >= maxAllowedOrigins {
 			break
 		}
 	}
+
 	return out
 }

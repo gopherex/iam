@@ -88,6 +88,7 @@ func Warm(ctx context.Context, auth Authenticator) error {
 	if w, ok := auth.(Warmer); ok {
 		return w.Warm(ctx)
 	}
+
 	return nil
 }
 
@@ -96,6 +97,7 @@ func Refresh(ctx context.Context, auth Authenticator) error {
 	if r, ok := auth.(Refresher); ok {
 		return r.Refresh(ctx)
 	}
+
 	return nil
 }
 
@@ -105,18 +107,22 @@ func New(config Config) (*Client, error) {
 	if baseURL == "" {
 		return nil, errors.New("iam sdk: base url is required")
 	}
+
 	credential := strings.TrimSpace(config.Credential)
 	if credential == "" {
 		return nil, errors.New("iam sdk: credential is required")
 	}
+
 	opts := []oas.ClientOption(nil)
 	if config.HTTPClient != nil {
 		opts = append(opts, oas.WithClient(config.HTTPClient))
 	}
+
 	c, err := oas.NewClient(baseURL, staticSecuritySource{token: credential}, opts...)
 	if err != nil {
 		return nil, err
 	}
+
 	return &Client{oas: c}, nil
 }
 
@@ -142,12 +148,15 @@ func NewVerifier(config Config, opts ...VerifierOption) (*Verifier, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	v := &Verifier{client: c}
+
 	for _, opt := range opts {
 		if opt != nil {
 			opt(v)
 		}
 	}
+
 	return v, nil
 }
 
@@ -157,24 +166,29 @@ func (v *Verifier) Verify(ctx context.Context, token string) (*VerifyResult, err
 	if token == "" {
 		return nil, ErrMissingToken
 	}
+
 	req := &oas.PostV1TokensVerifyReq{Token: token}
 	if v.audience != "" {
 		req.Audience = oas.NewOptString(v.audience)
 	}
+
 	res, err := v.client.oas.PostV1TokensVerify(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+
 	claims := Claims{}
 	if raw, ok := res.Claims.Get(); ok {
 		claims = rawMapToClaims(map[string]jx.Raw(raw))
 	}
+
 	out := &VerifyResult{
 		Valid:  res.Valid.Or(false),
 		Error:  res.Error.Or(""),
 		Claims: claims,
 	}
 	out.Principal = principalFromClaims(claims)
+
 	return out, nil
 }
 
@@ -184,16 +198,19 @@ func (v *Verifier) Introspect(ctx context.Context, token string) (*VerifyResult,
 	if token == "" {
 		return nil, ErrMissingToken
 	}
+
 	res, err := v.client.oas.PostV1TokensIntrospect(ctx, &oas.PostV1TokensIntrospectReq{Token: token})
 	if err != nil {
 		return nil, err
 	}
+
 	claims := rawMapToClaims(map[string]jx.Raw(res.AdditionalProps))
 	out := &VerifyResult{
 		Valid:  res.Active.Or(false),
 		Claims: claims,
 	}
 	out.Principal = principalFromClaims(claims)
+
 	return out, nil
 }
 
@@ -203,12 +220,15 @@ func (v *Verifier) Authenticate(ctx context.Context, token string) (*Principal, 
 	if err != nil {
 		return nil, err
 	}
+
 	if !res.Valid {
 		if res.Error != "" {
 			return nil, fmt.Errorf("%w: %s", ErrInvalidToken, res.Error)
 		}
+
 		return nil, ErrInvalidToken
 	}
+
 	return &res.Principal, nil
 }
 
@@ -225,11 +245,14 @@ func (v *Verifier) Refresh(context.Context) error {
 // BearerToken extracts an Authorization: Bearer token from an HTTP request.
 func BearerToken(r *http.Request) (string, bool) {
 	value := r.Header.Get("Authorization")
+
 	scheme, token, ok := strings.Cut(value, " ")
 	if !ok || !strings.EqualFold(scheme, "Bearer") {
 		return "", false
 	}
+
 	token = strings.TrimSpace(token)
+
 	return token, token != ""
 }
 
@@ -255,24 +278,29 @@ func rawMapToClaims(raw map[string]jx.Raw) Claims {
 			claims[k] = string(v)
 			continue
 		}
+
 		claims[k] = out
 	}
+
 	return claims
 }
 
 func principalFromClaims(claims Claims) Principal {
 	subject := claimString(claims, "sub")
 	projectID := claimString(claims, "pid")
+
 	environment := claimString(claims, "env")
 	if projectID == "" || environment == "" {
 		issuerProjectID, issuerEnvironment := parseIssuer(claimString(claims, "iss"))
 		if projectID == "" {
 			projectID = issuerProjectID
 		}
+
 		if environment == "" {
 			environment = issuerEnvironment
 		}
 	}
+
 	return Principal{
 		Subject:     subject,
 		AccountID:   subject,
@@ -294,6 +322,7 @@ func firstNonEmpty(values ...string) string {
 			return v
 		}
 	}
+
 	return ""
 }
 
@@ -305,7 +334,9 @@ func claimString(claims Claims, key string) string {
 		if len(v) == 0 {
 			return ""
 		}
+
 		s, _ := v[0].(string)
+
 		return s
 	default:
 		return ""
@@ -332,6 +363,7 @@ func claimStringSlice(claims Claims, keys ...string) []string {
 			if v == "" {
 				continue
 			}
+
 			return strings.Fields(v)
 		case []string:
 			return append([]string(nil), v...)
@@ -343,11 +375,13 @@ func claimStringSlice(claims Claims, keys ...string) []string {
 					out = append(out, s)
 				}
 			}
+
 			if len(out) > 0 {
 				return out
 			}
 		}
 	}
+
 	return nil
 }
 

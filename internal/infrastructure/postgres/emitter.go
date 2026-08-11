@@ -30,27 +30,31 @@ type Emitter interface {
 // outboxEmitter maps domain.Event onto an outbox.Message and enqueues it.
 type outboxEmitter struct{ ob *outbox.Outbox }
 
-// NewOutboxEmitter builds the outbox-backed Emitter over an initialised
+// NewOutboxEmitter builds the outbox-backed Emitter over an initialized
 // *outbox.Outbox (constructed with db.TxDB as its enqueue executor).
 func NewOutboxEmitter(ob *outbox.Outbox) *outboxEmitter { return &outboxEmitter{ob: ob} }
 
 var _ Emitter = (*outboxEmitter)(nil)
 
-// Emit serialises the event and enqueues it on the caller's transaction.
+// Emit serializes the event and enqueues it on the caller's transaction.
 func (e *outboxEmitter) Emit(ctx context.Context, ev domain.Event) error {
 	if ev.ID == "" {
 		ev.ID = newUUID()
 	}
+
 	if ev.Version == 0 {
 		ev.Version = 1
 	}
+
 	if ev.OccurredAt.IsZero() {
 		ev.OccurredAt = nowUTC()
 	}
+
 	payload, err := json.Marshal(ev)
 	if err != nil {
 		return err
 	}
+
 	return e.ob.Enqueue(ctx, outbox.Message{
 		ID:           ev.ID,
 		Topic:        "iam." + aggregateOf(ev.Type),
@@ -72,5 +76,6 @@ func aggregateOf(eventType string) string {
 	if i := strings.IndexByte(eventType, '.'); i >= 0 {
 		return eventType[:i]
 	}
+
 	return eventType
 }

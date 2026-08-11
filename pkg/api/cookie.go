@@ -50,6 +50,7 @@ func FlowCookieClear() []string {
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
 	}
+
 	return []string{c.String()}
 }
 
@@ -63,5 +64,6 @@ func cookieHeader(name, value, path string, ttl time.Duration) string {
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   int(ttl / time.Second),
 	}
+
 	return c.String()
 }

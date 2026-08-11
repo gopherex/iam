@@ -10,10 +10,11 @@ package grpc
 import (
 	"context"
 
-	"github.com/gopherex/iam/pkg/sdk"
 	googlegrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gopherex/iam/pkg/sdk"
 )
 
 func check(ctx context.Context, ok func(*sdk.Principal) bool) error {
@@ -21,9 +22,11 @@ func check(ctx context.Context, ok func(*sdk.Principal) bool) error {
 	if !present {
 		return status.Error(codes.Unauthenticated, "missing principal")
 	}
+
 	if !ok(principal) {
 		return status.Error(codes.PermissionDenied, "insufficient claims")
 	}
+
 	return nil
 }
 
@@ -32,6 +35,7 @@ func unaryGuard(ok func(*sdk.Principal) bool) googlegrpc.UnaryServerInterceptor 
 		if err := check(ctx, ok); err != nil {
 			return nil, err
 		}
+
 		return handler(ctx, req)
 	}
 }
@@ -41,6 +45,7 @@ func streamGuard(ok func(*sdk.Principal) bool) googlegrpc.StreamServerIntercepto
 		if err := check(stream.Context(), ok); err != nil {
 			return err
 		}
+
 		return handler(srv, stream)
 	}
 }

@@ -19,22 +19,27 @@ func TestCORSDynamicOriginAllowed(t *testing.T) {
 		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }))
 
 	// Registered dynamic origin -> reflected with credentials.
-	req := httptest.NewRequest("GET", "/v1/config/public", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/config/public", nil)
 	req.Header.Set("Origin", "https://landing.example.com")
+
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
+
 	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "https://landing.example.com" {
 		t.Fatalf("dynamic origin ACAO = %q, want reflected", got)
 	}
+
 	if rec.Header().Get("Access-Control-Allow-Credentials") != "true" {
 		t.Fatal("dynamic origin must be credentialed")
 	}
 
 	// Unregistered origin -> no ACAO.
-	req2 := httptest.NewRequest("GET", "/v1/config/public", nil)
+	req2 := httptest.NewRequest(http.MethodGet, "/v1/config/public", nil)
 	req2.Header.Set("Origin", "https://evil.com")
+
 	rec2 := httptest.NewRecorder()
 	handler.ServeHTTP(rec2, req2)
+
 	if got := rec2.Header().Get("Access-Control-Allow-Origin"); got != "" {
 		t.Fatalf("unregistered origin ACAO = %q, want empty", got)
 	}
@@ -45,20 +50,23 @@ func TestCORSWildcardNoCredentials(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("OPTIONS", "/v1/auth/register", nil)
+	req := httptest.NewRequest(http.MethodOptions, "/v1/auth/register", nil)
 	req.Header.Set("Origin", "https://evil.com")
 	req.Header.Set("Access-Control-Request-Method", "POST")
 	req.Header.Set("Access-Control-Request-Headers", "Authorization,Content-Type")
+
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("preflight: expected 204, got %d", rec.Code)
 	}
+
 	acao := rec.Header().Get("Access-Control-Allow-Origin")
 	if acao != "*" {
 		t.Fatalf("wildcard CORS: expected ACAO=*, got %q", acao)
 	}
+
 	acac := rec.Header().Get("Access-Control-Allow-Credentials")
 	if acac == "true" {
 		t.Fatal("wildcard CORS must NOT set Allow-Credentials: true")
@@ -70,10 +78,11 @@ func TestCORSExplicitOriginWithCredentials(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("OPTIONS", "/v1/auth/register", nil)
+	req := httptest.NewRequest(http.MethodOptions, "/v1/auth/register", nil)
 	req.Header.Set("Origin", "https://app.example.com")
 	req.Header.Set("Access-Control-Request-Method", "POST")
 	req.Header.Set("Access-Control-Request-Headers", "Authorization,Content-Type")
+
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
@@ -81,6 +90,7 @@ func TestCORSExplicitOriginWithCredentials(t *testing.T) {
 	if acao != "https://app.example.com" {
 		t.Fatalf("explicit origin: expected ACAO=https://app.example.com, got %q", acao)
 	}
+
 	acac := rec.Header().Get("Access-Control-Allow-Credentials")
 	if acac != "true" {
 		t.Fatal("explicit origin should set Allow-Credentials: true")
@@ -92,10 +102,11 @@ func TestCORSRejectsUnknownOrigin(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("OPTIONS", "/v1/auth/register", nil)
+	req := httptest.NewRequest(http.MethodOptions, "/v1/auth/register", nil)
 	req.Header.Set("Origin", "https://evil.com")
 	req.Header.Set("Access-Control-Request-Method", "POST")
 	req.Header.Set("Access-Control-Request-Headers", "Authorization")
+
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
@@ -110,7 +121,7 @@ func TestSecurityHeadersPresent(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
@@ -125,6 +136,7 @@ func TestSecurityHeadersPresent(t *testing.T) {
 			t.Errorf("missing security header: %s", h)
 		}
 	}
+
 	hsts := rec.Header().Get("Strict-Transport-Security")
 	if strings.Contains(hsts, "includeSubDomains") {
 		t.Errorf("HSTS should not include includeSubDomains: %q", hsts)

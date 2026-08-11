@@ -39,6 +39,7 @@ func (a *pgRateLimits) RateLimitRules(ctx context.Context, clientID, env string)
 	if clientID == "" {
 		return nil, nil // no project context -> defaults
 	}
+
 	if env == "" {
 		env = runtimeDefaultEnv
 	}
@@ -52,8 +53,10 @@ func (a *pgRateLimits) RateLimitRules(ctx context.Context, clientID, env string)
 		if errors.Is(translatePgErr("config", err), ErrNotFound) {
 			return nil, nil // no doc -> defaults
 		}
+
 		return nil, err
 	}
+
 	if len(row.Data) == 0 {
 		return nil, nil
 	}
@@ -68,9 +71,11 @@ func (a *pgRateLimits) RateLimitRules(ctx context.Context, clientID, env string)
 		if r.Endpoint == nil || r.Limit == nil || r.WindowSeconds == nil || r.By == nil {
 			continue
 		}
+
 		if *r.By != "ip" || !domain.RateLimitEndpoints.Has(*r.Endpoint) {
 			continue
 		}
+
 		rules = append(rules, api.RateLimitRule{
 			Endpoint: *r.Endpoint,
 			Limit:    *r.Limit,
@@ -78,5 +83,6 @@ func (a *pgRateLimits) RateLimitRules(ctx context.Context, clientID, env string)
 			By:       *r.By,
 		})
 	}
+
 	return rules, nil
 }

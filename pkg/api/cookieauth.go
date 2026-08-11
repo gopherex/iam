@@ -18,6 +18,7 @@ func CookieAuthMiddleware(next http.Handler) http.Handler {
 				r.Header.Set("Authorization", "Bearer "+ck.Value)
 			}
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }

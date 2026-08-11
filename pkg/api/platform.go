@@ -51,6 +51,7 @@ func (s *PlatformService) GetV1ConfigPublic(ctx context.Context, params oas.GetV
 	if err != nil {
 		return nil, err
 	}
+
 	return oasPublicConfig(cfg), nil
 }
 
@@ -59,6 +60,7 @@ func (s *PlatformService) GetV1Csrf(ctx context.Context, params oas.GetV1CsrfPar
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1CsrfOK{CsrfToken: oas.NewOptString(tok.Token)}, nil
 }
 
@@ -86,29 +88,36 @@ func oasPublicConfig(c *domain.PublicConfig) *oas.PublicConfig {
 	if c.DefaultLocale != "" {
 		r.DefaultLocale = oas.NewOptString(c.DefaultLocale)
 	}
+
 	if c.Registration != nil {
 		reg := oas.RegistrationConfig{}
 		if c.Registration.Mode != "" {
 			reg.Mode = oas.NewOptRegistrationConfigMode(oas.RegistrationConfigMode(c.Registration.Mode))
 		}
+
 		if c.Registration.PasswordStrategy != "" {
 			reg.PasswordStrategy = oas.NewOptRegistrationConfigPasswordStrategy(oas.RegistrationConfigPasswordStrategy(c.Registration.PasswordStrategy))
 		}
+
 		r.Registration = oas.NewOptRegistrationConfig(reg)
 	}
+
 	for _, p := range c.Providers {
 		r.Providers = append(r.Providers, oas.PublicConfigProvidersItem{
 			ID:   oas.NewOptString(p.ID),
 			Name: oas.NewOptString(p.Name),
 		})
 	}
+
 	if len(c.ConsentDocuments) > 0 {
 		docs := make([]oas.ConsentDocument, 0, len(c.ConsentDocuments))
 		for i := range c.ConsentDocuments {
 			docs = append(docs, oasConsentDocument(&c.ConsentDocuments[i]))
 		}
+
 		r.Consents = oas.NewOptConsentConfig(oas.ConsentConfig{Documents: docs})
 	}
+
 	return r
 }
 
@@ -120,15 +129,19 @@ func oasConsentDocument(d *domain.ConsentDocument) oas.ConsentDocument {
 	if d.Title != "" {
 		out.Title = oas.NewOptString(d.Title)
 	}
+
 	if d.Body != "" {
 		out.Body = oas.NewOptString(d.Body)
 	}
+
 	if d.Locale != "" {
 		out.Locale = oas.NewOptString(d.Locale)
 	}
+
 	out.Required = oas.NewOptBool(d.Required)
 	if d.URL != "" {
 		out.URL = oas.NewOptNilString(d.URL)
 	}
+
 	return out
 }

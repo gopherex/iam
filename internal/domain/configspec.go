@@ -16,8 +16,8 @@ import (
 // Design contract (read before editing):
 //   - FAIL-CLOSED. Any unknown key or unsupported value is REJECTED with
 //     ErrValidation (HTTP 422). We never silently drop or default away a value
-//     the admin supplied — that would let the API advertise behaviour the
-//     runtime cannot honour.
+//     the admin supplied — that would let the API advertise behavior the
+//     runtime cannot honor.
 //   - Each typed struct mirrors the EXACT jsonb field names used in storage
 //     (the *_pg.go / oas struct tags), so Validate() parses the same bytes the
 //     adapter persists/reads. The canonical key is the lowercase snake_case
@@ -43,6 +43,7 @@ func newStringSet(values ...string) stringSet {
 	for _, v := range values {
 		s.set[v] = struct{}{}
 	}
+
 	return s
 }
 
@@ -176,9 +177,11 @@ var FeatureKeys = newStringSet(
 func strictUnmarshal(raw []byte, v any) error {
 	dec := json.NewDecoder(strings.NewReader(string(raw)))
 	dec.DisallowUnknownFields()
+
 	if err := dec.Decode(v); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -189,9 +192,11 @@ func validateAbsoluteHTTPURL(field, s string) error {
 	if err != nil || !u.IsAbs() || u.Host == "" {
 		return ErrValidation.WithMessage(field + " must be an absolute http(s) URL")
 	}
+
 	if sc := strings.ToLower(u.Scheme); sc != "http" && sc != "https" {
 		return ErrValidation.WithMessage(field + " must use http or https")
 	}
+
 	return nil
 }
 
@@ -225,6 +230,7 @@ func ParseAuthConfig(raw []byte) (AuthConfigSpec, error) {
 	if err := strictUnmarshal(raw, &c); err != nil {
 		return c, ErrValidation.WithMessage("invalid auth config: " + err.Error())
 	}
+
 	return c, nil
 }
 
@@ -239,9 +245,11 @@ func (c AuthConfigSpec) Validate() error {
 				"allowed": SupportedAuthMethods.List(),
 			}).WithMessage("unsupported auth method: " + m)
 		}
+
 		if _, dup := seen[m]; dup {
 			return ErrValidation.WithMessage("duplicate auth method: " + m)
 		}
+
 		seen[m] = struct{}{}
 	}
 
@@ -253,6 +261,7 @@ func (c AuthConfigSpec) Validate() error {
 				"allowed": RegistrationModes.List(),
 			}).WithMessage("unsupported registration mode: " + *r.Mode)
 		}
+
 		if r.PasswordStrategy != nil && *r.PasswordStrategy != "" && !PasswordStrategies.Has(*r.PasswordStrategy) {
 			return ErrValidation.WithDetails(map[string]any{
 				"field":   "registration.password_strategy",
@@ -269,19 +278,22 @@ func (c AuthConfigSpec) Validate() error {
 	}
 
 	// default_locale, if set, must belong to the supported-locale list when that
-	// list is non-empty. Honour either jsonb key.
+	// list is non-empty. Honor either jsonb key.
 	locales := c.SupportedLocales
 	if len(locales) == 0 {
 		locales = c.Locales
 	}
+
 	if c.DefaultLocale != nil && strings.TrimSpace(*c.DefaultLocale) != "" && len(locales) > 0 {
 		ok := false
+
 		for _, l := range locales {
 			if l == *c.DefaultLocale {
 				ok = true
 				break
 			}
 		}
+
 		if !ok {
 			return ErrValidation.WithDetails(map[string]any{
 				"field":             "default_locale",
@@ -290,6 +302,7 @@ func (c AuthConfigSpec) Validate() error {
 			}).WithMessage("default_locale must be one of the supported locales")
 		}
 	}
+
 	return nil
 }
 
@@ -312,6 +325,7 @@ func ParsePasswordPolicy(raw []byte) (PasswordPolicySpec, error) {
 	if err := strictUnmarshal(raw, &c); err != nil {
 		return c, ErrValidation.WithMessage("invalid password_policy: " + err.Error())
 	}
+
 	return c, nil
 }
 
@@ -324,22 +338,27 @@ func (c PasswordPolicySpec) Validate() error {
 			return ErrValidation.WithMessage("min_length must be between 1 and 256")
 		}
 	}
+
 	if c.ZxcvbnMinScore != nil {
 		if *c.ZxcvbnMinScore < 0 || *c.ZxcvbnMinScore > 4 {
 			return ErrValidation.WithMessage("zxcvbn_min_score must be between 0 and 4")
 		}
 	}
+
 	if c.BreachedCheck != nil && *c.BreachedCheck {
 		return ErrValidation.WithMessage("breached_check not supported")
 	}
+
 	if c.History != nil {
 		if *c.History < 0 || *c.History > 50 {
 			return ErrValidation.WithMessage("history must be between 0 and 50")
 		}
+
 		if *c.History > 0 {
 			return ErrValidation.WithMessage("password history not supported")
 		}
 	}
+
 	return nil
 }
 
@@ -363,6 +382,7 @@ func ParseSessionPolicy(raw []byte) (SessionPolicySpec, error) {
 	if err := strictUnmarshal(raw, &c); err != nil {
 		return c, ErrValidation.WithMessage("invalid session_policy: " + err.Error())
 	}
+
 	return c, nil
 }
 
@@ -373,28 +393,35 @@ func (c SessionPolicySpec) Validate() error {
 		maxRefresh  = 31536000 // 365 days
 		maxAbsolute = 31536000 // 365 days
 	)
+
 	check := func(field string, v *int, max int) error {
 		if v == nil {
 			return nil
 		}
+
 		if *v <= 0 {
 			return ErrValidation.WithMessage(field + " must be > 0")
 		}
+
 		if *v > max {
 			return ErrValidation.WithDetails(map[string]any{"field": field, "value": *v, "max": max}).
 				WithMessage(field + " exceeds maximum")
 		}
+
 		return nil
 	}
 	if err := check("access_ttl", c.AccessTTL, maxAccess); err != nil {
 		return err
 	}
+
 	if err := check("refresh_ttl", c.RefreshTTL, maxRefresh); err != nil {
 		return err
 	}
+
 	if err := check("idle_timeout", c.IdleTimeout, maxRefresh); err != nil {
 		return err
 	}
+
 	if err := check("absolute_timeout", c.AbsoluteTimeout, maxAbsolute); err != nil {
 		return err
 	}
@@ -403,18 +430,22 @@ func (c SessionPolicySpec) Validate() error {
 		return ErrValidation.WithDetails(map[string]any{"access_ttl": *c.AccessTTL, "refresh_ttl": *c.RefreshTTL}).
 			WithMessage("access_ttl must be less than refresh_ttl")
 	}
+
 	if c.AccessTTL != nil && c.IdleTimeout != nil && *c.AccessTTL > *c.IdleTimeout {
 		return ErrValidation.WithDetails(map[string]any{"access_ttl": *c.AccessTTL, "idle_timeout": *c.IdleTimeout}).
 			WithMessage("access_ttl must not exceed idle_timeout")
 	}
+
 	if c.IdleTimeout != nil && c.AbsoluteTimeout != nil && *c.IdleTimeout > *c.AbsoluteTimeout {
 		return ErrValidation.WithDetails(map[string]any{"idle_timeout": *c.IdleTimeout, "absolute_timeout": *c.AbsoluteTimeout}).
 			WithMessage("idle_timeout must not exceed absolute_timeout")
 	}
+
 	if c.IdleTimeout != nil && c.RefreshTTL != nil && *c.IdleTimeout > *c.RefreshTTL {
 		return ErrValidation.WithDetails(map[string]any{"idle_timeout": *c.IdleTimeout, "refresh_ttl": *c.RefreshTTL}).
 			WithMessage("idle_timeout must not exceed refresh_ttl")
 	}
+
 	return nil
 }
 
@@ -435,6 +466,7 @@ func ParseMFAPolicy(raw []byte) (MFAPolicySpec, error) {
 	if err := strictUnmarshal(raw, &c); err != nil {
 		return c, ErrValidation.WithMessage("invalid mfa_policy: " + err.Error())
 	}
+
 	return c, nil
 }
 
@@ -450,9 +482,11 @@ func (c MFAPolicySpec) Validate() error {
 				"allowed": SupportedMFAFactors.List(),
 			}).WithMessage("allowed_factors: unknown factor " + f)
 		}
+
 		if _, dup := seen[f]; dup {
 			return ErrValidation.WithMessage("allowed_factors: duplicate factor " + f)
 		}
+
 		seen[f] = struct{}{}
 	}
 	// AllowedFactors present-but-empty + required => lockout.
@@ -460,6 +494,7 @@ func (c MFAPolicySpec) Validate() error {
 		c.RequiredForAdmins != nil && *c.RequiredForAdmins {
 		return ErrValidation.WithMessage("allowed_factors cannot be empty when MFA is required")
 	}
+
 	return nil
 }
 
@@ -489,12 +524,14 @@ func (c MFAPolicySpec) FactorAllowed(dbFactorType string) bool {
 	if len(c.AllowedFactors) == 0 {
 		return true
 	}
+
 	name := MFAPolicyFactorName(dbFactorType)
 	for _, f := range c.AllowedFactors {
 		if f == name {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -524,6 +561,7 @@ func ParseRateLimits(raw []byte) (RateLimitsSpec, error) {
 	if err := strictUnmarshal(raw, &c); err != nil {
 		return c, ErrValidation.WithMessage("invalid rate_limits: " + err.Error())
 	}
+
 	return c, nil
 }
 
@@ -534,7 +572,9 @@ func (c RateLimitsSpec) Validate() error {
 		maxLimit  = 1000000
 		maxWindow = 86400
 	)
+
 	type tuple struct{ endpoint, by string }
+
 	seen := make(map[tuple]struct{}, len(c.Rules))
 	for i, r := range c.Rules {
 		at := func(s string) string { return fmt.Sprintf("rules[%d].%s", i, s) }
@@ -542,6 +582,7 @@ func (c RateLimitsSpec) Validate() error {
 		if r.By == nil || strings.TrimSpace(*r.By) == "" {
 			return ErrValidation.WithMessage(at("by") + " is required")
 		}
+
 		if !RateLimitBy.Has(*r.By) {
 			return ErrValidation.WithDetails(map[string]any{
 				"field":   at("by"),
@@ -553,6 +594,7 @@ func (c RateLimitsSpec) Validate() error {
 		if r.Endpoint == nil || strings.TrimSpace(*r.Endpoint) == "" {
 			return ErrValidation.WithMessage(at("endpoint") + " is required")
 		}
+
 		if !RateLimitEndpoints.Has(*r.Endpoint) {
 			return ErrValidation.WithDetails(map[string]any{
 				"field": at("endpoint"),
@@ -570,6 +612,7 @@ func (c RateLimitsSpec) Validate() error {
 		if r.Limit == nil || *r.Limit < 1 {
 			return ErrValidation.WithMessage(at("limit") + " must be >= 1")
 		}
+
 		if *r.Limit > maxLimit {
 			return ErrValidation.WithMessage(at("limit") + " exceeds maximum")
 		}
@@ -577,6 +620,7 @@ func (c RateLimitsSpec) Validate() error {
 		if r.WindowSeconds == nil || *r.WindowSeconds < 1 {
 			return ErrValidation.WithMessage(at("window_seconds") + " must be >= 1")
 		}
+
 		if *r.WindowSeconds > maxWindow {
 			return ErrValidation.WithMessage(at("window_seconds") + " exceeds maximum")
 		}
@@ -588,8 +632,10 @@ func (c RateLimitsSpec) Validate() error {
 				"by":       *r.By,
 			}).WithMessage("duplicate (endpoint, by) rule")
 		}
+
 		seen[t] = struct{}{}
 	}
+
 	return nil
 }
 
@@ -620,6 +666,7 @@ func ParseConsentConfig(raw []byte) (ConsentConfigSpec, error) {
 	if err := strictUnmarshal(raw, &c); err != nil {
 		return c, ErrValidation.WithMessage("invalid consent config: " + err.Error())
 	}
+
 	return c, nil
 }
 
@@ -632,7 +679,9 @@ func (c ConsentConfigSpec) Validate() error {
 	if len(c.Documents) > maxDocs {
 		return ErrValidation.WithMessage("too many consent documents")
 	}
+
 	type tuple struct{ key, locale, version string }
+
 	seen := make(map[tuple]struct{}, len(c.Documents))
 	for i, d := range c.Documents {
 		at := func(s string) string { return fmt.Sprintf("documents[%d].%s", i, s) }
@@ -641,6 +690,7 @@ func (c ConsentConfigSpec) Validate() error {
 		if key == "" {
 			return ErrValidation.WithMessage(at("key") + " is required")
 		}
+
 		version := strings.TrimSpace(d.Version)
 		if version == "" {
 			return ErrValidation.WithMessage(at("version") + " is required")
@@ -651,7 +701,9 @@ func (c ConsentConfigSpec) Validate() error {
 			if d.Title == nil || strings.TrimSpace(*d.Title) == "" {
 				return ErrValidation.WithMessage(at("title") + " is required for a required consent")
 			}
+
 			hasBody := d.Body != nil && strings.TrimSpace(*d.Body) != ""
+
 			hasURL := d.URL != nil && strings.TrimSpace(*d.URL) != ""
 			if !hasBody && !hasURL {
 				return ErrValidation.WithMessage(at("body") + " or " + at("url") + " is required for a required consent")
@@ -661,9 +713,11 @@ func (c ConsentConfigSpec) Validate() error {
 		if d.Body != nil && len(*d.Body) > maxBody {
 			return ErrValidation.WithMessage(at("body") + " exceeds maximum size")
 		}
+
 		if d.Locale != nil && strings.TrimSpace(*d.Locale) == "" && *d.Locale != "" {
 			return ErrValidation.WithMessage(at("locale") + " must not be blank")
 		}
+
 		if d.URL != nil && strings.TrimSpace(*d.URL) != "" {
 			if err := validateAbsoluteHTTPURL(at("url"), *d.URL); err != nil {
 				return err
@@ -674,14 +728,17 @@ func (c ConsentConfigSpec) Validate() error {
 		if d.Locale != nil {
 			locale = *d.Locale
 		}
+
 		t := tuple{key, locale, version}
 		if _, dup := seen[t]; dup {
 			return ErrValidation.WithDetails(map[string]any{
 				"key": key, "locale": locale, "version": version,
 			}).WithMessage("duplicate consent document (key, locale, version)")
 		}
+
 		seen[t] = struct{}{}
 	}
+
 	return nil
 }
 
@@ -698,22 +755,27 @@ func ParseFeatures(raw []byte) (FeaturesSpec, error) {
 	if err := json.Unmarshal(raw, &c); err != nil {
 		return c, ErrValidation.WithMessage("invalid features: " + err.Error())
 	}
+
 	return c, nil
 }
 
 // Validate rejects any key outside the canonical FeatureKeys registry.
 func (c FeaturesSpec) Validate() error {
 	var unknown []string
+
 	for k := range c {
 		if !FeatureKeys.Has(k) {
 			unknown = append(unknown, k)
 		}
 	}
+
 	if len(unknown) > 0 {
 		sort.Strings(unknown)
+
 		return ErrValidation.WithDetails(map[string]any{"unknown_features": unknown}).
 			WithMessage("unknown feature(s): " + strings.Join(unknown, ", "))
 	}
+
 	return nil
 }
 
@@ -737,6 +799,7 @@ func (c ProviderConfigSpec) Validate() error {
 	if typ == "" {
 		return ErrValidation.WithMessage("provider type is required")
 	}
+
 	switch strings.ToLower(strings.TrimSpace(c.Kind)) {
 	case "email":
 		if !EmailProviderTypes.Has(typ) {
@@ -753,5 +816,6 @@ func (c ProviderConfigSpec) Validate() error {
 	default:
 		return ErrValidation.WithMessage("unknown provider kind: " + c.Kind)
 	}
+
 	return nil
 }

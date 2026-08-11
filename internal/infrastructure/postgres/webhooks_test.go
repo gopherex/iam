@@ -11,13 +11,16 @@ import (
 
 func TestWebhookSignature(t *testing.T) {
 	body := []byte(`{"id":"evt-1"}`)
+
 	got := webhookSignature("secret", "evt-1", 123, body)
 	if got == "" {
 		t.Fatal("signature is empty")
 	}
+
 	if !hmac.Equal([]byte(got), []byte(webhookSignature("secret", "evt-1", 123, body))) {
 		t.Fatal("signature is not deterministic")
 	}
+
 	if hmac.Equal([]byte(got), []byte(webhookSignature("other", "evt-1", 123, body))) {
 		t.Fatal("signature does not depend on the secret")
 	}
@@ -31,10 +34,12 @@ func TestPublicSessionRevokedPayloadIsExact(t *testing.T) {
 	if !ok || userID != "u1" {
 		t.Fatalf("event not normalized: ok=%v user=%q", ok, userID)
 	}
+
 	want := map[string]any{"session_id": "s1", "user_id": "u1", "project_id": "p1"}
 	if !reflect.DeepEqual(event.Data, want) {
 		t.Fatalf("data = %#v, want %#v", event.Data, want)
 	}
+
 	if _, _, ok := publicEventFromDomain(domain.Event{
 		Type: domain.WebhookEventSessionRevoked, ProjectID: "p1",
 		Payload: domain.SessionRevokedPayload{SessionID: "s1", ProjectID: "p1"},
@@ -49,6 +54,7 @@ func TestValidateWebhookURL(t *testing.T) {
 			t.Fatalf("%s: %v", valid, err)
 		}
 	}
+
 	for _, invalid := range []string{"http://example.com/hook", "https://user:pass@example.com/hook", "/relative", "ftp://example.com/hook"} {
 		if err := validateWebhookURL(invalid); err == nil {
 			t.Fatalf("%s: expected validation error", invalid)
@@ -58,6 +64,7 @@ func TestValidateWebhookURL(t *testing.T) {
 
 func TestPublicEventSanitizesPayload(t *testing.T) {
 	now := time.Now().UTC()
+
 	event, userID, ok := publicEventFromDomain(domain.Event{
 		ID: "evt-1", Type: domain.WebhookEventEmailChanged, ProjectID: "p1", Environment: "live",
 		AggregateID: "u1", OccurredAt: now,
@@ -66,9 +73,11 @@ func TestPublicEventSanitizesPayload(t *testing.T) {
 	if !ok || userID != "u1" {
 		t.Fatalf("event not normalized: ok=%v user=%q", ok, userID)
 	}
+
 	if event.Data["email"] != "new@example.com" || event.Data["email_verified"] != true {
 		t.Fatalf("unexpected data: %#v", event.Data)
 	}
+
 	if _, exists := event.Data["PasswordHash"]; exists {
 		t.Fatal("internal account fields leaked")
 	}

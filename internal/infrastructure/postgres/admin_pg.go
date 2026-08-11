@@ -11,7 +11,7 @@ package postgres
 //
 // Each aggregate is persisted as a `data jsonb` envelope; the typed columns
 // (project_id, status, email, kind, key, environment, ...) are lookup-only and
-// derived from the marshalled struct. Every query is scoped by project_id (the
+// derived from the marshaled struct. Every query is scoped by project_id (the
 // tenant boundary): a row whose project_id does not match the request is a
 // not-found. Reads run on db.Bobx(); every mutation is wrapped in
 // db.withTx / withTxRet (serializable + mandatory retry).
@@ -32,7 +32,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"text/template"
 	"time"
 
@@ -62,6 +61,7 @@ func adminEnv(env string) string {
 	if env == "" {
 		return adminDefaultEnvironment
 	}
+
 	return env
 }
 
@@ -73,6 +73,7 @@ func adminIsNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
+
 	return errors.Is(err, sql.ErrNoRows) ||
 		errors.Is(err, pgx.ErrNoRows) ||
 		errors.Is(err, ErrNotFound) ||
@@ -86,7 +87,9 @@ func adminRandomToken(n int) (token, hash string, err error) {
 	if _, err = rand.Read(buf); err != nil {
 		return "", "", err
 	}
+
 	token = base64.RawURLEncoding.EncodeToString(buf)
+
 	return token, adminSHA256(token), nil
 }
 
@@ -119,15 +122,19 @@ func (a *pgAdminUsers) findUser(ctx context.Context, projectID, environment, acc
 		if adminIsNotFound(translatePgErr("user", err)) {
 			return nil, nil, domain.ErrUserNotFound
 		}
+
 		return nil, nil, err
 	}
+
 	if row.ProjectID != projectID || row.Environment != adminEnv(environment) {
 		return nil, nil, domain.ErrUserNotFound
 	}
+
 	var acc domain.Account
 	if err := unmarshal(row.Data, &acc); err != nil {
 		return nil, nil, err
 	}
+
 	return row, &acc, nil
 }
 
@@ -139,14 +146,17 @@ func (a *pgAdminUsers) List(ctx context.Context, projectID, environment string) 
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Account, 0, len(rows))
 	for _, row := range rows {
 		var acc domain.Account
 		if err := unmarshal(row.Data, &acc); err != nil {
 			return nil, err
 		}
+
 		out = append(out, acc)
 	}
+
 	return out, nil
 }
 
@@ -159,6 +169,7 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 	if err := cmd.Validate(); err != nil {
 		return nil, err
 	}
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
 		now := nowUTC()
 		env := adminEnv(cmd.Environment)
@@ -173,11 +184,14 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 			CreatedAt:    now,
 			UpdatedAt:    now,
 		}
+
 		raw, err := marshal(acc)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamUserSetter{
 			ID:          &acc.ID,
 			ProjectID:   &acc.ProjectID,
@@ -190,14 +204,17 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 			v := null.From(acc.PrimaryEmail)
 			setter.PrimaryEmail = &v
 		}
+
 		if acc.PrimaryPhone != "" {
 			v := null.From(acc.PrimaryPhone)
 			setter.PrimaryPhone = &v
 		}
+
 		if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrEmailExists
 			}
+
 			return nil, err
 		}
 
@@ -207,12 +224,16 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 			if err != nil {
 				return nil, err
 			}
+
 			cred := map[string]any{"user_id": acc.ID, "type": "password"}
+
 			craw, err := marshal(cred)
 			if err != nil {
 				return nil, err
 			}
+
 			crm := json.RawMessage(craw)
+
 			cs := &models.IamCredentialSetter{
 				ID:        ptr(newUUID()),
 				ProjectID: &acc.ProjectID,
@@ -225,6 +246,7 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 				return nil, err
 			}
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.created",
 			ProjectID:   acc.ProjectID,
@@ -234,6 +256,7 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 		}); err != nil {
 			return nil, err
 		}
+
 		return acc, nil
 	})
 }
@@ -244,16 +267,20 @@ func (a *pgAdminUsers) Update(ctx context.Context, cmd domain.AdminUserUpdateCmd
 		if err != nil {
 			return nil, err
 		}
+
 		if cmd.Name != "" {
 			acc.Name = cmd.Name
 		}
+
 		if cmd.Locale != "" {
 			acc.Locale = cmd.Locale
 		}
+
 		acc.UpdatedAt = nowUTC()
 		if err := a.persist(ctx, row, acc); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.updated",
 			ProjectID:   acc.ProjectID,
@@ -263,6 +290,7 @@ func (a *pgAdminUsers) Update(ctx context.Context, cmd domain.AdminUserUpdateCmd
 		}); err != nil {
 			return nil, err
 		}
+
 		return acc, nil
 	})
 }
@@ -278,21 +306,26 @@ func (a *pgAdminUsers) BanWith(ctx context.Context, cmd domain.AdminUserBanCmd) 
 		if err != nil {
 			return nil, err
 		}
+
 		acc.Status = "banned"
+
 		acc.UpdatedAt = nowUTC()
 		if err := a.persistWithExtra(ctx, row, acc, func(m map[string]any) {
 			if cmd.Reason != "" {
 				m["ban_reason"] = cmd.Reason
 			}
+
 			if !cmd.Until.IsZero() {
 				m["ban_until"] = cmd.Until.UTC()
 			}
 		}); err != nil {
 			return nil, err
 		}
+
 		if _, err := a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, "", "user_banned"); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        domain.WebhookEventUserBanned,
 			ProjectID:   acc.ProjectID,
@@ -302,6 +335,7 @@ func (a *pgAdminUsers) BanWith(ctx context.Context, cmd domain.AdminUserBanCmd) 
 		}); err != nil {
 			return nil, err
 		}
+
 		return acc, nil
 	})
 }
@@ -312,11 +346,14 @@ func (a *pgAdminUsers) Unban(ctx context.Context, projectID, environment, accoun
 		if err != nil {
 			return nil, err
 		}
+
 		acc.Status = "active"
+
 		acc.UpdatedAt = nowUTC()
 		if err := a.persist(ctx, row, acc); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.unbanned",
 			ProjectID:   acc.ProjectID,
@@ -326,6 +363,7 @@ func (a *pgAdminUsers) Unban(ctx context.Context, projectID, environment, accoun
 		}); err != nil {
 			return nil, err
 		}
+
 		return acc, nil
 	})
 }
@@ -336,12 +374,15 @@ func (a *pgAdminUsers) Delete(ctx context.Context, projectID, environment, accou
 		if err != nil {
 			return err
 		}
+
 		if _, err := a.revokeSessions(ctx, projectID, environment, accountID, "", "user_deleted"); err != nil {
 			return err
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        domain.WebhookEventUserDeleted,
 			ProjectID:   projectID,
@@ -351,6 +392,7 @@ func (a *pgAdminUsers) Delete(ctx context.Context, projectID, environment, accou
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -361,11 +403,14 @@ func (a *pgAdminUsers) VerifyEmail(ctx context.Context, projectID, environment, 
 		if err != nil {
 			return nil, err
 		}
+
 		acc.EmailVerified = true
+
 		acc.UpdatedAt = nowUTC()
 		if err := a.persist(ctx, row, acc); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.email_verified",
 			ProjectID:   acc.ProjectID,
@@ -375,6 +420,7 @@ func (a *pgAdminUsers) VerifyEmail(ctx context.Context, projectID, environment, 
 		}); err != nil {
 			return nil, err
 		}
+
 		return acc, nil
 	})
 }
@@ -385,12 +431,14 @@ func (a *pgAdminUsers) VerifyPhone(ctx context.Context, projectID, environment, 
 		if err != nil {
 			return nil, err
 		}
+
 		acc.UpdatedAt = nowUTC()
 		if err := a.persistWithExtra(ctx, row, acc, func(m map[string]any) {
 			m["phone_verified"] = true
 		}); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.phone_verified",
 			ProjectID:   acc.ProjectID,
@@ -400,6 +448,7 @@ func (a *pgAdminUsers) VerifyPhone(ctx context.Context, projectID, environment, 
 		}); err != nil {
 			return nil, err
 		}
+
 		return acc, nil
 	})
 }
@@ -410,10 +459,12 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID); err != nil {
 			return err
 		}
+
 		hash, err := bcrypt.GenerateFromPassword([]byte(cmd.Password), bcrypt.DefaultCost)
 		if err != nil {
 			return err
 		}
+
 		existing, err := models.IamCredentials.Query(
 			sm.Where(models.IamCredentials.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 			sm.Where(models.IamCredentials.Columns.UserID.EQ(psql.Arg(cmd.AccountID))),
@@ -422,6 +473,7 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 		if err != nil {
 			return err
 		}
+
 		if len(existing) > 0 {
 			cr := existing[0]
 			if err := cr.Update(ctx, a.db.Bobx(), &models.IamCredentialSetter{
@@ -432,10 +484,12 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 			}
 		} else {
 			cred := map[string]any{"user_id": cmd.AccountID, "type": "password"}
+
 			craw, err := marshal(cred)
 			if err != nil {
 				return err
 			}
+
 			crm := json.RawMessage(craw)
 			if _, err := models.IamCredentials.Insert(&models.IamCredentialSetter{
 				ID:        ptr(newUUID()),
@@ -448,11 +502,13 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 				return err
 			}
 		}
+
 		if cmd.RevokeSessions {
 			if _, err := a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, "", "password_changed"); err != nil {
 				return err
 			}
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.password_set",
 			ProjectID:   cmd.ProjectID,
@@ -462,6 +518,7 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -479,12 +536,15 @@ func (a *pgAdminUsers) Anonymize(ctx context.Context, cmd domain.AdminUserAnonym
 		acc.EmailVerified = false
 		acc.Status = "deactivated"
 		acc.UpdatedAt = nowUTC()
+
 		raw, err := marshal(acc)
 		if err != nil {
 			return err
 		}
+
 		rm := json.RawMessage(raw)
 		nullEmail := null.FromPtr[string](nil)
+
 		nullPhone := null.FromPtr[string](nil)
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamUserSetter{
 			Status:       ptr(acc.Status),
@@ -495,6 +555,7 @@ func (a *pgAdminUsers) Anonymize(ctx context.Context, cmd domain.AdminUserAnonym
 		}); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.anonymized",
 			ProjectID:   cmd.ProjectID,
@@ -504,6 +565,7 @@ func (a *pgAdminUsers) Anonymize(ctx context.Context, cmd domain.AdminUserAnonym
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -513,12 +575,15 @@ func (a *pgAdminUsers) Export(ctx context.Context, projectID, environment, accou
 		if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 			return "", err
 		}
+
 		jobID := newUUID()
 		job := map[string]any{"type": "user_export", "user_id": accountID, "status": "running"}
+
 		jraw, err := marshal(job)
 		if err != nil {
 			return "", err
 		}
+
 		jrm := json.RawMessage(jraw)
 		if _, err := models.IamJobs.Insert(&models.IamJobSetter{
 			ID:        &jobID,
@@ -529,6 +594,7 @@ func (a *pgAdminUsers) Export(ctx context.Context, projectID, environment, accou
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return "", err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.export_requested",
 			ProjectID:   projectID,
@@ -538,6 +604,7 @@ func (a *pgAdminUsers) Export(ctx context.Context, projectID, environment, accou
 		}); err != nil {
 			return "", err
 		}
+
 		return jobID, nil
 	})
 }
@@ -548,10 +615,12 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID); err != nil {
 			return nil, err
 		}
+
 		ttl := cmd.DurationSeconds
 		if ttl <= 0 {
 			ttl = 300
 		}
+
 		expiresAt := nowUTC().Add(time.Duration(ttl) * time.Second)
 		// Short-TTL signed impersonation JWT (jwx, project Signer): typ=impersonation,
 		// sub=target user, act=admin actor. Persist only its hash so the challenge row
@@ -567,6 +636,7 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 		if err != nil {
 			return nil, err
 		}
+
 		hash := adminSHA256(token)
 		ch := map[string]any{
 			"type":     "impersonation",
@@ -574,12 +644,15 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 			"actor_id": cmd.ActorID,
 			"reason":   cmd.Reason,
 		}
+
 		chraw, err := marshal(ch)
 		if err != nil {
 			return nil, err
 		}
+
 		chrm := json.RawMessage(chraw)
 		subj := null.From(cmd.AccountID)
+
 		codeHash := null.From(hash)
 		if _, err := models.IamChallenges.Insert(&models.IamChallengeSetter{
 			ID:        ptr(newUUID()),
@@ -592,6 +665,7 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.impersonation_started",
 			ProjectID:   cmd.ProjectID,
@@ -601,8 +675,9 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 		}); err != nil {
 			return nil, err
 		}
+
 		return &domain.AdminImpersonation{
-			URL:       fmt.Sprintf("/impersonate?token=%s", token),
+			URL:       "/impersonate?token=" + token,
 			ExpiresAt: expiresAt,
 		}, nil
 	})
@@ -613,6 +688,7 @@ func (a *pgAdminUsers) ResetMFA(ctx context.Context, projectID, environment, acc
 		if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 			return 0, err
 		}
+
 		factors, err := models.IamFactors.Query(
 			sm.Where(models.IamFactors.Columns.ProjectID.EQ(psql.Arg(projectID))),
 			sm.Where(models.IamFactors.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
@@ -621,22 +697,28 @@ func (a *pgAdminUsers) ResetMFA(ctx context.Context, projectID, environment, acc
 		if err != nil {
 			return 0, err
 		}
+
 		want := make(map[string]struct{}, len(factorIDs))
 		for _, id := range factorIDs {
 			want[id] = struct{}{}
 		}
+
 		removed := 0
+
 		for _, f := range factors {
 			if len(want) > 0 {
 				if _, ok := want[f.ID]; !ok {
 					continue
 				}
 			}
+
 			if err := f.Delete(ctx, a.db.Bobx()); err != nil {
 				return removed, err
 			}
+
 			removed++
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.mfa_reset",
 			ProjectID:   projectID,
@@ -646,6 +728,7 @@ func (a *pgAdminUsers) ResetMFA(ctx context.Context, projectID, environment, acc
 		}); err != nil {
 			return 0, err
 		}
+
 		return removed, nil
 	})
 }
@@ -654,6 +737,7 @@ func (a *pgAdminUsers) ListIdentities(ctx context.Context, projectID, environmen
 	if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 		return nil, err
 	}
+
 	rows, err := models.IamIdentities.Query(
 		sm.Where(models.IamIdentities.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamIdentities.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
@@ -662,14 +746,17 @@ func (a *pgAdminUsers) ListIdentities(ctx context.Context, projectID, environmen
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Identity, 0, len(rows))
 	for _, row := range rows {
 		var id domain.Identity
 		if err := unmarshal(row.Data, &id); err != nil {
 			return nil, err
 		}
+
 		out = append(out, id)
 	}
+
 	return out, nil
 }
 
@@ -680,14 +767,18 @@ func (a *pgAdminUsers) DeleteIdentity(ctx context.Context, projectID, environmen
 			if adminIsNotFound(translatePgErr("identity", err)) {
 				return domain.ErrNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID || row.Environment != adminEnv(environment) || row.UserID != accountID {
 			return domain.ErrNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.identity_deleted",
 			ProjectID:   projectID,
@@ -697,6 +788,7 @@ func (a *pgAdminUsers) DeleteIdentity(ctx context.Context, projectID, environmen
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -705,6 +797,7 @@ func (a *pgAdminUsers) ListSessions(ctx context.Context, projectID, environment,
 	if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 		return nil, err
 	}
+
 	rows, err := models.IamSessions.Query(
 		sm.Where(models.IamSessions.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamSessions.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
@@ -713,6 +806,7 @@ func (a *pgAdminUsers) ListSessions(ctx context.Context, projectID, environment,
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Session, 0, len(rows))
 	for _, row := range rows {
 		// Use the shared mapper so envelope columns (last_active_at, trusted, aal,
@@ -721,8 +815,10 @@ func (a *pgAdminUsers) ListSessions(ctx context.Context, projectID, environment,
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, *s)
 	}
+
 	return out, nil
 }
 
@@ -733,11 +829,14 @@ func (a *pgAdminUsers) DeleteSession(ctx context.Context, projectID, environment
 			if adminIsNotFound(translatePgErr("session", err)) {
 				return domain.ErrSessionNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID || row.Environment != adminEnv(environment) || row.UserID != accountID {
 			return domain.ErrSessionNotFound
 		}
+
 		return revokeSessionRecord(ctx, a.db, a.emitter, row, "admin_request")
 	})
 }
@@ -747,6 +846,7 @@ func (a *pgAdminUsers) RevokeSessions(ctx context.Context, cmd domain.AdminUserS
 		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID); err != nil {
 			return 0, err
 		}
+
 		return a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, cmd.ExceptSessionID, cmd.Reason)
 	})
 }
@@ -762,16 +862,21 @@ func (a *pgAdminUsers) revokeSessions(ctx context.Context, projectID, environmen
 	if err != nil {
 		return 0, err
 	}
+
 	revoked := 0
+
 	for _, row := range rows {
 		if exceptID != "" && row.ID == exceptID {
 			continue
 		}
+
 		if err := revokeSessionRecord(ctx, a.db, a.emitter, row, reason); err != nil {
 			return revoked, err
 		}
+
 		revoked++
 	}
+
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "user.sessions_revoked",
 		ProjectID:   projectID,
@@ -781,6 +886,7 @@ func (a *pgAdminUsers) revokeSessions(ctx context.Context, projectID, environmen
 	}); err != nil {
 		return 0, err
 	}
+
 	return revoked, nil
 }
 
@@ -796,17 +902,22 @@ func (a *pgAdminUsers) persistWithExtra(ctx context.Context, row *models.IamUser
 	if err != nil {
 		return err
 	}
+
 	if extra != nil {
 		var m map[string]any
 		if err := json.Unmarshal(raw, &m); err != nil {
 			return err
 		}
+
 		extra(m)
+
 		if raw, err = json.Marshal(m); err != nil {
 			return err
 		}
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamUserSetter{
 		Status:    ptr(acc.Status),
 		Data:      &rm,
@@ -816,16 +927,20 @@ func (a *pgAdminUsers) persistWithExtra(ctx context.Context, row *models.IamUser
 		v := null.From(acc.PrimaryEmail)
 		setter.PrimaryEmail = &v
 	}
+
 	if acc.PrimaryPhone != "" {
 		v := null.From(acc.PrimaryPhone)
 		setter.PrimaryPhone = &v
 	}
+
 	if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 		if isUniqueViolation(err) {
 			return domain.ErrEmailExists
 		}
+
 		return err
 	}
+
 	return nil
 }
 
@@ -851,15 +966,19 @@ func (a *pgAdminApps) findApp(ctx context.Context, projectID, environment, appID
 		if adminIsNotFound(translatePgErr("app_client", err)) {
 			return nil, nil, domain.ErrClientNotFound
 		}
+
 		return nil, nil, err
 	}
+
 	if row.ProjectID != projectID || row.Environment != adminEnv(environment) {
 		return nil, nil, domain.ErrClientNotFound
 	}
+
 	var app domain.AppClient
 	if err := unmarshal(row.Data, &app); err != nil {
 		return nil, nil, err
 	}
+
 	return row, &app, nil
 }
 
@@ -871,14 +990,17 @@ func (a *pgAdminApps) List(ctx context.Context, projectID, environment string) (
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.AppClient, 0, len(rows))
 	for _, row := range rows {
 		var app domain.AppClient
 		if err := unmarshal(row.Data, &app); err != nil {
 			return nil, err
 		}
+
 		out = append(out, app)
 	}
+
 	return out, nil
 }
 
@@ -897,26 +1019,32 @@ func (a *pgAdminApps) AllowedOrigins(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	seen := make(map[string]struct{})
 	out := make([]string, 0)
+
 	for _, row := range rows {
 		if len(row.Data) == 0 {
 			continue
 		}
+
 		var app struct {
 			AllowedOrigins []string `json:"AllowedOrigins"`
 		}
 		if unmarshal(row.Data, &app) != nil {
 			continue
 		}
+
 		for _, o := range domain.NormalizeOrigins(app.AllowedOrigins) {
 			if _, ok := seen[o]; ok {
 				continue
 			}
+
 			seen[o] = struct{}{}
 			out = append(out, o)
 		}
 	}
+
 	return out, nil
 }
 
@@ -931,10 +1059,12 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 			RedirectURIs:   cmd.RedirectURIs,
 			AllowedOrigins: domain.NormalizeOrigins(cmd.AllowedOrigins),
 		}
+
 		raw, err := marshal(app)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if _, err := models.IamAppClients.Insert(&models.IamAppClientSetter{
 			ID:          &app.ID,
@@ -947,8 +1077,10 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "app_client.created",
 			ProjectID:   app.ProjectID,
@@ -958,6 +1090,7 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 		}); err != nil {
 			return nil, err
 		}
+
 		return app, nil
 	})
 }
@@ -968,12 +1101,15 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 		if err != nil {
 			return nil, err
 		}
+
 		if v, ok := patch["name"].(string); ok && v != "" {
 			app.Name = v
 		}
+
 		if v, ok := patch["type"].(string); ok && v != "" {
 			app.Type = v
 		}
+
 		if v, ok := patch["redirect_uris"].([]string); ok {
 			app.RedirectURIs = v
 		} else if v, ok := patch["redirect_uris"].([]any); ok {
@@ -983,8 +1119,10 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 					uris = append(uris, s)
 				}
 			}
+
 			app.RedirectURIs = uris
 		}
+
 		if v, ok := patch["allowed_origins"].([]string); ok {
 			app.AllowedOrigins = domain.NormalizeOrigins(v)
 		} else if v, ok := patch["allowed_origins"].([]any); ok {
@@ -994,12 +1132,15 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 					origins = append(origins, s)
 				}
 			}
+
 			app.AllowedOrigins = domain.NormalizeOrigins(origins)
 		}
+
 		raw, err := marshal(app)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamAppClientSetter{
 			Name:      ptr(app.Name),
@@ -1009,6 +1150,7 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 		}); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "app_client.updated",
 			ProjectID:   app.ProjectID,
@@ -1018,6 +1160,7 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 		}); err != nil {
 			return nil, err
 		}
+
 		return app, nil
 	})
 }
@@ -1036,14 +1179,17 @@ func (a *pgAdminApps) Delete(ctx context.Context, projectID, environment, appID 
 		if err != nil {
 			return err
 		}
+
 		for _, s := range secrets {
 			if err := s.Delete(ctx, a.db.Bobx()); err != nil {
 				return err
 			}
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "app_client.deleted",
 			ProjectID:   projectID,
@@ -1053,6 +1199,7 @@ func (a *pgAdminApps) Delete(ctx context.Context, projectID, environment, appID 
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -1067,12 +1214,15 @@ func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, environment, app
 		if err != nil {
 			return nil, err
 		}
+
 		secretID := newUUID()
 		meta := map[string]any{"name": name}
+
 		mraw, err := marshal(meta)
 		if err != nil {
 			return nil, err
 		}
+
 		mrm := json.RawMessage(mraw)
 		if _, err := models.IamAppSecrets.Insert(&models.IamAppSecretSetter{
 			ID:        &secretID,
@@ -1083,6 +1233,7 @@ func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, environment, app
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "app_client.secret_created",
 			ProjectID:   projectID,
@@ -1092,6 +1243,7 @@ func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, environment, app
 		}); err != nil {
 			return nil, err
 		}
+
 		return &domain.AdminSecret{
 			SecretID:     secretID,
 			ClientID:     appID,
@@ -1107,14 +1259,18 @@ func (a *pgAdminApps) DeleteSecret(ctx context.Context, projectID, environment, 
 			if adminIsNotFound(translatePgErr("app_secret", err)) {
 				return domain.ErrNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID || row.AppID != appID {
 			return domain.ErrNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "app_client.secret_deleted",
 			ProjectID:   projectID,
@@ -1124,6 +1280,7 @@ func (a *pgAdminApps) DeleteSecret(ctx context.Context, projectID, environment, 
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -1155,9 +1312,12 @@ func (a *pgAdminConfig) getConfigDoc(ctx context.Context, projectID, env, key st
 		if adminIsNotFound(err) {
 			return domain.AdminConfigDoc{}, nil // unset config is an empty doc
 		}
+
 		return nil, err
 	}
+
 	doc := domain.AdminConfigDoc{}
+
 	if len(row.Data) > 0 {
 		// Parse real JSON into raw per-key values. (json.Unmarshal into
 		// map[string]jx.Raw would base64-decode each value, the inverse of the
@@ -1168,12 +1328,15 @@ func (a *pgAdminConfig) getConfigDoc(ctx context.Context, projectID, env, key st
 			if err != nil {
 				return err
 			}
+
 			doc[key] = jx.Raw(raw)
+
 			return nil
 		}); err != nil {
 			return nil, err
 		}
 	}
+
 	return doc, nil
 }
 
@@ -1185,6 +1348,7 @@ func configDocToRawJSON(doc domain.AdminConfigDoc) ([]byte, error) {
 	for k, v := range doc {
 		rawDoc[k] = json.RawMessage(v)
 	}
+
 	return json.Marshal(rawDoc)
 }
 
@@ -1199,12 +1363,15 @@ func (a *pgAdminConfig) putConfigDoc(ctx context.Context, projectID, env, key st
 		for k, v := range doc {
 			rawDoc[k] = json.RawMessage(v)
 		}
+
 		raw, err := json.Marshal(rawDoc)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		env = adminEnv(env)
+
 		existing, err := models.IamConfigs.Query(
 			sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
 			sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(env))),
@@ -1213,6 +1380,7 @@ func (a *pgAdminConfig) putConfigDoc(ctx context.Context, projectID, env, key st
 		if err != nil && !adminIsNotFound(err) {
 			return nil, err
 		}
+
 		if err == nil {
 			if uerr := existing.Update(ctx, a.db.Bobx(), &models.IamConfigSetter{
 				Data:      &rm,
@@ -1230,6 +1398,7 @@ func (a *pgAdminConfig) putConfigDoc(ctx context.Context, projectID, env, key st
 				return nil, ierr
 			}
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "config.updated",
 			ProjectID:   projectID,
@@ -1239,6 +1408,7 @@ func (a *pgAdminConfig) putConfigDoc(ctx context.Context, projectID, env, key st
 		}); err != nil {
 			return nil, err
 		}
+
 		return doc, nil
 	})
 }
@@ -1252,13 +1422,16 @@ func (a *pgAdminConfig) UpdateAuthConfig(ctx context.Context, cmd domain.AdminCo
 	if err != nil {
 		return nil, err
 	}
+
 	spec, err := domain.ParseAuthConfig(raw)
 	if err != nil {
 		return nil, err
 	}
+
 	if err := spec.Validate(); err != nil {
 		return nil, err
 	}
+
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "auth", cmd.Doc)
 }
 
@@ -1271,13 +1444,16 @@ func (a *pgAdminConfig) UpdatePasswordPolicy(ctx context.Context, cmd domain.Adm
 	if err != nil {
 		return nil, err
 	}
+
 	spec, err := domain.ParsePasswordPolicy(raw)
 	if err != nil {
 		return nil, err
 	}
+
 	if err := spec.Validate(); err != nil {
 		return nil, err
 	}
+
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "password_policy", cmd.Doc)
 }
 
@@ -1290,47 +1466,60 @@ func (a *pgAdminConfig) UpdateSessionPolicy(ctx context.Context, cmd domain.Admi
 	if err != nil {
 		return nil, err
 	}
+
 	spec, err := domain.ParseSessionPolicy(raw)
 	if err != nil {
 		return nil, err
 	}
+
 	if err := spec.Validate(); err != nil {
 		return nil, err
 	}
+
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "session_policy", cmd.Doc)
 }
+
 func (a *pgAdminConfig) GetRateLimits(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
 	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "rate_limits")
 }
+
 func (a *pgAdminConfig) UpdateRateLimits(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
 	raw, err := configDocToRawJSON(cmd.Doc)
 	if err != nil {
 		return nil, err
 	}
+
 	spec, err := domain.ParseRateLimits(raw)
 	if err != nil {
 		return nil, err
 	}
+
 	if err := spec.Validate(); err != nil {
 		return nil, err
 	}
+
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "rate_limits", cmd.Doc)
 }
+
 func (a *pgAdminConfig) GetMfaPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
 	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "mfa_policy")
 }
+
 func (a *pgAdminConfig) UpdateMfaPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
 	raw, err := configDocToRawJSON(cmd.Doc)
 	if err != nil {
 		return nil, err
 	}
+
 	spec, err := domain.ParseMFAPolicy(raw)
 	if err != nil {
 		return nil, err
 	}
+
 	if err := spec.Validate(); err != nil {
 		return nil, err
 	}
+
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "mfa_policy", cmd.Doc)
 }
 
@@ -1343,13 +1532,16 @@ func (a *pgAdminConfig) PutConsent(ctx context.Context, cmd domain.AdminConfigUp
 	if err != nil {
 		return nil, err
 	}
+
 	spec, err := domain.ParseConsentConfig(raw)
 	if err != nil {
 		return nil, err
 	}
+
 	if err := spec.Validate(); err != nil {
 		return nil, err
 	}
+
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "consent", cmd.Doc)
 }
 
@@ -1363,14 +1555,17 @@ func (a *pgAdminConfig) GetFeatures(ctx context.Context, cmd domain.AdminConfigG
 		if adminIsNotFound(err) {
 			return map[string]bool{}, nil
 		}
+
 		return nil, err
 	}
+
 	out := map[string]bool{}
 	if len(row.Data) > 0 {
 		if err := json.Unmarshal(row.Data, &out); err != nil {
 			return nil, err
 		}
 	}
+
 	return out, nil
 }
 
@@ -1378,13 +1573,16 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 	if err := domain.FeaturesSpec(cmd.Features).Validate(); err != nil {
 		return nil, err
 	}
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]bool, error) {
 		raw, err := json.Marshal(cmd.Features)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		env := adminEnv(cmd.Environment)
+
 		existing, err := models.IamConfigs.Query(
 			sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 			sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(env))),
@@ -1393,6 +1591,7 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 		if err != nil && !adminIsNotFound(err) {
 			return nil, err
 		}
+
 		if err == nil {
 			if uerr := existing.Update(ctx, a.db.Bobx(), &models.IamConfigSetter{Data: &rm, UpdatedAt: ptr(nowUTC())}); uerr != nil {
 				return nil, uerr
@@ -1407,6 +1606,7 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 				return nil, ierr
 			}
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "config.features_updated",
 			ProjectID:   cmd.ProjectID,
@@ -1416,6 +1616,7 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 		}); err != nil {
 			return nil, err
 		}
+
 		return cmd.Features, nil
 	})
 }
@@ -1430,14 +1631,17 @@ func (a *pgAdminConfig) GetI18n(ctx context.Context, cmd domain.AdminConfigGetCm
 		if adminIsNotFound(err) {
 			return map[string]jx.Raw{}, nil
 		}
+
 		return nil, err
 	}
+
 	out := map[string]jx.Raw{}
 	if len(row.Data) > 0 {
 		if err := json.Unmarshal(row.Data, &out); err != nil {
 			return nil, err
 		}
 	}
+
 	return out, nil
 }
 
@@ -1448,6 +1652,7 @@ func (a *pgAdminConfig) PutI18n(ctx context.Context, cmd domain.AdminI18nUpdateC
 		if _, err := a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "i18n:"+cmd.Locale, doc); err != nil {
 			return err
 		}
+
 		return a.emitter.Emit(ctx, domain.Event{
 			Type:        "config.i18n_updated",
 			ProjectID:   cmd.ProjectID,
@@ -1458,6 +1663,7 @@ func (a *pgAdminConfig) PutI18n(ctx context.Context, cmd domain.AdminI18nUpdateC
 	}); err != nil {
 		return nil, err
 	}
+
 	return cmd.Messages, nil
 }
 
@@ -1480,14 +1686,17 @@ func (a *pgAdminConfig) listProviders(ctx context.Context, projectID, kind strin
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.AdminProvider, 0, len(rows))
 	for _, row := range rows {
 		p, err := adminProviderToDomain(a.db.Cipher, row)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, p)
 	}
+
 	return out, nil
 }
 
@@ -1499,13 +1708,16 @@ func adminProviderToDomain(cipher Cipher, row *models.IamProvider) (domain.Admin
 			if d.Type != "" {
 				p.Type = d.Type
 			}
+
 			cfg, err := decryptProviderConfig(cipher, jsonToRaw(d.Config))
 			if err != nil {
 				return domain.AdminProvider{}, err
 			}
+
 			p.Config = cfg
 		}
 	}
+
 	return p, nil
 }
 
@@ -1513,20 +1725,25 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 	if err := (domain.ProviderConfigSpec{Kind: kind, Type: cmd.Type}).Validate(); err != nil {
 		return nil, err
 	}
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminProvider, error) {
 		id := cmd.ID
 		if id == "" {
 			id = newUUID()
 		}
+
 		encCfg, err := encryptProviderConfig(a.db.Cipher, cmd.Config)
 		if err != nil {
 			return nil, err
 		}
+
 		d := adminProviderData{Type: cmd.Type, Config: rawToJSON(encCfg)}
+
 		raw, err := json.Marshal(d)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if _, err := models.IamProviders.Insert(&models.IamProviderSetter{
 			ID:        &id,
@@ -1539,8 +1756,10 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		p := &domain.AdminProvider{ID: id, Type: cmd.Type, Config: cmd.Config, Enabled: cmd.Enabled}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "config.provider_created",
@@ -1551,6 +1770,7 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 		}); err != nil {
 			return nil, err
 		}
+
 		return p, nil
 	})
 }
@@ -1559,26 +1779,33 @@ func (a *pgAdminConfig) updateProvider(ctx context.Context, kind string, cmd dom
 	if err := (domain.ProviderConfigSpec{Kind: kind, Type: cmd.Type}).Validate(); err != nil {
 		return nil, err
 	}
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminProvider, error) {
 		row, err := models.FindIamProvider(ctx, a.db.Bobx(), cmd.ID)
 		if err != nil {
 			if adminIsNotFound(translatePgErr("provider", err)) {
 				return nil, domain.ErrNotFound
 			}
+
 			return nil, err
 		}
+
 		if row.ProjectID != cmd.ProjectID || row.Kind != kind {
 			return nil, domain.ErrNotFound
 		}
+
 		encCfg, err := encryptProviderConfig(a.db.Cipher, cmd.Config)
 		if err != nil {
 			return nil, err
 		}
+
 		d := adminProviderData{Type: cmd.Type, Config: rawToJSON(encCfg)}
+
 		raw, err := json.Marshal(d)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamProviderSetter{
 			Provider:  ptr(cmd.Type),
@@ -1588,6 +1815,7 @@ func (a *pgAdminConfig) updateProvider(ctx context.Context, kind string, cmd dom
 		}); err != nil {
 			return nil, err
 		}
+
 		p := &domain.AdminProvider{ID: cmd.ID, Type: cmd.Type, Config: cmd.Config, Enabled: cmd.Enabled}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "config.provider_updated",
@@ -1598,6 +1826,7 @@ func (a *pgAdminConfig) updateProvider(ctx context.Context, kind string, cmd dom
 		}); err != nil {
 			return nil, err
 		}
+
 		return p, nil
 	})
 }
@@ -1609,14 +1838,18 @@ func (a *pgAdminConfig) deleteProvider(ctx context.Context, kind string, cmd dom
 			if adminIsNotFound(translatePgErr("provider", err)) {
 				return domain.ErrNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != cmd.ProjectID || row.Kind != kind {
 			return domain.ErrNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "config.provider_deleted",
 			ProjectID:   cmd.ProjectID,
@@ -1626,6 +1859,7 @@ func (a *pgAdminConfig) deleteProvider(ctx context.Context, kind string, cmd dom
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -1675,13 +1909,15 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 	if err != nil {
 		return nil, err
 	}
+
 	out := make(map[string]jx.Raw, len(rows)+len(domain.BuiltinEmailTemplates))
-	// Seed with the built-in catalogue so every system template is always listed
-	// (editable/previewable/testable) even before a project customises it. Bodies
+	// Seed with the built-in catalog so every system template is always listed
+	// (editable/previewable/testable) even before a project customizes it. Bodies
 	// are built as plain values and json-marshaled — NOT map[string]jx.Raw, which
 	// encoding/json base64-encodes (jx.Raw is []byte).
 	for _, t := range domain.BuiltinEmailTemplates {
 		c := t.Copy(adminTemplateLocale)
+
 		raw, err := json.Marshal(map[string]any{
 			"id":         t.Key,
 			"name":       t.Name,
@@ -1694,6 +1930,7 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 		if err != nil {
 			return nil, err
 		}
+
 		out[t.Key] = jx.Raw(raw)
 	}
 	// Overlay project overrides (mark them customized).
@@ -1702,26 +1939,32 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 		if row.Locale != "" && row.Locale != adminTemplateLocale {
 			key = row.Key + ":" + row.Locale
 		}
+
 		body := map[string]any{}
 		if len(row.Data) > 0 {
 			if err := json.Unmarshal(row.Data, &body); err != nil {
 				return nil, err
 			}
 		}
+
 		if bt := domain.BuiltinEmailTemplateByKey(row.Key); bt != nil {
 			if _, ok := body["name"]; !ok {
 				body["name"] = bt.Name
 			}
 		}
+
 		body["id"] = row.Key
 		body["locale"] = row.Locale
 		body["customized"] = true
+
 		raw, err := json.Marshal(body)
 		if err != nil {
 			return nil, err
 		}
+
 		out[key] = jx.Raw(raw)
 	}
+
 	return out, nil
 }
 
@@ -1737,6 +1980,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 		}
 		// Merge the patch onto the current template body.
 		body := map[string]jx.Raw{}
+
 		var cur *models.IamEmailTemplate
 		if len(existing) > 0 {
 			cur = existing[0]
@@ -1746,16 +1990,20 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 				}
 			}
 		}
+
 		for k, v := range cmd.Patch {
 			body[k] = v
 		}
+
 		locale := adminTemplateLocaleFromPatch(body)
 		body["id"] = adminRawString(cmd.TemplateID)
 		body["locale"] = adminRawString(locale)
+
 		raw, err := json.Marshal(body)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if cur != nil {
 			if err := cur.Update(ctx, a.db.Bobx(), &models.IamEmailTemplateSetter{
@@ -1775,6 +2023,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 				return nil, err
 			}
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "config.email_template_updated",
 			ProjectID:   cmd.ProjectID,
@@ -1784,6 +2033,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 		}); err != nil {
 			return nil, err
 		}
+
 		return body, nil
 	})
 }
@@ -1793,23 +2043,29 @@ func (a *pgAdminConfig) PreviewEmailTemplate(ctx context.Context, cmd domain.Adm
 	if err != nil {
 		return nil, err
 	}
+
 	body := map[string]string{}
 	if len(row.Data) > 0 {
 		_ = json.Unmarshal(row.Data, &body) // best-effort: only string fields render
 	}
+
 	data := adminTemplateData(cmd.Data)
+
 	subject, err := renderAdminTemplate(body["subject"], data)
 	if err != nil {
 		return nil, domain.ErrValidation.WithMessage("subject template is invalid")
 	}
+
 	html, err := renderAdminTemplate(body["html"], data)
 	if err != nil {
 		return nil, domain.ErrValidation.WithMessage("html template is invalid")
 	}
+
 	text, err := renderAdminTemplate(body["text"], data)
 	if err != nil {
 		return nil, domain.ErrValidation.WithMessage("text template is invalid")
 	}
+
 	return &domain.AdminTemplatePreview{
 		Subject: subject,
 		HTML:    html,
@@ -1822,13 +2078,16 @@ func (a *pgAdminConfig) SendTestEmail(ctx context.Context, cmd domain.AdminTempl
 	if _, err := a.findEmailTemplate(ctx, cmd.ProjectID, cmd.TemplateID, adminTemplateLocaleOrDefault(cmd.Locale)); err != nil {
 		return err
 	}
+
 	ok, err := a.hasEnabledProvider(ctx, cmd.ProjectID, "email")
 	if err != nil {
 		return err
 	}
+
 	if !ok {
 		return domain.ErrValidation.WithMessage("enabled email provider is required")
 	}
+
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "config.test_email_requested",
 		ProjectID:   cmd.ProjectID,
@@ -1844,6 +2103,7 @@ func (a *pgAdminConfig) SendTestEmail(ctx context.Context, cmd domain.AdminTempl
 	}); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -1856,20 +2116,25 @@ func (a *pgAdminConfig) SendTestSMS(ctx context.Context, cmd domain.AdminTemplat
 	if err != nil {
 		return err
 	}
+
 	if !ok {
 		return domain.ErrValidation.WithMessage("enabled sms provider is required")
 	}
+
 	tmpl := cmd.TemplateID
 	if tmpl == "" {
 		tmpl = "otp"
 	}
+
 	data := adminTemplateData(cmd.Data)
 	if data == nil {
 		data = map[string]any{}
 	}
+
 	if _, has := data["code"]; !has {
 		data["code"] = "123456"
 	}
+
 	return a.emitter.Emit(ctx, domain.Event{
 		Type:        "config.test_sms_requested",
 		ProjectID:   cmd.ProjectID,
@@ -1894,6 +2159,7 @@ func (a *pgAdminConfig) hasEnabledProvider(ctx context.Context, projectID, kind 
 	if err != nil {
 		return false, err
 	}
+
 	return len(rows) > 0, nil
 }
 
@@ -1906,6 +2172,7 @@ func (a *pgAdminConfig) findEmailTemplate(ctx context.Context, projectID, key, l
 	if err == nil {
 		return row, nil
 	}
+
 	if !adminIsNotFound(err) {
 		return nil, err
 	}
@@ -1919,30 +2186,35 @@ func (a *pgAdminConfig) findEmailTemplate(ctx context.Context, projectID, key, l
 		if err == nil {
 			return row, nil
 		}
+
 		if !adminIsNotFound(err) {
 			return nil, err
 		}
 	}
-	// No override at all: fall back to the built-in catalogue so previews and
-	// test-sends work for system templates the project has never customised.
+	// No override at all: fall back to the built-in catalog so previews and
+	// test-sends work for system templates the project has never customized.
 	if syn := builtinTemplateRow(projectID, key, locale); syn != nil {
 		return syn, nil
 	}
+
 	return nil, domain.ErrNotFound
 }
 
 // builtinTemplateRow synthesizes an in-memory (unpersisted) template row from the
-// domain catalogue, so callers that read row.Data render the system default.
+// domain catalog, so callers that read row.Data render the system default.
 func builtinTemplateRow(projectID, key, locale string) *models.IamEmailTemplate {
 	t := domain.BuiltinEmailTemplateByKey(key)
 	if t == nil {
 		return nil
 	}
+
 	if locale == "" {
 		locale = adminTemplateLocale
 	}
+
 	c := t.Copy(locale)
 	body, _ := json.Marshal(map[string]string{"subject": c.Subject, "text": c.Text, "html": c.HTML})
+
 	return &models.IamEmailTemplate{
 		ProjectID: projectID,
 		Key:       key,
@@ -1955,6 +2227,7 @@ func adminTemplateLocaleOrDefault(locale string) string {
 	if locale == "" {
 		return adminTemplateLocale
 	}
+
 	return locale
 }
 
@@ -1965,6 +2238,7 @@ func adminTemplateLocaleFromPatch(patch map[string]jx.Raw) string {
 			return locale
 		}
 	}
+
 	return adminTemplateLocale
 }
 
@@ -1989,12 +2263,14 @@ func adminTemplateData(in map[string]jx.Raw) map[string]any {
 		"magic_link":       "https://example.test/auth/magic?token=sample-token",
 		"verification_url": "https://example.test/auth/verify?token=sample-token",
 	}
+
 	for k, raw := range in {
 		var v any
 		if err := json.Unmarshal(raw, &v); err == nil {
 			out[k] = v
 		}
 	}
+
 	return out
 }
 
@@ -2002,14 +2278,17 @@ func renderAdminTemplate(src string, data map[string]any) (string, error) {
 	if src == "" {
 		return "", nil
 	}
+
 	tpl, err := template.New("email").Option("missingkey=zero").Parse(src)
 	if err != nil {
 		return "", err
 	}
+
 	var buf bytes.Buffer
 	if err := tpl.Execute(&buf, data); err != nil {
 		return "", err
 	}
+
 	return buf.String(), nil
 }
 
@@ -2047,10 +2326,12 @@ func (a *pgAdminKeys) ListSigningKeys(ctx context.Context, cmd domain.AdminConfi
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.AdminSigningKey, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, adminSigningKeyToDomain(row))
 	}
+
 	return out, nil
 }
 
@@ -2061,14 +2342,18 @@ func (a *pgAdminKeys) DeleteSigningKey(ctx context.Context, cmd domain.AdminConf
 			if adminIsNotFound(translatePgErr("signing_key", err)) {
 				return domain.ErrNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != cmd.ProjectID || row.Environment != adminEnv(cmd.Environment) {
 			return domain.ErrNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "keys.signing_key_deleted",
 			ProjectID:   cmd.ProjectID,
@@ -2078,6 +2363,7 @@ func (a *pgAdminKeys) DeleteSigningKey(ctx context.Context, cmd domain.AdminConf
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -2085,6 +2371,7 @@ func (a *pgAdminKeys) DeleteSigningKey(ctx context.Context, cmd domain.AdminConf
 func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWKSRotateCmd) (*domain.AdminSigningKey, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminSigningKey, error) {
 		env := adminEnv(cmd.Environment)
+
 		status := "inactive"
 		if cmd.Activate {
 			status = "active"
@@ -2097,12 +2384,14 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 			if err != nil {
 				return nil, err
 			}
+
 			for _, k := range active {
 				if uerr := k.Update(ctx, a.db.Bobx(), &models.IamSigningKeySetter{Status: ptr("retired")}); uerr != nil {
 					return nil, uerr
 				}
 			}
 		}
+
 		kid := newUUID()
 		key := domain.AdminSigningKey{
 			Kid:       kid,
@@ -2111,10 +2400,12 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 			Status:    status,
 			CreatedAt: nowUTC(),
 		}
+
 		raw, err := marshal(key)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		// Generate the RSA-2048 private key material and persist it (PEM) so the
 		// Signer can mint/verify project tokens with this kid.
@@ -2122,10 +2413,12 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 		if err != nil {
 			return nil, err
 		}
+
 		encPem, err := a.db.Cipher.Encrypt(pemStr)
 		if err != nil {
 			return nil, err
 		}
+
 		pv := null.From(encPem)
 		if _, err := models.IamSigningKeys.Insert(&models.IamSigningKeySetter{
 			Kid:         &kid,
@@ -2139,6 +2432,7 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "keys.signing_keys_rotated",
 			ProjectID:   cmd.ProjectID,
@@ -2148,6 +2442,7 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 		}); err != nil {
 			return nil, err
 		}
+
 		return &key, nil
 	})
 }
@@ -2155,13 +2450,16 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminConfigGetCmd, kid string) (*domain.AdminSigningKey, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminSigningKey, error) {
 		env := adminEnv(cmd.Environment)
+
 		row, err := models.FindIamSigningKey(ctx, a.db.Bobx(), kid)
 		if err != nil {
 			if adminIsNotFound(translatePgErr("signing_key", err)) {
 				return nil, domain.ErrNotFound
 			}
+
 			return nil, err
 		}
+
 		if row.ProjectID != cmd.ProjectID || row.Environment != env {
 			return nil, domain.ErrNotFound
 		}
@@ -2174,17 +2472,21 @@ func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminCo
 		if err != nil {
 			return nil, err
 		}
+
 		for _, k := range active {
 			if k.Kid == kid {
 				continue
 			}
+
 			if uerr := k.Update(ctx, a.db.Bobx(), &models.IamSigningKeySetter{Status: ptr("retired")}); uerr != nil {
 				return nil, uerr
 			}
 		}
+
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamSigningKeySetter{Status: ptr("active")}); err != nil {
 			return nil, err
 		}
+
 		out := adminSigningKeyToDomain(row)
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "keys.signing_key_activated",
@@ -2195,6 +2497,7 @@ func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminCo
 		}); err != nil {
 			return nil, err
 		}
+
 		return &out, nil
 	})
 }
@@ -2215,12 +2518,14 @@ func adminTokenProfileToDomain(row *models.IamTokenProfile) domain.AdminTokenPro
 			if d.Name != "" {
 				p.Name = d.Name
 			}
+
 			p.Audience = d.Audience
 			p.AccessTTL = d.AccessTTL
 			p.RefreshTTL = d.RefreshTTL
 			p.ClaimsTemplate = d.ClaimsTemplate
 		}
 	}
+
 	return p
 }
 
@@ -2231,10 +2536,12 @@ func (a *pgAdminKeys) ListTokenProfiles(ctx context.Context, cmd domain.AdminCon
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.AdminTokenProfile, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, adminTokenProfileToDomain(row))
 	}
+
 	return out, nil
 }
 
@@ -2246,6 +2553,7 @@ func adminProfileName(doc domain.AdminConfigDoc) string {
 			return s
 		}
 	}
+
 	return ""
 }
 
@@ -2255,11 +2563,14 @@ func (a *pgAdminKeys) CreateTokenProfile(ctx context.Context, cmd domain.AdminTo
 		if id == "" {
 			id = newUUID()
 		}
+
 		name := adminProfileName(cmd.Profile)
+
 		raw, err := json.Marshal(cmd.Profile)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if _, err := models.IamTokenProfiles.Insert(&models.IamTokenProfileSetter{
 			ID:        &id,
@@ -2270,12 +2581,15 @@ func (a *pgAdminKeys) CreateTokenProfile(ctx context.Context, cmd domain.AdminTo
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		row, err := models.FindIamTokenProfile(ctx, a.db.Bobx(), id)
 		if err != nil {
 			return nil, err
 		}
+
 		out := adminTokenProfileToDomain(row)
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "keys.token_profile_created",
@@ -2286,6 +2600,7 @@ func (a *pgAdminKeys) CreateTokenProfile(ctx context.Context, cmd domain.AdminTo
 		}); err != nil {
 			return nil, err
 		}
+
 		return &out, nil
 	})
 }
@@ -2297,19 +2612,24 @@ func (a *pgAdminKeys) UpdateTokenProfile(ctx context.Context, cmd domain.AdminTo
 			if adminIsNotFound(translatePgErr("token_profile", err)) {
 				return nil, domain.ErrNotFound
 			}
+
 			return nil, err
 		}
+
 		if row.ProjectID != cmd.ProjectID {
 			return nil, domain.ErrNotFound
 		}
+
 		name := adminProfileName(cmd.Profile)
 		if name == "" {
 			name = row.Name
 		}
+
 		raw, err := json.Marshal(cmd.Profile)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamTokenProfileSetter{
 			Name:      &name,
@@ -2318,6 +2638,7 @@ func (a *pgAdminKeys) UpdateTokenProfile(ctx context.Context, cmd domain.AdminTo
 		}); err != nil {
 			return nil, err
 		}
+
 		out := adminTokenProfileToDomain(row)
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "keys.token_profile_updated",
@@ -2328,6 +2649,7 @@ func (a *pgAdminKeys) UpdateTokenProfile(ctx context.Context, cmd domain.AdminTo
 		}); err != nil {
 			return nil, err
 		}
+
 		return &out, nil
 	})
 }
@@ -2339,14 +2661,18 @@ func (a *pgAdminKeys) DeleteTokenProfile(ctx context.Context, cmd domain.AdminCo
 			if adminIsNotFound(translatePgErr("token_profile", err)) {
 				return domain.ErrNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != cmd.ProjectID {
 			return domain.ErrNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "keys.token_profile_deleted",
 			ProjectID:   cmd.ProjectID,
@@ -2356,6 +2682,7 @@ func (a *pgAdminKeys) DeleteTokenProfile(ctx context.Context, cmd domain.AdminCo
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -2366,8 +2693,10 @@ func (a *pgAdminKeys) PreviewTokenProfile(ctx context.Context, cmd domain.AdminT
 		if adminIsNotFound(translatePgErr("token_profile", err)) {
 			return nil, domain.ErrNotFound
 		}
+
 		return nil, err
 	}
+
 	if row.ProjectID != cmd.ProjectID {
 		return nil, domain.ErrNotFound
 	}
@@ -2377,6 +2706,7 @@ func (a *pgAdminKeys) PreviewTokenProfile(ctx context.Context, cmd domain.AdminT
 	// claims under the synthetic "_sample_token" key so callers can inspect both
 	// the resolved claims and a verifiable example token.
 	profile := adminTokenProfileToDomain(row)
+
 	claims := profile.ClaimsTemplate
 	if claims == nil {
 		claims = map[string]jx.Raw{}
@@ -2388,26 +2718,34 @@ func (a *pgAdminKeys) PreviewTokenProfile(ctx context.Context, cmd domain.AdminT
 		if err := json.Unmarshal([]byte(v), &dv); err != nil {
 			return nil, err
 		}
+
 		sampleClaims[k] = dv
 	}
+
 	if cmd.UserID != "" {
 		sampleClaims["sub"] = cmd.UserID
 	}
+
 	sampleClaims["typ"] = "access"
 	sampleClaims["env"] = adminEnv(cmd.Environment)
+
 	token, err := a.db.Signer().Sign(ctx, cmd.ProjectID, adminEnv(cmd.Environment), sampleClaims, adminTokenProfilePreviewTTL)
 	if err != nil {
 		return nil, err
 	}
+
 	out := make(map[string]jx.Raw, len(claims)+1)
 	for k, v := range claims {
 		out[k] = v
 	}
+
 	tokraw, err := json.Marshal(token)
 	if err != nil {
 		return nil, err
 	}
+
 	out["_sample_token"] = jx.Raw(tokraw)
+
 	return out, nil
 }
 
@@ -2445,6 +2783,7 @@ func accessRequestToDomain(row *models.IamAccessRequest) domain.CoreAuthAccessRe
 	ar.ProjectID = row.ProjectID
 	ar.Email = row.Email
 	ar.Status = row.Status
+
 	return ar
 }
 
@@ -2454,11 +2793,14 @@ func (a *pgAdminAccessRequests) findRequest(ctx context.Context, projectID, requ
 		if adminIsNotFound(translatePgErr("access_request", err)) {
 			return nil, domain.ErrNotFound
 		}
+
 		return nil, err
 	}
+
 	if row.ProjectID != projectID {
 		return nil, domain.ErrNotFound
 	}
+
 	return row, nil
 }
 
@@ -2474,6 +2816,7 @@ func (a *pgAdminAccessRequests) List(ctx context.Context, cmd domain.AdminAccess
 	if cmd.Cursor != "" {
 		mods = append(mods, sm.Where(models.IamAccessRequests.Columns.ID.GT(psql.Arg(cmd.Cursor))))
 	}
+
 	mods = append(mods, sm.OrderBy(models.IamAccessRequests.Columns.ID))
 	mods = append(mods, sm.Limit(adminAccessRequestPageSize+1))
 
@@ -2481,18 +2824,22 @@ func (a *pgAdminAccessRequests) List(ctx context.Context, cmd domain.AdminAccess
 	if err != nil {
 		return nil, err
 	}
+
 	page := &domain.AdminAccessRequestPage{}
 	if len(rows) > adminAccessRequestPageSize {
 		page.HasMore = true
 		rows = rows[:adminAccessRequestPageSize]
 	}
+
 	page.Items = make([]domain.CoreAuthAccessRequest, 0, len(rows))
 	for _, row := range rows {
 		page.Items = append(page.Items, accessRequestToDomain(row))
 	}
+
 	if page.HasMore && len(rows) > 0 {
 		page.NextCursor = rows[len(rows)-1].ID
 	}
+
 	return page, nil
 }
 
@@ -2502,11 +2849,14 @@ func (a *pgAdminAccessRequests) Approve(ctx context.Context, cmd domain.AdminAcc
 		if err != nil {
 			return nil, err
 		}
+
 		ar := accessRequestToDomain(row)
+
 		ar.Status = "approved"
 		if err := a.persistDecision(ctx, row, ar, cmd.ActorID, ""); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "access_request.approved",
 			ProjectID:   cmd.ProjectID,
@@ -2516,11 +2866,13 @@ func (a *pgAdminAccessRequests) Approve(ctx context.Context, cmd domain.AdminAcc
 		}); err != nil {
 			return nil, err
 		}
+
 		out := map[string]jx.Raw{
 			"id":     jx.Raw(adminJSONString(ar.ID)),
 			"status": jx.Raw(adminJSONString(ar.Status)),
 			"email":  jx.Raw(adminJSONString(ar.Email)),
 		}
+
 		return out, nil
 	})
 }
@@ -2531,12 +2883,15 @@ func (a *pgAdminAccessRequests) Deny(ctx context.Context, cmd domain.AdminAccess
 		if err != nil {
 			return nil, err
 		}
+
 		ar := accessRequestToDomain(row)
 		ar.Status = "denied"
+
 		ar.Reason = cmd.Reason
 		if err := a.persistDecision(ctx, row, ar, cmd.ActorID, cmd.Reason); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "access_request.denied",
 			ProjectID:   cmd.ProjectID,
@@ -2546,6 +2901,7 @@ func (a *pgAdminAccessRequests) Deny(ctx context.Context, cmd domain.AdminAccess
 		}); err != nil {
 			return nil, err
 		}
+
 		return &ar, nil
 	})
 }
@@ -2557,20 +2913,26 @@ func (a *pgAdminAccessRequests) persistDecision(ctx context.Context, row *models
 	if err != nil {
 		return err
 	}
+
 	var m map[string]any
 	if err := json.Unmarshal(raw, &m); err != nil {
 		return err
 	}
+
 	m["decided_by"] = actorID
+
 	m["decided_at"] = nowUTC()
 	if reason != "" {
 		m["reason"] = reason
 	}
+
 	merged, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(merged)
+
 	return row.Update(ctx, a.db.Bobx(), &models.IamAccessRequestSetter{
 		Status:    ptr(ar.Status),
 		Data:      &rm,

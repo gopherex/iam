@@ -34,12 +34,13 @@ var providerSecretKeys = map[string]struct{}{
 }
 
 // providerConfigCrypt applies transform (Encrypt or Decrypt) to the string value
-// of every recognised secret key, leaving other keys and non-string values
+// of every recognized secret key, leaving other keys and non-string values
 // untouched. The input map is not mutated; a new map is returned.
 func providerConfigCrypt(cfg map[string]jx.Raw, transform func(string) (string, error)) (map[string]jx.Raw, error) {
 	if cfg == nil {
 		return nil, nil
 	}
+
 	out := make(map[string]jx.Raw, len(cfg))
 	for k, v := range cfg {
 		if _, ok := providerSecretKeys[strings.ToLower(k)]; ok {
@@ -49,16 +50,21 @@ func providerConfigCrypt(cfg map[string]jx.Raw, transform func(string) (string, 
 				if err != nil {
 					return nil, err
 				}
+
 				b, err := json.Marshal(t)
 				if err != nil {
 					return nil, err
 				}
+
 				out[k] = jx.Raw(b)
+
 				continue
 			}
 		}
+
 		out[k] = v
 	}
+
 	return out, nil
 }
 
@@ -80,10 +86,12 @@ func rawToJSON(in map[string]jx.Raw) map[string]json.RawMessage {
 	if in == nil {
 		return nil
 	}
+
 	out := make(map[string]json.RawMessage, len(in))
 	for k, v := range in {
 		out[k] = json.RawMessage(v)
 	}
+
 	return out
 }
 
@@ -91,9 +99,11 @@ func jsonToRaw(in map[string]json.RawMessage) map[string]jx.Raw {
 	if in == nil {
 		return nil
 	}
+
 	out := make(map[string]jx.Raw, len(in))
 	for k, v := range in {
 		out[k] = jx.Raw(v)
 	}
+
 	return out
 }

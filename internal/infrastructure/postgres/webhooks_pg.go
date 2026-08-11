@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -51,6 +52,7 @@ func NewPgWebhooks(db *DB, client *http.Client) *PgWebhooks {
 	if client == nil {
 		client = &http.Client{Timeout: webhookHTTPTimeout}
 	}
+
 	return &PgWebhooks{db: db, httpClient: client}
 }
 
@@ -58,9 +60,11 @@ func normalizeWebhookLimit(limit int) int {
 	if limit <= 0 {
 		return webhookDefaultPageLimit
 	}
+
 	if limit > webhookMaxPageLimit {
 		return webhookMaxPageLimit
 	}
+
 	return limit
 }
 
@@ -69,6 +73,7 @@ func newWebhookSigningSecret() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return "whsec_" + base64.StdEncoding.EncodeToString([]byte(token)), nil
 }
 
@@ -77,16 +82,20 @@ func validateWebhookURL(raw string) error {
 	if err != nil || u.Host == "" {
 		return domain.ErrValidation.WithMessage("webhook url must be an absolute URL")
 	}
+
 	if u.User != nil || u.Fragment != "" {
 		return domain.ErrValidation.WithMessage("webhook url must not contain userinfo or a fragment")
 	}
+
 	host := u.Hostname()
 	if u.Scheme == "https" {
 		return nil
 	}
+
 	if u.Scheme == "http" && (strings.EqualFold(host, "localhost") || isLoopbackIP(host)) {
 		return nil
 	}
+
 	return domain.ErrValidation.WithMessage("webhook url must use https (http is allowed only for loopback development)")
 }
 
@@ -99,6 +108,7 @@ func validateWebhookEvents(events []string) error {
 	if len(events) == 0 {
 		return domain.ErrValidation.WithMessage("at least one webhook event is required")
 	}
+
 	seen := make(map[string]struct{}, len(events))
 	for _, eventType := range events {
 		if eventType != "*" && !slices.Contains(domain.SupportedWebhookEvents, eventType) {
@@ -107,11 +117,14 @@ func validateWebhookEvents(events []string) error {
 				"supported": domain.SupportedWebhookEvents,
 			}).WithMessage("unsupported webhook event")
 		}
+
 		if _, ok := seen[eventType]; ok {
 			return domain.ErrValidation.WithMessage("duplicate webhook event: " + eventType)
 		}
+
 		seen[eventType] = struct{}{}
 	}
+
 	return nil
 }
 
@@ -120,32 +133,39 @@ func (a *PgWebhooks) decodeWebhookData(raw []byte) (webhookData, error) {
 	if err := json.Unmarshal(raw, &data); err != nil {
 		return data, err
 	}
+
 	var err error
+
 	data.SigningSecret, err = a.db.Cipher.Decrypt(data.SigningSecret)
 	if err != nil {
 		return data, err
 	}
+
 	if data.PreviousSigningSecret != "" {
 		data.PreviousSigningSecret, err = a.db.Cipher.Decrypt(data.PreviousSigningSecret)
 		if err != nil {
 			return data, err
 		}
 	}
+
 	return data, nil
 }
 
 func (a *PgWebhooks) encodeWebhookData(data webhookData) ([]byte, error) {
 	var err error
+
 	data.SigningSecret, err = a.db.Cipher.Encrypt(data.SigningSecret)
 	if err != nil {
 		return nil, err
 	}
+
 	if data.PreviousSigningSecret != "" {
 		data.PreviousSigningSecret, err = a.db.Cipher.Encrypt(data.PreviousSigningSecret)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	return json.Marshal(data)
 }
 
@@ -158,18 +178,22 @@ func (a *PgWebhooks) scanWebhook(row pgx.Row) (*domain.Webhook, error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound.WithMessage("webhook not found")
 		}
+
 		return nil, err
 	}
+
 	data, err := a.decodeWebhookData(raw)
 	if err != nil {
 		return nil, err
 	}
+
 	out.URL = data.URL
 	out.Events = data.Events
 	out.Description = data.Description
 	out.SigningSecret = data.SigningSecret
 	out.PreviousSigningSecret = data.PreviousSigningSecret
 	out.PreviousSecretValidUntil = data.PreviousSecretValidUntil
+
 	return &out, nil
 }
 
@@ -183,36 +207,47 @@ func (a *PgWebhooks) List(ctx context.Context, cmd domain.WebhookListCmd) ([]dom
 	limit := normalizeWebhookLimit(cmd.Limit)
 	env := adminEnv(cmd.Environment)
 	args := []any{cmd.ProjectID, env, limit + 1}
+
 	query := webhookSelect + ` WHERE project_id = $1 AND environment = $2`
 	if cmd.Cursor != "" {
 		query += ` AND (created_at, id) < COALESCE((SELECT created_at, id FROM iam_webhooks WHERE id = $4 AND project_id = $1 AND environment = $2), ('infinity'::timestamptz, '~'::text))`
+
 		args = append(args, cmd.Cursor)
 	}
+
 	query += ` ORDER BY created_at DESC, id DESC LIMIT $3`
+
 	rows, err := a.db.TxDB.Query(ctx, query, args...)
 	if err != nil {
 		return nil, "", false, err
 	}
 	defer rows.Close()
+
 	out := make([]domain.Webhook, 0, limit+1)
+
 	for rows.Next() {
 		webhook, err := a.scanWebhook(rows)
 		if err != nil {
 			return nil, "", false, err
 		}
+
 		out = append(out, *webhook)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, "", false, err
 	}
+
 	hasMore := len(out) > limit
 	if hasMore {
 		out = out[:limit]
 	}
+
 	next := ""
 	if hasMore && len(out) > 0 {
 		next = out[len(out)-1].ID
 	}
+
 	return out, next, hasMore, nil
 }
 
@@ -220,31 +255,38 @@ func (a *PgWebhooks) Create(ctx context.Context, cmd domain.WebhookCreateCmd) (*
 	if err := validateWebhookURL(cmd.URL); err != nil {
 		return nil, "", err
 	}
+
 	if err := validateWebhookEvents(cmd.Events); err != nil {
 		return nil, "", err
 	}
+
 	env := adminEnv(cmd.Environment)
 	if cmd.IdempotencyKey != "" {
 		existing, err := a.scanWebhook(a.db.TxDB.QueryRow(ctx, webhookSelect+` WHERE project_id = $1 AND environment = $2 AND idempotency_key = $3`, cmd.ProjectID, env, cmd.IdempotencyKey))
 		if err == nil {
 			return existing, existing.SigningSecret, nil
 		}
+
 		if !errors.Is(err, domain.ErrNotFound) {
 			return nil, "", err
 		}
 	}
+
 	secret, err := newWebhookSigningSecret()
 	if err != nil {
 		return nil, "", err
 	}
+
 	raw, err := a.encodeWebhookData(webhookData{
 		URL: cmd.URL, Events: slices.Clone(cmd.Events), Description: cmd.Description, SigningSecret: secret,
 	})
 	if err != nil {
 		return nil, "", err
 	}
+
 	id := newUUID()
 	now := nowUTC()
+
 	webhook, err := a.scanWebhook(a.db.TxDB.QueryRow(ctx, `
 		INSERT INTO iam_webhooks (id, project_id, environment, idempotency_key, enabled, created_at, updated_at, data)
 		VALUES ($1, $2, $3, $4, $5, $6, $6, $7)
@@ -258,11 +300,14 @@ func (a *PgWebhooks) Create(ctx context.Context, cmd domain.WebhookCreateCmd) (*
 		if getErr != nil {
 			return nil, "", getErr
 		}
+
 		return existing, existing.SigningSecret, nil
 	}
+
 	if err != nil {
 		return nil, "", translatePgErr("webhook", err)
 	}
+
 	return webhook, secret, nil
 }
 
@@ -272,24 +317,31 @@ func (a *PgWebhooks) Update(ctx context.Context, cmd domain.WebhookUpdateCmd) (*
 		if err != nil {
 			return nil, err
 		}
+
 		if cmd.URL != nil {
 			if err := validateWebhookURL(*cmd.URL); err != nil {
 				return nil, err
 			}
+
 			webhook.URL = *cmd.URL
 		}
+
 		if cmd.Events != nil {
 			if err := validateWebhookEvents(*cmd.Events); err != nil {
 				return nil, err
 			}
+
 			webhook.Events = slices.Clone(*cmd.Events)
 		}
+
 		if cmd.Description != nil {
 			webhook.Description = *cmd.Description
 		}
+
 		if cmd.Enabled != nil {
 			webhook.Enabled = *cmd.Enabled
 		}
+
 		raw, err := a.encodeWebhookData(webhookData{
 			URL: webhook.URL, Events: webhook.Events, Description: webhook.Description,
 			SigningSecret: webhook.SigningSecret, PreviousSigningSecret: webhook.PreviousSigningSecret,
@@ -298,7 +350,9 @@ func (a *PgWebhooks) Update(ctx context.Context, cmd domain.WebhookUpdateCmd) (*
 		if err != nil {
 			return nil, err
 		}
+
 		now := nowUTC()
+
 		return a.scanWebhook(a.db.TxDB.QueryRow(ctx, `
 			UPDATE iam_webhooks SET enabled = $1, updated_at = $2, data = $3
 			WHERE id = $4 AND project_id = $5 AND environment = $6
@@ -312,13 +366,16 @@ func (a *PgWebhooks) Delete(ctx context.Context, projectID, environment, id stri
 		if _, err := a.db.TxDB.Exec(ctx, `DELETE FROM iam_webhook_deliveries WHERE webhook_id = $1 AND project_id = $2 AND environment = $3`, id, projectID, adminEnv(environment)); err != nil {
 			return err
 		}
+
 		result, err := a.db.TxDB.Exec(ctx, `DELETE FROM iam_webhooks WHERE id = $1 AND project_id = $2 AND environment = $3`, id, projectID, adminEnv(environment))
 		if err != nil {
 			return err
 		}
+
 		if result.RowsAffected() == 0 {
 			return domain.ErrNotFound.WithMessage("webhook not found")
 		}
+
 		return nil
 	})
 }
@@ -329,11 +386,14 @@ func (a *PgWebhooks) RotateSecret(ctx context.Context, projectID, environment, i
 		if err != nil {
 			return "", err
 		}
+
 		secret, err := newWebhookSigningSecret()
 		if err != nil {
 			return "", err
 		}
+
 		now := nowUTC()
+
 		raw, err := a.encodeWebhookData(webhookData{
 			URL: webhook.URL, Events: webhook.Events, Description: webhook.Description,
 			SigningSecret: secret, PreviousSigningSecret: webhook.SigningSecret,
@@ -342,13 +402,16 @@ func (a *PgWebhooks) RotateSecret(ctx context.Context, projectID, environment, i
 		if err != nil {
 			return "", err
 		}
+
 		result, err := a.db.TxDB.Exec(ctx, `UPDATE iam_webhooks SET data = $1, updated_at = $2 WHERE id = $3 AND project_id = $4 AND environment = $5`, raw, now, id, projectID, adminEnv(environment))
 		if err != nil {
 			return "", err
 		}
+
 		if result.RowsAffected() == 0 {
 			return "", domain.ErrNotFound.WithMessage("webhook not found")
 		}
+
 		return secret, nil
 	})
 }
@@ -357,23 +420,29 @@ func publicEventFromDomain(ev domain.Event) (domain.PublicEvent, string, bool) {
 	if !slices.Contains(domain.SupportedWebhookEvents, ev.Type) {
 		return domain.PublicEvent{}, "", false
 	}
+
 	if ev.Version == 0 {
 		ev.Version = 1
 	}
+
 	if ev.OccurredAt.IsZero() {
 		ev.OccurredAt = nowUTC()
 	}
+
 	if ev.Environment == "" {
 		ev.Environment = "live"
 	}
+
 	data := map[string]any{}
 	userID := ""
+
 	switch ev.Type {
 	case domain.WebhookEventSessionRevoked:
 		payload, ok := sessionRevokedPayload(ev.Payload)
 		if !ok || payload.SessionID == "" || payload.UserID == "" || payload.ProjectID != ev.ProjectID {
 			return domain.PublicEvent{}, "", false
 		}
+
 		userID = payload.UserID
 		data = map[string]any{
 			"session_id": payload.SessionID,
@@ -382,30 +451,37 @@ func publicEventFromDomain(ev domain.Event) (domain.PublicEvent, string, bool) {
 		}
 	case domain.WebhookEventUserBanned:
 		account := accountFromPayload(ev.Payload)
+
 		userID = account.ID
 		if userID == "" {
 			userID = ev.AggregateID
 		}
+
 		data = map[string]any{"user_id": userID, "status": "banned"}
 	case domain.WebhookEventUserDeleted:
 		data = publicMap(ev.Payload)
+
 		userID = firstString(data, "user_id", "id")
 		if userID == "" {
 			userID = ev.AggregateID
 		}
+
 		data = map[string]any{"user_id": userID}
 	case domain.WebhookEventEmailChanged:
 		account := accountFromPayload(ev.Payload)
+
 		userID = account.ID
 		if userID == "" {
 			userID = ev.AggregateID
 		}
+
 		data = map[string]any{
 			"user_id":        userID,
 			"email":          account.PrimaryEmail,
 			"email_verified": account.EmailVerified,
 		}
 	}
+
 	return domain.PublicEvent{
 		ID: ev.ID, Type: ev.Type, Version: ev.Version, OccurredAt: ev.OccurredAt,
 		ProjectID: ev.ProjectID, Environment: ev.Environment, Data: data,
@@ -421,7 +497,9 @@ func sessionRevokedPayload(value any) (domain.SessionRevokedPayload, bool) {
 			return *payload, true
 		}
 	}
+
 	data := publicMap(value)
+
 	return domain.SessionRevokedPayload{
 		SessionID: firstString(data, "session_id"),
 		UserID:    firstString(data, "user_id"),
@@ -438,6 +516,7 @@ func accountFromPayload(payload any) domain.Account {
 			return *value
 		}
 	}
+
 	return domain.Account{}
 }
 
@@ -447,16 +526,20 @@ func publicMap(payload any) map[string]any {
 		for key, item := range value {
 			out[key] = item
 		}
+
 		return out
 	}
+
 	raw, err := json.Marshal(payload)
 	if err != nil {
 		return map[string]any{}
 	}
+
 	var out map[string]any
 	if json.Unmarshal(raw, &out) != nil {
 		return map[string]any{}
 	}
+
 	return out
 }
 
@@ -466,6 +549,7 @@ func firstString(values map[string]any, keys ...string) string {
 			return value
 		}
 	}
+
 	return ""
 }
 
@@ -474,11 +558,13 @@ func (a *PgWebhooks) archiveEvent(ctx context.Context, event domain.PublicEvent,
 	if err != nil {
 		return err
 	}
+
 	_, err = a.db.Pool.Exec(ctx, `
 		INSERT INTO iam_events (id, project_id, environment, aggregate_id, user_id, type, published, created_at, data)
 		VALUES ($1, $2, $3, $4, $5, $6, false, $7, $8)
 		ON CONFLICT (id) DO NOTHING`, event.ID, event.ProjectID, event.Environment,
 		firstString(event.Data, "session_id", "user_id"), userID, event.Type, event.OccurredAt, raw)
+
 	return err
 }
 
@@ -492,16 +578,20 @@ func (a *PgWebhooks) enabledForEvent(ctx context.Context, event domain.PublicEve
 		return nil, err
 	}
 	defer rows.Close()
+
 	var out []domain.Webhook
+
 	for rows.Next() {
 		webhook, err := a.scanWebhook(rows)
 		if err != nil {
 			return nil, err
 		}
+
 		if webhookMatches(webhook.Events, event.Type) {
 			out = append(out, *webhook)
 		}
 	}
+
 	return out, rows.Err()
 }
 
@@ -514,6 +604,7 @@ func (a *PgWebhooks) ensureDelivery(ctx context.Context, webhook domain.Webhook,
 	if err != nil {
 		return nil, err
 	}
+
 	return a.getDeliveryByPair(ctx, webhook.ID, event.ID)
 }
 
@@ -540,14 +631,18 @@ func scanDelivery(row rowScanner) (*domain.WebhookDelivery, error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound.WithMessage("webhook delivery not found")
 		}
+
 		return nil, err
 	}
+
 	if responseBody != nil {
 		out.ResponseBody = *responseBody
 	}
+
 	if lastError != nil {
 		out.LastError = *lastError
 	}
+
 	return &out, nil
 }
 
@@ -556,18 +651,25 @@ func (a *PgWebhooks) loadDeliveryParts(ctx context.Context, deliveryID string) (
 	if err != nil {
 		return nil, nil, domain.PublicEvent{}, err
 	}
+
 	webhook, err := a.Get(ctx, delivery.ProjectID, delivery.Environment, delivery.WebhookID)
 	if err != nil {
 		return nil, nil, domain.PublicEvent{}, err
 	}
-	var raw []byte
-	var event domain.PublicEvent
+
+	var (
+		raw   []byte
+		event domain.PublicEvent
+	)
+
 	if err := a.db.Pool.QueryRow(ctx, `SELECT data FROM iam_events WHERE id = $1`, delivery.EventID).Scan(&raw); err != nil {
 		return nil, nil, domain.PublicEvent{}, err
 	}
+
 	if err := json.Unmarshal(raw, &event); err != nil {
 		return nil, nil, domain.PublicEvent{}, err
 	}
+
 	return delivery, webhook, event, nil
 }
 
@@ -575,6 +677,7 @@ func webhookSignature(secret, eventID string, timestamp int64, body []byte) stri
 	mac := hmac.New(sha256.New, []byte(secret))
 	_, _ = fmt.Fprintf(mac, "%s.%d.", eventID, timestamp)
 	_, _ = mac.Write(body)
+
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
 
@@ -583,48 +686,63 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 	if err != nil {
 		return nil, err
 	}
+
 	if delivery.Status == "succeeded" && !force {
 		return delivery, nil
 	}
+
 	body, err := json.Marshal(event)
 	if err != nil {
 		return nil, err
 	}
+
 	timestamp := nowUTC().Unix()
+
 	signatures := []string{"v1," + webhookSignature(webhook.SigningSecret, event.ID, timestamp, body)}
 	if webhook.PreviousSigningSecret != "" && nowUTC().Before(webhook.PreviousSecretValidUntil) {
 		signatures = append(signatures, "v1,"+webhookSignature(webhook.PreviousSigningSecret, event.ID, timestamp, body))
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhook.URL, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "gopherex-iam-webhooks/1")
-	req.Header.Set("webhook-id", event.ID)
-	req.Header.Set("webhook-timestamp", fmt.Sprint(timestamp))
-	req.Header.Set("webhook-signature", strings.Join(signatures, " "))
+	req.Header.Set("Webhook-Id", event.ID)
+	req.Header.Set("Webhook-Timestamp", strconv.FormatInt(timestamp, 10))
+	req.Header.Set("Webhook-Signature", strings.Join(signatures, " "))
 
 	attemptedAt := nowUTC()
 	response, requestErr := a.httpClient.Do(req)
-	var status *int
-	var responseBody string
+
+	var (
+		status       *int
+		responseBody string
+	)
+
 	if response != nil {
 		value := response.StatusCode
 		status = &value
 		limited, readErr := io.ReadAll(io.LimitReader(response.Body, webhookResponseBodyLimit+1))
 		_ = response.Body.Close()
+
 		if len(limited) > webhookResponseBodyLimit {
 			limited = limited[:webhookResponseBodyLimit]
 		}
+
 		responseBody = string(limited)
+
 		if requestErr == nil && readErr != nil {
 			requestErr = readErr
 		}
+
 		if requestErr == nil && (response.StatusCode < 200 || response.StatusCode >= 300) {
 			requestErr = fmt.Errorf("webhook returned HTTP %d", response.StatusCode)
 		}
 	}
+
 	attempts := delivery.AttemptCount + 1
 	if requestErr == nil {
 		_, err = a.db.Pool.Exec(ctx, `UPDATE iam_webhook_deliveries
@@ -634,13 +752,17 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 		if err != nil {
 			return nil, err
 		}
+
 		return scanDelivery(a.db.Pool.QueryRow(ctx, deliverySelect+` WHERE d.id = $1`, delivery.ID))
 	}
+
 	delay := time.Second << min(attempts-1, 8)
 	if delay > 5*time.Minute {
 		delay = 5 * time.Minute
 	}
+
 	message := requestErr.Error()
+
 	_, updateErr := a.db.Pool.Exec(ctx, `UPDATE iam_webhook_deliveries
 		SET status = 'failed', attempt_count = $1, next_attempt_at = $2, last_attempt_at = $3,
 			response_status = $4, response_body = $5, last_error = $6, updated_at = $3
@@ -648,10 +770,12 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 	if updateErr != nil {
 		return nil, errors.Join(requestErr, updateErr)
 	}
+
 	updated, getErr := scanDelivery(a.db.Pool.QueryRow(ctx, deliverySelect+` WHERE d.id = $1`, delivery.ID))
 	if getErr != nil {
 		return nil, errors.Join(requestErr, getErr)
 	}
+
 	return updated, requestErr
 }
 
@@ -663,27 +787,35 @@ func (a *PgWebhooks) PublishEvent(ctx context.Context, ev domain.Event) error {
 	if !ok {
 		return nil
 	}
+
 	if err := a.archiveEvent(ctx, event, userID); err != nil {
 		return err
 	}
+
 	webhooks, err := a.enabledForEvent(ctx, event)
 	if err != nil {
 		return err
 	}
+
 	var deliveryErrs []error
+
 	for _, webhook := range webhooks {
 		delivery, err := a.ensureDelivery(ctx, webhook, event)
 		if err == nil {
 			_, err = a.deliver(ctx, delivery.ID, false)
 		}
+
 		if err != nil {
 			deliveryErrs = append(deliveryErrs, fmt.Errorf("webhook %s: %w", webhook.ID, err))
 		}
 	}
+
 	if len(deliveryErrs) > 0 {
 		return errors.Join(deliveryErrs...)
 	}
+
 	_, err = a.db.Pool.Exec(ctx, `UPDATE iam_events SET published = true WHERE id = $1`, event.ID)
+
 	return err
 }
 
@@ -691,32 +823,41 @@ func (a *PgWebhooks) ListDeliveries(ctx context.Context, cmd domain.WebhookDeliv
 	limit := normalizeWebhookLimit(cmd.Limit)
 	args := []any{cmd.ProjectID, adminEnv(cmd.Environment)}
 	query := deliverySelect + ` WHERE d.project_id = $1 AND d.environment = $2`
+
 	if cmd.WebhookID != "" {
 		args = append(args, cmd.WebhookID)
 		query += fmt.Sprintf(" AND d.webhook_id = $%d", len(args))
 	}
+
 	if cmd.Status != "" {
 		if cmd.Status != "pending" && cmd.Status != "succeeded" && cmd.Status != "failed" {
 			return nil, domain.ErrValidation.WithMessage("invalid webhook delivery status")
 		}
+
 		args = append(args, cmd.Status)
 		query += fmt.Sprintf(" AND d.status = $%d", len(args))
 	}
+
 	args = append(args, limit)
 	query += fmt.Sprintf(" ORDER BY d.created_at DESC, d.id DESC LIMIT $%d", len(args))
+
 	rows, err := a.db.TxDB.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var out []domain.WebhookDelivery
+
 	for rows.Next() {
 		delivery, err := scanDelivery(rows)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, *delivery)
 	}
+
 	return out, rows.Err()
 }
 
@@ -725,16 +866,19 @@ func (a *PgWebhooks) RetryDelivery(ctx context.Context, projectID, environment, 
 	if err != nil {
 		return nil, err
 	}
+
 	_, err = a.db.TxDB.Exec(ctx, `UPDATE iam_webhook_deliveries SET status = 'pending', next_attempt_at = NULL, updated_at = $1 WHERE id = $2`, nowUTC(), delivery.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	updated, err := a.deliver(ctx, delivery.ID, true)
 	if updated != nil {
 		// Manual retries are diagnostic operations: the persisted failed status
 		// is the useful result even when the receiver still returns an error.
 		return updated, nil
 	}
+
 	return nil, err
 }
 
@@ -742,13 +886,16 @@ func (a *PgWebhooks) Test(ctx context.Context, projectID, environment, webhookID
 	if eventType == "" {
 		eventType = domain.WebhookEventSessionRevoked
 	}
+
 	if !slices.Contains(domain.SupportedWebhookEvents, eventType) {
 		return nil, domain.ErrValidation.WithMessage("unsupported webhook event")
 	}
+
 	webhook, err := a.Get(ctx, projectID, environment, webhookID)
 	if err != nil {
 		return nil, err
 	}
+
 	event := domain.PublicEvent{
 		ID: newUUID(), Type: eventType, Version: 1, OccurredAt: nowUTC(),
 		ProjectID: projectID, Environment: adminEnv(environment),
@@ -757,14 +904,17 @@ func (a *PgWebhooks) Test(ctx context.Context, projectID, environment, webhookID
 	if err := a.archiveEvent(ctx, event, ""); err != nil {
 		return nil, err
 	}
+
 	delivery, err := a.ensureDelivery(ctx, *webhook, event)
 	if err != nil {
 		return nil, err
 	}
+
 	updated, err := a.deliver(ctx, delivery.ID, true)
 	if updated != nil {
 		return updated, nil
 	}
+
 	return nil, err
 }
 
@@ -772,45 +922,57 @@ func (a *PgWebhooks) ListEvents(ctx context.Context, cmd domain.WebhookEventList
 	limit := normalizeWebhookLimit(cmd.Limit)
 	args := []any{cmd.ProjectID, adminEnv(cmd.Environment)}
 	query := `SELECT data FROM iam_events WHERE project_id = $1 AND environment = $2`
+
 	if cmd.Type != "" {
 		args = append(args, cmd.Type)
 		query += fmt.Sprintf(" AND type = $%d", len(args))
 	}
+
 	if cmd.UserID != "" {
 		args = append(args, cmd.UserID)
 		query += fmt.Sprintf(" AND user_id = $%d", len(args))
 	}
+
 	if cmd.Cursor != "" {
 		args = append(args, cmd.Cursor)
 		query += fmt.Sprintf(" AND (created_at, id) < COALESCE((SELECT created_at, id FROM iam_events WHERE id = $%d), ('infinity'::timestamptz, '~'::text))", len(args))
 	}
+
 	args = append(args, limit+1)
 	query += fmt.Sprintf(" ORDER BY created_at DESC, id DESC LIMIT $%d", len(args))
+
 	rows, err := a.db.TxDB.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
 	page := &domain.WebhookEventPage{Data: make([]domain.PublicEvent, 0, limit+1)}
+
 	for rows.Next() {
 		var raw []byte
 		if err := rows.Scan(&raw); err != nil {
 			return nil, err
 		}
+
 		var event domain.PublicEvent
 		if err := json.Unmarshal(raw, &event); err != nil {
 			return nil, err
 		}
+
 		page.Data = append(page.Data, event)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	page.HasMore = len(page.Data) > limit
 	if page.HasMore {
 		page.Data = page.Data[:limit]
 		page.NextCursor = page.Data[len(page.Data)-1].ID
 	}
+
 	return page, nil
 }
 
@@ -820,36 +982,47 @@ func (a *PgWebhooks) ReplayEvent(ctx context.Context, projectID, environment, ev
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound.WithMessage("event not found")
 		}
+
 		return nil, err
 	}
+
 	var event domain.PublicEvent
 	if err := json.Unmarshal(raw, &event); err != nil {
 		return nil, err
 	}
+
 	var webhooks []domain.Webhook
+
 	if webhookID != "" {
 		webhook, err := a.Get(ctx, projectID, environment, webhookID)
 		if err != nil {
 			return nil, err
 		}
+
 		webhooks = []domain.Webhook{*webhook}
 	} else {
 		var err error
+
 		webhooks, err = a.enabledForEvent(ctx, event)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	var out []domain.WebhookDelivery
+
 	for _, webhook := range webhooks {
 		delivery, err := a.ensureDelivery(ctx, webhook, event)
 		if err == nil {
 			delivery, err = a.deliver(ctx, delivery.ID, true)
 		}
+
 		if err != nil {
 			return out, err
 		}
+
 		out = append(out, *delivery)
 	}
+
 	return out, nil
 }

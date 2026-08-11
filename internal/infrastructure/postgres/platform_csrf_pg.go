@@ -21,14 +21,13 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/aarondl/opt/null"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 
 	"github.com/gopherex/iam/internal/domain"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
 	"github.com/gopherex/iam/pkg/api"
-
-	"github.com/aarondl/opt/null"
 )
 
 // csrfTokenTTL is how long an issued CSRF token remains valid.
@@ -70,6 +69,7 @@ func (a *pgPlatform) IssueCsrfToken(ctx context.Context, clientID string) (*doma
 			Data:      &data,
 		}
 		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
+
 		return err
 	})
 	if err != nil {
@@ -86,6 +86,7 @@ func (a *pgPlatform) VerifyCsrfToken(ctx context.Context, clientID, token string
 	if clientID == "" || token == "" {
 		return domain.ErrInvalidCsrf
 	}
+
 	row, err := models.IamChallenges.Query(
 		sm.Where(models.IamChallenges.Columns.Type.EQ(psql.Arg("csrf_token"))),
 		sm.Where(models.IamChallenges.Columns.CodeHash.EQ(psql.Arg(csrfHashToken(token)))),
@@ -93,13 +94,16 @@ func (a *pgPlatform) VerifyCsrfToken(ctx context.Context, clientID, token string
 	if err != nil {
 		return domain.ErrInvalidCsrf
 	}
+
 	sub, ok := row.Subject.Get()
 	if !ok || subtle.ConstantTimeCompare([]byte(sub), []byte(clientID)) != 1 {
 		return domain.ErrInvalidCsrf
 	}
+
 	if nowUTC().After(row.ExpiresAt) {
 		return domain.ErrInvalidCsrf
 	}
+
 	return nil
 }
 
@@ -110,6 +114,7 @@ func csrfRandomToken() (string, error) {
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
+
 	return hex.EncodeToString(b), nil
 }
 

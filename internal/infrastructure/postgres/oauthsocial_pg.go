@@ -96,34 +96,43 @@ type oauthProviderData struct {
 // callers see a single flat view of the provider's OAuth settings.
 func (d oauthProviderData) resolved() oauthProviderData {
 	out := d
+
 	out.Config = nil
 	if d.Config != nil {
 		c := *d.Config
 		if out.Name == "" {
 			out.Name = c.Name
 		}
+
 		if len(out.Scopes) == 0 {
 			out.Scopes = c.Scopes
 		}
+
 		if out.ClientID == "" {
 			out.ClientID = c.ClientID
 		}
+
 		if out.ClientSecret == "" {
 			out.ClientSecret = c.ClientSecret
 		}
+
 		if out.AuthURL == "" {
 			out.AuthURL = c.AuthURL
 		}
+
 		if out.TokenURL == "" {
 			out.TokenURL = c.TokenURL
 		}
+
 		if out.UserInfoURL == "" {
 			out.UserInfoURL = c.UserInfoURL
 		}
+
 		if out.RedirectURL == "" {
 			out.RedirectURL = c.RedirectURL
 		}
 	}
+
 	return out
 }
 
@@ -144,6 +153,7 @@ func (u oauthUserInfo) externalID() string {
 	if u.Sub != "" {
 		return u.Sub
 	}
+
 	switch v := u.ID.(type) {
 	case string:
 		if v != "" {
@@ -158,6 +168,7 @@ func (u oauthUserInfo) externalID() string {
 			return s
 		}
 	}
+
 	return u.UserID
 }
 
@@ -178,23 +189,28 @@ func (a *pgOAuthSocial) EnabledProviders(ctx context.Context, projectID string) 
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.OAuthProvider, 0, len(rows))
 	for _, row := range rows {
 		var raw oauthProviderData
 		if err := unmarshal(row.Data, &raw); err != nil {
 			return nil, err
 		}
+
 		d := raw.resolved()
+
 		name := d.Name
 		if name == "" {
 			name = row.Provider
 		}
+
 		out = append(out, domain.OAuthProvider{
 			ID:     row.Provider,
 			Name:   name,
 			Scopes: d.Scopes,
 		})
 	}
+
 	return out, nil
 }
 
@@ -216,6 +232,7 @@ func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, 
 	if err != nil {
 		return nil, nil, err
 	}
+
 	providerAccountID, email, err := a.oauthExchange(ctx, cfg, d, code, "")
 	if err != nil {
 		return nil, nil, err
@@ -225,6 +242,7 @@ func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, 
 		acct *domain.Account
 		sess *domain.Session
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		// Find an existing identity for this provider account (tenant-scoped).
 		ident, err := a.findIdentity(ctx, projectID, provider, providerAccountID)
@@ -239,6 +257,7 @@ func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, 
 			if err != nil {
 				return result{}, err
 			}
+
 			if err := a.insertIdentity(ctx, &domain.Identity{
 				ID:                newUUID(),
 				Type:              "oauth",
@@ -248,6 +267,7 @@ func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, 
 			}, projectID, acct.ID); err != nil {
 				return result{}, err
 			}
+
 			if err := a.emitter.Emit(ctx, domain.Event{
 				Type:        "identity.linked",
 				ProjectID:   projectID,
@@ -267,6 +287,7 @@ func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, 
 		if err != nil {
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "session.created",
 			ProjectID:   acct.ProjectID,
@@ -275,11 +296,13 @@ func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, 
 		}); err != nil {
 			return result{}, err
 		}
+
 		return result{acct: acct, sess: sess}, nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return res.acct, res.sess, nil
 }
 
@@ -299,12 +322,14 @@ func (a *pgOAuthSocial) Link(ctx context.Context, accountID, provider, code stri
 	if err != nil {
 		return translatePgErr("user", err)
 	}
+
 	projectID := row.ProjectID
 
 	cfg, d, err := a.loadOAuthConfig(ctx, projectID, provider, "")
 	if err != nil {
 		return err
 	}
+
 	providerAccountID, email, err := a.oauthExchange(ctx, cfg, d, code, "")
 	if err != nil {
 		return err
@@ -316,6 +341,7 @@ func (a *pgOAuthSocial) Link(ctx context.Context, accountID, provider, code stri
 			if existing.UserID == accountID {
 				return domain.ErrAlreadyLinked
 			}
+
 			return domain.ErrIdentityExists
 		} else if !errors.Is(err, domain.ErrNotFound) {
 			return err
@@ -330,6 +356,7 @@ func (a *pgOAuthSocial) Link(ctx context.Context, accountID, provider, code stri
 		}, projectID, accountID); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "identity.linked",
 			ProjectID:   projectID,
@@ -338,6 +365,7 @@ func (a *pgOAuthSocial) Link(ctx context.Context, accountID, provider, code stri
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -348,17 +376,21 @@ func (a *pgOAuthSocial) Unlink(ctx context.Context, accountID, identityID string
 	if accountID == "" || identityID == "" {
 		return domain.ErrBadRequest
 	}
+
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		row, err := models.FindIamIdentity(ctx, a.db.Bobx(), identityID)
 		if err != nil {
 			return translatePgErr("identity", err)
 		}
+
 		if row.UserID != accountID { // ownership boundary
 			return domain.ErrNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "identity.unlinked",
 			ProjectID:   row.ProjectID,
@@ -367,6 +399,7 @@ func (a *pgOAuthSocial) Unlink(ctx context.Context, accountID, identityID string
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -390,12 +423,15 @@ func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExch
 	if cmd.ProjectID == "" || cmd.Code == "" {
 		return nil, nil, domain.ErrBadRequest
 	}
+
 	type result struct {
 		acct *domain.Account
 		sess *domain.Session
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		hash := fedHashToken(cmd.Code)
+
 		rows, err := models.IamAuthCodes.Query(
 			sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
 			sm.Where(models.IamAuthCodes.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
@@ -404,23 +440,29 @@ func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExch
 		if err != nil {
 			return result{}, err
 		}
+
 		if len(rows) == 0 {
 			return result{}, domain.ErrInvalidToken
 		}
+
 		row := rows[0]
 		if row.Consumed {
 			return result{}, domain.ErrInvalidToken
 		}
+
 		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
 			return result{}, domain.ErrInvalidToken
 		}
+
 		var data oauthExchangeCodeData
 		if err := unmarshal(row.Data, &data); err != nil {
 			return result{}, err
 		}
+
 		if data.Session == nil {
 			return result{}, domain.ErrInvalidToken
 		}
+
 		if data.CodeChallenge != "" {
 			if oauthPKCEChallengeS256(cmd.CodeVerifier) != data.CodeChallenge {
 				return result{}, domain.ErrInvalidToken
@@ -431,10 +473,12 @@ func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExch
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamAuthCodeSetter{Consumed: &consumed}); err != nil {
 			return result{}, err
 		}
+
 		acct, err := a.loadAccount(ctx, cmd.ProjectID, row.UserID.GetOrZero())
 		if err != nil {
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oauth.social.exchanged",
 			ProjectID:   cmd.ProjectID,
@@ -443,11 +487,13 @@ func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExch
 		}); err != nil {
 			return result{}, err
 		}
+
 		return result{acct: acct, sess: data.Session}, nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return res.acct, res.sess, nil
 }
 
@@ -457,7 +503,9 @@ func oauthPKCEChallengeS256(verifier string) string {
 	if verifier == "" {
 		return ""
 	}
+
 	sum := sha256.Sum256([]byte(verifier))
+
 	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
@@ -468,6 +516,7 @@ func (a *pgOAuthSocial) StartLogin(ctx context.Context, cmd domain.OAuthSocialSt
 	if cmd.ProjectID == "" || cmd.Provider == "" {
 		return "", domain.ErrBadRequest
 	}
+
 	cfg, d, err := a.loadOAuthConfig(ctx, cmd.ProjectID, cmd.Provider, cmd.RedirectTo)
 	if err != nil {
 		return "", err
@@ -478,7 +527,9 @@ func (a *pgOAuthSocial) StartLogin(ctx context.Context, cmd domain.OAuthSocialSt
 	if err := a.storeState(ctx, cmd.ProjectID, cmd.Provider, cmd.State, redirect, ""); err != nil {
 		return "", err
 	}
+
 	opts := a.authCodeOpts(cmd.CodeChallenge, cmd.Prompt, cmd.LoginHint)
+
 	return cfg.AuthCodeURL(cmd.State, opts...), nil
 }
 
@@ -492,12 +543,15 @@ func (a *pgOAuthSocial) authCodeOpts(codeChallenge, prompt, loginHint string) []
 			oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 		)
 	}
+
 	if prompt != "" {
 		opts = append(opts, oauth2.SetAuthURLParam("prompt", prompt))
 	}
+
 	if loginHint != "" {
 		opts = append(opts, oauth2.SetAuthURLParam("login_hint", loginHint))
 	}
+
 	return opts
 }
 
@@ -507,6 +561,7 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 	if cmd.Error != "" {
 		return domain.OAuthSocialCallbackResult{}, domain.ErrProviderError.WithMessage(cmd.Error)
 	}
+
 	if cmd.ProjectID == "" || cmd.Provider == "" || cmd.Code == "" {
 		return domain.OAuthSocialCallbackResult{}, domain.ErrBadRequest
 	}
@@ -524,6 +579,7 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 	if err != nil {
 		return domain.OAuthSocialCallbackResult{}, err
 	}
+
 	providerAccountID, email, err := a.oauthExchange(ctx, cfg, d, cmd.Code, cmd.CodeVerifier)
 	if err != nil {
 		return domain.OAuthSocialCallbackResult{}, err
@@ -544,7 +600,9 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 	if redirect == "" {
 		redirect = d.RedirectURL
 	}
+
 	redirect = oauthAppendCode(redirect, code)
+
 	return domain.OAuthSocialCallbackResult{
 		RedirectURL: redirect,
 		SetCookie:   sessionCookies(sess.AccessToken, sess.RefreshToken, oauthSocialAccessTTL, oauthSocialRefreshTTL),
@@ -557,10 +615,12 @@ func oauthAppendCode(redirect, code string) string {
 	if redirect == "" {
 		return redirect
 	}
+
 	sep := "?"
 	if strings.Contains(redirect, "?") {
 		sep = "&"
 	}
+
 	return redirect + sep + "code=" + url.QueryEscape(code)
 }
 
@@ -575,13 +635,16 @@ func (a *pgOAuthSocial) storeExchangeCode(ctx context.Context, projectID string,
 	if err != nil {
 		return "", err
 	}
+
 	err = a.db.withTx(ctx, func(ctx context.Context) error {
 		raw, err := marshal(oauthExchangeCodeData{Session: sess})
 		if err != nil {
 			return err
 		}
+
 		rm := json.RawMessage(raw)
 		uid := null.From(sess.AccountID)
+
 		setter := &models.IamAuthCodeSetter{
 			ID:        ptr(newUUID()),
 			ProjectID: &projectID,
@@ -594,8 +657,10 @@ func (a *pgOAuthSocial) storeExchangeCode(ctx context.Context, projectID string,
 			if isUniqueViolation(err) {
 				return domain.ErrConflict
 			}
+
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oauth.social.exchange_code_issued",
 			ProjectID:   projectID,
@@ -604,11 +669,13 @@ func (a *pgOAuthSocial) storeExchangeCode(ctx context.Context, projectID string,
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 	if err != nil {
 		return "", err
 	}
+
 	return code, nil
 }
 
@@ -621,12 +688,14 @@ func (a *pgOAuthSocial) resolveLoginAndMint(ctx context.Context, projectID, prov
 		if err != nil && !errors.Is(err, domain.ErrNotFound) {
 			return nil, err
 		}
+
 		var acct *domain.Account
 		if errors.Is(err, domain.ErrNotFound) {
 			acct, err = a.createSocialAccount(ctx, projectID, email)
 			if err != nil {
 				return nil, err
 			}
+
 			if err := a.insertIdentity(ctx, &domain.Identity{
 				ID:                newUUID(),
 				Type:              "oauth",
@@ -636,6 +705,7 @@ func (a *pgOAuthSocial) resolveLoginAndMint(ctx context.Context, projectID, prov
 			}, projectID, acct.ID); err != nil {
 				return nil, err
 			}
+
 			if err := a.emitter.Emit(ctx, domain.Event{
 				Type:        "identity.linked",
 				ProjectID:   projectID,
@@ -650,10 +720,12 @@ func (a *pgOAuthSocial) resolveLoginAndMint(ctx context.Context, projectID, prov
 				return nil, err
 			}
 		}
+
 		sess, err := a.mintSession(ctx, acct)
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "session.created",
 			ProjectID:   acct.ProjectID,
@@ -662,6 +734,7 @@ func (a *pgOAuthSocial) resolveLoginAndMint(ctx context.Context, projectID, prov
 		}); err != nil {
 			return nil, err
 		}
+
 		return sess, nil
 	})
 }
@@ -672,6 +745,7 @@ func (a *pgOAuthSocial) StartLink(ctx context.Context, cmd domain.OAuthSocialLin
 	if cmd.AccountID == "" || cmd.Provider == "" {
 		return "", domain.ErrBadRequest
 	}
+
 	projectID := cmd.ProjectID
 	if projectID == "" {
 		// Fall back to the account's tenant when the caller did not supply it.
@@ -679,8 +753,10 @@ func (a *pgOAuthSocial) StartLink(ctx context.Context, cmd domain.OAuthSocialLin
 		if err != nil {
 			return "", translatePgErr("user", err)
 		}
+
 		projectID = row.ProjectID
 	}
+
 	cfg, d, err := a.loadOAuthConfig(ctx, projectID, cmd.Provider, cmd.RedirectTo)
 	if err != nil {
 		return "", err
@@ -690,6 +766,7 @@ func (a *pgOAuthSocial) StartLink(ctx context.Context, cmd domain.OAuthSocialLin
 	if err := a.storeState(ctx, projectID, cmd.Provider, cmd.State, redirect, cmd.AccountID); err != nil {
 		return "", err
 	}
+
 	return cfg.AuthCodeURL(cmd.State), nil
 }
 
@@ -701,6 +778,7 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 	if cmd.Error != "" {
 		return "", domain.ErrProviderError.WithMessage(cmd.Error)
 	}
+
 	if cmd.AccountID == "" || cmd.Provider == "" || cmd.Code == "" {
 		return "", domain.ErrBadRequest
 	}
@@ -710,6 +788,7 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 	if err != nil {
 		return "", translatePgErr("user", err)
 	}
+
 	projectID := row.ProjectID
 	if cmd.ProjectID != "" && cmd.ProjectID != projectID { // tenant boundary
 		return "", domain.ErrForbidden
@@ -720,6 +799,7 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 	if err != nil {
 		return "", err
 	}
+
 	if stateAccount != "" && stateAccount != cmd.AccountID {
 		return "", domain.ErrForbidden
 	}
@@ -728,6 +808,7 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 	if err != nil {
 		return "", err
 	}
+
 	providerAccountID, email, err := a.oauthExchange(ctx, cfg, d, cmd.Code, cmd.CodeVerifier)
 	if err != nil {
 		return "", err
@@ -738,10 +819,12 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 			if existing.UserID == cmd.AccountID {
 				return domain.ErrAlreadyLinked
 			}
+
 			return domain.ErrIdentityExists
 		} else if !errors.Is(err, domain.ErrNotFound) {
 			return err
 		}
+
 		if err := a.insertIdentity(ctx, &domain.Identity{
 			ID:                newUUID(),
 			Type:              "oauth",
@@ -751,6 +834,7 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 		}, projectID, cmd.AccountID); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "identity.linked",
 			ProjectID:   projectID,
@@ -759,15 +843,18 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 	if err != nil {
 		return "", err
 	}
+
 	redirect := stateRedirect
 	if redirect == "" {
 		redirect = d.RedirectURL
 	}
+
 	return redirect, nil
 }
 
@@ -789,21 +876,26 @@ func (a *pgOAuthSocial) loadOAuthConfig(ctx context.Context, projectID, provider
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if len(rows) == 0 {
 		return nil, nil, domain.ErrNotFound
 	}
+
 	var raw oauthProviderData
 	if err := unmarshal(rows[0].Data, &raw); err != nil {
 		return nil, nil, err
 	}
+
 	d := raw.resolved()
 	if d.ClientID == "" || d.AuthURL == "" || d.TokenURL == "" {
 		return nil, nil, domain.ErrProviderError.WithMessage("oauth provider misconfigured: missing client_id/auth_url/token_url")
 	}
+
 	redirect := d.RedirectURL
 	if redirectOverride != "" {
 		redirect = redirectOverride
 	}
+
 	cfg := &oauth2.Config{
 		ClientID:     d.ClientID,
 		ClientSecret: d.ClientSecret,
@@ -814,6 +906,7 @@ func (a *pgOAuthSocial) loadOAuthConfig(ctx context.Context, projectID, provider
 			TokenURL: d.TokenURL,
 		},
 	}
+
 	return cfg, &d, nil
 }
 
@@ -827,21 +920,26 @@ func (a *pgOAuthSocial) oauthExchange(ctx context.Context, cfg *oauth2.Config, d
 	if codeVerifier != "" {
 		opts = append(opts, oauth2.VerifierOption(codeVerifier))
 	}
+
 	tok, err := cfg.Exchange(ctx, code, opts...)
 	if err != nil {
 		return "", "", domain.ErrProviderError.WithMessage("oauth code exchange failed")
 	}
+
 	if d.UserInfoURL == "" {
 		return "", "", domain.ErrProviderError.WithMessage("oauth provider misconfigured: missing userinfo_url")
 	}
+
 	info, err := a.fetchUserInfo(ctx, cfg, tok, d.UserInfoURL)
 	if err != nil {
 		return "", "", err
 	}
+
 	providerAccountID = info.externalID()
 	if providerAccountID == "" {
 		return "", "", domain.ErrProviderError.WithMessage("oauth userinfo missing subject id")
 	}
+
 	return providerAccountID, info.Email, nil
 }
 
@@ -849,26 +947,31 @@ func (a *pgOAuthSocial) oauthExchange(ctx context.Context, cfg *oauth2.Config, d
 // (cfg.Client attaches the bearer token and auto-refreshes) and decodes the
 // claims. Non-2xx / transport / decode failures map to ErrProviderError.
 func (a *pgOAuthSocial) fetchUserInfo(ctx context.Context, cfg *oauth2.Config, tok *oauth2.Token, userInfoURL string) (oauthUserInfo, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, userInfoURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, userInfoURL, http.NoBody)
 	if err != nil {
 		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo request build failed")
 	}
+
 	resp, err := cfg.Client(ctx, tok).Do(req)
 	if err != nil {
 		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo fetch failed")
 	}
 	defer resp.Body.Close()
+
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
 		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo read failed")
 	}
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo returned non-2xx")
 	}
+
 	var info oauthUserInfo
 	if err := json.Unmarshal(body, &info); err != nil {
 		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo decode failed")
 	}
+
 	return info, nil
 }
 
@@ -879,6 +982,7 @@ func (a *pgOAuthSocial) findIdentity(ctx context.Context, projectID, provider, p
 	if err != nil {
 		return nil, err
 	}
+
 	rows, err := models.IamIdentities.Query(
 		sm.Where(models.IamIdentities.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamIdentities.Columns.Environment.EQ(psql.Arg(env))),
@@ -888,9 +992,11 @@ func (a *pgOAuthSocial) findIdentity(ctx context.Context, projectID, provider, p
 	if err != nil {
 		return nil, err
 	}
+
 	if len(rows) == 0 {
 		return nil, domain.ErrNotFound
 	}
+
 	return rows[0], nil
 }
 
@@ -901,11 +1007,14 @@ func (a *pgOAuthSocial) insertIdentity(ctx context.Context, ident *domain.Identi
 	if err != nil {
 		return err
 	}
+
 	raw, err := marshal(ident)
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamIdentitySetter{
 		ID:          &ident.ID,
 		ProjectID:   &projectID,
@@ -918,20 +1027,25 @@ func (a *pgOAuthSocial) insertIdentity(ctx context.Context, ident *domain.Identi
 		v := null.From(ident.Provider)
 		setter.Provider = &v
 	}
+
 	if ident.ProviderAccountID != "" {
 		v := null.From(ident.ProviderAccountID)
 		setter.ProviderAccountID = &v
 	}
+
 	if ident.Email != "" {
 		v := null.From(ident.Email)
 		setter.Email = &v
 	}
+
 	if _, err := models.IamIdentities.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {
 			return domain.ErrIdentityExists
 		}
+
 		return err
 	}
+
 	return nil
 }
 
@@ -941,6 +1055,7 @@ func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, emai
 	if err != nil {
 		return nil, err
 	}
+
 	acct := &domain.Account{
 		ID:            newUUID(),
 		ProjectID:     projectID,
@@ -951,11 +1066,14 @@ func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, emai
 		CreatedAt:     nowUTC(),
 		UpdatedAt:     nowUTC(),
 	}
+
 	raw, err := marshal(acct)
 	if err != nil {
 		return nil, err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamUserSetter{
 		ID:          &acct.ID,
 		ProjectID:   &acct.ProjectID,
@@ -968,12 +1086,15 @@ func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, emai
 		v := null.From(acct.PrimaryEmail)
 		setter.PrimaryEmail = &v
 	}
+
 	if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {
 			return nil, domain.ErrEmailExists
 		}
+
 		return nil, err
 	}
+
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "user.created",
 		ProjectID:   acct.ProjectID,
@@ -982,6 +1103,7 @@ func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, emai
 	}); err != nil {
 		return nil, err
 	}
+
 	return acct, nil
 }
 
@@ -991,13 +1113,16 @@ func (a *pgOAuthSocial) loadAccount(ctx context.Context, projectID, userID strin
 	if err != nil {
 		return nil, translatePgErr("user", err)
 	}
+
 	if row.ProjectID != projectID { // tenant boundary
 		return nil, domain.ErrUserNotFound
 	}
+
 	var acct domain.Account
 	if err := unmarshal(row.Data, &acct); err != nil {
 		return nil, err
 	}
+
 	return &acct, nil
 }
 
@@ -1011,6 +1136,7 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 	if err != nil {
 		return nil, err
 	}
+
 	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
 		"iss": oidcIssuer(acct.ProjectID, signEnv),
 		"sub": acct.ID,
@@ -1024,6 +1150,7 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 	if err != nil {
 		return nil, err
 	}
+
 	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
 		"iss": oidcIssuer(acct.ProjectID, signEnv),
 		"sub": acct.ID,
@@ -1035,6 +1162,7 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 	if err != nil {
 		return nil, err
 	}
+
 	meta := domain.RequestMetaFromContext(ctx)
 	sess := &domain.Session{
 		ID:           sessionID,
@@ -1051,11 +1179,14 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 		UserAgent:    meta.UserAgent,
 		Fingerprint:  meta.Fingerprint,
 	}
+
 	raw, err := marshal(sess)
 	if err != nil {
 		return nil, err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamSessionSetter{
 		ID:          &sess.ID,
 		ProjectID:   &sess.ProjectID,
@@ -1067,5 +1198,6 @@ func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (
 	if _, err := models.IamSessions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		return nil, err
 	}
+
 	return sess, nil
 }

@@ -24,16 +24,16 @@ const (
 // It is intentionally tagged like internal/config service structs, so callers
 // can load it with the same structconf/mapstructure pipeline.
 type AuthenticatorConfig struct {
-	Mode            ValidationMode `mapstructure:"mode" default:"remote" validate:"oneof=remote local hybrid"`
-	BaseURL         string         `mapstructure:"base_url" default:"" validate:"omitempty,url"`
-	Credential      string         `mapstructure:"credential" default:""`
-	ProjectID       string         `mapstructure:"project_id" default:""`
-	Environment     string         `mapstructure:"environment" default:"live"`
-	Issuer          string         `mapstructure:"issuer" default:""`
-	Audience        string         `mapstructure:"audience" default:""`
-	JWKSURL         string         `mapstructure:"jwks_url" default:""`
-	JWKSCacheTTLSec int            `mapstructure:"jwks_cache_ttl_sec" default:"300" validate:"min=1"`
-	TokenType       string         `mapstructure:"token_type" default:"access" validate:"omitempty,oneof=access id_token"`
+	Mode            ValidationMode `default:"remote" mapstructure:"mode"               validate:"oneof=remote local hybrid"`
+	BaseURL         string         `default:""       mapstructure:"base_url"           validate:"omitempty,url"`
+	Credential      string         `default:""       mapstructure:"credential"`
+	ProjectID       string         `default:""       mapstructure:"project_id"`
+	Environment     string         `default:"live"   mapstructure:"environment"`
+	Issuer          string         `default:""       mapstructure:"issuer"`
+	Audience        string         `default:""       mapstructure:"audience"`
+	JWKSURL         string         `default:""       mapstructure:"jwks_url"`
+	JWKSCacheTTLSec int            `default:"300"    mapstructure:"jwks_cache_ttl_sec" validate:"min=1"`
+	TokenType       string         `default:"access" mapstructure:"token_type"         validate:"omitempty,oneof=access id_token"`
 	HTTPClient      *http.Client   `mapstructure:"-" validate:"-"`
 }
 
@@ -50,10 +50,12 @@ func NewAuthenticator(config AuthenticatorConfig) (Authenticator, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		local, err := NewLocalVerifier(config.localConfig())
 		if err != nil {
 			return nil, err
 		}
+
 		return NewHybridVerifier(local, remote), nil
 	default:
 		return nil, errors.New("iam sdk: unsupported validation mode")
@@ -65,6 +67,7 @@ func (c AuthenticatorConfig) mode() ValidationMode {
 	if mode == "" {
 		return ValidationModeRemote
 	}
+
 	return mode
 }
 

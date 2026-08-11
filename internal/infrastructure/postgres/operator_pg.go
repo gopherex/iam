@@ -68,6 +68,7 @@ func (a *PgOperator) CreateProject(ctx context.Context, cmd domain.ProjectCmd) (
 		if proj.Slug == "" {
 			proj.Slug = proj.ID
 		}
+
 		if err := a.insertProject(ctx, proj); err != nil {
 			return nil, err
 		}
@@ -80,6 +81,7 @@ func (a *PgOperator) CreateProject(ctx context.Context, cmd domain.ProjectCmd) (
 		if err := a.insertEnvironment(ctx, env); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "project.created",
 			ProjectID:   proj.ID,
@@ -89,6 +91,7 @@ func (a *PgOperator) CreateProject(ctx context.Context, cmd domain.ProjectCmd) (
 		}); err != nil {
 			return nil, err
 		}
+
 		return proj, nil
 	})
 }
@@ -98,7 +101,9 @@ func (a *PgOperator) insertProject(ctx context.Context, proj *domain.Project) er
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamProjectSetter{
 		ID:        &proj.ID,
 		Slug:      &proj.Slug,
@@ -111,8 +116,10 @@ func (a *PgOperator) insertProject(ctx context.Context, proj *domain.Project) er
 		if isUniqueViolation(err) {
 			return domain.ErrConflict
 		}
+
 		return err
 	}
+
 	return nil
 }
 
@@ -121,14 +128,17 @@ func (a *PgOperator) ListProjects(ctx context.Context) ([]domain.Project, error)
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Project, 0, len(rows))
 	for _, row := range rows {
 		var p domain.Project
 		if err := unmarshal(row.Data, &p); err != nil {
 			return nil, err
 		}
+
 		out = append(out, p)
 	}
+
 	return out, nil
 }
 
@@ -139,12 +149,15 @@ func (a *PgOperator) GetProject(ctx context.Context, projectID string) (*domain.
 		if isStorageNotFound(translatePgErr("project", err)) {
 			return nil, domain.ErrProjectNotFound
 		}
+
 		return nil, err
 	}
+
 	var p domain.Project
 	if err := unmarshal(row.Data, &p); err != nil {
 		return nil, err
 	}
+
 	return &p, nil
 }
 
@@ -155,26 +168,34 @@ func (a *PgOperator) UpdateProject(ctx context.Context, cmd domain.OperatorProje
 			if isStorageNotFound(translatePgErr("project", err)) {
 				return nil, domain.ErrProjectNotFound
 			}
+
 			return nil, err
 		}
+
 		var p domain.Project
 		if err := unmarshal(row.Data, &p); err != nil {
 			return nil, err
 		}
+
 		if cmd.Name != "" {
 			p.Name = cmd.Name
 		}
+
 		if cmd.Slug != "" {
 			p.Slug = cmd.Slug
 		}
+
 		if cmd.DefaultLocale != "" {
 			p.DefaultLocale = cmd.DefaultLocale
 		}
+
 		raw, err := marshal(&p)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamProjectSetter{
 			Name:      &p.Name,
 			Slug:      &p.Slug,
@@ -185,8 +206,10 @@ func (a *PgOperator) UpdateProject(ctx context.Context, cmd domain.OperatorProje
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "project.updated",
 			ProjectID:   p.ID,
@@ -196,6 +219,7 @@ func (a *PgOperator) UpdateProject(ctx context.Context, cmd domain.OperatorProje
 		}); err != nil {
 			return nil, err
 		}
+
 		return &p, nil
 	})
 }
@@ -207,6 +231,7 @@ func (a *PgOperator) DeleteProject(ctx context.Context, projectID string, hard b
 			if isStorageNotFound(translatePgErr("project", err)) {
 				return domain.ErrProjectNotFound
 			}
+
 			return err
 		}
 		// Both soft and hard delete remove the row here; outbox carries the
@@ -214,6 +239,7 @@ func (a *PgOperator) DeleteProject(ctx context.Context, projectID string, hard b
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "project.deleted",
 			ProjectID:   projectID,
@@ -223,6 +249,7 @@ func (a *PgOperator) DeleteProject(ctx context.Context, projectID string, hard b
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -237,8 +264,10 @@ func (a *PgOperator) CreateEnvironment(ctx context.Context, cmd domain.Environme
 			if isStorageNotFound(translatePgErr("project", err)) {
 				return nil, domain.ErrProjectNotFound
 			}
+
 			return nil, err
 		}
+
 		env := &domain.Environment{
 			ProjectID: cmd.ProjectID,
 			Name:      cmd.Name,
@@ -252,12 +281,15 @@ func (a *PgOperator) CreateEnvironment(ctx context.Context, cmd domain.Environme
 		if err := unmarshal(prow.Data, &p); err != nil {
 			return nil, err
 		}
+
 		if !containsString(p.Environments, env.Name) {
 			p.Environments = append(p.Environments, env.Name)
+
 			raw, err := marshal(&p)
 			if err != nil {
 				return nil, err
 			}
+
 			rm := json.RawMessage(raw)
 			if err := prow.Update(ctx, a.db.Bobx(), &models.IamProjectSetter{
 				Data:      &rm,
@@ -266,6 +298,7 @@ func (a *PgOperator) CreateEnvironment(ctx context.Context, cmd domain.Environme
 				return nil, err
 			}
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "environment.created",
 			ProjectID:   env.ProjectID,
@@ -275,6 +308,7 @@ func (a *PgOperator) CreateEnvironment(ctx context.Context, cmd domain.Environme
 		}); err != nil {
 			return nil, err
 		}
+
 		return env, nil
 	})
 }
@@ -284,7 +318,9 @@ func (a *PgOperator) insertEnvironment(ctx context.Context, env *domain.Environm
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamEnvironmentSetter{
 		ProjectID: &env.ProjectID,
 		Name:      &env.Name,
@@ -295,12 +331,15 @@ func (a *PgOperator) insertEnvironment(ctx context.Context, env *domain.Environm
 		v := null.From(env.Issuer)
 		setter.Issuer = &v
 	}
+
 	if _, err := models.IamEnvironments.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {
 			return domain.ErrConflict
 		}
+
 		return err
 	}
+
 	return nil
 }
 
@@ -311,14 +350,17 @@ func (a *PgOperator) ListEnvironments(ctx context.Context, projectID string) ([]
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Environment, 0, len(rows))
 	for _, row := range rows {
 		var e domain.Environment
 		if err := unmarshal(row.Data, &e); err != nil {
 			return nil, err
 		}
+
 		out = append(out, e)
 	}
+
 	return out, nil
 }
 
@@ -328,15 +370,19 @@ func (a *PgOperator) GetEnvironment(ctx context.Context, projectID, env string) 
 		if isStorageNotFound(translatePgErr("environment", err)) {
 			return nil, domain.ErrEnvironmentNotFound
 		}
+
 		return nil, err
 	}
+
 	if row.ProjectID != projectID { // tenant boundary
 		return nil, domain.ErrEnvironmentNotFound
 	}
+
 	var e domain.Environment
 	if err := unmarshal(row.Data, &e); err != nil {
 		return nil, err
 	}
+
 	return &e, nil
 }
 
@@ -347,11 +393,14 @@ func (a *PgOperator) DeleteEnvironment(ctx context.Context, projectID, env strin
 			if isStorageNotFound(translatePgErr("environment", err)) {
 				return domain.ErrEnvironmentNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID {
 			return domain.ErrEnvironmentNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
@@ -369,6 +418,7 @@ func (a *PgOperator) DeleteEnvironment(ctx context.Context, projectID, env strin
 				}
 			}
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "environment.deleted",
 			ProjectID:   projectID,
@@ -378,6 +428,7 @@ func (a *PgOperator) DeleteEnvironment(ctx context.Context, projectID, env strin
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -389,18 +440,23 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, cmd domain.OperatorAdmi
 		token     string
 		expiresAt time.Time
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (mintResult, error) {
 		if _, err := models.FindIamProject(ctx, a.db.Bobx(), cmd.ProjectID); err != nil {
 			if isStorageNotFound(translatePgErr("project", err)) {
 				return mintResult{}, domain.ErrProjectNotFound
 			}
+
 			return mintResult{}, err
 		}
+
 		now := nowUTC()
+
 		expiresAt := cmd.ExpiresAt
 		if expiresAt.IsZero() {
 			expiresAt = now.Add(90 * 24 * time.Hour)
 		}
+
 		expiresAt = expiresAt.UTC()
 		if !expiresAt.After(now) {
 			return mintResult{}, domain.ErrBadRequest.WithMessage("expires_at must be in the future")
@@ -416,10 +472,12 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, cmd domain.OperatorAdmi
 			ExpiresAt: expiresAt,
 			Revoked:   false,
 		}
+
 		signEnv, err := resolveSignEnv(ctx, a.db, cmd.ProjectID, "live")
 		if err != nil {
 			return mintResult{}, err
 		}
+
 		signed, err := a.db.Signer().Sign(ctx, cmd.ProjectID, signEnv, map[string]any{
 			"iss":   cmd.ProjectID,
 			"sub":   cmd.ProjectID,
@@ -432,12 +490,16 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, cmd domain.OperatorAdmi
 		if err != nil {
 			return mintResult{}, err
 		}
+
 		hash := sha256Hex(signed)
+
 		raw, err := marshal(&tok)
 		if err != nil {
 			return mintResult{}, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamAdminTokenSetter{
 			ID:        &tok.ID,
 			ProjectID: &tok.ProjectID,
@@ -450,8 +512,10 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, cmd domain.OperatorAdmi
 			if isUniqueViolation(err) {
 				return mintResult{}, domain.ErrConflict
 			}
+
 			return mintResult{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "admin_token.minted",
 			ProjectID:   tok.ProjectID,
@@ -461,8 +525,10 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, cmd domain.OperatorAdmi
 		}); err != nil {
 			return mintResult{}, err
 		}
+
 		return mintResult{token: signed, expiresAt: expiresAt}, nil
 	})
+
 	return res.token, res.expiresAt, err
 }
 
@@ -473,14 +539,17 @@ func (a *PgOperator) ListAdminTokens(ctx context.Context, projectID string) ([]d
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.OperatorAdminToken, 0, len(rows))
 	for _, row := range rows {
 		var t domain.OperatorAdminToken
 		if err := unmarshal(row.Data, &t); err != nil {
 			return nil, err
 		}
+
 		out = append(out, t)
 	}
+
 	return out, nil
 }
 
@@ -491,24 +560,31 @@ func (a *PgOperator) RevokeAdminToken(ctx context.Context, projectID, tokenID st
 			if isStorageNotFound(translatePgErr("admin_token", err)) {
 				return domain.ErrNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID { // tenant boundary
 			return domain.ErrNotFound
 		}
+
 		var t domain.OperatorAdminToken
 		if err := unmarshal(row.Data, &t); err != nil {
 			return err
 		}
+
 		t.Revoked = true
+
 		raw, err := marshal(&t)
 		if err != nil {
 			return err
 		}
+
 		rm := json.RawMessage(raw)
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamAdminTokenSetter{Data: &rm}); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "admin_token.revoked",
 			ProjectID:   t.ProjectID,
@@ -518,6 +594,7 @@ func (a *PgOperator) RevokeAdminToken(ctx context.Context, projectID, tokenID st
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -531,10 +608,12 @@ func (a *PgOperator) PlanConfig(ctx context.Context, cmd domain.OperatorConfigCm
 	if _, err := a.GetProject(ctx, cmd.ProjectID); err != nil {
 		return nil, err
 	}
+
 	current, err := a.readConfig(ctx, cmd.ProjectID, operatorConfigKeyConfig)
 	if err != nil {
 		return nil, err
 	}
+
 	return map[string]any{
 		"project_id": cmd.ProjectID,
 		"current":    current,
@@ -548,11 +627,14 @@ func (a *PgOperator) ApplyConfig(ctx context.Context, cmd domain.OperatorConfigC
 			if isStorageNotFound(translatePgErr("project", err)) {
 				return nil, domain.ErrProjectNotFound
 			}
+
 			return nil, err
 		}
+
 		if err := a.writeConfig(ctx, cmd.ProjectID, operatorConfigKeyConfig, cmd.Config); err != nil {
 			return nil, err
 		}
+
 		result := map[string]any{
 			"project_id": cmd.ProjectID,
 			"applied":    cmd.Config,
@@ -566,6 +648,7 @@ func (a *PgOperator) ApplyConfig(ctx context.Context, cmd domain.OperatorConfigC
 		}); err != nil {
 			return nil, err
 		}
+
 		return result, nil
 	})
 }
@@ -574,13 +657,16 @@ func (a *PgOperator) ExportConfig(ctx context.Context, projectID string) (map[st
 	if _, err := a.GetProject(ctx, projectID); err != nil {
 		return nil, err
 	}
+
 	cfg, err := a.readConfig(ctx, projectID, operatorConfigKeyConfig)
 	if err != nil {
 		return nil, err
 	}
+
 	if cfg == nil {
 		cfg = map[string]any{}
 	}
+
 	return cfg, nil
 }
 
@@ -590,10 +676,12 @@ func (a *PgOperator) GetFeatures(ctx context.Context, projectID string) (map[str
 	if _, err := a.GetProject(ctx, projectID); err != nil {
 		return nil, err
 	}
+
 	raw, err := a.readConfig(ctx, projectID, operatorConfigKeyFeatures)
 	if err != nil {
 		return nil, err
 	}
+
 	return rawToBoolMap(raw), nil
 }
 
@@ -603,6 +691,7 @@ func (a *PgOperator) UpdateFeatures(ctx context.Context, cmd domain.OperatorFeat
 			if isStorageNotFound(translatePgErr("project", err)) {
 				return nil, domain.ErrProjectNotFound
 			}
+
 			return nil, err
 		}
 		// Merge the patch over the existing feature map.
@@ -610,13 +699,16 @@ func (a *PgOperator) UpdateFeatures(ctx context.Context, cmd domain.OperatorFeat
 		for k, v := range cmd.Features {
 			existing[k] = v
 		}
+
 		doc := make(map[string]any, len(existing))
 		for k, v := range existing {
 			doc[k] = v
 		}
+
 		if err := a.writeConfig(ctx, cmd.ProjectID, operatorConfigKeyFeatures, doc); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "project.features.updated",
 			ProjectID:   cmd.ProjectID,
@@ -626,6 +718,7 @@ func (a *PgOperator) UpdateFeatures(ctx context.Context, cmd domain.OperatorFeat
 		}); err != nil {
 			return nil, err
 		}
+
 		return existing, nil
 	})
 }
@@ -640,15 +733,19 @@ func (a *PgOperator) readConfig(ctx context.Context, projectID, key string) (map
 		if isStorageNotFound(translatePgErr("config", err)) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
+
 	if row.ProjectID != projectID { // tenant boundary
 		return nil, nil
 	}
+
 	var doc map[string]any
 	if err := unmarshal(row.Data, &doc); err != nil {
 		return nil, err
 	}
+
 	return doc, nil
 }
 
@@ -659,6 +756,7 @@ func mustReadConfig(ctx context.Context, a *PgOperator, projectID, key string) m
 	if err != nil {
 		return nil
 	}
+
 	return doc
 }
 
@@ -667,16 +765,20 @@ func (a *PgOperator) writeConfig(ctx context.Context, projectID, key string, doc
 	if doc == nil {
 		doc = map[string]any{}
 	}
+
 	raw, err := marshal(doc)
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
 	now := nowUTC()
+
 	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, operatorDefaultEnv, key)
 	if err != nil {
 		if isStorageNotFound(translatePgErr("config", err)) {
 			env := operatorDefaultEnv
+
 			setter := &models.IamConfigSetter{
 				ProjectID:   &projectID,
 				Environment: &env,
@@ -687,10 +789,13 @@ func (a *PgOperator) writeConfig(ctx context.Context, projectID, key string, doc
 			if _, ierr := models.IamConfigs.Insert(setter).One(ctx, a.db.Bobx()); ierr != nil {
 				return ierr
 			}
+
 			return nil
 		}
+
 		return err
 	}
+
 	return row.Update(ctx, a.db.Bobx(), &models.IamConfigSetter{
 		Data:      &rm,
 		UpdatedAt: &now,
@@ -719,6 +824,7 @@ func rawToBoolMap(raw map[string]any) map[string]bool {
 			out[k] = b
 		}
 	}
+
 	return out
 }
 
@@ -728,6 +834,7 @@ func containsString(ss []string, s string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -738,5 +845,6 @@ func removeString(ss []string, s string) []string {
 			out = append(out, v)
 		}
 	}
+
 	return out
 }

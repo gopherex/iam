@@ -38,16 +38,20 @@ func (c *smsConfig) sendAwsSNS(ctx context.Context, to, text string) error {
 		form.Set("MessageAttributes.entry.1.Value.DataType", "String")
 		form.Set("MessageAttributes.entry.1.Value.StringValue", c.From)
 	}
+
 	body := form.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Endpoint, strings.NewReader(body))
 	if err != nil {
 		return err
 	}
+
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
+
 	if err := c.signV4(req, []byte(body), time.Now().UTC()); err != nil {
 		return err
 	}
+
 	return c.do(req)
 }
 
@@ -74,6 +78,7 @@ func (c *smsConfig) signV4(req *http.Request, payload []byte, now time.Time) err
 	if canonicalURI == "" {
 		canonicalURI = "/"
 	}
+
 	canonicalRequest := strings.Join([]string{
 		http.MethodPost,
 		canonicalURI,
@@ -99,6 +104,7 @@ func (c *smsConfig) signV4(req *http.Request, payload []byte, now time.Time) err
 		c.AccessKeyID, scope, signedHeaders, signature,
 	)
 	req.Header.Set("Authorization", auth)
+
 	return nil
 }
 
@@ -106,12 +112,14 @@ func sigV4SigningKey(secret, dateStamp, region, service string) []byte {
 	kDate := hmacSHA256([]byte("AWS4"+secret), []byte(dateStamp))
 	kRegion := hmacSHA256(kDate, []byte(region))
 	kService := hmacSHA256(kRegion, []byte(service))
+
 	return hmacSHA256(kService, []byte("aws4_request"))
 }
 
 func hmacSHA256(key, data []byte) []byte {
 	h := hmac.New(sha256.New, key)
 	h.Write(data)
+
 	return h.Sum(nil)
 }
 

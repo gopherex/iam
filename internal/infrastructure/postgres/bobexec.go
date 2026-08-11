@@ -34,6 +34,7 @@ func (e bobExec) QueryContext(ctx context.Context, query string, args ...any) (s
 	if err != nil {
 		return nil, err
 	}
+
 	return bobRows{rs}, nil
 }
 
@@ -49,10 +50,12 @@ type bobRows struct{ pgx.Rows }
 func (r bobRows) Close() error { r.Rows.Close(); return nil }
 
 func (r bobRows) Columns() ([]string, error) {
-	fds := r.Rows.FieldDescriptions()
+	fds := r.FieldDescriptions()
+
 	cols := make([]string, len(fds))
 	for i, fd := range fds {
 		cols[i] = fd.Name
 	}
+
 	return cols, nil
 }

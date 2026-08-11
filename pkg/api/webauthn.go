@@ -46,10 +46,12 @@ func (s *WebAuthnService) PostV1AuthWebauthnLoginOptions(ctx context.Context, re
 	if v, ok := req.Get(); ok {
 		email = v.Email.Or("")
 	}
+
 	ch, err := s.deps.Accounts.BeginLogin(ctx, params.XClientID, email)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthWebauthnLoginOptionsOK{
 		ChallengeID: oas.NewOptString(ch.ID),
 		PublicKey:   oas.NewOptPostV1AuthWebauthnLoginOptionsOKPublicKey(oasRawMap[oas.PostV1AuthWebauthnLoginOptionsOKPublicKey](ch.PublicKey)),
@@ -61,6 +63,7 @@ func (s *WebAuthnService) PostV1AuthWebauthnLoginVerify(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
+
 	return authResult(acct, sess), nil
 }
 
@@ -69,10 +72,12 @@ func (s *WebAuthnService) PostV1AuthWebauthnRegisterOptions(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
 	ch, err := s.deps.Accounts.BeginRegistration(ctx, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthWebauthnRegisterOptionsOK{
 		ChallengeID: oas.NewOptString(ch.ID),
 		PublicKey:   oas.NewOptPostV1AuthWebauthnRegisterOptionsOKPublicKey(oasRawMap[oas.PostV1AuthWebauthnRegisterOptionsOKPublicKey](ch.PublicKey)),
@@ -84,10 +89,12 @@ func (s *WebAuthnService) PostV1AuthWebauthnRegisterVerify(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
+
 	cred, err := s.deps.Accounts.FinishRegistration(ctx, p.AccountID, req.ChallengeID, anyMap(req.Credential))
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1AuthWebauthnRegisterVerifyOK{
 		Credential: oas.NewOptWebAuthnCredential(oasWebAuthnCredential(*cred)),
 	}, nil
@@ -98,14 +105,17 @@ func (s *WebAuthnService) GetV1AuthWebauthnCredentials(ctx context.Context) (*oa
 	if err != nil {
 		return nil, err
 	}
+
 	creds, err := s.deps.Accounts.ListCredentials(ctx, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.WebAuthnCredential, 0, len(creds))
 	for _, c := range creds {
 		data = append(data, oasWebAuthnCredential(c))
 	}
+
 	return &oas.GetV1AuthWebauthnCredentialsOK{Data: data}, nil
 }
 
@@ -114,9 +124,11 @@ func (s *WebAuthnService) DeleteV1AuthWebauthnCredentialsByCredentialId(ctx cont
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Accounts.RemoveCredential(ctx, p.AccountID, params.CredentialID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -125,6 +137,7 @@ func (s *WebAuthnService) PatchV1AuthWebauthnCredentialsByCredentialId(ctx conte
 	if err != nil {
 		return nil, err
 	}
+
 	cred, err := s.deps.Accounts.RenameCredential(ctx, domain.WebAuthnRenameCredentialCmd{
 		AccountID:    p.AccountID,
 		CredentialID: params.CredentialID,
@@ -133,6 +146,7 @@ func (s *WebAuthnService) PatchV1AuthWebauthnCredentialsByCredentialId(ctx conte
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PatchV1AuthWebauthnCredentialsByCredentialIdOK{
 		Credential: oas.NewOptWebAuthnCredential(oasWebAuthnCredential(*cred)),
 	}, nil
@@ -146,15 +160,19 @@ func oasWebAuthnCredential(c domain.WebAuthnCredential) oas.WebAuthnCredential {
 	if c.ID != "" {
 		cred.ID = oas.NewOptString(c.ID)
 	}
+
 	if c.Name != "" {
 		cred.Name = oas.NewOptString(c.Name)
 	}
+
 	if !c.CreatedAt.IsZero() {
 		cred.CreatedAt = oas.NewOptTimestamp(oas.Timestamp(c.CreatedAt))
 	}
+
 	if !c.LastUsedAt.IsZero() {
 		cred.LastUsedAt = oas.NewOptTimestamp(oas.Timestamp(c.LastUsedAt))
 	}
+
 	return cred
 }
 
@@ -167,8 +185,10 @@ func oasRawMap[T ~map[string]jx.Raw](m map[string]any) T {
 		if err != nil {
 			continue
 		}
+
 		out[k] = jx.Raw(b)
 	}
+
 	return out
 }
 
@@ -180,7 +200,9 @@ func anyMap[T ~map[string]jx.Raw](m T) map[string]any {
 		if err := json.Unmarshal([]byte(v), &dst); err != nil {
 			continue
 		}
+
 		out[k] = dst
 	}
+
 	return out
 }

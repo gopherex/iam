@@ -32,37 +32,48 @@ func (c *originCache) allowed(origin string) bool {
 	if c == nil || c.src == nil {
 		return false
 	}
+
 	c.mu.RLock()
+
 	fresh := time.Now().Before(c.exp)
 	if fresh {
 		_, ok := c.set[origin]
 		c.mu.RUnlock()
+
 		return ok
 	}
+
 	c.mu.RUnlock()
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
 	if time.Now().Before(c.exp) { // another goroutine refreshed
 		_, ok := c.set[origin]
 		return ok
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
 	origins, err := c.src.AllowedOrigins(ctx)
 	if err != nil {
 		// Keep the stale set; extend exp briefly to avoid hammering the DB.
 		c.exp = time.Now().Add(5 * time.Second)
 		_, ok := c.set[origin]
+
 		return ok
 	}
+
 	set := make(map[string]struct{}, len(origins))
 	for _, o := range origins {
 		set[o] = struct{}{}
 	}
+
 	c.set = set
 	c.exp = time.Now().Add(c.ttl)
 	_, ok := set[origin]
+
 	return ok
 }
 
@@ -75,21 +86,27 @@ func (c *originCache) allowed(origin string) bool {
 func CORSMiddleware(allowedOrigins []string, source OriginSource, ttl time.Duration) func(http.Handler) http.Handler {
 	allowAny := false
 	allowed := map[string]struct{}{}
+
 	for _, origin := range allowedOrigins {
 		origin = strings.TrimSpace(origin)
 		if origin == "" {
 			continue
 		}
+
 		if origin == "*" {
 			allowAny = true
 			continue
 		}
+
 		allowed[origin] = struct{}{}
 	}
+
 	if ttl <= 0 {
 		ttl = 60 * time.Second
 	}
+
 	cache := &originCache{src: source, ttl: ttl}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
@@ -97,6 +114,7 @@ func CORSMiddleware(allowedOrigins []string, source OriginSource, ttl time.Durat
 				next.ServeHTTP(w, r)
 				return
 			}
+
 			if allowAny {
 				setCORSHeadersPublic(w, origin)
 			} else if _, ok := allowed[origin]; ok || cache.allowed(origin) {
@@ -105,10 +123,12 @@ func CORSMiddleware(allowedOrigins []string, source OriginSource, ttl time.Durat
 				next.ServeHTTP(w, r)
 				return
 			}
+
 			if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 				w.WriteHeader(http.StatusNoContent)
 				return
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}

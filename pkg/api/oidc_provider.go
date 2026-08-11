@@ -96,9 +96,11 @@ func (s *OIDCProviderService) DeleteV1OauthGrantsByGrantId(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Grants.RevokeGrant(ctx, p.AccountID, params.GrantID); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -118,6 +120,7 @@ func (s *OIDCProviderService) GetOauth2Authorize(ctx context.Context, params oas
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetOauth2AuthorizeFound{Location: optURI(redirectTo)}, nil
 }
 
@@ -131,6 +134,7 @@ func (s *OIDCProviderService) GetOauth2Logout(ctx context.Context, params oas.Ge
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetOauth2LogoutFound{Location: optURI(redirectTo)}, nil
 }
 
@@ -139,10 +143,12 @@ func (s *OIDCProviderService) GetOauth2Userinfo(ctx context.Context) (r oas.GetO
 	if err != nil {
 		return nil, err
 	}
+
 	claims, err := s.deps.Grants.Userinfo(ctx, p.AccountID, p.SessionID)
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.GetOauth2UserinfoOK](claims), nil
 }
 
@@ -152,6 +158,7 @@ func (s *OIDCProviderService) GetPByProjectIdEByEnvWellKnownJwksJson(ctx context
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.GetPByProjectIdEByEnvWellKnownJwksJsonOK](jwks), nil
 }
 
@@ -161,6 +168,7 @@ func (s *OIDCProviderService) GetPByProjectIdEByEnvWellKnownOpenidConfiguration(
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.GetPByProjectIdEByEnvWellKnownOpenidConfigurationOK](cfg), nil
 }
 
@@ -173,6 +181,7 @@ func (s *OIDCProviderService) GetV1Device(ctx context.Context, params oas.GetV1D
 	if err != nil {
 		return nil, err
 	}
+
 	return oasOIDCDevicePending(pending), nil
 }
 
@@ -181,14 +190,17 @@ func (s *OIDCProviderService) GetV1OauthGrants(ctx context.Context, params oas.G
 	if err != nil {
 		return nil, err
 	}
+
 	grants, err := s.deps.Grants.ListGrants(ctx, p.AccountID)
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]oas.OAuthGrant, 0, len(grants))
 	for i := range grants {
 		data = append(data, oasOAuthGrant(grants[i]))
 	}
+
 	return &oas.GetV1OauthGrantsOK{Data: data}, nil
 }
 
@@ -197,6 +209,7 @@ func (s *OIDCProviderService) GetV1OauthInteractionByInteractionId(ctx context.C
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.GetV1OauthInteractionByInteractionIdOK{
 		RequestedScopes: in.Scopes,
 	}, nil
@@ -218,6 +231,7 @@ func (s *OIDCProviderService) PostOauth2DeviceAuthorization(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostOauth2DeviceAuthorizationOK{
 		DeviceCode:              oas.NewOptString(auth.DeviceCode),
 		UserCode:                oas.NewOptString(auth.UserCode),
@@ -236,6 +250,7 @@ func (s *OIDCProviderService) PostOauth2Introspect(ctx context.Context, req *oas
 	if err != nil {
 		return nil, err
 	}
+
 	res, err := s.deps.Grants.Introspect(ctx, domain.OIDCIntrospectCmd{
 		ProjectID: p.ProjectID,
 		Env:       oidcEnv(p),
@@ -244,6 +259,7 @@ func (s *OIDCProviderService) PostOauth2Introspect(ctx context.Context, req *oas
 	if err != nil {
 		return nil, err
 	}
+
 	out := &oas.PostOauth2IntrospectOK{
 		AdditionalProps: oasRawMap[oas.PostOauth2IntrospectOKAdditional](res),
 	}
@@ -251,12 +267,14 @@ func (s *OIDCProviderService) PostOauth2Introspect(ctx context.Context, req *oas
 		out.Active = oas.NewOptBool(active)
 		delete(out.AdditionalProps, "active")
 	}
+
 	return out, nil
 }
 
 func (s *OIDCProviderService) PostOauth2Par(ctx context.Context, req *oas.PushedAuthorizationRequest) (r *oas.PostOauth2ParCreated, _ error) {
 	// Client-authenticated pushed authorization request (RFC 9126).
 	parRedirect := req.RedirectURI.Or(url.URL{})
+
 	res, err := s.deps.Grants.PushAuthorizationRequest(ctx, domain.OIDCParCmd{
 		ResponseType:        req.ResponseType,
 		ClientID:            req.ClientID,
@@ -276,6 +294,7 @@ func (s *OIDCProviderService) PostOauth2Par(ctx context.Context, req *oas.Pushed
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostOauth2ParCreated{
 		RequestURI: oas.NewOptString(res.RequestURI),
 		ExpiresIn:  oas.NewOptInt(res.ExpiresIn),
@@ -288,6 +307,7 @@ func (s *OIDCProviderService) PostOauth2Revoke(ctx context.Context, req *oas.Pos
 	if err != nil {
 		return err
 	}
+
 	return s.deps.Grants.Revoke(ctx, domain.OIDCRevokeCmd{
 		ProjectID:     p.ProjectID,
 		Env:           oidcEnv(p),
@@ -301,6 +321,7 @@ func oidcEnv(p *domain.Principal) string {
 	if p.Environment != "" {
 		return p.Environment
 	}
+
 	return "live"
 }
 
@@ -311,6 +332,7 @@ func (s *OIDCProviderService) PostOauth2Token(ctx context.Context, req *oas.Post
 	if err != nil {
 		return nil, err
 	}
+
 	res, err := s.deps.Grants.Token(ctx, domain.OIDCTokenCmd{
 		ProjectID:    p.ProjectID,
 		Env:          oidcEnv(p),
@@ -326,6 +348,7 @@ func (s *OIDCProviderService) PostOauth2Token(ctx context.Context, req *oas.Post
 	if err != nil {
 		return nil, err
 	}
+
 	return oasRawMap[oas.PostOauth2TokenOK](res), nil
 }
 
@@ -334,6 +357,7 @@ func (s *OIDCProviderService) PostV1DeviceApprove(ctx context.Context, req *oas.
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Grants.ApproveDevice(ctx, domain.OIDCDeviceDecisionCmd{
 		ProjectID: p.ProjectID,
 		UserCode:  req.UserCode,
@@ -342,6 +366,7 @@ func (s *OIDCProviderService) PostV1DeviceApprove(ctx context.Context, req *oas.
 	}); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -350,6 +375,7 @@ func (s *OIDCProviderService) PostV1DeviceDeny(ctx context.Context, req *oas.Pos
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Grants.DenyDevice(ctx, domain.OIDCDeviceDecisionCmd{
 		ProjectID: p.ProjectID,
 		UserCode:  req.UserCode,
@@ -358,6 +384,7 @@ func (s *OIDCProviderService) PostV1DeviceDeny(ctx context.Context, req *oas.Pos
 	}); err != nil {
 		return nil, err
 	}
+
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
@@ -366,6 +393,7 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdConsent(ctx c
 	if err != nil {
 		return nil, err
 	}
+
 	redirectTo, err := s.deps.Grants.Consent(ctx, domain.OIDCConsentCmd{
 		InteractionID: params.InteractionID,
 		AccountID:     p.AccountID,
@@ -376,6 +404,7 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdConsent(ctx c
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1OauthInteractionByInteractionIdConsentOK{
 		RedirectTo: oas.NewOptString(redirectTo),
 	}, nil
@@ -386,9 +415,11 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdLogin(ctx con
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.deps.Grants.CompleteLogin(ctx, params.InteractionID, p.AccountID, p.SessionID); err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1OauthInteractionByInteractionIdLoginOK{}, nil
 }
 
@@ -398,10 +429,12 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdReject(ctx co
 		cmd.Error = v.Error.Or("")
 		cmd.ErrorDescription = v.ErrorDescription.Or("")
 	}
+
 	redirectTo, err := s.deps.Grants.Reject(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
+
 	return &oas.PostV1OauthInteractionByInteractionIdRejectOK{
 		RedirectTo: oas.NewOptString(redirectTo),
 	}, nil
@@ -414,9 +447,11 @@ func oasOIDCDevicePending(p *domain.OIDCDevicePending) *oas.GetV1DeviceOK {
 	if len(p.ClientMap) > 0 {
 		out.Client = oas.NewOptGetV1DeviceOKClient(oasRawMap[oas.GetV1DeviceOKClient](p.ClientMap))
 	}
+
 	if !p.ExpiresAt.IsZero() {
 		out.ExpiresAt = oas.NewOptTimestamp(oas.Timestamp(p.ExpiresAt))
 	}
+
 	return out
 }
 

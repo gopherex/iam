@@ -35,6 +35,7 @@ func parseConsentAccept(raw string) ([]domain.AccountConsentAcceptance, error) {
 	if raw == "" {
 		return nil, nil
 	}
+
 	var accepted []domain.AccountConsentAcceptance
 	if err := json.Unmarshal([]byte(raw), &accepted); err == nil {
 		return accepted, nil
@@ -46,6 +47,7 @@ func parseConsentAccept(raw string) ([]domain.AccountConsentAcceptance, error) {
 			return accepted, nil
 		}
 	}
+
 	return nil, domain.ErrBadRequest.WithMessage("accept must be a JSON array of {key,version}")
 }
 
@@ -74,24 +76,32 @@ func resolveRequiredConsents(docs []domain.ConsentDocumentSpec, requestedLocale,
 		version string
 		locale  string
 	}
+
 	byKey := make(map[string][]cand)
+
 	var order []string
+
 	for _, d := range docs {
 		if d.Required == nil || !*d.Required {
 			continue
 		}
+
 		if d.Key == "" || d.Version == "" {
 			continue
 		}
+
 		loc := ""
 		if d.Locale != nil {
 			loc = *d.Locale
 		}
+
 		if _, ok := byKey[d.Key]; !ok {
 			order = append(order, d.Key)
 		}
+
 		byKey[d.Key] = append(byKey[d.Key], cand{version: d.Version, locale: loc})
 	}
+
 	if len(order) == 0 {
 		return nil
 	}
@@ -128,6 +138,7 @@ func resolveRequiredConsents(docs []domain.ConsentDocumentSpec, requestedLocale,
 		c := pick(byKey[key])
 		out = append(out, consentRequiredDoc{Key: key, Version: c.version, Locale: c.locale})
 	}
+
 	return out
 }
 
@@ -140,16 +151,20 @@ func missingRequiredConsents(required []consentRequiredDoc, accepted []domain.Ac
 	if len(required) == 0 {
 		return nil
 	}
+
 	have := make(map[domain.FlowConsentRef]struct{}, len(accepted))
 	for _, a := range accepted {
-		have[domain.FlowConsentRef{Key: a.Key, Version: a.Version}] = struct{}{}
+		have[domain.FlowConsentRef(a)] = struct{}{}
 	}
+
 	var missing []consentRequiredDoc
+
 	for _, r := range required {
 		if _, ok := have[domain.FlowConsentRef{Key: r.Key, Version: r.Version}]; !ok {
 			missing = append(missing, r)
 		}
 	}
+
 	return missing
 }
 
@@ -160,6 +175,7 @@ func consentRefDetails(missing []consentRequiredDoc) map[string]any {
 	for _, m := range missing {
 		refs = append(refs, map[string]string{"key": m.Key, "version": m.Version})
 	}
+
 	return map[string]any{"missing": refs}
 }
 
@@ -176,12 +192,15 @@ func (a *pgCoreAuth) coreAuthCheckRequiredConsents(ctx context.Context, projectI
 	if err != nil {
 		return err
 	}
+
 	defLocale, _ := a.cfg.AuthConfig(ctx, projectID)
 	required := resolveRequiredConsents(docs, requestedLocale, defLocale.DefaultLocale)
+
 	missing := missingRequiredConsents(required, accepted)
 	if len(missing) > 0 {
 		return domain.ErrConsentRequired.WithDetails(consentRefDetails(missing))
 	}
+
 	return nil
 }
 
@@ -193,13 +212,16 @@ func (a *pgCoreAuth) coreAuthConsentLocales(ctx context.Context, projectID, requ
 	if err != nil || len(docs) == 0 {
 		return map[string]string{}
 	}
+
 	defLocale, _ := a.cfg.AuthConfig(ctx, projectID)
 	out := make(map[string]string)
+
 	for _, r := range resolveConsentLocales(docs, requestedLocale, defLocale.DefaultLocale) {
 		if r.Locale != "" {
 			out[r.Key] = r.Locale
 		}
 	}
+
 	return out
 }
 
@@ -208,10 +230,12 @@ func (a *pgCoreAuth) coreAuthConsentLocales(ctx context.Context, projectID, requ
 func resolveConsentLocales(docs []domain.ConsentDocumentSpec, requestedLocale, defaultLocale string) []consentRequiredDoc {
 	all := make([]domain.ConsentDocumentSpec, 0, len(docs))
 	yes := true
+
 	for _, d := range docs {
 		dd := d
 		dd.Required = &yes // treat every doc as a candidate for locale resolution
 		all = append(all, dd)
 	}
+
 	return resolveRequiredConsents(all, requestedLocale, defaultLocale)
 }

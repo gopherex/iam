@@ -8,7 +8,7 @@ type BuiltinEmailCopy struct {
 }
 
 // BuiltinEmailTemplate is a system-provided email template: the default copy the
-// notification renderer falls back to when a project has not customised the
+// notification renderer falls back to when a project has not customized the
 // template for a given key/locale. The admin API lists, previews, and test-sends
 // these so operators can see and exercise every template (and verify SMTP)
 // before overriding any of them. Copy is keyed by locale; "en" is the canonical
@@ -23,7 +23,7 @@ type BuiltinEmailTemplate struct {
 // nor any other resolution yields a built-in translation.
 const builtinEmailLocaleFallback = "en"
 
-// BuiltinEmailTemplates is the canonical catalogue, keyed by the template ids the
+// BuiltinEmailTemplates is the canonical catalog, keyed by the template ids the
 // notification layer emits. Slice order is the admin display order. Keep the copy
 // in sync with the renderer fallbacks.
 var BuiltinEmailTemplates = []BuiltinEmailTemplate{
@@ -157,7 +157,7 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 	},
 }
 
-// BuiltinEmailTemplateByKey returns the catalogue entry for key, or nil when key
+// BuiltinEmailTemplateByKey returns the catalog entry for key, or nil when key
 // is not a known built-in template.
 func BuiltinEmailTemplateByKey(key string) *BuiltinEmailTemplate {
 	for i := range BuiltinEmailTemplates {
@@ -165,6 +165,7 @@ func BuiltinEmailTemplateByKey(key string) *BuiltinEmailTemplate {
 			return &BuiltinEmailTemplates[i]
 		}
 	}
+
 	return nil
 }
 
@@ -174,21 +175,24 @@ func (t *BuiltinEmailTemplate) Copy(locale string) BuiltinEmailCopy {
 	if c, ok := t.Locales[locale]; ok {
 		return c
 	}
+
 	if base := baseLocale(locale); base != "" && base != locale {
 		if c, ok := t.Locales[base]; ok {
 			return c
 		}
 	}
+
 	return t.Locales[builtinEmailLocaleFallback]
 }
 
 // baseLocale reduces a BCP-47 tag to its primary subtag ("ru-RU" -> "ru").
 func baseLocale(locale string) string {
-	for i := 0; i < len(locale); i++ {
+	for i := range len(locale) {
 		if locale[i] == '-' || locale[i] == '_' {
 			return locale[:i]
 		}
 	}
+
 	return locale
 }
 
@@ -199,5 +203,6 @@ func FirstNonEmptyLocale(candidates ...string) string {
 			return c
 		}
 	}
+
 	return builtinEmailLocaleFallback
 }

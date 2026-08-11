@@ -10,7 +10,7 @@ package postgres
 //   - iam_scim_resources  : SCIM Users / Groups (connection-scoped).
 //
 // Persistence follows the package gold pattern (reference.go): the domain
-// aggregate is marshalled into the `data jsonb` envelope, the typed columns are
+// aggregate is marshaled into the `data jsonb` envelope, the typed columns are
 // lookup-only, every mutation runs inside db.withTx / withTxRet, reads run on
 // db.Bobx(). The tenant boundary is project_id on every query; SCIM resources
 // are additionally scoped to their connection_id (a row whose connection/project
@@ -71,6 +71,7 @@ func fedRandomToken() (string, error) {
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
+
 	return hex.EncodeToString(b), nil
 }
 
@@ -90,25 +91,32 @@ func fedConnectionFromRow(cipher Cipher, row *models.IamSsoConnection) (*domain.
 			return nil, err
 		}
 	}
+
 	if err := fedDecryptConnSecrets(cipher, &c); err != nil {
 		return nil, err
 	}
+
 	c.ID = row.ID
+
 	c.ProjectID = row.ProjectID
 	if c.Type == "" {
 		c.Type = row.Type
 	}
+
 	if c.Status == "" {
 		c.Status = row.Status
 	}
+
 	if c.Name == "" {
 		c.Name = row.Name
 	}
+
 	if c.ExternalRef == "" {
 		if v, ok := row.ExternalRef.Get(); ok {
 			c.ExternalRef = v
 		}
 	}
+
 	return &c, nil
 }
 
@@ -120,19 +128,24 @@ func fedDomainFromRow(row *models.IamDomain) (*domain.Domain, error) {
 			return nil, err
 		}
 	}
+
 	d.ID = row.ID
+
 	d.ProjectID = row.ProjectID
 	if d.Domain == "" {
 		d.Domain = row.Domain
 	}
+
 	if d.Status == "" {
 		d.Status = row.Status
 	}
+
 	if d.ConnectionID == "" {
 		if v, ok := row.ConnectionID.Get(); ok {
 			d.ConnectionID = v
 		}
 	}
+
 	return &d, nil
 }
 
@@ -145,9 +158,11 @@ func fedTokenFromRow(row *models.IamScimToken) (*domain.ScimToken, error) {
 			return nil, err
 		}
 	}
+
 	t.ID = row.ID
 	t.ProjectID = row.ProjectID
 	t.ConnectionID = row.ConnectionID
+
 	return &t, nil
 }
 
@@ -157,20 +172,25 @@ func fedEncryptConnSecrets(cipher Cipher, c *domain.Connection) error {
 	if c.Config == nil {
 		return nil
 	}
+
 	if c.Config.Saml != nil && c.Config.Saml.SPPrivateKeyPEM != "" {
 		v, err := cipher.Encrypt(c.Config.Saml.SPPrivateKeyPEM)
 		if err != nil {
 			return err
 		}
+
 		c.Config.Saml.SPPrivateKeyPEM = v
 	}
+
 	if c.Config.Oidc != nil && c.Config.Oidc.ClientSecret != "" {
 		v, err := cipher.Encrypt(c.Config.Oidc.ClientSecret)
 		if err != nil {
 			return err
 		}
+
 		c.Config.Oidc.ClientSecret = v
 	}
+
 	return nil
 }
 
@@ -179,20 +199,25 @@ func fedDecryptConnSecrets(cipher Cipher, c *domain.Connection) error {
 	if c.Config == nil {
 		return nil
 	}
+
 	if c.Config.Saml != nil && c.Config.Saml.SPPrivateKeyPEM != "" {
 		v, err := cipher.Decrypt(c.Config.Saml.SPPrivateKeyPEM)
 		if err != nil {
 			return err
 		}
+
 		c.Config.Saml.SPPrivateKeyPEM = v
 	}
+
 	if c.Config.Oidc != nil && c.Config.Oidc.ClientSecret != "" {
 		v, err := cipher.Decrypt(c.Config.Oidc.ClientSecret)
 		if err != nil {
 			return err
 		}
+
 		c.Config.Oidc.ClientSecret = v
 	}
+
 	return nil
 }
 
@@ -203,28 +228,37 @@ func fedConnSetter(cipher Cipher, c *domain.Connection) (*models.IamSsoConnectio
 	// Encrypt reversible secrets for persistence without corrupting the caller's
 	// in-memory plaintext aggregate: snapshot, encrypt, marshal, restore.
 	var samlOrig, oidcOrig string
+
 	hasSaml := c.Config != nil && c.Config.Saml != nil
+
 	hasOidc := c.Config != nil && c.Config.Oidc != nil
 	if hasSaml {
 		samlOrig = c.Config.Saml.SPPrivateKeyPEM
 	}
+
 	if hasOidc {
 		oidcOrig = c.Config.Oidc.ClientSecret
 	}
+
 	if err := fedEncryptConnSecrets(cipher, c); err != nil {
 		return nil, err
 	}
+
 	raw, err := marshal(c)
 	if hasSaml {
 		c.Config.Saml.SPPrivateKeyPEM = samlOrig
 	}
+
 	if hasOidc {
 		c.Config.Oidc.ClientSecret = oidcOrig
 	}
+
 	if err != nil {
 		return nil, err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamSsoConnectionSetter{
 		ID:        &c.ID,
 		ProjectID: &c.ProjectID,
@@ -237,6 +271,7 @@ func fedConnSetter(cipher Cipher, c *domain.Connection) (*models.IamSsoConnectio
 		v := null.From(c.ExternalRef)
 		setter.ExternalRef = &v
 	}
+
 	return setter, nil
 }
 
@@ -252,17 +287,21 @@ func fedParsePrivateKeyPEM(pemStr string) (crypto.Signer, error) {
 	if block == nil {
 		return nil, domain.ErrProviderError
 	}
+
 	if key, err := x509.ParsePKCS1PrivateKey(block.Bytes); err == nil {
 		return key, nil
 	}
+
 	keyAny, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, domain.ErrProviderError
 	}
+
 	signer, ok := keyAny.(crypto.Signer)
 	if !ok {
 		return nil, domain.ErrProviderError
 	}
+
 	return signer, nil
 }
 
@@ -273,10 +312,12 @@ func fedParseCertificatePEM(pemStr string) (*x509.Certificate, error) {
 	if block == nil {
 		return nil, domain.ErrProviderError
 	}
+
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
 		return nil, domain.ErrProviderError
 	}
+
 	return cert, nil
 }
 
@@ -290,6 +331,7 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 	if c.Config == nil || c.Config.Saml == nil {
 		return nil, domain.ErrProviderError
 	}
+
 	cfg := c.Config.Saml
 
 	sp := &saml.ServiceProvider{
@@ -300,13 +342,16 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 		if err != nil {
 			return nil, domain.ErrProviderError
 		}
+
 		sp.AcsURL = *u
 	}
+
 	if cfg.MetadataURL != "" {
 		u, err := url.Parse(cfg.MetadataURL)
 		if err != nil {
 			return nil, domain.ErrProviderError
 		}
+
 		sp.MetadataURL = *u
 	}
 
@@ -316,6 +361,7 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 		if err != nil {
 			return nil, domain.ErrProviderError
 		}
+
 		sp.IDPMetadata = md
 	case cfg.IDPCertificatePEM != "":
 		// Wrap the raw IdP signing cert into a minimal IDPMetadata so the library's
@@ -325,6 +371,7 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 		if err != nil {
 			return nil, err
 		}
+
 		sp.IDPMetadata = &saml.EntityDescriptor{
 			IDPSSODescriptors: []saml.IDPSSODescriptor{{
 				SSODescriptor: saml.SSODescriptor{
@@ -354,15 +401,19 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 		if err != nil {
 			return nil, err
 		}
+
 		sp.Key = key
 	}
+
 	if cfg.SPCertificatePEM != "" {
 		cert, err := fedParseCertificatePEM(cfg.SPCertificatePEM)
 		if err != nil {
 			return nil, err
 		}
+
 		sp.Certificate = cert
 	}
+
 	return sp, nil
 }
 
@@ -374,6 +425,7 @@ func fedSamlSubject(a *saml.Assertion) (subject, email string) {
 	if a.Subject != nil && a.Subject.NameID != nil {
 		subject = a.Subject.NameID.Value
 	}
+
 	emailNames := map[string]bool{
 		"email":        true,
 		"mail":         true,
@@ -381,11 +433,13 @@ func fedSamlSubject(a *saml.Assertion) (subject, email string) {
 		"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": true,
 		"urn:oid:0.9.2342.19200300.100.1.3":                                  true,
 	}
+
 	for _, stmt := range a.AttributeStatements {
 		for _, attr := range stmt.Attributes {
 			if email != "" {
 				break
 			}
+
 			if emailNames[attr.FriendlyName] || emailNames[attr.Name] {
 				for _, v := range attr.Values {
 					if v.Value != "" {
@@ -396,12 +450,15 @@ func fedSamlSubject(a *saml.Assertion) (subject, email string) {
 			}
 		}
 	}
+
 	if email == "" && subject != "" && fedEmailDomain(subject) != "" {
 		email = subject
 	}
+
 	if subject == "" {
 		subject = email
 	}
+
 	return subject, email
 }
 
@@ -410,11 +467,14 @@ func fedOauth2Config(c *domain.Connection) (*oauth2.Config, *domain.FederationOi
 	if c.Config == nil || c.Config.Oidc == nil {
 		return nil, nil, domain.ErrProviderError
 	}
+
 	cfg := c.Config.Oidc
+
 	scopes := cfg.Scopes
 	if len(scopes) == 0 {
 		scopes = []string{"openid", "email", "profile"}
 	}
+
 	return &oauth2.Config{
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
@@ -434,10 +494,12 @@ func fedVerifyIDToken(ctx context.Context, cfg *domain.FederationOidcConfig, raw
 	if cfg.JWKSURL == "" {
 		return nil, domain.ErrProviderError
 	}
+
 	set, err := jwk.Fetch(ctx, cfg.JWKSURL)
 	if err != nil {
 		return nil, domain.ErrProviderError
 	}
+
 	tok, err := jwt.Parse([]byte(rawIDToken),
 		jwt.WithKeySet(set),
 		jwt.WithValidate(true),
@@ -445,20 +507,24 @@ func fedVerifyIDToken(ctx context.Context, cfg *domain.FederationOidcConfig, raw
 	if err != nil {
 		return nil, domain.ErrInvalidToken
 	}
+
 	claims, err := tokenClaims(tok)
 	if err != nil {
 		return nil, domain.ErrInvalidToken
 	}
+
 	if cfg.Issuer != "" {
 		if iss, _ := claims["iss"].(string); iss != cfg.Issuer {
 			return nil, domain.ErrInvalidToken
 		}
 	}
+
 	if cfg.ClientID != "" {
 		if !fedAudienceContains(claims["aud"], cfg.ClientID) {
 			return nil, domain.ErrInvalidToken
 		}
 	}
+
 	return claims, nil
 }
 
@@ -481,6 +547,7 @@ func fedAudienceContains(aud any, clientID string) bool {
 			}
 		}
 	}
+
 	return false
 }
 
@@ -493,10 +560,12 @@ func fedGenerateSPCertificate(commonName string) (certPEM, keyPEM, fingerprint s
 	if err != nil {
 		return "", "", "", err
 	}
+
 	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
 	if err != nil {
 		return "", "", "", err
 	}
+
 	now := nowUTC()
 	tmpl := &x509.Certificate{
 		SerialNumber:          serial,
@@ -506,14 +575,17 @@ func fedGenerateSPCertificate(commonName string) (certPEM, keyPEM, fingerprint s
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		BasicConstraintsValid: true,
 	}
+
 	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &priv.PublicKey, priv)
 	if err != nil {
 		return "", "", "", err
 	}
+
 	certPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
 	keyPEM = string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}))
 	sum := sha1.Sum(der)
 	fingerprint = hex.EncodeToString(sum[:])
+
 	return certPEM, keyPEM, fingerprint, nil
 }
 
@@ -524,7 +596,9 @@ func xmlMarshalIndent(v any) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	out := append([]byte(xml.Header), body...)
+
 	return out, nil
 }
 
@@ -557,16 +631,20 @@ func (a *pgFederationConnections) CreateConnection(ctx context.Context, cmd doma
 			Status:    "active",
 			Domains:   cmd.Domains,
 		}
+
 		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
 			return nil, err
 		}
+
 		if _, err := models.IamSsoConnections.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.connection.created",
 			ProjectID:   conn.ProjectID,
@@ -576,6 +654,7 @@ func (a *pgFederationConnections) CreateConnection(ctx context.Context, cmd doma
 		}); err != nil {
 			return nil, err
 		}
+
 		return conn, nil
 	})
 }
@@ -586,11 +665,14 @@ func (a *pgFederationConnections) GetConnection(ctx context.Context, projectID, 
 		if errors.Is(translatePgErr("connection", err), ErrNotFound) {
 			return nil, domain.ErrConnectionNotFound
 		}
+
 		return nil, err
 	}
+
 	if row.ProjectID != projectID { // tenant boundary
 		return nil, domain.ErrConnectionNotFound
 	}
+
 	return fedConnectionFromRow(a.db.Cipher, row)
 }
 
@@ -601,14 +683,17 @@ func (a *pgFederationConnections) ListConnections(ctx context.Context, projectID
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Connection, 0, len(rows))
 	for _, row := range rows {
 		c, err := fedConnectionFromRow(a.db.Cipher, row)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, *c)
 	}
+
 	return out, nil
 }
 
@@ -619,26 +704,34 @@ func (a *pgFederationConnections) UpdateConnection(ctx context.Context, cmd doma
 			if errors.Is(translatePgErr("connection", err), ErrNotFound) {
 				return nil, domain.ErrConnectionNotFound
 			}
+
 			return nil, err
 		}
+
 		if row.ProjectID != cmd.ProjectID {
 			return nil, domain.ErrConnectionNotFound
 		}
+
 		conn, err := fedConnectionFromRow(a.db.Cipher, row)
 		if err != nil {
 			return nil, err
 		}
+
 		fedApplyConnectionPatch(conn, cmd.Patch)
+
 		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
 			return nil, err
 		}
+
 		setter.ID = nil // never re-set the pk on update
 		setter.ProjectID = nil
+
 		setter.UpdatedAt = ptr(nowUTC())
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.connection.updated",
 			ProjectID:   conn.ProjectID,
@@ -648,6 +741,7 @@ func (a *pgFederationConnections) UpdateConnection(ctx context.Context, cmd doma
 		}); err != nil {
 			return nil, err
 		}
+
 		return conn, nil
 	})
 }
@@ -673,17 +767,21 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 	if patch == nil {
 		return
 	}
+
 	for k := range patch {
 		if !fedPatchableFields[k] {
 			delete(patch, k)
 		}
 	}
+
 	if v, ok := patch["name"].(string); ok {
 		c.Name = v
 	}
+
 	if v, ok := patch["display_name"].(string); ok {
 		c.Name = v
 	}
+
 	if v, ok := patch["enabled"].(bool); ok {
 		if v {
 			c.Status = "active"
@@ -691,56 +789,72 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 			c.Status = "disabled"
 		}
 	}
+
 	if c.Config == nil {
 		c.Config = &domain.FederationConnectionConfig{}
 	}
+
 	if v, ok := patch["saml_metadata_url"].(string); ok {
 		if c.Config.Saml == nil {
 			c.Config.Saml = &domain.FederationSamlConfig{}
 		}
+
 		c.Config.Saml.MetadataURL = v
 	}
+
 	if v, ok := patch["saml_metadata_xml"].(string); ok {
 		if c.Config.Saml == nil {
 			c.Config.Saml = &domain.FederationSamlConfig{}
 		}
+
 		c.Config.Saml.IDPMetadataXML = v
 	}
+
 	if v, ok := patch["oidc_issuer"].(string); ok {
 		if c.Config.Oidc == nil {
 			c.Config.Oidc = &domain.FederationOidcConfig{}
 		}
+
 		c.Config.Oidc.Issuer = v
 	}
+
 	if v, ok := patch["oidc_client_id"].(string); ok {
 		if c.Config.Oidc == nil {
 			c.Config.Oidc = &domain.FederationOidcConfig{}
 		}
+
 		c.Config.Oidc.ClientID = v
 	}
+
 	if v, ok := patch["oidc_client_secret"].(string); ok {
 		if c.Config.Oidc == nil {
 			c.Config.Oidc = &domain.FederationOidcConfig{}
 		}
+
 		c.Config.Oidc.ClientSecret = v
 	}
+
 	if raw, ok := patch["oidc_scopes"].([]any); ok {
 		if c.Config.Oidc == nil {
 			c.Config.Oidc = &domain.FederationOidcConfig{}
 		}
+
 		scopes := make([]string, 0, len(raw))
 		for _, item := range raw {
 			if s, ok := item.(string); ok {
 				scopes = append(scopes, s)
 			}
 		}
+
 		c.Config.Oidc.Scopes = scopes
 	} else if scopes, ok := patch["oidc_scopes"].([]string); ok {
 		if c.Config.Oidc == nil {
 			c.Config.Oidc = &domain.FederationOidcConfig{}
 		}
+
 		c.Config.Oidc.Scopes = scopes
 	}
+
 	if raw, ok := patch["domains"].([]any); ok {
 		doms := make([]string, 0, len(raw))
 		for _, item := range raw {
@@ -748,6 +862,7 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 				doms = append(doms, s)
 			}
 		}
+
 		c.Domains = doms
 	} else if doms, ok := patch["domains"].([]string); ok {
 		c.Domains = doms
@@ -761,14 +876,18 @@ func (a *pgFederationConnections) DeleteConnection(ctx context.Context, projectI
 			if errors.Is(translatePgErr("connection", err), ErrNotFound) {
 				return domain.ErrConnectionNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID {
 			return domain.ErrConnectionNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.connection.deleted",
 			ProjectID:   projectID,
@@ -778,6 +897,7 @@ func (a *pgFederationConnections) DeleteConnection(ctx context.Context, projectI
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -798,16 +918,19 @@ func (a *pgFederationConnections) TestConnection(ctx context.Context, projectID,
 		if err != nil {
 			return "", err
 		}
+
 		redirectURL, err := sp.MakeRedirectAuthenticationRequest("test")
 		if err != nil {
 			return "", domain.ErrSSOError
 		}
+
 		return redirectURL.String(), nil
 	case "oidc":
 		oauthCfg, _, err := fedOauth2Config(conn)
 		if err != nil {
 			return "", err
 		}
+
 		return oauthCfg.AuthCodeURL("test"), nil
 	default:
 		return "", domain.ErrProviderError
@@ -821,11 +944,14 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 			if errors.Is(translatePgErr("connection", err), ErrNotFound) {
 				return "", domain.ErrConnectionNotFound
 			}
+
 			return "", err
 		}
+
 		if row.ProjectID != projectID {
 			return "", domain.ErrConnectionNotFound
 		}
+
 		conn, err := fedConnectionFromRow(a.db.Cipher, row)
 		if err != nil {
 			return "", err
@@ -838,25 +964,32 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 		if err != nil {
 			return "", err
 		}
+
 		if conn.Config == nil {
 			conn.Config = &domain.FederationConnectionConfig{}
 		}
+
 		if conn.Config.Saml == nil {
 			conn.Config.Saml = &domain.FederationSamlConfig{}
 		}
+
 		conn.Config.Saml.SPCertificatePEM = certPEM
 		conn.Config.Saml.SPPrivateKeyPEM = keyPEM
 		conn.ExternalRef = fp // fingerprint as the stable external reference
+
 		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
 			return "", err
 		}
+
 		setter.ID = nil
 		setter.ProjectID = nil
+
 		setter.UpdatedAt = ptr(nowUTC())
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return "", err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.connection.certificate_rotated",
 			ProjectID:   projectID,
@@ -866,6 +999,7 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 		}); err != nil {
 			return "", err
 		}
+
 		return certPEM, nil
 	})
 }
@@ -879,10 +1013,12 @@ func (a *pgFederationConnections) AddDomain(ctx context.Context, projectID, conn
 			Status:       "pending",
 			ConnectionID: connectionID,
 		}
+
 		raw, err := marshal(dom)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		setter := &models.IamDomainSetter{
 			ID:        &dom.ID,
@@ -891,16 +1027,20 @@ func (a *pgFederationConnections) AddDomain(ctx context.Context, projectID, conn
 			Status:    ptr(dom.Status),
 			Data:      &rm,
 		}
+
 		if connectionID != "" {
 			v := null.From(connectionID)
 			setter.ConnectionID = &v
 		}
+
 		if _, err := models.IamDomains.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrDomainTaken
 			}
+
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.domain.added",
 			ProjectID:   dom.ProjectID,
@@ -910,6 +1050,7 @@ func (a *pgFederationConnections) AddDomain(ctx context.Context, projectID, conn
 		}); err != nil {
 			return nil, err
 		}
+
 		return dom, nil
 	})
 }
@@ -921,11 +1062,14 @@ func (a *pgFederationConnections) VerifyDomain(ctx context.Context, projectID, d
 			if errors.Is(translatePgErr("domain", err), ErrNotFound) {
 				return nil, domain.ErrDomainNotFound
 			}
+
 			return nil, err
 		}
+
 		if row.ProjectID != projectID {
 			return nil, domain.ErrDomainNotFound
 		}
+
 		dom, err := fedDomainFromRow(row)
 		if err != nil {
 			return nil, err
@@ -933,12 +1077,15 @@ func (a *pgFederationConnections) VerifyDomain(ctx context.Context, projectID, d
 		// Verification of the DNS challenge is performed out of band; here we
 		// flip the persisted state to verified.
 		dom.Status = "verified"
+
 		raw, err := marshal(dom)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		verifiedAt := null.From(nowUTC())
+
 		setter := &models.IamDomainSetter{
 			Status:     ptr("verified"),
 			VerifiedAt: &verifiedAt,
@@ -947,6 +1094,7 @@ func (a *pgFederationConnections) VerifyDomain(ctx context.Context, projectID, d
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.domain.verified",
 			ProjectID:   dom.ProjectID,
@@ -956,6 +1104,7 @@ func (a *pgFederationConnections) VerifyDomain(ctx context.Context, projectID, d
 		}); err != nil {
 			return nil, err
 		}
+
 		return dom, nil
 	})
 }
@@ -967,14 +1116,17 @@ func (a *pgFederationConnections) ListDomains(ctx context.Context, projectID str
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Domain, 0, len(rows))
 	for _, row := range rows {
 		d, err := fedDomainFromRow(row)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, *d)
 	}
+
 	return out, nil
 }
 
@@ -985,14 +1137,18 @@ func (a *pgFederationConnections) DeleteDomain(ctx context.Context, projectID, d
 			if errors.Is(translatePgErr("domain", err), ErrNotFound) {
 				return domain.ErrDomainNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID {
 			return domain.ErrDomainNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.domain.deleted",
 			ProjectID:   projectID,
@@ -1002,6 +1158,7 @@ func (a *pgFederationConnections) DeleteDomain(ctx context.Context, projectID, d
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -1011,6 +1168,7 @@ func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domai
 		tok    *domain.ScimToken
 		secret string
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		// Verify the connection exists and is in the requested project before
 		// minting a credential scoped to it (tenant boundary).
@@ -1019,8 +1177,10 @@ func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domai
 			if errors.Is(translatePgErr("connection", err), ErrNotFound) {
 				return result{}, domain.ErrConnectionNotFound
 			}
+
 			return result{}, err
 		}
+
 		if connRow.ProjectID != cmd.ProjectID {
 			return result{}, domain.ErrConnectionNotFound
 		}
@@ -1029,6 +1189,7 @@ func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domai
 		if err != nil {
 			return result{}, err
 		}
+
 		tok := &domain.ScimToken{
 			ID:           newUUID(),
 			ProjectID:    cmd.ProjectID,
@@ -1036,11 +1197,14 @@ func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domai
 			Name:         cmd.Name,
 			ExpiresAt:    cmd.ExpiresAt,
 		}
+
 		raw, err := marshal(tok)
 		if err != nil {
 			return result{}, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamScimTokenSetter{
 			ID:           &tok.ID,
 			ProjectID:    &tok.ProjectID,
@@ -1052,8 +1216,10 @@ func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domai
 			if isUniqueViolation(err) {
 				return result{}, domain.ErrConflict
 			}
+
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.scim_token.created",
 			ProjectID:   tok.ProjectID,
@@ -1063,11 +1229,13 @@ func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domai
 		}); err != nil {
 			return result{}, err
 		}
+
 		return result{tok: tok, secret: secret}, nil
 	})
 	if err != nil {
 		return nil, "", err
 	}
+
 	return res.tok, res.secret, nil
 }
 
@@ -1079,14 +1247,17 @@ func (a *pgFederationConnections) ListScimTokens(ctx context.Context, projectID,
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.ScimToken, 0, len(rows))
 	for _, row := range rows {
 		t, err := fedTokenFromRow(row)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, *t)
 	}
+
 	return out, nil
 }
 
@@ -1097,14 +1268,18 @@ func (a *pgFederationConnections) DeleteScimToken(ctx context.Context, projectID
 			if errors.Is(translatePgErr("scim_token", err), ErrNotFound) {
 				return domain.ErrNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID || row.ConnectionID != connectionID {
 			return domain.ErrNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.scim_token.deleted",
 			ProjectID:   projectID,
@@ -1114,6 +1289,7 @@ func (a *pgFederationConnections) DeleteScimToken(ctx context.Context, projectID
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -1125,6 +1301,7 @@ func (a *pgFederationConnections) ResolveConnection(ctx context.Context, project
 	if host == "" {
 		return nil, domain.ErrConnectionNotFound
 	}
+
 	domRow, err := models.IamDomains.Query(
 		sm.Where(models.IamDomains.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamDomains.Columns.Domain.EQ(psql.Arg(host))),
@@ -1133,12 +1310,15 @@ func (a *pgFederationConnections) ResolveConnection(ctx context.Context, project
 		if errors.Is(translatePgErr("domain", err), ErrNotFound) {
 			return nil, domain.ErrConnectionNotFound
 		}
+
 		return nil, err
 	}
+
 	connID, ok := domRow.ConnectionID.Get()
 	if !ok || connID == "" {
 		return nil, domain.ErrConnectionNotFound
 	}
+
 	return a.GetConnection(ctx, projectID, connID)
 }
 
@@ -1150,6 +1330,7 @@ func fedEmailDomain(email string) string {
 			return email[i+1:]
 		}
 	}
+
 	return ""
 }
 
@@ -1199,8 +1380,10 @@ func (a *pgFederationRuntime) fedConnByID(ctx context.Context, connectionID stri
 		if errors.Is(translatePgErr("connection", err), ErrNotFound) {
 			return nil, domain.ErrConnectionNotFound
 		}
+
 		return nil, err
 	}
+
 	return row, nil
 }
 
@@ -1209,10 +1392,12 @@ func (a *pgFederationRuntime) OidcStart(ctx context.Context, cmd domain.Federati
 	if err != nil {
 		return nil, err
 	}
+
 	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
+
 	oauthCfg, _, err := fedOauth2Config(conn)
 	if err != nil {
 		return nil, err
@@ -1227,11 +1412,14 @@ func (a *pgFederationRuntime) OidcStart(ctx context.Context, cmd domain.Federati
 			return nil, err
 		}
 	}
+
 	opts := []oauth2.AuthCodeOption{}
 	if cmd.LoginHint != "" {
 		opts = append(opts, oauth2.SetAuthURLParam("login_hint", cmd.LoginHint))
 	}
+
 	authURL := oauthCfg.AuthCodeURL(state, opts...)
+
 	return &domain.FederationSsoRedirect{URL: authURL}, nil
 }
 
@@ -1240,10 +1428,12 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	if err != nil {
 		return nil, err
 	}
+
 	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
+
 	oauthCfg, oidcCfg, err := fedOauth2Config(conn)
 	if err != nil {
 		return nil, err
@@ -1253,6 +1443,7 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	if err != nil {
 		return nil, domain.ErrProviderError
 	}
+
 	rawIDToken, ok := tok.Extra("id_token").(string)
 	if !ok || rawIDToken == "" {
 		return nil, domain.ErrSSOError
@@ -1262,10 +1453,12 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	if err != nil {
 		return nil, err
 	}
+
 	subject, _ := claims["sub"].(string)
 	if subject == "" {
 		return nil, domain.ErrSSOError
 	}
+
 	email, _ := claims["email"].(string)
 	// The id_token is verified; the external subject is now trusted. Provision/link
 	// the verified subject to an IAM user + session, then persist a single-use
@@ -1277,15 +1470,20 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	}
 	// Provision + emit atomically: the callback event is recorded iff the
 	// exchange code commits (nested withTx joins fedProvisionAndStoreCode's tx).
-	var exchangeCode string
-	var cookie []string
+	var (
+		exchangeCode string
+		cookie       []string
+	)
+
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
 		code, accessToken, refreshToken, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, provider, "oidc", subject, email)
 		if err != nil {
 			return err
 		}
+
 		exchangeCode = code
 		cookie = sessionCookies(accessToken, refreshToken, fedAccessTTL, fedRefreshTTL)
+
 		return a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.sso.oidc_callback",
 			ProjectID:   row.ProjectID,
@@ -1295,6 +1493,7 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FederationSsoRedirect{
 		URL:    "/v1/sso/exchange?code=" + exchangeCode,
 		Cookie: cookie,
@@ -1306,10 +1505,12 @@ func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.Federati
 	if err != nil {
 		return nil, err
 	}
+
 	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
+
 	sp, err := fedSamlServiceProvider(conn)
 	if err != nil {
 		return nil, err
@@ -1321,6 +1522,7 @@ func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.Federati
 	if relayState == "" {
 		relayState = cmd.RedirectTo
 	}
+
 	redirectURL, err := sp.MakeRedirectAuthenticationRequest(relayState)
 	if err != nil {
 		return nil, domain.ErrSSOError
@@ -1330,6 +1532,7 @@ func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.Federati
 	if err := a.fedStoreSamlRequest(ctx, row.ProjectID, cmd.ConnectionID, relayState, cmd.RedirectTo); err != nil {
 		return nil, err
 	}
+
 	return &domain.FederationSsoRedirect{URL: redirectURL.String()}, nil
 }
 
@@ -1338,10 +1541,12 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	if err != nil {
 		return nil, err
 	}
+
 	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
+
 	sp, err := fedSamlServiceProvider(conn)
 	if err != nil {
 		return nil, err
@@ -1360,9 +1565,11 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	if err != nil {
 		return nil, err
 	}
+
 	if !correlated {
 		return nil, domain.ErrSSOError.WithMessage("unsolicited SAML response")
 	}
+
 	assertion, err := sp.ParseXMLResponse(decoded, []string{}, sp.AcsURL)
 	if err != nil {
 		return nil, domain.ErrSSOError
@@ -1372,9 +1579,11 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	if assertion.Conditions != nil {
 		notAfter = assertion.Conditions.NotOnOrAfter
 	}
+
 	if err := a.fedAssertNotReplayed(ctx, row.ProjectID, cmd.ConnectionID, assertion.ID, notAfter); err != nil {
 		return nil, err
 	}
+
 	subject, email := fedSamlSubject(assertion)
 	if subject == "" {
 		return nil, domain.ErrSSOError
@@ -1384,15 +1593,20 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	// single-use exchange code (code -> minted session) for the provisioning leg
 	// to resolve. The provider key is the connection id (no issuer for SAML).
 	// Provision + emit atomically (nested withTx joins fedProvisionAndStoreCode's tx).
-	var exchangeCode string
-	var cookie []string
+	var (
+		exchangeCode string
+		cookie       []string
+	)
+
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
 		code, accessToken, refreshToken, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, cmd.ConnectionID, "saml", subject, email)
 		if err != nil {
 			return err
 		}
+
 		exchangeCode = code
 		cookie = sessionCookies(accessToken, refreshToken, fedAccessTTL, fedRefreshTTL)
+
 		return a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.sso.saml_acs",
 			ProjectID:   row.ProjectID,
@@ -1402,6 +1616,7 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FederationSsoRedirect{
 		URL:    "/v1/sso/exchange?code=" + exchangeCode,
 		Cookie: cookie,
@@ -1413,10 +1628,12 @@ func (a *pgFederationRuntime) SamlSlo(ctx context.Context, connectionID string) 
 	if err != nil {
 		return nil, err
 	}
+
 	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
+
 	sp, err := fedSamlServiceProvider(conn)
 	if err != nil {
 		return nil, err
@@ -1444,6 +1661,7 @@ func (a *pgFederationRuntime) SamlSlo(ctx context.Context, connectionID string) 
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FederationSsoRedirect{URL: sloLocation}, nil
 }
 
@@ -1452,10 +1670,12 @@ func (a *pgFederationRuntime) SamlMetadata(ctx context.Context, connectionID str
 	if err != nil {
 		return nil, err
 	}
+
 	conn, err := fedConnectionFromRow(a.db.Cipher, row)
 	if err != nil {
 		return nil, err
 	}
+
 	sp, err := fedSamlServiceProvider(conn)
 	if err != nil {
 		return nil, err
@@ -1465,10 +1685,12 @@ func (a *pgFederationRuntime) SamlMetadata(ctx context.Context, connectionID str
 	// when stored; when absent the metadata is rendered without a signing
 	// KeyDescriptor (the SP simply runs without request signing).
 	md := sp.Metadata()
+
 	out, err := xmlMarshalIndent(md)
 	if err != nil {
 		return nil, domain.ErrSSOError
 	}
+
 	return out, nil
 }
 
@@ -1477,6 +1699,7 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 		acc  *domain.Account
 		sess *domain.Session
 	}
+
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		// The exchange code is an opaque single-use token persisted (hashed) by the
 		// callback leg; resolve it (project-scoped) to the session it authenticated.
@@ -1484,6 +1707,7 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 		// time (after the external subject was provisioned to an IAM user); here we
 		// validate single-use + expiry, consume it, and return account + session.
 		hash := fedHashToken(code)
+
 		rows, err := models.IamAuthCodes.Query(
 			sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
 			sm.Where(models.IamAuthCodes.Columns.ProjectID.EQ(psql.Arg(projectID))),
@@ -1492,13 +1716,16 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 		if err != nil {
 			return result{}, err
 		}
+
 		if len(rows) == 0 {
 			return result{}, domain.ErrInvalidToken
 		}
+
 		row := rows[0]
 		if row.Consumed {
 			return result{}, domain.ErrInvalidToken
 		}
+
 		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
 			return result{}, domain.ErrInvalidToken
 		}
@@ -1507,14 +1734,17 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamAuthCodeSetter{Consumed: &consumed}); err != nil {
 			return result{}, err
 		}
+
 		var sess domain.Session
 		if err := unmarshal(row.Data, &sess); err != nil {
 			return result{}, err
 		}
+
 		acc, err := a.fedLoadAccount(ctx, projectID, row.UserID.GetOrZero())
 		if err != nil {
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.sso.exchanged",
 			ProjectID:   projectID,
@@ -1524,11 +1754,13 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 		}); err != nil {
 			return result{}, err
 		}
+
 		return result{acc: acc, sess: &sess}, nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return res.acc, res.sess, nil
 }
 
@@ -1547,20 +1779,26 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, proj
 	if err != nil {
 		return "", "", "", err
 	}
+
 	var accessToken, refreshToken string
+
 	err = a.db.withTx(ctx, func(ctx context.Context) error {
 		acct, sess, err := a.fedProvisionSubject(ctx, projectID, connectionID, provider, idType, providerAccountID, email)
 		if err != nil {
 			return err
 		}
+
 		accessToken = sess.AccessToken
 		refreshToken = sess.RefreshToken
+
 		raw, err := marshal(sess)
 		if err != nil {
 			return err
 		}
+
 		rm := json.RawMessage(raw)
 		uid := null.From(acct.ID)
+
 		setter := &models.IamAuthCodeSetter{
 			ID:        ptr(newUUID()),
 			ProjectID: &projectID,
@@ -1573,8 +1811,10 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, proj
 			if isUniqueViolation(err) {
 				return domain.ErrConflict
 			}
+
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.sso.exchange_code_issued",
 			ProjectID:   projectID,
@@ -1584,11 +1824,13 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, proj
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 	if err != nil {
 		return "", "", "", err
 	}
+
 	return code, accessToken, refreshToken, nil
 }
 
@@ -1603,12 +1845,14 @@ func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID
 	if err != nil && !errors.Is(err, domain.ErrNotFound) {
 		return nil, nil, err
 	}
+
 	var acct *domain.Account
 	if errors.Is(err, domain.ErrNotFound) {
 		acct, err = a.fedCreateAccount(ctx, projectID, email)
 		if err != nil {
 			return nil, nil, err
 		}
+
 		if err := a.fedInsertIdentity(ctx, &domain.Identity{
 			ID:                newUUID(),
 			Type:              idType,
@@ -1618,6 +1862,7 @@ func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID
 		}, projectID, acct.ID); err != nil {
 			return nil, nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "identity.linked",
 			ProjectID:   projectID,
@@ -1633,10 +1878,12 @@ func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID
 			return nil, nil, err
 		}
 	}
+
 	sess, err := a.fedMintSession(ctx, acct, idType)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "session.created",
 		ProjectID:   acct.ProjectID,
@@ -1646,6 +1893,7 @@ func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID
 	}); err != nil {
 		return nil, nil, err
 	}
+
 	return acct, sess, nil
 }
 
@@ -1660,9 +1908,11 @@ func (a *pgFederationRuntime) fedFindIdentity(ctx context.Context, projectID, pr
 	if err != nil {
 		return nil, err
 	}
+
 	if len(rows) == 0 {
 		return nil, domain.ErrNotFound
 	}
+
 	return rows[0], nil
 }
 
@@ -1674,7 +1924,9 @@ func (a *pgFederationRuntime) fedInsertIdentity(ctx context.Context, ident *doma
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamIdentitySetter{
 		ID:        &ident.ID,
 		ProjectID: &projectID,
@@ -1686,20 +1938,25 @@ func (a *pgFederationRuntime) fedInsertIdentity(ctx context.Context, ident *doma
 		v := null.From(ident.Provider)
 		setter.Provider = &v
 	}
+
 	if ident.ProviderAccountID != "" {
 		v := null.From(ident.ProviderAccountID)
 		setter.ProviderAccountID = &v
 	}
+
 	if ident.Email != "" {
 		v := null.From(ident.Email)
 		setter.Email = &v
 	}
+
 	if _, err := models.IamIdentities.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {
 			return domain.ErrIdentityExists
 		}
+
 		return err
 	}
+
 	return nil
 }
 
@@ -1715,11 +1972,14 @@ func (a *pgFederationRuntime) fedCreateAccount(ctx context.Context, projectID, e
 		CreatedAt:     nowUTC(),
 		UpdatedAt:     nowUTC(),
 	}
+
 	raw, err := marshal(acct)
 	if err != nil {
 		return nil, err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamUserSetter{
 		ID:        &acct.ID,
 		ProjectID: &acct.ProjectID,
@@ -1731,12 +1991,15 @@ func (a *pgFederationRuntime) fedCreateAccount(ctx context.Context, projectID, e
 		v := null.From(acct.PrimaryEmail)
 		setter.PrimaryEmail = &v
 	}
+
 	if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {
 			return nil, domain.ErrEmailExists
 		}
+
 		return nil, err
 	}
+
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "user.created",
 		ProjectID:   acct.ProjectID,
@@ -1746,6 +2009,7 @@ func (a *pgFederationRuntime) fedCreateAccount(ctx context.Context, projectID, e
 	}); err != nil {
 		return nil, err
 	}
+
 	return acct, nil
 }
 
@@ -1755,13 +2019,16 @@ func (a *pgFederationRuntime) fedLoadAccount(ctx context.Context, projectID, use
 	if err != nil {
 		return nil, translatePgErr("user", err)
 	}
+
 	if row.ProjectID != projectID { // tenant boundary
 		return nil, domain.ErrUserNotFound
 	}
+
 	var acct domain.Account
 	if err := unmarshal(row.Data, &acct); err != nil {
 		return nil, err
 	}
+
 	return &acct, nil
 }
 
@@ -1770,10 +2037,12 @@ func (a *pgFederationRuntime) fedLoadAccount(ctx context.Context, projectID, use
 // token signed by the same key. amr carries the SSO method ("saml" | "oidc").
 func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.Account, amr string) (*domain.Session, error) {
 	sessionID := newUUID()
+
 	signEnv, err := resolveSignEnv(ctx, a.db, acct.ProjectID, fedDefaultEnv)
 	if err != nil {
 		return nil, err
 	}
+
 	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
 		"iss": oidcIssuer(acct.ProjectID, signEnv),
 		"sub": acct.ID,
@@ -1787,6 +2056,7 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 	if err != nil {
 		return nil, err
 	}
+
 	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
 		"iss": oidcIssuer(acct.ProjectID, signEnv),
 		"sub": acct.ID,
@@ -1798,6 +2068,7 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 	if err != nil {
 		return nil, err
 	}
+
 	meta := domain.RequestMetaFromContext(ctx)
 	sess := &domain.Session{
 		ID:           sessionID,
@@ -1814,11 +2085,14 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 		UserAgent:    meta.UserAgent,
 		Fingerprint:  meta.Fingerprint,
 	}
+
 	raw, err := marshal(sess)
 	if err != nil {
 		return nil, err
 	}
+
 	rm := json.RawMessage(raw)
+
 	setter := &models.IamSessionSetter{
 		ID:        &sess.ID,
 		ProjectID: &sess.ProjectID,
@@ -1829,6 +2103,7 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 	if _, err := models.IamSessions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		return nil, err
 	}
+
 	return sess, nil
 }
 
@@ -1867,8 +2142,10 @@ func (a *pgFederationScim) fedScimProjectForConnection(ctx context.Context, conn
 		if errors.Is(translatePgErr("connection", err), ErrNotFound) {
 			return "", domain.ErrConnectionNotFound
 		}
+
 		return "", err
 	}
+
 	return row.ProjectID, nil
 }
 
@@ -1881,18 +2158,22 @@ func fedScimResourceFromRow(row *models.IamScimResource) (map[string]any, error)
 			return nil, err
 		}
 	}
+
 	attrs["id"] = row.ID
 	if v, ok := row.ExternalID.Get(); ok && v != "" {
 		attrs["externalId"] = v
 	}
+
 	meta, _ := attrs["meta"].(map[string]any)
 	if meta == nil {
 		meta = map[string]any{}
 	}
+
 	meta["resourceType"] = row.ResourceType
 	meta["created"] = row.CreatedAt.UTC().Format(time.RFC3339)
 	meta["lastModified"] = row.UpdatedAt.UTC().Format(time.RFC3339)
 	attrs["meta"] = meta
+
 	return attrs, nil
 }
 
@@ -1901,6 +2182,7 @@ func fedScimExternalID(attrs map[string]any) string {
 	if v, ok := attrs["externalId"].(string); ok {
 		return v
 	}
+
 	return ""
 }
 
@@ -1909,6 +2191,7 @@ func fedScimListEnvelope(resources []map[string]any, startIndex, count int) map[
 	if startIndex <= 0 {
 		startIndex = 1
 	}
+
 	return map[string]any{
 		"schemas":      []string{"urn:ietf:params:scim:api:messages:2.0:ListResponse"},
 		"totalResults": len(resources),
@@ -1928,14 +2211,17 @@ func (a *pgFederationScim) fedScimList(ctx context.Context, q domain.FederationS
 	if err != nil {
 		return nil, err
 	}
+
 	resources := make([]map[string]any, 0, len(rows))
 	for _, row := range rows {
 		m, err := fedScimResourceFromRow(row)
 		if err != nil {
 			return nil, err
 		}
+
 		resources = append(resources, m)
 	}
+
 	return fedScimListEnvelope(resources, q.StartIndex, q.Count), nil
 }
 
@@ -1946,11 +2232,14 @@ func (a *pgFederationScim) fedScimGet(ctx context.Context, connectionID, resourc
 		if errors.Is(translatePgErr("scim_resource", err), ErrNotFound) {
 			return nil, domain.ErrNotFound
 		}
+
 		return nil, err
 	}
+
 	if row.ConnectionID != connectionID || row.ResourceType != resourceType { // tenant boundary
 		return nil, domain.ErrNotFound
 	}
+
 	return row, nil
 }
 
@@ -1961,18 +2250,23 @@ func (a *pgFederationScim) fedScimCreate(ctx context.Context, cmd domain.Federat
 		if err != nil {
 			return nil, err
 		}
+
 		id := newUUID()
+
 		attrs := map[string]any{}
 		for k, v := range cmd.Attributes {
 			attrs[k] = v
 		}
+
 		attrs["id"] = id
 
 		raw, err := marshal(attrs)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamScimResourceSetter{
 			ID:           &id,
 			ProjectID:    &projectID,
@@ -1984,20 +2278,25 @@ func (a *pgFederationScim) fedScimCreate(ctx context.Context, cmd domain.Federat
 			v := null.From(ext)
 			setter.ExternalID = &v
 		}
+
 		if _, err := models.IamScimResources.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		row, err := models.FindIamScimResource(ctx, a.db.Bobx(), id)
 		if err != nil {
 			return nil, err
 		}
+
 		out, err := fedScimResourceFromRow(row)
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.scim.resource_created",
 			ProjectID:   projectID,
@@ -2007,6 +2306,7 @@ func (a *pgFederationScim) fedScimCreate(ctx context.Context, cmd domain.Federat
 		}); err != nil {
 			return nil, err
 		}
+
 		return out, nil
 	})
 }
@@ -2018,29 +2318,36 @@ func (a *pgFederationScim) fedScimReplace(ctx context.Context, cmd domain.Federa
 		if err != nil {
 			return nil, err
 		}
+
 		attrs := map[string]any{}
 		for k, v := range cmd.Attributes {
 			attrs[k] = v
 		}
+
 		attrs["id"] = row.ID
 
 		raw, err := marshal(attrs)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		setter := &models.IamScimResourceSetter{Data: &rm, UpdatedAt: ptr(nowUTC())}
+
 		if ext := fedScimExternalID(cmd.Attributes); ext != "" {
 			v := null.From(ext)
 			setter.ExternalID = &v
 		}
+
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		out, err := fedScimResourceFromRow(row)
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.scim.resource_replaced",
 			ProjectID:   row.ProjectID,
@@ -2050,6 +2357,7 @@ func (a *pgFederationScim) fedScimReplace(ctx context.Context, cmd domain.Federa
 		}); err != nil {
 			return nil, err
 		}
+
 		return out, nil
 	})
 }
@@ -2062,34 +2370,42 @@ func (a *pgFederationScim) fedScimPatch(ctx context.Context, cmd domain.Federati
 		if err != nil {
 			return nil, err
 		}
+
 		attrs := map[string]any{}
 		if len(row.Data) > 0 {
 			if err := unmarshal(row.Data, &attrs); err != nil {
 				return nil, err
 			}
 		}
+
 		for k, v := range cmd.Patch {
 			attrs[k] = v
 		}
+
 		attrs["id"] = row.ID
 
 		raw, err := marshal(attrs)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		setter := &models.IamScimResourceSetter{Data: &rm, UpdatedAt: ptr(nowUTC())}
+
 		if ext := fedScimExternalID(attrs); ext != "" {
 			v := null.From(ext)
 			setter.ExternalID = &v
 		}
+
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		out, err := fedScimResourceFromRow(row)
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.scim.resource_patched",
 			ProjectID:   row.ProjectID,
@@ -2099,6 +2415,7 @@ func (a *pgFederationScim) fedScimPatch(ctx context.Context, cmd domain.Federati
 		}); err != nil {
 			return nil, err
 		}
+
 		return out, nil
 	})
 }
@@ -2110,9 +2427,11 @@ func (a *pgFederationScim) fedScimDelete(ctx context.Context, connectionID, reso
 		if err != nil {
 			return err
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.scim.resource_deleted",
 			ProjectID:   row.ProjectID,
@@ -2122,6 +2441,7 @@ func (a *pgFederationScim) fedScimDelete(ctx context.Context, connectionID, reso
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -2137,6 +2457,7 @@ func (a *pgFederationScim) GetUser(ctx context.Context, connectionID, scimUserID
 	if err != nil {
 		return nil, err
 	}
+
 	return fedScimResourceFromRow(row)
 }
 
@@ -2167,6 +2488,7 @@ func (a *pgFederationScim) GetGroup(ctx context.Context, connectionID, groupID s
 	if err != nil {
 		return nil, err
 	}
+
 	return fedScimResourceFromRow(row)
 }
 

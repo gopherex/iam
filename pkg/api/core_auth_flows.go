@@ -55,6 +55,7 @@ func flowHeaders(fs *domain.FlowState) *oas.FlowStateHeaders {
 	} else {
 		out.SetCookie = FlowCookieClear()
 	}
+
 	return out
 }
 
@@ -64,6 +65,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.Flow
 	for _, c := range req.Consents {
 		consents = append(consents, domain.AccountConsentAcceptance{Key: c.Key, Version: c.Version})
 	}
+
 	fs, err := s.deps.Flows.Create(ctx, domain.FlowCreateCmd{
 		ProjectID:    params.XClientID,
 		Kind:         domain.FlowKind(req.Kind),
@@ -82,6 +84,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.Flow
 	if err != nil {
 		return nil, err
 	}
+
 	return flowHeaders(fs), nil
 }
 
@@ -94,6 +97,7 @@ func (s *CoreAuthFlowService) GetV1AuthFlowsByFlowToken(ctx context.Context, par
 	if err != nil {
 		return nil, err
 	}
+
 	return flowHeaders(fs), nil
 }
 
@@ -104,6 +108,7 @@ func (s *CoreAuthFlowService) GetV1AuthFlowsCurrent(ctx context.Context, params 
 	if token == "" {
 		return nil, domain.ErrFlowNotFound
 	}
+
 	fs, err := s.deps.Flows.Get(ctx, domain.FlowGetCmd{
 		ProjectID: params.XClientID,
 		FlowToken: token,
@@ -111,12 +116,14 @@ func (s *CoreAuthFlowService) GetV1AuthFlowsCurrent(ctx context.Context, params 
 	if err != nil {
 		return nil, err
 	}
+
 	return flowHeaders(fs), nil
 }
 
 // PostV1AuthFlowsByFlowTokenSubmit advances the flow state machine.
 func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, req *oas.FlowSubmitRequest, params oas.PostV1AuthFlowsByFlowTokenSubmitParams) (*oas.FlowStateHeaders, error) {
 	payload := make(map[string]string)
+
 	if p, ok := req.Payload.Get(); ok {
 		for k, raw := range p {
 			// Each value is a jx.Raw (JSON bytes). For string scalars we strip
@@ -125,9 +132,11 @@ func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Conte
 			if len(s2) >= 2 && s2[0] == '"' && s2[len(s2)-1] == '"' {
 				s2 = s2[1 : len(s2)-1]
 			}
+
 			payload[k] = s2
 		}
 	}
+
 	fs, err := s.deps.Flows.Submit(ctx, domain.FlowSubmitCmd{
 		ProjectID: params.XClientID,
 		FlowToken: params.FlowToken,
@@ -137,6 +146,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
+
 	return flowHeaders(fs), nil
 }
 
@@ -149,6 +159,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenResend(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
+
 	return flowHeaders(fs), nil
 }
 
@@ -179,9 +190,11 @@ func oasFlowState(fs *domain.FlowState) *oas.FlowState {
 		if f.Contact.Email != "" {
 			fc.EmailMasked = oas.NewOptString(maskEmail(f.Contact.Email))
 		}
+
 		if f.Contact.Phone != "" {
 			fc.PhoneMasked = oas.NewOptString(maskPhone(f.Contact.Phone))
 		}
+
 		out.Contact = oas.NewOptFlowContact(fc)
 	}
 	// Active challenge (if any).
@@ -199,11 +212,14 @@ func oasFlowState(fs *domain.FlowState) *oas.FlowState {
 					pk[k] = jx.Raw(b)
 				}
 			}
+
 			fc.PublicKey = oas.NewOptFlowChallengePublicKey(pk)
 		}
+
 		if ac.RedirectURL != "" {
 			fc.RedirectURL = oas.NewOptString(ac.RedirectURL)
 		}
+
 		out.Challenge = oas.NewOptFlowChallenge(fc)
 	}
 	// Consents.
@@ -215,6 +231,7 @@ func oasFlowState(fs *domain.FlowState) *oas.FlowState {
 				Version: oas.NewOptString(c.Version),
 			})
 		}
+
 		out.ConsentsRequired = refs
 	}
 	// Error (within a still-pending flow).
@@ -228,6 +245,7 @@ func oasFlowState(fs *domain.FlowState) *oas.FlowState {
 	if fs.Session != nil {
 		out.Session = oas.NewOptSessionTokens(oasSessionTokens(fs.Session))
 	}
+
 	return out
 }
 
@@ -237,7 +255,9 @@ func flowNextActions(f *domain.Flow) []string {
 	if f.Status != domain.FlowStatusPending {
 		return nil
 	}
+
 	var actions []string
+
 	switch f.Step {
 	case domain.FlowStepCollectCredentials:
 		actions = []string{"submit"}
@@ -257,6 +277,7 @@ func flowNextActions(f *domain.Flow) []string {
 		} else {
 			actions = []string{"verify_email"}
 		}
+
 		if f.ActiveChallenge != nil {
 			actions = append(actions, "resend")
 		}
@@ -273,6 +294,7 @@ func flowNextActions(f *domain.Flow) []string {
 	if len(f.AvailableMethods) > 0 {
 		actions = append(actions, "switch_method")
 	}
+
 	return actions
 }
 
@@ -282,11 +304,14 @@ func maskEmail(email string) string {
 	if at < 0 {
 		return "***"
 	}
+
 	local := email[:at]
+
 	domain := email[at:]
 	if len(local) <= 1 {
 		return "*" + domain
 	}
+
 	return string(local[0]) + "***" + domain
 }
 
@@ -295,6 +320,7 @@ func maskPhone(phone string) string {
 	if len(phone) <= 2 {
 		return "***"
 	}
+
 	return "***" + phone[len(phone)-2:]
 }
 
@@ -324,18 +350,23 @@ type coreAuthComposite struct {
 func (c *coreAuthComposite) PostV1AuthFlows(ctx context.Context, req *oas.FlowCreateRequest, params oas.PostV1AuthFlowsParams) (*oas.FlowStateHeaders, error) {
 	return c.CoreAuthFlowService.PostV1AuthFlows(ctx, req, params)
 }
+
 func (c *coreAuthComposite) GetV1AuthFlowsByFlowToken(ctx context.Context, params oas.GetV1AuthFlowsByFlowTokenParams) (*oas.FlowStateHeaders, error) {
 	return c.CoreAuthFlowService.GetV1AuthFlowsByFlowToken(ctx, params)
 }
+
 func (c *coreAuthComposite) GetV1AuthFlowsCurrent(ctx context.Context, params oas.GetV1AuthFlowsCurrentParams) (*oas.FlowStateHeaders, error) {
 	return c.CoreAuthFlowService.GetV1AuthFlowsCurrent(ctx, params)
 }
+
 func (c *coreAuthComposite) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, req *oas.FlowSubmitRequest, params oas.PostV1AuthFlowsByFlowTokenSubmitParams) (*oas.FlowStateHeaders, error) {
 	return c.CoreAuthFlowService.PostV1AuthFlowsByFlowTokenSubmit(ctx, req, params)
 }
+
 func (c *coreAuthComposite) PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params oas.PostV1AuthFlowsByFlowTokenResendParams) (*oas.FlowStateHeaders, error) {
 	return c.CoreAuthFlowService.PostV1AuthFlowsByFlowTokenResend(ctx, params)
 }
+
 func (c *coreAuthComposite) DeleteV1AuthFlowsByFlowToken(ctx context.Context, params oas.DeleteV1AuthFlowsByFlowTokenParams) error {
 	return c.CoreAuthFlowService.DeleteV1AuthFlowsByFlowToken(ctx, params)
 }

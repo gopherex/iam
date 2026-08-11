@@ -43,6 +43,7 @@ func translatePgErr(resource string, err error) error {
 	if errors.Is(err, sql.ErrNoRows) || errors.Is(err, pgx.ErrNoRows) {
 		return fmt.Errorf("%s: %w", resource, ErrNotFound)
 	}
+
 	return err
 }
 
@@ -53,6 +54,7 @@ func isUniqueViolation(err error) bool {
 	if errors.As(err, &pgErr) {
 		return pgErr.Code == "23505"
 	}
+
 	return false
 }
 

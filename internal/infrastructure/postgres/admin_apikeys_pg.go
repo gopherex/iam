@@ -56,6 +56,7 @@ func (a *pgAdminAPIKeys) findAdminAPIKey(ctx context.Context, projectID, keyID s
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return row, key, nil
 }
 
@@ -70,14 +71,17 @@ func (a *pgAdminAPIKeys) List(ctx context.Context, projectID string) ([]domain.A
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.APIKey, 0, len(rows))
 	for _, row := range rows {
 		var key domain.APIKey
 		if err := unmarshal(row.Data, &key); err != nil {
 			return nil, err
 		}
+
 		out = append(out, key)
 	}
+
 	return out, nil
 }
 
@@ -92,6 +96,7 @@ func (a *pgAdminAPIKeys) Create(ctx context.Context, cmd domain.AdminAPIKeyCmd) 
 		if err != nil {
 			return nil, err
 		}
+
 		now := nowUTC()
 		key := domain.APIKey{
 			ID:        newUUID(),
@@ -101,10 +106,12 @@ func (a *pgAdminAPIKeys) Create(ctx context.Context, cmd domain.AdminAPIKeyCmd) 
 			Prefix:    prefix,
 			Disabled:  false,
 		}
+
 		raw, err := marshal(keyEnvelope{APIKey: key})
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		setter := &models.IamAPIKeySetter{
 			ID:        &key.ID,
@@ -115,16 +122,20 @@ func (a *pgAdminAPIKeys) Create(ctx context.Context, cmd domain.AdminAPIKeyCmd) 
 			CreatedAt: &now,
 			Data:      &rm,
 		}
+
 		if !cmd.ExpiresAt.IsZero() {
 			v := null.From(cmd.ExpiresAt.UTC())
 			setter.ExpiresAt = &v
 		}
+
 		if _, err := models.IamAPIKeys.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		result := &domain.AdminAPIKeySecret{Key: &key, Secret: plaintext}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "api_key.created",
@@ -135,6 +146,7 @@ func (a *pgAdminAPIKeys) Create(ctx context.Context, cmd domain.AdminAPIKeyCmd) 
 		}); err != nil {
 			return nil, err
 		}
+
 		return result, nil
 	})
 }
@@ -148,17 +160,22 @@ func (a *pgAdminAPIKeys) Update(ctx context.Context, cmd domain.AdminAPIKeyUpdat
 		if err != nil {
 			return nil, err
 		}
+
 		if cmd.Name != "" {
 			key.Name = cmd.Name
 		}
+
 		if cmd.Scopes != nil {
 			key.Scopes = cmd.Scopes
 		}
+
 		key.Disabled = cmd.Disabled
+
 		raw, err := marshal(keyEnvelope{APIKey: *key})
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamAPIKeySetter{
 			Disabled: &key.Disabled,
@@ -166,6 +183,7 @@ func (a *pgAdminAPIKeys) Update(ctx context.Context, cmd domain.AdminAPIKeyUpdat
 		}); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "api_key.updated",
 			ProjectID:   key.ProjectID,
@@ -175,6 +193,7 @@ func (a *pgAdminAPIKeys) Update(ctx context.Context, cmd domain.AdminAPIKeyUpdat
 		}); err != nil {
 			return nil, err
 		}
+
 		return key, nil
 	})
 }
@@ -188,9 +207,11 @@ func (a *pgAdminAPIKeys) Delete(ctx context.Context, projectID, keyID string) er
 		if err != nil {
 			return err
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "api_key.deleted",
 			ProjectID:   projectID,
@@ -200,6 +221,7 @@ func (a *pgAdminAPIKeys) Delete(ctx context.Context, projectID, keyID string) er
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -215,15 +237,19 @@ func (a *pgAdminAPIKeys) Rotate(ctx context.Context, projectID, keyID string) (*
 		if err != nil {
 			return nil, err
 		}
+
 		plaintext, prefix, hash, err := mintAPIKeySecret()
 		if err != nil {
 			return nil, err
 		}
+
 		key.Prefix = prefix
+
 		raw, err := marshal(keyEnvelope{APIKey: *key})
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamAPIKeySetter{
 			Prefix: &prefix,
@@ -232,6 +258,7 @@ func (a *pgAdminAPIKeys) Rotate(ctx context.Context, projectID, keyID string) (*
 		}); err != nil {
 			return nil, err
 		}
+
 		result := &domain.AdminAPIKeySecret{Key: key, Secret: plaintext}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "api_key.rotated",
@@ -242,6 +269,7 @@ func (a *pgAdminAPIKeys) Rotate(ctx context.Context, projectID, keyID string) (*
 		}); err != nil {
 			return nil, err
 		}
+
 		return result, nil
 	})
 }
@@ -262,13 +290,16 @@ func loadAPIKey(db *DB, ctx context.Context, projectID, keyID string) (*models.I
 	if err != nil {
 		return nil, nil, translatePgErr("api_key", err)
 	}
+
 	if row.ProjectID != projectID {
 		return nil, nil, domain.ErrNotFound
 	}
+
 	var key domain.APIKey
 	if err := unmarshal(row.Data, &key); err != nil {
 		return nil, nil, err
 	}
+
 	return row, &key, nil
 }
 

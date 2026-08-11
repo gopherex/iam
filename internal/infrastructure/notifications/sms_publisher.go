@@ -27,7 +27,7 @@ const smsHTTPTimeout = 10 * time.Second
 
 // smsJob is the SMS analog of emailJob: a template key + the resolved phone
 // recipient. The body is rendered from inline defaults (defaultSMSText) since
-// SMS copy is short and few — no DB-backed catalogue for v1.
+// SMS copy is short and few — no DB-backed catalog for v1.
 type smsJob struct {
 	TemplateID string
 	To         string
@@ -40,6 +40,7 @@ type smsJob struct {
 // the email path stays untouched.
 func smsJobFromEvent(ev eventEnvelope) (smsJob, bool) {
 	data := payloadData(ev.Payload)
+
 	job := smsJob{Locale: stringValue(ev.Payload, "locale"), Data: data}
 	switch ev.Type {
 	case "config.test_sms_requested":
@@ -47,34 +48,41 @@ func smsJobFromEvent(ev eventEnvelope) (smsJob, bool) {
 		if job.TemplateID == "" {
 			job.TemplateID = "otp"
 		}
+
 		job.To = stringValue(ev.Payload, "to")
 	case "auth.otp.started":
 		if stringValue(ev.Payload, "channel") != "sms" {
 			return smsJob{}, false
 		}
+
 		job.TemplateID = "otp"
 		job.To = phoneRecipient(ev.Payload)
 	case "mfa.challenge.created":
 		if stringValue(ev.Payload, "channel") != "sms" {
 			return smsJob{}, false
 		}
+
 		job.TemplateID = "mfa_sms"
 		job.To = phoneRecipient(ev.Payload)
 	case "phone.verification.requested":
 		if stringValue(ev.Payload, "channel") != "sms" {
 			return smsJob{}, false
 		}
+
 		job.TemplateID = "phone_verification"
 		if stringValue(ev.Payload, "purpose") == "change" {
 			job.TemplateID = "phone_change"
 		}
+
 		job.To = phoneRecipient(ev.Payload)
 	default:
 		return smsJob{}, false
 	}
+
 	job.Data["to"] = job.To
 	job.Data["phone"] = job.To
 	job.Data["template_id"] = job.TemplateID
+
 	return job, true
 }
 
@@ -87,6 +95,7 @@ func phoneRecipient(payload map[string]any) string {
 			return v
 		}
 	}
+
 	return ""
 }
 
@@ -97,8 +106,10 @@ func (p *Publisher) publishSMS(ctx context.Context, ev eventEnvelope, job smsJob
 	if job.To == "" {
 		p.log.Info("sms skipped: event has no recipient",
 			xlog.String("event", ev.Type), xlog.String("project_id", ev.ProjectID))
+
 		return nil
 	}
+
 	provider, err := p.smsProvider(ctx, ev.ProjectID)
 	if err != nil {
 		if errors.Is(err, errNoSMSProvider) {
@@ -106,20 +117,27 @@ func (p *Publisher) publishSMS(ctx context.Context, ev eventEnvelope, job smsJob
 			// no-op behavior — ack the message, do not retry forever.
 			p.log.Info("sms skipped: no enabled sms provider",
 				xlog.String("event", ev.Type), xlog.String("project_id", ev.ProjectID))
+
 			return nil
 		}
+
 		return err
 	}
+
 	job.Locale = p.resolveLocale(ctx, ev, job.Locale)
+
 	text, err := renderText(defaultSMSText(job.TemplateID, job.Locale), job.Data)
 	if err != nil {
 		return err
 	}
+
 	if strings.TrimSpace(text) == "" {
 		p.log.Info("sms skipped: empty body",
 			xlog.String("event", ev.Type), xlog.String("template_id", job.TemplateID))
+
 		return nil
 	}
+
 	if err := provider.send(ctx, job.To, text); err != nil {
 		return err
 	}
@@ -130,6 +148,7 @@ func (p *Publisher) publishSMS(ctx context.Context, ev eventEnvelope, job smsJob
 		xlog.String("template_id", job.TemplateID),
 		xlog.String("provider", provider.Type),
 	)
+
 	return nil
 }
 
@@ -164,6 +183,7 @@ func (p *Publisher) smsProvider(ctx context.Context, projectID string) (*smsConf
 	if err != nil {
 		return nil, err
 	}
+
 	for _, row := range rows {
 		var d providerData
 		if len(row.Data) > 0 {
@@ -171,20 +191,25 @@ func (p *Publisher) smsProvider(ctx context.Context, projectID string) (*smsConf
 				return nil, err
 			}
 		}
+
 		typ := row.Provider
 		if d.Type != "" {
 			typ = d.Type
 		}
+
 		typ = strings.ToLower(strings.TrimSpace(typ))
 		if !domain.SMSProviderTypes.Has(typ) {
 			continue
 		}
+
 		cfg, err := decodeSMSConfig(p.db.Cipher, typ, d.Config)
 		if err != nil {
 			return nil, err
 		}
+
 		return cfg, nil
 	}
+
 	return nil, errNoSMSProvider
 }
 
@@ -211,19 +236,22 @@ func decodeSMSConfig(cipher postgres.Cipher, typ string, raw map[string]json.Raw
 		if v == "" {
 			continue
 		}
+
 		dec, err := cipher.Decrypt(v)
 		if err != nil {
 			return nil, err
 		}
+
 		switch key {
 		case "password":
 			if cfg.Password == "" {
 				cfg.Password = dec
 			}
-		default: // every other recognised secret: bearer + basic-pass fallback
+		default: // every other recognized secret: bearer + basic-pass fallback
 			if cfg.AuthToken == "" {
 				cfg.AuthToken = dec
 			}
+
 			if cfg.Password == "" {
 				cfg.Password = dec
 			}
@@ -236,6 +264,7 @@ func decodeSMSConfig(cipher postgres.Cipher, typ string, raw map[string]json.Raw
 		if sid == "" {
 			sid = cfg.Username
 		}
+
 		cfg.Username = sid
 		if cfg.URL == "" {
 			cfg.URL = "https://api.twilio.com/2010-04-01/Accounts/" + url.PathEscape(sid) + "/Messages.json"
@@ -245,6 +274,7 @@ func decodeSMSConfig(cipher postgres.Cipher, typ string, raw map[string]json.Raw
 		if u, err := url.Parse(cfg.URL); err != nil || u.Scheme != "https" || u.Host == "" {
 			return nil, errors.New("notifications: twilio url must be a valid https URL")
 		}
+
 		if sid == "" || cfg.Password == "" || cfg.From == "" {
 			return nil, errors.New("notifications: twilio requires account_sid, auth_token and from")
 		}
@@ -266,36 +296,45 @@ func decodeSMSConfig(cipher postgres.Cipher, typ string, raw map[string]json.Raw
 			if err != nil {
 				return nil, err
 			}
+
 			cfg.AccessKeyID = dec
 		}
+
 		if v := rawString(raw, "secret_access_key"); v != "" {
 			dec, err := cipher.Decrypt(v)
 			if err != nil {
 				return nil, err
 			}
+
 			cfg.SecretAccessKey = dec
 		} else if cfg.SecretAccessKey == "" {
 			// Fall back to the generic secret slot decrypted above (secret_key etc).
 			cfg.SecretAccessKey = cfg.Password
 		}
+
 		if cfg.Endpoint == "" {
 			if cfg.Region == "" {
 				return nil, errors.New("notifications: aws_sns requires region (or an explicit endpoint)")
 			}
+
 			cfg.Endpoint = "https://sns." + cfg.Region + ".amazonaws.com"
 		}
+
 		if u, err := url.Parse(cfg.Endpoint); err != nil || u.Scheme != "https" || u.Host == "" {
 			return nil, errors.New("notifications: aws_sns endpoint must be a valid https URL")
 		}
+
 		if cfg.AccessKeyID == "" || cfg.SecretAccessKey == "" {
 			return nil, errors.New("notifications: aws_sns requires access_key_id and secret_access_key")
 		}
+
 		if cfg.Region == "" {
 			cfg.Region = "ru-central1"
 		}
 	default:
 		return nil, fmt.Errorf("notifications: unsupported sms provider type %q", typ)
 	}
+
 	return cfg, nil
 }
 
@@ -303,6 +342,7 @@ func (c *smsConfig) client() *http.Client {
 	if c.HTTPClient != nil {
 		return c.HTTPClient
 	}
+
 	return &http.Client{Timeout: smsHTTPTimeout}
 }
 
@@ -327,16 +367,20 @@ func (c *smsConfig) sendGeneric(ctx context.Context, to, text string) error {
 	if err != nil {
 		return err
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
+
 	req.Header.Set("Content-Type", "application/json")
+
 	if c.AuthToken != "" {
 		req.Header.Set("Authorization", "Bearer "+c.AuthToken)
 	} else if c.Username != "" || c.Password != "" {
 		req.SetBasicAuth(c.Username, c.Password)
 	}
+
 	return c.do(req)
 }
 
@@ -347,12 +391,15 @@ func (c *smsConfig) sendTwilio(ctx context.Context, to, text string) error {
 	form.Set("From", c.From)
 	form.Set("To", to)
 	form.Set("Body", text)
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL, strings.NewReader(form.Encode()))
 	if err != nil {
 		return err
 	}
+
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.SetBasicAuth(c.Username, c.Password)
+
 	return c.do(req)
 }
 
@@ -362,10 +409,12 @@ func (c *smsConfig) do(req *http.Request) error {
 		return err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
 		return fmt.Errorf("notifications: sms gateway returned %d: %s", resp.StatusCode, strings.TrimSpace(string(snippet)))
 	}
+
 	return nil
 }
 
@@ -374,26 +423,31 @@ func (c *smsConfig) do(req *http.Request) error {
 // copy is provided for "ru"; everything else falls back to English.
 func defaultSMSText(key, locale string) string {
 	ru := strings.HasPrefix(strings.ToLower(locale), "ru")
+
 	switch key {
 	case "otp", "mfa_sms":
 		if ru {
 			return "{{.code}} — ваш код подтверждения."
 		}
+
 		return "{{.code}} is your verification code."
 	case "phone_verification":
 		if ru {
 			return "{{.code}} — код подтверждения номера телефона."
 		}
+
 		return "{{.code}} is your phone verification code."
 	case "phone_change":
 		if ru {
 			return "{{.code}} — код для смены номера телефона."
 		}
+
 		return "{{.code}} is your phone change code."
 	default:
 		if ru {
 			return "{{.code}} — ваш код."
 		}
+
 		return "{{.code}} is your code."
 	}
 }

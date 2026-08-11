@@ -67,18 +67,22 @@ func (a *pgAuthenticator) verifyJWT(ctx context.Context, token string) (map[stri
 	if claims == nil {
 		return nil, domain.ErrUnauthorized
 	}
+
 	pid, _ := claims["pid"].(string)
 	if pid == "" {
 		return nil, domain.ErrUnauthorized
 	}
+
 	env := authDefaultEnv
 	if e, ok := claims["env"].(string); ok && e != "" {
 		env = e
 	}
+
 	verified, err := a.db.Signer().Verify(ctx, pid, env, token)
 	if err != nil {
 		return nil, domain.ErrUnauthorized
 	}
+
 	return verified, nil
 }
 
@@ -89,9 +93,11 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 	if err != nil {
 		return nil, err
 	}
+
 	if typ, _ := claims["typ"].(string); typ != "access" {
 		return nil, domain.ErrUnauthorized
 	}
+
 	sid := claimStr(claims, "sid")
 	if sid != "" {
 		// A revoked/expired session must fail even while the JWT is unexpired.
@@ -99,6 +105,7 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 		if err != nil {
 			return nil, domain.ErrUnauthorized
 		}
+
 		if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
 			return nil, domain.ErrUnauthorized
 		}
@@ -111,6 +118,7 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 			if sp.IdleTimeout > 0 && now.Sub(row.LastActiveAt) > sp.IdleTimeout {
 				return nil, domain.ErrUnauthorized
 			}
+
 			if sp.AbsoluteTimeout > 0 && now.Sub(row.CreatedAt) > sp.AbsoluteTimeout {
 				return nil, domain.ErrUnauthorized
 			}
@@ -123,6 +131,7 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 			_ = row.Update(ctx, a.db.Bobx(), &models.IamSessionSetter{LastActiveAt: &la})
 		}
 	}
+
 	return &domain.Principal{
 		Kind:        domain.PrincipalUser,
 		AccountID:   claimStr(claims, "sub"),
@@ -144,23 +153,28 @@ func (a *pgAuthenticator) Admin(ctx context.Context, token string) (*domain.Prin
 	if err != nil {
 		return nil, err
 	}
+
 	typ, _ := claims["typ"].(string)
 	if typ != "admin" {
 		return nil, domain.ErrUnauthorized
 	}
+
 	row, err := models.IamAdminTokens.Query(
 		sm.Where(models.IamAdminTokens.Columns.Hash.EQ(psql.Arg(sha256Hex(token)))),
 	).One(ctx, a.db.Bobx())
 	if err != nil {
 		return nil, domain.ErrUnauthorized
 	}
+
 	var tok domain.OperatorAdminToken
 	if err := unmarshal(row.Data, &tok); err == nil && tok.Revoked {
 		return nil, domain.ErrUnauthorized
 	}
+
 	if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
 		return nil, domain.ErrUnauthorized
 	}
+
 	return &domain.Principal{
 		Kind:        domain.PrincipalAdmin,
 		AccountID:   claimStr(claims, "sub"),
@@ -177,9 +191,11 @@ func (a *pgAuthenticator) Master(_ context.Context, token string) (*domain.Princ
 	if a.masterKey == "" || token == "" {
 		return nil, domain.ErrUnauthorized
 	}
+
 	if subtle.ConstantTimeCompare([]byte(token), []byte(a.masterKey)) != 1 {
 		return nil, domain.ErrUnauthorized
 	}
+
 	return &domain.Principal{Kind: domain.PrincipalOperator, Environment: authDefaultEnv}, nil
 }
 
@@ -204,14 +220,19 @@ func (a *pgAuthenticator) Service(ctx context.Context, token string) (*domain.Pr
 	if err != nil {
 		return nil, domain.ErrUnauthorized
 	}
+
 	if row.Disabled {
 		return nil, domain.ErrUnauthorized
 	}
+
 	if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
 		return nil, domain.ErrUnauthorized
 	}
+
 	var key domain.APIKey
+
 	_ = unmarshal(row.Data, &key)
+
 	return &domain.Principal{
 		Kind:        domain.PrincipalService,
 		ProjectID:   row.ProjectID,
@@ -229,12 +250,14 @@ func (a *pgAuthenticator) SCIM(ctx context.Context, token string) (*domain.Princ
 	if err != nil {
 		return nil, domain.ErrUnauthorized
 	}
+
 	var tok domain.ScimToken
 	if err := unmarshal(row.Data, &tok); err == nil {
 		if !tok.ExpiresAt.IsZero() && nowUTC().After(tok.ExpiresAt) {
 			return nil, domain.ErrUnauthorized
 		}
 	}
+
 	return &domain.Principal{
 		Kind:         domain.PrincipalSCIM,
 		ProjectID:    row.ProjectID,
@@ -250,23 +273,28 @@ func (a *pgAuthenticator) Client(ctx context.Context, clientID, secret string) (
 	if err != nil {
 		return nil, domain.ErrUnauthorized
 	}
+
 	rows, err := models.IamAppSecrets.Query(
 		sm.Where(models.IamAppSecrets.Columns.AppID.EQ(psql.Arg(clientID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
 		return nil, domain.ErrUnauthorized
 	}
+
 	want := adminSHA256(secret)
 	matched := false
+
 	for _, r := range rows {
 		if subtle.ConstantTimeCompare([]byte(r.Hash), []byte(want)) == 1 {
 			matched = true
 			break
 		}
 	}
+
 	if !matched {
 		return nil, domain.ErrUnauthorized
 	}
+
 	return &domain.Principal{
 		Kind:        domain.PrincipalClient,
 		ProjectID:   app.ProjectID,
@@ -281,9 +309,11 @@ func (a *pgAuthenticator) OAuth2(ctx context.Context, token string) (*domain.Pri
 	if err != nil {
 		return nil, err
 	}
+
 	if typ, _ := claims["typ"].(string); typ != "access" {
 		return nil, domain.ErrUnauthorized
 	}
+
 	return &domain.Principal{
 		Kind:        domain.PrincipalUser,
 		AccountID:   claimStr(claims, "sub"),
@@ -307,6 +337,7 @@ func claimEnv(claims map[string]any) string {
 	if e, _ := claims["env"].(string); e != "" {
 		return e
 	}
+
 	return authDefaultEnv
 }
 
@@ -319,6 +350,7 @@ func claimInt(claims map[string]any, key string) int {
 	case int64:
 		return int(v)
 	}
+
 	return 0
 }
 
@@ -329,11 +361,13 @@ func claimScopes(claims map[string]any) []string {
 	if !ok {
 		v = claims["scp"]
 	}
+
 	switch s := v.(type) {
 	case string:
 		if s == "" {
 			return nil
 		}
+
 		return strings.Fields(s)
 	case []any:
 		out := make([]string, 0, len(s))
@@ -342,10 +376,12 @@ func claimScopes(claims map[string]any) []string {
 				out = append(out, str)
 			}
 		}
+
 		return out
 	case []string:
 		return s
 	}
+
 	return nil
 }
 

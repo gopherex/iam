@@ -66,8 +66,9 @@ func init() {
 func (a *pgCoreAuthFlows) signinPasswordless() (*pgPasswordlessAccounts, error) {
 	core, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, fmt.Errorf("signin flow: accounts adapter is not *pgCoreAuth")
+		return nil, errors.New("signin flow: accounts adapter is not *pgCoreAuth")
 	}
+
 	return NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core), nil
 }
 
@@ -79,6 +80,7 @@ func createSignin(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd d
 	if method == "" {
 		method = domain.FlowMethodPassword
 	}
+
 	f.Method = method
 	switch method {
 	case domain.FlowMethodPassword:
@@ -103,11 +105,14 @@ func (a *pgCoreAuthFlows) createSigninPasskey(ctx context.Context, f *domain.Flo
 	if cmd.Email == "" {
 		return nil, domain.ErrBadRequest.WithMessage("email is required for passkey signin")
 	}
+
 	wa := NewPgWebAuthnAccounts(a.db, a.emitter)
+
 	ch, err := wa.BeginLogin(ctx, f.ProjectID, cmd.Email)
 	if err != nil {
 		return nil, err
 	}
+
 	now := nowUTC()
 	f.Step = domain.FlowStepCollectCredentials
 	f.ActiveChallenge = &domain.FlowActiveChallenge{
@@ -118,10 +123,12 @@ func (a *pgCoreAuthFlows) createSigninPasskey(ctx context.Context, f *domain.Flo
 		ResendAt:     now.Add(flowResendCooloff),
 		AttemptsLeft: flowMaxAttempts,
 	}
+
 	token, hash, err := flowMintToken()
 	if err != nil {
 		return nil, fmt.Errorf("flow signin create (passkey): mint token: %w", err)
 	}
+
 	if err := a.flowInsert(ctx, f, hash, flowData{
 		Contact:          f.Contact,
 		Collected:        f.Collected,
@@ -131,6 +138,7 @@ func (a *pgCoreAuthFlows) createSigninPasskey(ctx context.Context, f *domain.Flo
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
 }
 
@@ -143,11 +151,14 @@ func (a *pgCoreAuthFlows) createSigninOAuth(ctx context.Context, f *domain.Flow,
 	if cmd.Provider == "" {
 		return nil, domain.ErrBadRequest.WithMessage("provider is required for oauth signin")
 	}
+
 	os := NewPgOAuthSocial(a.db, a.emitter)
+
 	state, err := coreAuthRandomToken()
 	if err != nil {
 		return nil, err
 	}
+
 	url, err := os.StartLogin(ctx, domain.OAuthSocialStartCmd{
 		ProjectID:  f.ProjectID,
 		Provider:   cmd.Provider,
@@ -157,6 +168,7 @@ func (a *pgCoreAuthFlows) createSigninOAuth(ctx context.Context, f *domain.Flow,
 	if err != nil {
 		return nil, err
 	}
+
 	now := nowUTC()
 	f.Step = domain.FlowStepCollectCredentials
 	f.ActiveChallenge = &domain.FlowActiveChallenge{
@@ -168,10 +180,12 @@ func (a *pgCoreAuthFlows) createSigninOAuth(ctx context.Context, f *domain.Flow,
 		ResendAt:     now.Add(flowResendCooloff),
 		AttemptsLeft: flowMaxAttempts,
 	}
+
 	token, hash, err := flowMintToken()
 	if err != nil {
 		return nil, fmt.Errorf("flow signin create (oauth): mint token: %w", err)
 	}
+
 	if err := a.flowInsert(ctx, f, hash, flowData{
 		Contact:          f.Contact,
 		Collected:        f.Collected,
@@ -181,6 +195,7 @@ func (a *pgCoreAuthFlows) createSigninOAuth(ctx context.Context, f *domain.Flow,
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
 }
 
@@ -207,6 +222,7 @@ func (a *pgCoreAuthFlows) createSigninPassword(ctx context.Context, f *domain.Fl
 		if err != nil {
 			return nil, fmt.Errorf("flow signin create (no-mfa): mint token: %w", err)
 		}
+
 		if err := a.flowInsert(ctx, f, hash, flowData{
 			Contact:          f.Contact,
 			Collected:        f.Collected,
@@ -215,6 +231,7 @@ func (a *pgCoreAuthFlows) createSigninPassword(ctx context.Context, f *domain.Fl
 		}); err != nil {
 			return nil, err
 		}
+
 		return &domain.FlowState{FlowToken: token, Flow: f, Session: result.Session}, nil
 	}
 
@@ -227,6 +244,7 @@ func (a *pgCoreAuthFlows) createSigninPassword(ctx context.Context, f *domain.Fl
 	}
 
 	mfa := NewPgMFAAccounts(a.db, a.emitter)
+
 	ch, err := mfa.Challenge(ctx, result.Account.ID, primaryFactorID)
 	if err != nil {
 		return nil, fmt.Errorf("flow signin create: issue mfa challenge: %w", err)
@@ -249,6 +267,7 @@ func (a *pgCoreAuthFlows) createSigninPassword(ctx context.Context, f *domain.Fl
 	if err != nil {
 		return nil, fmt.Errorf("flow signin create (mfa): mint token: %w", err)
 	}
+
 	if err := a.flowInsert(ctx, f, hash, flowData{
 		Contact:          f.Contact,
 		Collected:        f.Collected,
@@ -258,6 +277,7 @@ func (a *pgCoreAuthFlows) createSigninPassword(ctx context.Context, f *domain.Fl
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
 }
 
@@ -268,14 +288,17 @@ func (a *pgCoreAuthFlows) createSigninPhoneOTP(ctx context.Context, f *domain.Fl
 	if cmd.Phone == "" {
 		return nil, domain.ErrBadRequest.WithMessage("phone is required for phone_otp signin")
 	}
+
 	pl, err := a.signinPasswordless()
 	if err != nil {
 		return nil, err
 	}
+
 	ch, err := pl.StartOTP(ctx, f.ProjectID, cmd.Phone, "sms", "signin", cmd.Locale)
 	if err != nil {
 		return nil, err // ErrValidation (no provider) / ErrBadRequest (bad E.164)
 	}
+
 	return a.signinPersistChallenge(ctx, f, domain.FlowStepVerifyPhone, "sms", ch)
 }
 
@@ -286,14 +309,17 @@ func (a *pgCoreAuthFlows) createSigninMagicLink(ctx context.Context, f *domain.F
 	if cmd.Email == "" {
 		return nil, domain.ErrBadRequest.WithMessage("email is required for magic_link signin")
 	}
+
 	pl, err := a.signinPasswordless()
 	if err != nil {
 		return nil, err
 	}
+
 	ch, err := pl.StartMagicLink(ctx, f.ProjectID, cmd.Email, cmd.RedirectTo, cmd.Locale)
 	if err != nil {
 		return nil, err
 	}
+
 	return a.signinPersistChallenge(ctx, f, domain.FlowStepVerifyEmail, "email", ch)
 }
 
@@ -309,10 +335,12 @@ func (a *pgCoreAuthFlows) signinPersistChallenge(ctx context.Context, f *domain.
 		ResendAt:     now.Add(flowResendCooloff),
 		AttemptsLeft: flowMaxAttempts,
 	}
+
 	token, hash, err := flowMintToken()
 	if err != nil {
 		return nil, fmt.Errorf("flow signin create (%s): mint token: %w", f.Method, err)
 	}
+
 	if err := a.flowInsert(ctx, f, hash, flowData{
 		Contact:          f.Contact,
 		Collected:        f.Collected,
@@ -322,6 +350,7 @@ func (a *pgCoreAuthFlows) signinPersistChallenge(ctx context.Context, f *domain.
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
 }
 
@@ -334,13 +363,16 @@ func (a *pgCoreAuthFlows) signinAvailableMethods(_ context.Context, acc *domain.
 	if acc == nil {
 		return nil
 	}
+
 	var out []string
 	if acc.PrimaryEmail != "" {
 		out = append(out, domain.FlowMethodMagicLink)
 	}
+
 	if acc.PrimaryPhone != "" {
 		out = append(out, domain.FlowMethodPhoneOTP)
 	}
+
 	return out
 }
 
@@ -353,21 +385,25 @@ func advanceSignin(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 	if cmd.Action == "switch_method" {
 		return a.signinSwitchMethod(ctx, row, f, cmd)
 	}
+
 	switch f.Step {
 	case domain.FlowStepMFARequired:
 		if cmd.Action != "mfa" {
 			return nil, domain.ErrBadRequest.WithMessage(`expected action "mfa" at step mfa_required`)
 		}
+
 		return a.signinVerifyMFA(ctx, row, f, cmd)
 	case domain.FlowStepVerifyPhone:
 		if cmd.Action != "verify_otp" {
 			return nil, domain.ErrBadRequest.WithMessage(`expected action "verify_otp" at step verify_phone`)
 		}
+
 		return a.signinVerifyOTP(ctx, row, f, cmd)
 	case domain.FlowStepVerifyEmail:
 		if cmd.Action != "verify_email" {
 			return nil, domain.ErrBadRequest.WithMessage(`expected action "verify_email" at step verify_email`)
 		}
+
 		return a.signinVerifyMagicLink(ctx, row, f, cmd)
 	case domain.FlowStepCollectCredentials:
 		switch cmd.Action {
@@ -391,19 +427,24 @@ func (a *pgCoreAuthFlows) signinVerifyPasskey(ctx context.Context, row *models.I
 	if ac == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active passkey challenge")
 	}
+
 	raw := cmd.Payload["credential"]
 	if raw == "" {
 		return nil, domain.ErrBadRequest.WithMessage("credential is required")
 	}
+
 	var cred map[string]any
 	if err := json.Unmarshal([]byte(raw), &cred); err != nil {
 		return nil, domain.ErrBadRequest.WithMessage("credential must be a JSON object")
 	}
+
 	wa := NewPgWebAuthnAccounts(a.db, a.emitter)
+
 	_, sess, err := wa.FinishLogin(ctx, ac.ChallengeID, cred)
 	if err != nil {
 		return a.signinWrongCode(ctx, row, f, cmd, "Passkey verification failed.")
 	}
+
 	return a.signinCompleteWithSession(ctx, row, f, sess)
 }
 
@@ -414,15 +455,19 @@ func (a *pgCoreAuthFlows) signinOAuthCallback(ctx context.Context, row *models.I
 	if ac == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active oauth challenge")
 	}
+
 	code := cmd.Payload["code"]
 	if code == "" {
 		return nil, domain.ErrBadRequest.WithMessage("code is required")
 	}
+
 	os := NewPgOAuthSocial(a.db, a.emitter)
+
 	_, sess, err := os.CompleteLogin(ctx, f.ProjectID, ac.Provider, code)
 	if err != nil {
 		return a.signinWrongCode(ctx, row, f, cmd, "OAuth sign-in failed.")
 	}
+
 	return a.signinCompleteWithSession(ctx, row, f, sess)
 }
 
@@ -435,15 +480,18 @@ func (a *pgCoreAuthFlows) signinVerifyMFA(ctx context.Context, row *models.IamFl
 	if ac == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active MFA challenge")
 	}
+
 	code := cmd.Payload["code"]
 	if code == "" {
 		return nil, domain.ErrBadRequest.WithMessage("code is required")
 	}
+
 	if ac.AttemptsLeft <= 0 {
 		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
 	}
 
 	mfa := NewPgMFAAccounts(a.db, a.emitter)
+
 	_, sess, err := mfa.Verify(ctx, ac.ChallengeID, code)
 	if err != nil {
 		return a.signinWrongCode(ctx, row, f, cmd, "The MFA code is incorrect.")
@@ -459,25 +507,31 @@ func (a *pgCoreAuthFlows) signinVerifyOTP(ctx context.Context, row *models.IamFl
 	if ac == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active otp challenge")
 	}
+
 	code := cmd.Payload["code"]
 	if code == "" {
 		return nil, domain.ErrBadRequest.WithMessage("code is required")
 	}
+
 	if ac.AttemptsLeft <= 0 {
 		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
 	}
+
 	pl, err := a.signinPasswordless()
 	if err != nil {
 		return nil, err
 	}
+
 	_, sess, err := pl.VerifyOTP(ctx, ac.ChallengeID, code)
 	if err != nil {
 		// ErrRateLimited (challenge locked) is surfaced as-is so the client backs off.
 		if errors.Is(err, domain.ErrRateLimited) {
 			return nil, err
 		}
+
 		return a.signinWrongCode(ctx, row, f, cmd, "The verification code is incorrect.")
 	}
+
 	return a.signinCompleteWithSession(ctx, row, f, sess)
 }
 
@@ -488,14 +542,17 @@ func (a *pgCoreAuthFlows) signinVerifyMagicLink(ctx context.Context, row *models
 	if token == "" {
 		return nil, domain.ErrBadRequest.WithMessage("token is required")
 	}
+
 	pl, err := a.signinPasswordless()
 	if err != nil {
 		return nil, err
 	}
+
 	_, sess, err := pl.VerifyMagicLink(ctx, token)
 	if err != nil {
 		return a.signinWrongCode(ctx, row, f, cmd, "The magic link is invalid or expired.")
 	}
+
 	return a.signinCompleteWithSession(ctx, row, f, sess)
 }
 
@@ -508,40 +565,50 @@ func (a *pgCoreAuthFlows) signinSwitchMethod(ctx context.Context, row *models.Ia
 	if method == "" {
 		return nil, domain.ErrBadRequest.WithMessage("method is required for switch_method")
 	}
+
 	if method == f.Method {
 		return nil, domain.ErrBadRequest.WithMessage("already using that method")
 	}
+
 	switch method {
 	case domain.FlowMethodPhoneOTP:
 		phone := cmd.Payload["phone"]
 		if phone == "" {
 			phone = f.Contact.Phone
 		}
+
 		if phone == "" {
 			return nil, domain.ErrBadRequest.WithMessage("phone is required to switch to phone_otp")
 		}
+
 		pl, err := a.signinPasswordless()
 		if err != nil {
 			return nil, err
 		}
+
 		ch, err := pl.StartOTP(ctx, f.ProjectID, phone, "sms", "signin", f.Locale)
 		if err != nil {
 			return nil, err
 		}
+
 		f.Contact.Phone = phone
+
 		return a.signinSwitchPersist(ctx, row, f, cmd.FlowToken, method, domain.FlowStepVerifyPhone, "sms", ch)
 	case domain.FlowMethodMagicLink:
 		if f.Contact.Email == "" {
 			return nil, domain.ErrBadRequest.WithMessage("email is required to switch to magic_link")
 		}
+
 		pl, err := a.signinPasswordless()
 		if err != nil {
 			return nil, err
 		}
+
 		ch, err := pl.StartMagicLink(ctx, f.ProjectID, f.Contact.Email, cmd.Payload["redirect_to"], f.Locale)
 		if err != nil {
 			return nil, err
 		}
+
 		return a.signinSwitchPersist(ctx, row, f, cmd.FlowToken, method, domain.FlowStepVerifyEmail, "email", ch)
 	default:
 		return nil, domain.ErrBadRequest.WithMessage(fmt.Sprintf("cannot switch to method %q", method))
@@ -563,11 +630,13 @@ func (a *pgCoreAuthFlows) signinSwitchPersist(ctx context.Context, row *models.I
 		ResendAt:     now.Add(flowResendCooloff),
 		AttemptsLeft: flowMaxAttempts,
 	}
+
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
 		return a.flowSave(ctx, row, f)
 	}); err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: flowToken, Flow: f}, nil
 }
 
@@ -577,10 +646,12 @@ func (a *pgCoreAuthFlows) signinWrongCode(ctx context.Context, row *models.IamFl
 	if f.ActiveChallenge != nil {
 		f.ActiveChallenge.AttemptsLeft--
 	}
+
 	f.Error = &domain.FlowError{Code: "invalid_code", Message: msg}
 	_ = a.db.withTx(ctx, func(ctx context.Context) error {
 		return a.flowSave(ctx, row, f)
 	})
+
 	return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
 }
 
@@ -598,5 +669,6 @@ func (a *pgCoreAuthFlows) signinCompleteWithSession(ctx context.Context, row *mo
 	if err != nil {
 		return nil, err
 	}
+
 	return &domain.FlowState{FlowToken: newToken, Flow: f, Session: sess}, nil
 }

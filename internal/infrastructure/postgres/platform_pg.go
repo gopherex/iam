@@ -67,6 +67,7 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 		if errors.Is(translatePgErr("project", err), ErrNotFound) {
 			return nil, domain.ErrProjectNotFound
 		}
+
 		return nil, err
 	}
 
@@ -77,6 +78,7 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 		if err := unmarshal(projRow.Data, &proj); err != nil {
 			return nil, err
 		}
+
 		cfg.ProjectName = proj.Name
 		cfg.Locales = proj.SupportedLocales
 		cfg.DefaultLocale = proj.DefaultLocale
@@ -108,13 +110,16 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 				methods = append(methods, m)
 			}
 		}
+
 		cfg.Methods = methods
 		if len(ac.Locales) > 0 {
 			cfg.Locales = ac.Locales
 		}
+
 		if ac.DefaultLocale != "" {
 			cfg.DefaultLocale = ac.DefaultLocale
 		}
+
 		if ac.Registration != nil {
 			cfg.Registration = &domain.RegistrationInfo{
 				Mode:             ac.Registration.Mode,
@@ -131,6 +136,7 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 	if err != nil {
 		return nil, err
 	}
+
 	for _, p := range provRows {
 		cfg.Providers = append(cfg.Providers, platformProviderToDomain(p))
 	}
@@ -149,6 +155,7 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 		if err := unmarshal(consentRow.Data, &cc); err != nil {
 			return nil, err
 		}
+
 		cfg.ConsentDocuments = cc.Documents
 	}
 
@@ -173,8 +180,10 @@ func platformProviderToDomain(row *models.IamProvider) domain.OAuthProvider {
 			if p.Name != "" {
 				out.Name = p.Name
 			}
+
 			out.Scopes = p.Scopes
 		}
 	}
+
 	return out
 }

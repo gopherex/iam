@@ -12,7 +12,7 @@ package postgres
 //                          (factor id, delivery code hash, webauthn options).
 //
 // Persistence follows the gold pattern (reference.go): bob query builders,
-// every mutation wrapped in withTx/withTxRet, aggregate marshalled into `data`,
+// every mutation wrapped in withTx/withTxRet, aggregate marshaled into `data`,
 // envelope columns used only for lookups, and every query bounded by project_id.
 //
 // Secrets/codes/tokens are minted with crypto/rand and only ever persisted as
@@ -77,7 +77,7 @@ var _ api.MFAAccounts = (*pgMFAAccounts)(nil)
 // mfaChallengeData is the jsonb payload carried in iam_challenges.data. It holds
 // the flow material the verify step needs but that has no dedicated column.
 //
-// Session carries the opaque marshalled go-webauthn SessionData (challenge bytes,
+// Session carries the opaque marshaled go-webauthn SessionData (challenge bytes,
 // RP id, user verification) minted by BeginRegistration during a WebAuthn-factor
 // enrollment; EnrollWebAuthnVerify replays it via w.CreateCredential to verify
 // the attestation. It is the MFA-flow counterpart of domain.WebAuthnCeremonyData
@@ -105,6 +105,7 @@ func mfaRandomBytes(n int) ([]byte, error) {
 	if _, err := rand.Read(b); err != nil {
 		return nil, err
 	}
+
 	return b, nil
 }
 
@@ -117,6 +118,7 @@ func mfaGenerateTOTPKey(accountName string) (*otp.Key, error) {
 	if accountName == "" {
 		accountName = "user"
 	}
+
 	return totp.Generate(totp.GenerateOpts{
 		Issuer:      mfaTOTPIssuer,
 		AccountName: accountName,
@@ -129,6 +131,7 @@ func mfaNewOpaqueToken(nbytes int) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return hex.EncodeToString(b), nil
 }
 
@@ -145,9 +148,11 @@ func mfaFactorFromRow(row *models.IamFactor) (domain.Factor, error) {
 	if f.Type == "" {
 		f.Type = row.Type
 	}
+
 	if f.Status == "" {
 		f.Status = row.Status
 	}
+
 	return f, nil
 }
 
@@ -157,13 +162,16 @@ func (a *pgMFAAccounts) mfaLoadAccount(ctx context.Context, projectID, accountID
 	if err != nil {
 		return nil, translatePgErr("user", err)
 	}
+
 	if row.ProjectID != projectID {
 		return nil, domain.ErrUserNotFound
 	}
+
 	var acc domain.Account
 	if err := unmarshal(row.Data, &acc); err != nil {
 		return nil, err
 	}
+
 	return &acc, nil
 }
 
@@ -173,9 +181,11 @@ func (a *pgMFAAccounts) mfaFindFactor(ctx context.Context, accountID, factorID s
 	if err != nil {
 		return nil, translatePgErr("factor", err)
 	}
+
 	if row.UserID != accountID {
 		return nil, domain.ErrNotFound
 	}
+
 	return row, nil
 }
 
@@ -187,6 +197,7 @@ func (a *pgMFAAccounts) mfaCountFactors(ctx context.Context, accountID string) (
 	if err != nil {
 		return 0, err
 	}
+
 	return len(rows), nil
 }
 
@@ -208,7 +219,9 @@ func (a *pgMFAAccounts) mfaRPConfigFor(ctx context.Context, projectID string) (*
 	if err != nil {
 		return nil, translatePgErr("project", err)
 	}
+
 	rpID, displayName, origins := webauthnRPFromProject(row)
+
 	w, err := gowebauthn.New(&gowebauthn.Config{
 		RPID:          rpID,
 		RPDisplayName: displayName,
@@ -217,6 +230,7 @@ func (a *pgMFAAccounts) mfaRPConfigFor(ctx context.Context, projectID string) (*
 	if err != nil {
 		return nil, domain.ErrProviderError
 	}
+
 	return w, nil
 }
 
@@ -229,12 +243,15 @@ func (a *pgMFAAccounts) mfaLoadWebauthnUser(ctx context.Context, accountID strin
 	if err != nil {
 		return nil, translatePgErr("user", err)
 	}
+
 	var acct domain.Account
 	if err := unmarshal(userRow.Data, &acct); err != nil {
 		return nil, err
 	}
+
 	acct.ID = userRow.ID
 	acct.ProjectID = userRow.ProjectID
+
 	return &webauthnUser{account: &acct, creds: nil}, nil
 }
 
@@ -248,14 +265,17 @@ func (a *pgMFAAccounts) ListFactors(ctx context.Context, accountID string) ([]do
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Factor, 0, len(rows))
 	for _, row := range rows {
 		f, err := mfaFactorFromRow(row)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, f)
 	}
+
 	return out, nil
 }
 
@@ -269,13 +289,16 @@ func (a *pgMFAAccounts) EnrollTOTP(ctx context.Context, accountID string) (*doma
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.mfaGateEnroll(ctx, acc.ProjectID, "totp"); err != nil {
 			return nil, err
 		}
+
 		count, err := a.mfaCountFactors(ctx, accountID)
 		if err != nil {
 			return nil, err
 		}
+
 		if count >= mfaMaxFactorsPerAccount {
 			return nil, domain.ErrConflict.WithMessage("maximum number of MFA factors reached")
 		}
@@ -286,6 +309,7 @@ func (a *pgMFAAccounts) EnrollTOTP(ctx context.Context, accountID string) (*doma
 		if err != nil {
 			return nil, err
 		}
+
 		f := domain.Factor{
 			ID:         newUUID(),
 			Type:       "totp",
@@ -296,6 +320,7 @@ func (a *pgMFAAccounts) EnrollTOTP(ctx context.Context, accountID string) (*doma
 		if err := a.mfaInsertFactorFor(ctx, acc.ProjectID, accountID, &f, key.Secret()); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.factor.enrolled",
 			ProjectID:   acc.ProjectID,
@@ -305,6 +330,7 @@ func (a *pgMFAAccounts) EnrollTOTP(ctx context.Context, accountID string) (*doma
 		}); err != nil {
 			return nil, err
 		}
+
 		return &f, nil
 	})
 }
@@ -316,14 +342,17 @@ func (a *pgMFAAccounts) Challenge(ctx context.Context, accountID, factorID strin
 		if err != nil {
 			return nil, err
 		}
+
 		factorRow, err := a.mfaFindFactor(ctx, accountID, factorID)
 		if err != nil {
 			return nil, err
 		}
+
 		factor, err := mfaFactorFromRow(factorRow)
 		if err != nil {
 			return nil, err
 		}
+
 		ch := domain.Challenge{
 			ID:        newUUID(),
 			Type:      factor.Type,
@@ -334,17 +363,21 @@ func (a *pgMFAAccounts) Challenge(ctx context.Context, accountID, factorID strin
 		// Verify matches its sha256 against FlowTokenHash. TOTP/WebAuthn need no
 		// delivery — the code comes from the authenticator.
 		deliver := factor.Type == "email" || factor.Type == "sms"
+
 		var code string
 		if deliver {
 			code, err = mfaNewOpaqueToken(4) // 8 hex chars
 			if err != nil {
 				return nil, err
 			}
+
 			data.FlowTokenHash = mfaSha256Hex(code)
 		}
+
 		if err := a.mfaInsertChallenge(ctx, projectID, accountID, &ch, data); err != nil {
 			return nil, err
 		}
+
 		payload := map[string]any{
 			"channel":      factor.Type,
 			"factor_id":    factor.ID,
@@ -354,6 +387,7 @@ func (a *pgMFAAccounts) Challenge(ctx context.Context, accountID, factorID strin
 			payload["code"] = code
 			payload["to"] = factor.Hint
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.challenge.created",
 			ProjectID:   projectID,
@@ -363,6 +397,7 @@ func (a *pgMFAAccounts) Challenge(ctx context.Context, accountID, factorID strin
 		}); err != nil {
 			return nil, err
 		}
+
 		return &ch, nil
 	})
 }
@@ -375,20 +410,25 @@ func (a *pgMFAAccounts) mfaAccountFromFlow(ctx context.Context, projectID, flowT
 	if flowToken == "" {
 		return "", domain.ErrChallengeInvalid
 	}
+
 	row, err := models.FindIamChallenge(ctx, a.db.Bobx(), flowToken)
 	if err != nil {
 		return "", domain.ErrChallengeInvalid
 	}
+
 	if row.ProjectID != projectID || row.Consumed {
 		return "", domain.ErrChallengeInvalid
 	}
+
 	if nowUTC().After(row.ExpiresAt) {
 		return "", domain.ErrChallengeExpired
 	}
+
 	accountID := row.Subject.GetOrZero()
 	if accountID == "" {
 		return "", domain.ErrChallengeInvalid
 	}
+
 	return accountID, nil
 }
 
@@ -401,16 +441,19 @@ func (a *pgMFAAccounts) ChallengeWithFlow(ctx context.Context, projectID, flowTo
 	if err != nil {
 		return nil, err
 	}
+
 	if factorID == "" {
 		factors, err := a.ListFactors(ctx, accountID)
 		if err != nil {
 			return nil, err
 		}
+
 		factorID = mfaPrimaryFactorID(factors)
 		if factorID == "" {
 			return nil, domain.ErrMFAInvalid
 		}
 	}
+
 	return a.Challenge(ctx, accountID, factorID)
 }
 
@@ -421,11 +464,13 @@ func mfaPrimaryFactorID(factors []domain.Factor) string {
 			return f.ID
 		}
 	}
+
 	for _, f := range factors {
 		if f.Status == "active" {
 			return f.ID
 		}
 	}
+
 	return ""
 }
 
@@ -436,18 +481,23 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 		acc  *domain.Account
 		sess *domain.Session
 	}
+
 	out, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		row, err := models.FindIamChallenge(ctx, a.db.Bobx(), challengeID)
 		if err != nil {
 			return result{}, translatePgErr("challenge", err)
 		}
+
 		if row.Consumed {
 			return result{}, domain.ErrChallengeInvalid
 		}
+
 		if nowUTC().After(row.ExpiresAt) {
 			return result{}, domain.ErrChallengeExpired
 		}
+
 		accountID := row.Subject.GetOrZero()
+
 		var data mfaChallengeData
 		if len(row.Data) > 0 {
 			if err := unmarshal(row.Data, &data); err != nil {
@@ -470,32 +520,40 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 			if data.FactorID == "" {
 				return result{}, domain.ErrMFAInvalid
 			}
+
 			factor, err := a.mfaFindFactor(ctx, accountID, data.FactorID)
 			if err != nil {
 				return result{}, err
 			}
+
 			if factor.Status != "active" {
 				return result{}, domain.ErrMFAInvalid
 			}
+
 			secret, err := a.db.Cipher.Decrypt(factor.Secret)
 			if err != nil {
 				return result{}, domain.ErrMFAInvalid
 			}
+
 			if !totp.Validate(code, secret) {
 				return result{}, domain.ErrMFAInvalid
 			}
 		}
+
 		if err := a.mfaConsumeChallenge(ctx, row); err != nil {
 			return result{}, err
 		}
+
 		acc, err := a.mfaLoadAccount(ctx, row.ProjectID, accountID)
 		if err != nil {
 			return result{}, err
 		}
+
 		sess, err := a.mfaMintSession(ctx, acc)
 		if err != nil {
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.challenge.verified",
 			ProjectID:   row.ProjectID,
@@ -505,11 +563,13 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 		}); err != nil {
 			return result{}, err
 		}
+
 		return result{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return out.acc, out.sess, nil
 }
 
@@ -522,6 +582,7 @@ func (a *pgMFAAccounts) GenerateRecoveryCodes(ctx context.Context, accountID str
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.mfaGateEnroll(ctx, projectID, "recovery"); err != nil {
 			return nil, err
 		}
@@ -532,13 +593,16 @@ func (a *pgMFAAccounts) GenerateRecoveryCodes(ctx context.Context, accountID str
 		).Exec(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
+
 		codes := make([]string, 0, mfaRecoveryCodeCount)
-		for i := 0; i < mfaRecoveryCodeCount; i++ {
+		for range mfaRecoveryCodeCount {
 			code, err := mfaNewOpaqueToken(16) // 32 hex chars, 128 bits
 			if err != nil {
 				return nil, err
 			}
+
 			codes = append(codes, code)
+
 			setter := &models.IamRecoveryCodeSetter{
 				ID:        ptr(newUUID()),
 				ProjectID: ptr(projectID),
@@ -551,6 +615,7 @@ func (a *pgMFAAccounts) GenerateRecoveryCodes(ctx context.Context, accountID str
 				return nil, err
 			}
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.recovery_codes.generated",
 			ProjectID:   projectID,
@@ -560,6 +625,7 @@ func (a *pgMFAAccounts) GenerateRecoveryCodes(ctx context.Context, accountID str
 		}); err != nil {
 			return nil, err
 		}
+
 		return codes, nil
 	})
 }
@@ -571,9 +637,11 @@ func (a *pgMFAAccounts) RemoveFactor(ctx context.Context, accountID, factorID st
 		if err != nil {
 			return err
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.factor.removed",
 			ProjectID:   row.ProjectID,
@@ -583,6 +651,7 @@ func (a *pgMFAAccounts) RemoveFactor(ctx context.Context, accountID, factorID st
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -593,6 +662,7 @@ func (a *pgMFAAccounts) EnrollEmail(ctx context.Context, cmd domain.MFAEmailEnro
 	if err := domain.ValidateEmail(cmd.Email); err != nil {
 		return nil, nil, err
 	}
+
 	return a.mfaEnrollDelivery(ctx, cmd.AccountID, "email", cmd.Email)
 }
 
@@ -602,6 +672,7 @@ func (a *pgMFAAccounts) EnrollSMS(ctx context.Context, cmd domain.MFASmsEnrollCm
 	if err := domain.ValidatePhone(cmd.Phone); err != nil {
 		return nil, nil, err
 	}
+
 	return a.mfaEnrollDelivery(ctx, cmd.AccountID, "sms", cmd.Phone)
 }
 
@@ -618,6 +689,7 @@ func (a *pgMFAAccounts) VerifyTOTP(ctx context.Context, cmd domain.MFATotpVerify
 		if err != nil {
 			return nil, domain.ErrMFAInvalid
 		}
+
 		if !totp.Validate(cmd.Code, secret) {
 			return nil, domain.ErrMFAInvalid
 		}
@@ -626,16 +698,21 @@ func (a *pgMFAAccounts) VerifyTOTP(ctx context.Context, cmd domain.MFATotpVerify
 		if err != nil {
 			return nil, err
 		}
+
 		f.Status = "active"
+
 		raw, err := marshal(&f)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
+
 		setter := &models.IamFactorSetter{Status: ptr("active"), Data: &rm}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.factor.activated",
 			ProjectID:   row.ProjectID,
@@ -645,6 +722,7 @@ func (a *pgMFAAccounts) VerifyTOTP(ctx context.Context, cmd domain.MFATotpVerify
 		}); err != nil {
 			return nil, err
 		}
+
 		return &f, nil
 	})
 }
@@ -656,6 +734,7 @@ func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARe
 		acc  *domain.Account
 		sess *domain.Session
 	}
+
 	out, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		// A recovery code is a second factor: it is accepted only against a live
 		// login flow_token (password already verified). The account is taken from
@@ -664,7 +743,9 @@ func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARe
 		if err != nil {
 			return result{}, err
 		}
+
 		hash := mfaSha256Hex(cmd.Code)
+
 		row, err := models.IamRecoveryCodes.Query(
 			sm.Where(models.IamRecoveryCodes.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 			sm.Where(models.IamRecoveryCodes.Columns.UserID.EQ(psql.Arg(accountID))),
@@ -678,14 +759,17 @@ func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARe
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamRecoveryCodeSetter{Used: ptr(true)}); err != nil {
 			return result{}, err
 		}
+
 		acc, err := a.mfaLoadAccount(ctx, cmd.ProjectID, row.UserID)
 		if err != nil {
 			return result{}, err
 		}
+
 		sess, err := a.mfaMintSession(ctx, acc)
 		if err != nil {
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.recovery_code.consumed",
 			ProjectID:   cmd.ProjectID,
@@ -695,11 +779,13 @@ func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARe
 		}); err != nil {
 			return result{}, err
 		}
+
 		return result{acc: acc, sess: sess}, nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return out.acc, out.sess, nil
 }
 
@@ -714,6 +800,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 		if err != nil {
 			return nil, err
 		}
+
 		if err := a.mfaGateEnroll(ctx, projectID, "webauthn"); err != nil {
 			return nil, err
 		}
@@ -724,6 +811,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 		if err != nil {
 			return nil, err
 		}
+
 		user, err := a.mfaLoadWebauthnUser(ctx, cmd.AccountID)
 		if err != nil {
 			return nil, err
@@ -735,10 +823,12 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 		if err != nil {
 			return nil, domain.ErrProviderError
 		}
+
 		publicKey, err := webauthnOptionsMap(creation.Response)
 		if err != nil {
 			return nil, err
 		}
+
 		sessionRaw, err := json.Marshal(session)
 		if err != nil {
 			return nil, err
@@ -756,6 +846,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 		}); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.webauthn.options_issued",
 			ProjectID:   projectID,
@@ -765,6 +856,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 		}); err != nil {
 			return nil, err
 		}
+
 		return &ch, nil
 	})
 }
@@ -781,12 +873,15 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 		if err != nil {
 			return nil, translatePgErr("challenge", err)
 		}
+
 		if row.Subject.GetOrZero() != cmd.AccountID {
 			return nil, domain.ErrChallengeInvalid
 		}
+
 		if row.Consumed {
 			return nil, domain.ErrChallengeInvalid
 		}
+
 		if nowUTC().After(row.ExpiresAt) {
 			return nil, domain.ErrChallengeExpired
 		}
@@ -798,9 +893,11 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 				return nil, err
 			}
 		}
+
 		if len(data.Session) == 0 {
 			return nil, domain.ErrChallengeInvalid
 		}
+
 		var session gowebauthn.SessionData
 		if err := json.Unmarshal(data.Session, &session); err != nil {
 			return nil, domain.ErrChallengeInvalid
@@ -811,6 +908,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 		if err != nil {
 			return nil, err
 		}
+
 		user, err := a.mfaLoadWebauthnUser(ctx, cmd.AccountID)
 		if err != nil {
 			return nil, err
@@ -823,10 +921,12 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 		if err != nil {
 			return nil, err
 		}
+
 		parsed, err := protocol.ParseCredentialCreationResponseBody(bytes.NewReader(credRaw))
 		if err != nil {
 			return nil, domain.ErrMFAInvalid
 		}
+
 		libCred, err := w.CreateCredential(user, session, parsed)
 		if err != nil {
 			return nil, domain.ErrMFAInvalid
@@ -851,6 +951,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 		} else if id := base64.RawURLEncoding.EncodeToString(libCred.ID); id != "" {
 			hint = id
 		}
+
 		f := domain.Factor{
 			ID:     newUUID(),
 			Type:   "webauthn",
@@ -860,6 +961,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 		if err := a.mfaInsertFactorFor(ctx, row.ProjectID, cmd.AccountID, &f, string(libJSON)); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.factor.enrolled",
 			ProjectID:   row.ProjectID,
@@ -869,6 +971,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 		}); err != nil {
 			return nil, err
 		}
+
 		return &f, nil
 	})
 }
@@ -882,6 +985,7 @@ func (a *pgMFAAccounts) mfaResolveProject(ctx context.Context, accountID string)
 	if err != nil {
 		return "", translatePgErr("user", err)
 	}
+
 	return row.ProjectID, nil
 }
 
@@ -894,6 +998,7 @@ func (a *pgMFAAccounts) mfaResolveAccount(ctx context.Context, accountID string)
 	if err != nil {
 		return nil, translatePgErr("user", err)
 	}
+
 	var acc domain.Account
 	if err := unmarshal(row.Data, &acc); err != nil {
 		return nil, err
@@ -901,6 +1006,7 @@ func (a *pgMFAAccounts) mfaResolveAccount(ctx context.Context, accountID string)
 	// Envelope is authoritative for the tenant + identifier.
 	acc.ID = row.ID
 	acc.ProjectID = row.ProjectID
+
 	return &acc, nil
 }
 
@@ -911,12 +1017,15 @@ func (a *pgMFAAccounts) mfaInsertChallenge(ctx context.Context, projectID, accou
 	if err != nil {
 		return err
 	}
+
 	raw, err := marshal(data)
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
 	subject := null.From(accountID)
+
 	setter := &models.IamChallengeSetter{
 		ID:          ptr(ch.ID),
 		ProjectID:   ptr(projectID),
@@ -932,9 +1041,11 @@ func (a *pgMFAAccounts) mfaInsertChallenge(ctx context.Context, projectID, accou
 		ch := null.From(data.FlowTokenHash)
 		setter.CodeHash = &ch
 	}
+
 	if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -951,21 +1062,26 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 		factor *domain.Factor
 		ch     *domain.Challenge
 	}
+
 	out, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
 		projectID, err := a.mfaResolveProject(ctx, accountID)
 		if err != nil {
 			return result{}, err
 		}
+
 		if err := a.mfaGateEnroll(ctx, projectID, factorType); err != nil {
 			return result{}, err
 		}
+
 		count, err := a.mfaCountFactors(ctx, accountID)
 		if err != nil {
 			return result{}, err
 		}
+
 		if count >= mfaMaxFactorsPerAccount {
 			return result{}, domain.ErrConflict.WithMessage("maximum number of MFA factors reached")
 		}
+
 		f := domain.Factor{
 			ID:     newUUID(),
 			Type:   factorType,
@@ -975,10 +1091,12 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 		if err := a.mfaInsertFactorFor(ctx, projectID, accountID, &f, ""); err != nil {
 			return result{}, err
 		}
+
 		code, err := mfaNewOpaqueToken(4) // 8 hex chars delivered out-of-band
 		if err != nil {
 			return result{}, err
 		}
+
 		ch := domain.Challenge{
 			ID:        newUUID(),
 			Type:      factorType,
@@ -990,6 +1108,7 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 		}); err != nil {
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.factor.enrolled",
 			ProjectID:   projectID,
@@ -999,6 +1118,7 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 		}); err != nil {
 			return result{}, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "mfa.challenge.created",
 			ProjectID:   projectID,
@@ -1015,11 +1135,13 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 		}); err != nil {
 			return result{}, err
 		}
+
 		return result{factor: &f, ch: &ch}, nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return out.factor, out.ch, nil
 }
 
@@ -1029,15 +1151,19 @@ func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accou
 	if err != nil {
 		return err
 	}
+
 	raw, err := marshal(f)
 	if err != nil {
 		return err
 	}
+
 	rm := json.RawMessage(raw)
+
 	encSecret, err := a.db.Cipher.Encrypt(secret)
 	if err != nil {
 		return err
 	}
+
 	setter := &models.IamFactorSetter{
 		ID:          ptr(f.ID),
 		ProjectID:   ptr(projectID),
@@ -1053,8 +1179,10 @@ func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accou
 		if isUniqueViolation(err) {
 			return domain.ErrConflict
 		}
+
 		return err
 	}
+
 	return nil
 }
 
@@ -1070,10 +1198,12 @@ const mfaAccessTTL = 10 * time.Minute
 // the session sid); the refresh token stays an opaque random handle.
 func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account) (*domain.Session, error) {
 	sessionID := newUUID()
+
 	signEnv, err := resolveSignEnv(ctx, a.db, acc.ProjectID, mfaDefaultEnv)
 	if err != nil {
 		return nil, err
 	}
+
 	access, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, map[string]any{
 		"iss": oidcIssuer(acc.ProjectID, signEnv),
 		"sub": acc.ID,
@@ -1087,11 +1217,14 @@ func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account)
 	if err != nil {
 		return nil, err
 	}
+
 	refresh, err := mfaNewOpaqueToken(32)
 	if err != nil {
 		return nil, err
 	}
+
 	meta := domain.RequestMetaFromContext(ctx)
+
 	return &domain.Session{
 		ID:           sessionID,
 		AccountID:    acc.ID,

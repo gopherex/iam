@@ -14,9 +14,11 @@ type fakeCsrf struct{ calls int }
 
 func (f *fakeCsrf) VerifyCsrfToken(_ context.Context, clientID, token string) error {
 	f.calls++
+
 	if clientID == "c1" && token == "good" {
 		return nil
 	}
+
 	return domain.ErrInvalidCsrf
 }
 
@@ -51,6 +53,7 @@ func TestCSRFMiddleware(t *testing.T) {
 			nextCalled := false
 			h := CSRFMiddleware(f)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				nextCalled = true
+
 				w.WriteHeader(http.StatusOK)
 			}))
 
@@ -58,24 +61,30 @@ func TestCSRFMiddleware(t *testing.T) {
 			if tc.authHeader {
 				req.Header.Set("Authorization", "Bearer tok")
 			}
+
 			if tc.cookie {
 				req.AddCookie(sessionCookie())
 			}
+
 			if tc.clientID != "" {
-				req.Header.Set("X-Client-ID", tc.clientID)
+				req.Header.Set("X-Client-Id", tc.clientID)
 			}
+
 			if tc.csrf != "" {
-				req.Header.Set("X-CSRF-Token", tc.csrf)
+				req.Header.Set("X-Csrf-Token", tc.csrf)
 			}
+
 			rec := httptest.NewRecorder()
 			h.ServeHTTP(rec, req)
 
 			if rec.Code != tc.wantStatus {
 				t.Errorf("status = %d, want %d", rec.Code, tc.wantStatus)
 			}
+
 			if nextCalled != tc.wantNext {
 				t.Errorf("next called = %v, want %v", nextCalled, tc.wantNext)
 			}
+
 			if (f.calls > 0) != tc.wantVerify {
 				t.Errorf("verify called = %v, want %v", f.calls > 0, tc.wantVerify)
 			}

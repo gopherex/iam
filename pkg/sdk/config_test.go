@@ -22,10 +22,12 @@ func TestNewAuthenticatorRemote(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewAuthenticator() error = %v", err)
 	}
+
 	principal, err := auth.Authenticate(context.Background(), "valid-token")
 	if err != nil {
 		t.Fatalf("Authenticate() error = %v", err)
 	}
+
 	if principal.ProjectID != "proj_123" {
 		t.Fatalf("project = %q, want proj_123", principal.ProjectID)
 	}
@@ -33,7 +35,9 @@ func TestNewAuthenticatorRemote(t *testing.T) {
 
 func TestNewAuthenticatorLocalWarm(t *testing.T) {
 	key := newTestSigningKey(t, "kid-1")
+
 	var jwksCalls atomic.Int32
+
 	server := newSDKWiringServer(t, key.publicSet, &jwksCalls, nil)
 	defer server.Close()
 
@@ -47,9 +51,11 @@ func TestNewAuthenticatorLocalWarm(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewAuthenticator() error = %v", err)
 	}
+
 	if err := Warm(context.Background(), auth); err != nil {
 		t.Fatalf("Warm() error = %v", err)
 	}
+
 	if jwksCalls.Load() != 1 {
 		t.Fatalf("jwks calls = %d, want 1", jwksCalls.Load())
 	}
@@ -57,7 +63,9 @@ func TestNewAuthenticatorLocalWarm(t *testing.T) {
 
 func TestNewAuthenticatorHybridPrefersLocal(t *testing.T) {
 	key := newTestSigningKey(t, "kid-1")
+
 	var verifyCalls atomic.Int32
+
 	server := newSDKWiringServer(t, key.publicSet, nil, &verifyCalls)
 	defer server.Close()
 
@@ -72,6 +80,7 @@ func TestNewAuthenticatorHybridPrefersLocal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewAuthenticator() error = %v", err)
 	}
+
 	token := key.sign(t, map[string]any{
 		"iss": "/p/proj_123/e/live",
 		"sub": "acct_123",
@@ -84,9 +93,11 @@ func TestNewAuthenticatorHybridPrefersLocal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Authenticate() error = %v", err)
 	}
+
 	if principal.Subject != "acct_123" {
 		t.Fatalf("subject = %q, want acct_123", principal.Subject)
 	}
+
 	if verifyCalls.Load() != 0 {
 		t.Fatalf("remote verify calls = %d, want 0", verifyCalls.Load())
 	}
@@ -94,7 +105,9 @@ func TestNewAuthenticatorHybridPrefersLocal(t *testing.T) {
 
 func TestNewAuthenticatorHybridFallsBackToRemote(t *testing.T) {
 	key := newTestSigningKey(t, "kid-1")
+
 	var verifyCalls atomic.Int32
+
 	server := newSDKWiringServer(t, key.publicSet, nil, &verifyCalls)
 	defer server.Close()
 
@@ -114,9 +127,11 @@ func TestNewAuthenticatorHybridFallsBackToRemote(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Authenticate() error = %v", err)
 	}
+
 	if principal.Subject != "remote_acct" {
 		t.Fatalf("subject = %q, want remote_acct", principal.Subject)
 	}
+
 	if verifyCalls.Load() != 1 {
 		t.Fatalf("remote verify calls = %d, want 1", verifyCalls.Load())
 	}
@@ -124,13 +139,16 @@ func TestNewAuthenticatorHybridFallsBackToRemote(t *testing.T) {
 
 func newSDKWiringServer(t *testing.T, set any, jwksCalls *atomic.Int32, verifyCalls *atomic.Int32) *httptest.Server {
 	t.Helper()
+
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/p/proj_123/e/live/.well-known/jwks.json":
 			if jwksCalls != nil {
 				jwksCalls.Add(1)
 			}
+
 			w.Header().Set("Content-Type", "application/json")
+
 			if err := json.NewEncoder(w).Encode(set); err != nil {
 				t.Fatalf("Encode() error = %v", err)
 			}
@@ -138,10 +156,12 @@ func newSDKWiringServer(t *testing.T, set any, jwksCalls *atomic.Int32, verifyCa
 			if verifyCalls != nil {
 				verifyCalls.Add(1)
 			}
+
 			if r.Header.Get("Authorization") != "Bearer service-token" {
 				http.Error(w, "bad service credential", http.StatusUnauthorized)
 				return
 			}
+
 			var req struct {
 				Token string `json:"token"`
 			}
@@ -149,10 +169,12 @@ func newSDKWiringServer(t *testing.T, set any, jwksCalls *atomic.Int32, verifyCa
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+
 			if req.Token != "remote-token" {
 				writeJSON(w, map[string]any{"valid": false, "error": "invalid_token"})
 				return
 			}
+
 			writeJSON(w, map[string]any{
 				"valid": true,
 				"claims": map[string]any{

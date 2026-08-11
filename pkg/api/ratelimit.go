@@ -35,9 +35,11 @@ func newRateLimiter(limit int, window time.Duration) *rateLimiter {
 	if window <= 0 {
 		window = time.Minute
 	}
+
 	if limit < 1 {
 		limit = 1
 	}
+
 	rl := &rateLimiter{
 		entries: make(map[string]*rateLimitEntry),
 		limit:   limit,
@@ -45,6 +47,7 @@ func newRateLimiter(limit int, window time.Duration) *rateLimiter {
 		stop:    make(chan struct{}),
 	}
 	go rl.cleanup()
+
 	return rl
 }
 
@@ -55,12 +58,14 @@ func (rl *rateLimiter) Stop() { close(rl.stop) }
 func (rl *rateLimiter) cleanup() {
 	ticker := time.NewTicker(rl.window)
 	defer ticker.Stop()
+
 	for {
 		select {
 		case <-rl.stop:
 			return
 		case <-ticker.C:
 			rl.mu.Lock()
+
 			now := time.Now()
 			for k, v := range rl.entries {
 				if now.After(v.expiry) {
@@ -75,13 +80,17 @@ func (rl *rateLimiter) cleanup() {
 func (rl *rateLimiter) allow(key string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
+
 	now := time.Now()
+
 	e, ok := rl.entries[key]
 	if !ok || now.After(e.expiry) {
 		rl.entries[key] = &rateLimitEntry{count: 1, expiry: now.Add(rl.window)}
 		return true
 	}
+
 	e.count++
+
 	return e.count <= rl.limit
 }
 
@@ -136,6 +145,7 @@ func NewRateLimitMiddleware(reader RateLimitConfigReader) func(http.Handler) htt
 	if reader != nil {
 		pl = newProjectLimiters(reader, 30*time.Second)
 	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			limiter, message, ok := rateLimitForRequest(r)
@@ -143,12 +153,14 @@ func NewRateLimitMiddleware(reader RateLimitConfigReader) func(http.Handler) htt
 				next.ServeHTTP(w, r)
 				return
 			}
+
 			key := rateLimitKey(r)
 
 			// Per-project override (limit/window) for this endpoint, if any.
 			// Falls open to the hardcoded limiter on miss or reader error.
 			if pl != nil {
-				clientID := r.Header.Get("X-Client-ID")
+				clientID := r.Header.Get("X-Client-Id")
+
 				env := r.Header.Get(EnvironmentHeader)
 				if pLimiter, pKey, found := pl.limiterFor(r.Context(), clientID, env, r.URL.Path, key); found {
 					limiter, key = pLimiter, pKey
@@ -158,8 +170,10 @@ func NewRateLimitMiddleware(reader RateLimitConfigReader) func(http.Handler) htt
 			if !limiter.allow(key) {
 				w.Header().Set("Retry-After", "60")
 				http.Error(w, `{"error":"rate_limit_exceeded","message":"`+message+`"}`, http.StatusTooManyRequests)
+
 				return
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -188,6 +202,7 @@ func newProjectLimiters(reader RateLimitConfigReader, ttl time.Duration) *projec
 	if ttl <= 0 {
 		ttl = 30 * time.Second
 	}
+
 	return &projectLimiters{
 		reader:   reader,
 		ttl:      ttl,
@@ -202,12 +217,15 @@ func (p *projectLimiters) limiterFor(ctx context.Context, clientID, env, path, i
 	if clientID == "" {
 		return nil, "", false
 	}
+
 	if env == "" {
 		env = "live"
 	}
+
 	scope := clientID + "|" + env
 
 	entry := p.resolve(ctx, scope, clientID, env)
+
 	rule, ok := entry.byEndpoint[path]
 	if !ok {
 		return nil, "", false
@@ -234,10 +252,13 @@ func (p *projectLimiters) resolve(ctx context.Context, scope, clientID, env stri
 		if e, ok := p.rules[scope]; ok {
 			e.exp = time.Now().Add(5 * time.Second) // keep stale, back off
 			p.rules[scope] = e
+
 			return e
 		}
+
 		e := ruleCacheEntry{byEndpoint: map[string]RateLimitRule{}, exp: time.Now().Add(5 * time.Second)}
 		p.rules[scope] = e
+
 		return e
 	}
 
@@ -245,8 +266,10 @@ func (p *projectLimiters) resolve(ctx context.Context, scope, clientID, env stri
 	for _, r := range rules {
 		byEndpoint[r.Endpoint] = r
 	}
+
 	e := ruleCacheEntry{byEndpoint: byEndpoint, exp: time.Now().Add(p.ttl)}
 	p.rules[scope] = e
+
 	return e
 }
 
@@ -257,6 +280,7 @@ func (p *projectLimiters) resolve(ctx context.Context, scope, clientID, env stri
 func (p *projectLimiters) getOrCreateLimiter(key string, limit int, window time.Duration) *rateLimiter {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+
 	if rl, ok := p.limiters[key]; ok && rl.limit == limit && rl.window == window {
 		return rl
 	}
@@ -265,8 +289,10 @@ func (p *projectLimiters) getOrCreateLimiter(key string, limit int, window time.
 	if old, ok := p.limiters[key]; ok {
 		old.Stop()
 	}
+
 	rl := newRateLimiter(limit, window)
 	p.limiters[key] = rl
+
 	return rl
 }
 
@@ -274,16 +300,20 @@ func rateLimitForRequest(r *http.Request) (*rateLimiter, string, bool) {
 	if r.Method == http.MethodOptions {
 		return nil, "", false
 	}
+
 	path := r.URL.Path
 	if path == "/v1/auth/guest" {
 		return guestLimiter, "Too many guest accounts created.", true
 	}
+
 	if isSensitiveRateLimitedPath(path) {
 		return sensitiveLimiter, "Too many attempts. Try again later.", true
 	}
+
 	if isAuthRateLimitedPath(path) {
 		return authLimiter, "Too many requests. Try again later.", true
 	}
+
 	return nil, "", false
 }
 
@@ -333,8 +363,10 @@ func SensitiveRateLimitMiddleware(next http.Handler) http.Handler {
 		if !sensitiveLimiter.allow(key) {
 			w.Header().Set("Retry-After", "60")
 			http.Error(w, `{"error":"rate_limit_exceeded","message":"Too many attempts. Try again later."}`, http.StatusTooManyRequests)
+
 			return
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -345,8 +377,10 @@ func GuestRateLimitMiddleware(next http.Handler) http.Handler {
 		if !guestLimiter.allow(key) {
 			w.Header().Set("Retry-After", "60")
 			http.Error(w, `{"error":"rate_limit_exceeded","message":"Too many guest accounts created."}`, http.StatusTooManyRequests)
+
 			return
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }

@@ -37,6 +37,7 @@ func truncateRunes(value string, limit int) string {
 	if len(runes) <= limit {
 		return value
 	}
+
 	return string(runes[:limit])
 }
 
@@ -57,6 +58,7 @@ func SetTrustedProxies(cidrs []string) {
 		if c == "" {
 			continue
 		}
+
 		if !strings.ContainsRune(c, '/') {
 			if strings.Contains(c, ":") {
 				c += "/128"
@@ -64,10 +66,12 @@ func SetTrustedProxies(cidrs []string) {
 				c += "/32"
 			}
 		}
+
 		if _, n, err := net.ParseCIDR(c); err == nil {
 			nets = append(nets, n)
 		}
 	}
+
 	trustedProxyNets = nets
 }
 
@@ -76,11 +80,13 @@ func ipInTrustedProxies(ip string) bool {
 	if parsed == nil {
 		return false
 	}
+
 	for _, n := range trustedProxyNets {
 		if n.Contains(parsed) {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -89,6 +95,7 @@ func remoteHost(r *http.Request) string {
 	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
 		return host
 	}
+
 	return strings.Trim(r.RemoteAddr, "[]")
 }
 
@@ -102,6 +109,7 @@ func clientIP(r *http.Request) string {
 	if len(trustedProxyNets) == 0 || !ipInTrustedProxies(peer) {
 		return peer
 	}
+
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		parts := strings.Split(xff, ",")
 		for i := len(parts) - 1; i >= 0; i-- {
@@ -111,8 +119,10 @@ func clientIP(r *http.Request) string {
 			}
 		}
 	}
+
 	if xr := strings.TrimSpace(r.Header.Get("X-Real-IP")); xr != "" {
 		return xr
 	}
+
 	return peer
 }

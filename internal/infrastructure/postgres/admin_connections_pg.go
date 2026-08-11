@@ -5,7 +5,7 @@ package postgres
 // tables that the federation adapter owns.
 //
 // Persistence follows the package gold pattern: the domain aggregate is
-// marshalled into the `data jsonb` envelope; typed columns (project_id, type,
+// marshaled into the `data jsonb` envelope; typed columns (project_id, type,
 // status, name, domain, connection_id) are lookup-only. Every mutation runs
 // inside withTx / withTxRet. The tenant boundary is project_id on every query.
 //
@@ -26,12 +26,12 @@ import (
 	"errors"
 
 	"github.com/aarondl/opt/null"
+	"github.com/stephenafamo/bob/dialect/psql"
+	"github.com/stephenafamo/bob/dialect/psql/sm"
 
 	"github.com/gopherex/iam/internal/domain"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
 	"github.com/gopherex/iam/pkg/api"
-	"github.com/stephenafamo/bob/dialect/psql"
-	"github.com/stephenafamo/bob/dialect/psql/sm"
 )
 
 // ===========================================================================
@@ -63,14 +63,17 @@ func (a *pgAdminConnections) List(ctx context.Context, projectID string) ([]doma
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Connection, 0, len(rows))
 	for _, row := range rows {
 		c, err := fedConnectionFromRow(a.db.Cipher, row)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, *c)
 	}
+
 	return out, nil
 }
 
@@ -80,11 +83,14 @@ func (a *pgAdminConnections) Get(ctx context.Context, projectID, connID string) 
 		if errors.Is(translatePgErr("connection", err), ErrNotFound) {
 			return nil, domain.ErrConnectionNotFound
 		}
+
 		return nil, err
 	}
+
 	if row.ProjectID != projectID { // tenant boundary
 		return nil, domain.ErrConnectionNotFound
 	}
+
 	return fedConnectionFromRow(a.db.Cipher, row)
 }
 
@@ -99,16 +105,20 @@ func (a *pgAdminConnections) Create(ctx context.Context, cmd domain.AdminConnect
 			Domains:     cmd.Domains,
 			ExternalRef: cmd.ExternalRef,
 		}
+
 		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
 			return nil, err
 		}
+
 		if _, err := models.IamSsoConnections.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
 			}
+
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "connection.created",
 			ProjectID:   conn.ProjectID,
@@ -118,6 +128,7 @@ func (a *pgAdminConnections) Create(ctx context.Context, cmd domain.AdminConnect
 		}); err != nil {
 			return nil, err
 		}
+
 		return conn, nil
 	})
 }
@@ -127,7 +138,7 @@ func (a *pgAdminConnections) Create(ctx context.Context, cmd domain.AdminConnect
 // Patch strategy (read-modify-write inside the serializable tx):
 //  1. Load the current row (tenant boundary check).
 //  2. Unmarshal into domain.Connection via fedConnectionFromRow.
-//  3. Apply recognised top-level keys from the patch map onto the struct.
+//  3. Apply recognized top-level keys from the patch map onto the struct.
 //     Only keys that are present in the patch are touched; absent keys keep
 //     their current value.  The same logic as fedApplyConnectionPatch is used
 //     so that admin and federation patches behave identically.
@@ -139,11 +150,14 @@ func (a *pgAdminConnections) Update(ctx context.Context, projectID, connID strin
 			if errors.Is(translatePgErr("connection", err), ErrNotFound) {
 				return nil, domain.ErrConnectionNotFound
 			}
+
 			return nil, err
 		}
+
 		if row.ProjectID != projectID { // tenant boundary
 			return nil, domain.ErrConnectionNotFound
 		}
+
 		conn, err := fedConnectionFromRow(a.db.Cipher, row)
 		if err != nil {
 			return nil, err
@@ -151,16 +165,20 @@ func (a *pgAdminConnections) Update(ctx context.Context, projectID, connID strin
 		// Apply the merge patch onto the aggregate (shared helper, same semantics
 		// as the federation update path).
 		fedApplyConnectionPatch(conn, patch)
+
 		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
 			return nil, err
 		}
+
 		setter.ID = nil        // never re-set the pk on update
 		setter.ProjectID = nil // never change the tenant column
+
 		setter.UpdatedAt = ptr(nowUTC())
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "connection.updated",
 			ProjectID:   conn.ProjectID,
@@ -170,6 +188,7 @@ func (a *pgAdminConnections) Update(ctx context.Context, projectID, connID strin
 		}); err != nil {
 			return nil, err
 		}
+
 		return conn, nil
 	})
 }
@@ -181,14 +200,18 @@ func (a *pgAdminConnections) Delete(ctx context.Context, projectID, connID strin
 			if errors.Is(translatePgErr("connection", err), ErrNotFound) {
 				return domain.ErrConnectionNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID { // tenant boundary
 			return domain.ErrConnectionNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "connection.deleted",
 			ProjectID:   projectID,
@@ -198,6 +221,7 @@ func (a *pgAdminConnections) Delete(ctx context.Context, projectID, connID strin
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -213,14 +237,17 @@ func (a *pgAdminConnections) ListDomains(ctx context.Context, projectID string) 
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Domain, 0, len(rows))
 	for _, row := range rows {
 		d, err := fedDomainFromRow(row)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, *d)
 	}
+
 	return out, nil
 }
 
@@ -255,15 +282,19 @@ func (a *pgAdminConnections) CreateDomain(ctx context.Context, cmd domain.AdminD
 		if err != nil {
 			return nil, err
 		}
+
 		var envelope map[string]any
 		if err := json.Unmarshal(rawDom, &envelope); err != nil {
 			return nil, err
 		}
+
 		envelope["verify_token"] = verifyToken
+
 		rawEnv, err := json.Marshal(envelope)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(rawEnv)
 
 		setter := &models.IamDomainSetter{
@@ -273,6 +304,7 @@ func (a *pgAdminConnections) CreateDomain(ctx context.Context, cmd domain.AdminD
 			Status:    ptr(dom.Status),
 			Data:      &rm,
 		}
+
 		if cmd.ConnectionID != "" {
 			v := null.From(cmd.ConnectionID)
 			setter.ConnectionID = &v
@@ -282,8 +314,10 @@ func (a *pgAdminConnections) CreateDomain(ctx context.Context, cmd domain.AdminD
 			if isUniqueViolation(err) {
 				return nil, domain.ErrDomainTaken
 			}
+
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "domain.created",
 			ProjectID:   dom.ProjectID,
@@ -293,6 +327,7 @@ func (a *pgAdminConnections) CreateDomain(ctx context.Context, cmd domain.AdminD
 		}); err != nil {
 			return nil, err
 		}
+
 		return &domain.AdminDomainRegistration{
 			Domain:                  dom,
 			VerificationRecordType:  "TXT",
@@ -309,14 +344,18 @@ func (a *pgAdminConnections) DeleteDomain(ctx context.Context, projectID, domain
 			if errors.Is(translatePgErr("domain", err), ErrNotFound) {
 				return domain.ErrDomainNotFound
 			}
+
 			return err
 		}
+
 		if row.ProjectID != projectID { // tenant boundary
 			return domain.ErrDomainNotFound
 		}
+
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "domain.deleted",
 			ProjectID:   projectID,
@@ -326,6 +365,7 @@ func (a *pgAdminConnections) DeleteDomain(ctx context.Context, projectID, domain
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -341,22 +381,29 @@ func (a *pgAdminConnections) VerifyDomain(ctx context.Context, projectID, domain
 			if errors.Is(translatePgErr("domain", err), ErrNotFound) {
 				return nil, domain.ErrDomainNotFound
 			}
+
 			return nil, err
 		}
+
 		if row.ProjectID != projectID { // tenant boundary
 			return nil, domain.ErrDomainNotFound
 		}
+
 		dom, err := fedDomainFromRow(row)
 		if err != nil {
 			return nil, err
 		}
+
 		dom.Status = "verified"
+
 		raw, err := marshal(dom)
 		if err != nil {
 			return nil, err
 		}
+
 		rm := json.RawMessage(raw)
 		verifiedAt := null.From(nowUTC())
+
 		setter := &models.IamDomainSetter{
 			Status:     ptr("verified"),
 			VerifiedAt: &verifiedAt,
@@ -365,6 +412,7 @@ func (a *pgAdminConnections) VerifyDomain(ctx context.Context, projectID, domain
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "domain.verified",
 			ProjectID:   dom.ProjectID,
@@ -374,6 +422,7 @@ func (a *pgAdminConnections) VerifyDomain(ctx context.Context, projectID, domain
 		}); err != nil {
 			return nil, err
 		}
+
 		return dom, nil
 	})
 }

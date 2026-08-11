@@ -5,12 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gopherex/iam/pkg/sdk"
-	sdkgrpc "github.com/gopherex/iam/pkg/sdk/grpc"
 	googlegrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	"github.com/gopherex/iam/pkg/sdk"
+	sdkgrpc "github.com/gopherex/iam/pkg/sdk/grpc"
 )
 
 func TestUnaryServerInterceptorStoresPrincipal(t *testing.T) {
@@ -23,14 +24,17 @@ func TestUnaryServerInterceptorStoresPrincipal(t *testing.T) {
 		if !ok {
 			t.Fatal("principal missing from context")
 		}
+
 		return principal.ProjectID, nil
 	})
 	if err != nil {
 		t.Fatalf("interceptor error = %v", err)
 	}
+
 	if resp != "proj_123" {
 		t.Fatalf("resp = %#v, want proj_123", resp)
 	}
+
 	if auth.token != "valid-token" {
 		t.Fatalf("auth token = %q, want valid-token", auth.token)
 	}
@@ -38,6 +42,7 @@ func TestUnaryServerInterceptorStoresPrincipal(t *testing.T) {
 
 func TestUnaryServerInterceptorRejectsMissingToken(t *testing.T) {
 	interceptor := sdkgrpc.UnaryServerInterceptor(&fakeAuth{})
+
 	_, err := interceptor(context.Background(), nil, &googlegrpc.UnaryServerInfo{}, func(ctx context.Context, req any) (any, error) {
 		t.Fatal("handler should not run")
 		return nil, nil
@@ -57,14 +62,17 @@ func TestStreamServerInterceptorStoresPrincipal(t *testing.T) {
 		if !ok {
 			t.Fatal("principal missing from context")
 		}
+
 		if principal.ProjectID != "proj_123" {
 			t.Fatalf("project = %q, want proj_123", principal.ProjectID)
 		}
+
 		return nil
 	})
 	if err != nil {
 		t.Fatalf("interceptor error = %v", err)
 	}
+
 	if auth.token != "valid-token" {
 		t.Fatalf("auth token = %q, want valid-token", auth.token)
 	}
@@ -80,12 +88,15 @@ func (a *fakeAuth) Authenticate(_ context.Context, token string) (*sdk.Principal
 	if a.principal == nil {
 		return nil, sdk.ErrInvalidToken
 	}
+
 	if token == "" {
 		return nil, sdk.ErrMissingToken
 	}
+
 	if token != "valid-token" {
 		return nil, sdk.ErrInvalidToken
 	}
+
 	return a.principal, nil
 }
 

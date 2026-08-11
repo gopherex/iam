@@ -26,12 +26,15 @@ func TestSMSJobFromEventOTP(t *testing.T) {
 	if !ok {
 		t.Fatal("expected sms job")
 	}
+
 	if job.TemplateID != "otp" {
 		t.Fatalf("template = %q", job.TemplateID)
 	}
+
 	if job.To != "+15551234567" {
 		t.Fatalf("to = %q", job.To)
 	}
+
 	if job.Data["code"] != "123456" {
 		t.Fatalf("code = %v", job.Data["code"])
 	}
@@ -45,9 +48,11 @@ func TestSMSJobFromEventMFA(t *testing.T) {
 	if !ok {
 		t.Fatal("expected sms job")
 	}
+
 	if job.TemplateID != "mfa_sms" {
 		t.Fatalf("template = %q", job.TemplateID)
 	}
+
 	if job.To != "+1999" {
 		t.Fatalf("to = %q", job.To)
 	}
@@ -61,6 +66,7 @@ func TestSMSJobFromEventPhoneVerification(t *testing.T) {
 	if !ok || verify.TemplateID != "phone_verification" {
 		t.Fatalf("verify template = %q ok=%v", verify.TemplateID, ok)
 	}
+
 	change, ok := smsJobFromEvent(eventEnvelope{
 		Type:    "phone.verification.requested",
 		Payload: map[string]any{"channel": "sms", "code": "1", "contact": "+1", "purpose": "change"},
@@ -77,6 +83,7 @@ func TestSMSJobFromEventIgnoresEmailChannel(t *testing.T) {
 	}); ok {
 		t.Fatal("email-channel otp must not produce an sms job")
 	}
+
 	if _, ok := smsJobFromEvent(eventEnvelope{
 		Type:    "auth.magiclink.started",
 		Payload: map[string]any{"to": "user@example.com"},
@@ -108,10 +115,12 @@ func TestDecodeSMSConfigGeneric(t *testing.T) {
 	cipher := postgres.NewIdentityCipher()
 	raw := func(m map[string]any) map[string]json.RawMessage {
 		out := map[string]json.RawMessage{}
+
 		for k, v := range m {
 			b, _ := json.Marshal(v)
 			out[k] = b
 		}
+
 		return out
 	}
 
@@ -123,6 +132,7 @@ func TestDecodeSMSConfigGeneric(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode: %v", err)
 	}
+
 	if cfg.URL != "https://gw.example.com/send" || cfg.AuthToken != "secret-token" {
 		t.Fatalf("cfg = %+v", cfg)
 	}
@@ -130,6 +140,7 @@ func TestDecodeSMSConfigGeneric(t *testing.T) {
 	if _, err := decodeSMSConfig(cipher, "generic", raw(map[string]any{"from": "IAM"})); err == nil {
 		t.Fatal("expected error: missing url")
 	}
+
 	if _, err := decodeSMSConfig(cipher, "generic", raw(map[string]any{"url": "http://insecure.example.com"})); err == nil {
 		t.Fatal("expected error: non-https url rejected")
 	}
@@ -139,10 +150,12 @@ func TestDecodeSMSConfigTwilio(t *testing.T) {
 	cipher := postgres.NewIdentityCipher()
 	raw := func(m map[string]any) map[string]json.RawMessage {
 		out := map[string]json.RawMessage{}
+
 		for k, v := range m {
 			b, _ := json.Marshal(v)
 			out[k] = b
 		}
+
 		return out
 	}
 
@@ -154,9 +167,11 @@ func TestDecodeSMSConfigTwilio(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode: %v", err)
 	}
+
 	if cfg.Username != "ACxxx" || cfg.Password != "tok" {
 		t.Fatalf("cfg = %+v", cfg)
 	}
+
 	if !strings.Contains(cfg.URL, "/Accounts/ACxxx/Messages.json") {
 		t.Fatalf("url = %q", cfg.URL)
 	}
@@ -167,13 +182,17 @@ func TestDecodeSMSConfigTwilio(t *testing.T) {
 }
 
 func TestSMSSendGeneric(t *testing.T) {
-	var gotAuth, gotCT string
-	var body map[string]string
+	var (
+		gotAuth, gotCT string
+		body           map[string]string
+	)
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotAuth = r.Header.Get("Authorization")
 		gotCT = r.Header.Get("Content-Type")
 		b, _ := io.ReadAll(r.Body)
 		_ = json.Unmarshal(b, &body)
+
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer srv.Close()
@@ -182,12 +201,15 @@ func TestSMSSendGeneric(t *testing.T) {
 	if err := cfg.send(context.Background(), "+1555", "hello"); err != nil {
 		t.Fatalf("send: %v", err)
 	}
+
 	if gotAuth != "Bearer tok123" {
 		t.Fatalf("auth = %q", gotAuth)
 	}
+
 	if !strings.HasPrefix(gotCT, "application/json") {
 		t.Fatalf("content-type = %q", gotCT)
 	}
+
 	if body["to"] != "+1555" || body["text"] != "hello" || body["from"] != "IAM" {
 		t.Fatalf("body = %v", body)
 	}
@@ -197,6 +219,7 @@ func TestSMSSendGeneric(t *testing.T) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer bad.Close()
+
 	cfg.URL = bad.URL
 	if err := cfg.send(context.Background(), "+1", "x"); err == nil {
 		t.Fatal("expected error on 500")
@@ -204,14 +227,18 @@ func TestSMSSendGeneric(t *testing.T) {
 }
 
 func TestSMSSendTwilio(t *testing.T) {
-	var gotUser, gotPass, gotCT string
-	var ok bool
-	var form url.Values
+	var (
+		gotUser, gotPass, gotCT string
+		ok                      bool
+		form                    url.Values
+	)
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotUser, gotPass, ok = r.BasicAuth()
 		gotCT = r.Header.Get("Content-Type")
 		_ = r.ParseForm()
 		form = r.PostForm
+
 		w.WriteHeader(http.StatusCreated)
 	}))
 	defer srv.Close()
@@ -220,12 +247,15 @@ func TestSMSSendTwilio(t *testing.T) {
 	if err := cfg.send(context.Background(), "+15551112222", "body text"); err != nil {
 		t.Fatalf("send: %v", err)
 	}
+
 	if !ok || gotUser != "ACxxx" || gotPass != "tok" {
 		t.Fatalf("basic auth = %q/%q ok=%v", gotUser, gotPass, ok)
 	}
+
 	if !strings.HasPrefix(gotCT, "application/x-www-form-urlencoded") {
 		t.Fatalf("content-type = %q", gotCT)
 	}
+
 	if form.Get("From") != "+15550000000" || form.Get("To") != "+15551112222" || form.Get("Body") != "body text" {
 		t.Fatalf("form = %v", form)
 	}
@@ -236,13 +266,16 @@ func TestDefaultSMSText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("render en: %v", err)
 	}
+
 	if !strings.Contains(en, "424242") {
 		t.Fatalf("en body = %q", en)
 	}
+
 	ru, err := renderText(defaultSMSText("otp", "ru"), map[string]any{"code": "424242"})
 	if err != nil {
 		t.Fatalf("render ru: %v", err)
 	}
+
 	if !strings.Contains(ru, "424242") || !strings.Contains(ru, "код") {
 		t.Fatalf("ru body = %q", ru)
 	}

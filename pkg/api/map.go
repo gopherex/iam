@@ -14,6 +14,7 @@ func optURI(raw string) oas.OptURI {
 	if err != nil {
 		return oas.OptURI{}
 	}
+
 	return oas.NewOptURI(*u)
 }
 
@@ -31,6 +32,7 @@ func oasUser(a *domain.Account) oas.User {
 	if a.PrimaryEmail != "" {
 		u.PrimaryEmail = oas.NewOptNilString(a.PrimaryEmail)
 	}
+
 	if a.PrimaryPhone != "" {
 		u.PrimaryPhone = oas.NewOptNilString(a.PrimaryPhone)
 	}
@@ -42,11 +44,14 @@ func oasUser(a *domain.Account) oas.User {
 		if a.Name != "" {
 			prof.Name = oas.NewOptNilString(a.Name)
 		}
+
 		if a.Locale != "" {
 			prof.Locale = oas.NewOptString(a.Locale)
 		}
+
 		u.Profile = oas.NewOptCoreProfile(prof)
 	}
+
 	return u
 }
 
@@ -59,6 +64,7 @@ func oasSessionTokens(s *domain.Session) oas.SessionTokens {
 	if s.RefreshToken != "" {
 		t.RefreshToken = oas.NewOptString(s.RefreshToken)
 	}
+
 	return t
 }
 
@@ -75,18 +81,23 @@ func oasSession(s *domain.Session) oas.Session {
 	if s.DeviceName != "" {
 		out.DeviceName = oas.NewOptNilString(s.DeviceName)
 	}
+
 	if s.IP != "" {
 		out.IP = oas.NewOptString(s.IP)
 	}
+
 	if s.UserAgent != "" {
 		out.UserAgent = oas.NewOptString(s.UserAgent)
 	}
+
 	if !s.CreatedAt.IsZero() {
 		out.CreatedAt = oas.NewOptTimestamp(oas.Timestamp(s.CreatedAt))
 	}
+
 	if !s.LastActiveAt.IsZero() {
 		out.LastActiveAt = oas.NewOptTimestamp(oas.Timestamp(s.LastActiveAt))
 	}
+
 	return out
 }
 
