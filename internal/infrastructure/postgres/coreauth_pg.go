@@ -1946,6 +1946,42 @@ func (a *pgCoreAuth) VerifyEmail(ctx context.Context, cmd domain.CoreAuthVerifyC
 	return res.acc, res.sess, nil
 }
 
+// coreAuthSameOrigin reports whether a and b share scheme+host (case-insensitive).
+func coreAuthSameOrigin(a, b string) bool {
+	ua, err1 := url.Parse(a)
+
+	ub, err2 := url.Parse(b)
+	if err1 != nil || err2 != nil || ua.Scheme == "" || ua.Host == "" || ub.Scheme == "" || ub.Host == "" {
+		return false
+	}
+
+	return strings.EqualFold(ua.Scheme, ub.Scheme) && strings.EqualFold(ua.Host, ub.Host)
+}
+
+// coreAuthSafeRedirect returns candidate only when it is safe from open-redirect
+// abuse: a same-origin relative path ("/x" but not "//host") is always allowed,
+// and an absolute URL is allowed only when its origin matches the project's
+// configured app_base_url. Anything else yields "" so the caller renders a
+// default page rather than bouncing the user to an attacker host. Mirrors the
+// OAuth callback's redirect discipline (oauthSafeRedirect + stored target).
+func (a *pgCoreAuth) coreAuthSafeRedirect(ctx context.Context, projectID, candidate string) string {
+	candidate = strings.TrimSpace(candidate)
+	if candidate == "" {
+		return ""
+	}
+
+	if strings.HasPrefix(candidate, "/") && !strings.HasPrefix(candidate, "//") {
+		return candidate
+	}
+
+	auth, err := a.cfg.AuthConfig(ctx, projectID)
+	if err == nil && auth.AppBaseURL != "" && coreAuthSameOrigin(candidate, auth.AppBaseURL) {
+		return candidate
+	}
+
+	return ""
+}
+
 // VerifyEmailCallback consumes an opaque email-verification link token and
 // resolves the redirect target. Marking the account verified mirrors
 // VerifyEmail; no session cookie is minted here (the link flow defers to the
@@ -1981,9 +2017,13 @@ func (a *pgCoreAuth) VerifyEmailCallback(ctx context.Context, cmd domain.CoreAut
 			}
 		}
 
-		redirect := cmd.RedirectTo
+		// Open-redirect guard: the live ?redirect_to callback query param is
+		// attacker-controlled, and the stored value is validated too for defense
+		// in depth. Both must be same-origin-relative or match the project's
+		// app_base_url; otherwise no redirect is emitted.
+		redirect := a.coreAuthSafeRedirect(ctx, data.ProjectID, cmd.RedirectTo)
 		if redirect == "" {
-			redirect = data.RedirectTo
+			redirect = a.coreAuthSafeRedirect(ctx, data.ProjectID, data.RedirectTo)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
