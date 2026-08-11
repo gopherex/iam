@@ -34,6 +34,7 @@ func (a *pgAdminConfig) ListOAuthProviders(ctx context.Context, projectID string
 	out := make([]domain.AdminOAuthProvider, 0, len(rows))
 	for _, row := range rows {
 		var d oauthProviderData
+
 		_ = json.Unmarshal(row.Data, &d)
 
 		out = append(out, domain.AdminOAuthProvider{
@@ -90,10 +91,10 @@ func (a *pgAdminConfig) CreateOAuthProvider(ctx context.Context, projectID strin
 		p.ClientSecret = ""
 
 		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:      "config.oauth_provider_created",
-			ProjectID: projectID,
+			Type:        "config.oauth_provider_created",
+			ProjectID:   projectID,
 			AggregateID: id,
-			Payload:   map[string]any{"id": id, "provider": p.Provider},
+			Payload:     map[string]any{"id": id, "provider": p.Provider},
 		}); err != nil {
 			return domain.AdminOAuthProvider{}, err
 		}
@@ -112,6 +113,7 @@ func (a *pgAdminConfig) UpdateOAuthProvider(ctx context.Context, projectID, id s
 		}
 
 		var cur oauthProviderData
+
 		_ = json.Unmarshal(row.Data, &cur)
 
 		secret := cur.ClientSecret

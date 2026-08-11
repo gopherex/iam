@@ -1455,6 +1455,7 @@ func joinScopes(scopes []string) string {
 	out := ""
 
 	var outSb1304 strings.Builder
+
 	for i, s := range scopes {
 		if i > 0 {
 			outSb1304.WriteString(" ")
@@ -1462,6 +1463,7 @@ func joinScopes(scopes []string) string {
 
 		outSb1304.WriteString(s)
 	}
+
 	out += outSb1304.String()
 
 	return out

@@ -13,19 +13,19 @@ func TestIsBlockedWebhookIP(t *testing.T) {
 		ip      string
 		blocked bool
 	}{
-		{"169.254.169.254", true}, // cloud metadata (link-local)
-		{"10.0.0.1", true},        // RFC1918
-		{"172.16.5.4", true},      // RFC1918
-		{"192.168.1.1", true},     // RFC1918
-		{"100.64.0.1", true},      // CGNAT
-		{"0.0.0.0", true},         // unspecified
-		{"fe80::1", true},         // link-local v6
-		{"fc00::1", true},         // ULA v6
-		{"::", true},              // unspecified v6
-		{"8.8.8.8", false},        // public
-		{"1.1.1.1", false},        // public
-		{"127.0.0.1", false},      // loopback (dev escape hatch)
-		{"::1", false},            // loopback v6
+		{"169.254.169.254", true},       // cloud metadata (link-local)
+		{"10.0.0.1", true},              // RFC1918
+		{"172.16.5.4", true},            // RFC1918
+		{"192.168.1.1", true},           // RFC1918
+		{"100.64.0.1", true},            // CGNAT
+		{"0.0.0.0", true},               // unspecified
+		{"fe80::1", true},               // link-local v6
+		{"fc00::1", true},               // ULA v6
+		{"::", true},                    // unspecified v6
+		{"8.8.8.8", false},              // public
+		{"1.1.1.1", false},              // public
+		{"127.0.0.1", false},            // loopback (dev escape hatch)
+		{"::1", false},                  // loopback v6
 		{"2606:4700:4700::1111", false}, // public v6
 	}
 

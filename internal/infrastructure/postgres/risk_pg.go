@@ -49,6 +49,7 @@ func (a *pgRisk) ListRules(ctx context.Context, projectID string) ([]domain.Admi
 		}
 
 		var d riskRuleData
+
 		_ = json.Unmarshal(raw, &d)
 
 		out = append(out, domain.AdminRiskRule{ID: id, Name: d.Name, Condition: d.Condition, Action: d.Action, Enabled: enabled})
@@ -168,6 +169,7 @@ func (a *pgRisk) IsBlocked(ctx context.Context, projectID string, subjects ...st
 	}
 
 	var n int
+
 	err := a.db.Pool.QueryRow(ctx,
 		`SELECT count(*) FROM iam_blocks
 		 WHERE project_id = $1 AND subject = ANY($2) AND (expires_at IS NULL OR expires_at > now())`,

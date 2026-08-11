@@ -51,6 +51,7 @@ func (a *pgTestMode) Reset(ctx context.Context, projectID, env string) (int64, e
 
 		if testModeEnvScoped[table] {
 			query += ` AND environment = $2`
+
 			args = append(args, env)
 		}
 
@@ -152,6 +153,7 @@ func (a *pgTestMode) Messages(ctx context.Context, projectID, env, channel, to s
 		}
 
 		var payload map[string]any
+
 		_ = json.Unmarshal(raw, &payload)
 
 		msg := map[string]any{"type": typ, "payload": payload}

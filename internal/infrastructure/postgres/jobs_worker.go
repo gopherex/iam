@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -35,7 +36,7 @@ func (db *DB) RunJobsWorker(ctx context.Context, interval time.Duration, log *xl
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			for db.drainOneJob(ctx, log) { //nolint:revive // drain until empty
+			for db.drainOneJob(ctx, log) {
 			}
 		}
 	}
@@ -62,6 +63,7 @@ func (db *DB) drainOneJob(ctx context.Context, log *xlog.Logger) bool {
 	}
 
 	var d jobData
+
 	_ = json.Unmarshal(raw, &d)
 
 	var (
@@ -306,13 +308,16 @@ func specTime(spec map[string]any, key string) (time.Time, bool) {
 
 func condsJoin(conds []string) string {
 	out := ""
+
+	var outSb309 strings.Builder
 	for i, c := range conds {
 		if i > 0 {
-			out += " AND "
+			outSb309.WriteString(" AND ")
 		}
 
-		out += c
+		outSb309.WriteString(c)
 	}
+	out += outSb309.String()
 
 	return out
 }

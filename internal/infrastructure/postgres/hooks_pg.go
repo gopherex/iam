@@ -124,6 +124,7 @@ func (a *pgHooks) Update(ctx context.Context, projectID, id string, h domain.Adm
 	}
 
 	var cur hookData
+
 	_ = json.Unmarshal(row.Data, &cur)
 
 	if h.URL != "" {
@@ -143,6 +144,7 @@ func (a *pgHooks) Update(ctx context.Context, projectID, id string, h domain.Adm
 
 	rm := json.RawMessage(raw)
 	now := nowUTC()
+
 	typ := row.Type
 	if h.Type != "" {
 		typ = h.Type
@@ -182,6 +184,7 @@ func (a *pgHooks) Test(ctx context.Context, projectID, id string, payload []byte
 	}
 
 	var d hookData
+
 	_ = json.Unmarshal(row.Data, &d)
 
 	if len(payload) == 0 {
@@ -211,6 +214,7 @@ func (a *pgHooks) InvokeHooks(ctx context.Context, projectID, hookType string, p
 
 	for _, row := range rows {
 		var d hookData
+
 		_ = json.Unmarshal(row.Data, &d)
 
 		status, _, callErr := a.call(ctx, d, payload)
@@ -228,6 +232,7 @@ func (a *pgHooks) InvokeHooks(ctx context.Context, projectID, hookType string, p
 // transport error.
 func (a *pgHooks) call(ctx context.Context, d hookData, payload []byte) (int, string, error) {
 	timeout := time.Duration(clampHookTimeout(d.TimeoutMs)) * time.Millisecond
+
 	reqCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
@@ -242,6 +247,7 @@ func (a *pgHooks) call(ctx context.Context, d hookData, payload []byte) (int, st
 	}
 
 	ts := nowUTC().Unix()
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "gopherex-iam-hooks/1")
 	req.Header.Set("Webhook-Timestamp", strconv.FormatInt(ts, 10))
@@ -272,6 +278,7 @@ func clampHookTimeout(ms int) int {
 
 func hookToDomain(row *models.IamHook) domain.AdminHook {
 	var d hookData
+
 	_ = json.Unmarshal(row.Data, &d)
 
 	return domain.AdminHook{

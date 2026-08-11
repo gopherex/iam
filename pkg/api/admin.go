@@ -1187,6 +1187,7 @@ func decodeHookPatch(req oas.PatchV1ProjectsByProjectIdAdminHooksByIdReq) hookPa
 	}
 
 	var p hookPatch
+
 	_ = json.Unmarshal(raw, &p)
 
 	return p
@@ -1210,6 +1211,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.C
 	}
 
 	var payload []byte
+
 	if v, ok := req.Get(); ok {
 		if p, ok := v.Payload.Get(); ok {
 			m := make(map[string]json.RawMessage, len(p))

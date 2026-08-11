@@ -138,6 +138,7 @@ func (a *pgAudit) List(ctx context.Context, cmd domain.AuditLogListCmd) ([]domai
 	}
 
 	next := ""
+
 	if hasMore && len(out) > 0 {
 		last := out[len(out)-1]
 		next = encodeAuditCursor(last.At, last.ID)
