@@ -268,6 +268,17 @@ func run() error {
 			log.Error("outbox relay stopped", xlog.Error("err", err))
 		}
 	})
+	// Garbage collector: prune expired runtime rows (challenges, flows, auth /
+	// device / PAR codes, timed-out sessions and refresh tokens) that are only
+	// filtered read-side and would otherwise grow without bound.
+	sd.Go(func(ctx context.Context) {
+		db.RunGarbageCollector(ctx, 0, log.AppendName("gc"))
+	})
+	// Webhook retry: drain deliveries whose exponential backoff has elapsed
+	// (deliver() writes next_attempt_at; nothing consumed it before).
+	sd.Go(func(ctx context.Context) {
+		webhooks.RunRetryWorker(ctx, 0, log.AppendName("webhook-retry"))
+	})
 
 	if probeSrv != nil {
 		sd.Go(func(context.Context) {
