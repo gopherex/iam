@@ -24,7 +24,7 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 	projectID := newUUID()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls.Add(1)
-		lastSignature.Store(r.Header.Get("IAM-Webhook-Signature"))
+		lastSignature.Store(r.Header.Get("Webhook-Signature"))
 		var event domain.PublicEvent
 		if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
 			t.Errorf("decode event: %v", err)
@@ -32,7 +32,10 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 		if event.ID == "" || event.Version != 1 {
 			t.Errorf("bad event envelope: %+v", event)
 		}
-		if event.Type == domain.WebhookEventSessionRevoked {
+		// The Test webhook action delivers a synthetic {"test": true} payload with
+		// the event type being exercised; only assert the real session.revoked
+		// envelope emitted by PublishEvent.
+		if event.Type == domain.WebhookEventSessionRevoked && event.Data["test"] != true {
 			if event.Data["session_id"] == "" || event.Data["user_id"] == "" || event.Data["project_id"] != projectID {
 				t.Errorf("bad session.revoked data: %#v", event.Data)
 			}

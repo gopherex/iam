@@ -232,9 +232,11 @@ func TestSessionPolicyReuseDetectionOn(t *testing.T) {
 	if rec.count("token.reuse_detected") != 1 {
 		t.Errorf("token.reuse_detected emitted %d times, want 1", rec.count("token.reuse_detected"))
 	}
+	// Reuse detection revokes EVERY session the user holds: the one minted at
+	// registration plus A and B — three in total.
 	payloads := rec.sessionRevoked()
-	if len(payloads) != 2 {
-		t.Fatalf("session.revoked count = %d, want 2", len(payloads))
+	if len(payloads) != 3 {
+		t.Fatalf("session.revoked count = %d, want 3", len(payloads))
 	}
 	for _, payload := range payloads {
 		if payload.SessionID == "" || payload.UserID != acct.ID || payload.ProjectID != projectID {
