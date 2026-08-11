@@ -209,7 +209,23 @@ type coreAuthCredential struct {
 	Hash      string    `json:"hash"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	// Account-lockout state (password credential only): consecutive failed
+	// password attempts and, once the threshold is crossed, the time until which
+	// password login is refused.
+	FailedAttempts int       `json:"failed_attempts,omitempty"`
+	LockedUntil    time.Time `json:"locked_until,omitempty"`
 }
+
+const (
+	// coreAuthMaxLoginFailures is the consecutive wrong-password count that locks
+	// the password credential; coreAuthLockoutDuration is how long it stays
+	// locked. Deliberately moderate: high enough that a legitimate user fat-
+	// fingering a password is not locked out, low enough to throttle credential
+	// stuffing that slips past IP rate limiting. A short duration bounds the
+	// account-lockout DoS (an attacker deliberately locking a victim).
+	coreAuthMaxLoginFailures = 10
+	coreAuthLockoutDuration  = 15 * time.Minute
+)
 
 // coreAuthRefreshToken is the refresh-token aggregate stored in the
 // iam_refresh_tokens `data` jsonb envelope. The hash column mirrors Hash.
@@ -1046,6 +1062,48 @@ func (a *pgCoreAuth) coreAuthRevokeAllForUser(ctx context.Context, projectID, us
 	return nil
 }
 
+// coreAuthRecordLoginFailure increments the password credential's consecutive
+// failure counter and locks it once the threshold is reached. Best-effort: a
+// persistence error must not turn a wrong password into a 500, so it is
+// swallowed (the worst case is one un-counted attempt). MUST run in the caller's
+// transaction.
+func (a *pgCoreAuth) coreAuthRecordLoginFailure(ctx context.Context, cred *models.IamCredential, data coreAuthCredential) {
+	data.FailedAttempts++
+	if data.FailedAttempts >= coreAuthMaxLoginFailures {
+		data.LockedUntil = nowUTC().Add(coreAuthLockoutDuration)
+		data.FailedAttempts = 0
+	}
+
+	_ = a.coreAuthPersistCredentialLock(ctx, cred, data)
+}
+
+// coreAuthClearLoginFailures resets the failure counter and lock after a
+// successful password verification. Best-effort.
+func (a *pgCoreAuth) coreAuthClearLoginFailures(ctx context.Context, cred *models.IamCredential, data coreAuthCredential) {
+	data.FailedAttempts = 0
+	data.LockedUntil = time.Time{}
+	_ = a.coreAuthPersistCredentialLock(ctx, cred, data)
+}
+
+// coreAuthPersistCredentialLock writes the lockout state on the pool directly
+// (not the ambient transaction). AuthenticatePassword runs inside withTxRet and
+// returns an error on a wrong password, which rolls that transaction back — so a
+// failure increment committed through the ambient tx would be discarded and the
+// counter could never advance. An independent auto-commit statement survives the
+// rollback. The read-modify-write can lose a concurrent increment, which only
+// means marginally more attempts before the lock, never a missed lock.
+func (a *pgCoreAuth) coreAuthPersistCredentialLock(ctx context.Context, cred *models.IamCredential, data coreAuthCredential) error {
+	raw, err := marshal(data)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.db.Pool.Exec(ctx,
+		`UPDATE iam_credentials SET data = $1, updated_at = now() WHERE id = $2`, raw, cred.ID)
+
+	return err
+}
+
 // coreAuthMarkRefreshRevoked flips a refresh-token row's revoked flag (column +
 // envelope). MUST run inside an open transaction.
 func (a *pgCoreAuth) coreAuthMarkRefreshRevoked(ctx context.Context, row *models.IamRefreshToken) error {
@@ -1286,8 +1344,26 @@ func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email,
 			return nil, err
 		}
 
+		var credData coreAuthCredential
+		if len(cred.Data) > 0 {
+			_ = unmarshal(cred.Data, &credData)
+		}
+
+		// Account lockout: while locked, refuse without testing the password so a
+		// distributed guessing attack cannot keep probing this account.
+		if credData.LockedUntil.After(nowUTC()) {
+			return nil, domain.ErrAccountLocked
+		}
+
 		if !coreAuthCheckPassword(cred.Secret, password) {
+			a.coreAuthRecordLoginFailure(ctx, cred, credData)
+
 			return nil, domain.ErrInvalidCredentials
+		}
+
+		// Correct password clears any accumulated failure/lock state.
+		if credData.FailedAttempts > 0 || !credData.LockedUntil.IsZero() {
+			a.coreAuthClearLoginFailures(ctx, cred, credData)
 		}
 
 		if err := coreAuthAccountActive(acc); err != nil {
