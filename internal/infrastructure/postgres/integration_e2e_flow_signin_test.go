@@ -435,3 +435,65 @@ func TestE2EFlowSigninSwitchMethod(t *testing.T) {
 		t.Fatal("session not minted after switched phone OTP verify")
 	}
 }
+
+// ─── security: switch_method must not bypass MFA ──────────────────────────────
+
+// TestE2EFlowSigninSwitchMethodRejectedAtMFA is the regression guard for the
+// MFA-bypass hole: at mfa_required the password has been verified and a second
+// factor is required, so switch_method (which re-issues a FIRST-factor method)
+// must be rejected. Otherwise an attacker with the password plus the account's
+// email could swap the required TOTP/email-factor challenge for a magic_link
+// and complete an AAL1 session without ever proving the second factor.
+func TestE2EFlowSigninSwitchMethodRejectedAtMFA(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID := e2eProject(t, ctx)
+	email := fmt.Sprintf("flow-signin-switchmfa-%s@example.com", newUUID()[:8])
+
+	// Account with password + an active email MFA factor.
+	acct, _ := registerUser(t, ctx, projectID, email)
+	e2eActiveEmailFactor(t, ctx, projectID, acct.ID, email)
+
+	// 1. Password sign-in gates at mfa_required.
+	fs, r := flowCreate(t, ctx, ts, projectID, map[string]any{
+		"kind":     "signin",
+		"email":    email,
+		"password": "Sup3rStr0ng!Pass",
+	})
+	e2eWantStatus(t, r, http.StatusOK)
+	if fs.Step != "mfa_required" {
+		t.Fatalf("step = %q, want mfa_required", fs.Step)
+	}
+	token := fs.FlowToken
+
+	// 2. mfa_required must NOT advertise switch_method as a next action.
+	for _, a := range fs.NextActions {
+		if a == "switch_method" {
+			t.Fatal("mfa_required advertises switch_method — MFA bypass surface")
+		}
+	}
+
+	// 3. Attempt to swap the second factor for a first-factor magic_link. The
+	//    account's email is on file, so without the gate this would proceed to
+	//    verify_email and complete an AAL1 session. It must be rejected.
+	fs2, r2 := flowSubmit(t, ctx, ts, projectID, token, "switch_method", map[string]any{
+		"method": "magic_link",
+	})
+	e2eWantStatus(t, r2, http.StatusBadRequest)
+	if fs2.Session != nil {
+		t.Fatal("switch_method at mfa_required minted a session — MFA bypassed")
+	}
+
+	// 4. The flow is still pending at mfa_required; the legitimate path (verify
+	//    the enrolled factor) still works.
+	challengeID := findFlowChallengeID(t, ctx, token)
+	code := captureCode(challengeID)
+	if code == "" {
+		t.Fatal("no MFA code captured after rejected switch_method")
+	}
+	fs3, r3 := flowSubmit(t, ctx, ts, projectID, token, "mfa", map[string]any{"code": code})
+	e2eWantStatus(t, r3, http.StatusOK)
+	if fs3.Status != "completed" || fs3.Session == nil || fs3.Session.AccessToken == "" {
+		t.Fatal("legitimate MFA verify did not complete after rejected switch_method")
+	}
+}

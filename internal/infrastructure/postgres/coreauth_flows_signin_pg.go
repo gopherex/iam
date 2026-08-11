@@ -253,7 +253,10 @@ func (a *pgCoreAuthFlows) createSigninPassword(ctx context.Context, f *domain.Fl
 	now := nowUTC()
 	f.UserID = result.Account.ID
 	f.Step = domain.FlowStepMFARequired
-	f.AvailableMethods = a.signinAvailableMethods(ctx, result.Account, result.Factors)
+	// AvailableMethods stays empty at mfa_required: the only valid progression
+	// is verifying an enrolled second factor. Offering first-factor alternates
+	// (magic_link/phone_otp) here is exactly the switch_method MFA bypass.
+	f.AvailableMethods = nil
 	f.ActiveChallenge = &domain.FlowActiveChallenge{
 		ChallengeID:  ch.ID,
 		Channel:      ch.Type, // "email" | "totp" | "webauthn" | "sms"
@@ -380,9 +383,16 @@ func (a *pgCoreAuthFlows) signinAvailableMethods(_ context.Context, acc *domain.
 
 // advanceSignin is the flowAdvanceFn for SIGNIN.
 func advanceSignin(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
-	// switch_method is valid at any pending signin step: re-issue an alternate
-	// method's challenge in place (no rotation).
+	// switch_method re-issues an alternate FIRST-FACTOR method's challenge in
+	// place (no rotation). It is never valid at mfa_required: the required
+	// second factor must not be swappable for a first-factor method, or MFA is
+	// defeated by anyone holding the password plus the alternate channel.
 	if cmd.Action == "switch_method" {
+		if f.Step == domain.FlowStepMFARequired {
+			return nil, domain.ErrBadRequest.WithMessage(
+				"cannot switch method at mfa_required: complete an enrolled second factor")
+		}
+
 		return a.signinSwitchMethod(ctx, row, f, cmd)
 	}
 
@@ -556,10 +566,12 @@ func (a *pgCoreAuthFlows) signinVerifyMagicLink(ctx context.Context, row *models
 	return a.signinCompleteWithSession(ctx, row, f, sess)
 }
 
-// signinSwitchMethod re-issues a different method's challenge in place: it
-// overwrites ActiveChallenge and the active method, then persists with flowSave
-// (no rotation — switching does not grant privilege). The requested method must
-// be one of the flow's AvailableMethods (or the empty default password).
+// signinSwitchMethod re-issues a different FIRST-FACTOR method's challenge in
+// place: it overwrites ActiveChallenge and the active method, then persists with
+// flowSave (no rotation — switching does not grant privilege). Only the
+// passwordless first-factor methods (phone_otp, magic_link) can be switched to;
+// the caller (advanceSignin) has already rejected switch_method at mfa_required,
+// so this never swaps a required second factor.
 func (a *pgCoreAuthFlows) signinSwitchMethod(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
 	method := cmd.Payload["method"]
 	if method == "" {
