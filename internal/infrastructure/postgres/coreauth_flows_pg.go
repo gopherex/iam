@@ -381,6 +381,13 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 			return nil, err
 		}
 	}
+	// Manual rate-limit blocks: refuse the flow when the caller's IP or the
+	// target email/phone matches an unexpired admin block. No-op when the project
+	// has no blocks.
+	meta := domain.RequestMetaFromContext(ctx)
+	if blocked, err := NewPgRisk(a.db, a.emitter).IsBlocked(ctx, cmd.ProjectID, meta.IP, cmd.Email, cmd.Phone); err == nil && blocked {
+		return nil, domain.ErrForbidden.WithMessage("blocked")
+	}
 
 	now := nowUTC()
 	f := &domain.Flow{

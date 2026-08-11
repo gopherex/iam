@@ -192,6 +192,19 @@ type AdminDeps struct {
 	Audit           AdminAudit
 	Jobs            AdminJobs
 	Hooks           AdminHooks
+	Risk            AdminRisk
+}
+
+// AdminRisk manages declarative risk rules, risk events, and manual rate-limit
+// blocks.
+type AdminRisk interface {
+	ListRules(ctx context.Context, projectID string) ([]domain.AdminRiskRule, error)
+	CreateRule(ctx context.Context, projectID string, r domain.AdminRiskRule) (domain.AdminRiskRule, error)
+	UpdateRule(ctx context.Context, projectID, id string, r domain.AdminRiskRule) (domain.AdminRiskRule, error)
+	DeleteRule(ctx context.Context, projectID, id string) error
+	CreateBlock(ctx context.Context, projectID, env string, b domain.AdminBlock) (domain.AdminBlock, error)
+	DeleteBlock(ctx context.Context, projectID, id string) error
+	ListEvents(ctx context.Context, projectID string) ([]map[string]any, error)
 }
 
 // AdminHooks manages blocking auth hooks (signed HTTP callbacks at auth decision
@@ -814,6 +827,142 @@ func oasAuditLog(e domain.AuditLogEntry) oas.AuditLog {
 	}
 
 	return out
+}
+
+func oasRiskRule(r domain.AdminRiskRule) oas.RiskRule {
+	out := oas.RiskRule{
+		ID:        oas.NewOptString(r.ID),
+		Name:      r.Name,
+		Condition: oas.NewOptString(r.Condition),
+		Enabled:   oas.NewOptBool(r.Enabled),
+	}
+
+	var act oas.RiskRuleAction
+	if err := act.UnmarshalText([]byte(r.Action)); err == nil {
+		out.Action = oas.NewOptRiskRuleAction(act)
+	}
+
+	return out
+}
+
+func riskRuleFromReq(req *oas.RiskRule) domain.AdminRiskRule {
+	return domain.AdminRiskRule{
+		ID: req.ID.Or(""), Name: req.Name, Condition: req.Condition.Or(""),
+		Action: string(req.Action.Or("")), Enabled: req.Enabled.Or(true),
+	}
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminRiskRulesParams) (*oas.GetV1ProjectsByProjectIdAdminRiskRulesOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	rules, err := s.deps.Risk.ListRules(ctx, params.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]oas.RiskRule, 0, len(rules))
+	for i := range rules {
+		data = append(data, oasRiskRule(rules[i]))
+	}
+
+	return &oas.GetV1ProjectsByProjectIdAdminRiskRulesOK{Data: data, HasMore: oas.NewOptBool(false)}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, req *oas.RiskRule, params oas.PostV1ProjectsByProjectIdAdminRiskRulesParams) (*oas.RiskRule, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	created, err := s.deps.Risk.CreateRule(ctx, params.ProjectID, riskRuleFromReq(req))
+	if err != nil {
+		return nil, err
+	}
+
+	out := oasRiskRule(created)
+
+	return &out, nil
+}
+
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, req *oas.RiskRule, params oas.PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams) (*oas.RiskRule, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	updated, err := s.deps.Risk.UpdateRule(ctx, params.ProjectID, params.RuleID, riskRuleFromReq(req))
+	if err != nil {
+		return nil, err
+	}
+
+	out := oasRiskRule(updated)
+
+	return &out, nil
+}
+
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams) (*oas.Ok, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	if err := s.deps.Risk.DeleteRule(ctx, params.ProjectID, params.RuleID); err != nil {
+		return nil, err
+	}
+
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminRiskEventsParams) (oas.GetV1ProjectsByProjectIdAdminRiskEventsOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	events, err := s.deps.Risk.ListEvents(ctx, params.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, _ := json.Marshal(map[string]any{"data": events, "has_more": false})
+
+	out := oas.GetV1ProjectsByProjectIdAdminRiskEventsOK{}
+	_ = out.UnmarshalJSON(raw)
+
+	return out, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminRateLimitBlocksReq, params oas.PostV1ProjectsByProjectIdAdminRateLimitBlocksParams) (oas.PostV1ProjectsByProjectIdAdminRateLimitBlocksOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	b := domain.AdminBlock{Type: string(req.Type), Value: req.Value, Reason: req.Reason.Or("")}
+	if v, ok := req.ExpiresAt.Get(); ok {
+		b.ExpiresAt = v
+	}
+
+	created, err := s.deps.Risk.CreateBlock(ctx, params.ProjectID, params.XEnvironment.Or(""), b)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, _ := json.Marshal(map[string]any{"id": created.ID, "type": created.Type, "value": created.Value})
+
+	out := oas.PostV1ProjectsByProjectIdAdminRateLimitBlocksOK{}
+	_ = out.UnmarshalJSON(raw)
+
+	return out, nil
+}
+
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams) (*oas.Ok, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	if err := s.deps.Risk.DeleteBlock(ctx, params.ProjectID, params.BlockID); err != nil {
+		return nil, err
+	}
+
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
 func oasHook(h domain.AdminHook) oas.Hook {

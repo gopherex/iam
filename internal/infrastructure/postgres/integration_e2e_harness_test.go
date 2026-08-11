@@ -153,6 +153,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 			Audit:           NewPgAudit(testDB, em),
 			Jobs:            NewPgJobs(testDB, em),
 			Hooks:           NewPgHooks(testDB, em),
+			Risk:            NewPgRisk(testDB, em),
 		})),
 		api.WithOperator(api.NewOperatorService(api.OperatorDeps{
 			Projects: NewPgOperator(testDB, em),
