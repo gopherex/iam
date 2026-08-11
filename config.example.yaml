@@ -18,15 +18,16 @@ service:
     read_timeout_sec: 15
     write_timeout_sec: 30
     shutdown_sec: 15
+    trusted_proxies: []       # CIDRs/IPs of reverse proxies to trust for X-Forwarded-For/X-Real-IP. Empty = ignore forwarding headers and use the real TCP peer, so clients cannot spoof their IP to bypass IP-keyed rate limits. Set this to your LB/ingress network when behind a proxy. (SERVICE_HTTP_TRUSTED_PROXIES)
   logger:
     level: info               # debug | info | warn | error
     format: json              # json | text
   cors:
     allowed_origins: []
   auth:
-    default_environment: live
-    access_ttl_sec: 1800      # 30m
-    refresh_ttl_sec: 2592000  # 30d
+    # NOTE: token TTLs and the acting environment are NOT set here — access /
+    # refresh TTLs come from each project's session_policy config doc, and the
+    # environment is chosen per request via the X-Environment header.
     master_key: ""            # operator master-key credential; empty disables the masterKey scheme (set via MASTER_KEY)
     encryption_key: ""        # REQUIRED: base64 32-byte AES-256 key; encrypts reversible secrets at rest. Service refuses to start without it. (SERVICE_AUTH_ENCRYPTION_KEY)
     seed_root: false          # dev: ensure a "Root" project exists on startup so the operator (master_key) has something to manage (SERVICE_AUTH_SEED_ROOT)

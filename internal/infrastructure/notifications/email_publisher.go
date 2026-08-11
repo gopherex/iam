@@ -139,6 +139,15 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 
 	provider, err := p.smtpProvider(ctx, ev.ProjectID)
 	if err != nil {
+		if errors.Is(err, errNoSMTPProvider) {
+			// Fail soft: ack and drop rather than retrying forever. A project with
+			// no SMTP provider configured must not wedge the outbox.
+			p.log.Warn("email skipped: no enabled smtp provider for project",
+				xlog.String("event", ev.Type), xlog.String("project_id", ev.ProjectID))
+
+			return nil
+		}
+
 		return err
 	}
 
@@ -500,8 +509,14 @@ func (p *Publisher) smtpProvider(ctx context.Context, projectID string) (*smtpCo
 		return cfg, nil
 	}
 
-	return nil, errors.New("notifications: enabled smtp provider is required")
+	return nil, errNoSMTPProvider
 }
+
+// errNoSMTPProvider signals the fail-soft "no enabled smtp provider" case, so
+// publishOne acks and drops the message instead of retrying forever (mirrors the
+// SMS errNoSMSProvider behavior). A project that has not configured SMTP should
+// not wedge the outbox on every verification email.
+var errNoSMTPProvider = errors.New("notifications: no enabled smtp provider")
 
 func (p *Publisher) decodeSMTPConfig(raw map[string]json.RawMessage) (*smtpConfig, error) {
 	cfg := &smtpConfig{

@@ -65,10 +65,17 @@ services:
       # Empty means no browser origins. Use "*" or a comma-separated list.
       IAM_SERVICE_CORS_ALLOWED_ORIGINS: ${IAM_SERVICE_CORS_ALLOWED_ORIGINS:-}
 
+      # Reverse-proxy networks to trust for X-Forwarded-For (empty = use the real
+      # TCP peer; set to your LB/ingress CIDR in production behind a proxy).
+      IAM_SERVICE_HTTP_TRUSTED_PROXIES: ${IAM_SERVICE_HTTP_TRUSTED_PROXIES:-}
+
       # IAM server config: service.auth.*
-      IAM_SERVICE_AUTH_DEFAULT_ENVIRONMENT: ${IAM_SERVICE_AUTH_DEFAULT_ENVIRONMENT:-live}
-      IAM_SERVICE_AUTH_ACCESS_TTL_SEC: ${IAM_SERVICE_AUTH_ACCESS_TTL_SEC:-600}
-      IAM_SERVICE_AUTH_REFRESH_TTL_SEC: ${IAM_SERVICE_AUTH_REFRESH_TTL_SEC:-2592000}
+      # ┌─────────────────────────────────────────────────────────────────────┐
+      # │ DEV ONLY — the defaults below (master key "dev", a committed AES key)│
+      # │ are for `docker compose up` on localhost. NEVER use them in a shared │
+      # │ or production environment: override every value via IAM_* env vars   │
+      # │ and supply a real, secret encryption_key and master_key.             │
+      # └─────────────────────────────────────────────────────────────────────┘
       # Dev: seed a Root project and sign in with this master key.
       IAM_SERVICE_AUTH_MASTER_KEY: ${IAM_SERVICE_AUTH_MASTER_KEY:-dev}
       # Dev-only fallback key: base64("0123456789abcdef0123456789abcdef").

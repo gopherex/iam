@@ -59,10 +59,14 @@ type CORS struct {
 
 // Auth holds IAM token/issuer defaults applied when an environment does not
 // override them.
+//
+// Token lifetimes and the acting environment are NOT configured here: access /
+// refresh TTLs come from each project's session_policy config doc (env-scoped),
+// and the runtime environment is selected per request by the X-Environment
+// header. Server-level access_ttl_sec / refresh_ttl_sec / default_environment
+// keys were removed because they were silently ignored (a footgun for operators
+// who set them expecting an effect).
 type Auth struct {
-	DefaultEnvironment string `default:"live"    mapstructure:"default_environment" validate:"required"`
-	AccessTTLSec       int    `default:"600"     mapstructure:"access_ttl_sec"      validate:"min=60"`
-	RefreshTTLSec      int    `default:"2592000" mapstructure:"refresh_ttl_sec"     validate:"min=60"`
 	// MasterKey is the platform operator (master-key) credential. When empty the
 	// masterKey security scheme rejects every request — operator endpoints are
 	// disabled until a key is configured (set via MASTER_KEY / service.auth.master_key).
