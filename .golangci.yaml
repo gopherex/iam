@@ -1,0 +1,356 @@
+version: "2"
+run:
+  go: "1.26"
+output:
+  formats:
+    text:
+      path: stdout
+  sort-order:
+    - linter
+    - severity
+    - file
+linters:
+  default: none
+  enable:
+    - asasalint
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - cyclop
+    - decorder
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - err113
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - fatcontext
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - gocheckcompilerdirectives
+    - gochecknoglobals
+    - gochecknoinits
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - godox
+    - gomoddirectives
+    - goprintffuncname
+    - gosec
+    - gosmopolitan
+    - govet
+    - grouper
+    - inamedparam
+    - ineffassign
+    - interfacebloat
+    - intrange
+    - ireturn
+    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - mnd
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
+    - perfsprint
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - tagalign
+    - tagliatelle
+    - testableexamples
+    - testifylint
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - varnamelen
+    - wastedassign
+    - whitespace
+    - wrapcheck
+    - wsl_v5
+  settings:
+    errcheck:
+      check-type-assertions: true
+    wrapcheck:
+      ignore-sigs:
+        - .Errorf(
+        - errors.New(
+        - errors.Unwrap(
+        - errors.Join(
+        - .Wrap(
+        - .Wrapf(
+        - .WithMessage(
+        - .WithMessagef(
+        - .WithStack(
+        # A cancelled context is the caller's own doing. "store: context
+        # canceled" tells them something they already know.
+        - ctx.Err(
+      ignore-package-globs:
+        # This module's own errors already carry this module's vocabulary.
+        # An error from our own port has a name we chose and a package that
+        # says where it came from; wrapping it again produces
+        # "flow: flow: not found" — noise that buries the real prefix.
+        # Whole module rather than a list so it can't go silently stale.
+        - github.com/gopherex/iam/*
+      ignore-interface-regexps:
+        # A guard, a session, a cache: each is a wrapper whose whole job is
+        # to pass through what it wraps. An error decorated on the way out
+        # of one says only that it went through, which the caller knows.
+        - ^github\.com/gopherex/iam/
+    exhaustive:
+      # maps here are partial by design (message templates, format
+      # extensions); only switches must be exhaustive.
+      check:
+        - switch
+      default-signifies-exhaustive: true
+    cyclop:
+      max-complexity: 15
+    funlen:
+      lines: 75
+    gocognit:
+      min-complexity: 30
+    gocritic:
+      disabled-checks:
+        - dupImport
+        - octalLiteral
+        # Domain types here are immutable and passed by value on purpose.
+        # The decisive reason is nil: a pointer can be one, so every method
+        # would have to tolerate it and every caller remember — while a
+        # value's zero is safe, composes as a map key, and compares with ==.
+        - hugeParam
+        - whyNoLint
+        # contradicts nonamedreturns, which we keep
+        - unnamedResult
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+        - experimental
+        - opinionated
+      settings:
+        captLocal:
+          paramsOnly: false
+        underef:
+          skipRecvDeref: false
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+      settings:
+        shadow:
+          strict: true
+    ireturn:
+      allow:
+        - anon
+        - error
+        - empty
+        - stdlib
+        - generic
+        # Adapters legitimately return the ports they implement; the ports
+        # live beside the domain they belong to.
+        - github.com/gopherex/iam/internal/domain
+        - github.com/gopherex/iam/pkg/api
+        # The ogen-generated server contract is an interface with no
+        # concrete type: an accessor handing one back hands back exactly
+        # what the generated code defines.
+        - github.com/gopherex/iam/internal/oas
+        # A probe and a reporter are the health library's own ports.
+        - github.com/gopherex/xprobe
+    mnd:
+      ignored-functions:
+        - cobra.ExactArgs
+        - cobra.MaximumNArgs
+        - cobra.MinimumNArgs
+        - cobra.RangeArgs
+    lll:
+      line-length: 120
+    revive:
+      rules:
+        # This codebase writes Id, not ID — a convention held everywhere is
+        # worth more than the one Go started with and never applied to its
+        # own url.URL. Everything else revive checks stays on.
+        - name: var-naming
+          disabled: true
+    misspell:
+      locale: US
+      ignore-rules:
+        - cancelled
+    nakedret:
+      max-func-lines: 0
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-no-explanation:
+        - funlen
+        - gocognit
+        - lll
+      allow-unused: false
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
+    varnamelen:
+      max-distance: 5
+      min-name-length: 3
+      check-receiver: false
+      check-return: false
+      check-type-param: false
+      ignore-names:
+        - err
+        - tx
+        - id
+        - ok
+        - db
+        - w
+        - r
+        - f
+        - s
+        - k
+        - v
+        - m
+        - b
+        - l
+        - o
+        - t
+        - c
+        - e
+        - i
+        - n
+        - a
+        - p
+        - x
+        - to
+        - ns
+        - ch
+        - vs
+        - it
+        - re
+        - st
+        - en
+        - ts
+        - in
+        - aal
+        - amr
+        - sid
+        - jwt
+        - kid
+        - otp
+      ignore-decls:
+        - t testing.T
+        - e error
+        - i int
+        - const C
+        - T any
+        - m map[string]int
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - lll
+        source: ^//\s*go:generate\s
+      - linters:
+          - godot
+        source: (noinspection|TODO)
+      - linters:
+          - gocritic
+        source: //noinspection
+      # Test code: style linters that are about production code being read
+      # for years do not apply to fixtures read while written and when they
+      # fail; the numbers in a test are the test, not magic.
+      - linters:
+          - bodyclose
+          - containedctx
+          - dupl
+          - err113
+          - errcheck
+          - forcetypeassert
+          - funlen
+          - goconst
+          - gosec
+          - noctx
+          - wrapcheck
+          - gochecknoglobals
+          - cyclop
+          - gocognit
+          - lll
+          - maintidx
+          - ireturn
+          - gocritic
+          - mnd
+          - prealloc
+          - unparam
+          - contextcheck
+          - varnamelen
+          - dupword
+        path: _test\.go
+      - linters:
+          - govet
+        text: 'shadow: declaration of "(err|ctx)" shadows declaration at'
+      # A command's error is printed to the person who ran it, already
+      # prefixed with the binary name. A second prefix naming the function
+      # that returned it is noise where the words matter most.
+      - linters:
+          - wrapcheck
+        path: ^cmd/
+    paths:
+      - third_party$
+      - builtin$
+issues:
+  max-same-issues: 50
+formatters:
+  enable:
+    - gci
+    - gofumpt
+    - goimports
+  settings:
+    gofumpt:
+      module-path: github.com/gopherex/iam
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/gopherex/iam)
+        - localmodule
+      custom-order: true
+  exclusions:
+    generated: lax
