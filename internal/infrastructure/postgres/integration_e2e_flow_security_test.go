@@ -701,3 +701,15 @@ func TestE2EFlowCaptchaEnforced(t *testing.T) {
 		map[string]string{"X-Client-Id": projectID, "X-Environment": "live"})
 	e2eWantStatus(t, rSignup, http.StatusForbidden)
 }
+
+// TestE2EFlowEmailChangeRejected verifies email_change is refused at flow create
+// (it is a post-auth action on /v1/auth/email/change/*, not a resumable-flow
+// kind) rather than creating a flow that only fails at the first submit.
+func TestE2EFlowEmailChangeRejected(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID := e2eProject(t, ctx)
+
+	_, r := flowCreate(t, ctx, ts, projectID, map[string]any{"kind": "email_change", "email": "x@example.com"})
+	e2eWantStatus(t, r, http.StatusBadRequest)
+}

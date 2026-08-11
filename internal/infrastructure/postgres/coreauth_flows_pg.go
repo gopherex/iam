@@ -368,6 +368,14 @@ var flowCreators = map[domain.FlowKind]flowCreateFn{
 }
 
 func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+	// email_change is a post-authentication action, not a public resumable-flow
+	// kind: it belongs on /v1/auth/email/change/*. Reject it up front with a
+	// clear 400 rather than creating a flow that only fails at the first submit.
+	if cmd.Kind == domain.FlowKindEmailChange {
+		return nil, domain.ErrBadRequest.WithMessage(
+			"email_change is not a resumable-flow kind; use the /v1/auth/email/change endpoints")
+	}
+
 	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID, coreAuthDefaultEnv)
 	if err != nil {
 		return nil, err

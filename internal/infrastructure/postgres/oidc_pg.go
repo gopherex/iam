@@ -640,9 +640,9 @@ func (a *pgOIDCGrants) BackchannelLogout(ctx context.Context, cmd domain.OIDCBac
 
 // ===== token endpoint family =====
 
-// Token dispatches an /oauth2/token request. Code/refresh-token validation
-// looks up the persisted hashes; the access/id-token MINTING + SIGNING is left
-// to the token subsystem (returns an opaque placeholder here).
+// Token dispatches an /oauth2/token request. Code/refresh-token validation looks
+// up the persisted hashes; mintTokenResponse then mints real RS256-signed access,
+// id and (for offline_access) refresh tokens via the project Signer.
 func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[string]any, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]any, error) {
 		switch cmd.GrantType {
