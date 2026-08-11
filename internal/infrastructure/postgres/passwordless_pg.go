@@ -338,6 +338,20 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 	return ch, nil
 }
 
+// VerifyMagicLinkCallback consumes the token and, in addition to the account +
+// session, returns a redirect target sanitized against the project's app_base_url
+// (open-redirect safe) for the browser GET callback leg.
+func (a *pgPasswordlessAccounts) VerifyMagicLinkCallback(ctx context.Context, token, redirectTo string) (*domain.Account, *domain.Session, string, error) {
+	acct, sess, err := a.VerifyMagicLink(ctx, token)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	safe := a.core.coreAuthSafeRedirect(ctx, sess.ProjectID, redirectTo)
+
+	return acct, sess, safe, nil
+}
+
 func (a *pgPasswordlessAccounts) VerifyMagicLink(ctx context.Context, token string) (*domain.Account, *domain.Session, error) {
 	if token == "" {
 		return nil, nil, domain.ErrInvalidToken

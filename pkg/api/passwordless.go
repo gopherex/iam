@@ -10,16 +10,25 @@ package api
 
 import (
 	"context"
+	"time"
 
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
 )
+
+// magicLinkRefreshCookieTTL bounds the refresh cookie set by the magic-link
+// callback; the access cookie uses the session's own TTL.
+const magicLinkRefreshCookieTTL = 30 * 24 * time.Hour
 
 type PasswordlessAccounts interface {
 	StartOTP(ctx context.Context, projectID, identifier, channel, purpose, locale string) (*domain.Challenge, error)
 	VerifyOTP(ctx context.Context, challengeID, code string) (*domain.Account, *domain.Session, error)
 	StartMagicLink(ctx context.Context, projectID, email, redirectTo, locale string) (*domain.Challenge, error)
 	VerifyMagicLink(ctx context.Context, token string) (*domain.Account, *domain.Session, error)
+	// VerifyMagicLinkCallback consumes the link token like VerifyMagicLink and
+	// additionally returns a redirect target sanitized against the project's
+	// app_base_url (open-redirect safe), for the browser GET callback leg.
+	VerifyMagicLinkCallback(ctx context.Context, token, redirectTo string) (*domain.Account, *domain.Session, string, error)
 }
 
 type PasswordlessDeps struct{ Accounts PasswordlessAccounts }
@@ -71,4 +80,21 @@ func (s *PasswordlessService) PostV1AuthMagicLinkVerify(ctx context.Context, req
 	}
 
 	return authResult(acct, sess), nil
+}
+
+// GetV1AuthMagicLinkCallback is the browser GET leg of a magic link: it consumes
+// the token, mints a session, sets the session cookies and redirects the browser
+// to the (sanitized) target. Mirrors the email-verification callback.
+func (s *PasswordlessService) GetV1AuthMagicLinkCallback(ctx context.Context, params oas.GetV1AuthMagicLinkCallbackParams) (*oas.GetV1AuthMagicLinkCallbackFound, error) {
+	_, sess, redirect, err := s.deps.Accounts.VerifyMagicLinkCallback(ctx, params.Token, params.RedirectTo.Or(""))
+	if err != nil {
+		return nil, err
+	}
+
+	out := &oas.GetV1AuthMagicLinkCallbackFound{Location: optURI(redirect)}
+	out.SetCookie = SessionCookies(
+		sess.AccessToken, sess.RefreshToken,
+		time.Duration(sess.ExpiresIn)*time.Second, magicLinkRefreshCookieTTL)
+
+	return out, nil
 }
