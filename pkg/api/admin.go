@@ -190,6 +190,17 @@ type AdminDeps struct {
 	Webhooks        AdminWebhooks
 	Grants          AdminGrants
 	Audit           AdminAudit
+	Jobs            AdminJobs
+}
+
+// AdminJobs manages async background jobs (bulk import, exports) and verifies
+// imported password hashes.
+type AdminJobs interface {
+	List(ctx context.Context, projectID string, limit int) ([]domain.AdminJob, error)
+	Get(ctx context.Context, projectID, id string) (*domain.AdminJob, error)
+	Cancel(ctx context.Context, projectID, id string) error
+	CreateImportUsers(ctx context.Context, projectID string, users []map[string]jx.Raw, format string, sendInvites bool) (jobID string, status string, err error)
+	VerifyPasswordHash(hash, password, format string) (bool, error)
 }
 
 // AdminAudit reads the tenant audit log and enqueues export jobs.
@@ -791,6 +802,133 @@ func oasAuditLog(e domain.AuditLogEntry) oas.AuditLog {
 	}
 
 	return out
+}
+
+func oasJob(j domain.AdminJob) oas.Job {
+	out := oas.Job{
+		ID:       oas.NewOptString(j.ID),
+		Type:     oas.NewOptString(j.Type),
+		Progress: oas.NewOptJobProgress(oas.JobProgress{Processed: oas.NewOptInt(j.Progress)}),
+	}
+
+	var st oas.JobStatus
+	if err := st.UnmarshalText([]byte(jobAPIStatus(j.Status))); err == nil {
+		out.Status = oas.NewOptJobStatus(st)
+	}
+
+	return out
+}
+
+// jobAPIStatus maps the internal "pending" status onto the API's "running"
+// (queued and in-progress both read as running to the client).
+func jobAPIStatus(s string) string {
+	if s == "pending" {
+		return "running"
+	}
+
+	return s
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminJobs(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminJobsParams) (*oas.GetV1ProjectsByProjectIdAdminJobsOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	jobs, err := s.deps.Jobs.List(ctx, params.ProjectID, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]oas.Job, 0, len(jobs))
+	for i := range jobs {
+		data = append(data, oasJob(jobs[i]))
+	}
+
+	return &oas.GetV1ProjectsByProjectIdAdminJobsOK{Data: data, HasMore: oas.NewOptBool(false)}, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminJobsByJobIdParams) (*oas.GetV1ProjectsByProjectIdAdminJobsByJobIdOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	job, err := s.deps.Jobs.Get(ctx, params.ProjectID, params.JobID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &oas.GetV1ProjectsByProjectIdAdminJobsByJobIdOK{Job: oas.NewOptJob(oasJob(*job))}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams) (*oas.PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	if err := s.deps.Jobs.Cancel(ctx, params.ProjectID, params.JobID); err != nil {
+		return nil, err
+	}
+
+	job, err := s.deps.Jobs.Get(ctx, params.ProjectID, params.JobID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &oas.PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK{Job: oas.NewOptJob(oasJob(*job))}, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminExportsByJobIdParams) (*oas.GetV1ProjectsByProjectIdAdminExportsByJobIdOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	job, err := s.deps.Jobs.Get(ctx, params.ProjectID, params.JobID)
+	if err != nil {
+		return nil, err
+	}
+
+	out := &oas.GetV1ProjectsByProjectIdAdminExportsByJobIdOK{Status: oas.NewOptString(jobAPIStatus(job.Status))}
+	if job.Result != nil {
+		if url, ok := job.Result["download_url"].(string); ok && url != "" {
+			out.DownloadURL = oas.NewOptNilString(url)
+		}
+	}
+
+	return out, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminImportUsersReq, params oas.PostV1ProjectsByProjectIdAdminImportUsersParams) (*oas.PostV1ProjectsByProjectIdAdminImportUsersOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	users := make([]map[string]jx.Raw, 0, len(req.Users))
+	for _, u := range req.Users {
+		users = append(users, map[string]jx.Raw(u))
+	}
+
+	jobID, status, err := s.deps.Jobs.CreateImportUsers(ctx, params.ProjectID, users, req.PasswordHashFormat.Or(""), req.SendInvites.Or(false))
+	if err != nil {
+		return nil, err
+	}
+
+	return &oas.PostV1ProjectsByProjectIdAdminImportUsersOK{
+		JobID:  oas.NewOptString(jobID),
+		Status: oas.NewOptString(jobAPIStatus(status)),
+	}, nil
+}
+
+func (s *AdminService) PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq, params oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams) (*oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	valid, err := s.deps.Jobs.VerifyPasswordHash(req.Hash, req.Password, req.Format)
+	if err != nil {
+		return nil, err
+	}
+
+	return &oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK{Valid: oas.NewOptBool(valid)}, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminRetentionPolicyParams) (*oas.RetentionPolicy, error) {

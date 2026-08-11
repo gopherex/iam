@@ -281,6 +281,10 @@ func run() error {
 	sd.Go(func(ctx context.Context) {
 		webhooks.RunRetryWorker(ctx, 0, log.AppendName("webhook-retry"))
 	})
+	// Jobs: drain pending async jobs (bulk user import, audit/data exports).
+	sd.Go(func(ctx context.Context) {
+		db.RunJobsWorker(ctx, 0, log.AppendName("jobs"))
+	})
 
 	if probeSrv != nil {
 		sd.Go(func(context.Context) {
@@ -425,6 +429,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 			Webhooks:        webhooks,
 			Grants:          postgres.NewPgOIDCGrants(db, emitter),
 			Audit:           postgres.NewPgAudit(db, emitter),
+			Jobs:            postgres.NewPgJobs(db, emitter),
 		})),
 		api.WithOperator(api.NewOperatorService(api.OperatorDeps{
 			Projects: postgres.NewPgOperator(db, emitter),
