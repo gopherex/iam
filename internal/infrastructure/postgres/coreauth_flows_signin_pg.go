@@ -106,7 +106,7 @@ func (a *pgCoreAuthFlows) createSigninPasskey(ctx context.Context, f *domain.Flo
 		return nil, domain.ErrBadRequest.WithMessage("email is required for passkey signin")
 	}
 
-	wa := NewPgWebAuthnAccounts(a.db, a.emitter)
+	wa := NewPgWebAuthnAccounts(a.db, a.emitter, a.cfg)
 
 	ch, err := wa.BeginLogin(ctx, f.ProjectID, cmd.Email)
 	if err != nil {
@@ -152,7 +152,7 @@ func (a *pgCoreAuthFlows) createSigninOAuth(ctx context.Context, f *domain.Flow,
 		return nil, domain.ErrBadRequest.WithMessage("provider is required for oauth signin")
 	}
 
-	os := NewPgOAuthSocial(a.db, a.emitter)
+	os := NewPgOAuthSocial(a.db, a.emitter, a.cfg)
 
 	state, err := coreAuthRandomToken()
 	if err != nil {
@@ -243,7 +243,7 @@ func (a *pgCoreAuthFlows) createSigninPassword(ctx context.Context, f *domain.Fl
 		return nil, domain.ErrMFAInvalid
 	}
 
-	mfa := NewPgMFAAccounts(a.db, a.emitter)
+	mfa := NewPgMFAAccounts(a.db, a.emitter, a.cfg)
 
 	ch, err := mfa.Challenge(ctx, result.Account.ID, primaryFactorID)
 	if err != nil {
@@ -448,7 +448,7 @@ func (a *pgCoreAuthFlows) signinVerifyPasskey(ctx context.Context, row *models.I
 		return nil, domain.ErrBadRequest.WithMessage("credential must be a JSON object")
 	}
 
-	wa := NewPgWebAuthnAccounts(a.db, a.emitter)
+	wa := NewPgWebAuthnAccounts(a.db, a.emitter, a.cfg)
 
 	_, sess, err := wa.FinishLogin(ctx, ac.ChallengeID, cred)
 	if err != nil {
@@ -471,7 +471,7 @@ func (a *pgCoreAuthFlows) signinOAuthCallback(ctx context.Context, row *models.I
 		return nil, domain.ErrBadRequest.WithMessage("code is required")
 	}
 
-	os := NewPgOAuthSocial(a.db, a.emitter)
+	os := NewPgOAuthSocial(a.db, a.emitter, a.cfg)
 
 	_, sess, err := os.CompleteLogin(ctx, f.ProjectID, ac.Provider, code)
 	if err != nil {
@@ -500,7 +500,7 @@ func (a *pgCoreAuthFlows) signinVerifyMFA(ctx context.Context, row *models.IamFl
 		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
 	}
 
-	mfa := NewPgMFAAccounts(a.db, a.emitter)
+	mfa := NewPgMFAAccounts(a.db, a.emitter, a.cfg)
 
 	_, sess, err := mfa.Verify(ctx, ac.ChallengeID, code)
 	if err != nil {

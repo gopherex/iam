@@ -63,11 +63,14 @@ const mfaMaxFactorsPerAccount = 10
 type pgMFAAccounts struct {
 	db      *DB
 	emitter Emitter
+	cfg     *configReader
 }
 
-// NewPgMFAAccounts builds the MFA aggregate adapter over a *DB.
-func NewPgMFAAccounts(db *DB, emitter Emitter) *pgMFAAccounts {
-	return &pgMFAAccounts{db: db, emitter: emitter}
+// NewPgMFAAccounts builds the MFA aggregate adapter over a *DB. cfg resolves the
+// project's session_policy when minting a verified session; a nil cfg falls back
+// to default TTLs (see NewPgCoreAuth).
+func NewPgMFAAccounts(db *DB, emitter Emitter, cfg *configReader) *pgMFAAccounts {
+	return &pgMFAAccounts{db: db, emitter: emitter, cfg: cfg}
 }
 
 var _ api.MFAAccounts = (*pgMFAAccounts)(nil)
@@ -1193,51 +1196,11 @@ const mfaDefaultEnv = "live"
 // mfaAccessTTL bounds the minted access-token JWT.
 const mfaAccessTTL = 10 * time.Minute
 
-// mfaMintSession produces a session for a freshly verified (AAL2) account. The
-// access token is a signed RS256 JWT minted by the project Signer (jwx, carrying
-// the session sid); the refresh token stays an opaque random handle.
+// mfaMintSession produces and PERSISTS a session for a freshly verified (AAL2)
+// account by delegating to core-auth's canonical minter. Previously this built a
+// session with a signed access JWT but never wrote iam_sessions / a refresh-token
+// row, so the returned AAL2 token authenticated against nothing and the refresh
+// token was dangling. MUST run inside the caller's transaction.
 func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account) (*domain.Session, error) {
-	sessionID := newUUID()
-
-	signEnv, err := resolveSignEnv(ctx, a.db, acc.ProjectID, mfaDefaultEnv)
-	if err != nil {
-		return nil, err
-	}
-
-	access, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, map[string]any{
-		"iss": oidcIssuer(acc.ProjectID, signEnv),
-		"sub": acc.ID,
-		"sid": sessionID,
-		"pid": acc.ProjectID,
-		"aal": 2,
-		"amr": []string{"mfa"},
-		"typ": "access",
-		"env": signEnv,
-	}, mfaAccessTTL)
-	if err != nil {
-		return nil, err
-	}
-
-	refresh, err := mfaNewOpaqueToken(32)
-	if err != nil {
-		return nil, err
-	}
-
-	meta := domain.RequestMetaFromContext(ctx)
-
-	return &domain.Session{
-		ID:           sessionID,
-		AccountID:    acc.ID,
-		ProjectID:    acc.ProjectID,
-		AMR:          []string{"mfa"},
-		AAL:          2,
-		AccessToken:  access,
-		RefreshToken: refresh,
-		ExpiresIn:    int(mfaAccessTTL / time.Second),
-		CreatedAt:    nowUTC(),
-		DeviceName:   meta.DeviceName,
-		IP:           meta.IP,
-		UserAgent:    meta.UserAgent,
-		Fingerprint:  meta.Fingerprint,
-	}, nil
+	return mintSessionVia(ctx, a.db, a.emitter, a.cfg, acc, "", []string{"mfa"}, 2)
 }

@@ -111,6 +111,22 @@ func TestE2EFlowSigninWithMFA(t *testing.T) {
 	}
 	token2 := fs2.FlowToken
 
+	// 3a. The minted AAL2 access token must actually authenticate — i.e. the
+	//     session was persisted (iam_sessions row), not just signed. This is the
+	//     regression guard for the "MFA session never persisted" bug.
+	rMe := e2eReq(t, ctx, http.MethodGet, ts.URL+"/v1/users/me", nil, e2eBearer(fs2.Session.AccessToken))
+	e2eWantStatus(t, rMe, http.StatusOK)
+
+	// 3b. The refresh token must be usable — i.e. an iam_refresh_tokens row was
+	//     written. A dangling refresh token would 401 here.
+	if fs2.Session.RefreshToken == "" {
+		t.Fatal("no refresh token minted after MFA verification")
+	}
+	rRef := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/token/refresh",
+		map[string]any{"refresh_token": fs2.Session.RefreshToken},
+		map[string]string{"X-Client-Id": projectID, "X-Environment": "live"})
+	e2eWantStatus(t, rRef, http.StatusOK)
+
 	// 4. Token must have rotated (§5 rule 2).
 	if token2 == token1 {
 		t.Error("token was NOT rotated after MFA verify — security violation")

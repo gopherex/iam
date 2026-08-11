@@ -45,11 +45,14 @@ const webauthnSignerEnv = "live"
 type pgWebAuthnAccounts struct {
 	db      *DB
 	emitter Emitter
+	cfg     *configReader
 }
 
-// NewPgWebAuthnAccounts builds the WebAuthn adapter.
-func NewPgWebAuthnAccounts(db *DB, emitter Emitter) *pgWebAuthnAccounts {
-	return &pgWebAuthnAccounts{db: db, emitter: emitter}
+// NewPgWebAuthnAccounts builds the WebAuthn adapter. cfg resolves the project's
+// session_policy when minting a verified session; a nil cfg falls back to default
+// TTLs (see NewPgCoreAuth).
+func NewPgWebAuthnAccounts(db *DB, emitter Emitter, cfg *configReader) *pgWebAuthnAccounts {
+	return &pgWebAuthnAccounts{db: db, emitter: emitter, cfg: cfg}
 }
 
 // Port assertion — keeps the adapter honest against the pkg/api contract.
@@ -618,47 +621,15 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 			return loginResult{}, err
 		}
 
-		// Mint the session. The access token is a signed RS256 JWT from the
-		// project's active signing key (jwx); the refresh token stays opaque.
-		sessionID := newUUID()
-
-		signEnv, err := resolveSignEnv(ctx, a.db, projectID, webauthnSignerEnv)
+		// Mint and PERSIST the session via core-auth's canonical minter (AAL2,
+		// amr=webauthn). Previously this signed an access JWT and built a session
+		// struct but never wrote iam_sessions / a refresh-token row, so the token
+		// authenticated against nothing and the refresh token was dangling.
+		sess, err := mintSessionVia(ctx, a.db, a.emitter, a.cfg, acct, "", []string{"webauthn"}, 2)
 		if err != nil {
 			return loginResult{}, err
 		}
 
-		accessToken, err := a.db.Signer().Sign(ctx, projectID, signEnv, map[string]any{
-			"iss": oidcIssuer(projectID, signEnv),
-			"sub": acct.ID,
-			"sid": sessionID,
-			"jti": newUUID(),
-			"pid": projectID,
-			"aud": projectID,
-			"aal": 2,
-			"amr": []string{"webauthn"},
-			"typ": "access",
-			"env": signEnv,
-		}, time.Hour)
-		if err != nil {
-			return loginResult{}, err
-		}
-
-		refresh, err := webauthnRandomChallenge()
-		if err != nil {
-			return loginResult{}, err
-		}
-
-		sess := &domain.Session{
-			ID:           sessionID,
-			AccountID:    acct.ID,
-			ProjectID:    projectID,
-			AMR:          []string{"webauthn"},
-			AAL:          2,
-			AccessToken:  accessToken,
-			RefreshToken: refresh,
-			ExpiresIn:    int(time.Hour.Seconds()),
-			CreatedAt:    now,
-		}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "webauthn.login.succeeded",
 			ProjectID:   projectID,

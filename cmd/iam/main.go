@@ -368,7 +368,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 		api.WithCoreAuth(api.NewCoreAuthService(api.CoreAuthDeps{
 			Accounts: coreAuth,
 			Tokens:   coreAuth,
-			MFA:      postgres.NewPgMFAAccounts(db, emitter),
+			MFA:      postgres.NewPgMFAAccounts(db, emitter, cfgReader),
 		})),
 		api.WithCoreAuthFlows(api.CoreAuthFlowDeps{
 			Flows: postgres.NewPgCoreAuthFlows(db, emitter, coreAuth, cfgReader),
@@ -377,13 +377,13 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 			Accounts: postgres.NewPgPasswordlessAccounts(db, emitter, cfgReader, coreAuth),
 		})),
 		api.WithOAuthSocial(api.NewOAuthSocialService(api.OAuthSocialDeps{
-			Accounts: postgres.NewPgOAuthSocial(db, emitter),
+			Accounts: postgres.NewPgOAuthSocial(db, emitter, cfgReader),
 		})),
 		api.WithWebAuthn(api.NewWebAuthnService(api.WebAuthnDeps{
-			Accounts: postgres.NewPgWebAuthnAccounts(db, emitter),
+			Accounts: postgres.NewPgWebAuthnAccounts(db, emitter, cfgReader),
 		})),
 		api.WithMFA(api.NewMFAService(api.MFADeps{
-			Accounts: postgres.NewPgMFAAccounts(db, emitter),
+			Accounts: postgres.NewPgMFAAccounts(db, emitter, cfgReader),
 		})),
 		api.WithAccount(api.NewAccountService(api.AccountDeps{
 			Accounts: postgres.NewPgAccountStore(db, emitter),

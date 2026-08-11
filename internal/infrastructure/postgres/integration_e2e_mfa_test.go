@@ -79,7 +79,7 @@ import (
 // empty secret round-trips.
 func e2eActiveEmailFactor(t *testing.T, ctx context.Context, projectID, accountID, email string) string {
 	t.Helper()
-	mfa := NewPgMFAAccounts(testDB, e2eEmitter)
+	mfa := NewPgMFAAccounts(testDB, e2eEmitter, nil)
 	f := domain.Factor{ID: newUUID(), Type: "email", Status: "active", Hint: email}
 	if err := mfa.mfaInsertFactorFor(ctx, projectID, accountID, &f, ""); err != nil {
 		t.Fatalf("insert active email factor: %v", err)

@@ -214,7 +214,7 @@ func TestE2EMFAPolicyRequiredForAdminsNoLockout(t *testing.T) {
 func TestMFALoadPolicyNotFound(t *testing.T) {
 	ctx := context.Background()
 	projectID := e2eProject(t, ctx)
-	mfa := NewPgMFAAccounts(testDB, e2eEmitter)
+	mfa := NewPgMFAAccounts(testDB, e2eEmitter, nil)
 
 	t.Run("missing row => zero (allow all)", func(t *testing.T) {
 		pol, err := mfa.mfaLoadPolicy(ctx, projectID)

@@ -105,7 +105,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 		api.WithCoreAuth(api.NewCoreAuthService(api.CoreAuthDeps{
 			Accounts: coreAuth,
 			Tokens:   coreAuth,
-			MFA:      NewPgMFAAccounts(testDB, em),
+			MFA:      NewPgMFAAccounts(testDB, em, nil),
 		})),
 		api.WithCoreAuthFlows(api.CoreAuthFlowDeps{
 			Flows: NewPgCoreAuthFlows(testDB, em, coreAuth, nil),
@@ -114,13 +114,13 @@ func e2eServer(t *testing.T) *httptest.Server {
 			Accounts: NewPgPasswordlessAccounts(testDB, em, NewConfigReader(testDB, time.Second), coreAuth),
 		})),
 		api.WithOAuthSocial(api.NewOAuthSocialService(api.OAuthSocialDeps{
-			Accounts: NewPgOAuthSocial(testDB, em),
+			Accounts: NewPgOAuthSocial(testDB, em, nil),
 		})),
 		api.WithWebAuthn(api.NewWebAuthnService(api.WebAuthnDeps{
-			Accounts: NewPgWebAuthnAccounts(testDB, em),
+			Accounts: NewPgWebAuthnAccounts(testDB, em, nil),
 		})),
 		api.WithMFA(api.NewMFAService(api.MFADeps{
-			Accounts: NewPgMFAAccounts(testDB, em),
+			Accounts: NewPgMFAAccounts(testDB, em, nil),
 		})),
 		api.WithAccount(api.NewAccountService(api.AccountDeps{
 			Accounts: NewPgAccountStore(testDB, em),

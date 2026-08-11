@@ -358,6 +358,19 @@ func (a *pgCoreAuth) coreAuthFindPasswordCredential(ctx context.Context, project
 	return row, nil
 }
 
+// mintSessionVia is the single session-minting seam shared by every login path
+// that is not itself core-auth: MFA verify, WebAuthn assertion, OAuth-social
+// callback. Each used to build a domain.Session with a signed access JWT but
+// never persist an iam_sessions / iam_refresh_tokens row, so the access token's
+// sid resolved to nothing (pgAuthenticator.User → FindIamSession failed) and the
+// refresh token was dangling. Delegating here produces a real, refreshable,
+// expiring session with the project's session_policy TTLs.
+//
+// MUST be called inside db.withTx / withTxRet (it issues multiple mutations).
+func mintSessionVia(ctx context.Context, db *DB, emitter Emitter, cfg *configReader, acc *domain.Account, clientID string, amr []string, aal int) (*domain.Session, error) {
+	return NewPgCoreAuth(db, emitter, cfg).coreAuthMintSession(ctx, acc, clientID, amr, aal)
+}
+
 // coreAuthMintSession persists a fresh session + its refresh token inside an
 // open transaction and returns the populated domain Session. The access token
 // is a signed JWT and the refresh token is an opaque, hashed-at-rest secret.

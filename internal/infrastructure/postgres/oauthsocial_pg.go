@@ -62,11 +62,14 @@ const (
 type pgOAuthSocial struct {
 	db      *DB
 	emitter Emitter
+	cfg     *configReader
 }
 
-// NewPgOAuthSocial builds the OAuthSocial adapter over the connection bundle.
-func NewPgOAuthSocial(db *DB, emitter Emitter) *pgOAuthSocial {
-	return &pgOAuthSocial{db: db, emitter: emitter}
+// NewPgOAuthSocial builds the OAuthSocial adapter over the connection bundle. cfg
+// resolves the project's session_policy when minting a login session; a nil cfg
+// falls back to default TTLs (see NewPgCoreAuth).
+func NewPgOAuthSocial(db *DB, emitter Emitter, cfg *configReader) *pgOAuthSocial {
+	return &pgOAuthSocial{db: db, emitter: emitter, cfg: cfg}
 }
 
 var _ api.OAuthSocialAccounts = (*pgOAuthSocial)(nil)
@@ -1126,78 +1129,12 @@ func (a *pgOAuthSocial) loadAccount(ctx context.Context, projectID, userID strin
 	return &acct, nil
 }
 
-// mintSession creates a session row for an account and returns it with a signed
-// RS256 JWT access token (minted by the project Signer) plus a refresh token
-// signed by the same key.
+// mintSession creates and persists a login session for an account via core-auth's
+// canonical minter (AAL1, amr=oauth). Previously it minted the refresh token as a
+// signed JWT that was never written to iam_refresh_tokens (so refresh 401'd) and
+// inserted a session row without ExpiresAt/CreatedAt/LastActiveAt (so the idle and
+// absolute timeouts had no anchor). Delegating fixes both. MUST run inside the
+// caller's transaction.
 func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (*domain.Session, error) {
-	sessionID := newUUID()
-
-	signEnv, err := resolveSignEnv(ctx, a.db, acct.ProjectID, oauthSocialDefaultEnv)
-	if err != nil {
-		return nil, err
-	}
-
-	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		"iss": oidcIssuer(acct.ProjectID, signEnv),
-		"sub": acct.ID,
-		"sid": sessionID,
-		"pid": acct.ProjectID,
-		"aal": 1,
-		"amr": []string{"oauth"},
-		"typ": "access",
-		"env": signEnv,
-	}, oauthSocialAccessTTL)
-	if err != nil {
-		return nil, err
-	}
-
-	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		"iss": oidcIssuer(acct.ProjectID, signEnv),
-		"sub": acct.ID,
-		"sid": sessionID,
-		"pid": acct.ProjectID,
-		"typ": "refresh",
-		"env": signEnv,
-	}, oauthSocialRefreshTTL)
-	if err != nil {
-		return nil, err
-	}
-
-	meta := domain.RequestMetaFromContext(ctx)
-	sess := &domain.Session{
-		ID:           sessionID,
-		AccountID:    acct.ID,
-		ProjectID:    acct.ProjectID,
-		AMR:          []string{"oauth"},
-		AAL:          1,
-		AccessToken:  access,
-		RefreshToken: refresh,
-		ExpiresIn:    int(oauthSocialAccessTTL / timeSecondDur),
-		CreatedAt:    nowUTC(),
-		DeviceName:   meta.DeviceName,
-		IP:           meta.IP,
-		UserAgent:    meta.UserAgent,
-		Fingerprint:  meta.Fingerprint,
-	}
-
-	raw, err := marshal(sess)
-	if err != nil {
-		return nil, err
-	}
-
-	rm := json.RawMessage(raw)
-
-	setter := &models.IamSessionSetter{
-		ID:          &sess.ID,
-		ProjectID:   &sess.ProjectID,
-		Environment: &signEnv,
-		UserID:      &sess.AccountID,
-		Aal:         ptr(int32(sess.AAL)),
-		Data:        &rm,
-	}
-	if _, err := models.IamSessions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-		return nil, err
-	}
-
-	return sess, nil
+	return mintSessionVia(ctx, a.db, a.emitter, a.cfg, acct, "", []string{"oauth"}, 1)
 }
