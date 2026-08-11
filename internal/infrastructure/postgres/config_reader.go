@@ -126,6 +126,21 @@ func NewConfigReader(db *DB, ttl time.Duration) *configReader {
 	}
 }
 
+// invalidate drops the cached entry for (projectID, env, key) so the next read
+// re-fetches. Used by the integration tests to force a config refresh; also
+// available to a future "config.updated" subscriber wanting sub-TTL propagation.
+//
+//nolint:unused // referenced only from integration-tagged tests
+func (r *configReader) invalidate(projectID, env, key string) {
+	if r == nil {
+		return
+	}
+
+	r.mu.Lock()
+	delete(r.entries, cacheKey{projectID, env, key})
+	r.mu.Unlock()
+}
+
 // rawDoc resolves the request environment and returns the (cached) raw jsonb for
 // (project, env, key). A returned nil slice with a nil error means the doc is
 // absent — callers apply defaults. An environment-resolution error (unknown
