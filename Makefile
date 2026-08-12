@@ -128,16 +128,23 @@ test:
 test-db:
 	go test -tags=integration ./... -count=1 -p 1
 
-## lint: vet + format check
+## lint: golangci-lint on code changed vs origin/master (the actionable set).
+## The full strict config carries ~1.9k pre-existing findings; new/changed code
+## must pass the whole bar, so gate on the diff. Use `lint-all` for everything.
 .PHONY: lint
 lint:
 	go vet ./...
-	gofmt -l .
+	golangci-lint run --new-from-rev=origin/master ./...
 
-## fmt: format Go code
+## lint-all: run the full strict lint over the whole tree (legacy debt included).
+.PHONY: lint-all
+lint-all:
+	golangci-lint run ./...
+
+## fmt: apply the golangci formatters (gofumpt + gci + goimports).
 .PHONY: fmt
 fmt:
-	gofmt -w .
+	golangci-lint run --fix ./... || true
 
 ## clean: remove build artifacts
 .PHONY: clean
