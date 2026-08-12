@@ -852,8 +852,18 @@ func (s *AdminService) adminTestGate(ctx context.Context, env string) (string, s
 	if err != nil {
 		return "", "", err
 	}
-
-	if env == "" || strings.EqualFold(env, "live") {
+	// Test mode (seed / reset-wipe / clock / messages) is a privileged
+	// administrative capability, NEVER an end-user one: an ordinary user or
+	// OAuth-client token must not be able to wipe or reseed an environment.
+	switch p.Kind {
+	case domain.PrincipalAdmin, domain.PrincipalOperator, domain.PrincipalService:
+	default:
+		return "", "", domain.ErrForbidden.WithMessage("test mode requires an admin, operator or service credential")
+	}
+	// Normalize before the live comparison so whitespace/case variants
+	// (" live", "LIVE") cannot slip past the guard.
+	env = strings.ToLower(strings.TrimSpace(env))
+	if env == "" || env == "live" {
 		return "", "", domain.ErrForbidden.WithMessage("test mode is not available in the live environment")
 	}
 

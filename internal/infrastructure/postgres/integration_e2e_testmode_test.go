@@ -57,4 +57,22 @@ func TestE2ETestMode(t *testing.T) {
 	rLive := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/test/reset", nil,
 		map[string]string{"Authorization": "Bearer " + token, "X-Environment": "live"})
 	e2eWantStatus(t, rLive, http.StatusForbidden)
+
+	// A whitespace/case variant of "live" must not slip past the guard (refused
+	// either upstream or by the gate's normalization — never allowed through).
+	rLive2 := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/test/reset", nil,
+		map[string]string{"Authorization": "Bearer " + token, "X-Environment": " LIVE "})
+	if rLive2.Status < 400 || rLive2.Status >= 500 {
+		t.Fatalf("\" LIVE \" variant: status = %d, want 4xx (refused)", rLive2.Status)
+	}
+
+	// An ordinary end-user token must NOT be able to drive test mode (privilege
+	// escalation guard). It is refused — 401 at the admin-token security scheme,
+	// and the handler's own kind check is defense-in-depth behind that.
+	_, userSess := registerUser(t, ctx, projectID, fmt.Sprintf("tm-user-%s@example.com", newUUID()[:8]))
+	rUser := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/test/reset", nil,
+		map[string]string{"Authorization": "Bearer " + userSess.AccessToken, "X-Environment": "test"})
+	if rUser.Status < 400 || rUser.Status >= 500 {
+		t.Fatalf("end-user token drove test mode: status = %d, want 4xx (refused)", rUser.Status)
+	}
 }
