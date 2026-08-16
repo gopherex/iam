@@ -1,9 +1,64 @@
 # IAM — Authentication & Identity
 
-Headless authentication & identity server. The HTTP contract is the single
-source of truth: [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.1.0).
+A headless, multi-tenant **authentication** server: password + passwordless
+sign-in, MFA (TOTP/SMS/email/WebAuthn), OAuth social login, resumable auth
+flows, an OIDC provider, SAML/OIDC/SCIM federation, webhooks, and a full admin +
+operator API. It ships as a single static binary (admin SPA embedded, Postgres
+for storage) plus a first-class TypeScript SDK.
 
-## Layout
+The HTTP contract is the single source of truth:
+[`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.1.0). The Go server and
+the TypeScript SDK are generated from it.
+
+## 📚 Documentation
+
+**Full docs, guides, and API reference:
+[https://gopherex.github.io/iam/](https://gopherex.github.io/iam/)**
+
+Start there — it has real, copy-pasteable examples for everything below:
+
+- [Quickstart](https://gopherex.github.io/iam/quickstart) — sign up a user in
+  minutes
+- [Core concepts](https://gopherex.github.io/iam/concepts/overview) — projects,
+  environments, principals, sessions, MFA, webhooks, OIDC/federation
+- [Guides](https://gopherex.github.io/iam/guides/sdk-quickstart) — SDK, auth
+  flows, passwordless, OAuth, MFA, project config
+- [REST API reference](https://gopherex.github.io/iam/rest-api/overview)
+- [TypeScript SDK reference](https://gopherex.github.io/iam/sdk/typescript)
+- [Self-hosting](https://gopherex.github.io/iam/self-hosting/docker) — Docker,
+  configuration, operator, deployment, observability, migrations
+
+## Run it locally
+
+```sh
+docker compose up
+```
+
+Brings up Postgres 17 + the IAM server (admin SPA embedded, migrations applied,
+a `Root` project seeded). Open <http://localhost:8080> and sign in with the
+master key `dev`.
+
+> ⚠️ The compose defaults (master key `dev`, a committed AES key) are for
+> localhost only. For anything shared, set a real
+> `IAM_SERVICE_AUTH_ENCRYPTION_KEY` (`openssl rand -base64 32`) and
+> `IAM_SERVICE_AUTH_MASTER_KEY`. See
+> [Configuration](https://gopherex.github.io/iam/self-hosting/configuration).
+
+## Use the SDK
+
+```ts
+import { createIamClient } from '@gopherex/iam-sdk';
+
+const iam = createIamClient({ baseUrl: 'https://auth.example.com', clientId: 'app_web' });
+
+await iam.flow.start({ kind: 'signup', email, password, name });
+await iam.flow.verifyEmail({ code }); // → SIGNED_IN on completion
+```
+
+`@gopherex/iam-sdk` is published to the GitHub Packages registry. See the
+[SDK quickstart](https://gopherex.github.io/iam/guides/sdk-quickstart).
+
+## Repository layout
 
 | Path | Purpose |
 | --- | --- |
@@ -17,19 +72,22 @@ source of truth: [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.1.0).
 | [`cmd/iam/`](cmd/iam) | The Go server — serves the API and the embedded admin SPA. |
 | [`ts/`](ts) | Yarn workspace; the TypeScript SDK, published to the GitHub npm registry. |
 | [`web/`](web) | Admin panel SPA, served by the server. |
-| [`deployments/`](deployments) | Production deployment artifacts. |
+| [`website/`](website) | The documentation site (Docusaurus) → GitHub Pages. |
+| [`deployments/`](deployments) | Production deployment artifacts (Dockerfile). |
 | [`docker-compose.yml`](docker-compose.yml) | Local dev environment (full infra). |
 | [`docs/rfc/`](docs/rfc) | Reference set of the standards IAM implements. |
-| [`docs/integrations/komeet.md`](docs/integrations/komeet.md) | Komeet token, device-session and webhook contract. |
 
-## Quickstart
+## Development
 
 ```sh
 make help        # list targets
 make generate    # regenerate Go + TS from the spec
-make dev         # bring up dev infra
+make dev         # bring up dev infra (docker compose)
 make run         # run the server
+make test        # unit tests
+make test-db     # integration tests (testcontainers; needs Docker)
 ```
 
-Stacks (HTTP runtime, storage, frontend, TS toolchain) are decided separately;
-scaffolding here is intentionally stack-agnostic.
+## License
+
+See [LICENSE](LICENSE).
