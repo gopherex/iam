@@ -76,4 +76,3 @@ func TestWebhookMigrationPreservesPopulatedIAMUsers(t *testing.T) {
 		t.Fatalf("delivery table missing: %q", deliveriesTable)
 	}
 }
-

@@ -100,8 +100,8 @@ func TestE2ESelfManagedSessions(t *testing.T) {
 		e2eWantStatus(t, r, http.StatusOK)
 		var body struct {
 			Session struct {
-				Current   bool   `json:"current"`
-				IP        string `json:"ip"`
+				Current    bool   `json:"current"`
+				IP         string `json:"ip"`
 				UserAgent  string `json:"user_agent"`
 				DeviceName string `json:"device_name"`
 			} `json:"session"`

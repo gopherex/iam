@@ -257,4 +257,3 @@ func TestE2EFormPostSilentAuthorizeReturnsADocument(t *testing.T) {
 		t.Errorf("form_post response also set a Location: %q", b.lastLocation)
 	}
 }
-
