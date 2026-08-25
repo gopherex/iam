@@ -94,8 +94,9 @@ type Auth struct {
 	// disabled until a key is configured (set via MASTER_KEY / service.auth.master_key).
 	MasterKey string `default:"" mapstructure:"master_key"`
 	// EncryptionKey is the base64-encoded 32-byte AES-256 key that encrypts
-	// reversible secrets at rest (signing-key PEMs, TOTP secrets). Empty disables
-	// at-rest encryption (passthrough). Set via SERVICE_AUTH_ENCRYPTION_KEY.
+	// reversible secrets at rest (signing-key PEMs, TOTP secrets). It is
+	// required: startup refuses an empty value rather than running with at-rest
+	// encryption silently off. Set via SERVICE_AUTH_ENCRYPTION_KEY.
 	EncryptionKey string `default:"" mapstructure:"encryption_key" validate:"omitempty,base64"`
 	// SeedRoot, when true, ensures a root project exists on startup so the
 	// operator (master key) has something to manage. Development convenience;

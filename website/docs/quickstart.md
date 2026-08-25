@@ -72,7 +72,7 @@ endpoint drives signup, the emailed code, and the resulting session.
 ```bash
 # Start a signup flow (server issues an email verification challenge)
 curl -sX POST http://localhost:8080/v1/auth/flows \
-  -H "X-Client-Id: prj_XXXX" \
+  -H "X-Client-Id: prj_XXXX" -H "X-Environment: test" \
   -H "Content-Type: application/json" \
   -d '{"kind":"signup","email":"ada@example.com","password":"hunter2pw","name":"Ada"}'
 ```
@@ -86,8 +86,9 @@ curl -sX POST http://localhost:8080/v1/auth/flows \
 }
 ```
 
-Locally there's no real mailbox — read the emitted code from the **test inbox**
-(requires an admin token and a non-live environment):
+Locally there's no real mailbox — read the emitted code from the **test inbox**,
+which is why the calls above target the `test` environment ([test
+mode](/guides/test-mode) is refused on `live`):
 
 ```bash
 curl -s "http://localhost:8080/v1/test/messages?to=ada@example.com" \
@@ -98,7 +99,7 @@ Submit the code to complete signup and receive a session:
 
 ```bash
 curl -sX POST http://localhost:8080/v1/auth/flows/ftk_9s2.../submit \
-  -H "X-Client-Id: prj_XXXX" \
+  -H "X-Client-Id: prj_XXXX" -H "X-Environment: test" \
   -H "Content-Type: application/json" \
   -d '{"action":"submit_code","payload":{"code":"123456"}}'
 ```
@@ -114,7 +115,7 @@ Use the access token as a bearer credential:
 
 ```bash
 curl -s http://localhost:8080/v1/users/me \
-  -H "X-Client-Id: prj_XXXX" -H "Authorization: Bearer eyJ..."
+  -H "X-Client-Id: prj_XXXX" -H "X-Environment: test" -H "Authorization: Bearer eyJ..."
 ```
 
 ## 4. Or use the SDK
@@ -131,9 +132,21 @@ await iam.flow.start({ kind: 'signup', email: 'ada@example.com', password: 'hunt
 await iam.flow.verifyEmail({ code: '123456' }); // completes → SIGNED_IN
 ```
 
+## Before this works for real users
+
+Everything above ran against the test inbox. In `live` there is no test inbox, so
+a project with no **email provider** silently never delivers its verification
+codes — configure one first:
+
+- **[Email & SMS](/guides/notifications)** — SMTP and SMS providers, templates.
+- **[Admin & config](/guides/admin-config)** — sign-in methods, registration
+  mode, password and session policy.
+
 ## Next steps
 
 - **[Concepts](/concepts/overview)** — projects, environments, sessions, MFA.
 - **[SDK quickstart](/guides/sdk-quickstart)** — full web-app integration.
 - **[Auth flows](/guides/auth-flows)** — signup / signin / recovery in depth.
 - **[Self-hosting](/self-hosting/docker)** — configure and deploy for real.
+- **[Deployment checklist](/self-hosting/deployment)** — what must be set before
+  anyone else can reach it.

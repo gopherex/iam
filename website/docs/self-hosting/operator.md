@@ -38,7 +38,7 @@ curl -sX POST https://auth.example.com/mgmt/v1/projects \
 curl -sX POST https://auth.example.com/mgmt/v1/projects/prj_7Fk2/admin-tokens \
   -H "Authorization: Bearer $MASTER_KEY" -H "Content-Type: application/json" \
   -d '{"name":"ci"}'
-# -> { "token": "<shown once>", ... }
+# -> { "admin_token": "<shown once>", "expires_at": ... }
 ```
 
 The `Root` project can be auto-seeded in dev with `IAM_SERVICE_AUTH_SEED_ROOT=true`.

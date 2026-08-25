@@ -41,9 +41,22 @@ valid for a 24h overlap (dual-signature).
 
 ### Event catalogue
 
-The **public** event set is allowlisted — e.g. `session.revoked`, `user.banned`,
-`user.deleted`, `email.changed`. Internal events that carry OTPs/magic links are
-**never** delivered, so secrets can't leak through webhooks.
+The public event set is an allowlist, and this is all of it:
+
+| Event | Fired when |
+| --- | --- |
+| `session.revoked` | a session was ended by an admin, the user, or a policy |
+| `user.banned` | an admin banned a user |
+| `user.deleted` | a user was deleted |
+| `email.changed` | a user's primary address changed |
+
+`*` subscribes to all four. Any other value is rejected at subscription time,
+which is the point: IAM emits far more events internally, and some carry OTPs,
+magic links or one-time proofs. They must never become subscribable merely
+because they travel through the same outbox.
+
+The full internal stream is readable — but not deliverable — through
+`GET admin/events`; see [Abuse & audit](/guides/security-controls).
 
 ### Delivery & retry
 

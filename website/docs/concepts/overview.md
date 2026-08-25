@@ -17,6 +17,7 @@ A short map of the model before you build. Each concept has its own page.
 | [MFA](/concepts/mfa) | TOTP, email, SMS, WebAuthn factors + recovery codes; step-up to AAL2. |
 | [Webhooks & hooks](/concepts/webhooks-hooks) | Async signed **webhooks** for events; synchronous **blocking hooks** in the auth path. |
 | [OIDC & federation](/concepts/oidc-federation) | Be an OIDC provider; connect upstream OIDC/SAML IdPs and SCIM. |
+| [Signing keys](/concepts/signing-keys) | RS256 keys per project environment, their rotation, and token profiles. |
 
 ## The request model in one picture
 

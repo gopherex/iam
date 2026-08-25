@@ -312,6 +312,12 @@ webhooks use.
 Any session ending triggers it, not only RP-initiated logout: an admin revoking
 a session, or the user signing out of IAM, notifies the relying parties too.
 
+IAM also **receives** back-channel logout, at `POST /oauth2/backchannel-logout`:
+when IAM is the relying party of an upstream IdP (see
+[Enterprise SSO](/guides/enterprise-sso)), that IdP posts a `logout_token` there
+and the IAM sessions it names end. The endpoint is public, as the spec requires —
+the token's signature is what authenticates it.
+
 ### Revoking issued tokens
 
 An access token is a signed JWT a resource server verifies offline, so nothing
@@ -443,10 +449,18 @@ The runtime exposes helper endpoints (and SDK methods, see
 [`iam.oidc`](/sdk/typescript)) so you can render the login/consent screens
 yourself:
 
-- Device grant: `getDevice(userCode)`, `approveDevice`, `denyDevice`
-- Interaction: `getInteraction`, `loginInteraction`, `consentInteraction`,
-  `rejectInteraction`
-- Grants: `listGrants`, `revokeGrant` (also admin-visible per user)
+| Endpoint | SDK method | Purpose |
+| --- | --- | --- |
+| `GET /v1/device?user_code=` | `getDevice` | resolve a device code — which app, which scopes |
+| `POST /v1/device/approve` | `approveDevice` | approve it (`{user_code}`) |
+| `POST /v1/device/deny` | `denyDevice` | refuse it |
+| `GET /v1/oauth/interaction/{id}` | `getInteraction` | the context to render — public, needs only the id |
+| `POST /v1/oauth/interaction/{id}/login` | `loginInteraction` | claim it with the browser's session |
+| `POST /v1/oauth/interaction/{id}/consent` | `consentInteraction` | `{granted_scopes, remember}` |
+| `POST /v1/oauth/interaction/{id}/reject` | `rejectInteraction` | `{error, error_description}` |
+| `GET/DELETE /v1/oauth/grants[/{grant_id}]` | `listGrants` / `revokeGrant` | what the user has consented to (also admin-visible per user) |
+
+Everything except the two `GET`s is a cookie-mode call and needs a CSRF token.
 
 `consentInteraction` and `rejectInteraction` answer with `redirect_to` in the
 usual response modes and with `form_post: { action, fields }` when the client

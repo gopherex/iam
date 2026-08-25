@@ -59,6 +59,7 @@ Point it at a reachable Postgres and supply the two required secrets:
 
 ```bash
 docker run --rm -p 8080:8080 -p 8081:8081 \
+  -e IAM_SERVICE_HTTP_PUBLIC_URL=https://auth.example.com \
   -e IAM_INFRA_POSTGRES_HOST=db \
   -e IAM_INFRA_POSTGRES_PASSWORD=... \
   -e IAM_INFRA_POSTGRES_SSLMODE=require \
@@ -79,6 +80,7 @@ Full env-var contract: [Configuration](/self-hosting/configuration).
 Run the API on the host and the Vite dev server (proxies `/v1` + `/mgmt`):
 
 ```bash
+IAM_SERVICE_HTTP_PUBLIC_URL=http://localhost:8080 \
 IAM_INFRA_POSTGRES_SSLMODE=disable \
 IAM_SERVICE_AUTH_SEED_ROOT=true \
 IAM_SERVICE_AUTH_MASTER_KEY=dev \

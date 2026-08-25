@@ -18,6 +18,7 @@ const sidebars = {
         'concepts/mfa',
         'concepts/webhooks-hooks',
         'concepts/oidc-federation',
+        'concepts/signing-keys',
       ],
     },
     {
@@ -31,6 +32,13 @@ const sidebars = {
         'guides/oauth-social',
         'guides/mfa',
         'guides/admin-config',
+        'guides/notifications',
+        'guides/user-management',
+        'guides/machine-identity',
+        'guides/enterprise-sso',
+        'guides/security-controls',
+        'guides/import-export',
+        'guides/test-mode',
       ],
     },
     {

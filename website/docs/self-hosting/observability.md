@@ -47,11 +47,23 @@ correlate it against the request span/log.
 
 ## Health probes
 
-- `/healthz/liveness` — process is up.
-- `/healthz/readiness` — Postgres reachable + migrations applied.
+There are two health surfaces, for two different consumers.
 
-Both on `:8081` by default (or the API port when
-`IAM_SERVICE_HTTP_PROBE_ADDR` equals the API address).
+| Path | Port | For |
+| --- | --- | --- |
+| `/healthz/liveness` | `:8081` | orchestrator liveness — the process is up |
+| `/healthz/readiness` | `:8081` | orchestrator readiness — Postgres reachable, migrations applied |
+| `/v1/health` | `:8080` | public aggregate check, returns `{status, time, version}` |
+| `/v1/health/live` | `:8080` | same as liveness, over the public API |
+| `/v1/health/ready` | `:8080` | readiness with a per-dependency `checks[]` breakdown |
+
+Point orchestrator probes at `/healthz/*`: it stays on its own listener, so a
+saturated API port cannot make a healthy process look dead, and the port need not
+be exposed. Use `/v1/health*` from outside, where only the API is reachable —
+`/v1/health/ready` is the one that names which dependency is failing.
+
+Set `IAM_SERVICE_HTTP_PROBE_ADDR` equal to the API address to collapse both onto
+one listener.
 
 ## Background workers
 
