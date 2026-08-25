@@ -25,6 +25,7 @@ var gcSweeps = []gcSweep{
 	{"iam_challenges", `DELETE FROM iam_challenges WHERE expires_at < now()`},
 	{"iam_flows", `DELETE FROM iam_flows WHERE expires_at < now()`},
 	{"iam_auth_codes", `DELETE FROM iam_auth_codes WHERE expires_at < now()`},
+	{"iam_interactions", `DELETE FROM iam_interactions WHERE expires_at IS NOT NULL AND expires_at < now()`},
 	{"iam_device_codes", `DELETE FROM iam_device_codes WHERE expires_at < now()`},
 	{"iam_par_requests", `DELETE FROM iam_par_requests WHERE expires_at < now()`},
 	// Sessions/refresh tokens have a nullable expires_at; a revoked-but-unexpired

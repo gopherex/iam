@@ -210,13 +210,27 @@ func oidcUserCode() (string, error) {
 
 // ===== interactions =====
 
+// oidcInteractionExpired reports whether a pending interaction has aged out. An
+// expired interaction is treated as gone: the user has to restart the flow
+// rather than resume one whose parameters may no longer reflect the client.
+func oidcInteractionExpired(row *models.IamInteraction) bool {
+	exp, ok := row.ExpiresAt.Get()
+	return ok && !exp.IsZero() && exp.Before(nowUTC())
+}
+
 // ResolveInteraction returns the pending interaction by id. No tenant filter is
-// applied here because the interaction id is itself an unguessable handle; the
-// session binding is enforced at CompleteLogin/Consent time.
+// applied here because the interaction id is itself an unguessable handle, and
+// the endpoint is public: the UI needs the requested scopes before the user has
+// logged in. Whoever may ACT on the interaction is decided by the session
+// binding in CompleteLogin/Consent, not here.
 func (a *pgOIDCGrants) ResolveInteraction(ctx context.Context, interactionID string) (*domain.Interaction, error) {
 	row, err := models.FindIamInteraction(ctx, a.db.Bobx(), interactionID)
 	if err != nil {
 		return nil, translatePgErr("interaction", err)
+	}
+
+	if oidcInteractionExpired(row) {
+		return nil, domain.ErrFlowExpired
 	}
 
 	var in domain.Interaction
@@ -227,17 +241,35 @@ func (a *pgOIDCGrants) ResolveInteraction(ctx context.Context, interactionID str
 	return &in, nil
 }
 
-// CompleteLogin binds an authenticated account to the interaction. It verifies
-// the interaction's session_id matches the caller's session (anti-hijack):
-// a mismatch is ErrForbidden.
+// CompleteLogin binds an authenticated account and session to the interaction.
+//
+// This is where an interaction acquires an owner. It is created unbound by the
+// public authorization endpoint, so the FIRST authenticated caller claims it and
+// every later step must present the same session. Without that claim the
+// interaction id — which travels through the user-agent, and therefore through
+// history, logs and referrers — would be the only thing needed to drive somebody
+// else's authorization to completion and hand their client a code bound to the
+// attacker's account.
+//
+// A caller with no session (an admin token, an API key, a client credential)
+// cannot own an interactive flow at all: its empty session id used to match the
+// unbound interaction's NULL, which made the check vacuous.
 func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, accountID, sessionID string) error {
+	if sessionID == "" || accountID == "" {
+		return domain.ErrForbidden
+	}
+
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		row, err := models.FindIamInteraction(ctx, a.db.Bobx(), interactionID)
 		if err != nil {
 			return translatePgErr("interaction", err)
 		}
 
-		if row.SessionID.GetOrZero() != sessionID {
+		if oidcInteractionExpired(row) {
+			return domain.ErrFlowExpired
+		}
+
+		if bound := row.SessionID.GetOrZero(); bound != "" && bound != sessionID {
 			return domain.ErrForbidden
 		}
 		// Persist the resolved account into the interaction envelope alongside the
@@ -248,6 +280,7 @@ func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, account
 		}
 
 		env.AccountID = accountID
+		env.SessionID = sessionID
 
 		raw, err := marshal(&env)
 		if err != nil {
@@ -256,7 +289,9 @@ func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, account
 
 		rm := json.RawMessage(raw)
 
-		setter := &models.IamInteractionSetter{Data: &rm}
+		boundSession := null.From(sessionID)
+
+		setter := &models.IamInteractionSetter{Data: &rm, SessionID: &boundSession}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return err
 		}
@@ -278,21 +313,42 @@ func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, account
 // Consent records the resource-owner's decision. It verifies the session
 // binding, optionally persists a remembered grant, and returns the redirect
 // target the user-agent follows next.
+//
+// Consent is only meaningful from the person who logged in: the interaction must
+// already be claimed (CompleteLogin), the caller must present the session that
+// claimed it, and the consenting account must be the one that was bound. An
+// unclaimed interaction is refused outright — otherwise anyone holding the
+// interaction id could mint a code for their own account and hand the client a
+// session that is not the user's.
 func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (string, error) {
+	if cmd.SessionID == "" || cmd.AccountID == "" {
+		return "", domain.ErrForbidden
+	}
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
 		row, err := models.FindIamInteraction(ctx, a.db.Bobx(), cmd.InteractionID)
 		if err != nil {
 			return "", translatePgErr("interaction", err)
 		}
 
+		if oidcInteractionExpired(row) {
+			return "", domain.ErrFlowExpired
+		}
+
 		if row.SessionID.GetOrZero() != cmd.SessionID {
 			return "", domain.ErrForbidden
 		}
 
-		var in domain.Interaction
-		if err := unmarshal(row.Data, &in); err != nil {
+		var env oidcInteractionEnvelope
+		if err := unmarshal(row.Data, &env); err != nil {
 			return "", err
 		}
+
+		if env.AccountID == "" || env.AccountID != cmd.AccountID {
+			return "", domain.ErrForbidden
+		}
+
+		in := env.Interaction
 
 		if cmd.Remember && in.ClientID != "" {
 			grant := domain.Grant{
@@ -430,6 +486,10 @@ func (a *pgOIDCGrants) Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (st
 		row, err := models.FindIamInteraction(ctx, a.db.Bobx(), cmd.InteractionID)
 		if err != nil {
 			return "", translatePgErr("interaction", err)
+		}
+
+		if oidcInteractionExpired(row) {
+			return "", domain.ErrFlowExpired
 		}
 
 		var in domain.Interaction

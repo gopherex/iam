@@ -101,11 +101,17 @@ func (f pkceFixture) authorizeAndConsent(t *testing.T, ctx context.Context, chal
 
 	interactionID := redirect[len(prefix):]
 
-	// The interaction is not bound to a session here, so consent presents the
-	// same empty session id the authorization request created it with.
+	// The interaction is created unbound; the authenticated user claims it at
+	// login, and consent has to come from that same session and account.
+	sessionID := "sess-" + newUUID()
+	if err := f.grants.CompleteLogin(ctx, interactionID, f.userID, sessionID); err != nil {
+		t.Fatalf("CompleteLogin: %v", err)
+	}
+
 	consentRedirect, err := f.grants.Consent(ctx, domain.OIDCConsentCmd{
 		InteractionID: interactionID,
 		AccountID:     f.userID,
+		SessionID:     sessionID,
 		GrantedScopes: []string{"openid"},
 		Remember:      true,
 	})

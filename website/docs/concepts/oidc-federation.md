@@ -107,6 +107,29 @@ Roles are environment-scoped: the same person can be `ops` in `test` and
 This is deliberately separate from a token profile's `claims_template`, which is
 a static per-client map and cannot express anything about the individual user.
 
+### Interaction ownership
+
+An interaction is created **unbound** by `/oauth2/authorize`, which is a public
+endpoint — there is no user yet, that is the whole point. Its id then travels
+through the user-agent, so it ends up in browser history, referrers and logs and
+must not be treated as a capability on its own.
+
+The first authenticated caller **claims** the interaction at
+`POST /v1/oauth/interaction/{id}/login`: the interaction is bound to that
+session and account. From then on:
+
+- a different session cannot take it over, and cannot consent on it;
+- consent must name the account that logged in;
+- an interaction nobody has logged into cannot be consented at all;
+- a credential without a browser session (an admin token, an API key, a client
+  credential) cannot claim or consent on an interaction — it has no session to
+  bind;
+- interactions expire (10 minutes) and an expired one is `flow_expired`, not
+  resumable.
+
+`GET /v1/oauth/interaction/{id}` stays public: the login/consent screen needs the
+requested scopes before the user has signed in.
+
 ### Building your own consent / device / interaction UI
 
 The runtime exposes helper endpoints (and SDK methods, see
