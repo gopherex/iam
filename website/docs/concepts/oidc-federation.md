@@ -24,6 +24,8 @@ discovery and JWKS:
 /oauth2/logout
 /oauth2/par                    # RFC 9126 pushed authorization requests
 /oauth2/device_authorization   # RFC 8628 device grant
+/oauth2/register               # RFC 7591 dynamic client registration
+/oauth2/register/{client_id}   # RFC 7592 client management
 
 /p/{project_id}/e/{env}/.well-known/openid-configuration
 /p/{project_id}/e/{env}/.well-known/jwks.json
@@ -83,8 +85,6 @@ expired or foreign `request_uri` is `invalid_request_uri`. When `request_uri` is
 present every other query parameter except `client_id` is ignored (RFC 9126 §4),
 so nothing in the browser's URL can override what the client lodged.
 
-Request objects (`request`, RFC 9101) are not supported and are refused rather
-than silently ignored.
 
 ### Reusing an existing session (`prompt`, `max_age`)
 
@@ -111,8 +111,33 @@ there is the same as failing.
 is re-authenticated however valid it still is, and the resulting id_token's
 `auth_time` says when that happened.
 
-`response_mode=fragment` returns the code in the fragment instead of the query,
-keeping it out of the `Referer` header and the redirect target's logs.
+### Response modes
+
+`response_mode` decides how the response travels, never what it says: the same
+parameters — `code`, `state`, `iss` — go out in every mode.
+
+| Mode | How the response arrives |
+| --- | --- |
+| `query` *(default)* | in the query string of the redirect to `redirect_uri` |
+| `fragment` | in the fragment, keeping it out of the `Referer` header and out of the redirect target's logs |
+| `form_post` | as a `200` HTML document whose self-submitting form POSTs the parameters to `redirect_uri` |
+
+`form_post` is the strongest of the three: the code never appears in the address
+bar, in browser history, or in a `Referer` header at all. Anything else is
+answered `unsupported_response_mode`.
+
+Two details follow from where the response is produced. When an existing session
+and a remembered grant already answer the request, `/oauth2/authorize` itself
+returns the document — `200 text/html`, no `Location`. When a screen is involved,
+the response only exists after consent, so `POST /v1/oauth/interaction/{id}/consent`
+(and `/reject`) answer with `form_post: { action, fields }` instead of
+`redirect_to`, and the page builds and submits the form. The redirect to the
+interaction screen is not the authorization response and stays a `302` in every
+mode.
+
+The effective mode is read after a pushed request or a signed request object has
+replaced the query parameters — `response_mode` is one of the things they
+replace.
 
 ### The response names the issuer (RFC 9207)
 
@@ -169,6 +194,54 @@ URL) is not accepted: here `request_uri` means a **pushed** request (RFC 9126),
 which gives the same protection by lodging the request over the client's
 authenticated back channel and never asks us to fetch from an address the browser
 chose.
+
+### Dynamic client registration
+
+A client can register itself instead of being created in the console
+(RFC 7591), and then manage its own registration (RFC 7592):
+
+```bash
+# register — the initial access token is a project-admin token
+curl -sX POST https://auth.example.com/oauth2/register \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H "X-Environment: live" \
+  -H "Content-Type: application/json" \
+  -d '{"client_name":"Reporting","redirect_uris":["https://reports.example.com/cb"],
+       "token_endpoint_auth_method":"none","scope":"openid email"}'
+```
+
+Registration is **not open**. IAM is multi-tenant, so an endpoint anyone could
+POST to would let them create clients inside somebody else's project; the
+initial access token RFC 7591 allows the server to require is a project-admin
+token, and it is also what decides which project the new client lands in.
+`registration_endpoint` is advertised in discovery.
+
+The response carries two credentials **exactly once** — only their digests are
+kept:
+
+- `client_secret`, for a confidential client. A client registering with
+  `token_endpoint_auth_method: none` is public and is issued none: it cannot keep
+  a secret, which is what PKCE is for.
+- `registration_access_token`, together with the `registration_client_uri` it
+  works against.
+
+That token authorizes exactly **one** client — the one it was issued for.
+Presenting it against a different `client_id` is a `404`; otherwise it would be a
+master key over every client in the project. `GET` returns the metadata (never
+the secret again), `PUT` **replaces** it — a field left out is cleared, so read
+first, edit, send back — and `DELETE` removes the client.
+
+`application_type: native` registers a native client; otherwise the auth method
+decides between `spa` (public) and `web` (confidential). `id_token_signed_response_alg`
+is not configurable — id_tokens are RS256, as discovery says — and
+`sector_identifier_uri` is not supported, since the subject type is `public`.
+
+A client created in the console has no registration access token and is managed
+in the console; the RFC 7592 endpoints do not see it. In the other direction, a
+self-registered client is marked **self-registered** in the client list, because
+it can rewrite metadata edited there. The desired-state apply
+(`PUT admin/clients`) carries the registration token through: the document
+describes configuration, not credentials, so an IaC run cannot silently revoke a
+client's ability to manage itself.
 
 ### PKCE
 
@@ -238,6 +311,33 @@ webhooks use.
 
 Any session ending triggers it, not only RP-initiated logout: an admin revoking
 a session, or the user signing out of IAM, notifies the relying parties too.
+
+### Revoking issued tokens
+
+An access token is a signed JWT a resource server verifies offline, so nothing
+about it is naturally killable. Two records make revocation real:
+
+- every issued **refresh token** has a row (by sha256), the same table core-auth
+  uses — so rotation, reuse detection and "revoke this session" work on OIDC
+  grants exactly as they do on the runtime API's;
+- a revoked **access token** is named by its `jti` until it would have expired
+  anyway, which is what the verification path checks.
+
+`POST /oauth2/revoke` (RFC 7009) accepts either kind and, as the RFC requires,
+answers `200` whether or not the token existed — telling a caller which of its
+guesses was a real token is an oracle.
+
+Refresh tokens **rotate**: the presented token is spent whether or not the
+exchange succeeds afterwards, and a fresh one comes back. Presenting an
+already-spent token is the signal that it leaked — the legitimate holder would
+have moved on to the rotated one — so the whole session's tokens are revoked
+rather than merely refusing that one request (RFC 9700 §4.14.2). The revocation
+is committed outside the failing exchange's transaction, so a rolled-back
+exchange cannot roll back the burn.
+
+Token lifetimes come from the project's session policy, not from constants
+compiled into the provider: an environment that shortens `access_ttl` shortens
+the tokens the OIDC provider mints too.
 
 ### Claims in the id_token
 
@@ -347,6 +447,12 @@ yourself:
 - Interaction: `getInteraction`, `loginInteraction`, `consentInteraction`,
   `rejectInteraction`
 - Grants: `listGrants`, `revokeGrant` (also admin-visible per user)
+
+`consentInteraction` and `rejectInteraction` answer with `redirect_to` in the
+usual response modes and with `form_post: { action, fields }` when the client
+asked for `form_post`. A UI that handles only `redirect_to` silently strands
+those clients, so handle both: navigate to the one, build and submit a form for
+the other.
 
 ## Federation — consuming upstream IdPs
 

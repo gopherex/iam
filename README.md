@@ -100,7 +100,7 @@ Guides: [SDK quickstart](https://gopherex.github.io/iam/guides/sdk-quickstart) Â
 | [`openapi/openapi.yaml`](openapi/openapi.yaml) | the HTTP contract (OpenAPI 3.1) â€” source of truth |
 | [`cmd/iam`](cmd/iam) | the server (API + embedded admin SPA) |
 | [`pkg/api`](pkg/api) | hand-written API implementation over the generated server |
-| [`pkg/sdk`](pkg/sdk) | Go SDK |
+| [`pkg/sdk`](pkg/sdk) | Go SDK (resource-server token verification) |
 | [`internal/oas/`](internal/oas) | generated ogen code (wire types, server scaffolding) |
 | [`internal/infrastructure/postgres/`](internal/infrastructure/postgres) | Postgres store: pgx + pgtx + bob + sqld |
 | [`ts/`](ts) | TypeScript SDK (`@gopherex/iam-sdk`) |

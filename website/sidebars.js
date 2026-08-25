@@ -48,7 +48,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'SDK',
-      items: ['sdk/typescript'],
+      items: ['sdk/typescript', 'sdk/go'],
     },
     {
       type: 'category',

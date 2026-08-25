@@ -205,6 +205,31 @@ await iam.oidc.listGrants();
 await iam.oidc.revokeGrant(grantId);
 ```
 
+Consent and reject answer with **either** `redirect_to` **or** `form_post`,
+depending on the response mode the client asked for. Handle both — a screen that
+reads only `redirect_to` leaves `form_post` clients on a dead page:
+
+```ts
+const { data } = await iam.oidc.consentInteraction(interactionId, { grantedScopes });
+
+if (data?.form_post) {
+  const form = document.createElement('form');
+  form.method = 'post';
+  form.action = data.form_post.action;
+  for (const [name, value] of Object.entries(data.form_post.fields)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  }
+  document.body.appendChild(form);
+  form.submit();
+} else if (data?.redirect_to) {
+  window.location.assign(data.redirect_to);
+}
+```
+
 Every state-changing call here carries the cookie-mode **CSRF token** for you:
 the namespace fetches it from `/v1/csrf`, caches it, attaches it, and retries
 once if the server says it is stale. You do not need to perform that handshake
@@ -247,6 +272,38 @@ import {
 
 App clients carry the OIDC provider's per-client settings: `scopes` (allow-list),
 `post_logout_redirect_uris`, `backchannel_logout_uri` and `disabled`.
+`dynamically_registered` marks a client that registered itself — it holds a
+registration access token and can rewrite the metadata edited here.
+
+## Dynamic client registration (separate client)
+
+Register OAuth clients programmatically (RFC 7591) and let them manage
+themselves (RFC 7592):
+
+```ts
+import { createIamClientRegistration } from '@gopherex/iam-sdk';
+
+// registering needs an initial access token — a project-admin token, which is
+// also what decides the project the client lands in
+const registration = createIamClientRegistration({ baseUrl, initialAccessToken: adminToken });
+
+const { data } = await registration.register({
+  client_name: 'Reporting',
+  redirect_uris: ['https://reports.example.com/cb'],
+  token_endpoint_auth_method: 'none',   // public client: no secret, PKCE instead
+  scope: 'openid email',
+});
+
+// data.client_secret and data.registration_access_token are returned once —
+// persist them now, only their digests are kept
+await registration.read(data.client_id, data.registration_access_token);
+await registration.update(data.client_id, token, metadata);  // replaces, not patches
+await registration.delete(data.client_id, token);
+```
+
+The registration access token authorizes exactly the one client it was issued
+for. `update` is a **replacement** (RFC 7592 §2.2): read first, edit the result,
+send it back, or the fields you leave out are cleared.
 
 ## `iam.config`
 

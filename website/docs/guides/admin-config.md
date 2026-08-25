@@ -57,6 +57,28 @@ list cannot delete clients it does not know about. Both PUTs accept
 `?dry_run=true` and an `Idempotency-Key` header. The response lists what was
 created, updated and deleted, with `before`/`after` for each object.
 
+The document describes configuration, not credentials. Client secrets and the
+registration access token of a
+[self-registered client](/concepts/oidc-federation) are carried through an
+apply untouched — otherwise every IaC run would silently revoke them. `prune`
+does delete a self-registered client that is missing from the list, which is the
+point of asking for `prune`.
+
+## Roles
+
+Roles are plain labels assigned per user per environment, and they are what the
+OIDC `groups` scope projects into the `groups` claim:
+
+```bash
+curl -sX PUT https://auth.example.com/v1/projects/prj_7Fk2/admin/users/usr_9/roles \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H "X-Environment: live" \
+  -H "Content-Type: application/json" \
+  -d '{"roles":["ops","platform:admin"]}'
+```
+
+The PUT is a replacement: the user ends up with exactly the roles listed. See
+[Roles in the token](/concepts/oidc-federation).
+
 ## Auth methods & registration
 
 ```bash

@@ -34,13 +34,15 @@ is generated from or verified against it.
   Stripe-like **test / live environment** data isolation.
 - **Sessions & tokens** — signed RS256 JWT access tokens, opaque hashed refresh
   tokens with reuse detection, sliding refresh, per-project session policy.
-- **OIDC provider + federation** — be an OpenID Connect provider for your apps;
+- **OIDC provider + federation** — be an OpenID Connect provider for your apps,
+  with hosted sign-in and consent screens, PKCE, PAR, signed request objects,
+  `private_key_jwt`, dynamic client registration and back-channel logout;
   connect upstream IdPs (OIDC/SAML) and SCIM provisioning.
 - **Operations built in** — webhooks, blocking auth hooks, audit logs, bulk
   import/export jobs, risk rules & rate-limit blocks, retention policies — all
   via the admin API.
-- **Batteries** — an embedded admin SPA, a first-class TypeScript SDK, and a
-  distroless production image.
+- **Batteries** — an embedded admin SPA, a first-class TypeScript SDK, a Go SDK
+  for the resource servers behind IAM, and a distroless production image.
 
 ## How it fits together
 
