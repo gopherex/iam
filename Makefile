@@ -118,6 +118,12 @@ dev:
 down:
 	docker compose down
 
+## lint-web: type-check the admin SPA and the TypeScript SDK
+.PHONY: lint-web
+lint-web:
+	cd ts && yarn install --frozen-lockfile && yarn workspace @gopherex/iam-sdk typecheck
+	cd web && yarn install --frozen-lockfile && yarn lint
+
 ## test: run Go tests
 .PHONY: test
 test:

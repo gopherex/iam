@@ -39,6 +39,14 @@ import (
 	"github.com/gopherex/iam/web"
 )
 
+// apiPathPrefixes returns the URL namespaces served by the generated API.
+// Anything outside them falls through to the SPA, which is how the hosted OIDC
+// provider screens under /oauth/ are reached: /oauth2/ is the protocol surface
+// and does NOT capture /oauth/, so those screens need no extra routing.
+func apiPathPrefixes() []string {
+	return []string{"/v1/", "/mgmt/", "/oauth2/", "/p/"}
+}
+
 func main() {
 	if err := run(); err != nil {
 		// run already logged the cause; exit non-zero for the supervisor.
@@ -217,7 +225,7 @@ func run() error {
 	root := http.NewServeMux()
 	// API namespaces go to the generated server; everything else is the embedded
 	// admin SPA (a stub until the binary is built with `make build` / -tags embed).
-	for _, prefix := range []string{"/v1/", "/mgmt/", "/oauth2/", "/p/"} {
+	for _, prefix := range apiPathPrefixes() {
 		root.Handle(prefix, apiPipeline)
 	}
 

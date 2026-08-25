@@ -106,6 +106,17 @@ export interface FlowController {
      * (step:blocked, error:invite_required).
      */
     inviteToken?: string;
+    /**
+     * Ask IAM to return the completed session as HttpOnly cookies
+     * (`iam_session` / `iam_refresh`) instead of in the response body.
+     *
+     * This is what establishes a browser session, and therefore what lets the
+     * OIDC provider's hosted pages recognise an already-signed-in user instead
+     * of asking for a password once per relying party. Set it from a browser;
+     * leave it off in a programmatic client, which wants the tokens it can store
+     * itself.
+     */
+    cookieMode?: boolean;
   }): Promise<{ state: FlowState | null; error: IamAuthError | null }>;
 
   /**
@@ -336,6 +347,7 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
           locale: params.locale,
           invite_token: params.inviteToken,
           consents: params.consents,
+          cookie_mode: params.cookieMode,
         },
       });
       return handleState(r);

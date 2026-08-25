@@ -1518,3 +1518,422 @@ func TestE2EOIDCProviderGrantRevoke(t *testing.T) {
 // Ensures the bytes and io packages are used (imported for form-encoded requests).
 var _ = bytes.NewReader
 var _ = io.ReadAll
+
+// TestE2EOIDCAuthorizationCodeThroughTheHostedUI walks the whole authorization
+// code grant the way a browser does it, over HTTP, through the same endpoints
+// the hosted provider pages call:
+//
+//	/oauth2/authorize -> interaction -> sign in (cookie mode) -> claim -> consent
+//	-> redirect carrying the code -> token exchange
+//
+// Every step in the middle used to be unreachable: the interaction context
+// carried no client to display, no login path handed the browser a session
+// cookie, and consent could not be given by the session that signed in.
+func TestE2EOIDCAuthorizationCodeThroughTheHostedUI(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, adminToken := e2eProjectAdmin(t, ctx)
+
+	const redirectURI = "https://app.example.com/cb"
+
+	// A confidential client, so the token exchange authenticates with a secret.
+	rApp := e2eReq(t, ctx, http.MethodPost,
+		fmt.Sprintf("%s/v1/projects/%s/admin/apps", ts.URL, projectID),
+		map[string]any{
+			"name":          "Hosted UI Demo",
+			"type":          "web",
+			"redirect_uris": []string{redirectURI},
+		}, e2eBearer(adminToken))
+	e2eWantStatus(t, rApp, http.StatusCreated)
+
+	var app struct {
+		App struct {
+			ID string `json:"id"`
+		} `json:"app"`
+	}
+	e2eDecode(t, rApp, &app)
+
+	rSecret := e2eReq(t, ctx, http.MethodPost,
+		fmt.Sprintf("%s/v1/projects/%s/admin/apps/%s/secrets", ts.URL, projectID, app.App.ID),
+		map[string]any{"name": "e2e"}, e2eBearer(adminToken))
+	e2eWantStatus(t, rSecret, http.StatusCreated)
+
+	var secret struct {
+		ClientSecret string `json:"client_secret"`
+	}
+	e2eDecode(t, rSecret, &secret)
+
+	email := fmt.Sprintf("hosted-ui-%s@example.com", newUUID()[:8])
+	registerUser(t, ctx, projectID, email)
+
+	b := newBrowser(t, ts)
+
+	// 1. The client sends the browser to authorize; it lands on an interaction.
+	challenge := challengeFor(pkceVerifier)
+	authorizeURL := fmt.Sprintf(
+		"/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=%s&state=st-1"+
+			"&code_challenge=%s&code_challenge_method=S256",
+		app.App.ID, url.QueryEscape(redirectURI), url.QueryEscape("openid email"),
+		url.QueryEscape(challenge))
+
+	status, body := b.do(t, ctx, http.MethodGet, authorizeURL, nil, nil)
+	if status != http.StatusFound {
+		t.Fatalf("authorize: status %d, body %s", status, body)
+	}
+
+	location := b.lastLocation
+	const prefix = "/oauth/interaction/"
+	if !strings.HasPrefix(location, prefix) {
+		t.Fatalf("authorize redirected to %q, want an interaction handle", location)
+	}
+
+	interactionID := strings.TrimPrefix(location, prefix)
+
+	// 2. The page reads the context with nothing but the interaction id — no
+	//    X-Client-Id, which it could not know yet.
+	status, body = b.do(t, ctx, http.MethodGet, "/v1/oauth/interaction/"+interactionID, nil, nil)
+	if status != http.StatusOK {
+		t.Fatalf("interaction context: status %d, body %s", status, body)
+	}
+
+	var ictx struct {
+		Stage  string `json:"stage"`
+		Client struct {
+			Name string `json:"name"`
+		} `json:"client"`
+		ProjectID       string   `json:"project_id"`
+		RequestedScopes []string `json:"requested_scopes"`
+	}
+	if err := json.Unmarshal(body, &ictx); err != nil {
+		t.Fatalf("decode interaction context: %v", err)
+	}
+	if ictx.Stage != "login" {
+		t.Fatalf("stage = %q, want login", ictx.Stage)
+	}
+	if ictx.Client.Name != "Hosted UI Demo" {
+		t.Fatalf("client name = %q; the consent screen cannot name the app", ictx.Client.Name)
+	}
+	if ictx.ProjectID != projectID {
+		t.Fatalf("project_id = %q, want %q", ictx.ProjectID, projectID)
+	}
+	if len(ictx.RequestedScopes) == 0 {
+		t.Fatal("no requested scopes to consent to")
+	}
+
+	tenant := map[string]string{"X-Client-Id": ictx.ProjectID, "X-Environment": "live"}
+
+	// 3. Sign in through the flow engine in cookie mode: this is what leaves the
+	//    browser holding a session.
+	status, body = b.do(t, ctx, http.MethodPost, "/v1/auth/flows", map[string]any{
+		"kind":        "signin",
+		"email":       email,
+		"password":    "Sup3rStr0ng!Pass",
+		"cookie_mode": true,
+	}, tenant)
+	if status != http.StatusOK {
+		t.Fatalf("sign in: status %d, body %s", status, body)
+	}
+	if b.cookie("iam_session") == "" {
+		t.Fatal("sign-in left the browser without a session cookie")
+	}
+
+	// 4. Claim the interaction with that session (cookie mode ⇒ CSRF).
+	csrf := b.csrf(t, ctx, ictx.ProjectID)
+	status, body = b.do(t, ctx, http.MethodPost,
+		"/v1/oauth/interaction/"+interactionID+"/login", map[string]any{}, csrf)
+	if status != http.StatusOK {
+		t.Fatalf("interaction login: status %d, body %s", status, body)
+	}
+
+	status, body = b.do(t, ctx, http.MethodGet, "/v1/oauth/interaction/"+interactionID, nil, nil)
+	if status != http.StatusOK {
+		t.Fatalf("interaction context after login: status %d, body %s", status, body)
+	}
+	if err := json.Unmarshal(body, &ictx); err != nil {
+		t.Fatalf("decode interaction context: %v", err)
+	}
+	if ictx.Stage != "consent" {
+		t.Fatalf("stage after login = %q, want consent", ictx.Stage)
+	}
+
+	// 5. Consent, and follow the code back to the client's redirect_uri.
+	status, body = b.do(t, ctx, http.MethodPost,
+		"/v1/oauth/interaction/"+interactionID+"/consent",
+		map[string]any{"granted_scopes": ictx.RequestedScopes, "remember": true},
+		b.csrf(t, ctx, ictx.ProjectID))
+	if status != http.StatusOK {
+		t.Fatalf("consent: status %d, body %s", status, body)
+	}
+
+	var consent struct {
+		RedirectTo string `json:"redirect_to"`
+	}
+	if err := json.Unmarshal(body, &consent); err != nil {
+		t.Fatalf("decode consent: %v", err)
+	}
+
+	parsed, err := url.Parse(consent.RedirectTo)
+	if err != nil {
+		t.Fatalf("parse consent redirect %q: %v", consent.RedirectTo, err)
+	}
+	if got := parsed.Scheme + "://" + parsed.Host + parsed.Path; got != redirectURI {
+		t.Fatalf("consent redirected to %q, want the registered %q", got, redirectURI)
+	}
+
+	code := parsed.Query().Get("code")
+	if code == "" {
+		t.Fatalf("consent redirect %q carries no code", consent.RedirectTo)
+	}
+
+	// 6. The client exchanges the code for tokens.
+	form := url.Values{
+		"grant_type":    {"authorization_code"},
+		"code":          {code},
+		"redirect_uri":  {redirectURI},
+		"code_verifier": {pkceVerifier},
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ts.URL+"/oauth2/token",
+		strings.NewReader(form.Encode()))
+	if err != nil {
+		t.Fatalf("new token request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth(app.App.ID, secret.ClientSecret)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("token exchange: %v", err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("token exchange: status %d, body %s", resp.StatusCode, raw)
+	}
+
+	var tokens struct {
+		AccessToken string `json:"access_token"`
+		IDToken     string `json:"id_token"`
+	}
+	if err := json.Unmarshal(raw, &tokens); err != nil {
+		t.Fatalf("decode token response: %v", err)
+	}
+	if tokens.AccessToken == "" {
+		t.Fatalf("no access_token in %s", raw)
+	}
+	if tokens.IDToken == "" {
+		t.Fatalf("openid was requested but no id_token came back: %s", raw)
+	}
+}
+
+// TestE2EDeviceFlowThroughTheHostedUI walks the device grant the way the hosted
+// /oauth/device screen does it: the device asks for a code, a person signs in in
+// a browser and approves it, and the device redeems its token.
+func TestE2EDeviceFlowThroughTheHostedUI(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, adminToken := e2eProjectAdmin(t, ctx)
+
+	rApp := e2eReq(t, ctx, http.MethodPost,
+		fmt.Sprintf("%s/v1/projects/%s/admin/apps", ts.URL, projectID),
+		map[string]any{
+			"name":          "Living Room TV",
+			"type":          "web",
+			"redirect_uris": []string{"https://tv.example.com/cb"},
+		}, e2eBearer(adminToken))
+	e2eWantStatus(t, rApp, http.StatusCreated)
+
+	var app struct {
+		App struct {
+			ID string `json:"id"`
+		} `json:"app"`
+	}
+	e2eDecode(t, rApp, &app)
+
+	rSecret := e2eReq(t, ctx, http.MethodPost,
+		fmt.Sprintf("%s/v1/projects/%s/admin/apps/%s/secrets", ts.URL, projectID, app.App.ID),
+		map[string]any{"name": "e2e"}, e2eBearer(adminToken))
+	e2eWantStatus(t, rSecret, http.StatusCreated)
+
+	var secret struct {
+		ClientSecret string `json:"client_secret"`
+	}
+	e2eDecode(t, rSecret, &secret)
+
+	// form posts the given values to path with client_secret_basic.
+	form := func(path string, values url.Values) (int, []byte) {
+		t.Helper()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, ts.URL+path,
+			strings.NewReader(values.Encode()))
+		if err != nil {
+			t.Fatalf("new request: %v", err)
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.SetBasicAuth(app.App.ID, secret.ClientSecret)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("POST %s: %v", path, err)
+		}
+		defer resp.Body.Close()
+		raw, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, raw
+	}
+
+	// 1. The device starts the grant and shows the user_code on screen.
+	status, body := form("/oauth2/device_authorization", url.Values{
+		"client_id": {app.App.ID},
+		"scope":     {"openid"},
+	})
+	if status != http.StatusOK {
+		t.Fatalf("device authorization: status %d, body %s", status, body)
+	}
+
+	var device struct {
+		DeviceCode string `json:"device_code"`
+		UserCode   string `json:"user_code"`
+	}
+	if err := json.Unmarshal(body, &device); err != nil {
+		t.Fatalf("decode device authorization: %v", err)
+	}
+	if device.UserCode == "" || device.DeviceCode == "" {
+		t.Fatalf("device authorization returned no codes: %s", body)
+	}
+
+	// 2. The person opens the verification page in a browser and signs in.
+	email := fmt.Sprintf("device-%s@example.com", newUUID()[:8])
+	registerUser(t, ctx, projectID, email)
+
+	b := newBrowser(t, ts)
+	tenant := map[string]string{"X-Client-Id": projectID, "X-Environment": "live"}
+
+	status, body = b.do(t, ctx, http.MethodPost, "/v1/auth/flows", map[string]any{
+		"kind":        "signin",
+		"email":       email,
+		"password":    "Sup3rStr0ng!Pass",
+		"cookie_mode": true,
+	}, tenant)
+	if status != http.StatusOK {
+		t.Fatalf("sign in: status %d, body %s", status, body)
+	}
+
+	// 3. The page resolves the code and shows which application is asking.
+	status, body = b.do(t, ctx, http.MethodGet,
+		"/v1/device?user_code="+url.QueryEscape(device.UserCode), nil, tenant)
+	if status != http.StatusOK {
+		t.Fatalf("resolve device code: status %d, body %s", status, body)
+	}
+
+	var pending struct {
+		Client map[string]any `json:"client"`
+		Scopes []string       `json:"scopes"`
+	}
+	if err := json.Unmarshal(body, &pending); err != nil {
+		t.Fatalf("decode device context: %v", err)
+	}
+	if len(pending.Scopes) == 0 {
+		t.Fatalf("device context lists no scopes: %s", body)
+	}
+
+	// 4. Approve it.
+	status, body = b.do(t, ctx, http.MethodPost, "/v1/device/approve",
+		map[string]any{"user_code": device.UserCode}, b.csrf(t, ctx, projectID))
+	if status != http.StatusOK {
+		t.Fatalf("approve device: status %d, body %s", status, body)
+	}
+
+	// 5. The device, still polling, now gets its tokens.
+	status, body = form("/oauth2/token", url.Values{
+		"grant_type":  {"device_code"},
+		"device_code": {device.DeviceCode},
+	})
+	if status != http.StatusOK {
+		t.Fatalf("device token exchange: status %d, body %s", status, body)
+	}
+
+	var tokens struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.Unmarshal(body, &tokens); err != nil {
+		t.Fatalf("decode device token response: %v", err)
+	}
+	if tokens.AccessToken == "" {
+		t.Fatalf("no access_token in %s", body)
+	}
+}
+
+// TestE2EDeviceVerificationURIIsAbsolute: a device prints this URI for a person
+// to type into another device, so a path is useless — RFC 8628 §3.2 wants a URL.
+func TestE2EDeviceVerificationURIIsAbsolute(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, adminToken := e2eProjectAdmin(t, ctx)
+
+	rApp := e2eReq(t, ctx, http.MethodPost,
+		fmt.Sprintf("%s/v1/projects/%s/admin/apps", ts.URL, projectID),
+		map[string]any{
+			"name":          "Kiosk",
+			"type":          "web",
+			"redirect_uris": []string{"https://kiosk.example.com/cb"},
+		}, e2eBearer(adminToken))
+	e2eWantStatus(t, rApp, http.StatusCreated)
+
+	var app struct {
+		App struct {
+			ID string `json:"id"`
+		} `json:"app"`
+	}
+	e2eDecode(t, rApp, &app)
+
+	rSecret := e2eReq(t, ctx, http.MethodPost,
+		fmt.Sprintf("%s/v1/projects/%s/admin/apps/%s/secrets", ts.URL, projectID, app.App.ID),
+		map[string]any{"name": "e2e"}, e2eBearer(adminToken))
+	e2eWantStatus(t, rSecret, http.StatusCreated)
+
+	var secret struct {
+		ClientSecret string `json:"client_secret"`
+	}
+	e2eDecode(t, rSecret, &secret)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ts.URL+"/oauth2/device_authorization",
+		strings.NewReader(url.Values{"client_id": {app.App.ID}, "scope": {"openid"}}.Encode()))
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth(app.App.ID, secret.ClientSecret)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("device authorization: %v", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("device authorization: status %d, body %s", resp.StatusCode, body)
+	}
+
+	var out struct {
+		UserCode                string `json:"user_code"`
+		VerificationURI         string `json:"verification_uri"`
+		VerificationURIComplete string `json:"verification_uri_complete"`
+	}
+	if err := json.Unmarshal(body, &out); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	if want := ts.URL + "/oauth/device"; out.VerificationURI != want {
+		t.Fatalf("verification_uri = %q, want %q", out.VerificationURI, want)
+	}
+
+	complete, err := url.Parse(out.VerificationURIComplete)
+	if err != nil {
+		t.Fatalf("parse verification_uri_complete: %v", err)
+	}
+	if got := complete.Query().Get("user_code"); got != out.UserCode {
+		t.Fatalf("verification_uri_complete user_code = %q, want %q", got, out.UserCode)
+	}
+	if got := complete.Query().Get("client_id"); got != projectID {
+		t.Fatalf("verification_uri_complete client_id = %q, want the project %q", got, projectID)
+	}
+}

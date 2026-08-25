@@ -72,6 +72,23 @@ openssl rand -base64 32
 | --- | --- | --- |
 | `IAM_SERVICE_AUTH_SEED_ROOT` | `false` | ensure a `Root` project exists on startup so the operator has something to manage |
 
+## Browser session lifetime
+
+The session the hosted provider screens establish is a pair of HttpOnly cookies,
+and both lifetimes come from the project's `session_policy`, not from the
+service config:
+
+| Cookie | Max-Age | Scope |
+| --- | --- | --- |
+| `iam_session` | `session_policy.access_ttl` (default 10m) | `/` |
+| `iam_refresh` | `session_policy.refresh_ttl` (default 30d) | `/v1/auth/token/refresh` |
+
+The access cookie is short by design; the refresh cookie is what keeps a person
+signed in, so **`refresh_ttl` is the knob that decides how often an operator is
+sent back to a login screen**. Raise it for an internal console; lower it for
+anything handling sensitive data. Both are set per project (and per environment)
+through the admin API, so `live` and `test` can differ.
+
 ## Note on TTLs and environment
 
 Token TTLs are **not** service config — access/refresh TTLs come from each

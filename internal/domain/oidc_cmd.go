@@ -101,6 +101,11 @@ type OIDCTokenCmd struct {
 	ClientID     string
 	ClientSecret string
 	DeviceCode   string
+	// AuthenticatedClientID is the client the TRANSPORT already authenticated —
+	// client_secret_basic (RFC 6749 §2.3.1), the method most OAuth clients use by
+	// default. It is empty when the client sent its credentials in the form body
+	// (client_secret_post) instead, in which case ClientSecret carries them.
+	AuthenticatedClientID string
 }
 
 // OIDCIntrospectCmd is the /oauth2/introspect request (RFC 7662). It is

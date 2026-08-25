@@ -369,17 +369,27 @@ func (s *OIDCProviderService) PostOauth2Token(ctx context.Context, req *oas.Post
 		return nil, err
 	}
 
+	// The client may have authenticated with client_secret_basic, in which case
+	// the security layer has already proven its identity and the form body
+	// carries no secret at all. Pass that through, or the endpoint would demand a
+	// body secret from a client that authenticated the standard way.
+	authenticatedClientID := ""
+	if p.Kind == domain.PrincipalClient {
+		authenticatedClientID = p.ClientID
+	}
+
 	res, err := s.deps.Grants.Token(ctx, domain.OIDCTokenCmd{
-		ProjectID:    p.ProjectID,
-		Env:          oidcEnv(p),
-		GrantType:    req.GrantType.Or(""),
-		Code:         req.Code.Or(""),
-		RedirectURI:  req.RedirectURI.Or(""),
-		CodeVerifier: req.CodeVerifier.Or(""),
-		RefreshToken: req.RefreshToken.Or(""),
-		ClientID:     req.ClientID.Or(""),
-		ClientSecret: req.ClientSecret.Or(""),
-		DeviceCode:   req.DeviceCode.Or(""),
+		ProjectID:             p.ProjectID,
+		Env:                   oidcEnv(p),
+		AuthenticatedClientID: authenticatedClientID,
+		GrantType:             req.GrantType.Or(""),
+		Code:                  req.Code.Or(""),
+		RedirectURI:           req.RedirectURI.Or(""),
+		CodeVerifier:          req.CodeVerifier.Or(""),
+		RefreshToken:          req.RefreshToken.Or(""),
+		ClientID:              req.ClientID.Or(""),
+		ClientSecret:          req.ClientSecret.Or(""),
+		DeviceCode:            req.DeviceCode.Or(""),
 	})
 	if err != nil {
 		return nil, err

@@ -4,6 +4,8 @@ import { Toaster } from '@/components/ui/sonner';
 import { OperatorLayout } from '@/layout/operator-layout';
 import { ProjectLayout } from '@/layout/project-layout';
 import { FlowPage } from '@/pages/flow';
+import { DevicePage } from '@/pages/oauth/device';
+import { InteractionPage } from '@/pages/oauth/interaction';
 import { LoginPage } from '@/pages/login';
 import { ProjectsPage } from '@/pages/projects';
 import { AccessRequestsPage } from '@/pages/project/access-requests';
@@ -26,6 +28,11 @@ export function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/flow" element={<FlowPage />} />
+
+        {/* Hosted OIDC provider screens. Public: /oauth2/authorize redirects the
+            browser here before anyone has signed in. */}
+        <Route path="/oauth/interaction/:id" element={<InteractionPage />} />
+        <Route path="/oauth/device" element={<DevicePage />} />
 
         <Route element={<RequireAuth />}>
           <Route element={<OperatorLayout />}>

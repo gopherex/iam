@@ -1099,10 +1099,15 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 				return nil, domain.ErrTokenExpired
 			}
 
-			// H-01: Verify client_secret for confidential clients.
-			effectiveClientID := firstNonEmpty(row.ClientID.GetOrZero(), cmd.ClientID)
-			if err := a.oidcVerifyClientSecret(ctx, effectiveClientID, cmd.ClientSecret); err != nil {
-				return nil, err
+			// H-01: Verify client_secret for confidential clients — unless the
+			// transport already authenticated this very client
+			// (client_secret_basic), in which case there is nothing left to prove
+			// and no secret in the body to prove it with.
+			effectiveClientID := firstNonEmpty(row.ClientID.GetOrZero(), cmd.ClientID, cmd.AuthenticatedClientID)
+			if cmd.AuthenticatedClientID != effectiveClientID {
+				if err := a.oidcVerifyClientSecret(ctx, effectiveClientID, cmd.ClientSecret); err != nil {
+					return nil, err
+				}
 			}
 
 			// Parse the code data envelope for redirect_uri, nonce, and scopes.
@@ -1248,7 +1253,7 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 				return nil, err
 			}
 
-			effectiveClientID := firstNonEmpty(clientID, cmd.ClientID)
+			effectiveClientID := firstNonEmpty(clientID, cmd.ClientID, cmd.AuthenticatedClientID)
 			if err := a.emitter.Emit(ctx, domain.Event{
 				Type:        "oidc.token.refreshed",
 				ProjectID:   projectID,
@@ -1768,6 +1773,15 @@ func (a *pgOIDCGrants) consumePushedRequest(
 // device_code is stored as a hash; the plaintext device_code and user_code are
 // returned to the client exactly once.
 func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCDeviceAuthorizationCmd) (*domain.OIDCDeviceAuthorization, error) {
+	// Resolve the client so the pending grant is stored under its real tenant.
+	// The verification page looks the user_code up by PROJECT (that is all a
+	// signed-in browser knows), so a row keyed by client id can never be found —
+	// which made the whole user half of the device grant unreachable.
+	clientRow, _, err := a.resolveAuthorizeClient(ctx, cmd.ClientID)
+	if err != nil {
+		return nil, err
+	}
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.OIDCDeviceAuthorization, error) {
 		deviceCode, err := oidcRandToken(32)
 		if err != nil {
@@ -1785,11 +1799,21 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 
 		expiresAt := nowUTC().Add(ttl * time.Second)
 
+		// RFC 8628 §3.2: the device prints verification_uri for a human to type
+		// into another device, so it has to be an absolute URL — a path is
+		// useless on a TV screen. It points at the hosted verification page and
+		// carries the tenant the page needs to resolve the code.
+		verificationURI := a.db.PublicURL + "/oauth/device"
+		verificationQuery := url.Values{
+			"user_code": {userCode},
+			"client_id": {clientRow.ProjectID},
+		}
+
 		out := &domain.OIDCDeviceAuthorization{
 			DeviceCode:              deviceCode,
 			UserCode:                userCode,
-			VerificationURI:         "/device",
-			VerificationURIComplete: "/device?user_code=" + userCode,
+			VerificationURI:         verificationURI,
+			VerificationURIComplete: verificationURI + "?" + verificationQuery.Encode(),
 			ExpiresIn:               ttl,
 			Interval:                interval,
 		}
@@ -1808,13 +1832,14 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 
 		rm := json.RawMessage(raw)
 		setter := &models.IamDeviceCodeSetter{
-			ID:         ptr(newUUID()),
-			ProjectID:  ptr(cmd.ClientID), // routing key; project resolved by client
-			DeviceCode: ptr(oidcHashToken(deviceCode)),
-			UserCode:   &userCode,
-			Status:     ptr("pending"),
-			ExpiresAt:  &expiresAt,
-			Data:       &rm,
+			ID:          ptr(newUUID()),
+			ProjectID:   ptr(clientRow.ProjectID),
+			Environment: ptr(clientRow.Environment),
+			DeviceCode:  ptr(oidcHashToken(deviceCode)),
+			UserCode:    &userCode,
+			Status:      ptr("pending"),
+			ExpiresAt:   &expiresAt,
+			Data:        &rm,
 		}
 
 		deviceRow, err := models.IamDeviceCodes.Insert(setter).One(ctx, a.db.Bobx())
@@ -1828,8 +1853,8 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.device.authorized",
-			ProjectID:   cmd.ClientID, // routing key; project resolved by client
-			Environment: "",
+			ProjectID:   clientRow.ProjectID,
+			Environment: clientRow.Environment,
 			AggregateID: deviceRow.ID,
 			Payload:     &pending,
 		}); err != nil {

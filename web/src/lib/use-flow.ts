@@ -31,6 +31,13 @@ export interface UseFlowReturn {
     name?: string;
     captchaToken?: string;
     consents?: Array<ConsentAcceptance>;
+    /**
+     * Return the completed session as HttpOnly cookies rather than in the
+     * response body. The hosted provider pages set it: it is what gives the
+     * browser a session, and so what makes the "already signed in" path
+     * possible.
+     */
+    cookieMode?: boolean;
   }): Promise<void>;
   submit(action: string, payload?: Record<string, unknown>): Promise<void>;
   resend(): Promise<void>;
@@ -99,6 +106,7 @@ export function useFlow(opts?: { flowToken?: string }): UseFlowReturn {
       captchaToken?: string;
       locale?: string;
       consents?: Array<ConsentAcceptance>;
+      cookieMode?: boolean;
     }) => {
       setLoading(true);
       try {

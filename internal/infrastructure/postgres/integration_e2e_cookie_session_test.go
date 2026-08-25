@@ -31,6 +31,9 @@ import (
 type browser struct {
 	client *http.Client
 	ts     *httptest.Server
+	// lastLocation is the Location header of the most recent response, kept
+	// because redirects are deliberately not followed.
+	lastLocation string
 }
 
 func newBrowser(t *testing.T, ts *httptest.Server) *browser {
@@ -75,8 +78,31 @@ func (b *browser) do(t *testing.T, ctx context.Context, method, path string, bod
 		t.Fatalf("%s %s: %v", method, path, err)
 	}
 	defer resp.Body.Close()
+	b.lastLocation = resp.Header.Get("Location")
 	raw, _ := io.ReadAll(resp.Body)
 	return resp.StatusCode, raw
+}
+
+// csrf returns the header set a cookie-mode POST needs: the project it is bound
+// to plus a freshly issued synchronizer token.
+func (b *browser) csrf(t *testing.T, ctx context.Context, projectID string) map[string]string {
+	t.Helper()
+	headers := map[string]string{"X-Client-Id": projectID, "X-Environment": "live"}
+	status, body := b.do(t, ctx, http.MethodGet, "/v1/csrf", nil, headers)
+	if status != http.StatusOK {
+		t.Fatalf("GET /v1/csrf: status %d, body %s", status, body)
+	}
+	var out struct {
+		CsrfToken string `json:"csrf_token"`
+	}
+	if err := json.Unmarshal(body, &out); err != nil {
+		t.Fatalf("decode csrf: %v", err)
+	}
+	if out.CsrfToken == "" {
+		t.Fatalf("empty csrf token: %s", body)
+	}
+	headers["X-Csrf-Token"] = out.CsrfToken
+	return headers
 }
 
 // cookie returns the value the jar holds for name, or "".

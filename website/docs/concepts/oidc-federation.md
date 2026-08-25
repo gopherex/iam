@@ -161,6 +161,37 @@ session and account. From then on:
 `GET /v1/oauth/interaction/{id}` stays public: the login/consent screen needs the
 requested scopes before the user has signed in.
 
+### The hosted sign-in and consent screens
+
+IAM ships the screens the authorization flow needs, so a project gets a working
+provider without writing any UI:
+
+| Path | Screen |
+| --- | --- |
+| `/oauth/interaction/{id}` | sign in, continue as the signed-in user, consent |
+| `/oauth/device` | enter a device `user_code`, then approve or refuse it |
+
+`/oauth2/authorize` redirects the browser to the interaction screen with nothing
+but the interaction id; the page reads
+`GET /v1/oauth/interaction/{id}` for the application name, the requested scopes,
+the tenant and the project's locales, and renders in the project's language.
+
+**Already signed in.** If the browser holds a valid IAM session the screen offers
+it — "Continue as ada@example.com" — instead of asking for a password. That is
+what makes this single sign-on: the session is established once, and the second
+relying party only needs a consent decision (and not even that, if the user
+ticked "remember" the first time). A browser session exists because the sign-in
+flow is driven with `cookie_mode`, which returns the session as HttpOnly cookies
+rather than in the response body.
+
+The sign-in step is the same resumable flow engine, and literally the same step
+components, as the console's `/flow` page — password, OTP, magic link, passkey,
+MFA, consent documents and recovery all work here because they are not
+reimplemented here.
+
+Every state-changing call the screens make is cookie-mode with a CSRF token from
+`GET /v1/csrf`; the pages never hold a token themselves.
+
 ### Building your own consent / device / interaction UI
 
 The runtime exposes helper endpoints (and SDK methods, see
