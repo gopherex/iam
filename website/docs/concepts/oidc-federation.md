@@ -318,6 +318,12 @@ when IAM is the relying party of an upstream IdP (see
 and the IAM sessions it names end. The endpoint is public, as the spec requires —
 the token's signature is what authenticates it.
 
+### Machine-to-machine (`client_credentials`)
+
+A service account authenticates at the token endpoint with its own id and secret
+and receives a token in its own name (RFC 6749 §4.4) — no user, no code, no
+session. See [Machine identity](/guides/machine-identity).
+
 ### Revoking issued tokens
 
 An access token is a signed JWT a resource server verifies offline, so nothing

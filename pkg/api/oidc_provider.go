@@ -398,7 +398,9 @@ func (s *OIDCProviderService) PostOauth2Token(ctx context.Context, req *oas.Post
 
 	if p, ok := PrincipalFrom(ctx); ok && p != nil {
 		projectID, environment = p.ProjectID, oidcEnv(p)
-		if p.Kind == domain.PrincipalClient {
+		// A service account authenticating with its client secret is a
+		// client-credentials client; the transport proved it either way.
+		if p.Kind == domain.PrincipalClient || p.Kind == domain.PrincipalService {
 			authenticatedClientID = p.ClientID
 		}
 	}
@@ -416,6 +418,7 @@ func (s *OIDCProviderService) PostOauth2Token(ctx context.Context, req *oas.Post
 		RefreshToken:          req.RefreshToken.Or(""),
 		ClientID:              req.ClientID.Or(""),
 		ClientSecret:          req.ClientSecret.Or(""),
+		Scope:                 req.Scope.Or(""),
 		DeviceCode:            req.DeviceCode.Or(""),
 	})
 	if err != nil {

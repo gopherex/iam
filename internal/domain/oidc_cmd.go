@@ -189,6 +189,9 @@ type OIDCTokenCmd struct {
 	// default. It is empty when the client sent its credentials in the form body
 	// (client_secret_post) instead, in which case ClientSecret carries them.
 	AuthenticatedClientID string
+	// Scope narrows a client_credentials request. It can only ever ask for less
+	// than the caller already holds.
+	Scope string
 }
 
 // OIDCIntrospectCmd is the /oauth2/introspect request (RFC 7662). It is

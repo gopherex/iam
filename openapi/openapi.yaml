@@ -7959,6 +7959,14 @@ paths:
                 device_code:
                   type: string
                   maxLength: 1024
+                scope:
+                  type: string
+                  description: >-
+                    Space-delimited scopes, for `grant_type=client_credentials`.
+                    It can only narrow what the service account already holds;
+                    asking for anything outside the grant is `invalid_scope`
+                    rather than a quietly trimmed token.
+                  maxLength: 1024
       responses:
         '200':
           description: OAuth token response.

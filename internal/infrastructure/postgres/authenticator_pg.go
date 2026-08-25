@@ -285,7 +285,10 @@ func (a *pgAuthenticator) SCIM(ctx context.Context, token string) (*domain.Princ
 func (a *pgAuthenticator) Client(ctx context.Context, clientID, secret string) (*domain.Principal, error) {
 	app, err := models.FindIamAppClient(ctx, a.db.Bobx(), clientID)
 	if err != nil {
-		return nil, domain.ErrUnauthorized
+		// A service account is an OAuth client of the client-credentials kind, so
+		// its id and secrets authenticate here too — otherwise it would need a
+		// second, non-standard way to prove who it is.
+		return a.serviceAccountClient(ctx, clientID, secret)
 	}
 
 	rows, err := models.IamAppSecrets.Query(
@@ -434,3 +437,23 @@ func claimScopes(claims map[string]any) []string {
 }
 
 var _ = time.Time{}
+
+// serviceAccountClient authenticates a service account presenting its client
+// secret (RFC 6749 §2.3.1 / §4.4).
+func (a *pgAuthenticator) serviceAccountClient(
+	ctx context.Context, clientID, secret string,
+) (*domain.Principal, error) {
+	account, err := verifyServiceAccountSecret(ctx, a.db, clientID, secret)
+	if err != nil {
+		return nil, domain.ErrUnauthorized
+	}
+
+	return &domain.Principal{
+		Kind:        domain.PrincipalService,
+		AccountID:   account.ID,
+		ProjectID:   account.ProjectID,
+		Environment: account.Environment,
+		ClientID:    account.ID,
+		Scopes:      account.Scopes,
+	}, nil
+}

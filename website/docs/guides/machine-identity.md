@@ -53,27 +53,61 @@ old key.
 
 ## Service accounts
 
-A service account is a named machine principal that can hold scopes and mint a
-short-lived JWT:
+A service account is an OAuth client of the client-credentials kind (RFC 6749
+§4.4): its id **is** the client id, its secrets are client secrets, and it gets a
+token from the standard token endpoint — so every OAuth library already knows how
+to talk to it.
 
 ```bash
+# create it and issue a secret
 curl -sX POST .../admin/service-accounts -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"billing-sync","scopes":["users:read","users:write"]}'
+# -> { "service_account": { "id": "sa_…" } }
+
+curl -sX POST .../admin/service-accounts/sa_…/secrets -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" -d '{"name":"prod"}'
+# -> { "secret": "<shown once>" }
 ```
 
-`POST /v1/service-accounts/tokens` mints an access token for the **calling**
-service account: a one-hour RS256 JWT carrying `typ: service`, the account id as
-`sub`, and the account's scopes. The `scopes` and `ttl_seconds` in the request
-body are not yet honoured — the account's own scopes and a fixed one-hour
-lifetime are used.
+Then, from the service itself:
 
-:::caution A service-account secret is not yet a credential
-`POST admin/service-accounts/{sa_id}/secrets` issues and stores a secret, but no
-authentication path verifies it — there is no client-credentials grant for
-service accounts today, and the token-minting endpoint requires a service token
-you already hold. Until that lands, use an **API key** for machine access.
-:::
+```bash
+curl -sX POST https://auth.example.com/oauth2/token \
+  -u "$CLIENT_ID:$CLIENT_SECRET" \
+  -d grant_type=client_credentials
+# -> { "access_token": "eyJ…", "token_type": "Bearer", "expires_in": 3600,
+#      "scope": "users:read users:write" }
+```
+
+`client_secret_post` works too — send `client_id` and `client_secret` in the
+form body instead of the Authorization header. `client_credentials` is
+advertised in `grant_types_supported`.
+
+The token is a one-hour RS256 JWT carrying `typ: service`, the account id as
+`sub`, and the account's scopes. There is no refresh token and no id_token:
+there is no user to represent, and a client that can authenticate can simply ask
+again.
+
+### Narrowing a token
+
+```bash
+curl -sX POST https://auth.example.com/oauth2/token -u "$CLIENT_ID:$CLIENT_SECRET" \
+  -d grant_type=client_credentials -d scope="users:read"
+```
+
+`scope` can only ask for **less** than the account already holds. A scope outside
+the grant is refused with `invalid_scope` rather than quietly trimmed, so a
+misconfigured caller fails loudly instead of holding a token that does less than
+it thinks.
+
+An account may hold several secrets at once, so one can be rotated in before the
+other is deleted. Setting `disabled` on the account stops it minting immediately
+— existing tokens still run out their hour.
+
+`POST /v1/service-accounts/tokens` is the older path to the same thing; it mints
+for the calling service account and ignores the request's `scopes` and
+`ttl_seconds`. Prefer `client_credentials`.
 
 ## Scopes
 

@@ -15332,6 +15332,10 @@ type PostOauth2TokenReq struct {
 	ClientAssertion OptString `json:"client_assertion"`
 	ClientSecret    OptString `json:"client_secret"`
 	DeviceCode      OptString `json:"device_code"`
+	// Space-delimited scopes, for `grant_type=client_credentials`. It can only narrow what the service
+	// account already holds; asking for anything outside the grant is `invalid_scope` rather than a
+	// quietly trimmed token.
+	Scope OptString `json:"scope"`
 }
 
 // GetGrantType returns the value of GrantType.
@@ -15384,6 +15388,11 @@ func (s *PostOauth2TokenReq) GetDeviceCode() OptString {
 	return s.DeviceCode
 }
 
+// GetScope returns the value of Scope.
+func (s *PostOauth2TokenReq) GetScope() OptString {
+	return s.Scope
+}
+
 // SetGrantType sets the value of GrantType.
 func (s *PostOauth2TokenReq) SetGrantType(val OptString) {
 	s.GrantType = val
@@ -15432,6 +15441,11 @@ func (s *PostOauth2TokenReq) SetClientSecret(val OptString) {
 // SetDeviceCode sets the value of DeviceCode.
 func (s *PostOauth2TokenReq) SetDeviceCode(val OptString) {
 	s.DeviceCode = val
+}
+
+// SetScope sets the value of Scope.
+func (s *PostOauth2TokenReq) SetScope(val OptString) {
+	s.Scope = val
 }
 
 type PostV1AuthAccessRequestsOK struct {

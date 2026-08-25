@@ -1748,6 +1748,12 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 	if cmd.GrantType == "refresh_token" {
 		return a.tokenRefreshGrant(ctx, cmd)
 	}
+	// Client credentials mints a token for the calling service account itself.
+	// There is no user, no code and no session to bind, so it shares nothing with
+	// the grants below but the endpoint.
+	if cmd.GrantType == string(oidc.GrantTypeClientCredentials) {
+		return a.tokenClientCredentialsGrant(ctx, cmd)
+	}
 
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]any, error) {
 		switch cmd.GrantType {
@@ -2951,6 +2957,7 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 		},
 		GrantTypesSupported: []oidc.GrantType{
 			oidc.GrantTypeCode, oidc.GrantTypeRefreshToken, oidc.GrantTypeDeviceCode,
+			oidc.GrantTypeClientCredentials,
 		},
 		SubjectTypesSupported: []string{"public"},
 		ScopesSupported: []string{
