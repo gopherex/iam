@@ -423,7 +423,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 			Scim:        postgres.NewPgFederationScim(db, emitter),
 		})),
 		api.WithOIDCProvider(api.NewOIDCProviderService(api.OIDCProviderDeps{
-			Grants: postgres.NewPgOIDCGrants(db, emitter),
+			Grants: postgres.NewPgOIDCGrants(db, emitter, cfgReader),
 		})),
 		api.WithAdmin(api.NewAdminService(api.AdminDeps{
 			Users:           postgres.NewPgAdminUsers(db, emitter),
@@ -437,7 +437,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 			AccessRequests:  postgres.NewPgAdminAccessRequests(db, emitter),
 			Invites:         postgres.NewPgInvites(db, emitter),
 			Webhooks:        webhooks,
-			Grants:          postgres.NewPgOIDCGrants(db, emitter),
+			Grants:          postgres.NewPgOIDCGrants(db, emitter, cfgReader),
 			Audit:           postgres.NewPgAudit(db, emitter),
 			Jobs:            postgres.NewPgJobs(db, emitter),
 			Hooks:           postgres.NewPgHooks(db, emitter),

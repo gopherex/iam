@@ -514,10 +514,6 @@ function ClientDetailDialog({
   const [allowedOrigins, setAllowedOrigins] = useState(
     (initialClient.allowed_origins ?? []).join('\n'),
   );
-  const [loginUri, setLoginUri] = useState(initialClient.login_uri ?? '');
-  const [defaultRedirectUri, setDefaultRedirectUri] = useState(
-    initialClient.default_redirect_uri ?? '',
-  );
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
 
@@ -545,8 +541,6 @@ function ClientDetailDialog({
             type,
             redirect_uris: uris,
             allowed_origins: origins,
-            login_uri: loginUri || null,
-            default_redirect_uri: defaultRedirectUri || null,
           },
         }),
       );
@@ -629,27 +623,6 @@ function ClientDetailDialog({
                     are dropped server-side.
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="d-login-uri">Login URI</Label>
-                    <Input
-                      id="d-login-uri"
-                      value={loginUri}
-                      onChange={(e) => setLoginUri(e.target.value)}
-                      placeholder="optional"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="d-default-uri">Default redirect URI</Label>
-                    <Input
-                      id="d-default-uri"
-                      value={defaultRedirectUri}
-                      onChange={(e) => setDefaultRedirectUri(e.target.value)}
-                      placeholder="optional"
-                    />
-                  </div>
-                </div>
-
                 {saveErr && <p className="text-sm text-destructive">{saveErr}</p>}
 
                 <DialogFooter className="items-center">

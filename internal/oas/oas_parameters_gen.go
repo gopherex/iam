@@ -11869,30 +11869,10 @@ func decodeGetV1OauthGrantsParams(args [0]string, argsEscaped bool, r *http.Requ
 
 // GetV1OauthInteractionByInteractionIdParams is parameters of getV1OauthInteractionByInteractionId operation.
 type GetV1OauthInteractionByInteractionIdParams struct {
-	XClientID string
-	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
-	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
-	XEnvironment  OptString `json:",omitempty,omitzero"`
 	InteractionID string
 }
 
 func unpackGetV1OauthInteractionByInteractionIdParams(packed middleware.Parameters) (params GetV1OauthInteractionByInteractionIdParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "X-Client-Id",
-			In:   "header",
-		}
-		params.XClientID = packed[key].(string)
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "X-Environment",
-			In:   "header",
-		}
-		if v, ok := packed[key]; ok {
-			params.XEnvironment = v.(OptString)
-		}
-	}
 	{
 		key := middleware.ParameterKey{
 			Name: "interaction_id",
@@ -11904,127 +11884,6 @@ func unpackGetV1OauthInteractionByInteractionIdParams(packed middleware.Paramete
 }
 
 func decodeGetV1OauthInteractionByInteractionIdParams(args [1]string, argsEscaped bool, r *http.Request) (params GetV1OauthInteractionByInteractionIdParams, _ error) {
-	h := uri.NewHeaderDecoder(r.Header)
-	// Decode header: X-Client-Id.
-	if err := func() error {
-		cfg := uri.HeaderParameterDecodingConfig{
-			Name:    "X-Client-Id",
-			Explode: false,
-		}
-		if err := h.HasParam(cfg); err == nil {
-			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToString(val)
-				if err != nil {
-					return err
-				}
-
-				params.XClientID = c
-				return nil
-			}); err != nil {
-				return err
-			}
-			if err := func() error {
-				if err := (validate.String{
-					MinLength:     0,
-					MinLengthSet:  false,
-					MaxLength:     1024,
-					MaxLengthSet:  true,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(params.XClientID)); err != nil {
-					return errors.Wrap(err, "string")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "X-Client-Id",
-			In:   "header",
-			Err:  err,
-		}
-	}
-	// Decode header: X-Environment.
-	if err := func() error {
-		cfg := uri.HeaderParameterDecodingConfig{
-			Name:    "X-Environment",
-			Explode: false,
-		}
-		if err := h.HasParam(cfg); err == nil {
-			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotXEnvironmentVal string
-				if err := func() error {
-					val, err := d.DecodeValue()
-					if err != nil {
-						return err
-					}
-
-					c, err := conv.ToString(val)
-					if err != nil {
-						return err
-					}
-
-					paramsDotXEnvironmentVal = c
-					return nil
-				}(); err != nil {
-					return err
-				}
-				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
-				return nil
-			}); err != nil {
-				return err
-			}
-			if err := func() error {
-				if value, ok := params.XEnvironment.Get(); ok {
-					if err := func() error {
-						if err := (validate.String{
-							MinLength:     0,
-							MinLengthSet:  false,
-							MaxLength:     1024,
-							MaxLengthSet:  true,
-							Email:         false,
-							Hostname:      false,
-							Regex:         nil,
-							MinNumeric:    0,
-							MinNumericSet: false,
-							MaxNumeric:    0,
-							MaxNumericSet: false,
-						}).Validate(string(value)); err != nil {
-							return errors.Wrap(err, "string")
-						}
-						return nil
-					}(); err != nil {
-						return err
-					}
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "X-Environment",
-			In:   "header",
-			Err:  err,
-		}
-	}
 	// Decode path: interaction_id.
 	if err := func() error {
 		param := args[0]

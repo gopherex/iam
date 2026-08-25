@@ -12974,7 +12974,11 @@ func (s *Server) handleGetV1OauthGrantsRequest(args [0]string, argsEscaped bool,
 
 // handleGetV1OauthInteractionByInteractionIdRequest handles getV1OauthInteractionByInteractionId operation.
 //
-// Fetch interaction context.
+// Everything the login/consent screen needs to render: which application is asking, what it is
+// asking for, which tenant it belongs to and which locales that project speaks.
+// Public and deliberately NOT scoped by `X-Client-Id`: the browser arrives here holding only the
+// interaction id from the authorization redirect and learns the project from the response, which it
+// then uses as the `X-Client-Id` of its CSRF and login/consent calls.
 //
 // GET /v1/oauth/interaction/{interaction_id}
 func (s *Server) handleGetV1OauthInteractionByInteractionIdRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -13071,14 +13075,6 @@ func (s *Server) handleGetV1OauthInteractionByInteractionIdRequest(args [1]strin
 			Body:             nil,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
-				{
-					Name: "X-Client-Id",
-					In:   "header",
-				}: params.XClientID,
-				{
-					Name: "X-Environment",
-					In:   "header",
-				}: params.XEnvironment,
 				{
 					Name: "interaction_id",
 					In:   "path",

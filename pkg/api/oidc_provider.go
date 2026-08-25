@@ -17,7 +17,9 @@ import (
 )
 
 type OIDCGrants interface {
-	ResolveInteraction(ctx context.Context, interactionID string) (*domain.Interaction, error)
+	// ResolveInteraction returns the context the hosted login/consent UI renders:
+	// the requesting application, the tenant, and the project's locales.
+	ResolveInteraction(ctx context.Context, interactionID string) (*domain.OIDCInteractionContext, error)
 	// CompleteLogin binds the interaction to the caller. sessionID lets the
 	// adapter verify the interaction belongs to this session (anti-hijack)
 	// before completing.
@@ -211,9 +213,30 @@ func (s *OIDCProviderService) GetV1OauthInteractionByInteractionId(ctx context.C
 		return nil, err
 	}
 
-	return &oas.GetV1OauthInteractionByInteractionIdOK{
-		RequestedScopes: in.Scopes,
-	}, nil
+	out := &oas.GetV1OauthInteractionByInteractionIdOK{
+		RequestedScopes: in.Interaction.Scopes,
+		ProjectID:       oas.NewOptString(in.ProjectID),
+		Environment:     oas.NewOptString(in.Environment),
+		Client: oas.NewOptGetV1OauthInteractionByInteractionIdOKClient(
+			oas.GetV1OauthInteractionByInteractionIdOKClient{
+				ID:   oas.NewOptString(in.Interaction.ClientID),
+				Name: oas.NewOptString(in.ClientName),
+				Type: oas.NewOptString(in.ClientType),
+			}),
+		SupportedLocales: in.SupportedLocales,
+	}
+	out.Stage = oas.NewOptGetV1OauthInteractionByInteractionIdOKStage(
+		oas.GetV1OauthInteractionByInteractionIdOKStage(in.Stage))
+
+	if in.DefaultLocale != "" {
+		out.DefaultLocale = oas.NewOptString(in.DefaultLocale)
+	}
+
+	if !in.ExpiresAt.IsZero() {
+		out.ExpiresAt = oas.NewOptTimestamp(oas.Timestamp(in.ExpiresAt))
+	}
+
+	return out, nil
 }
 
 func (s *OIDCProviderService) PostOauth2BackchannelLogout(ctx context.Context, req *oas.PostOauth2BackchannelLogoutReq) error {

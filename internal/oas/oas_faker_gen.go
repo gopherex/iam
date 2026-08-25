@@ -180,36 +180,6 @@ func (s *AppClient) SetFake() {
 			s.Disabled.SetFake()
 		}
 	}
-	{
-		{
-			s.LoginURI.SetFake()
-		}
-	}
-	{
-		{
-			s.ConsentURI.SetFake()
-		}
-	}
-	{
-		{
-			s.DefaultRedirectURI.SetFake()
-		}
-	}
-	{
-		{
-			s.RegistrationOverride.SetFake()
-		}
-	}
-	{
-		{
-			s.MinSdkVersion.SetFake()
-		}
-	}
-	{
-		{
-			s.TokenProfile.SetFake()
-		}
-	}
 }
 
 // SetFake set fake values.
@@ -1644,6 +1614,38 @@ func (s *GetV1OauthInteractionByInteractionIdOK) SetFake() {
 	}
 	{
 		{
+			s.ProjectID.SetFake()
+		}
+	}
+	{
+		{
+			s.Environment.SetFake()
+		}
+	}
+	{
+		{
+			s.DefaultLocale.SetFake()
+		}
+	}
+	{
+		{
+			s.SupportedLocales = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.SupportedLocales = append(s.SupportedLocales, elem)
+			}
+		}
+	}
+	{
+		{
+			s.ExpiresAt.SetFake()
+		}
+	}
+	{
+		{
 			s.RequestedScopes = nil
 			for i := 0; i < 0; i++ {
 				var elem string
@@ -1663,12 +1665,20 @@ func (s *GetV1OauthInteractionByInteractionIdOK) SetFake() {
 
 // SetFake set fake values.
 func (s *GetV1OauthInteractionByInteractionIdOKClient) SetFake() {
-	var (
-		elem jx.Raw
-		m    map[string]jx.Raw = s.init()
-	)
-	for i := 0; i < 0; i++ {
-		m[fmt.Sprintf("fake%d", i)] = elem
+	{
+		{
+			s.ID.SetFake()
+		}
+	}
+	{
+		{
+			s.Name.SetFake()
+		}
+	}
+	{
+		{
+			s.Type.SetFake()
+		}
 	}
 }
 
@@ -3400,12 +3410,6 @@ func (s *OptNilPostV1AuthMfaVerifyReqCredential) SetFake() {
 
 // SetFake set fake values.
 func (s *OptNilPostV1AuthWebauthnLoginOptionsReqMediation) SetFake() {
-	s.Null = true
-	s.Set = true
-}
-
-// SetFake set fake values.
-func (s *OptNilRegistrationConfig) SetFake() {
 	s.Null = true
 	s.Set = true
 }
@@ -6132,36 +6136,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetFake() {
 	{
 		{
 			s.Disabled.SetFake()
-		}
-	}
-	{
-		{
-			s.LoginURI.SetFake()
-		}
-	}
-	{
-		{
-			s.ConsentURI.SetFake()
-		}
-	}
-	{
-		{
-			s.DefaultRedirectURI.SetFake()
-		}
-	}
-	{
-		{
-			s.RegistrationOverride.SetFake()
-		}
-	}
-	{
-		{
-			s.MinSdkVersion.SetFake()
-		}
-	}
-	{
-		{
-			s.TokenProfile.SetFake()
 		}
 	}
 }

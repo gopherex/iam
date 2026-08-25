@@ -58,7 +58,7 @@ func newPKCEFixture(t *testing.T, ctx context.Context, clientType string) pkceFi
 	}
 
 	f := pkceFixture{
-		grants:      NewPgOIDCGrants(testDB, nopEmitter{}),
+		grants:      NewPgOIDCGrants(testDB, nopEmitter{}, nil),
 		projectID:   proj.ID,
 		userID:      acc.ID,
 		clientID:    app.ID,

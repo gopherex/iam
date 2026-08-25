@@ -1131,7 +1131,6 @@ func TestGetV1OauthInteractionByInteractionIdOK_EncodeDecode(t *testing.T) {
 }
 func TestGetV1OauthInteractionByInteractionIdOKClient_EncodeDecode(t *testing.T) {
 	var typ GetV1OauthInteractionByInteractionIdOKClient
-	typ = make(GetV1OauthInteractionByInteractionIdOKClient)
 	typ.SetFake()
 
 	e := jx.Encoder{}
@@ -1140,7 +1139,6 @@ func TestGetV1OauthInteractionByInteractionIdOKClient_EncodeDecode(t *testing.T)
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 GetV1OauthInteractionByInteractionIdOKClient
-	typ2 = make(GetV1OauthInteractionByInteractionIdOKClient)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestGetV1OauthInteractionByInteractionIdOKStage_EncodeDecode(t *testing.T) {

@@ -1676,7 +1676,11 @@ type OIDCProviderInvoker interface {
 	GetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams, options ...RequestOption) (*GetV1OauthGrantsOK, error)
 	// GetV1OauthInteractionByInteractionId invokes getV1OauthInteractionByInteractionId operation.
 	//
-	// Fetch interaction context.
+	// Everything the login/consent screen needs to render: which application is asking, what it is
+	// asking for, which tenant it belongs to and which locales that project speaks.
+	// Public and deliberately NOT scoped by `X-Client-Id`: the browser arrives here holding only the
+	// interaction id from the authorization redirect and learns the project from the response, which it
+	// then uses as the `X-Client-Id` of its CSRF and login/consent calls.
 	//
 	// GET /v1/oauth/interaction/{interaction_id}
 	GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams, options ...RequestOption) (*GetV1OauthInteractionByInteractionIdOK, error)
@@ -13133,7 +13137,11 @@ func (c *Client) sendGetV1OauthGrants(ctx context.Context, params GetV1OauthGran
 
 // GetV1OauthInteractionByInteractionId invokes getV1OauthInteractionByInteractionId operation.
 //
-// Fetch interaction context.
+// Everything the login/consent screen needs to render: which application is asking, what it is
+// asking for, which tenant it belongs to and which locales that project speaks.
+// Public and deliberately NOT scoped by `X-Client-Id`: the browser arrives here holding only the
+// interaction id from the authorization redirect and learns the project from the response, which it
+// then uses as the `X-Client-Id` of its CSRF and login/consent calls.
 //
 // GET /v1/oauth/interaction/{interaction_id}
 func (c *Client) GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams, options ...RequestOption) (*GetV1OauthInteractionByInteractionIdOK, error) {
@@ -13214,34 +13222,6 @@ func (c *Client) sendGetV1OauthInteractionByInteractionId(ctx context.Context, p
 	r, err := ht.NewRequest(ctx, "GET", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
-	}
-
-	stage = "EncodeHeaderParams"
-	h := uri.NewHeaderEncoder(r.Header)
-	{
-		cfg := uri.HeaderParameterEncodingConfig{
-			Name:    "X-Client-Id",
-			Explode: false,
-		}
-		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-			return e.EncodeValue(conv.StringToString(params.XClientID))
-		}); err != nil {
-			return res, errors.Wrap(err, "encode header")
-		}
-	}
-	{
-		cfg := uri.HeaderParameterEncodingConfig{
-			Name:    "X-Environment",
-			Explode: false,
-		}
-		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.XEnvironment.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode header")
-		}
 	}
 
 	if err := c.onRequest(ctx, r); err != nil {

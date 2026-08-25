@@ -72,13 +72,13 @@ func TestPARRoundTrip(t *testing.T) {
 		t.Fatalf("ResolveInteraction: %v", err)
 	}
 
-	if in.RedirectURI != f.redirectURI {
-		t.Fatalf("interaction redirect_uri = %q, want the pushed %q", in.RedirectURI, f.redirectURI)
+	if in.Interaction.RedirectURI != f.redirectURI {
+		t.Fatalf("interaction redirect_uri = %q, want the pushed %q", in.Interaction.RedirectURI, f.redirectURI)
 	}
 
-	if in.CodeChallenge != challengeFor(pkceVerifier) || in.CodeChallengeMethod != "S256" {
+	if in.Interaction.CodeChallenge != challengeFor(pkceVerifier) || in.Interaction.CodeChallengeMethod != "S256" {
 		t.Fatalf("PKCE did not survive the push: challenge=%q method=%q",
-			in.CodeChallenge, in.CodeChallengeMethod)
+			in.Interaction.CodeChallenge, in.Interaction.CodeChallengeMethod)
 	}
 }
 

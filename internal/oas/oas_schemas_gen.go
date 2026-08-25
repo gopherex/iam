@@ -310,13 +310,7 @@ type AppClient struct {
 	// Turns the client off without deleting it. A disabled client is refused at /oauth2/authorize
 	// exactly like an unknown client_id, so an integration can be suspended and restored without
 	// re-issuing its registration.
-	Disabled             OptBool                  `json:"disabled"`
-	LoginURI             OptNilString             `json:"login_uri"`
-	ConsentURI           OptNilString             `json:"consent_uri"`
-	DefaultRedirectURI   OptNilString             `json:"default_redirect_uri"`
-	RegistrationOverride OptNilRegistrationConfig `json:"registration_override"`
-	MinSdkVersion        OptNilString             `json:"min_sdk_version"`
-	TokenProfile         OptNilString             `json:"token_profile"`
+	Disabled OptBool `json:"disabled"`
 }
 
 // GetID returns the value of ID.
@@ -354,36 +348,6 @@ func (s *AppClient) GetDisabled() OptBool {
 	return s.Disabled
 }
 
-// GetLoginURI returns the value of LoginURI.
-func (s *AppClient) GetLoginURI() OptNilString {
-	return s.LoginURI
-}
-
-// GetConsentURI returns the value of ConsentURI.
-func (s *AppClient) GetConsentURI() OptNilString {
-	return s.ConsentURI
-}
-
-// GetDefaultRedirectURI returns the value of DefaultRedirectURI.
-func (s *AppClient) GetDefaultRedirectURI() OptNilString {
-	return s.DefaultRedirectURI
-}
-
-// GetRegistrationOverride returns the value of RegistrationOverride.
-func (s *AppClient) GetRegistrationOverride() OptNilRegistrationConfig {
-	return s.RegistrationOverride
-}
-
-// GetMinSdkVersion returns the value of MinSdkVersion.
-func (s *AppClient) GetMinSdkVersion() OptNilString {
-	return s.MinSdkVersion
-}
-
-// GetTokenProfile returns the value of TokenProfile.
-func (s *AppClient) GetTokenProfile() OptNilString {
-	return s.TokenProfile
-}
-
 // SetID sets the value of ID.
 func (s *AppClient) SetID(val OptString) {
 	s.ID = val
@@ -417,36 +381,6 @@ func (s *AppClient) SetAllowedOrigins(val []string) {
 // SetDisabled sets the value of Disabled.
 func (s *AppClient) SetDisabled(val OptBool) {
 	s.Disabled = val
-}
-
-// SetLoginURI sets the value of LoginURI.
-func (s *AppClient) SetLoginURI(val OptNilString) {
-	s.LoginURI = val
-}
-
-// SetConsentURI sets the value of ConsentURI.
-func (s *AppClient) SetConsentURI(val OptNilString) {
-	s.ConsentURI = val
-}
-
-// SetDefaultRedirectURI sets the value of DefaultRedirectURI.
-func (s *AppClient) SetDefaultRedirectURI(val OptNilString) {
-	s.DefaultRedirectURI = val
-}
-
-// SetRegistrationOverride sets the value of RegistrationOverride.
-func (s *AppClient) SetRegistrationOverride(val OptNilRegistrationConfig) {
-	s.RegistrationOverride = val
-}
-
-// SetMinSdkVersion sets the value of MinSdkVersion.
-func (s *AppClient) SetMinSdkVersion(val OptNilString) {
-	s.MinSdkVersion = val
-}
-
-// SetTokenProfile sets the value of TokenProfile.
-func (s *AppClient) SetTokenProfile(val OptNilString) {
-	s.TokenProfile = val
 }
 
 // Ref: #/components/schemas/AppClientApplyResult
@@ -3792,10 +3726,19 @@ func (s *GetV1OauthGrantsOK) SetHasMore(val OptBool) {
 }
 
 type GetV1OauthInteractionByInteractionIdOK struct {
-	Stage           OptGetV1OauthInteractionByInteractionIdOKStage  `json:"stage"`
-	Client          OptGetV1OauthInteractionByInteractionIdOKClient `json:"client"`
-	RequestedScopes []string                                        `json:"requested_scopes"`
-	Prompt          OptNilString                                    `json:"prompt"`
+	// `login` while nobody has claimed the interaction, `consent` once a user has signed in and only the
+	// decision is missing.
+	Stage OptGetV1OauthInteractionByInteractionIdOKStage `json:"stage"`
+	// The application the authorization request came from.
+	Client      OptGetV1OauthInteractionByInteractionIdOKClient `json:"client"`
+	ProjectID   OptString                                       `json:"project_id"`
+	Environment OptString                                       `json:"environment"`
+	// The project's default UI language.
+	DefaultLocale    OptString    `json:"default_locale"`
+	SupportedLocales []string     `json:"supported_locales"`
+	ExpiresAt        OptTimestamp `json:"expires_at"`
+	RequestedScopes  []string     `json:"requested_scopes"`
+	Prompt           OptNilString `json:"prompt"`
 }
 
 // GetStage returns the value of Stage.
@@ -3806,6 +3749,31 @@ func (s *GetV1OauthInteractionByInteractionIdOK) GetStage() OptGetV1OauthInterac
 // GetClient returns the value of Client.
 func (s *GetV1OauthInteractionByInteractionIdOK) GetClient() OptGetV1OauthInteractionByInteractionIdOKClient {
 	return s.Client
+}
+
+// GetProjectID returns the value of ProjectID.
+func (s *GetV1OauthInteractionByInteractionIdOK) GetProjectID() OptString {
+	return s.ProjectID
+}
+
+// GetEnvironment returns the value of Environment.
+func (s *GetV1OauthInteractionByInteractionIdOK) GetEnvironment() OptString {
+	return s.Environment
+}
+
+// GetDefaultLocale returns the value of DefaultLocale.
+func (s *GetV1OauthInteractionByInteractionIdOK) GetDefaultLocale() OptString {
+	return s.DefaultLocale
+}
+
+// GetSupportedLocales returns the value of SupportedLocales.
+func (s *GetV1OauthInteractionByInteractionIdOK) GetSupportedLocales() []string {
+	return s.SupportedLocales
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *GetV1OauthInteractionByInteractionIdOK) GetExpiresAt() OptTimestamp {
+	return s.ExpiresAt
 }
 
 // GetRequestedScopes returns the value of RequestedScopes.
@@ -3828,6 +3796,31 @@ func (s *GetV1OauthInteractionByInteractionIdOK) SetClient(val OptGetV1OauthInte
 	s.Client = val
 }
 
+// SetProjectID sets the value of ProjectID.
+func (s *GetV1OauthInteractionByInteractionIdOK) SetProjectID(val OptString) {
+	s.ProjectID = val
+}
+
+// SetEnvironment sets the value of Environment.
+func (s *GetV1OauthInteractionByInteractionIdOK) SetEnvironment(val OptString) {
+	s.Environment = val
+}
+
+// SetDefaultLocale sets the value of DefaultLocale.
+func (s *GetV1OauthInteractionByInteractionIdOK) SetDefaultLocale(val OptString) {
+	s.DefaultLocale = val
+}
+
+// SetSupportedLocales sets the value of SupportedLocales.
+func (s *GetV1OauthInteractionByInteractionIdOK) SetSupportedLocales(val []string) {
+	s.SupportedLocales = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *GetV1OauthInteractionByInteractionIdOK) SetExpiresAt(val OptTimestamp) {
+	s.ExpiresAt = val
+}
+
 // SetRequestedScopes sets the value of RequestedScopes.
 func (s *GetV1OauthInteractionByInteractionIdOK) SetRequestedScopes(val []string) {
 	s.RequestedScopes = val
@@ -3838,17 +3831,45 @@ func (s *GetV1OauthInteractionByInteractionIdOK) SetPrompt(val OptNilString) {
 	s.Prompt = val
 }
 
-type GetV1OauthInteractionByInteractionIdOKClient map[string]jx.Raw
-
-func (s *GetV1OauthInteractionByInteractionIdOKClient) init() GetV1OauthInteractionByInteractionIdOKClient {
-	m := *s
-	if m == nil {
-		m = map[string]jx.Raw{}
-		*s = m
-	}
-	return m
+// The application the authorization request came from.
+type GetV1OauthInteractionByInteractionIdOKClient struct {
+	ID   OptString `json:"id"`
+	Name OptString `json:"name"`
+	Type OptString `json:"type"`
 }
 
+// GetID returns the value of ID.
+func (s *GetV1OauthInteractionByInteractionIdOKClient) GetID() OptString {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *GetV1OauthInteractionByInteractionIdOKClient) GetName() OptString {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *GetV1OauthInteractionByInteractionIdOKClient) GetType() OptString {
+	return s.Type
+}
+
+// SetID sets the value of ID.
+func (s *GetV1OauthInteractionByInteractionIdOKClient) SetID(val OptString) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *GetV1OauthInteractionByInteractionIdOKClient) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *GetV1OauthInteractionByInteractionIdOKClient) SetType(val OptString) {
+	s.Type = val
+}
+
+// `login` while nobody has claimed the interaction, `consent` once a user has signed in and only the
+// decision is missing.
 type GetV1OauthInteractionByInteractionIdOKStage string
 
 const (
@@ -8881,69 +8902,6 @@ func (o OptNilPostV1AuthWebauthnLoginOptionsReqMediation) Get() (v PostV1AuthWeb
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilPostV1AuthWebauthnLoginOptionsReqMediation) Or(d PostV1AuthWebauthnLoginOptionsReqMediation) PostV1AuthWebauthnLoginOptionsReqMediation {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptNilRegistrationConfig returns new OptNilRegistrationConfig with value set to v.
-func NewOptNilRegistrationConfig(v RegistrationConfig) OptNilRegistrationConfig {
-	return OptNilRegistrationConfig{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptNilRegistrationConfig is optional nullable RegistrationConfig.
-type OptNilRegistrationConfig struct {
-	Value RegistrationConfig
-	Set   bool
-	Null  bool
-}
-
-// IsSet returns true if OptNilRegistrationConfig was set.
-func (o OptNilRegistrationConfig) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptNilRegistrationConfig) Reset() {
-	var v RegistrationConfig
-	o.Value = v
-	o.Set = false
-	o.Null = false
-}
-
-// SetTo sets value to v.
-func (o *OptNilRegistrationConfig) SetTo(v RegistrationConfig) {
-	o.Set = true
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o OptNilRegistrationConfig) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *OptNilRegistrationConfig) SetToNull() {
-	o.Set = true
-	o.Null = true
-	var v RegistrationConfig
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptNilRegistrationConfig) Get() (v RegistrationConfig, ok bool) {
-	if o.Null {
-		return v, false
-	}
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptNilRegistrationConfig) Or(d RegistrationConfig) RegistrationConfig {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -16483,13 +16441,7 @@ type PostV1ProjectsByProjectIdAdminAppsReq struct {
 	// Turns the client off without deleting it. A disabled client is refused at /oauth2/authorize
 	// exactly like an unknown client_id, so an integration can be suspended and restored without
 	// re-issuing its registration.
-	Disabled             OptBool                  `json:"disabled"`
-	LoginURI             OptNilString             `json:"login_uri"`
-	ConsentURI           OptNilString             `json:"consent_uri"`
-	DefaultRedirectURI   OptNilString             `json:"default_redirect_uri"`
-	RegistrationOverride OptNilRegistrationConfig `json:"registration_override"`
-	MinSdkVersion        OptNilString             `json:"min_sdk_version"`
-	TokenProfile         OptNilString             `json:"token_profile"`
+	Disabled OptBool `json:"disabled"`
 }
 
 // GetID returns the value of ID.
@@ -16527,36 +16479,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetDisabled() OptBool {
 	return s.Disabled
 }
 
-// GetLoginURI returns the value of LoginURI.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetLoginURI() OptNilString {
-	return s.LoginURI
-}
-
-// GetConsentURI returns the value of ConsentURI.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetConsentURI() OptNilString {
-	return s.ConsentURI
-}
-
-// GetDefaultRedirectURI returns the value of DefaultRedirectURI.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetDefaultRedirectURI() OptNilString {
-	return s.DefaultRedirectURI
-}
-
-// GetRegistrationOverride returns the value of RegistrationOverride.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetRegistrationOverride() OptNilRegistrationConfig {
-	return s.RegistrationOverride
-}
-
-// GetMinSdkVersion returns the value of MinSdkVersion.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetMinSdkVersion() OptNilString {
-	return s.MinSdkVersion
-}
-
-// GetTokenProfile returns the value of TokenProfile.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetTokenProfile() OptNilString {
-	return s.TokenProfile
-}
-
 // SetID sets the value of ID.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetID(val OptString) {
 	s.ID = val
@@ -16590,36 +16512,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetAllowedOrigins(val []string) 
 // SetDisabled sets the value of Disabled.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetDisabled(val OptBool) {
 	s.Disabled = val
-}
-
-// SetLoginURI sets the value of LoginURI.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetLoginURI(val OptNilString) {
-	s.LoginURI = val
-}
-
-// SetConsentURI sets the value of ConsentURI.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetConsentURI(val OptNilString) {
-	s.ConsentURI = val
-}
-
-// SetDefaultRedirectURI sets the value of DefaultRedirectURI.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetDefaultRedirectURI(val OptNilString) {
-	s.DefaultRedirectURI = val
-}
-
-// SetRegistrationOverride sets the value of RegistrationOverride.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetRegistrationOverride(val OptNilRegistrationConfig) {
-	s.RegistrationOverride = val
-}
-
-// SetMinSdkVersion sets the value of MinSdkVersion.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetMinSdkVersion(val OptNilString) {
-	s.MinSdkVersion = val
-}
-
-// SetTokenProfile sets the value of TokenProfile.
-func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetTokenProfile(val OptNilString) {
-	s.TokenProfile = val
 }
 
 type PostV1ProjectsByProjectIdAdminAppsReqType string

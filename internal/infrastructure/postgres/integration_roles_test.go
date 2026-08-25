@@ -133,7 +133,7 @@ func TestOIDCGroupsClaim(t *testing.T) {
 		t.Fatalf("SetRoles: %v", err)
 	}
 
-	grants := NewPgOIDCGrants(testDB, nopEmitter{})
+	grants := NewPgOIDCGrants(testDB, nopEmitter{}, nil)
 
 	claimsOf := func(t *testing.T, token string) map[string]any {
 		t.Helper()

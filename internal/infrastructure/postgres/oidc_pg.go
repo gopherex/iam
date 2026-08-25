@@ -150,11 +150,14 @@ func oidcHasScope(scopes []string, want string) bool {
 type pgOIDCGrants struct {
 	db      *DB
 	emitter Emitter
+	// cfg resolves the project's auth config (locales) for the hosted
+	// login/consent pages. A nil cfg falls back to no declared locales.
+	cfg *configReader
 }
 
 // NewPgOIDCGrants builds the OIDC-provider adapter over db.
-func NewPgOIDCGrants(db *DB, emitter Emitter) *pgOIDCGrants {
-	return &pgOIDCGrants{db: db, emitter: emitter}
+func NewPgOIDCGrants(db *DB, emitter Emitter, cfg *configReader) *pgOIDCGrants {
+	return &pgOIDCGrants{db: db, emitter: emitter, cfg: cfg}
 }
 
 var _ api.OIDCGrants = (*pgOIDCGrants)(nil)
@@ -223,7 +226,9 @@ func oidcInteractionExpired(row *models.IamInteraction) bool {
 // the endpoint is public: the UI needs the requested scopes before the user has
 // logged in. Whoever may ACT on the interaction is decided by the session
 // binding in CompleteLogin/Consent, not here.
-func (a *pgOIDCGrants) ResolveInteraction(ctx context.Context, interactionID string) (*domain.Interaction, error) {
+func (a *pgOIDCGrants) ResolveInteraction(
+	ctx context.Context, interactionID string,
+) (*domain.OIDCInteractionContext, error) {
 	row, err := models.FindIamInteraction(ctx, a.db.Bobx(), interactionID)
 	if err != nil {
 		return nil, translatePgErr("interaction", err)
@@ -233,12 +238,49 @@ func (a *pgOIDCGrants) ResolveInteraction(ctx context.Context, interactionID str
 		return nil, domain.ErrFlowExpired
 	}
 
-	var in domain.Interaction
-	if err := unmarshal(row.Data, &in); err != nil {
+	var env oidcInteractionEnvelope
+	if err := unmarshal(row.Data, &env); err != nil {
 		return nil, err
 	}
 
-	return &in, nil
+	in := env.Interaction
+
+	// An interaction nobody has claimed still needs a login; one that carries a
+	// bound session and account only needs the decision.
+	stage := domain.OIDCStageLogin
+	if row.SessionID.GetOrZero() != "" && env.AccountID != "" {
+		stage = domain.OIDCStageConsent
+	}
+
+	out := &domain.OIDCInteractionContext{
+		Interaction: in,
+		ProjectID:   row.ProjectID,
+		Environment: row.Environment,
+		Stage:       stage,
+	}
+	if exp, ok := row.ExpiresAt.Get(); ok {
+		out.ExpiresAt = exp
+	}
+	// The application's own name: a consent screen that cannot say WHICH app is
+	// asking for these scopes is not a consent screen.
+	if in.ClientID != "" {
+		if clientRow, err := models.FindIamAppClient(ctx, a.db.Bobx(), in.ClientID); err == nil {
+			out.ClientName = clientRow.Name
+			out.ClientType = clientRow.Type
+		}
+	}
+
+	if a.cfg != nil && row.ProjectID != "" {
+		authCfg, err := a.cfg.AuthConfig(ctx, row.ProjectID)
+		if err != nil {
+			return nil, err
+		}
+
+		out.DefaultLocale = authCfg.DefaultLocale
+		out.SupportedLocales = authCfg.SupportedLocales
+	}
+
+	return out, nil
 }
 
 // CompleteLogin binds an authenticated account and session to the interaction.

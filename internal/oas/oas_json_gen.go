@@ -612,58 +612,16 @@ func (s *AppClient) encodeFields(e *jx.Encoder) {
 			s.Disabled.Encode(e)
 		}
 	}
-	{
-		if s.LoginURI.Set {
-			e.FieldStart("login_uri")
-			s.LoginURI.Encode(e)
-		}
-	}
-	{
-		if s.ConsentURI.Set {
-			e.FieldStart("consent_uri")
-			s.ConsentURI.Encode(e)
-		}
-	}
-	{
-		if s.DefaultRedirectURI.Set {
-			e.FieldStart("default_redirect_uri")
-			s.DefaultRedirectURI.Encode(e)
-		}
-	}
-	{
-		if s.RegistrationOverride.Set {
-			e.FieldStart("registration_override")
-			s.RegistrationOverride.Encode(e)
-		}
-	}
-	{
-		if s.MinSdkVersion.Set {
-			e.FieldStart("min_sdk_version")
-			s.MinSdkVersion.Encode(e)
-		}
-	}
-	{
-		if s.TokenProfile.Set {
-			e.FieldStart("token_profile")
-			s.TokenProfile.Encode(e)
-		}
-	}
 }
 
-var jsonFieldsNameOfAppClient = [13]string{
-	0:  "id",
-	1:  "name",
-	2:  "type",
-	3:  "environment",
-	4:  "redirect_uris",
-	5:  "allowed_origins",
-	6:  "disabled",
-	7:  "login_uri",
-	8:  "consent_uri",
-	9:  "default_redirect_uri",
-	10: "registration_override",
-	11: "min_sdk_version",
-	12: "token_profile",
+var jsonFieldsNameOfAppClient = [7]string{
+	0: "id",
+	1: "name",
+	2: "type",
+	3: "environment",
+	4: "redirect_uris",
+	5: "allowed_origins",
+	6: "disabled",
 }
 
 // Decode decodes AppClient from json.
@@ -762,66 +720,6 @@ func (s *AppClient) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"disabled\"")
-			}
-		case "login_uri":
-			if err := func() error {
-				s.LoginURI.Reset()
-				if err := s.LoginURI.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"login_uri\"")
-			}
-		case "consent_uri":
-			if err := func() error {
-				s.ConsentURI.Reset()
-				if err := s.ConsentURI.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"consent_uri\"")
-			}
-		case "default_redirect_uri":
-			if err := func() error {
-				s.DefaultRedirectURI.Reset()
-				if err := s.DefaultRedirectURI.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"default_redirect_uri\"")
-			}
-		case "registration_override":
-			if err := func() error {
-				s.RegistrationOverride.Reset()
-				if err := s.RegistrationOverride.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"registration_override\"")
-			}
-		case "min_sdk_version":
-			if err := func() error {
-				s.MinSdkVersion.Reset()
-				if err := s.MinSdkVersion.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"min_sdk_version\"")
-			}
-		case "token_profile":
-			if err := func() error {
-				s.TokenProfile.Reset()
-				if err := s.TokenProfile.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"token_profile\"")
 			}
 		default:
 			return d.Skip()
@@ -8313,6 +8211,40 @@ func (s *GetV1OauthInteractionByInteractionIdOK) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.ProjectID.Set {
+			e.FieldStart("project_id")
+			s.ProjectID.Encode(e)
+		}
+	}
+	{
+		if s.Environment.Set {
+			e.FieldStart("environment")
+			s.Environment.Encode(e)
+		}
+	}
+	{
+		if s.DefaultLocale.Set {
+			e.FieldStart("default_locale")
+			s.DefaultLocale.Encode(e)
+		}
+	}
+	{
+		if s.SupportedLocales != nil {
+			e.FieldStart("supported_locales")
+			e.ArrStart()
+			for _, elem := range s.SupportedLocales {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.ExpiresAt.Set {
+			e.FieldStart("expires_at")
+			s.ExpiresAt.Encode(e)
+		}
+	}
+	{
 		if s.RequestedScopes != nil {
 			e.FieldStart("requested_scopes")
 			e.ArrStart()
@@ -8330,11 +8262,16 @@ func (s *GetV1OauthInteractionByInteractionIdOK) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfGetV1OauthInteractionByInteractionIdOK = [4]string{
+var jsonFieldsNameOfGetV1OauthInteractionByInteractionIdOK = [9]string{
 	0: "stage",
 	1: "client",
-	2: "requested_scopes",
-	3: "prompt",
+	2: "project_id",
+	3: "environment",
+	4: "default_locale",
+	5: "supported_locales",
+	6: "expires_at",
+	7: "requested_scopes",
+	8: "prompt",
 }
 
 // Decode decodes GetV1OauthInteractionByInteractionIdOK from json.
@@ -8364,6 +8301,65 @@ func (s *GetV1OauthInteractionByInteractionIdOK) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"client\"")
+			}
+		case "project_id":
+			if err := func() error {
+				s.ProjectID.Reset()
+				if err := s.ProjectID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"project_id\"")
+			}
+		case "environment":
+			if err := func() error {
+				s.Environment.Reset()
+				if err := s.Environment.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"environment\"")
+			}
+		case "default_locale":
+			if err := func() error {
+				s.DefaultLocale.Reset()
+				if err := s.DefaultLocale.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default_locale\"")
+			}
+		case "supported_locales":
+			if err := func() error {
+				s.SupportedLocales = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.SupportedLocales = append(s.SupportedLocales, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"supported_locales\"")
+			}
+		case "expires_at":
+			if err := func() error {
+				s.ExpiresAt.Reset()
+				if err := s.ExpiresAt.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"expires_at\"")
 			}
 		case "requested_scopes":
 			if err := func() error {
@@ -8419,21 +8415,38 @@ func (s *GetV1OauthInteractionByInteractionIdOK) UnmarshalJSON(data []byte) erro
 }
 
 // Encode implements json.Marshaler.
-func (s GetV1OauthInteractionByInteractionIdOKClient) Encode(e *jx.Encoder) {
+func (s *GetV1OauthInteractionByInteractionIdOKClient) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
-// encodeFields implements json.Marshaler.
-func (s GetV1OauthInteractionByInteractionIdOKClient) encodeFields(e *jx.Encoder) {
-	for k, elem := range s {
-		e.FieldStart(k)
-
-		if len(elem) != 0 {
-			e.Raw(elem)
+// encodeFields encodes fields.
+func (s *GetV1OauthInteractionByInteractionIdOKClient) encodeFields(e *jx.Encoder) {
+	{
+		if s.ID.Set {
+			e.FieldStart("id")
+			s.ID.Encode(e)
 		}
 	}
+	{
+		if s.Name.Set {
+			e.FieldStart("name")
+			s.Name.Encode(e)
+		}
+	}
+	{
+		if s.Type.Set {
+			e.FieldStart("type")
+			s.Type.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetV1OauthInteractionByInteractionIdOKClient = [3]string{
+	0: "id",
+	1: "name",
+	2: "type",
 }
 
 // Decode decodes GetV1OauthInteractionByInteractionIdOKClient from json.
@@ -8441,20 +8454,42 @@ func (s *GetV1OauthInteractionByInteractionIdOKClient) Decode(d *jx.Decoder) err
 	if s == nil {
 		return errors.New("invalid: unable to decode GetV1OauthInteractionByInteractionIdOKClient to nil")
 	}
-	m := s.init()
+
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		var elem jx.Raw
-		if err := func() error {
-			v, err := d.RawAppend(nil)
-			elem = jx.Raw(v)
-			if err != nil {
-				return err
+		switch string(k) {
+		case "id":
+			if err := func() error {
+				s.ID.Reset()
+				if err := s.ID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
 			}
-			return nil
-		}(); err != nil {
-			return errors.Wrapf(err, "decode field %q", k)
+		case "name":
+			if err := func() error {
+				s.Name.Reset()
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "type":
+			if err := func() error {
+				s.Type.Reset()
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		default:
+			return d.Skip()
 		}
-		m[string(k)] = elem
 		return nil
 	}); err != nil {
 		return errors.Wrap(err, "decode GetV1OauthInteractionByInteractionIdOKClient")
@@ -8464,7 +8499,7 @@ func (s *GetV1OauthInteractionByInteractionIdOKClient) Decode(d *jx.Decoder) err
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s GetV1OauthInteractionByInteractionIdOKClient) MarshalJSON() ([]byte, error) {
+func (s *GetV1OauthInteractionByInteractionIdOKClient) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
@@ -16198,7 +16233,6 @@ func (o *OptGetV1OauthInteractionByInteractionIdOKClient) Decode(d *jx.Decoder) 
 		return errors.New("invalid: unable to decode OptGetV1OauthInteractionByInteractionIdOKClient to nil")
 	}
 	o.Set = true
-	o.Value = make(GetV1OauthInteractionByInteractionIdOKClient)
 	if err := o.Value.Decode(d); err != nil {
 		return err
 	}
@@ -16862,55 +16896,6 @@ func (s OptNilPostV1AuthWebauthnLoginOptionsReqMediation) MarshalJSON() ([]byte,
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptNilPostV1AuthWebauthnLoginOptionsReqMediation) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes RegistrationConfig as json.
-func (o OptNilRegistrationConfig) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	if o.Null {
-		e.Null()
-		return
-	}
-	o.Value.Encode(e)
-}
-
-// Decode decodes RegistrationConfig from json.
-func (o *OptNilRegistrationConfig) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptNilRegistrationConfig to nil")
-	}
-	if d.Next() == jx.Null {
-		if err := d.Null(); err != nil {
-			return err
-		}
-
-		var v RegistrationConfig
-		o.Value = v
-		o.Set = true
-		o.Null = true
-		return nil
-	}
-	o.Set = true
-	o.Null = false
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptNilRegistrationConfig) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptNilRegistrationConfig) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -31772,58 +31757,16 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) encodeFields(e *jx.Encoder) {
 			s.Disabled.Encode(e)
 		}
 	}
-	{
-		if s.LoginURI.Set {
-			e.FieldStart("login_uri")
-			s.LoginURI.Encode(e)
-		}
-	}
-	{
-		if s.ConsentURI.Set {
-			e.FieldStart("consent_uri")
-			s.ConsentURI.Encode(e)
-		}
-	}
-	{
-		if s.DefaultRedirectURI.Set {
-			e.FieldStart("default_redirect_uri")
-			s.DefaultRedirectURI.Encode(e)
-		}
-	}
-	{
-		if s.RegistrationOverride.Set {
-			e.FieldStart("registration_override")
-			s.RegistrationOverride.Encode(e)
-		}
-	}
-	{
-		if s.MinSdkVersion.Set {
-			e.FieldStart("min_sdk_version")
-			s.MinSdkVersion.Encode(e)
-		}
-	}
-	{
-		if s.TokenProfile.Set {
-			e.FieldStart("token_profile")
-			s.TokenProfile.Encode(e)
-		}
-	}
 }
 
-var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [13]string{
-	0:  "id",
-	1:  "name",
-	2:  "type",
-	3:  "environment",
-	4:  "redirect_uris",
-	5:  "allowed_origins",
-	6:  "disabled",
-	7:  "login_uri",
-	8:  "consent_uri",
-	9:  "default_redirect_uri",
-	10: "registration_override",
-	11: "min_sdk_version",
-	12: "token_profile",
+var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [7]string{
+	0: "id",
+	1: "name",
+	2: "type",
+	3: "environment",
+	4: "redirect_uris",
+	5: "allowed_origins",
+	6: "disabled",
 }
 
 // Decode decodes PostV1ProjectsByProjectIdAdminAppsReq from json.
@@ -31831,7 +31774,7 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode PostV1ProjectsByProjectIdAdminAppsReq to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [1]uint8
 	s.setDefaults()
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -31926,66 +31869,6 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"disabled\"")
 			}
-		case "login_uri":
-			if err := func() error {
-				s.LoginURI.Reset()
-				if err := s.LoginURI.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"login_uri\"")
-			}
-		case "consent_uri":
-			if err := func() error {
-				s.ConsentURI.Reset()
-				if err := s.ConsentURI.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"consent_uri\"")
-			}
-		case "default_redirect_uri":
-			if err := func() error {
-				s.DefaultRedirectURI.Reset()
-				if err := s.DefaultRedirectURI.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"default_redirect_uri\"")
-			}
-		case "registration_override":
-			if err := func() error {
-				s.RegistrationOverride.Reset()
-				if err := s.RegistrationOverride.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"registration_override\"")
-			}
-		case "min_sdk_version":
-			if err := func() error {
-				s.MinSdkVersion.Reset()
-				if err := s.MinSdkVersion.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"min_sdk_version\"")
-			}
-		case "token_profile":
-			if err := func() error {
-				s.TokenProfile.Reset()
-				if err := s.TokenProfile.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"token_profile\"")
-			}
 		default:
 			return d.Skip()
 		}
@@ -31995,9 +31878,8 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
+	for i, mask := range [1]uint8{
 		0b00000110,
-		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

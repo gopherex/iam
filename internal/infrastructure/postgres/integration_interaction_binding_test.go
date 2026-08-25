@@ -183,3 +183,55 @@ func TestInteractionExpires(t *testing.T) {
 		t.Fatalf("consent on expired = %v, want flow_expired", err)
 	}
 }
+
+// TestInteractionContextRendersTheScreen: the hosted login/consent page arrives
+// holding only the interaction id, and everything it must display has to come
+// back from this one call — which application is asking, for what, in whose
+// project and in which language.
+func TestInteractionContextRendersTheScreen(t *testing.T) {
+	ctx := context.Background()
+	f := newPKCEFixture(t, ctx, "spa")
+	interactionID := f.startInteraction(t, ctx)
+
+	got, err := f.grants.ResolveInteraction(ctx, interactionID)
+	if err != nil {
+		t.Fatalf("ResolveInteraction: %v", err)
+	}
+
+	if got.ClientName != "pkce client" {
+		t.Errorf("client name = %q, want the registered name", got.ClientName)
+	}
+	if got.ClientType != "spa" {
+		t.Errorf("client type = %q, want spa", got.ClientType)
+	}
+	if got.ProjectID != f.projectID {
+		t.Errorf("project_id = %q, want %q", got.ProjectID, f.projectID)
+	}
+	if got.Environment != "live" {
+		t.Errorf("environment = %q, want live", got.Environment)
+	}
+	if got.ExpiresAt.IsZero() {
+		t.Error("expires_at is zero; the page cannot tell the user their window")
+	}
+	if len(got.Interaction.Scopes) == 0 {
+		t.Error("no requested scopes; nothing to consent to")
+	}
+
+	// Nobody has signed in yet.
+	if got.Stage != domain.OIDCStageLogin {
+		t.Fatalf("stage = %q, want login", got.Stage)
+	}
+
+	// Once a session claims it, only the decision is missing.
+	if err := f.grants.CompleteLogin(ctx, interactionID, f.userID, "sess-"+newUUID()); err != nil {
+		t.Fatalf("CompleteLogin: %v", err)
+	}
+
+	got, err = f.grants.ResolveInteraction(ctx, interactionID)
+	if err != nil {
+		t.Fatalf("ResolveInteraction after login: %v", err)
+	}
+	if got.Stage != domain.OIDCStageConsent {
+		t.Fatalf("stage = %q, want consent", got.Stage)
+	}
+}

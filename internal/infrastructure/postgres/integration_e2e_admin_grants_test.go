@@ -22,7 +22,7 @@ func TestE2EAdminUserGrants(t *testing.T) {
 
 	// Seed a consent grant for the user.
 	grantID := newUUID()
-	grants := NewPgOIDCGrants(testDB, e2eEmitter)
+	grants := NewPgOIDCGrants(testDB, e2eEmitter, nil)
 	if err := grants.persistGrant(ctx, projectID, &domain.Grant{
 		ID:        grantID,
 		AccountID: acct.ID,

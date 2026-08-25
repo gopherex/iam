@@ -45,6 +45,38 @@ type OIDCAuthorizeCmd struct {
 	RequestURI          string
 }
 
+// OIDCInteractionContext is everything the hosted login/consent UI needs to
+// render an interaction: which application is asking, what it is asking for, and
+// which project's language the page should speak. The interaction id alone is a
+// handle — the UI cannot show "Sign in to <app>" without this.
+type OIDCInteractionContext struct {
+	Interaction Interaction
+	// ProjectID / Environment are the tenant the interaction belongs to. The
+	// page needs them for the X-Client-Id it sends on the CSRF and interaction
+	// calls.
+	ProjectID   string
+	Environment string
+	// ClientName is the application's display name, ClientType its kind
+	// (spa/native/web/machine).
+	ClientName string
+	ClientType string
+	// DefaultLocale / SupportedLocales come from the project's auth config, so
+	// the hosted pages speak the project's language rather than the browser's.
+	DefaultLocale    string
+	SupportedLocales []string
+	// ExpiresAt is when the interaction stops being resumable.
+	ExpiresAt time.Time
+	// Stage tells the UI what is still missing: OIDCStageLogin while nobody has
+	// claimed the interaction, OIDCStageConsent once a user has signed in.
+	Stage string
+}
+
+// Stages of an authorization interaction, as reported to the hosted UI.
+const (
+	OIDCStageLogin   = "login"
+	OIDCStageConsent = "consent"
+)
+
 // OIDCLogoutCmd is the front-channel RP-initiated logout request
 // (/oauth2/logout). It is public. The adapter terminates the session referenced
 // by IDTokenHint and returns the post-logout redirect URL.

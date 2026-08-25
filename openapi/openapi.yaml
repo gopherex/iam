@@ -1056,35 +1056,6 @@ components:
             refused at /oauth2/authorize exactly like an unknown client_id, so
             an integration can be suspended and restored without re-issuing its
             registration.
-        login_uri:
-          type:
-          - string
-          - 'null'
-          maxLength: 2048
-        consent_uri:
-          type:
-          - string
-          - 'null'
-          maxLength: 2048
-        default_redirect_uri:
-          type:
-          - string
-          - 'null'
-          maxLength: 2048
-        registration_override:
-          anyOf:
-          - $ref: '#/components/schemas/RegistrationConfig'
-          - type: 'null'
-        min_sdk_version:
-          type:
-          - string
-          - 'null'
-          maxLength: 1024
-        token_profile:
-          type:
-          - string
-          - 'null'
-          maxLength: 1024
     UserRoles:
       type: object
       required:
@@ -8112,10 +8083,18 @@ paths:
       tags:
       - OIDC Interaction
       summary: Fetch interaction context.
+      description: >-
+        Everything the login/consent screen needs to render: which application is
+        asking, what it is asking for, which tenant it belongs to and which
+        locales that project speaks.
+
+
+        Public and deliberately NOT scoped by `X-Client-Id`: the browser arrives
+        here holding only the interaction id from the authorization redirect and
+        learns the project from the response, which it then uses as the
+        `X-Client-Id` of its CSRF and login/consent calls.
       security: []
       parameters:
-      - $ref: '#/components/parameters/XClientId'
-      - $ref: '#/components/parameters/XEnvironment'
       - name: interaction_id
         in: path
         required: true
@@ -8132,12 +8111,44 @@ paths:
                 properties:
                   stage:
                     type: string
+                    description: >-
+                      `login` while nobody has claimed the interaction,
+                      `consent` once a user has signed in and only the decision
+                      is missing.
                     enum:
                     - login
                     - consent
                   client:
                     type: object
-                    additionalProperties: true
+                    description: The application the authorization request came from.
+                    properties:
+                      id:
+                        type: string
+                        maxLength: 256
+                      name:
+                        type: string
+                        maxLength: 256
+                      type:
+                        type: string
+                        maxLength: 64
+                  project_id:
+                    type: string
+                    maxLength: 256
+                  environment:
+                    type: string
+                    maxLength: 1024
+                  default_locale:
+                    type: string
+                    description: The project's default UI language.
+                    maxLength: 32
+                  supported_locales:
+                    type: array
+                    items:
+                      type: string
+                      maxLength: 32
+                    maxItems: 100
+                  expires_at:
+                    $ref: '#/components/schemas/Timestamp'
                   requested_scopes:
                     type: array
                     items:

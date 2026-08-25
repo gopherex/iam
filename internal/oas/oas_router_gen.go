@@ -278,9 +278,6 @@ var (
 	rn20AllowedHeaders = map[string]string{
 		"DELETE": "Authorization",
 	}
-	rn130AllowedHeaders = map[string]string{
-		"GET": "X-Client-Id,X-Environment",
-	}
 	rn296AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
 	}
@@ -4084,7 +4081,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
-									allowedHeaders: rn130AllowedHeaders,
+									allowedHeaders: nil,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})

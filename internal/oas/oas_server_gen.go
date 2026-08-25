@@ -1601,7 +1601,11 @@ type OIDCProviderHandler interface {
 	GetV1OauthGrants(ctx context.Context, params GetV1OauthGrantsParams) (*GetV1OauthGrantsOK, error)
 	// GetV1OauthInteractionByInteractionId implements getV1OauthInteractionByInteractionId operation.
 	//
-	// Fetch interaction context.
+	// Everything the login/consent screen needs to render: which application is asking, what it is
+	// asking for, which tenant it belongs to and which locales that project speaks.
+	// Public and deliberately NOT scoped by `X-Client-Id`: the browser arrives here holding only the
+	// interaction id from the authorization redirect and learns the project from the response, which it
+	// then uses as the `X-Client-Id` of its CSRF and login/consent calls.
 	//
 	// GET /v1/oauth/interaction/{interaction_id}
 	GetV1OauthInteractionByInteractionId(ctx context.Context, params GetV1OauthInteractionByInteractionIdParams) (*GetV1OauthInteractionByInteractionIdOK, error)

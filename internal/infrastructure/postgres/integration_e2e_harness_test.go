@@ -138,7 +138,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 			Scim:        NewPgFederationScim(testDB, em),
 		})),
 		api.WithOIDCProvider(api.NewOIDCProviderService(api.OIDCProviderDeps{
-			Grants: NewPgOIDCGrants(testDB, em),
+			Grants: NewPgOIDCGrants(testDB, em, NewConfigReader(testDB, time.Second)),
 		})),
 		api.WithAdmin(api.NewAdminService(api.AdminDeps{
 			Users:           NewPgAdminUsers(testDB, em),
@@ -151,7 +151,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 			Keys:            NewPgAdminKeys(testDB, em),
 			AccessRequests:  NewPgAdminAccessRequests(testDB, em),
 			Invites:         NewPgInvites(testDB, em),
-			Grants:          NewPgOIDCGrants(testDB, em),
+			Grants:          NewPgOIDCGrants(testDB, em, NewConfigReader(testDB, time.Second)),
 			Audit:           NewPgAudit(testDB, em),
 			Jobs:            NewPgJobs(testDB, em),
 			Hooks:           NewPgHooks(testDB, em),
