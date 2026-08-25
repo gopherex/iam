@@ -884,6 +884,8 @@ func TestE2EOIDCProviderAuthorize(t *testing.T) {
 		clientID := "probe-" + newUUID()
 		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid&code_challenge=abc&code_challenge_method=S256",
 			ts.URL, clientID, url.QueryEscape("https://example.org/cb"))
+		// NB: code_challenge=abc is malformed, but the client is resolved first —
+		// a malformed parameter must not turn an unknown client into a 422.
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 		if err != nil {
@@ -935,6 +937,11 @@ func TestE2EOIDCProviderAuthorizeClientValidation(t *testing.T) {
 	const registered = "https://app.example.com/cb"
 	clientID := e2eAppClient(t, ctx, ts, projectID, token, registered)
 
+	// The fixture client is a spa, i.e. public, so PKCE is mandatory for it; the
+	// challenge below is the S256 transform of a fixed verifier.
+	pkce := fmt.Sprintf("&code_challenge=%s&code_challenge_method=S256",
+		url.QueryEscape(challengeFor(pkceVerifier)))
+
 	// noRedirect performs the authorize request without following redirects.
 	noRedirect := func(t *testing.T, u string) *http.Response {
 		t.Helper()
@@ -953,8 +960,8 @@ func TestE2EOIDCProviderAuthorizeClientValidation(t *testing.T) {
 	}
 
 	t.Run("unregistered_redirect_uri_400_without_redirect", func(t *testing.T) {
-		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid",
-			ts.URL, clientID, url.QueryEscape("https://evil.example.net/cb"))
+		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid%s",
+			ts.URL, clientID, url.QueryEscape("https://evil.example.net/cb"), pkce)
 		resp := noRedirect(t, u)
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
@@ -968,8 +975,8 @@ func TestE2EOIDCProviderAuthorizeClientValidation(t *testing.T) {
 	})
 
 	t.Run("valid_client_creates_interaction", func(t *testing.T) {
-		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid",
-			ts.URL, clientID, url.QueryEscape(registered))
+		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid%s",
+			ts.URL, clientID, url.QueryEscape(registered), pkce)
 		resp := noRedirect(t, u)
 		defer resp.Body.Close()
 
@@ -988,8 +995,8 @@ func TestE2EOIDCProviderAuthorizeClientValidation(t *testing.T) {
 	// The client and redirect_uri are proven at this point, so a bad parameter is
 	// reported to the client at its registered URI, carrying the original state.
 	t.Run("bad_response_type_redirects_with_error_and_state", func(t *testing.T) {
-		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&scope=openid&state=xyz789",
-			ts.URL, clientID, url.QueryEscape(registered))
+		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&scope=openid&state=xyz789%s",
+			ts.URL, clientID, url.QueryEscape(registered), pkce)
 		resp := noRedirect(t, u)
 		defer resp.Body.Close()
 
@@ -1020,8 +1027,8 @@ func TestE2EOIDCProviderAuthorizeClientValidation(t *testing.T) {
 			map[string]any{"disabled": true}, e2eBearer(token))
 		e2eWantStatus(t, r, http.StatusOK)
 
-		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid",
-			ts.URL, disabledID, url.QueryEscape(registered))
+		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid%s",
+			ts.URL, disabledID, url.QueryEscape(registered), pkce)
 		resp := noRedirect(t, u)
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)

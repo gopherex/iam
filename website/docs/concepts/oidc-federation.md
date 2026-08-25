@@ -55,6 +55,31 @@ original `state`.
 A client can be switched off with `disabled: true` instead of being deleted;
 the authorization endpoint then treats it exactly like an unknown `client_id`.
 
+### PKCE
+
+PKCE (RFC 7636) is enforced, and `S256` is the only method — `plain` is not
+supported and is not advertised in `code_challenge_methods_supported`.
+
+- **Public clients** (`spa`, `native`) **must** send `code_challenge` and
+  `code_challenge_method=S256`. They hold no secret, so the authorization code
+  is the only thing between an attacker who intercepts the redirect and a token.
+  A request without a challenge is bounced back to the client's registered
+  `redirect_uri` with `error=invalid_request`.
+- **Confidential clients** (`web`, `machine`) authenticate with a client secret
+  at the token endpoint and may omit PKCE — but when they send a challenge it is
+  enforced identically.
+
+The challenge is bound to the issued authorization code. The token endpoint
+rejects the exchange with `invalid_grant` unless the presented `code_verifier`
+hashes to it, and equally rejects a `code_verifier` presented for a code that
+was issued without a challenge — otherwise an attacker holding a stolen code
+could simply strip the challenge (RFC 7636 §4.6). A failed exchange does not
+consume the code, so the legitimate client can still finish its flow.
+
+Confidential clients are authenticated against the secrets issued for them under
+`admin/apps/{app_id}/secrets`. A client may hold several at once, so a secret can
+be rotated in before the old one is deleted; any issued secret authenticates.
+
 ### Roles in the token (`groups`)
 
 Relying parties (ArgoCD, Grafana, …) need to know *who* the user is inside your

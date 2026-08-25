@@ -28,6 +28,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -346,14 +347,12 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			scopes = in.Scopes
 		}
 
-		codeData, err := marshal(struct {
-			Scopes      []string `json:"Scopes"`
-			RedirectURI string   `json:"RedirectURI"`
-			Nonce       string   `json:"Nonce"`
-		}{
-			Scopes:      scopes,
-			RedirectURI: in.RedirectURI,
-			Nonce:       in.Nonce,
+		codeData, err := marshal(authCodeData{
+			Scopes:              scopes,
+			RedirectURI:         in.RedirectURI,
+			Nonce:               in.Nonce,
+			CodeChallenge:       in.CodeChallenge,
+			CodeChallengeMethod: in.CodeChallengeMethod,
 		})
 		if err != nil {
 			return "", err
@@ -615,6 +614,131 @@ func authorizeRedirectURI(app *domain.AppClient, requested string) (string, erro
 	return "", domain.ErrInvalidRedirectURI
 }
 
+// PKCE (RFC 7636). S256 is the only method IAM implements, and the only one the
+// discovery document advertises: `plain` offers no protection against an
+// intercepted authorization code, which is the whole point of the exchange.
+// OAuth2 error codes returned on the authorization redirect (RFC 6749 §4.1.2.1).
+const (
+	oidcErrInvalidRequest          = "invalid_request"
+	oidcErrUnsupportedResponseType = "unsupported_response_type"
+)
+
+const (
+	oidcCodeChallengeMethodS256 = "S256"
+	// Length bounds of a code_verifier, straight from RFC 7636 §4.1. The S256
+	// challenge is BASE64URL of a 32-byte digest, so it is always 43 characters;
+	// the same bounds are applied to it for a cheap early reject.
+	oidcCodeVerifierMinLen = 43
+	oidcCodeVerifierMaxLen = 128
+)
+
+// oidcUnreserved reports whether r is in the RFC 7636 `unreserved` set that both
+// the code_verifier and the code_challenge are drawn from.
+func oidcUnreserved(r rune) bool {
+	switch {
+	case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9':
+		return true
+	case r == '-', r == '.', r == '_', r == '~':
+		return true
+	default:
+		return false
+	}
+}
+
+// oidcValidPKCEValue reports whether s is a syntactically valid code_verifier or
+// code_challenge: the RFC 7636 length bounds and character set.
+func oidcValidPKCEValue(s string) bool {
+	if len(s) < oidcCodeVerifierMinLen || len(s) > oidcCodeVerifierMaxLen {
+		return false
+	}
+
+	for _, r := range s {
+		if !oidcUnreserved(r) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// oidcCodeChallengeFor returns BASE64URL-ENCODE(SHA256(verifier)) — the S256
+// transformation of RFC 7636 §4.6, unpadded as the spec requires.
+func oidcCodeChallengeFor(verifier string) string {
+	sum := sha256.Sum256([]byte(verifier))
+	return base64.RawURLEncoding.EncodeToString(sum[:])
+}
+
+// oidcCheckPKCERequest validates the PKCE parameters of an authorization
+// request. It returns an OAuth2 error code and description when the request must
+// be bounced back to the client, or empty strings when it is acceptable.
+//
+// PKCE is REQUIRED for public clients (spa / native): they hold no secret, so
+// the authorization code is the only thing standing between an attacker who
+// intercepts the redirect and a token. Confidential clients authenticate with a
+// secret at the token endpoint and may omit it — but if they send a challenge it
+// is enforced exactly the same way.
+func oidcCheckPKCERequest(app *domain.AppClient, challenge, method string) (string, string) {
+	if challenge == "" {
+		if method != "" {
+			return oidcErrInvalidRequest, "code_challenge_method was sent without a code_challenge"
+		}
+
+		if !oidcIsConfidentialClient(app.Type) {
+			return oidcErrInvalidRequest, "code_challenge is required for public clients (PKCE, RFC 7636)"
+		}
+
+		return "", ""
+	}
+
+	if method != oidcCodeChallengeMethodS256 {
+		return oidcErrInvalidRequest, "code_challenge_method must be S256"
+	}
+
+	if !oidcValidPKCEValue(challenge) {
+		return oidcErrInvalidRequest, "code_challenge is not a valid RFC 7636 challenge"
+	}
+
+	return "", ""
+}
+
+// oidcVerifyPKCE checks a presented code_verifier against the challenge bound to
+// the authorization code at authorize time.
+//
+// Both directions matter. A code issued WITH a challenge cannot be redeemed
+// without the matching verifier — that is the attack PKCE exists to stop. A code
+// issued WITHOUT one cannot be redeemed with a verifier either: accepting that
+// would let an attacker who captured a code strip the challenge and downgrade
+// the exchange (RFC 7636 §4.6).
+func oidcVerifyPKCE(challenge, method, verifier string) error {
+	if challenge == "" {
+		if verifier != "" {
+			return domain.ErrInvalidGrant.WithMessage(
+				"code_verifier was presented for a code issued without a code_challenge")
+		}
+
+		return nil
+	}
+
+	if verifier == "" {
+		return domain.ErrInvalidGrant.WithMessage("code_verifier is required for this authorization code")
+	}
+
+	if method != oidcCodeChallengeMethodS256 {
+		// Only S256 is ever stored; anything else means a corrupted or forged code.
+		return domain.ErrInvalidGrant.WithMessage("unsupported code_challenge_method on the authorization code")
+	}
+
+	if !oidcValidPKCEValue(verifier) {
+		return domain.ErrInvalidGrant.WithMessage("code_verifier is not a valid RFC 7636 verifier")
+	}
+
+	if subtle.ConstantTimeCompare([]byte(oidcCodeChallengeFor(verifier)), []byte(challenge)) != 1 {
+		return domain.ErrInvalidGrant.WithMessage("code_verifier does not match the code_challenge")
+	}
+
+	return nil
+}
+
 // oidcErrorRedirect builds the OAuth2 error redirect back to an already
 // validated redirect_uri (RFC 6749 §4.1.2.1). state is echoed verbatim when the
 // client sent one, so the client can match the response to its request.
@@ -662,14 +786,18 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 	// From here the redirect target is a URI this client registered, so request
 	// errors travel back to the client instead of being shown to the user.
 	if cmd.ResponseType != oidcResponseTypeCode {
-		return oidcErrorRedirect(redirectURI, "unsupported_response_type",
+		return oidcErrorRedirect(redirectURI, oidcErrUnsupportedResponseType,
 			"only response_type=code is supported", cmd.State), nil
 	}
 
 	scopes := splitScopes(cmd.Scope)
 	if len(scopes) == 0 {
-		return oidcErrorRedirect(redirectURI, "invalid_request",
+		return oidcErrorRedirect(redirectURI, oidcErrInvalidRequest,
 			"scope is required", cmd.State), nil
+	}
+
+	if errCode, desc := oidcCheckPKCERequest(app, cmd.CodeChallenge, cmd.CodeChallengeMethod); errCode != "" {
+		return oidcErrorRedirect(redirectURI, errCode, desc, cmd.State), nil
 	}
 
 	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
@@ -679,6 +807,10 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 			Scopes:      scopes,
 			RedirectURI: redirectURI,
 			Nonce:       cmd.Nonce,
+			// Bind PKCE to the interaction; Consent copies it onto the code it
+			// mints, and the token endpoint checks the verifier against it.
+			CodeChallenge:       cmd.CodeChallenge,
+			CodeChallengeMethod: cmd.CodeChallengeMethod,
 		}
 
 		raw, err := marshal(&in)
@@ -869,6 +1001,13 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 				if subtle.ConstantTimeCompare([]byte(cmd.RedirectURI), []byte(codeData.RedirectURI)) != 1 {
 					return nil, domain.ErrUnauthorized
 				}
+			}
+
+			// PKCE (RFC 7636): the verifier must reproduce the challenge that was
+			// bound to this code at authorize time. Checked before the code is
+			// consumed so a failed exchange does not burn a valid code.
+			if err := oidcVerifyPKCE(codeData.CodeChallenge, codeData.CodeChallengeMethod, cmd.CodeVerifier); err != nil {
+				return nil, err
 			}
 
 			// M-02: Verify consent was granted for this (project, user, client).
@@ -1730,6 +1869,11 @@ type authCodeData struct {
 	Scope       string   `json:"scope"`
 	RedirectURI string   `json:"RedirectURI"`
 	Nonce       string   `json:"Nonce"`
+	// PKCE parameters copied from the authorization request. An empty challenge
+	// means the code was issued without PKCE, which the token endpoint treats as
+	// "a verifier must NOT be presented".
+	CodeChallenge       string `json:"code_challenge,omitempty"`
+	CodeChallengeMethod string `json:"code_challenge_method,omitempty"`
 }
 
 // parseAuthCodeData unmarshals the auth-code data envelope.
@@ -1749,8 +1893,13 @@ func oidcIsConfidentialClient(clientType string) bool {
 }
 
 // oidcVerifyClientSecret looks up an app client by ID, and if it is a
-// confidential client, verifies the supplied secret against the stored sha256
-// hash in the data envelope using constant-time comparison.
+// confidential client, verifies the supplied secret against its stored sha256
+// hashes using constant-time comparison.
+//
+// The secrets live in iam_app_secrets — a client may hold several so one can be
+// rotated before the old one is dropped — and any of them authenticates the
+// client. A hash inside the client's own data envelope is also accepted, for
+// clients provisioned that way.
 func (a *pgOIDCGrants) oidcVerifyClientSecret(ctx context.Context, clientID, clientSecret string) error {
 	if clientID == "" {
 		return domain.ErrUnauthorized
@@ -1769,17 +1918,34 @@ func (a *pgOIDCGrants) oidcVerifyClientSecret(ctx context.Context, clientID, cli
 		return domain.ErrUnauthorized
 	}
 
+	given := sha256.Sum256([]byte(clientSecret))
+	givenHex := hex.EncodeToString(given[:])
+
 	var data struct {
 		ClientSecretHash string `json:"client_secret_hash"`
 	}
-	if err := json.Unmarshal(row.Data, &data); err != nil || data.ClientSecretHash == "" {
-		return domain.ErrUnauthorized
+	if err := json.Unmarshal(row.Data, &data); err == nil && data.ClientSecretHash != "" {
+		if subtle.ConstantTimeCompare([]byte(givenHex), []byte(data.ClientSecretHash)) == 1 {
+			return nil
+		}
 	}
 
-	given := sha256.Sum256([]byte(clientSecret))
+	secrets, err := models.IamAppSecrets.Query(
+		sm.Where(models.IamAppSecrets.Columns.ProjectID.EQ(psql.Arg(row.ProjectID))),
+		sm.Where(models.IamAppSecrets.Columns.AppID.EQ(psql.Arg(clientID))),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return fmt.Errorf("read client secrets: %w", err)
+	}
 
-	givenHex := hex.EncodeToString(given[:])
-	if subtle.ConstantTimeCompare([]byte(givenHex), []byte(data.ClientSecretHash)) != 1 {
+	// Compare against every issued secret without short-circuiting, so the reply
+	// time does not reveal which one (if any) was close.
+	matched := 0
+	for _, secret := range secrets {
+		matched |= subtle.ConstantTimeCompare([]byte(givenHex), []byte(secret.Hash))
+	}
+
+	if matched != 1 {
 		return domain.ErrUnauthorized
 	}
 

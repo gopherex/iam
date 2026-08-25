@@ -110,6 +110,10 @@ var (
 	// is not one the client registered, the authorization server MUST NOT
 	// redirect the user-agent — the target cannot be trusted — and reports the
 	// error directly instead.
+	// RFC 6749 §5.2 invalid_grant: the presented authorization grant is invalid,
+	// expired, revoked, or does not match the request it was issued for — which
+	// is also how a failed PKCE verification is reported.
+	ErrInvalidGrant       = newErr(http.StatusBadRequest, "invalid_grant", "The authorization grant is invalid.")
 	ErrInvalidClient      = newErr(http.StatusBadRequest, "invalid_client", "Unknown or disabled OAuth client.")
 	ErrInvalidRedirectURI = newErr(http.StatusBadRequest, "invalid_redirect_uri",
 		"The redirect_uri is not registered for this client.")

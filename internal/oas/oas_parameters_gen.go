@@ -7660,14 +7660,23 @@ type GetOauth2AuthorizeParams struct {
 	// to the client's registered redirect_uri carrying `error=unsupported_response_type` and the
 	// original `state` — so the value is accepted here as a free string rather than rejected by schema
 	// validation before the client has been resolved.
-	ResponseType  string
-	RedirectURI   string
-	Scope         string
-	State         OptString `json:",omitempty,omitzero"`
+	ResponseType string
+	RedirectURI  string
+	Scope        string
+	State        OptString `json:",omitempty,omitzero"`
+	// PKCE challenge (RFC 7636), `BASE64URL(SHA256(code_verifier))`. Required for public clients (`spa`,
+	// `native`); optional for confidential clients, which authenticate with a secret. When present it is
+	// bound to the authorization code and the matching `code_verifier` MUST be presented at the token
+	// endpoint. The RFC 7636 length (43–128) and character-set rules are enforced by the authorization
+	// endpoint itself, so a malformed value is reported as an OAuth2 `invalid_request` on the client's
+	// registered redirect_uri rather than as a schema failure before the client has been resolved.
 	CodeChallenge OptString `json:",omitempty,omitzero"`
-	Nonce         OptString `json:",omitempty,omitzero"`
-	Prompt        OptString `json:",omitempty,omitzero"`
-	RequestURI    OptString `json:",omitempty,omitzero"`
+	// Must be `S256` whenever `code_challenge` is present; `plain` is not supported (see
+	// `code_challenge_methods_supported` in the discovery document).
+	CodeChallengeMethod OptString `json:",omitempty,omitzero"`
+	Nonce               OptString `json:",omitempty,omitzero"`
+	Prompt              OptString `json:",omitempty,omitzero"`
+	RequestURI          OptString `json:",omitempty,omitzero"`
 }
 
 func unpackGetOauth2AuthorizeParams(packed middleware.Parameters) (params GetOauth2AuthorizeParams) {
@@ -7715,6 +7724,15 @@ func unpackGetOauth2AuthorizeParams(packed middleware.Parameters) (params GetOau
 		}
 		if v, ok := packed[key]; ok {
 			params.CodeChallenge = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "code_challenge_method",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.CodeChallengeMethod = v.(OptString)
 		}
 	}
 	{
@@ -8079,7 +8097,7 @@ func decodeGetOauth2AuthorizeParams(args [0]string, argsEscaped bool, r *http.Re
 						if err := (validate.String{
 							MinLength:     0,
 							MinLengthSet:  false,
-							MaxLength:     1024,
+							MaxLength:     128,
 							MaxLengthSet:  true,
 							Email:         false,
 							Hostname:      false,
@@ -8105,6 +8123,74 @@ func decodeGetOauth2AuthorizeParams(args [0]string, argsEscaped bool, r *http.Re
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "code_challenge",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: code_challenge_method.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "code_challenge_method",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCodeChallengeMethodVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCodeChallengeMethodVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.CodeChallengeMethod.SetTo(paramsDotCodeChallengeMethodVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.CodeChallengeMethod.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     16,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "code_challenge_method",
 			In:   "query",
 			Err:  err,
 		}

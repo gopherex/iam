@@ -30,15 +30,19 @@ type OIDCRejectCmd struct {
 // interaction and returns the redirect URL the user-agent must follow (to the
 // login/consent UI, or back to the client with code/error).
 type OIDCAuthorizeCmd struct {
-	ClientID      string
-	ResponseType  string
-	RedirectURI   string
-	Scope         string
-	State         string
-	CodeChallenge string
-	Nonce         string
-	Prompt        string
-	RequestURI    string
+	ClientID     string
+	ResponseType string
+	RedirectURI  string
+	Scope        string
+	State        string
+	// CodeChallenge / CodeChallengeMethod carry PKCE (RFC 7636). The challenge is
+	// bound to the issued authorization code and the token endpoint refuses the
+	// exchange without the matching verifier.
+	CodeChallenge       string
+	CodeChallengeMethod string
+	Nonce               string
+	Prompt              string
+	RequestURI          string
 }
 
 // OIDCLogoutCmd is the front-channel RP-initiated logout request

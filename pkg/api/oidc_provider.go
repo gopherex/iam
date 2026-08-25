@@ -107,15 +107,16 @@ func (s *OIDCProviderService) DeleteV1OauthGrantsByGrantId(ctx context.Context, 
 func (s *OIDCProviderService) GetOauth2Authorize(ctx context.Context, params oas.GetOauth2AuthorizeParams) (r *oas.GetOauth2AuthorizeFound, _ error) {
 	// Public front-channel operation: the client is identified by client_id.
 	redirectTo, err := s.deps.Grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
-		ClientID:      params.ClientID,
-		ResponseType:  string(params.ResponseType),
-		RedirectURI:   params.RedirectURI,
-		Scope:         params.Scope,
-		State:         params.State.Or(""),
-		CodeChallenge: params.CodeChallenge.Or(""),
-		Nonce:         params.Nonce.Or(""),
-		Prompt:        params.Prompt.Or(""),
-		RequestURI:    params.RequestURI.Or(""),
+		ClientID:            params.ClientID,
+		ResponseType:        params.ResponseType,
+		RedirectURI:         params.RedirectURI,
+		Scope:               params.Scope,
+		State:               params.State.Or(""),
+		CodeChallenge:       params.CodeChallenge.Or(""),
+		CodeChallengeMethod: params.CodeChallengeMethod.Or(""),
+		Nonce:               params.Nonce.Or(""),
+		Prompt:              params.Prompt.Or(""),
+		RequestURI:          params.RequestURI.Or(""),
 	})
 	if err != nil {
 		return nil, err

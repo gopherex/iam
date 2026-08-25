@@ -201,6 +201,12 @@ type Interaction struct {
 	RedirectURI string
 	Nonce       string
 	SessionID   string
+	// CodeChallenge / CodeChallengeMethod are the PKCE parameters of the
+	// authorization request (RFC 7636). They travel from the authorization
+	// request onto the authorization code, where the token endpoint checks the
+	// verifier against them.
+	CodeChallenge       string `json:"code_challenge,omitempty"`
+	CodeChallengeMethod string `json:"code_challenge_method,omitempty"`
 }
 
 // ===== Read models =====

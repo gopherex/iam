@@ -10723,7 +10723,7 @@ func (s *PostOauth2TokenReq) Validate() error {
 				if err := (validate.String{
 					MinLength:     0,
 					MinLengthSet:  false,
-					MaxLength:     1024,
+					MaxLength:     128,
 					MaxLengthSet:  true,
 					Email:         false,
 					Hostname:      false,

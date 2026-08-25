@@ -14440,9 +14440,13 @@ func (s *PostOauth2TokenOK) init() PostOauth2TokenOK {
 }
 
 type PostOauth2TokenReq struct {
-	GrantType    OptString `json:"grant_type"`
-	Code         OptString `json:"code"`
-	RedirectURI  OptString `json:"redirect_uri"`
+	GrantType   OptString `json:"grant_type"`
+	Code        OptString `json:"code"`
+	RedirectURI OptString `json:"redirect_uri"`
+	// PKCE verifier (RFC 7636). Required whenever the authorization request carried a `code_challenge`;
+	// presenting one for a code that was issued without a challenge is rejected. The RFC 7636 length
+	// (43–128) and character-set rules are enforced by the token endpoint, which reports a violation
+	// as `invalid_grant`.
 	CodeVerifier OptString `json:"code_verifier"`
 	RefreshToken OptString `json:"refresh_token"`
 	ClientID     OptString `json:"client_id"`

@@ -1,0 +1,330 @@
+//go:build integration
+
+package postgres
+
+// integration_pkce_test.go — PKCE (RFC 7636) end to end: the challenge sent to
+// /oauth2/authorize is bound to the issued authorization code, and the token
+// endpoint refuses to exchange that code without the matching verifier.
+
+import (
+	"context"
+	"errors"
+	"net/url"
+	"testing"
+
+	"github.com/gopherex/iam/internal/domain"
+)
+
+// pkceFixture is a project with one registered app client and one user, plus the
+// grants adapter under test.
+type pkceFixture struct {
+	grants       *pgOIDCGrants
+	projectID    string
+	userID       string
+	clientID     string
+	clientSecret string
+	redirectURI  string
+}
+
+const pkceRedirectURI = "https://app.example.com/cb"
+
+func newPKCEFixture(t *testing.T, ctx context.Context, clientType string) pkceFixture {
+	t.Helper()
+
+	op := NewPgOperator(testDB, nopEmitter{})
+	proj, err := op.CreateProject(ctx, domain.ProjectCmd{Name: "pkce " + newUUID()[:8]})
+	if err != nil {
+		t.Fatalf("create project: %v", err)
+	}
+
+	app, err := NewPgAdminApps(testDB, nopEmitter{}).Create(ctx, domain.AppClientCmd{
+		ProjectID:    proj.ID,
+		Environment:  "live",
+		Name:         "pkce client",
+		Type:         clientType,
+		RedirectURIs: []string{pkceRedirectURI},
+	})
+	if err != nil {
+		t.Fatalf("create app client: %v", err)
+	}
+
+	acc, err := NewPgAdminUsers(testDB, nopEmitter{}).Create(ctx, domain.RegisterCmd{
+		ProjectID:   proj.ID,
+		Environment: "live",
+		Email:       "pkce+" + newUUID() + "@example.com",
+	})
+	if err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+
+	f := pkceFixture{
+		grants:      NewPgOIDCGrants(testDB, nopEmitter{}),
+		projectID:   proj.ID,
+		userID:      acc.ID,
+		clientID:    app.ID,
+		redirectURI: pkceRedirectURI,
+	}
+
+	// Confidential clients authenticate with a secret at the token endpoint.
+	if clientType == "web" || clientType == "machine" {
+		secret, err := NewPgAdminApps(testDB, nopEmitter{}).AddSecret(ctx, proj.ID, "live", app.ID, "e2e")
+		if err != nil {
+			t.Fatalf("add client secret: %v", err)
+		}
+		f.clientSecret = secret.ClientSecret
+	}
+
+	return f
+}
+
+// authorizeAndConsent drives authorize -> consent and returns the authorization
+// code the client would receive on its redirect_uri.
+func (f pkceFixture) authorizeAndConsent(t *testing.T, ctx context.Context, challenge, method string) string {
+	t.Helper()
+
+	redirect, err := f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+		ClientID:            f.clientID,
+		ResponseType:        "code",
+		RedirectURI:         f.redirectURI,
+		Scope:               "openid",
+		CodeChallenge:       challenge,
+		CodeChallengeMethod: method,
+	})
+	if err != nil {
+		t.Fatalf("Authorize: %v", err)
+	}
+
+	const prefix = "/oauth/interaction/"
+	if len(redirect) <= len(prefix) || redirect[:len(prefix)] != prefix {
+		t.Fatalf("Authorize returned %q, want an interaction handle", redirect)
+	}
+
+	interactionID := redirect[len(prefix):]
+
+	// The interaction is not bound to a session here, so consent presents the
+	// same empty session id the authorization request created it with.
+	consentRedirect, err := f.grants.Consent(ctx, domain.OIDCConsentCmd{
+		InteractionID: interactionID,
+		AccountID:     f.userID,
+		GrantedScopes: []string{"openid"},
+		Remember:      true,
+	})
+	if err != nil {
+		t.Fatalf("Consent: %v", err)
+	}
+
+	parsed, err := url.Parse(consentRedirect)
+	if err != nil {
+		t.Fatalf("parse consent redirect %q: %v", consentRedirect, err)
+	}
+
+	code := parsed.Query().Get("code")
+	if code == "" {
+		t.Fatalf("consent redirect %q carries no code", consentRedirect)
+	}
+
+	return code
+}
+
+func (f pkceFixture) exchange(ctx context.Context, code, verifier string) (map[string]any, error) {
+	return f.grants.Token(ctx, domain.OIDCTokenCmd{
+		ProjectID:    f.projectID,
+		Env:          "live",
+		GrantType:    "authorization_code",
+		Code:         code,
+		RedirectURI:  f.redirectURI,
+		CodeVerifier: verifier,
+		ClientID:     f.clientID,
+		ClientSecret: f.clientSecret,
+	})
+}
+
+// TestPKCEExchangeRequiresMatchingVerifier is the attack PKCE exists to stop: an
+// authorization code intercepted on the redirect is worthless without the
+// verifier that never left the client.
+func TestPKCEExchangeRequiresMatchingVerifier(t *testing.T) {
+	ctx := context.Background()
+	f := newPKCEFixture(t, ctx, "spa")
+	challenge := challengeFor(pkceVerifier)
+
+	t.Run("matching_verifier_exchanges", func(t *testing.T) {
+		code := f.authorizeAndConsent(t, ctx, challenge, "S256")
+
+		resp, err := f.exchange(ctx, code, pkceVerifier)
+		if err != nil {
+			t.Fatalf("exchange with the matching verifier: %v", err)
+		}
+
+		if access, _ := resp["access_token"].(string); access == "" {
+			t.Fatalf("exchange returned no access_token: %v", resp)
+		}
+	})
+
+	t.Run("missing_verifier_rejected", func(t *testing.T) {
+		code := f.authorizeAndConsent(t, ctx, challenge, "S256")
+
+		if _, err := f.exchange(ctx, code, ""); !errors.Is(err, domain.ErrInvalidGrant) {
+			t.Fatalf("exchange without a verifier = %v, want invalid_grant", err)
+		}
+	})
+
+	t.Run("wrong_verifier_rejected", func(t *testing.T) {
+		code := f.authorizeAndConsent(t, ctx, challenge, "S256")
+
+		other := "ZZZftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+		if _, err := f.exchange(ctx, code, other); !errors.Is(err, domain.ErrInvalidGrant) {
+			t.Fatalf("exchange with a wrong verifier = %v, want invalid_grant", err)
+		}
+	})
+
+	// A rejected exchange must not burn the code: the legitimate client still
+	// holds the real verifier and has to be able to finish its flow.
+	t.Run("rejected_exchange_leaves_the_code_usable", func(t *testing.T) {
+		code := f.authorizeAndConsent(t, ctx, challenge, "S256")
+
+		if _, err := f.exchange(ctx, code, ""); err == nil {
+			t.Fatal("exchange without a verifier succeeded")
+		}
+
+		if _, err := f.exchange(ctx, code, pkceVerifier); err != nil {
+			t.Fatalf("exchange with the correct verifier after a failed attempt: %v", err)
+		}
+	})
+}
+
+// TestPKCEAuthorizeRequiresChallengeForPublicClients: a public client holds no
+// secret, so an authorization request without PKCE is refused — bounced back to
+// the client's registered redirect_uri as RFC 6749 §4.1.2.1 requires.
+func TestPKCEAuthorizeRequiresChallengeForPublicClients(t *testing.T) {
+	ctx := context.Background()
+	f := newPKCEFixture(t, ctx, "spa")
+
+	redirect, err := f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+		ClientID:     f.clientID,
+		ResponseType: "code",
+		RedirectURI:  f.redirectURI,
+		Scope:        "openid",
+		State:        "st-1",
+	})
+	if err != nil {
+		t.Fatalf("Authorize: %v", err)
+	}
+
+	parsed, err := url.Parse(redirect)
+	if err != nil {
+		t.Fatalf("parse redirect %q: %v", redirect, err)
+	}
+
+	if got := parsed.Query().Get("error"); got != "invalid_request" {
+		t.Fatalf("error = %q, want invalid_request (redirect was %q)", got, redirect)
+	}
+
+	if got := parsed.Query().Get("state"); got != "st-1" {
+		t.Fatalf("state = %q, want st-1", got)
+	}
+
+	if n := e2eInteractionCount(t, ctx, f.clientID); n != 0 {
+		t.Fatalf("a PKCE-less request created %d interaction(s); want 0", n)
+	}
+}
+
+// TestPKCEConfidentialClientMayOmitChallenge: a confidential client
+// authenticates with a secret at the token endpoint, so PKCE stays optional for
+// it — but a code issued without a challenge cannot be redeemed WITH a verifier
+// (downgrade protection, RFC 7636 §4.6).
+func TestPKCEConfidentialClientMayOmitChallenge(t *testing.T) {
+	ctx := context.Background()
+	f := newPKCEFixture(t, ctx, "web")
+
+	t.Run("exchange_without_pkce", func(t *testing.T) {
+		code := f.authorizeAndConsent(t, ctx, "", "")
+
+		resp, err := f.grants.Token(ctx, domain.OIDCTokenCmd{
+			ProjectID:    f.projectID,
+			Env:          "live",
+			GrantType:    "authorization_code",
+			Code:         code,
+			RedirectURI:  f.redirectURI,
+			ClientID:     f.clientID,
+			ClientSecret: f.clientSecret,
+		})
+		if err != nil {
+			t.Fatalf("exchange without PKCE: %v", err)
+		}
+
+		if access, _ := resp["access_token"].(string); access == "" {
+			t.Fatalf("exchange returned no access_token: %v", resp)
+		}
+	})
+
+	t.Run("verifier_for_a_pkce_less_code_rejected", func(t *testing.T) {
+		code := f.authorizeAndConsent(t, ctx, "", "")
+
+		if _, err := f.exchange(ctx, code, pkceVerifier); !errors.Is(err, domain.ErrInvalidGrant) {
+			t.Fatalf("exchange = %v, want invalid_grant", err)
+		}
+	})
+}
+
+// TestOIDCConfidentialClientSecret: the token endpoint authenticates a
+// confidential client against the secrets issued for it (iam_app_secrets), and
+// refuses a wrong or missing one.
+func TestOIDCConfidentialClientSecret(t *testing.T) {
+	ctx := context.Background()
+	f := newPKCEFixture(t, ctx, "web")
+
+	t.Run("issued_secret_authenticates", func(t *testing.T) {
+		code := f.authorizeAndConsent(t, ctx, "", "")
+
+		if _, err := f.grants.Token(ctx, domain.OIDCTokenCmd{
+			ProjectID: f.projectID, Env: "live", GrantType: "authorization_code",
+			Code: code, RedirectURI: f.redirectURI,
+			ClientID: f.clientID, ClientSecret: f.clientSecret,
+		}); err != nil {
+			t.Fatalf("exchange with the issued secret: %v", err)
+		}
+	})
+
+	t.Run("wrong_secret_rejected", func(t *testing.T) {
+		code := f.authorizeAndConsent(t, ctx, "", "")
+
+		if _, err := f.grants.Token(ctx, domain.OIDCTokenCmd{
+			ProjectID: f.projectID, Env: "live", GrantType: "authorization_code",
+			Code: code, RedirectURI: f.redirectURI,
+			ClientID: f.clientID, ClientSecret: "not-the-secret",
+		}); !errors.Is(err, domain.ErrUnauthorized) {
+			t.Fatalf("exchange with a wrong secret = %v, want unauthorized", err)
+		}
+	})
+
+	t.Run("missing_secret_rejected", func(t *testing.T) {
+		code := f.authorizeAndConsent(t, ctx, "", "")
+
+		if _, err := f.grants.Token(ctx, domain.OIDCTokenCmd{
+			ProjectID: f.projectID, Env: "live", GrantType: "authorization_code",
+			Code: code, RedirectURI: f.redirectURI, ClientID: f.clientID,
+		}); !errors.Is(err, domain.ErrUnauthorized) {
+			t.Fatalf("exchange without a secret = %v, want unauthorized", err)
+		}
+	})
+
+	// Rotation: a second secret is issued alongside the first, and both work
+	// until the old one is dropped.
+	t.Run("rotated_secret_also_authenticates", func(t *testing.T) {
+		second, err := NewPgAdminApps(testDB, nopEmitter{}).AddSecret(ctx, f.projectID, "live", f.clientID, "rotated")
+		if err != nil {
+			t.Fatalf("add second secret: %v", err)
+		}
+
+		for name, secret := range map[string]string{"old": f.clientSecret, "new": second.ClientSecret} {
+			code := f.authorizeAndConsent(t, ctx, "", "")
+			if _, err := f.grants.Token(ctx, domain.OIDCTokenCmd{
+				ProjectID: f.projectID, Env: "live", GrantType: "authorization_code",
+				Code: code, RedirectURI: f.redirectURI,
+				ClientID: f.clientID, ClientSecret: secret,
+			}); err != nil {
+				t.Fatalf("exchange with the %s secret: %v", name, err)
+			}
+		}
+	})
+}

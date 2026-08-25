@@ -7538,6 +7538,12 @@ paths:
         unverified URI, and no interaction record is created. Once the client and
         redirect_uri check out, a bad request parameter redirects back to the
         registered redirect_uri with `error` and the original `state`.
+
+
+        PKCE (RFC 7636) is enforced: `code_challenge` is required for public
+        clients, must use `S256`, and is bound to the issued authorization code —
+        the token endpoint rejects the exchange unless the matching
+        `code_verifier` is presented.
       security: []
       parameters:
       - name: client_id
@@ -7579,9 +7585,29 @@ paths:
       - name: code_challenge
         in: query
         required: false
+        description: >-
+          PKCE challenge (RFC 7636), `BASE64URL(SHA256(code_verifier))`. Required
+          for public clients (`spa`, `native`); optional for confidential
+          clients, which authenticate with a secret. When present it is bound to
+          the authorization code and the matching `code_verifier` MUST be
+          presented at the token endpoint. The RFC 7636 length (43–128) and
+          character-set rules are enforced by the authorization endpoint itself,
+          so a malformed value is reported as an OAuth2 `invalid_request` on the
+          client's registered redirect_uri rather than as a schema failure before
+          the client has been resolved.
         schema:
           type: string
-          maxLength: 1024
+          maxLength: 128
+      - name: code_challenge_method
+        in: query
+        required: false
+        description: >-
+          Must be `S256` whenever `code_challenge` is present; `plain` is not
+          supported (see `code_challenge_methods_supported` in the discovery
+          document).
+        schema:
+          type: string
+          maxLength: 16
       - name: nonce
         in: query
         required: false
@@ -7643,7 +7669,13 @@ paths:
                   maxLength: 2048
                 code_verifier:
                   type: string
-                  maxLength: 1024
+                  description: >-
+                    PKCE verifier (RFC 7636). Required whenever the authorization
+                    request carried a `code_challenge`; presenting one for a code
+                    that was issued without a challenge is rejected. The RFC 7636
+                    length (43–128) and character-set rules are enforced by the
+                    token endpoint, which reports a violation as `invalid_grant`.
+                  maxLength: 128
                 refresh_token:
                   type: string
                   maxLength: 4096

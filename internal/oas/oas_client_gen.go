@@ -1629,6 +1629,9 @@ type OIDCProviderInvoker interface {
 	// unverified URI, and no interaction record is created. Once the client and redirect_uri check out,
 	// a bad request parameter redirects back to the registered redirect_uri with `error` and the
 	// original `state`.
+	// PKCE (RFC 7636) is enforced: `code_challenge` is required for public clients, must use `S256`, and
+	// is bound to the issued authorization code — the token endpoint rejects the exchange unless the
+	// matching `code_verifier` is presented.
 	//
 	// GET /oauth2/authorize
 	GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, options ...RequestOption) (*GetOauth2AuthorizeFound, error)
@@ -9224,6 +9227,9 @@ func (c *Client) sendGetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, p
 // unverified URI, and no interaction record is created. Once the client and redirect_uri check out,
 // a bad request parameter redirects back to the registered redirect_uri with `error` and the
 // original `state`.
+// PKCE (RFC 7636) is enforced: `code_challenge` is required for public clients, must use `S256`, and
+// is bound to the issued authorization code — the token endpoint rejects the exchange unless the
+// matching `code_verifier` is presented.
 //
 // GET /oauth2/authorize
 func (c *Client) GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, options ...RequestOption) (*GetOauth2AuthorizeFound, error) {
@@ -9367,6 +9373,23 @@ func (c *Client) sendGetOauth2Authorize(ctx context.Context, params GetOauth2Aut
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
 			if val, ok := params.CodeChallenge.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "code_challenge_method" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "code_challenge_method",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.CodeChallengeMethod.Get(); ok {
 				return e.EncodeValue(conv.StringToString(val))
 			}
 			return nil

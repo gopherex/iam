@@ -390,6 +390,9 @@ func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Con
 // unverified URI, and no interaction record is created. Once the client and redirect_uri check out,
 // a bad request parameter redirects back to the registered redirect_uri with `error` and the
 // original `state`.
+// PKCE (RFC 7636) is enforced: `code_challenge` is required for public clients, must use `S256`, and
+// is bound to the issued authorization code — the token endpoint rejects the exchange unless the
+// matching `code_verifier` is presented.
 //
 // GET /oauth2/authorize
 func (UnimplementedHandler) GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams) (r *GetOauth2AuthorizeFound, _ error) {

@@ -4031,7 +4031,7 @@ func (s *Server) decodePostOauth2TokenRequest(r *http.Request) (
 							if err := (validate.String{
 								MinLength:     0,
 								MinLengthSet:  false,
-								MaxLength:     1024,
+								MaxLength:     128,
 								MaxLengthSet:  true,
 								Email:         false,
 								Hostname:      false,
