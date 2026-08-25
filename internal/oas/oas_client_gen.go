@@ -1580,7 +1580,12 @@ type OIDCProviderInvoker interface {
 	DeleteV1OauthGrantsByGrantId(ctx context.Context, params DeleteV1OauthGrantsByGrantIdParams, options ...RequestOption) (*Ok, error)
 	// GetOauth2Authorize invokes getOauth2Authorize operation.
 	//
-	// Authorization endpoint (headless; may redirect to interaction).
+	// Validates the client and the requested redirect_uri before anything is persisted. An unknown or
+	// disabled `client_id`, or a `redirect_uri` the client has not registered, is answered with a 400
+	// error envelope and no redirect (RFC 6749 §4.1.2.1) — the user-agent is never sent to an
+	// unverified URI, and no interaction record is created. Once the client and redirect_uri check out,
+	// a bad request parameter redirects back to the registered redirect_uri with `error` and the
+	// original `state`.
 	//
 	// GET /oauth2/authorize
 	GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, options ...RequestOption) (*GetOauth2AuthorizeFound, error)
@@ -9170,7 +9175,12 @@ func (c *Client) sendGetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, p
 
 // GetOauth2Authorize invokes getOauth2Authorize operation.
 //
-// Authorization endpoint (headless; may redirect to interaction).
+// Validates the client and the requested redirect_uri before anything is persisted. An unknown or
+// disabled `client_id`, or a `redirect_uri` the client has not registered, is answered with a 400
+// error envelope and no redirect (RFC 6749 §4.1.2.1) — the user-agent is never sent to an
+// unverified URI, and no interaction record is created. Once the client and redirect_uri check out,
+// a bad request parameter redirects back to the registered redirect_uri with `error` and the
+// original `state`.
 //
 // GET /oauth2/authorize
 func (c *Client) GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, options ...RequestOption) (*GetOauth2AuthorizeFound, error) {
@@ -9254,7 +9264,7 @@ func (c *Client) sendGetOauth2Authorize(ctx context.Context, params GetOauth2Aut
 		}
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			return e.EncodeValue(conv.StringToString(string(params.ResponseType)))
+			return e.EncodeValue(conv.StringToString(params.ResponseType))
 		}); err != nil {
 			return res, errors.Wrap(err, "encode query")
 		}

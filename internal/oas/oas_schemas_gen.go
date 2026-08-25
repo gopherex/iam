@@ -301,12 +301,16 @@ func (s *ApiKey) SetExpiresAt(val OptTimestamp) {
 
 // Ref: #/components/schemas/AppClient
 type AppClient struct {
-	ID                   OptString                `json:"id"`
-	Name                 OptString                `json:"name"`
-	Type                 OptAppClientType         `json:"type"`
-	Environment          OptString                `json:"environment"`
-	RedirectUris         []string                 `json:"redirect_uris"`
-	AllowedOrigins       []string                 `json:"allowed_origins"`
+	ID             OptString        `json:"id"`
+	Name           OptString        `json:"name"`
+	Type           OptAppClientType `json:"type"`
+	Environment    OptString        `json:"environment"`
+	RedirectUris   []string         `json:"redirect_uris"`
+	AllowedOrigins []string         `json:"allowed_origins"`
+	// Turns the client off without deleting it. A disabled client is refused at /oauth2/authorize
+	// exactly like an unknown client_id, so an integration can be suspended and restored without
+	// re-issuing its registration.
+	Disabled             OptBool                  `json:"disabled"`
 	LoginURI             OptNilString             `json:"login_uri"`
 	ConsentURI           OptNilString             `json:"consent_uri"`
 	DefaultRedirectURI   OptNilString             `json:"default_redirect_uri"`
@@ -343,6 +347,11 @@ func (s *AppClient) GetRedirectUris() []string {
 // GetAllowedOrigins returns the value of AllowedOrigins.
 func (s *AppClient) GetAllowedOrigins() []string {
 	return s.AllowedOrigins
+}
+
+// GetDisabled returns the value of Disabled.
+func (s *AppClient) GetDisabled() OptBool {
+	return s.Disabled
 }
 
 // GetLoginURI returns the value of LoginURI.
@@ -403,6 +412,11 @@ func (s *AppClient) SetRedirectUris(val []string) {
 // SetAllowedOrigins sets the value of AllowedOrigins.
 func (s *AppClient) SetAllowedOrigins(val []string) {
 	s.AllowedOrigins = val
+}
+
+// SetDisabled sets the value of Disabled.
+func (s *AppClient) SetDisabled(val OptBool) {
+	s.Disabled = val
 }
 
 // SetLoginURI sets the value of LoginURI.
@@ -2873,40 +2887,6 @@ func (s *GetOauth2AuthorizeFound) GetLocation() OptURI {
 // SetLocation sets the value of Location.
 func (s *GetOauth2AuthorizeFound) SetLocation(val OptURI) {
 	s.Location = val
-}
-
-type GetOauth2AuthorizeResponseType string
-
-const (
-	GetOauth2AuthorizeResponseTypeCode GetOauth2AuthorizeResponseType = "code"
-)
-
-// AllValues returns all GetOauth2AuthorizeResponseType values.
-func (GetOauth2AuthorizeResponseType) AllValues() []GetOauth2AuthorizeResponseType {
-	return []GetOauth2AuthorizeResponseType{
-		GetOauth2AuthorizeResponseTypeCode,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s GetOauth2AuthorizeResponseType) MarshalText() ([]byte, error) {
-	switch s {
-	case GetOauth2AuthorizeResponseTypeCode:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *GetOauth2AuthorizeResponseType) UnmarshalText(data []byte) error {
-	switch GetOauth2AuthorizeResponseType(data) {
-	case GetOauth2AuthorizeResponseTypeCode:
-		*s = GetOauth2AuthorizeResponseTypeCode
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
 }
 
 // GetOauth2LogoutFound is response for GetOauth2Logout operation.
@@ -15499,18 +15479,22 @@ func (s *PostV1ProjectsByProjectIdAdminAppsCreated) SetClientSecret(val OptNilSt
 
 // Merged schema.
 type PostV1ProjectsByProjectIdAdminAppsReq struct {
-	ID                   OptString                                 `json:"id"`
-	Name                 string                                    `json:"name"`
-	Type                 PostV1ProjectsByProjectIdAdminAppsReqType `json:"type"`
-	Environment          OptString                                 `json:"environment"`
-	RedirectUris         []string                                  `json:"redirect_uris"`
-	AllowedOrigins       []string                                  `json:"allowed_origins"`
-	LoginURI             OptNilString                              `json:"login_uri"`
-	ConsentURI           OptNilString                              `json:"consent_uri"`
-	DefaultRedirectURI   OptNilString                              `json:"default_redirect_uri"`
-	RegistrationOverride OptNilRegistrationConfig                  `json:"registration_override"`
-	MinSdkVersion        OptNilString                              `json:"min_sdk_version"`
-	TokenProfile         OptNilString                              `json:"token_profile"`
+	ID             OptString                                 `json:"id"`
+	Name           string                                    `json:"name"`
+	Type           PostV1ProjectsByProjectIdAdminAppsReqType `json:"type"`
+	Environment    OptString                                 `json:"environment"`
+	RedirectUris   []string                                  `json:"redirect_uris"`
+	AllowedOrigins []string                                  `json:"allowed_origins"`
+	// Turns the client off without deleting it. A disabled client is refused at /oauth2/authorize
+	// exactly like an unknown client_id, so an integration can be suspended and restored without
+	// re-issuing its registration.
+	Disabled             OptBool                  `json:"disabled"`
+	LoginURI             OptNilString             `json:"login_uri"`
+	ConsentURI           OptNilString             `json:"consent_uri"`
+	DefaultRedirectURI   OptNilString             `json:"default_redirect_uri"`
+	RegistrationOverride OptNilRegistrationConfig `json:"registration_override"`
+	MinSdkVersion        OptNilString             `json:"min_sdk_version"`
+	TokenProfile         OptNilString             `json:"token_profile"`
 }
 
 // GetID returns the value of ID.
@@ -15541,6 +15525,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetRedirectUris() []string {
 // GetAllowedOrigins returns the value of AllowedOrigins.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetAllowedOrigins() []string {
 	return s.AllowedOrigins
+}
+
+// GetDisabled returns the value of Disabled.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetDisabled() OptBool {
+	return s.Disabled
 }
 
 // GetLoginURI returns the value of LoginURI.
@@ -15601,6 +15590,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetRedirectUris(val []string) {
 // SetAllowedOrigins sets the value of AllowedOrigins.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetAllowedOrigins(val []string) {
 	s.AllowedOrigins = val
+}
+
+// SetDisabled sets the value of Disabled.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetDisabled(val OptBool) {
+	s.Disabled = val
 }
 
 // SetLoginURI sets the value of LoginURI.

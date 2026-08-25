@@ -1058,6 +1058,7 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 			Environment:    adminEnv(cmd.Environment),
 			RedirectURIs:   cmd.RedirectURIs,
 			AllowedOrigins: domain.NormalizeOrigins(cmd.AllowedOrigins),
+			Disabled:       cmd.Disabled,
 		}
 
 		raw, err := marshal(app)
@@ -1134,6 +1135,10 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 			}
 
 			app.AllowedOrigins = domain.NormalizeOrigins(origins)
+		}
+
+		if v, ok := patch["disabled"].(bool); ok {
+			app.Disabled = v
 		}
 
 		raw, err := marshal(app)

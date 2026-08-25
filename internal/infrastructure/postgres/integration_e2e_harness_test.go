@@ -13,6 +13,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -211,6 +212,44 @@ func e2eProjectAdmin(t *testing.T, ctx context.Context, scopes ...string) (proje
 		t.Fatalf("mint admin token: %v", err)
 	}
 	return projectID, tok
+}
+
+// e2eAppClient registers an app client through the admin API and returns its
+// id. redirectURIs become the client's registered redirect_uri allow-list, which
+// the authorization endpoint matches exactly.
+func e2eAppClient(t *testing.T, ctx context.Context, ts *httptest.Server, projectID, token string, redirectURIs ...string) string {
+	t.Helper()
+	r := e2eReq(t, ctx, http.MethodPost, fmt.Sprintf("%s/v1/projects/%s/admin/apps", ts.URL, projectID),
+		map[string]any{
+			"name":          "e2e-client",
+			"type":          "spa",
+			"redirect_uris": redirectURIs,
+		},
+		e2eBearer(token))
+	e2eWantStatus(t, r, http.StatusCreated)
+	var resp struct {
+		App struct {
+			ID string `json:"id"`
+		} `json:"app"`
+	}
+	e2eDecode(t, r, &resp)
+	if resp.App.ID == "" {
+		t.Fatalf("create app client: empty id, body: %s", r.Body)
+	}
+	return resp.App.ID
+}
+
+// e2eInteractionCount returns how many authorization interactions exist for a
+// client id. Tests assert it stays at zero for requests that must be refused
+// before anything is persisted.
+func e2eInteractionCount(t *testing.T, ctx context.Context, clientID string) int {
+	t.Helper()
+	var n int
+	if err := testDB.Pool.QueryRow(ctx,
+		`SELECT count(*) FROM iam_interactions WHERE client_id = $1`, clientID).Scan(&n); err != nil {
+		t.Fatalf("count interactions: %v", err)
+	}
+	return n
 }
 
 // e2eResp is the decoded outcome of an HTTP request: the status code and the raw

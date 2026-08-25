@@ -8421,7 +8421,12 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]strin
 
 // handleGetOauth2AuthorizeRequest handles getOauth2Authorize operation.
 //
-// Authorization endpoint (headless; may redirect to interaction).
+// Validates the client and the requested redirect_uri before anything is persisted. An unknown or
+// disabled `client_id`, or a `redirect_uri` the client has not registered, is answered with a 400
+// error envelope and no redirect (RFC 6749 §4.1.2.1) — the user-agent is never sent to an
+// unverified URI, and no interaction record is created. Once the client and redirect_uri check out,
+// a bad request parameter redirects back to the registered redirect_uri with `error` and the
+// original `state`.
 //
 // GET /oauth2/authorize
 func (s *Server) handleGetOauth2AuthorizeRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

@@ -38,6 +38,23 @@ therefore ArgoCD, oauth2-proxy, kube-oidc-proxy) verify. Tokens are RS256
 JWTs minted by the project's signing key; discovery and JWKS are per project and
 environment.
 
+### Authorization request validation
+
+`/oauth2/authorize` resolves the client **before** it persists anything. An
+unknown or disabled `client_id`, or a `redirect_uri` the client has not
+registered, is answered with a `400` error envelope and **no** redirect — the
+user-agent is never sent to a URI the client did not register, and no
+interaction record is created (RFC 6749 §4.1.2.1). Registered `redirect_uri`
+values are matched exactly; there is no prefix or wildcard matching.
+
+Once the client and its `redirect_uri` check out, a bad request parameter is
+reported the other way round: a `302` back to the registered `redirect_uri`
+carrying `error` (e.g. `unsupported_response_type`, `invalid_request`) and the
+original `state`.
+
+A client can be switched off with `disabled: true` instead of being deleted;
+the authorization endpoint then treats it exactly like an unknown `client_id`.
+
 ### Building your own consent / device / interaction UI
 
 The runtime exposes helper endpoints (and SDK methods, see

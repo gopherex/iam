@@ -1997,6 +1997,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, r
 		Type:           string(req.Type),
 		RedirectURIs:   req.RedirectUris,
 		AllowedOrigins: req.AllowedOrigins,
+		Disabled:       req.Disabled.Or(false),
 	}
 
 	app, err := s.deps.Apps.Create(ctx, cmd)
@@ -2988,6 +2989,7 @@ func oasAppClient(a *domain.AppClient) oas.AppClient {
 		Environment:    oas.NewOptString(a.Environment),
 		RedirectUris:   a.RedirectURIs,
 		AllowedOrigins: a.AllowedOrigins,
+		Disabled:       oas.NewOptBool(a.Disabled),
 	}
 	if a.Type != "" {
 		out.Type = oas.NewOptAppClientType(oas.AppClientType(a.Type))

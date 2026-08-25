@@ -31,6 +31,7 @@ package postgres
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -854,16 +855,163 @@ func TestE2EOIDCProviderAuthorize(t *testing.T) {
 		}
 	})
 
-	t.Run("unknown_client_id_not_500", func(t *testing.T) {
-		u := ts.URL + "/oauth2/authorize?client_id=unknown&response_type=code&redirect_uri=https://app.example.com/cb&scope=openid"
-		r := e2eReq(t, ctx, http.MethodGet, u, nil, nil)
-		if r.Status == http.StatusInternalServerError {
-			t.Fatalf("unexpected 500 for unknown client_id: %s", r.Body)
+	// RFC 6749 §4.1.2.1: an unknown client_id must be reported directly, never by
+	// redirecting the user-agent to an unverified URI — and nothing may be
+	// persisted for it, or anyone can mint interaction rows in bulk.
+	t.Run("unknown_client_id_400_without_redirect", func(t *testing.T) {
+		clientID := "probe-" + newUUID()
+		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid&code_challenge=abc&code_challenge_method=S256",
+			ts.URL, clientID, url.QueryEscape("https://example.org/cb"))
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+		if err != nil {
+			t.Fatalf("new request: %v", err)
 		}
-		// Authorize with unknown client may redirect (302) to an error interaction
-		// or return a direct 4xx; either is acceptable — just not 500.
-		if r.Status < 300 {
-			t.Fatalf("expected 3xx or 4xx for unknown client, got %d", r.Status)
+		// Do not follow the redirect: the point of the test is that there is none.
+		client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		}}
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("GET authorize: %v", err)
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400\nbody: %s", resp.StatusCode, body)
+		}
+		if loc := resp.Header.Get("Location"); loc != "" {
+			t.Fatalf("unknown client got redirected to %q; the URI is unverified", loc)
+		}
+		if n := e2eInteractionCount(t, ctx, clientID); n != 0 {
+			t.Fatalf("unknown client created %d interaction(s); want 0", n)
+		}
+
+		var env struct {
+			Error struct {
+				Code string `json:"code"`
+			} `json:"error"`
+		}
+		if err := json.Unmarshal(body, &env); err != nil {
+			t.Fatalf("decode error envelope: %v\nbody: %s", err, body)
+		}
+		if env.Error.Code != "invalid_client" {
+			t.Fatalf("error.code = %q, want invalid_client\nbody: %s", env.Error.Code, body)
+		}
+	})
+}
+
+// TestE2EOIDCProviderAuthorizeClientValidation covers RFC 6749 §4.1.2.1: which
+// failures are reported directly (client / redirect_uri — the redirect target
+// cannot be trusted) and which travel back to the client as a redirect.
+func TestE2EOIDCProviderAuthorizeClientValidation(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, token := e2eProjectAdmin(t, ctx)
+
+	const registered = "https://app.example.com/cb"
+	clientID := e2eAppClient(t, ctx, ts, projectID, token, registered)
+
+	// noRedirect performs the authorize request without following redirects.
+	noRedirect := func(t *testing.T, u string) *http.Response {
+		t.Helper()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+		if err != nil {
+			t.Fatalf("new request: %v", err)
+		}
+		client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		}}
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("GET authorize: %v", err)
+		}
+		return resp
+	}
+
+	t.Run("unregistered_redirect_uri_400_without_redirect", func(t *testing.T) {
+		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid",
+			ts.URL, clientID, url.QueryEscape("https://evil.example.net/cb"))
+		resp := noRedirect(t, u)
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400\nbody: %s", resp.StatusCode, body)
+		}
+		if loc := resp.Header.Get("Location"); loc != "" {
+			t.Fatalf("unregistered redirect_uri got a redirect to %q", loc)
+		}
+	})
+
+	t.Run("valid_client_creates_interaction", func(t *testing.T) {
+		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid",
+			ts.URL, clientID, url.QueryEscape(registered))
+		resp := noRedirect(t, u)
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusFound {
+			body, _ := io.ReadAll(resp.Body)
+			t.Fatalf("status = %d, want 302\nbody: %s", resp.StatusCode, body)
+		}
+		if loc := resp.Header.Get("Location"); !strings.HasPrefix(loc, "/oauth/interaction/") {
+			t.Fatalf("Location = %q, want an /oauth/interaction/ handle", loc)
+		}
+		if n := e2eInteractionCount(t, ctx, clientID); n == 0 {
+			t.Fatal("valid authorize request created no interaction")
+		}
+	})
+
+	// The client and redirect_uri are proven at this point, so a bad parameter is
+	// reported to the client at its registered URI, carrying the original state.
+	t.Run("bad_response_type_redirects_with_error_and_state", func(t *testing.T) {
+		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&scope=openid&state=xyz789",
+			ts.URL, clientID, url.QueryEscape(registered))
+		resp := noRedirect(t, u)
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusFound {
+			body, _ := io.ReadAll(resp.Body)
+			t.Fatalf("status = %d, want 302\nbody: %s", resp.StatusCode, body)
+		}
+
+		loc, err := url.Parse(resp.Header.Get("Location"))
+		if err != nil {
+			t.Fatalf("parse Location: %v", err)
+		}
+		if got := loc.Scheme + "://" + loc.Host + loc.Path; got != registered {
+			t.Fatalf("redirected to %q, want the registered %q", got, registered)
+		}
+		if got := loc.Query().Get("error"); got != "unsupported_response_type" {
+			t.Fatalf("error = %q, want unsupported_response_type", got)
+		}
+		if got := loc.Query().Get("state"); got != "xyz789" {
+			t.Fatalf("state = %q, want xyz789", got)
+		}
+	})
+
+	t.Run("disabled_client_400_without_redirect", func(t *testing.T) {
+		disabledID := e2eAppClient(t, ctx, ts, projectID, token, registered)
+		r := e2eReq(t, ctx, http.MethodPatch,
+			fmt.Sprintf("%s/v1/projects/%s/admin/apps/%s", ts.URL, projectID, disabledID),
+			map[string]any{"disabled": true}, e2eBearer(token))
+		e2eWantStatus(t, r, http.StatusOK)
+
+		u := fmt.Sprintf("%s/oauth2/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=openid",
+			ts.URL, disabledID, url.QueryEscape(registered))
+		resp := noRedirect(t, u)
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400\nbody: %s", resp.StatusCode, body)
+		}
+		if loc := resp.Header.Get("Location"); loc != "" {
+			t.Fatalf("disabled client got redirected to %q", loc)
+		}
+		if n := e2eInteractionCount(t, ctx, disabledID); n != 0 {
+			t.Fatalf("disabled client created %d interaction(s); want 0", n)
 		}
 	})
 }

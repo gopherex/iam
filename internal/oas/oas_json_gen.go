@@ -607,6 +607,12 @@ func (s *AppClient) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Disabled.Set {
+			e.FieldStart("disabled")
+			s.Disabled.Encode(e)
+		}
+	}
+	{
 		if s.LoginURI.Set {
 			e.FieldStart("login_uri")
 			s.LoginURI.Encode(e)
@@ -644,19 +650,20 @@ func (s *AppClient) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfAppClient = [12]string{
+var jsonFieldsNameOfAppClient = [13]string{
 	0:  "id",
 	1:  "name",
 	2:  "type",
 	3:  "environment",
 	4:  "redirect_uris",
 	5:  "allowed_origins",
-	6:  "login_uri",
-	7:  "consent_uri",
-	8:  "default_redirect_uri",
-	9:  "registration_override",
-	10: "min_sdk_version",
-	11: "token_profile",
+	6:  "disabled",
+	7:  "login_uri",
+	8:  "consent_uri",
+	9:  "default_redirect_uri",
+	10: "registration_override",
+	11: "min_sdk_version",
+	12: "token_profile",
 }
 
 // Decode decodes AppClient from json.
@@ -664,6 +671,7 @@ func (s *AppClient) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode AppClient to nil")
 	}
+	s.setDefaults()
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -744,6 +752,16 @@ func (s *AppClient) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"allowed_origins\"")
+			}
+		case "disabled":
+			if err := func() error {
+				s.Disabled.Reset()
+				if err := s.Disabled.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"disabled\"")
 			}
 		case "login_uri":
 			if err := func() error {
@@ -30503,6 +30521,12 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Disabled.Set {
+			e.FieldStart("disabled")
+			s.Disabled.Encode(e)
+		}
+	}
+	{
 		if s.LoginURI.Set {
 			e.FieldStart("login_uri")
 			s.LoginURI.Encode(e)
@@ -30540,19 +30564,20 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [12]string{
+var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [13]string{
 	0:  "id",
 	1:  "name",
 	2:  "type",
 	3:  "environment",
 	4:  "redirect_uris",
 	5:  "allowed_origins",
-	6:  "login_uri",
-	7:  "consent_uri",
-	8:  "default_redirect_uri",
-	9:  "registration_override",
-	10: "min_sdk_version",
-	11: "token_profile",
+	6:  "disabled",
+	7:  "login_uri",
+	8:  "consent_uri",
+	9:  "default_redirect_uri",
+	10: "registration_override",
+	11: "min_sdk_version",
+	12: "token_profile",
 }
 
 // Decode decodes PostV1ProjectsByProjectIdAdminAppsReq from json.
@@ -30561,6 +30586,7 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 		return errors.New("invalid: unable to decode PostV1ProjectsByProjectIdAdminAppsReq to nil")
 	}
 	var requiredBitSet [2]uint8
+	s.setDefaults()
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -30643,6 +30669,16 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"allowed_origins\"")
+			}
+		case "disabled":
+			if err := func() error {
+				s.Disabled.Reset()
+				if err := s.Disabled.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"disabled\"")
 			}
 		case "login_uri":
 			if err := func() error {

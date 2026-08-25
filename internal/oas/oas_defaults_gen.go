@@ -3,6 +3,14 @@
 package oas
 
 // setDefaults set default value of fields.
+func (s *AppClient) setDefaults() {
+	{
+		val := bool(false)
+		s.Disabled.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
 func (s *DeleteV1SessionsReq) setDefaults() {
 	{
 		val := bool(true)
@@ -55,6 +63,14 @@ func (s *PostV1AuthSignOutReq) setDefaults() {
 	{
 		val := bool(false)
 		s.Everywhere.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) setDefaults() {
+	{
+		val := bool(false)
+		s.Disabled.SetTo(val)
 	}
 }
 

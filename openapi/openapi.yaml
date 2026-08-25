@@ -1013,6 +1013,14 @@ components:
           items:
             type: string
           maxItems: 1000
+        disabled:
+          type: boolean
+          default: false
+          description: >-
+            Turns the client off without deleting it. A disabled client is
+            refused at /oauth2/authorize exactly like an unknown client_id, so
+            an integration can be suspended and restored without re-issuing its
+            registration.
         login_uri:
           type:
           - string
@@ -7373,6 +7381,14 @@ paths:
       tags:
       - OIDC Provider
       summary: Authorization endpoint (headless; may redirect to interaction).
+      description: >-
+        Validates the client and the requested redirect_uri before anything is
+        persisted. An unknown or disabled `client_id`, or a `redirect_uri` the
+        client has not registered, is answered with a 400 error envelope and no
+        redirect (RFC 6749 §4.1.2.1) — the user-agent is never sent to an
+        unverified URI, and no interaction record is created. Once the client and
+        redirect_uri check out, a bad request parameter redirects back to the
+        registered redirect_uri with `error` and the original `state`.
       security: []
       parameters:
       - name: client_id
@@ -7384,10 +7400,15 @@ paths:
       - name: response_type
         in: query
         required: true
+        description: >-
+          Only `code` is supported. Any other value is answered per RFC 6749
+          §4.1.2.1 — a redirect back to the client's registered redirect_uri
+          carrying `error=unsupported_response_type` and the original `state` —
+          so the value is accepted here as a free string rather than rejected by
+          schema validation before the client has been resolved.
         schema:
           type: string
-          enum:
-          - code
+          maxLength: 256
       - name: redirect_uri
         in: query
         required: true

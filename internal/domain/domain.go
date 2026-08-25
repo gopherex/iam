@@ -158,6 +158,10 @@ type AppClient struct {
 	// make cross-origin calls to IAM for this client. The CORS layer reflects
 	// ACAO for any origin in the union of all clients' AllowedOrigins.
 	AllowedOrigins []string
+	// Disabled turns the client off without deleting it: the authorization
+	// endpoint refuses it exactly like an unknown client_id, so an integration
+	// can be suspended and restored without re-issuing its registration.
+	Disabled bool
 }
 
 // ===== Project aggregate (admin / operator) =====
@@ -286,6 +290,7 @@ type AppClientCmd struct {
 	Type           string
 	RedirectURIs   []string
 	AllowedOrigins []string
+	Disabled       bool
 }
 
 type ProjectCmd struct {

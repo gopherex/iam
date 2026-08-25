@@ -31,6 +31,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -343,9 +344,15 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 		uid := null.From(cmd.AccountID)
 		cid := null.From(in.ClientID)
 
-		acEnv, err := effectiveEnv(ctx, a.db, row.ProjectID, oidcDefaultEnv)
-		if err != nil {
-			return "", err
+		// The interaction carries the environment of the client it was created
+		// for; the authorization code inherits it so the token minted from the
+		// code is signed by — and carries the issuer of — the right environment.
+		acEnv := row.Environment
+		if acEnv == "" {
+			var err error
+			if acEnv, err = effectiveEnv(ctx, a.db, row.ProjectID, oidcDefaultEnv); err != nil {
+				return "", err
+			}
 		}
 
 		setter := &models.IamAuthCodeSetter{
@@ -527,17 +534,131 @@ func (a *pgOIDCGrants) RevokeGrant(ctx context.Context, accountID, grantID strin
 
 // ===== authorize / logout / back-channel =====
 
+// oidcResponseTypeCode is the only response_type IAM supports (authorization
+// code flow); the discovery document advertises exactly this one.
+const oidcResponseTypeCode = "code"
+
+// oidcAuthorizeTTL is how long an authorization interaction stays resolvable
+// before the user has to restart the flow.
+const oidcAuthorizeTTL = 10 * time.Minute
+
+// resolveAuthorizeClient loads the app client behind client_id. An unknown or
+// disabled client is ErrInvalidClient: RFC 6749 §4.1.2.1 forbids redirecting the
+// user-agent in that case, because nothing about the request has been proven to
+// belong to a registered client yet.
+func (a *pgOIDCGrants) resolveAuthorizeClient(
+	ctx context.Context, clientID string,
+) (*models.IamAppClient, *domain.AppClient, error) {
+	if clientID == "" {
+		return nil, nil, domain.ErrInvalidClient
+	}
+
+	row, err := models.FindIamAppClient(ctx, a.db.Bobx(), clientID)
+	if err != nil {
+		if isStorageNotFound(translatePgErr("app_client", err)) {
+			return nil, nil, domain.ErrInvalidClient
+		}
+
+		return nil, nil, err
+	}
+
+	var app domain.AppClient
+	if err := unmarshal(row.Data, &app); err != nil {
+		return nil, nil, err
+	}
+
+	if app.Disabled {
+		return nil, nil, domain.ErrInvalidClient
+	}
+
+	return row, &app, nil
+}
+
+// authorizeRedirectURI returns the registered redirect_uri the request asked
+// for. The comparison is exact against the client's registration — no prefix or
+// substring matching, which is how open redirectors are built (RFC 9700 §2.1).
+// A client with exactly one registered URI may omit the parameter.
+func authorizeRedirectURI(app *domain.AppClient, requested string) (string, error) {
+	if requested == "" {
+		if len(app.RedirectURIs) == 1 {
+			return app.RedirectURIs[0], nil
+		}
+
+		return "", domain.ErrInvalidRedirectURI
+	}
+
+	for _, registered := range app.RedirectURIs {
+		if registered == requested {
+			return requested, nil
+		}
+	}
+
+	return "", domain.ErrInvalidRedirectURI
+}
+
+// oidcErrorRedirect builds the OAuth2 error redirect back to an already
+// validated redirect_uri (RFC 6749 §4.1.2.1). state is echoed verbatim when the
+// client sent one, so the client can match the response to its request.
+func oidcErrorRedirect(redirectURI, code, description, state string) string {
+	params := url.Values{}
+	params.Set("error", code)
+
+	if description != "" {
+		params.Set("error_description", description)
+	}
+
+	if state != "" {
+		params.Set("state", state)
+	}
+
+	sep := "?"
+	if strings.Contains(redirectURI, "?") {
+		sep = "&"
+	}
+
+	return redirectURI + sep + params.Encode()
+}
+
 // Authorize builds a front-channel interaction for the request and returns the
-// redirect to the login/consent UI. Public operation: the project is resolved
-// from the client; here we persist a fresh interaction keyed by an unguessable
-// id and return its handle to the UI.
+// redirect to the login/consent UI. Public operation.
+//
+// Validation order follows RFC 6749 §4.1.2.1, and it is the order that matters:
+// the client and its redirect_uri are resolved FIRST and any failure there is
+// reported as a 400 without a redirect, because an unverified redirect_uri must
+// never receive traffic. Only once both check out does a bad request parameter
+// become a redirect carrying `error` and the caller's `state`. Nothing is
+// persisted until the client is known, so an unknown client_id can no longer
+// mint interaction rows.
 func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCmd) (string, error) {
+	clientRow, app, err := a.resolveAuthorizeClient(ctx, cmd.ClientID)
+	if err != nil {
+		return "", err
+	}
+
+	redirectURI, err := authorizeRedirectURI(app, cmd.RedirectURI)
+	if err != nil {
+		return "", err
+	}
+
+	// From here the redirect target is a URI this client registered, so request
+	// errors travel back to the client instead of being shown to the user.
+	if cmd.ResponseType != oidcResponseTypeCode {
+		return oidcErrorRedirect(redirectURI, "unsupported_response_type",
+			"only response_type=code is supported", cmd.State), nil
+	}
+
+	scopes := splitScopes(cmd.Scope)
+	if len(scopes) == 0 {
+		return oidcErrorRedirect(redirectURI, "invalid_request",
+			"scope is required", cmd.State), nil
+	}
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
 		in := domain.Interaction{
 			ID:          newUUID(),
 			ClientID:    cmd.ClientID,
-			Scopes:      splitScopes(cmd.Scope),
-			RedirectURI: cmd.RedirectURI,
+			Scopes:      scopes,
+			RedirectURI: redirectURI,
 			Nonce:       cmd.Nonce,
 		}
 
@@ -547,17 +668,16 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 		}
 
 		rm := json.RawMessage(raw)
-		// project_id is unknown without a client lookup port; the client_id
-		// lookup column carries the routing key for the UI to resolve.
 		cid := null.From(cmd.ClientID)
-		exp := null.From(nowUTC().Add(10 * time.Minute))
+		exp := null.From(nowUTC().Add(oidcAuthorizeTTL))
 
 		setter := &models.IamInteractionSetter{
-			ID:        &in.ID,
-			ProjectID: ptr(cmd.ClientID), // routing key; project resolved by client at UI
-			ClientID:  &cid,
-			ExpiresAt: &exp,
-			Data:      &rm,
+			ID:          &in.ID,
+			ProjectID:   ptr(clientRow.ProjectID),
+			Environment: ptr(clientRow.Environment),
+			ClientID:    &cid,
+			ExpiresAt:   &exp,
+			Data:        &rm,
 		}
 		if _, err := models.IamInteractions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return "", err
@@ -565,8 +685,8 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.interaction.created",
-			ProjectID:   cmd.ClientID, // project resolved by client at UI; clientID is the routing key
-			Environment: "",
+			ProjectID:   clientRow.ProjectID,
+			Environment: clientRow.Environment,
 			AggregateID: in.ID,
 			Payload:     &in,
 		}); err != nil {
@@ -744,9 +864,14 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 				return nil, err
 			}
 
+			codeEnv := row.Environment
+			if codeEnv == "" {
+				codeEnv = oidcDefaultEnv
+			}
+
 			tokenSubj := oidcTokenSubject{
 				projectID: row.ProjectID,
-				env:       oidcDefaultEnv,
+				env:       codeEnv,
 				subject:   row.UserID.GetOrZero(),
 				clientID:  effectiveClientID,
 				nonce:     codeData.Nonce,
@@ -755,7 +880,7 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			if err := a.emitter.Emit(ctx, domain.Event{
 				Type:        "oidc.token.issued",
 				ProjectID:   row.ProjectID,
-				Environment: oidcDefaultEnv,
+				Environment: codeEnv,
 				AggregateID: row.UserID.GetOrZero(),
 				Payload: map[string]any{
 					"grant_type": "authorization_code",

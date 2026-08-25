@@ -106,6 +106,13 @@ var (
 	// 400 — malformed.
 	ErrBadRequest       = newErr(http.StatusBadRequest, "bad_request", "Invalid request.")
 	ErrUnsupportedGrant = newErr(http.StatusBadRequest, "unsupported_grant", "Unsupported grant type.")
+	// RFC 6749 §4.1.2.1: when the client is unknown/disabled or the redirect_uri
+	// is not one the client registered, the authorization server MUST NOT
+	// redirect the user-agent — the target cannot be trusted — and reports the
+	// error directly instead.
+	ErrInvalidClient      = newErr(http.StatusBadRequest, "invalid_client", "Unknown or disabled OAuth client.")
+	ErrInvalidRedirectURI = newErr(http.StatusBadRequest, "invalid_redirect_uri",
+		"The redirect_uri is not registered for this client.")
 
 	// 429 — throttled.
 	ErrRateLimited       = newErr(http.StatusTooManyRequests, "rate_limited", "Too many requests.")

@@ -3819,15 +3819,6 @@ func (s *GetMgmtV1ProjectsOK) Validate() error {
 	return nil
 }
 
-func (s GetOauth2AuthorizeResponseType) Validate() error {
-	switch s {
-	case "code":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
 func (s *GetV1AuthIdentitiesOK) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer

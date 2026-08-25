@@ -177,6 +177,11 @@ func (s *AppClient) SetFake() {
 	}
 	{
 		{
+			s.Disabled.SetFake()
+		}
+	}
+	{
+		{
 			s.LoginURI.SetFake()
 		}
 	}
@@ -5862,6 +5867,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetFake() {
 				}
 				s.AllowedOrigins = append(s.AllowedOrigins, elem)
 			}
+		}
+	}
+	{
+		{
+			s.Disabled.SetFake()
 		}
 	}
 	{

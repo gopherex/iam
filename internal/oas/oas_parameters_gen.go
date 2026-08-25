@@ -7655,8 +7655,12 @@ func decodeGetMgmtV1ProjectsByProjectIdFeaturesParams(args [1]string, argsEscape
 
 // GetOauth2AuthorizeParams is parameters of getOauth2Authorize operation.
 type GetOauth2AuthorizeParams struct {
-	ClientID      string
-	ResponseType  GetOauth2AuthorizeResponseType
+	ClientID string
+	// Only `code` is supported. Any other value is answered per RFC 6749 §4.1.2.1 — a redirect back
+	// to the client's registered redirect_uri carrying `error=unsupported_response_type` and the
+	// original `state` — so the value is accepted here as a free string rather than rejected by schema
+	// validation before the client has been resolved.
+	ResponseType  string
 	RedirectURI   string
 	Scope         string
 	State         OptString `json:",omitempty,omitzero"`
@@ -7679,7 +7683,7 @@ func unpackGetOauth2AuthorizeParams(packed middleware.Parameters) (params GetOau
 			Name: "response_type",
 			In:   "query",
 		}
-		params.ResponseType = packed[key].(GetOauth2AuthorizeResponseType)
+		params.ResponseType = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -7821,14 +7825,26 @@ func decodeGetOauth2AuthorizeParams(args [0]string, argsEscaped bool, r *http.Re
 					return err
 				}
 
-				params.ResponseType = GetOauth2AuthorizeResponseType(c)
+				params.ResponseType = c
 				return nil
 			}); err != nil {
 				return err
 			}
 			if err := func() error {
-				if err := params.ResponseType.Validate(); err != nil {
-					return err
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     256,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.ResponseType)); err != nil {
+					return errors.Wrap(err, "string")
 				}
 				return nil
 			}(); err != nil {
