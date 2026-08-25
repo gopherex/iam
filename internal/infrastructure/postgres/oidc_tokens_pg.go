@@ -196,6 +196,29 @@ func denyToken(ctx context.Context, db *DB, projectID, env, jti string, expiresA
 	return nil
 }
 
+// claimOnce reserves a jti until it expires, reporting whether this caller got
+// it. It shares the denylist table with revocation because the question is the
+// same one — "has this token id been used up" — and a client assertion is
+// single-use by definition (RFC 7523 §3): replaying one is how a captured
+// assertion becomes a second authentication.
+func claimOnce(ctx context.Context, db *DB, projectID, env, jti string, expiresAt time.Time) (bool, error) {
+	if jti == "" || expiresAt.IsZero() {
+		return false, nil
+	}
+
+	tag, err := db.TxDB.Exec(ctx,
+		`INSERT INTO iam_revoked_tokens (jti, project_id, environment, expires_at)
+		 VALUES ($1, $2, $3, $4)
+		 ON CONFLICT (jti) DO NOTHING`,
+		jti, projectID, adminEnv(env), expiresAt,
+	)
+	if err != nil {
+		return false, fmt.Errorf("claim token id: %w", err)
+	}
+
+	return tag.RowsAffected() == 1, nil
+}
+
 // tokenDenied reports whether a token's jti has been revoked. Called on every
 // verification, so it is a single primary-key lookup.
 func tokenDenied(ctx context.Context, db *DB, jti string) (bool, error) {

@@ -8574,6 +8574,10 @@ func (s *Server) handleGetOauth2AuthorizeRequest(args [0]string, argsEscaped boo
 					In:   "query",
 				}: params.Prompt,
 				{
+					Name: "request",
+					In:   "query",
+				}: params.Request,
+				{
 					Name: "request_uri",
 					In:   "query",
 				}: params.RequestURI,
@@ -33277,7 +33281,10 @@ func (s *Server) handlePostOauth2RevokeRequest(args [0]string, argsEscaped bool,
 
 // handlePostOauth2TokenRequest handles postOauth2Token operation.
 //
-// Token endpoint.
+// The client authenticates with client_secret_basic, client_secret_post, or private_key_jwt
+// (`client_assertion`); a public client with PKCE authenticates with none of them. Security is
+// therefore optional at the transport: the handler decides, because rejecting an unauthenticated
+// request here would turn away every client that authenticates in the body.
 //
 // POST /oauth2/token
 func (s *Server) handlePostOauth2TokenRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -33377,6 +33384,7 @@ func (s *Server) handlePostOauth2TokenRequest(args [0]string, argsEscaped bool, 
 		nextRequirement:
 			for _, requirement := range []bitset{
 				{0b00000001},
+				{},
 			} {
 				for i, mask := range requirement {
 					if satisfied[i]&mask != mask {

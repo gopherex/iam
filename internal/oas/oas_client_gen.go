@@ -1726,7 +1726,10 @@ type OIDCProviderInvoker interface {
 	PostOauth2Revoke(ctx context.Context, request *PostOauth2RevokeReq, options ...RequestOption) error
 	// PostOauth2Token invokes postOauth2Token operation.
 	//
-	// Token endpoint.
+	// The client authenticates with client_secret_basic, client_secret_post, or private_key_jwt
+	// (`client_assertion`); a public client with PKCE authenticates with none of them. Security is
+	// therefore optional at the transport: the handler decides, because rejecting an unauthenticated
+	// request here would turn away every client that authenticates in the body.
 	//
 	// POST /oauth2/token
 	PostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, options ...RequestOption) (PostOauth2TokenOK, error)
@@ -9487,6 +9490,23 @@ func (c *Client) sendGetOauth2Authorize(ctx context.Context, params GetOauth2Aut
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
 			if val, ok := params.Prompt.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "request" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "request",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Request.Get(); ok {
 				return e.EncodeValue(conv.StringToString(val))
 			}
 			return nil
@@ -30773,7 +30793,10 @@ func (c *Client) sendPostOauth2Revoke(ctx context.Context, request *PostOauth2Re
 
 // PostOauth2Token invokes postOauth2Token operation.
 //
-// Token endpoint.
+// The client authenticates with client_secret_basic, client_secret_post, or private_key_jwt
+// (`client_assertion`); a public client with PKCE authenticates with none of them. Security is
+// therefore optional at the transport: the handler decides, because rejecting an unauthenticated
+// request here would turn away every client that authenticates in the body.
 //
 // POST /oauth2/token
 func (c *Client) PostOauth2Token(ctx context.Context, request *PostOauth2TokenReq, options ...RequestOption) (PostOauth2TokenOK, error) {
@@ -30869,6 +30892,7 @@ func (c *Client) sendPostOauth2Token(ctx context.Context, request *PostOauth2Tok
 		nextRequirement:
 			for _, requirement := range []bitset{
 				{0b00000001},
+				{},
 			} {
 				for i, mask := range requirement {
 					if satisfied[i]&mask != mask {

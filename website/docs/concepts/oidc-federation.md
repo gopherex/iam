@@ -131,6 +131,45 @@ token than was asked for produces failures a long way from their cause. An empty
 list means no restriction, so a project that has not thought about it is not
 silently narrowed.
 
+### Client authentication with a key (`private_key_jwt`)
+
+A client can authenticate at the token endpoint by signing a short-lived
+assertion with a key only it holds, instead of presenting a secret both sides
+know (RFC 7523 §3). Nothing shareable ever travels, so there is no secret to leak
+from our storage or from the client's configuration — which is why FAPI requires
+it.
+
+Publish the client's public keys as `jwks` (inline) or `jwks_uri` on the client,
+then send `client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer`
+and `client_assertion`. The assertion must name the client as both `iss` and
+`sub`, be addressed to the token endpoint, expire within five minutes, and carry
+a `jti` — which is **single-use**: replaying an assertion is how a captured one
+becomes a second authentication.
+
+`client_secret_jwt` is deliberately not supported. It needs the shared secret in
+recoverable form to compute an HMAC, and we store only its sha256 — weakening
+that for a method strictly weaker than `private_key_jwt` is a bad trade.
+
+### Signed request objects (`request`)
+
+The whole authorization request can arrive as a JWT the client signed (RFC 9101):
+
+```
+GET /oauth2/authorize?client_id=app_web&request=eyJhbGciOi...
+```
+
+Everything in a query string is modifiable by whatever sits between the client
+and the browser; a signed object is not. Parameters inside the object **win** over
+the query — that is the point — and `client_id` must appear in both and agree,
+since we have to know whose key to verify against before trusting anything
+inside.
+
+The by-reference form of RFC 9101 (a `request_uri` pointing at a client-hosted
+URL) is not accepted: here `request_uri` means a **pushed** request (RFC 9126),
+which gives the same protection by lodging the request over the client's
+authenticated back channel and never asks us to fetch from an address the browser
+chose.
+
 ### PKCE
 
 PKCE (RFC 7636) is enforced, and `S256` is the only method — `plain` is not

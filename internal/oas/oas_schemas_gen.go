@@ -307,6 +307,13 @@ type AppClient struct {
 	Environment    OptString        `json:"environment"`
 	RedirectUris   []string         `json:"redirect_uris"`
 	AllowedOrigins []string         `json:"allowed_origins"`
+	// The client's public JWK Set, inline. Used to verify private_key_jwt assertions and signed request
+	// objects. Wins over `jwks_uri` when both are set: it needs no network and cannot be made
+	// unavailable by the client's own infrastructure.
+	Jwks OptNilString `json:"jwks"`
+	// Where the client publishes its public JWK Set. Fetched through the same hardened outbound client
+	// webhook delivery uses, and cached.
+	JwksURI OptNilString `json:"jwks_uri"`
 	// Scopes this client may request. Empty means no restriction. A request for a scope outside the list
 	// is refused with `invalid_scope` rather than quietly trimmed, so a misconfigured client fails
 	// loudly.
@@ -352,6 +359,16 @@ func (s *AppClient) GetRedirectUris() []string {
 // GetAllowedOrigins returns the value of AllowedOrigins.
 func (s *AppClient) GetAllowedOrigins() []string {
 	return s.AllowedOrigins
+}
+
+// GetJwks returns the value of Jwks.
+func (s *AppClient) GetJwks() OptNilString {
+	return s.Jwks
+}
+
+// GetJwksURI returns the value of JwksURI.
+func (s *AppClient) GetJwksURI() OptNilString {
+	return s.JwksURI
 }
 
 // GetScopes returns the value of Scopes.
@@ -402,6 +419,16 @@ func (s *AppClient) SetRedirectUris(val []string) {
 // SetAllowedOrigins sets the value of AllowedOrigins.
 func (s *AppClient) SetAllowedOrigins(val []string) {
 	s.AllowedOrigins = val
+}
+
+// SetJwks sets the value of Jwks.
+func (s *AppClient) SetJwks(val OptNilString) {
+	s.Jwks = val
+}
+
+// SetJwksURI sets the value of JwksURI.
+func (s *AppClient) SetJwksURI(val OptNilString) {
+	s.JwksURI = val
 }
 
 // SetScopes sets the value of Scopes.
@@ -14477,8 +14504,14 @@ type PostOauth2TokenReq struct {
 	CodeVerifier OptString `json:"code_verifier"`
 	RefreshToken OptString `json:"refresh_token"`
 	ClientID     OptString `json:"client_id"`
-	ClientSecret OptString `json:"client_secret"`
-	DeviceCode   OptString `json:"device_code"`
+	// `urn:ietf:params:oauth:client-assertion-type:jwt-bearer` for private_key_jwt client authentication
+	// (RFC 7523 §3).
+	ClientAssertionType OptString `json:"client_assertion_type"`
+	// A short-lived JWT the client signed with a key only it holds, verified against the client's
+	// registered `jwks` / `jwks_uri`. Single-use: its `jti` cannot be presented twice.
+	ClientAssertion OptString `json:"client_assertion"`
+	ClientSecret    OptString `json:"client_secret"`
+	DeviceCode      OptString `json:"device_code"`
 }
 
 // GetGrantType returns the value of GrantType.
@@ -14509,6 +14542,16 @@ func (s *PostOauth2TokenReq) GetRefreshToken() OptString {
 // GetClientID returns the value of ClientID.
 func (s *PostOauth2TokenReq) GetClientID() OptString {
 	return s.ClientID
+}
+
+// GetClientAssertionType returns the value of ClientAssertionType.
+func (s *PostOauth2TokenReq) GetClientAssertionType() OptString {
+	return s.ClientAssertionType
+}
+
+// GetClientAssertion returns the value of ClientAssertion.
+func (s *PostOauth2TokenReq) GetClientAssertion() OptString {
+	return s.ClientAssertion
 }
 
 // GetClientSecret returns the value of ClientSecret.
@@ -14549,6 +14592,16 @@ func (s *PostOauth2TokenReq) SetRefreshToken(val OptString) {
 // SetClientID sets the value of ClientID.
 func (s *PostOauth2TokenReq) SetClientID(val OptString) {
 	s.ClientID = val
+}
+
+// SetClientAssertionType sets the value of ClientAssertionType.
+func (s *PostOauth2TokenReq) SetClientAssertionType(val OptString) {
+	s.ClientAssertionType = val
+}
+
+// SetClientAssertion sets the value of ClientAssertion.
+func (s *PostOauth2TokenReq) SetClientAssertion(val OptString) {
+	s.ClientAssertion = val
 }
 
 // SetClientSecret sets the value of ClientSecret.
@@ -16490,6 +16543,13 @@ type PostV1ProjectsByProjectIdAdminAppsReq struct {
 	Environment    OptString                                 `json:"environment"`
 	RedirectUris   []string                                  `json:"redirect_uris"`
 	AllowedOrigins []string                                  `json:"allowed_origins"`
+	// The client's public JWK Set, inline. Used to verify private_key_jwt assertions and signed request
+	// objects. Wins over `jwks_uri` when both are set: it needs no network and cannot be made
+	// unavailable by the client's own infrastructure.
+	Jwks OptNilString `json:"jwks"`
+	// Where the client publishes its public JWK Set. Fetched through the same hardened outbound client
+	// webhook delivery uses, and cached.
+	JwksURI OptNilString `json:"jwks_uri"`
 	// Scopes this client may request. Empty means no restriction. A request for a scope outside the list
 	// is refused with `invalid_scope` rather than quietly trimmed, so a misconfigured client fails
 	// loudly.
@@ -16535,6 +16595,16 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetRedirectUris() []string {
 // GetAllowedOrigins returns the value of AllowedOrigins.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetAllowedOrigins() []string {
 	return s.AllowedOrigins
+}
+
+// GetJwks returns the value of Jwks.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetJwks() OptNilString {
+	return s.Jwks
+}
+
+// GetJwksURI returns the value of JwksURI.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetJwksURI() OptNilString {
+	return s.JwksURI
 }
 
 // GetScopes returns the value of Scopes.
@@ -16585,6 +16655,16 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetRedirectUris(val []string) {
 // SetAllowedOrigins sets the value of AllowedOrigins.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetAllowedOrigins(val []string) {
 	s.AllowedOrigins = val
+}
+
+// SetJwks sets the value of Jwks.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetJwks(val OptNilString) {
+	s.Jwks = val
+}
+
+// SetJwksURI sets the value of JwksURI.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetJwksURI(val OptNilString) {
+	s.JwksURI = val
 }
 
 // SetScopes sets the value of Scopes.

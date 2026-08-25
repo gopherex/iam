@@ -1069,6 +1069,8 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 			PostLogoutRedirectURIs: cmd.PostLogoutRedirectURIs,
 			BackchannelLogoutURI:   cmd.BackchannelLogoutURI,
 			Scopes:                 cmd.Scopes,
+			JWKS:                   cmd.JWKS,
+			JWKSURI:                cmd.JWKSURI,
 		}
 
 		raw, err := marshal(app)
@@ -1161,6 +1163,14 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 
 		if v, ok := patchStrings(patch, "scopes"); ok {
 			app.Scopes = v
+		}
+
+		if v, ok := patch["jwks"].(string); ok {
+			app.JWKS = v
+		}
+
+		if v, ok := patch["jwks_uri"].(string); ok {
+			app.JWKSURI = v
 		}
 
 		raw, err := marshal(app)
@@ -1275,6 +1285,8 @@ func desiredToAppClient(
 		PostLogoutRedirectURIs: desired.PostLogoutRedirectURIs,
 		BackchannelLogoutURI:   desired.BackchannelLogoutURI,
 		Scopes:                 desired.Scopes,
+		JWKS:                   desired.JWKS,
+		JWKSURI:                desired.JWKSURI,
 	}
 }
 

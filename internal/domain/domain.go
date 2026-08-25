@@ -179,6 +179,12 @@ type AppClient struct {
 	// Scopes the client may request. Empty means no restriction — a project that
 	// has not thought about it is not silently narrowed.
 	Scopes []string
+	// JWKS / JWKSURI are the public keys the CLIENT signs with: private_key_jwt
+	// assertions and request objects are verified against them. Inline JWKS wins
+	// when both are set — it needs no network and cannot be made unavailable by
+	// the client's own infrastructure.
+	JWKS    string
+	JWKSURI string
 }
 
 // ===== Project aggregate (admin / operator) =====
@@ -328,6 +334,8 @@ type AppClientCmd struct {
 	PostLogoutRedirectURIs []string
 	BackchannelLogoutURI   string
 	Scopes                 []string
+	JWKS                   string
+	JWKSURI                string
 }
 
 type ProjectCmd struct {

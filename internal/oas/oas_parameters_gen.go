@@ -7688,6 +7688,10 @@ type GetOauth2AuthorizeParams struct {
 	// `unsupported_response_mode`.
 	ResponseMode OptString `json:",omitempty,omitzero"`
 	Prompt       OptString `json:",omitempty,omitzero"`
+	// A signed request object (RFC 9101): the whole authorization request as a JWT the client signed,
+	// verified against its registered `jwks` / `jwks_uri`. When present its parameters win over the
+	// query string, so nothing in the browser's URL can alter what the client asked for.
+	Request OptString `json:",omitempty,omitzero"`
 	// The `request_uri` returned by `/oauth2/par` (RFC 9126). When present it supplies the whole
 	// authorization request: every other query parameter except `client_id` is ignored, and the pushed
 	// request is single-use — replaying a consumed or expired `request_uri` is `invalid_request_uri`.
@@ -7790,6 +7794,15 @@ func unpackGetOauth2AuthorizeParams(packed middleware.Parameters) (params GetOau
 		}
 		if v, ok := packed[key]; ok {
 			params.Prompt = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "request",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Request = v.(OptString)
 		}
 	}
 	{
@@ -8536,6 +8549,74 @@ func decodeGetOauth2AuthorizeParams(args [0]string, argsEscaped bool, r *http.Re
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "prompt",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: request.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "request",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRequestVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotRequestVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Request.SetTo(paramsDotRequestVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Request.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     8192,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "request",
 			In:   "query",
 			Err:  err,
 		}

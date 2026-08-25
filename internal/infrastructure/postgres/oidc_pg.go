@@ -158,6 +158,9 @@ func oidcHasScope(scopes []string, want string) bool {
 type pgOIDCGrants struct {
 	db      *DB
 	emitter Emitter
+	// clientKeys resolves the public keys a client signs its assertions and
+	// request objects with.
+	clientKeys *clientKeyCache
 	// cfg resolves the project's auth config (locales) for the hosted
 	// login/consent pages. A nil cfg falls back to no declared locales.
 	cfg *configReader
@@ -165,7 +168,7 @@ type pgOIDCGrants struct {
 
 // NewPgOIDCGrants builds the OIDC-provider adapter over db.
 func NewPgOIDCGrants(db *DB, emitter Emitter, cfg *configReader) *pgOIDCGrants {
-	return &pgOIDCGrants{db: db, emitter: emitter, cfg: cfg}
+	return &pgOIDCGrants{db: db, emitter: emitter, cfg: cfg, clientKeys: newClientKeyCache()}
 }
 
 var _ api.OIDCGrants = (*pgOIDCGrants)(nil)
@@ -1163,6 +1166,16 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 	// client_id is read from the query alongside it; everything else is ignored,
 	// so a query parameter cannot override what the client lodged over an
 	// authenticated back channel.
+	// A signed request object replaces the query parameters it carries (RFC 9101).
+	if cmd.Request != "" {
+		resolved, err := a.consumeRequestObject(ctx, cmd)
+		if err != nil {
+			return "", err
+		}
+
+		cmd = resolved
+	}
+
 	if cmd.RequestURI != "" {
 		pushed, err := a.consumePushedRequest(ctx, cmd.RequestURI, cmd.ClientID)
 		if err != nil {
@@ -1498,6 +1511,44 @@ func (a *pgOIDCGrants) BackchannelLogout(ctx context.Context, cmd domain.OIDCBac
 // up the persisted hashes; mintTokenResponse then mints real RS256-signed access,
 // id and (for offline_access) refresh tokens via the project Signer.
 func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[string]any, error) {
+	// private_key_jwt: a client that signed an assertion has proven itself
+	// without any shared secret, so from here it is treated exactly like one the
+	// transport authenticated.
+	if cmd.ClientAssertion != "" {
+		assertedClientID, assertedProject, assertedEnv, err := a.verifyClientAssertion(
+			ctx, cmd.ProjectID, cmd.Env, cmd.ClientAssertionType, cmd.ClientAssertion,
+			a.db.PublicURL+"/oauth2/token")
+		if err != nil {
+			return nil, err
+		}
+
+		cmd.AuthenticatedClientID = assertedClientID
+		if cmd.ClientID == "" {
+			cmd.ClientID = assertedClientID
+		}
+		// An assertion client authenticates nowhere else, so the tenant comes from
+		// the client it proved itself to be.
+		if cmd.ProjectID == "" {
+			cmd.ProjectID = assertedProject
+		}
+
+		if cmd.Env == "" {
+			cmd.Env = assertedEnv
+		}
+	}
+	// A public client (PKCE, no secret) authenticates with nothing at the
+	// transport, so it arrives with no tenant. RFC 6749 §3.2.1 requires it to
+	// send client_id; the client's own row supplies the rest. Refusing here would
+	// turn away exactly the clients PKCE exists for.
+	if cmd.ProjectID == "" && cmd.ClientID != "" {
+		if clientRow, _, err := a.resolveAuthorizeClient(ctx, cmd.ClientID); err == nil {
+			cmd.ProjectID = clientRow.ProjectID
+			if cmd.Env == "" {
+				cmd.Env = clientRow.Environment
+			}
+		}
+	}
+
 	// The refresh grant runs outside the shared transaction on purpose. Spending
 	// the presented token — and, when it turns out to have been replayed, burning
 	// the session it belonged to — must COMMIT even though the exchange itself
@@ -2716,6 +2767,7 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 		IDTokenSigningAlgValuesSupported: []string{"RS256"},
 		TokenEndpointAuthMethodsSupported: []oidc.AuthMethod{
 			oidc.AuthMethodBasic, oidc.AuthMethodPost, oidc.AuthMethodNone,
+			oidc.AuthMethodPrivateKeyJWT,
 		},
 		CodeChallengeMethodsSupported:     []oidc.CodeChallengeMethod{oidc.CodeChallengeMethodS256},
 		BackChannelLogoutSupported:        true,
@@ -2735,6 +2787,12 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 	// RFC 9207: we name ourselves on every authorization response, so clients can
 	// and should check it.
 	m["authorization_response_iss_parameter_supported"] = true
+	// Algorithms accepted on a client assertion and on a signed request object.
+	m["token_endpoint_auth_signing_alg_values_supported"] = oidcAssertionAlgorithms()
+	// Signed request objects are accepted by value; the by-reference form is PAR,
+	// whose request_uri we issue ourselves.
+	m["request_parameter_supported"] = true
+	m["request_object_signing_alg_values_supported"] = oidcAssertionAlgorithms()
 	m["prompt_values_supported"] = []string{
 		oidcPromptNone, oidcPromptLogin, oidcPromptConsent, oidcPromptSelectAccount,
 	}

@@ -121,6 +121,7 @@ func (s *OIDCProviderService) GetOauth2Authorize(ctx context.Context, params oas
 		MaxAge:              params.MaxAge.Or(0),
 		ResponseMode:        params.ResponseMode.Or(""),
 		RequestURI:          params.RequestURI.Or(""),
+		Request:             params.Request.Or(""),
 	})
 	if err != nil {
 		return nil, err
@@ -366,26 +367,30 @@ func oidcEnv(p *domain.Principal) string {
 }
 
 func (s *OIDCProviderService) PostOauth2Token(ctx context.Context, req *oas.PostOauth2TokenReq) (r oas.PostOauth2TokenOK, _ error) {
-	// Client-authenticated token endpoint (RFC 6749 + extensions). The tenant is
-	// the authenticated client's project, not the token's issuer.
-	p, err := requirePrincipal(ctx)
-	if err != nil {
-		return nil, err
-	}
+	// The token endpoint accepts four kinds of client: client_secret_basic (the
+	// transport authenticated it), client_secret_post and private_key_jwt (the
+	// body does), and a public client with PKCE (none of them). Transport
+	// authentication is therefore optional here, and the adapter decides — the
+	// tenant comes from whichever identity is actually proven.
+	var (
+		projectID             string
+		environment           string
+		authenticatedClientID string
+	)
 
-	// The client may have authenticated with client_secret_basic, in which case
-	// the security layer has already proven its identity and the form body
-	// carries no secret at all. Pass that through, or the endpoint would demand a
-	// body secret from a client that authenticated the standard way.
-	authenticatedClientID := ""
-	if p.Kind == domain.PrincipalClient {
-		authenticatedClientID = p.ClientID
+	if p, ok := PrincipalFrom(ctx); ok && p != nil {
+		projectID, environment = p.ProjectID, oidcEnv(p)
+		if p.Kind == domain.PrincipalClient {
+			authenticatedClientID = p.ClientID
+		}
 	}
 
 	res, err := s.deps.Grants.Token(ctx, domain.OIDCTokenCmd{
-		ProjectID:             p.ProjectID,
-		Env:                   oidcEnv(p),
+		ProjectID:             projectID,
+		Env:                   environment,
 		AuthenticatedClientID: authenticatedClientID,
+		ClientAssertionType:   req.ClientAssertionType.Or(""),
+		ClientAssertion:       req.ClientAssertion.Or(""),
 		GrantType:             req.GrantType.Or(""),
 		Code:                  req.Code.Or(""),
 		RedirectURI:           req.RedirectURI.Or(""),

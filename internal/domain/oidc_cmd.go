@@ -49,6 +49,9 @@ type OIDCAuthorizeCmd struct {
 	// fragment.
 	ResponseMode string
 	RequestURI   string
+	// Request is a signed request object (RFC 9101) carrying the whole
+	// authorization request as a JWT the client signed.
+	Request string
 }
 
 // OIDCLogoutResult is the outcome of an RP-initiated logout: where to send the
@@ -114,6 +117,11 @@ type OIDCTokenCmd struct {
 	ClientID     string
 	ClientSecret string
 	DeviceCode   string
+	// ClientAssertionType / ClientAssertion carry private_key_jwt client
+	// authentication (RFC 7523 §3): the client signs a short-lived JWT with a key
+	// only it holds instead of presenting a shared secret.
+	ClientAssertionType string
+	ClientAssertion     string
 	// AuthenticatedClientID is the client the TRANSPORT already authenticated —
 	// client_secret_basic (RFC 6749 §2.3.1), the method most OAuth clients use by
 	// default. It is empty when the client sent its credentials in the form body

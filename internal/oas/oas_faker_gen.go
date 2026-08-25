@@ -177,6 +177,16 @@ func (s *AppClient) SetFake() {
 	}
 	{
 		{
+			s.Jwks.SetFake()
+		}
+	}
+	{
+		{
+			s.JwksURI.SetFake()
+		}
+	}
+	{
+		{
 			s.Scopes = nil
 			for i := 0; i < 0; i++ {
 				var elem string
@@ -6160,6 +6170,16 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetFake() {
 				}
 				s.AllowedOrigins = append(s.AllowedOrigins, elem)
 			}
+		}
+	}
+	{
+		{
+			s.Jwks.SetFake()
+		}
+	}
+	{
+		{
+			s.JwksURI.SetFake()
 		}
 	}
 	{

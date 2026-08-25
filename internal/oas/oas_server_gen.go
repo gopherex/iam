@@ -1651,7 +1651,10 @@ type OIDCProviderHandler interface {
 	PostOauth2Revoke(ctx context.Context, req *PostOauth2RevokeReq) error
 	// PostOauth2Token implements postOauth2Token operation.
 	//
-	// Token endpoint.
+	// The client authenticates with client_secret_basic, client_secret_post, or private_key_jwt
+	// (`client_assertion`); a public client with PKCE authenticates with none of them. Security is
+	// therefore optional at the transport: the handler decides, because rejecting an unauthenticated
+	// request here would turn away every client that authenticates in the body.
 	//
 	// POST /oauth2/token
 	PostOauth2Token(ctx context.Context, req *PostOauth2TokenReq) (PostOauth2TokenOK, error)

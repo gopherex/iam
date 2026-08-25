@@ -3997,6 +3997,124 @@ func (s *Server) decodePostOauth2TokenRequest(r *http.Request) (
 		}
 		{
 			cfg := uri.QueryParameterDecodingConfig{
+				Name:    "client_assertion_type",
+				Style:   uri.QueryStyleForm,
+				Explode: true,
+			}
+			if err := q.HasParam(cfg); err == nil {
+				if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+					var requestDotClientAssertionTypeVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						requestDotClientAssertionTypeVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					request.ClientAssertionType.SetTo(requestDotClientAssertionTypeVal)
+					return nil
+				}); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "decode \"client_assertion_type\"")
+				}
+				if err := func() error {
+					if value, ok := request.ClientAssertionType.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     256,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
+			}
+		}
+		{
+			cfg := uri.QueryParameterDecodingConfig{
+				Name:    "client_assertion",
+				Style:   uri.QueryStyleForm,
+				Explode: true,
+			}
+			if err := q.HasParam(cfg); err == nil {
+				if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+					var requestDotClientAssertionVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						requestDotClientAssertionVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					request.ClientAssertion.SetTo(requestDotClientAssertionVal)
+					return nil
+				}); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "decode \"client_assertion\"")
+				}
+				if err := func() error {
+					if value, ok := request.ClientAssertion.Get(); ok {
+						if err := func() error {
+							if err := (validate.String{
+								MinLength:     0,
+								MinLengthSet:  false,
+								MaxLength:     8192,
+								MaxLengthSet:  true,
+								Email:         false,
+								Hostname:      false,
+								Regex:         nil,
+								MinNumeric:    0,
+								MinNumericSet: false,
+								MaxNumeric:    0,
+								MaxNumericSet: false,
+							}).Validate(string(value)); err != nil {
+								return errors.Wrap(err, "string")
+							}
+							return nil
+						}(); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return req, rawBody, close, errors.Wrap(err, "validate")
+				}
+			}
+		}
+		{
+			cfg := uri.QueryParameterDecodingConfig{
 				Name:    "client_secret",
 				Style:   uri.QueryStyleForm,
 				Explode: true,

@@ -607,6 +607,18 @@ func (s *AppClient) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Jwks.Set {
+			e.FieldStart("jwks")
+			s.Jwks.Encode(e)
+		}
+	}
+	{
+		if s.JwksURI.Set {
+			e.FieldStart("jwks_uri")
+			s.JwksURI.Encode(e)
+		}
+	}
+	{
 		if s.Scopes != nil {
 			e.FieldStart("scopes")
 			e.ArrStart()
@@ -640,17 +652,19 @@ func (s *AppClient) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfAppClient = [10]string{
-	0: "id",
-	1: "name",
-	2: "type",
-	3: "environment",
-	4: "redirect_uris",
-	5: "allowed_origins",
-	6: "scopes",
-	7: "post_logout_redirect_uris",
-	8: "backchannel_logout_uri",
-	9: "disabled",
+var jsonFieldsNameOfAppClient = [12]string{
+	0:  "id",
+	1:  "name",
+	2:  "type",
+	3:  "environment",
+	4:  "redirect_uris",
+	5:  "allowed_origins",
+	6:  "jwks",
+	7:  "jwks_uri",
+	8:  "scopes",
+	9:  "post_logout_redirect_uris",
+	10: "backchannel_logout_uri",
+	11: "disabled",
 }
 
 // Decode decodes AppClient from json.
@@ -739,6 +753,26 @@ func (s *AppClient) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"allowed_origins\"")
+			}
+		case "jwks":
+			if err := func() error {
+				s.Jwks.Reset()
+				if err := s.Jwks.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"jwks\"")
+			}
+		case "jwks_uri":
+			if err := func() error {
+				s.JwksURI.Reset()
+				if err := s.JwksURI.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"jwks_uri\"")
 			}
 		case "scopes":
 			if err := func() error {
@@ -31829,6 +31863,18 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Jwks.Set {
+			e.FieldStart("jwks")
+			s.Jwks.Encode(e)
+		}
+	}
+	{
+		if s.JwksURI.Set {
+			e.FieldStart("jwks_uri")
+			s.JwksURI.Encode(e)
+		}
+	}
+	{
 		if s.Scopes != nil {
 			e.FieldStart("scopes")
 			e.ArrStart()
@@ -31862,17 +31908,19 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [10]string{
-	0: "id",
-	1: "name",
-	2: "type",
-	3: "environment",
-	4: "redirect_uris",
-	5: "allowed_origins",
-	6: "scopes",
-	7: "post_logout_redirect_uris",
-	8: "backchannel_logout_uri",
-	9: "disabled",
+var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [12]string{
+	0:  "id",
+	1:  "name",
+	2:  "type",
+	3:  "environment",
+	4:  "redirect_uris",
+	5:  "allowed_origins",
+	6:  "jwks",
+	7:  "jwks_uri",
+	8:  "scopes",
+	9:  "post_logout_redirect_uris",
+	10: "backchannel_logout_uri",
+	11: "disabled",
 }
 
 // Decode decodes PostV1ProjectsByProjectIdAdminAppsReq from json.
@@ -31964,6 +32012,26 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"allowed_origins\"")
+			}
+		case "jwks":
+			if err := func() error {
+				s.Jwks.Reset()
+				if err := s.Jwks.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"jwks\"")
+			}
+		case "jwks_uri":
+			if err := func() error {
+				s.JwksURI.Reset()
+				if err := s.JwksURI.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"jwks_uri\"")
 			}
 		case "scopes":
 			if err := func() error {
