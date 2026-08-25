@@ -112,6 +112,10 @@ type FederationSamlConfig struct {
 	// IDPMetadataXML is the IdP's SAML metadata document (entityID, SSO URL,
 	// signing certificate). When present it is the authoritative source.
 	IDPMetadataXML string `json:"idp_metadata_xml,omitempty"`
+	// IDPMetadataURL is where the IdP publishes that document. It is fetched once,
+	// at configuration time, into IDPMetadataXML — an IdP's availability does not
+	// belong in the path of every sign-in.
+	IDPMetadataURL string `json:"idp_metadata_url,omitempty"`
 	// IDPCertificatePEM is a fallback IdP signing certificate (PEM) used when no
 	// full metadata document is available.
 	IDPCertificatePEM string `json:"idp_certificate_pem,omitempty"`
@@ -132,7 +136,11 @@ type FederationSamlConfig struct {
 // FederationOidcConfig carries the external OIDC provider settings used to drive
 // the authorization-code leg and to verify the returned id_token.
 type FederationOidcConfig struct {
-	Issuer       string   `json:"issuer,omitempty"`
+	Issuer string `json:"issuer,omitempty"`
+	// DiscoveryURL is where the provider publishes its metadata. When set it is
+	// fetched at configuration time to fill AuthURL/TokenURL/JWKSURL; when unset
+	// the well-known path under Issuer is used instead.
+	DiscoveryURL string   `json:"discovery_url,omitempty"`
 	AuthURL      string   `json:"auth_url,omitempty"`
 	TokenURL     string   `json:"token_url,omitempty"`
 	JWKSURL      string   `json:"jwks_url,omitempty"`

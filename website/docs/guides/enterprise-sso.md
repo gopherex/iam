@@ -30,42 +30,62 @@ curl -sX DELETE .../admin/sso/connections/con_1 -H "Authorization: Bearer $ADMIN
 ```
 
 The `config` and `attribute_mapping` fields of the create request are accepted by
-the schema but **ignored** — configuration is applied with `PATCH`, which takes
-a flat patch rather than a nested object:
+the schema but **ignored** — configuration is applied with `PATCH`, which takes a
+flat patch rather than a nested object:
 
 ```bash
-# SAML: point at the IdP's metadata
+# SAML: point at the IdP's metadata — that is the whole configuration
 curl -sX PATCH .../admin/sso/connections/con_1 -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"saml_metadata_url":"https://acme.okta.com/app/xxx/sso/saml/metadata"}'
 
-# OIDC: the upstream client credentials
+# OIDC: the issuer plus the client credentials
 curl -sX PATCH .../admin/sso/connections/con_2 -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"oidc_issuer":"https://acme.okta.com","oidc_client_id":"…","oidc_client_secret":"…",
        "oidc_scopes":["openid","email","profile"]}'
 ```
 
-Accepted patch keys: `name`, `display_name`, `enabled`, `domain`, `domains`,
-`metadata`, `saml_metadata_url`, `saml_metadata_xml`, `oidc_issuer`,
-`oidc_discovery_url`, `oidc_client_id`, `oidc_client_secret`, `oidc_scopes`,
-`oidc_response_mode`. Anything else in the patch is dropped, not rejected.
+Both fetch the provider's document **at patch time**: the SAML metadata XML, or
+the OIDC discovery document under `{issuer}/.well-known/openid-configuration`
+(or an explicit `oidc_discovery_url`). Two things follow from doing it here
+rather than per request. A typo fails while the administrator who made it is
+still watching, instead of surfacing later as an unverifiable assertion. And the
+provider's availability is not in the path of every sign-in.
 
-:::caution The configuration surface is incomplete today
-The connection store, the SAML and OIDC runtime flows, domains and SCIM all
-exist, but some fields a working connection needs have **no API path**:
+### What you do not have to configure
 
-- **SAML** — the SP `entity_id` and `acs_url` that the metadata document
-  advertises and that assertion validation matches against. Without them the
-  rendered SP metadata is incomplete and an assertion cannot be consumed.
-- **OIDC** — the provider's `auth_url`, `token_url` and `jwks_url`. Setting
-  `oidc_issuer` or `oidc_discovery_url` does not populate them, because
-  discovery is not fetched.
+The local half of a connection — the identity IAM presents to the provider — is
+derived from the deployment's `public_url` and the connection id:
 
-Until those are settable, treat enterprise SSO as configurable only by writing
-the connection's config directly in the database. The rest of this page
-describes the surface as it stands.
-:::
+| Field | Derived value |
+| --- | --- |
+| SP entity id | `{public_url}/v1/sso/saml/{connection_id}/metadata` |
+| SP ACS URL | `{public_url}/v1/sso/saml/{connection_id}/acs` |
+| OIDC `redirect_uri` | `{public_url}/v1/sso/oidc/{connection_id}/callback` |
+
+Derivation runs on every read, so connections created before these fields existed
+resolve correctly too. Override any of them — `saml_entity_id`, `saml_acs_url`,
+`oidc_redirect_url` — when a customer's IdP was already registered against
+something else; an explicit value always wins.
+
+### Every patch key
+
+| Key | Applies to |
+| --- | --- |
+| `name`, `display_name`, `enabled`, `domain`, `domains`, `metadata` | any |
+| `saml_metadata_url` | the IdP's metadata document; fetched and stored |
+| `saml_metadata_xml` | the same document inline, when the IdP does not publish one |
+| `saml_idp_certificate` | a bare IdP signing certificate (PEM), when there is no metadata at all |
+| `saml_entity_id`, `saml_acs_url` | override the derived SP identity |
+| `oidc_issuer`, `oidc_discovery_url` | either triggers discovery |
+| `oidc_client_id`, `oidc_client_secret`, `oidc_scopes`, `oidc_response_mode` | the upstream client |
+| `oidc_auth_url`, `oidc_token_url`, `oidc_jwks_url` | override what discovery returned |
+| `oidc_redirect_url` | override the derived callback |
+
+A key outside this set is ignored rather than rejected: the stored envelope also
+carries derived endpoints and generated key material, and a patch must not be a
+way to write those by accident.
 
 `POST .../connections/{id}/test` returns a URL that starts the flow, for checking
 a connection before handing it to a customer. `POST .../connections/{id}/rotate-certificate`

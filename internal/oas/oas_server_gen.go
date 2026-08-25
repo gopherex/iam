@@ -1230,7 +1230,19 @@ type FederationHandler interface {
 	GetV1SsoSamlByConnectionIdMetadata(ctx context.Context, params GetV1SsoSamlByConnectionIdMetadataParams) (GetV1SsoSamlByConnectionIdMetadataOK, error)
 	// PatchV1ProjectsByProjectIdAdminSsoConnectionsById implements patchV1ProjectsByProjectIdAdminSsoConnectionsById operation.
 	//
-	// Update a connection.
+	// Patch a connection's configuration. The body is a flat map; keys outside the set below are ignored
+	// rather than rejected, so a patch cannot write derived endpoints or generated key material by
+	// accident.
+	// Common: `name`, `display_name`, `enabled`, `domain`, `domains`, `metadata`.
+	// SAML: `saml_metadata_url` or `saml_metadata_xml` (the IdP's metadata, authoritative when present),
+	// `saml_idp_certificate` (a bare IdP signing certificate when no metadata document exists), and
+	// `saml_entity_id` / `saml_acs_url` to override the SP identity, which otherwise defaults to
+	// `{public_url}/v1/sso/saml/{connection_id}/metadata` and `/acs`.
+	// OIDC: `oidc_discovery_url` or `oidc_issuer` — either one is fetched at patch time to fill the
+	// authorization, token and JWKS endpoints, and an unreachable or incomplete document fails the
+	// request. `oidc_client_id`, `oidc_client_secret`, `oidc_scopes`, `oidc_response_mode`. The
+	// discovered `oidc_auth_url`, `oidc_token_url`, `oidc_jwks_url` and the derived `oidc_redirect_url`
+	// can each be overridden explicitly.
 	//
 	// PATCH /v1/projects/{project_id}/admin/sso/connections/{id}
 	PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (*PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error)

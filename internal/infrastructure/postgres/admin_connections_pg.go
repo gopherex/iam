@@ -66,7 +66,7 @@ func (a *pgAdminConnections) List(ctx context.Context, projectID string) ([]doma
 
 	out := make([]domain.Connection, 0, len(rows))
 	for _, row := range rows {
-		c, err := fedConnectionFromRow(a.db.Cipher, row)
+		c, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +91,7 @@ func (a *pgAdminConnections) Get(ctx context.Context, projectID, connID string) 
 		return nil, domain.ErrConnectionNotFound
 	}
 
-	return fedConnectionFromRow(a.db.Cipher, row)
+	return fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 }
 
 func (a *pgAdminConnections) Create(ctx context.Context, cmd domain.AdminConnectionCmd) (*domain.Connection, error) {
@@ -158,7 +158,7 @@ func (a *pgAdminConnections) Update(ctx context.Context, projectID, connID strin
 			return nil, domain.ErrConnectionNotFound
 		}
 
-		conn, err := fedConnectionFromRow(a.db.Cipher, row)
+		conn, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 		if err != nil {
 			return nil, err
 		}

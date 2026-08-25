@@ -42,6 +42,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"math/big"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -83,8 +84,13 @@ func fedHashToken(token string) string {
 }
 
 // fedConnectionFromRow rebuilds a domain.Connection from its envelope. The jsonb
-// blob is authoritative; lookup columns backfill anything the blob omits.
-func fedConnectionFromRow(cipher Cipher, row *models.IamSsoConnection) (*domain.Connection, error) {
+// blob is authoritative; lookup columns backfill anything the blob omits, and
+// the local endpoints (SP entity id / ACS, OIDC redirect) are derived from the
+// deployment's public URL when the envelope does not pin them — so a connection
+// stored before those fields existed still resolves.
+func fedConnectionFromRow(
+	cipher Cipher, publicURL string, row *models.IamSsoConnection,
+) (*domain.Connection, error) {
 	var c domain.Connection
 	if len(row.Data) > 0 {
 		if err := unmarshal(row.Data, &c); err != nil {
@@ -102,6 +108,8 @@ func fedConnectionFromRow(cipher Cipher, row *models.IamSsoConnection) (*domain.
 	if c.Type == "" {
 		c.Type = row.Type
 	}
+	// Deferred so every early return below also gets the derived endpoints.
+	defer fedApplyEndpointDefaults(publicURL, &c)
 
 	if c.Status == "" {
 		c.Status = row.Status
@@ -612,11 +620,20 @@ func xmlMarshalIndent(v any) ([]byte, error) {
 type pgFederationConnections struct {
 	db      *DB
 	emitter Emitter
+	// discovery fetches an upstream provider's OIDC metadata. It is the same
+	// hardened outbound client webhook delivery uses: the URL comes from an
+	// administrator, but "an administrator typed it" is not a reason to let the
+	// server reach cloud metadata or the cluster's own network.
+	discovery *http.Client
 }
 
 // NewPgFederationConnections builds the Postgres-backed FederationConnections adapter.
 func NewPgFederationConnections(db *DB, emitter Emitter) *pgFederationConnections {
-	return &pgFederationConnections{db: db, emitter: emitter}
+	return &pgFederationConnections{
+		db:        db,
+		emitter:   emitter,
+		discovery: NewOutboundHTTPClient(fedDiscoveryTimeout),
+	}
 }
 
 var _ api.FederationConnections = (*pgFederationConnections)(nil)
@@ -673,7 +690,7 @@ func (a *pgFederationConnections) GetConnection(ctx context.Context, projectID, 
 		return nil, domain.ErrConnectionNotFound
 	}
 
-	return fedConnectionFromRow(a.db.Cipher, row)
+	return fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 }
 
 func (a *pgFederationConnections) ListConnections(ctx context.Context, projectID string) ([]domain.Connection, error) {
@@ -686,7 +703,7 @@ func (a *pgFederationConnections) ListConnections(ctx context.Context, projectID
 
 	out := make([]domain.Connection, 0, len(rows))
 	for _, row := range rows {
-		c, err := fedConnectionFromRow(a.db.Cipher, row)
+		c, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 		if err != nil {
 			return nil, err
 		}
@@ -712,12 +729,27 @@ func (a *pgFederationConnections) UpdateConnection(ctx context.Context, cmd doma
 			return nil, domain.ErrConnectionNotFound
 		}
 
-		conn, err := fedConnectionFromRow(a.db.Cipher, row)
+		conn, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 		if err != nil {
 			return nil, err
 		}
 
 		fedApplyConnectionPatch(conn, cmd.Patch)
+		// Resolve the provider's endpoints now, while an administrator is
+		// watching: a wrong issuer surfaces here as a failed update instead of as
+		// an unverifiable id_token on somebody's first sign-in.
+		if conn.Config != nil {
+			switch conn.Type {
+			case fedConnectionTypeOIDC:
+				if err := fedResolveOIDCDiscovery(ctx, a.discovery, conn.Config.Oidc); err != nil {
+					return nil, err
+				}
+			case fedConnectionTypeSAML:
+				if err := fedResolveSAMLMetadata(ctx, a.discovery, conn.Config.Saml); err != nil {
+					return nil, err
+				}
+			}
+		}
 
 		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
@@ -746,21 +778,39 @@ func (a *pgFederationConnections) UpdateConnection(ctx context.Context, cmd doma
 	})
 }
 
+// fedPatchName is the connection's display name, patchable under two spellings.
+const fedPatchName = "name"
+
+// fedPatchableFields is the flat patch surface of a connection. It is an
+// allow-list rather than a free-form merge: the envelope also carries derived
+// endpoints and generated key material, and a patch must not be a way to write
+// those by accident.
 var fedPatchableFields = map[string]bool{
-	"name":               true,
-	"display_name":       true,
-	"enabled":            true,
-	"metadata":           true,
-	"saml_metadata_url":  true,
-	"saml_metadata_xml":  true,
+	fedPatchName:   true,
+	"display_name": true,
+	"enabled":      true,
+	"metadata":     true,
+	"domain":       true,
+	"domains":      true,
+	// SAML — the IdP half, then the local half for a customer whose IdP was
+	// already configured against something other than our defaults.
+	"saml_metadata_url":    true,
+	"saml_metadata_xml":    true,
+	"saml_idp_certificate": true,
+	"saml_entity_id":       true,
+	"saml_acs_url":         true,
+	// OIDC — the provider half; the endpoint trio is normally discovered rather
+	// than typed, and set here only to override what discovery returned.
 	"oidc_discovery_url": true,
 	"oidc_issuer":        true,
 	"oidc_client_id":     true,
 	"oidc_client_secret": true,
 	"oidc_scopes":        true,
 	"oidc_response_mode": true,
-	"domain":             true,
-	"domains":            true,
+	"oidc_auth_url":      true,
+	"oidc_token_url":     true,
+	"oidc_jwks_url":      true,
+	"oidc_redirect_url":  true,
 }
 
 func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
@@ -774,7 +824,7 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 		}
 	}
 
-	if v, ok := patch["name"].(string); ok {
+	if v, ok := patch[fedPatchName].(string); ok {
 		c.Name = v
 	}
 
@@ -798,8 +848,10 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 		if c.Config.Saml == nil {
 			c.Config.Saml = &domain.FederationSamlConfig{}
 		}
-
-		c.Config.Saml.MetadataURL = v
+		// This key names the IdP's document, which is what an administrator has
+		// to hand. The SP's own metadata endpoint is ours and is derived.
+		c.Config.Saml.IDPMetadataURL = v
+		c.Config.Saml.IDPMetadataXML = ""
 	}
 
 	if v, ok := patch["saml_metadata_xml"].(string); ok {
@@ -855,6 +907,9 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 		c.Config.Oidc.Scopes = scopes
 	}
 
+	fedApplyConnectionPatchSAML(c, patch)
+	fedApplyConnectionPatchOIDC(c, patch)
+
 	if raw, ok := patch["domains"].([]any); ok {
 		doms := make([]string, 0, len(raw))
 		for _, item := range raw {
@@ -866,6 +921,69 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 		c.Domains = doms
 	} else if doms, ok := patch["domains"].([]string); ok {
 		c.Domains = doms
+	}
+}
+
+// fedApplyConnectionPatchSAML applies the SAML half of a connection patch.
+func fedApplyConnectionPatchSAML(c *domain.Connection, patch map[string]any) {
+	fields := map[string]*string{}
+
+	cfgFor := func() *domain.FederationSamlConfig {
+		if c.Config.Saml == nil {
+			c.Config.Saml = &domain.FederationSamlConfig{}
+		}
+
+		return c.Config.Saml
+	}
+
+	if _, ok := patch["saml_idp_certificate"]; ok {
+		fields["saml_idp_certificate"] = &cfgFor().IDPCertificatePEM
+	}
+
+	if _, ok := patch["saml_entity_id"]; ok {
+		fields["saml_entity_id"] = &cfgFor().EntityID
+	}
+
+	if _, ok := patch["saml_acs_url"]; ok {
+		fields["saml_acs_url"] = &cfgFor().AcsURL
+	}
+
+	fedAssignStrings(patch, fields)
+}
+
+// fedApplyConnectionPatchOIDC applies the OIDC half of a connection patch.
+func fedApplyConnectionPatchOIDC(c *domain.Connection, patch map[string]any) {
+	fields := map[string]*string{}
+
+	oidc := func() *domain.FederationOidcConfig {
+		if c.Config.Oidc == nil {
+			c.Config.Oidc = &domain.FederationOidcConfig{}
+		}
+
+		return c.Config.Oidc
+	}
+
+	for key, target := range map[string]func() *string{
+		"oidc_discovery_url": func() *string { return &oidc().DiscoveryURL },
+		"oidc_auth_url":      func() *string { return &oidc().AuthURL },
+		"oidc_token_url":     func() *string { return &oidc().TokenURL },
+		"oidc_jwks_url":      func() *string { return &oidc().JWKSURL },
+		"oidc_redirect_url":  func() *string { return &oidc().RedirectURL },
+	} {
+		if _, ok := patch[key]; ok {
+			fields[key] = target()
+		}
+	}
+
+	fedAssignStrings(patch, fields)
+}
+
+// fedAssignStrings copies string patch values into the fields they name.
+func fedAssignStrings(patch map[string]any, fields map[string]*string) {
+	for key, target := range fields {
+		if v, ok := patch[key].(string); ok {
+			*target = v
+		}
 	}
 }
 
@@ -952,7 +1070,7 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 			return "", domain.ErrConnectionNotFound
 		}
 
-		conn, err := fedConnectionFromRow(a.db.Cipher, row)
+		conn, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 		if err != nil {
 			return "", err
 		}
@@ -1391,7 +1509,7 @@ func (a *pgFederationRuntime) OidcStart(ctx context.Context, cmd domain.Federati
 		return nil, err
 	}
 
-	conn, err := fedConnectionFromRow(a.db.Cipher, row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 	if err != nil {
 		return nil, err
 	}
@@ -1427,7 +1545,7 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 		return nil, err
 	}
 
-	conn, err := fedConnectionFromRow(a.db.Cipher, row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 	if err != nil {
 		return nil, err
 	}
@@ -1504,7 +1622,7 @@ func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.Federati
 		return nil, err
 	}
 
-	conn, err := fedConnectionFromRow(a.db.Cipher, row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 	if err != nil {
 		return nil, err
 	}
@@ -1540,7 +1658,7 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 		return nil, err
 	}
 
-	conn, err := fedConnectionFromRow(a.db.Cipher, row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 	if err != nil {
 		return nil, err
 	}
@@ -1628,7 +1746,7 @@ func (a *pgFederationRuntime) SamlSlo(ctx context.Context, connectionID string) 
 		return nil, err
 	}
 
-	conn, err := fedConnectionFromRow(a.db.Cipher, row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 	if err != nil {
 		return nil, err
 	}
@@ -1670,7 +1788,7 @@ func (a *pgFederationRuntime) SamlMetadata(ctx context.Context, connectionID str
 		return nil, err
 	}
 
-	conn, err := fedConnectionFromRow(a.db.Cipher, row)
+	conn, err := fedConnectionFromRow(a.db.Cipher, a.db.PublicURL, row)
 	if err != nil {
 		return nil, err
 	}
