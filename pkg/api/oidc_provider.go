@@ -36,9 +36,9 @@ type OIDCGrants interface {
 	// Authorize handles the front-channel authorization request and returns the
 	// redirect URL the user-agent must follow next. Public operation.
 	Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCmd) (string, error)
-	// Logout terminates the RP-initiated logout and returns the post-logout
-	// redirect URL. Public operation.
-	Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (string, error)
+	// Logout ends the session named by the id_token_hint and returns where to
+	// send the browser, plus whether to clear its session cookies. Public.
+	Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (*domain.OIDCLogoutResult, error)
 	// BackchannelLogout validates the logout token and terminates the referenced
 	// sessions. Public operation.
 	BackchannelLogout(ctx context.Context, cmd domain.OIDCBackchannelLogoutCmd) error
@@ -129,7 +129,7 @@ func (s *OIDCProviderService) GetOauth2Authorize(ctx context.Context, params oas
 
 func (s *OIDCProviderService) GetOauth2Logout(ctx context.Context, params oas.GetOauth2LogoutParams) (r *oas.GetOauth2LogoutFound, _ error) {
 	// Public RP-initiated logout.
-	redirectTo, err := s.deps.Grants.Logout(ctx, domain.OIDCLogoutCmd{
+	res, err := s.deps.Grants.Logout(ctx, domain.OIDCLogoutCmd{
 		IDTokenHint:           params.IDTokenHint.Or(""),
 		PostLogoutRedirectURI: params.PostLogoutRedirectURI.Or(""),
 		State:                 params.State.Or(""),
@@ -138,7 +138,12 @@ func (s *OIDCProviderService) GetOauth2Logout(ctx context.Context, params oas.Ge
 		return nil, err
 	}
 
-	return &oas.GetOauth2LogoutFound{Location: optURI(redirectTo)}, nil
+	out := &oas.GetOauth2LogoutFound{Location: optURI(res.RedirectURL)}
+	if res.ClearSessionCookies {
+		out.SetCookie = ClearSessionCookies()
+	}
+
+	return out, nil
 }
 
 func (s *OIDCProviderService) GetOauth2Userinfo(ctx context.Context) (r oas.GetOauth2UserinfoOK, _ error) {

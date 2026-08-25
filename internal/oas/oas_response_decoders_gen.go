@@ -4,6 +4,7 @@ package oas
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -3878,6 +3879,90 @@ func decodeGetOauth2LogoutResponse(resp *http.Response) (res *GetOauth2LogoutFou
 				return nil
 			}(); err != nil {
 				return res, errors.Wrap(err, "parse Location header")
+			}
+		}
+		// Parse "Set-Cookie" header.
+		{
+			cfg := uri.HeaderParameterDecodingConfig{
+				Name:    "Set-Cookie",
+				Explode: false,
+			}
+			if err := func() error {
+				if err := h.HasParam(cfg); err == nil {
+					if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+						return d.DecodeArray(func(d uri.Decoder) error {
+							var wrapperDotSetCookieVal string
+							if err := func() error {
+								val, err := d.DecodeValue()
+								if err != nil {
+									return err
+								}
+
+								c, err := conv.ToString(val)
+								if err != nil {
+									return err
+								}
+
+								wrapperDotSetCookieVal = c
+								return nil
+							}(); err != nil {
+								return err
+							}
+							wrapper.SetCookie = append(wrapper.SetCookie, wrapperDotSetCookieVal)
+							return nil
+						})
+					}); err != nil {
+						return err
+					}
+					if err := func() error {
+						if wrapper.SetCookie == nil {
+							return nil // optional
+						}
+						if err := (validate.Array{
+							MinLength:    0,
+							MinLengthSet: false,
+							MaxLength:    10,
+							MaxLengthSet: true,
+						}).ValidateLength(len(wrapper.SetCookie)); err != nil {
+							return errors.Wrap(err, "array")
+						}
+						var failures []validate.FieldError
+						for i, elem := range wrapper.SetCookie {
+							if err := func() error {
+								if err := (validate.String{
+									MinLength:     0,
+									MinLengthSet:  false,
+									MaxLength:     4096,
+									MaxLengthSet:  true,
+									Email:         false,
+									Hostname:      false,
+									Regex:         nil,
+									MinNumeric:    0,
+									MinNumericSet: false,
+									MaxNumeric:    0,
+									MaxNumericSet: false,
+								}).Validate(string(elem)); err != nil {
+									return errors.Wrap(err, "string")
+								}
+								return nil
+							}(); err != nil {
+								failures = append(failures, validate.FieldError{
+									Name:  fmt.Sprintf("[%d]", i),
+									Error: err,
+								})
+							}
+						}
+						if len(failures) > 0 {
+							return &validate.Error{Fields: failures}
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "parse Set-Cookie header")
 			}
 		}
 		return &wrapper, nil

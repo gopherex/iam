@@ -38,6 +38,30 @@ func SessionCookies(access, refresh string, accessTTL, refreshTTL time.Duration)
 	}
 }
 
+// ClearSessionCookies renders the Set-Cookie pair that deletes a browser
+// session. Logging out has to remove the cookie as well as the session it names,
+// or the next authorization request signs the user straight back in.
+func ClearSessionCookies() []string {
+	return []string{
+		expireCookie(SessionCookieName, "/"),
+		expireCookie(RefreshCookieName, "/v1/auth/token/refresh"),
+	}
+}
+
+func expireCookie(name, path string) string {
+	c := &http.Cookie{
+		Name:     name,
+		Value:    "",
+		Path:     path,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	}
+
+	return c.String()
+}
+
 // FlowCookieName carries the resumable-auth flow_token in cookie mode so the
 // token is never exposed to JS (GET /v1/auth/flows/current reads it). Scoped to
 // the flows path so it is only presented to flow endpoints.

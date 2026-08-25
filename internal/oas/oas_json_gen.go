@@ -607,6 +607,22 @@ func (s *AppClient) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.PostLogoutRedirectUris != nil {
+			e.FieldStart("post_logout_redirect_uris")
+			e.ArrStart()
+			for _, elem := range s.PostLogoutRedirectUris {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.BackchannelLogoutURI.Set {
+			e.FieldStart("backchannel_logout_uri")
+			s.BackchannelLogoutURI.Encode(e)
+		}
+	}
+	{
 		if s.Disabled.Set {
 			e.FieldStart("disabled")
 			s.Disabled.Encode(e)
@@ -614,14 +630,16 @@ func (s *AppClient) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfAppClient = [7]string{
+var jsonFieldsNameOfAppClient = [9]string{
 	0: "id",
 	1: "name",
 	2: "type",
 	3: "environment",
 	4: "redirect_uris",
 	5: "allowed_origins",
-	6: "disabled",
+	6: "post_logout_redirect_uris",
+	7: "backchannel_logout_uri",
+	8: "disabled",
 }
 
 // Decode decodes AppClient from json.
@@ -710,6 +728,35 @@ func (s *AppClient) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"allowed_origins\"")
+			}
+		case "post_logout_redirect_uris":
+			if err := func() error {
+				s.PostLogoutRedirectUris = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.PostLogoutRedirectUris = append(s.PostLogoutRedirectUris, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"post_logout_redirect_uris\"")
+			}
+		case "backchannel_logout_uri":
+			if err := func() error {
+				s.BackchannelLogoutURI.Reset()
+				if err := s.BackchannelLogoutURI.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"backchannel_logout_uri\"")
 			}
 		case "disabled":
 			if err := func() error {
@@ -31752,6 +31799,22 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.PostLogoutRedirectUris != nil {
+			e.FieldStart("post_logout_redirect_uris")
+			e.ArrStart()
+			for _, elem := range s.PostLogoutRedirectUris {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.BackchannelLogoutURI.Set {
+			e.FieldStart("backchannel_logout_uri")
+			s.BackchannelLogoutURI.Encode(e)
+		}
+	}
+	{
 		if s.Disabled.Set {
 			e.FieldStart("disabled")
 			s.Disabled.Encode(e)
@@ -31759,14 +31822,16 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [7]string{
+var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [9]string{
 	0: "id",
 	1: "name",
 	2: "type",
 	3: "environment",
 	4: "redirect_uris",
 	5: "allowed_origins",
-	6: "disabled",
+	6: "post_logout_redirect_uris",
+	7: "backchannel_logout_uri",
+	8: "disabled",
 }
 
 // Decode decodes PostV1ProjectsByProjectIdAdminAppsReq from json.
@@ -31774,7 +31839,7 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode PostV1ProjectsByProjectIdAdminAppsReq to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 	s.setDefaults()
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -31859,6 +31924,35 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"allowed_origins\"")
 			}
+		case "post_logout_redirect_uris":
+			if err := func() error {
+				s.PostLogoutRedirectUris = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.PostLogoutRedirectUris = append(s.PostLogoutRedirectUris, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"post_logout_redirect_uris\"")
+			}
+		case "backchannel_logout_uri":
+			if err := func() error {
+				s.BackchannelLogoutURI.Reset()
+				if err := s.BackchannelLogoutURI.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"backchannel_logout_uri\"")
+			}
 		case "disabled":
 			if err := func() error {
 				s.Disabled.Reset()
@@ -31878,8 +31972,9 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
+	for i, mask := range [2]uint8{
 		0b00000110,
+		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

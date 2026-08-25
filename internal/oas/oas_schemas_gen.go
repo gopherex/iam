@@ -307,6 +307,13 @@ type AppClient struct {
 	Environment    OptString        `json:"environment"`
 	RedirectUris   []string         `json:"redirect_uris"`
 	AllowedOrigins []string         `json:"allowed_origins"`
+	// URIs the browser may be sent to after an RP-initiated logout. Matched exactly, like redirect_uris
+	// — an unregistered value is ignored rather than followed, so logout cannot be turned into an open
+	// redirect.
+	PostLogoutRedirectUris []string `json:"post_logout_redirect_uris"`
+	// Where IAM POSTs a signed `logout_token` when a session this client holds a grant on ends (OpenID
+	// Connect Back-Channel Logout 1.0). Unset means the client is not notified.
+	BackchannelLogoutURI OptNilString `json:"backchannel_logout_uri"`
 	// Turns the client off without deleting it. A disabled client is refused at /oauth2/authorize
 	// exactly like an unknown client_id, so an integration can be suspended and restored without
 	// re-issuing its registration.
@@ -343,6 +350,16 @@ func (s *AppClient) GetAllowedOrigins() []string {
 	return s.AllowedOrigins
 }
 
+// GetPostLogoutRedirectUris returns the value of PostLogoutRedirectUris.
+func (s *AppClient) GetPostLogoutRedirectUris() []string {
+	return s.PostLogoutRedirectUris
+}
+
+// GetBackchannelLogoutURI returns the value of BackchannelLogoutURI.
+func (s *AppClient) GetBackchannelLogoutURI() OptNilString {
+	return s.BackchannelLogoutURI
+}
+
 // GetDisabled returns the value of Disabled.
 func (s *AppClient) GetDisabled() OptBool {
 	return s.Disabled
@@ -376,6 +393,16 @@ func (s *AppClient) SetRedirectUris(val []string) {
 // SetAllowedOrigins sets the value of AllowedOrigins.
 func (s *AppClient) SetAllowedOrigins(val []string) {
 	s.AllowedOrigins = val
+}
+
+// SetPostLogoutRedirectUris sets the value of PostLogoutRedirectUris.
+func (s *AppClient) SetPostLogoutRedirectUris(val []string) {
+	s.PostLogoutRedirectUris = val
+}
+
+// SetBackchannelLogoutURI sets the value of BackchannelLogoutURI.
+func (s *AppClient) SetBackchannelLogoutURI(val OptNilString) {
+	s.BackchannelLogoutURI = val
 }
 
 // SetDisabled sets the value of Disabled.
@@ -3230,7 +3257,8 @@ func (s *GetOauth2AuthorizeFound) SetLocation(val OptURI) {
 
 // GetOauth2LogoutFound is response for GetOauth2Logout operation.
 type GetOauth2LogoutFound struct {
-	Location OptURI
+	Location  OptURI
+	SetCookie []string
 }
 
 // GetLocation returns the value of Location.
@@ -3238,9 +3266,19 @@ func (s *GetOauth2LogoutFound) GetLocation() OptURI {
 	return s.Location
 }
 
+// GetSetCookie returns the value of SetCookie.
+func (s *GetOauth2LogoutFound) GetSetCookie() []string {
+	return s.SetCookie
+}
+
 // SetLocation sets the value of Location.
 func (s *GetOauth2LogoutFound) SetLocation(val OptURI) {
 	s.Location = val
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *GetOauth2LogoutFound) SetSetCookie(val []string) {
+	s.SetCookie = val
 }
 
 type GetOauth2UserinfoOK map[string]jx.Raw
@@ -16438,6 +16476,13 @@ type PostV1ProjectsByProjectIdAdminAppsReq struct {
 	Environment    OptString                                 `json:"environment"`
 	RedirectUris   []string                                  `json:"redirect_uris"`
 	AllowedOrigins []string                                  `json:"allowed_origins"`
+	// URIs the browser may be sent to after an RP-initiated logout. Matched exactly, like redirect_uris
+	// — an unregistered value is ignored rather than followed, so logout cannot be turned into an open
+	// redirect.
+	PostLogoutRedirectUris []string `json:"post_logout_redirect_uris"`
+	// Where IAM POSTs a signed `logout_token` when a session this client holds a grant on ends (OpenID
+	// Connect Back-Channel Logout 1.0). Unset means the client is not notified.
+	BackchannelLogoutURI OptNilString `json:"backchannel_logout_uri"`
 	// Turns the client off without deleting it. A disabled client is refused at /oauth2/authorize
 	// exactly like an unknown client_id, so an integration can be suspended and restored without
 	// re-issuing its registration.
@@ -16474,6 +16519,16 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetAllowedOrigins() []string {
 	return s.AllowedOrigins
 }
 
+// GetPostLogoutRedirectUris returns the value of PostLogoutRedirectUris.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetPostLogoutRedirectUris() []string {
+	return s.PostLogoutRedirectUris
+}
+
+// GetBackchannelLogoutURI returns the value of BackchannelLogoutURI.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetBackchannelLogoutURI() OptNilString {
+	return s.BackchannelLogoutURI
+}
+
 // GetDisabled returns the value of Disabled.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetDisabled() OptBool {
 	return s.Disabled
@@ -16507,6 +16562,16 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetRedirectUris(val []string) {
 // SetAllowedOrigins sets the value of AllowedOrigins.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetAllowedOrigins(val []string) {
 	s.AllowedOrigins = val
+}
+
+// SetPostLogoutRedirectUris sets the value of PostLogoutRedirectUris.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetPostLogoutRedirectUris(val []string) {
+	s.PostLogoutRedirectUris = val
+}
+
+// SetBackchannelLogoutURI sets the value of BackchannelLogoutURI.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetBackchannelLogoutURI(val OptNilString) {
+	s.BackchannelLogoutURI = val
 }
 
 // SetDisabled sets the value of Disabled.

@@ -130,6 +130,31 @@ Two things such a client insists on that are easy to miss:
   `--insecure-oidc-allow-unverified-email`, so verify the address (or turn on
   verification at signup) before wiring one up.
 
+### Logout
+
+`GET /oauth2/logout` with an `id_token_hint` ends the IAM session that token
+names — the session record, its refresh tokens and the browser's session cookie
+— and notifies every other client holding a grant on it.
+
+- `post_logout_redirect_uri` is followed only when the hint identifies the client
+  that **registered** it, matched exactly against the client's
+  `post_logout_redirect_uris`. Anything else lands on `/`; the parameter is
+  attacker-controlled, and following it unchecked makes every logout link an open
+  redirect. `state` is echoed back.
+- without an `id_token_hint` nothing is ended and no redirect is honored: there
+  is no way to know whose session, or whose redirect, is being asked for.
+
+**Back-channel logout** is now actually sent. A client with a
+`backchannel_logout_uri` receives a POST carrying a signed `logout_token` (aud =
+the client, `sid` = the ended session, `sub` = the user, the
+`backchannel-logout` event, and deliberately no `nonce`). Delivery runs through
+the outbox, so a slow relying party cannot hold up a logout and a failed POST is
+retried instead of lost, and it goes out through the same hardened client
+webhooks use.
+
+Any session ending triggers it, not only RP-initiated logout: an admin revoking
+a session, or the user signing out of IAM, notifies the relying parties too.
+
 ### Claims in the id_token
 
 The scopes a client is granted decide what the id_token says about the person:

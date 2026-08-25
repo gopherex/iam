@@ -240,12 +240,14 @@ type AdminConfigApplyResult struct {
 // supplied ID is honored so an external applicator can name its clients
 // deterministically instead of discovering server-generated ids).
 type AdminAppClientDesired struct {
-	ID             string
-	Name           string
-	Type           string
-	RedirectURIs   []string
-	AllowedOrigins []string
-	Disabled       bool
+	ID                     string
+	Name                   string
+	Type                   string
+	RedirectURIs           []string
+	AllowedOrigins         []string
+	Disabled               bool
+	PostLogoutRedirectURIs []string
+	BackchannelLogoutURI   string
 }
 
 // AdminAppsApplyCmd reconciles a project environment's app clients against a

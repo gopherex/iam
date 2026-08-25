@@ -649,7 +649,15 @@ func encodeGetOauth2AuthorizeResponse(response *GetOauth2AuthorizeFound, w http.
 }
 
 func encodeGetOauth2LogoutResponse(response *GetOauth2LogoutFound, w http.ResponseWriter, span trace.Span) error {
-	w.Header().Set("Access-Control-Expose-Headers", "Location")
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Access-Control-Expose-Headers", "Location,Set-Cookie")
 	// Encoding response headers.
 	{
 		h := uri.NewHeaderEncoder(w.Header())
@@ -666,6 +674,30 @@ func encodeGetOauth2LogoutResponse(response *GetOauth2LogoutFound, w http.Respon
 				return nil
 			}); err != nil {
 				return errors.Wrap(err, "encode Location header")
+			}
+		}
+		// Encode "Set-Cookie" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Set-Cookie",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				if response.SetCookie != nil {
+					return e.EncodeArray(func(e uri.Encoder) error {
+						for i, item := range response.SetCookie {
+							if err := func() error {
+								return e.EncodeValue(conv.StringToString(item))
+							}(); err != nil {
+								return errors.Wrapf(err, "[%d]", i)
+							}
+						}
+						return nil
+					})
+				}
+				return nil
+			}); err != nil {
+				return errors.Wrap(err, "encode Set-Cookie header")
 			}
 		}
 	}

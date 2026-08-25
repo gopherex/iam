@@ -990,53 +990,156 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 
 // Logout terminates an RP-initiated logout. Validating the id_token_hint
 // signature is the token subsystem's job; we return the post-logout redirect.
-func (a *pgOIDCGrants) Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (string, error) {
-	// When an id_token_hint is supplied, verify its signature against the tenant
-	// named in its `iss` claim (peeked unverified for routing only) before
-	// honoring the request. An invalid hint is rejected; a valid one resolves
-	// the sub/sid of the session to terminate. The actual session termination is
-	// owned by the session store (a separate port not wired into this adapter),
-	// so we validate the hint here and emit the logout event downstream.
-	if cmd.IDTokenHint != "" {
-		peek := a.db.Signer().UnverifiedClaims(cmd.IDTokenHint)
-		if peek == nil {
-			return "", domain.ErrInvalidToken
-		}
+func (a *pgOIDCGrants) Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (*domain.OIDCLogoutResult, error) {
+	out := &domain.OIDCLogoutResult{RedirectURL: "/"}
 
-		projectID, env := oidcParseIssuer(a.db.PublicURL, peekString(peek, claimIssuer))
-		if projectID == "" {
-			return "", domain.ErrInvalidToken
-		}
+	if cmd.IDTokenHint == "" {
+		// Without a hint we know neither whose session to end nor which client
+		// registered the redirect the caller is asking for. OpenID Connect
+		// RP-Initiated Logout 1.0 §2 says the URI SHOULD NOT be honored then, so
+		// it is ignored rather than followed.
+		return out, nil
+	}
 
-		claims, err := a.db.Signer().Verify(ctx, projectID, env, cmd.IDTokenHint)
+	peek := a.db.Signer().UnverifiedClaims(cmd.IDTokenHint)
+	if peek == nil {
+		return nil, domain.ErrInvalidToken
+	}
+
+	projectID, env := oidcParseIssuer(a.db.PublicURL, peekString(peek, claimIssuer))
+	if projectID == "" {
+		return nil, domain.ErrInvalidToken
+	}
+
+	claims, err := a.db.Signer().Verify(ctx, projectID, env, cmd.IDTokenHint)
+	if err != nil {
+		return nil, err
+	}
+
+	sub := peekString(claims, claimSubject)
+	sid := peekString(claims, claimSessionID)
+	clientID := peekAudience(claims)
+
+	// End the session for real. Revoking it invalidates its refresh tokens
+	// through the shared primitive, and emits session.revoked — which is what
+	// drives back-channel logout to the other clients holding a grant on it.
+	terminated, err := a.terminateSession(ctx, projectID, sid)
+	if err != nil {
+		return nil, err
+	}
+
+	if terminated {
+		// The browser must lose its session cookie too, or the very next
+		// authorization request signs the user straight back in.
+		out.ClearSessionCookies = true
+	}
+
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "oidc.session.logout",
+		ProjectID:   projectID,
+		Environment: env,
+		AggregateID: sub,
+		Payload: map[string]any{
+			claimSubject:        sub,
+			eventFieldSessionID: sid,
+			"project_id":        projectID,
+			claimEnvironment:    env,
+			"client_id":         clientID,
+		},
+	}); err != nil {
+		return nil, err
+	}
+
+	out.RedirectURL = a.postLogoutRedirect(ctx, clientID, cmd)
+
+	return out, nil
+}
+
+// postLogoutRedirect resolves where to send the browser after logout. An
+// unregistered target is refused rather than followed: post_logout_redirect_uri
+// is attacker-controlled input, and honoring it unchecked turns every logout
+// link into an open redirect.
+func (a *pgOIDCGrants) postLogoutRedirect(ctx context.Context, clientID string, cmd domain.OIDCLogoutCmd) string {
+	if cmd.PostLogoutRedirectURI == "" || clientID == "" {
+		return "/"
+	}
+
+	row, err := models.FindIamAppClient(ctx, a.db.Bobx(), clientID)
+	if err != nil {
+		return "/"
+	}
+
+	var app domain.AppClient
+	if err := unmarshal(row.Data, &app); err != nil {
+		return "/"
+	}
+
+	if !containsString(app.PostLogoutRedirectURIs, cmd.PostLogoutRedirectURI) {
+		return "/"
+	}
+
+	if cmd.State == "" {
+		return cmd.PostLogoutRedirectURI
+	}
+
+	sep := "?"
+	if strings.Contains(cmd.PostLogoutRedirectURI, "?") {
+		sep = "&"
+	}
+
+	return cmd.PostLogoutRedirectURI + sep + url.Values{"state": {cmd.State}}.Encode()
+}
+
+// terminateSession revokes the IAM session an id_token names, reporting whether
+// there was one to revoke. A session that is already gone is not an error — the
+// caller asked for it to be over, and it is.
+func (a *pgOIDCGrants) terminateSession(ctx context.Context, projectID, sessionID string) (bool, error) {
+	if sessionID == "" {
+		return false, nil
+	}
+
+	return withTxRet(ctx, a.db, func(ctx context.Context) (bool, error) {
+		row, err := models.FindIamSession(ctx, a.db.Bobx(), sessionID)
 		if err != nil {
-			return "", err
+			if isStorageNotFound(translatePgErr("session", err)) {
+				return false, nil
+			}
+
+			return false, err
 		}
 
-		sub := peekString(claims, "sub") // session subject to terminate
+		if row.ProjectID != projectID {
+			return false, nil // another tenant's session is not ours to end
+		}
 
-		sid := peekString(claims, "sid") // session id to terminate
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "oidc.session.logout",
-			ProjectID:   projectID,
-			Environment: env,
-			AggregateID: sub,
-			Payload:     map[string]any{"sub": sub, "sid": sid, "project_id": projectID, "env": env},
-		}); err != nil {
-			return "", err
+		if err := revokeSessionRecord(ctx, a.db, a.emitter, row, "rp_initiated_logout"); err != nil {
+			return false, err
+		}
+
+		return true, nil
+	})
+}
+
+// peekAudience reads the `aud` claim, which is a string OR an array of strings
+// (RFC 7519 §4.1.3) — an id_token minted for one client still serializes it as
+// an array, so reading it as a plain string silently yields nothing.
+func peekAudience(claims map[string]any) string {
+	switch v := claims[claimAudience].(type) {
+	case string:
+		return v
+	case []string:
+		if len(v) > 0 {
+			return v[0]
+		}
+	case []any:
+		for _, item := range v {
+			if s, ok := item.(string); ok && s != "" {
+				return s
+			}
 		}
 	}
 
-	redirect := cmd.PostLogoutRedirectURI
-	if redirect == "" {
-		return "/", nil
-	}
-
-	if cmd.State != "" {
-		return fmt.Sprintf("%s?state=%s", redirect, cmd.State), nil
-	}
-
-	return redirect, nil
+	return ""
 }
 
 // peekString reads a string claim from a generic claim map, returning "" when

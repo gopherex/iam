@@ -45,6 +45,13 @@ type OIDCAuthorizeCmd struct {
 	RequestURI          string
 }
 
+// OIDCLogoutResult is the outcome of an RP-initiated logout: where to send the
+// browser, and whether its session cookies should be cleared on the way.
+type OIDCLogoutResult struct {
+	RedirectURL         string
+	ClearSessionCookies bool
+}
+
 // OIDCInteractionContext is everything the hosted login/consent UI needs to
 // render an interaction: which application is asking, what it is asking for, and
 // which project's language the page should speak. The interaction id alone is a

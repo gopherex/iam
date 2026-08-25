@@ -177,6 +177,23 @@ func (s *AppClient) SetFake() {
 	}
 	{
 		{
+			s.PostLogoutRedirectUris = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.PostLogoutRedirectUris = append(s.PostLogoutRedirectUris, elem)
+			}
+		}
+	}
+	{
+		{
+			s.BackchannelLogoutURI.SetFake()
+		}
+	}
+	{
+		{
 			s.Disabled.SetFake()
 		}
 	}
@@ -6131,6 +6148,23 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetFake() {
 				}
 				s.AllowedOrigins = append(s.AllowedOrigins, elem)
 			}
+		}
+	}
+	{
+		{
+			s.PostLogoutRedirectUris = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.PostLogoutRedirectUris = append(s.PostLogoutRedirectUris, elem)
+			}
+		}
+	}
+	{
+		{
+			s.BackchannelLogoutURI.SetFake()
 		}
 	}
 	{

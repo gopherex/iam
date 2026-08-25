@@ -1065,6 +1065,9 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 			RedirectURIs:   cmd.RedirectURIs,
 			AllowedOrigins: domain.NormalizeOrigins(cmd.AllowedOrigins),
 			Disabled:       cmd.Disabled,
+
+			PostLogoutRedirectURIs: cmd.PostLogoutRedirectURIs,
+			BackchannelLogoutURI:   cmd.BackchannelLogoutURI,
 		}
 
 		raw, err := marshal(app)
@@ -1147,6 +1150,14 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 			app.Disabled = v
 		}
 
+		if v, ok := patchStrings(patch, "post_logout_redirect_uris"); ok {
+			app.PostLogoutRedirectURIs = v
+		}
+
+		if v, ok := patch["backchannel_logout_uri"].(string); ok {
+			app.BackchannelLogoutURI = v
+		}
+
 		raw, err := marshal(app)
 		if err != nil {
 			return nil, err
@@ -1218,6 +1229,29 @@ func (a *pgAdminApps) deleteApp(ctx context.Context, projectID, environment, app
 	})
 }
 
+// patchStrings reads a string-slice field from a free-form PATCH body, accepting
+// both a typed slice and the []any a JSON decode produces.
+func patchStrings(patch map[string]any, key string) ([]string, bool) {
+	if v, ok := patch[key].([]string); ok {
+		return v, true
+	}
+
+	raw, isSlice := patch[key].([]any)
+	if !isSlice {
+		return nil, false
+	}
+
+	out := make([]string, 0, len(raw))
+
+	for _, item := range raw {
+		if s, isString := item.(string); isString {
+			out = append(out, s)
+		}
+	}
+
+	return out, true
+}
+
 // desiredToAppClient renders one desired-state entry into the stored shape,
 // with the tenant fields filled in from the request.
 func desiredToAppClient(
@@ -1232,6 +1266,9 @@ func desiredToAppClient(
 		RedirectURIs:   desired.RedirectURIs,
 		AllowedOrigins: domain.NormalizeOrigins(desired.AllowedOrigins),
 		Disabled:       desired.Disabled,
+
+		PostLogoutRedirectURIs: desired.PostLogoutRedirectURIs,
+		BackchannelLogoutURI:   desired.BackchannelLogoutURI,
 	}
 }
 

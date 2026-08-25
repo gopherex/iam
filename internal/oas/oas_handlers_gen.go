@@ -8622,7 +8622,12 @@ func (s *Server) handleGetOauth2AuthorizeRequest(args [0]string, argsEscaped boo
 
 // handleGetOauth2LogoutRequest handles getOauth2Logout operation.
 //
-// RP-initiated logout.
+// Ends the IAM session named by `id_token_hint` — the session itself, its refresh tokens and the
+// browser's session cookie — and notifies every client holding a grant on it through back-channel
+// logout.
+// `post_logout_redirect_uri` is honoured only when `id_token_hint` identifies the client that
+// registered it; without the hint, or for a URI the client did not register, the browser is not
+// redirected there.
 //
 // GET /oauth2/logout
 func (s *Server) handleGetOauth2LogoutRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

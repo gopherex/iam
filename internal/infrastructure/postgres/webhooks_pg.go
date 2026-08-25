@@ -66,6 +66,13 @@ func NewPgWebhooks(db *DB, client *http.Client) *PgWebhooks {
 // actually-resolved IP, closing the DNS-rebinding TOCTOU that host-string
 // validation alone leaves open. Loopback stays reachable as the documented
 // http-development escape hatch (see validateWebhookURL). Redirects are capped.
+// NewOutboundHTTPClient exposes the hardened outbound client (SSRF guards,
+// redirect limits, fixed timeout) to other outbound senders in this service,
+// so a second delivery path cannot quietly be less careful than webhooks.
+func NewOutboundHTTPClient(timeout time.Duration) *http.Client {
+	return newWebhookHTTPClient(timeout)
+}
+
 func newWebhookHTTPClient(timeout time.Duration) *http.Client {
 	dialer := &net.Dialer{
 		Control: func(_, address string, _ syscall.RawConn) error {

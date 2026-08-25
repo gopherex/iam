@@ -168,6 +168,14 @@ type AppClient struct {
 	// endpoint refuses it exactly like an unknown client_id, so an integration
 	// can be suspended and restored without re-issuing its registration.
 	Disabled bool
+	// PostLogoutRedirectURIs are the targets an RP-initiated logout may send the
+	// browser to. Matched exactly, like RedirectURIs: honoring an unregistered
+	// value would make logout an open redirect.
+	PostLogoutRedirectURIs []string
+	// BackchannelLogoutURI receives a signed logout_token when a session this
+	// client holds a grant on ends (OpenID Connect Back-Channel Logout 1.0).
+	// Empty means the client is not notified.
+	BackchannelLogoutURI string
 }
 
 // ===== Project aggregate (admin / operator) =====
@@ -301,13 +309,15 @@ type APIKeyCmd struct {
 }
 
 type AppClientCmd struct {
-	ProjectID      string
-	Environment    string
-	Name           string
-	Type           string
-	RedirectURIs   []string
-	AllowedOrigins []string
-	Disabled       bool
+	ProjectID              string
+	Environment            string
+	Name                   string
+	Type                   string
+	RedirectURIs           []string
+	AllowedOrigins         []string
+	Disabled               bool
+	PostLogoutRedirectURIs []string
+	BackchannelLogoutURI   string
 }
 
 type ProjectCmd struct {

@@ -10,6 +10,7 @@ import (
 	htmltemplate "html/template"
 	"mime"
 	"net"
+	"net/http"
 	"net/mail"
 	"net/smtp"
 	"net/url"
@@ -30,14 +31,27 @@ import (
 
 const defaultLocale = "en"
 
+// backchannelTimeout bounds one back-channel logout POST. A relying party that
+// cannot answer within it is retried by the outbox rather than waited on.
+const backchannelTimeout = 10 * time.Second
+
 type Publisher struct {
 	db       *postgres.DB
 	webhooks *postgres.PgWebhooks
 	log      *xlog.Logger
+	// backchannelClient delivers OIDC back-channel logout tokens. It is the same
+	// hardened client webhook delivery uses: both are outbound requests to an
+	// address an operator configured.
+	backchannelClient *http.Client
 }
 
 func NewPublisher(db *postgres.DB, webhooks *postgres.PgWebhooks, log *xlog.Logger) *Publisher {
-	return &Publisher{db: db, webhooks: webhooks, log: log}
+	return &Publisher{
+		db:                db,
+		webhooks:          webhooks,
+		log:               log,
+		backchannelClient: postgres.NewOutboundHTTPClient(backchannelTimeout),
+	}
 }
 
 func (p *Publisher) Publish(ctx context.Context, msgs []outbox.Message) error {
@@ -81,6 +95,14 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	// double-sends.
 	if sjob, ok := smsJobFromEvent(ev); ok {
 		return p.publishSMS(ctx, ev, sjob)
+	}
+
+	// A session ending is what relying parties subscribe to with back-channel
+	// logout. Delivering it here rather than from the request that ended the
+	// session means a slow relying party cannot hold up a logout, and a failed
+	// POST is retried by the outbox instead of being lost.
+	if err := p.publishBackchannelLogout(ctx, ev); err != nil {
+		return err
 	}
 
 	job, ok := emailJobFromEvent(ev)
@@ -843,4 +865,37 @@ func rawInt(raw map[string]json.RawMessage, key string, fallback int) int {
 	}
 
 	return fallback
+}
+
+// publishBackchannelLogout notifies relying parties that a session has ended.
+// Only session-ending events qualify; everything else passes straight through.
+func (p *Publisher) publishBackchannelLogout(ctx context.Context, event eventEnvelope) error {
+	switch event.Type {
+	case string(domain.WebhookEventSessionRevoked), "oidc.session.logout", "oidc.session.backchannel_logout":
+	default:
+		return nil
+	}
+
+	sessionID := stringValue(event.Payload, "session_id")
+	if sessionID == "" {
+		sessionID = event.AggregateID
+	}
+
+	subject := stringValue(event.Payload, "user_id")
+	if subject == "" {
+		subject = stringValue(event.Payload, "sub")
+	}
+
+	if err := postgres.DeliverBackchannelLogout(
+		ctx, p.db, p.backchannelClient, event.ProjectID, event.Environment, sessionID, subject,
+	); err != nil {
+		p.log.Warn("backchannel logout delivery failed",
+			xlog.String("project_id", event.ProjectID),
+			xlog.String("session_id", sessionID),
+			xlog.Error("err", err))
+
+		return err
+	}
+
+	return nil
 }
