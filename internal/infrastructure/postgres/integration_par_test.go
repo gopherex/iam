@@ -53,11 +53,11 @@ func TestPARRoundTrip(t *testing.T) {
 
 	// Only client_id and request_uri are sent; everything else must come from the
 	// pushed request. A junk redirect_uri in the query must not be honoured.
-	redirect, err := f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+	redirect, err := redirectOf(f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
 		ClientID:    f.clientID,
 		RequestURI:  res.RequestURI,
 		RedirectURI: "https://evil.example.net/cb",
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Authorize with request_uri: %v", err)
 	}
@@ -224,9 +224,9 @@ func TestPARPushedRequestCompletesTheFlow(t *testing.T) {
 		t.Fatalf("PushAuthorizationRequest: %v", err)
 	}
 
-	redirect, err := f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+	redirect, err := redirectOf(f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
 		ClientID: f.clientID, RequestURI: res.RequestURI,
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Authorize with request_uri: %v", err)
 	}
@@ -238,13 +238,13 @@ func TestPARPushedRequestCompletesTheFlow(t *testing.T) {
 		t.Fatalf("CompleteLogin: %v", err)
 	}
 
-	consent, err := f.grants.Consent(ctx, domain.OIDCConsentCmd{
+	consent, err := redirectOf(f.grants.Consent(ctx, domain.OIDCConsentCmd{
 		InteractionID: interactionID,
 		AccountID:     f.userID,
 		SessionID:     sessionID,
 		GrantedScopes: []string{"openid"},
 		Remember:      true,
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Consent: %v", err)
 	}

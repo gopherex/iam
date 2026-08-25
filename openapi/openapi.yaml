@@ -1134,6 +1134,28 @@ components:
             type: string
             maxLength: 128
           maxItems: 1000
+    FormPostResponse:
+      type: object
+      description: >-
+        An authorization response to be delivered as a self-submitting HTML form
+        (`response_mode=form_post`) instead of a redirect. POST every field in
+        `fields` to `action` as `application/x-www-form-urlencoded`. Present
+        only when the client asked for `form_post`; otherwise follow
+        `redirect_to`.
+      required:
+      - action
+      - fields
+      properties:
+        action:
+          type: string
+          description: The client's registered redirect_uri — the form's target.
+          maxLength: 2048
+        fields:
+          type: object
+          description: The response parameters, posted as form fields.
+          additionalProperties:
+            type: string
+            maxLength: 4096
     ClientRegistration:
       type: object
       description: >-
@@ -7782,8 +7804,17 @@ paths:
         in: query
         required: false
         description: >-
-          How the authorization response is returned: `query` (default) or
-          `fragment`. Anything else is `unsupported_response_mode`.
+          How the authorization response is returned: `query` (default),
+          `fragment`, or `form_post`. Anything else is
+          `unsupported_response_mode`.
+
+
+          `form_post` answers with a 200 HTML document containing a
+          self-submitting form that POSTs the response parameters to the
+          client's registered redirect_uri, so they never appear in the address
+          bar, in browser history, or in a Referer header. The 302 response is
+          still used for the redirect to the interaction UI, which is not the
+          authorization response.
         schema:
           type: string
           maxLength: 32
@@ -7816,6 +7847,14 @@ paths:
           type: string
           maxLength: 2048
       responses:
+        '200':
+          description: >-
+            The authorization response as a self-submitting HTML form
+            (`response_mode=form_post`).
+          content:
+            text/html:
+              schema:
+                type: string
         '302':
           description: Redirect to the interaction UI, or to redirect_uri with a code.
           headers:
@@ -8591,7 +8630,10 @@ paths:
                   type: boolean
       responses:
         '200':
-          description: Redirect target.
+          description: >-
+            Where to send the user-agent next: `redirect_to` for the usual
+            response modes, or `form_post` when the client asked for that mode,
+            in which case the page submits the form instead of navigating.
           content:
             application/json:
               schema:
@@ -8600,6 +8642,8 @@ paths:
                   redirect_to:
                     type: string
                     maxLength: 2048
+                  form_post:
+                    $ref: '#/components/schemas/FormPostResponse'
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -8636,7 +8680,10 @@ paths:
                   maxLength: 1024
       responses:
         '200':
-          description: Redirect target.
+          description: >-
+            Where to send the user-agent next: `redirect_to` for the usual
+            response modes, or `form_post` when the client asked for that mode,
+            in which case the page submits the form instead of navigating.
           content:
             application/json:
               schema:
@@ -8645,6 +8692,8 @@ paths:
                   redirect_to:
                     type: string
                     maxLength: 2048
+                  form_post:
+                    $ref: '#/components/schemas/FormPostResponse'
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime

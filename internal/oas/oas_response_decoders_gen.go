@@ -3831,8 +3831,27 @@ func decodeGetMgmtV1ProjectsByProjectIdFeaturesResponse(resp *http.Response) (re
 	return res, errors.Wrap(defRes, "error")
 }
 
-func decodeGetOauth2AuthorizeResponse(resp *http.Response) (res *GetOauth2AuthorizeFound, _ error) {
+func decodeGetOauth2AuthorizeResponse(resp *http.Response) (res GetOauth2AuthorizeRes, _ error) {
 	switch resp.StatusCode {
+	case 200:
+		// Code 200.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "text/html":
+			reader := resp.Body
+			b, err := io.ReadAll(reader)
+			if err != nil {
+				return res, err
+			}
+
+			response := GetOauth2AuthorizeOK{Data: bytes.NewReader(b)}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	case 302:
 		// Code 302.
 		var wrapper GetOauth2AuthorizeFound

@@ -4,3 +4,7 @@ package oas
 type GetMgmtV1ProjectsByProjectIdConfigExportRes interface {
 	getMgmtV1ProjectsByProjectIdConfigExportRes()
 }
+
+type GetOauth2AuthorizeRes interface {
+	getOauth2AuthorizeRes()
+}

@@ -635,31 +635,52 @@ func encodeGetMgmtV1ProjectsByProjectIdFeaturesResponse(response GetMgmtV1Projec
 	return nil
 }
 
-func encodeGetOauth2AuthorizeResponse(response *GetOauth2AuthorizeFound, w http.ResponseWriter, span trace.Span) error {
-	w.Header().Set("Access-Control-Expose-Headers", "Location")
-	// Encoding response headers.
-	{
-		h := uri.NewHeaderEncoder(w.Header())
-		// Encode "Location" header.
+func encodeGetOauth2AuthorizeResponse(response GetOauth2AuthorizeRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *GetOauth2AuthorizeOK:
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(200)
+		span.SetStatus(codes.Ok, http.StatusText(200))
+
+		writer := w
+		if closer, ok := response.Data.(io.Closer); ok {
+			defer closer.Close()
+		}
+		if _, err := io.Copy(writer, response); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *GetOauth2AuthorizeFound:
+		w.Header().Set("Access-Control-Expose-Headers", "Location")
+		// Encoding response headers.
 		{
-			cfg := uri.HeaderParameterEncodingConfig{
-				Name:    "Location",
-				Explode: false,
-			}
-			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-				if val, ok := response.Location.Get(); ok {
-					return e.EncodeValue(conv.URLToString(val))
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Location" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Location",
+					Explode: false,
 				}
-				return nil
-			}); err != nil {
-				return errors.Wrap(err, "encode Location header")
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					if val, ok := response.Location.Get(); ok {
+						return e.EncodeValue(conv.URLToString(val))
+					}
+					return nil
+				}); err != nil {
+					return errors.Wrap(err, "encode Location header")
+				}
 			}
 		}
-	}
-	w.WriteHeader(302)
-	span.SetStatus(codes.Ok, http.StatusText(302))
+		w.WriteHeader(302)
+		span.SetStatus(codes.Ok, http.StatusText(302))
 
-	return nil
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
 }
 
 func encodeGetOauth2LogoutResponse(response *GetOauth2LogoutFound, w http.ResponseWriter, span trace.Span) error {

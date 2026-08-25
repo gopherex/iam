@@ -1482,6 +1482,31 @@ func (s *FlowSubmitRequestPayload) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *FormPostResponse) SetFake() {
+	{
+		{
+			s.Action = "string"
+		}
+	}
+	{
+		{
+			s.Fields.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *FormPostResponseFields) SetFake() {
+	var (
+		elem string
+		m    map[string]string = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
+	}
+}
+
+// SetFake set fake values.
 func (s *GetMgmtV1ProjectsByProjectIdAdminTokensOK) SetFake() {
 	var (
 		elem jx.Raw
@@ -3557,6 +3582,15 @@ func (s *OptFlowError) SetFake() {
 // SetFake set fake values.
 func (s *OptFlowSubmitRequestPayload) SetFake() {
 	var elem FlowSubmitRequestPayload
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptFormPostResponse) SetFake() {
+	var elem FormPostResponse
 	{
 		elem.SetFake()
 	}
@@ -6193,6 +6227,11 @@ func (s *PostV1OauthInteractionByInteractionIdConsentOK) SetFake() {
 			s.RedirectTo.SetFake()
 		}
 	}
+	{
+		{
+			s.FormPost.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.
@@ -6239,6 +6278,11 @@ func (s *PostV1OauthInteractionByInteractionIdRejectOK) SetFake() {
 	{
 		{
 			s.RedirectTo.SetFake()
+		}
+	}
+	{
+		{
+			s.FormPost.SetFake()
 		}
 	}
 }

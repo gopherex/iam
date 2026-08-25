@@ -41,6 +41,7 @@
 | OIDC Back-Channel Logout 1.0 | [oidc-backchannel-logout.md](oidc-backchannel-logout.md) | SHOULD | 23b |
 | OIDC Front-Channel Logout 1.0 | [oidc-frontchannel-logout.md](oidc-frontchannel-logout.md) | OPT | 23 |
 | OIDC Session Management 1.0 | [oidc-session.md](oidc-session.md) | OPT | 13, 23 |
+| OAuth 2.0 Form Post Response Mode | [oidc-formpost.md](oidc-formpost.md) | SHOULD | 23 |
 
 ## JOSE / токены
 

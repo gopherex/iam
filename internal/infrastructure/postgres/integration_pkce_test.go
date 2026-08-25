@@ -83,14 +83,14 @@ func newPKCEFixture(t *testing.T, ctx context.Context, clientType string) pkceFi
 func (f pkceFixture) authorizeAndConsent(t *testing.T, ctx context.Context, challenge, method string) string {
 	t.Helper()
 
-	redirect, err := f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+	redirect, err := redirectOf(f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
 		ClientID:            f.clientID,
 		ResponseType:        "code",
 		RedirectURI:         f.redirectURI,
 		Scope:               "openid",
 		CodeChallenge:       challenge,
 		CodeChallengeMethod: method,
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Authorize: %v", err)
 	}
@@ -109,13 +109,13 @@ func (f pkceFixture) authorizeAndConsent(t *testing.T, ctx context.Context, chal
 		t.Fatalf("CompleteLogin: %v", err)
 	}
 
-	consentRedirect, err := f.grants.Consent(ctx, domain.OIDCConsentCmd{
+	consentRedirect, err := redirectOf(f.grants.Consent(ctx, domain.OIDCConsentCmd{
 		InteractionID: interactionID,
 		AccountID:     f.userID,
 		SessionID:     sessionID,
 		GrantedScopes: []string{"openid"},
 		Remember:      true,
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Consent: %v", err)
 	}
@@ -206,13 +206,13 @@ func TestPKCEAuthorizeRequiresChallengeForPublicClients(t *testing.T) {
 	ctx := context.Background()
 	f := newPKCEFixture(t, ctx, "spa")
 
-	redirect, err := f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+	redirect, err := redirectOf(f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
 		ClientID:     f.clientID,
 		ResponseType: "code",
 		RedirectURI:  f.redirectURI,
 		Scope:        "openid",
 		State:        "st-1",
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Authorize: %v", err)
 	}
@@ -419,7 +419,7 @@ func TestOIDCAuthorizationResponseCarriesState(t *testing.T) {
 
 	const state = "opaque-client-state-123"
 
-	redirect, err := f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+	redirect, err := redirectOf(f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
 		ClientID:            f.clientID,
 		ResponseType:        "code",
 		RedirectURI:         f.redirectURI,
@@ -427,7 +427,7 @@ func TestOIDCAuthorizationResponseCarriesState(t *testing.T) {
 		State:               state,
 		CodeChallenge:       challengeFor(pkceVerifier),
 		CodeChallengeMethod: "S256",
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Authorize: %v", err)
 	}
@@ -439,12 +439,12 @@ func TestOIDCAuthorizationResponseCarriesState(t *testing.T) {
 		t.Fatalf("CompleteLogin: %v", err)
 	}
 
-	consent, err := f.grants.Consent(ctx, domain.OIDCConsentCmd{
+	consent, err := redirectOf(f.grants.Consent(ctx, domain.OIDCConsentCmd{
 		InteractionID: interactionID,
 		AccountID:     f.userID,
 		SessionID:     sessionID,
 		GrantedScopes: []string{"openid"},
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Consent: %v", err)
 	}

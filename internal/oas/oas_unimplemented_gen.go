@@ -407,7 +407,7 @@ func (UnimplementedHandler) GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Con
 // (RFC 9126 §4).
 //
 // GET /oauth2/authorize
-func (UnimplementedHandler) GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams) (r *GetOauth2AuthorizeFound, _ error) {
+func (UnimplementedHandler) GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams) (r GetOauth2AuthorizeRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

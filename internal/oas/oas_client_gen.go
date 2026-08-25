@@ -1643,7 +1643,7 @@ type OIDCProviderInvoker interface {
 	// (RFC 9126 §4).
 	//
 	// GET /oauth2/authorize
-	GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, options ...RequestOption) (*GetOauth2AuthorizeFound, error)
+	GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, options ...RequestOption) (GetOauth2AuthorizeRes, error)
 	// GetOauth2Logout invokes getOauth2Logout operation.
 	//
 	// Ends the IAM session named by `id_token_hint` — the session itself, its refresh tokens and the
@@ -9436,12 +9436,12 @@ func (c *Client) sendGetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, p
 // (RFC 9126 §4).
 //
 // GET /oauth2/authorize
-func (c *Client) GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, options ...RequestOption) (*GetOauth2AuthorizeFound, error) {
+func (c *Client) GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, options ...RequestOption) (GetOauth2AuthorizeRes, error) {
 	res, err := c.sendGetOauth2Authorize(ctx, params, options...)
 	return res, err
 }
 
-func (c *Client) sendGetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, requestOptions ...RequestOption) (res *GetOauth2AuthorizeFound, err error) {
+func (c *Client) sendGetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams, requestOptions ...RequestOption) (res GetOauth2AuthorizeRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getOauth2Authorize"),
 		semconv.HTTPRequestMethodKey.String("GET"),

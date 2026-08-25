@@ -22,14 +22,14 @@ import (
 func (f pkceFixture) startInteraction(t *testing.T, ctx context.Context) string {
 	t.Helper()
 
-	redirect, err := f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+	redirect, err := redirectOf(f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
 		ClientID:            f.clientID,
 		ResponseType:        "code",
 		RedirectURI:         f.redirectURI,
 		Scope:               "openid",
 		CodeChallenge:       challengeFor(pkceVerifier),
 		CodeChallengeMethod: "S256",
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Authorize: %v", err)
 	}
@@ -125,12 +125,12 @@ func TestInteractionLoginClaimsAndLocks(t *testing.T) {
 	})
 
 	t.Run("owning_session_consents", func(t *testing.T) {
-		redirect, err := f.grants.Consent(ctx, domain.OIDCConsentCmd{
+		redirect, err := redirectOf(f.grants.Consent(ctx, domain.OIDCConsentCmd{
 			InteractionID: interactionID,
 			AccountID:     f.userID,
 			SessionID:     victimSession,
 			GrantedScopes: []string{"openid"},
-		})
+		}))
 		if err != nil {
 			t.Fatalf("consent from the owning session: %v", err)
 		}

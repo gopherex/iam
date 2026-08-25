@@ -148,6 +148,25 @@ export function InteractionPage() {
     window.location.assign(url);
   }
 
+  // response_mode=form_post: the provider hands us the response as form fields
+  // instead of a URL, because the parameters must travel in a POST body rather
+  // than in the address bar. Build the form and submit it.
+  function submitFormPost(post: { action: string; fields: Record<string, string> }) {
+    setScreen('redirecting');
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = post.action;
+    for (const [name, value] of Object.entries(post.fields)) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    }
+    document.body.appendChild(form);
+    form.submit();
+  }
+
   async function decide(allow: boolean) {
     if (!oidc) return;
     setBusy(true);
@@ -161,9 +180,15 @@ export function InteractionPage() {
 
       if (error) throw error;
 
-      const to = (data as { redirect_to?: string } | undefined)?.redirect_to;
-      if (to) {
-        leave(to);
+      const outcome = data as
+        | { redirect_to?: string; form_post?: { action: string; fields: Record<string, string> } }
+        | undefined;
+      if (outcome?.form_post) {
+        submitFormPost(outcome.form_post);
+        return;
+      }
+      if (outcome?.redirect_to) {
+        leave(outcome.redirect_to);
         return;
       }
       setErrorKey(allow ? 'provider.error.generic' : 'provider.error.denied');

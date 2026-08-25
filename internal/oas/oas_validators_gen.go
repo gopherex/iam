@@ -4954,6 +4954,86 @@ func (s *FlowSubmitRequest) Validate() error {
 	return nil
 }
 
+func (s *FormPostResponse) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     0,
+			MinLengthSet:  false,
+			MaxLength:     2048,
+			MaxLengthSet:  true,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.Action)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "action",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Fields.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "fields",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s FormPostResponseFields) Validate() error {
+	var failures []validate.FieldError
+	for key, elem := range s {
+		if err := func() error {
+			if err := (validate.String{
+				MinLength:     0,
+				MinLengthSet:  false,
+				MaxLength:     4096,
+				MaxLengthSet:  true,
+				Email:         false,
+				Hostname:      false,
+				Regex:         nil,
+				MinNumeric:    0,
+				MinNumericSet: false,
+				MaxNumeric:    0,
+				MaxNumericSet: false,
+			}).Validate(string(elem)); err != nil {
+				return errors.Wrap(err, "string")
+			}
+			return nil
+		}(); err != nil {
+			failures = append(failures, validate.FieldError{
+				Name:  key,
+				Error: err,
+			})
+		}
+	}
+
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -15306,6 +15386,24 @@ func (s *PostV1OauthInteractionByInteractionIdConsentOK) Validate() error {
 			Error: err,
 		})
 	}
+	if err := func() error {
+		if value, ok := s.FormPost.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "form_post",
+			Error: err,
+		})
+	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -15460,6 +15558,24 @@ func (s *PostV1OauthInteractionByInteractionIdRejectOK) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "redirect_to",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.FormPost.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "form_post",
 			Error: err,
 		})
 	}

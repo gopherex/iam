@@ -7232,6 +7232,173 @@ func (s *FlowSubmitRequestPayload) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *FormPostResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *FormPostResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("action")
+		e.Str(s.Action)
+	}
+	{
+		e.FieldStart("fields")
+		s.Fields.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfFormPostResponse = [2]string{
+	0: "action",
+	1: "fields",
+}
+
+// Decode decodes FormPostResponse from json.
+func (s *FormPostResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FormPostResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "action":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.Action = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"action\"")
+			}
+		case "fields":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				if err := s.Fields.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"fields\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FormPostResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfFormPostResponse) {
+					name = jsonFieldsNameOfFormPostResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *FormPostResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FormPostResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s FormPostResponseFields) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields implements json.Marshaler.
+func (s FormPostResponseFields) encodeFields(e *jx.Encoder) {
+	for k, elem := range s {
+		e.FieldStart(k)
+
+		e.Str(elem)
+	}
+}
+
+// Decode decodes FormPostResponseFields from json.
+func (s *FormPostResponseFields) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FormPostResponseFields to nil")
+	}
+	m := s.init()
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		var elem string
+		if err := func() error {
+			v, err := d.Str()
+			elem = string(v)
+			if err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return errors.Wrapf(err, "decode field %q", k)
+		}
+		m[string(k)] = elem
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FormPostResponseFields")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s FormPostResponseFields) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FormPostResponseFields) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s GetMgmtV1ProjectsByProjectIdAdminTokensOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -17230,6 +17397,39 @@ func (s OptFlowSubmitRequestPayload) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptFlowSubmitRequestPayload) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FormPostResponse as json.
+func (o OptFormPostResponse) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes FormPostResponse from json.
+func (o *OptFormPostResponse) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptFormPostResponse to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptFormPostResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptFormPostResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -31572,10 +31772,17 @@ func (s *PostV1OauthInteractionByInteractionIdConsentOK) encodeFields(e *jx.Enco
 			s.RedirectTo.Encode(e)
 		}
 	}
+	{
+		if s.FormPost.Set {
+			e.FieldStart("form_post")
+			s.FormPost.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfPostV1OauthInteractionByInteractionIdConsentOK = [1]string{
+var jsonFieldsNameOfPostV1OauthInteractionByInteractionIdConsentOK = [2]string{
 	0: "redirect_to",
+	1: "form_post",
 }
 
 // Decode decodes PostV1OauthInteractionByInteractionIdConsentOK from json.
@@ -31595,6 +31802,16 @@ func (s *PostV1OauthInteractionByInteractionIdConsentOK) Decode(d *jx.Decoder) e
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"redirect_to\"")
+			}
+		case "form_post":
+			if err := func() error {
+				s.FormPost.Reset()
+				if err := s.FormPost.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"form_post\"")
 			}
 		default:
 			return d.Skip()
@@ -31854,10 +32071,17 @@ func (s *PostV1OauthInteractionByInteractionIdRejectOK) encodeFields(e *jx.Encod
 			s.RedirectTo.Encode(e)
 		}
 	}
+	{
+		if s.FormPost.Set {
+			e.FieldStart("form_post")
+			s.FormPost.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfPostV1OauthInteractionByInteractionIdRejectOK = [1]string{
+var jsonFieldsNameOfPostV1OauthInteractionByInteractionIdRejectOK = [2]string{
 	0: "redirect_to",
+	1: "form_post",
 }
 
 // Decode decodes PostV1OauthInteractionByInteractionIdRejectOK from json.
@@ -31877,6 +32101,16 @@ func (s *PostV1OauthInteractionByInteractionIdRejectOK) Decode(d *jx.Decoder) er
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"redirect_to\"")
+			}
+		case "form_post":
+			if err := func() error {
+				s.FormPost.Reset()
+				if err := s.FormPost.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"form_post\"")
 			}
 		default:
 			return d.Skip()

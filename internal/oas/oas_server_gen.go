@@ -1568,7 +1568,7 @@ type OIDCProviderHandler interface {
 	// (RFC 9126 §4).
 	//
 	// GET /oauth2/authorize
-	GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams) (*GetOauth2AuthorizeFound, error)
+	GetOauth2Authorize(ctx context.Context, params GetOauth2AuthorizeParams) (GetOauth2AuthorizeRes, error)
 	// GetOauth2Logout implements getOauth2Logout operation.
 	//
 	// Ends the IAM session named by `id_token_hint` — the session itself, its refresh tokens and the

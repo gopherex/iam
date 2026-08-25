@@ -320,3 +320,14 @@ func e2eWantStatus(t *testing.T, r e2eResp, want int) {
 		t.Fatalf("status = %d, want %d\nbody: %s", r.Status, want, r.Body)
 	}
 }
+
+// redirectOf unwraps an authorization result to the URL the user-agent is sent
+// to. The result can instead carry a form to post (response_mode=form_post);
+// tests that care about that read the result directly.
+func redirectOf(res *domain.OIDCAuthorizeResult, err error) (string, error) {
+	if err != nil || res == nil {
+		return "", err
+	}
+
+	return res.RedirectTo, nil
+}

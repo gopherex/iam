@@ -7769,8 +7769,12 @@ type GetOauth2AuthorizeParams struct {
 	// re-authenticated even if it is otherwise valid; the resulting id_token's `auth_time` says when
 	// that happened.
 	MaxAge OptInt `json:",omitempty,omitzero"`
-	// How the authorization response is returned: `query` (default) or `fragment`. Anything else is
-	// `unsupported_response_mode`.
+	// How the authorization response is returned: `query` (default), `fragment`, or `form_post`.
+	// Anything else is `unsupported_response_mode`.
+	// `form_post` answers with a 200 HTML document containing a self-submitting form that POSTs the
+	// response parameters to the client's registered redirect_uri, so they never appear in the address
+	// bar, in browser history, or in a Referer header. The 302 response is still used for the redirect
+	// to the interaction UI, which is not the authorization response.
 	ResponseMode OptString `json:",omitempty,omitzero"`
 	Prompt       OptString `json:",omitempty,omitzero"`
 	// A signed request object (RFC 9101): the whole authorization request as a JWT the client signed,

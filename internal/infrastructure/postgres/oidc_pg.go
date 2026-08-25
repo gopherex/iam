@@ -378,55 +378,29 @@ func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, account
 // unclaimed interaction is refused outright — otherwise anyone holding the
 // interaction id could mint a code for their own account and hand the client a
 // session that is not the user's.
-func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (string, error) {
+// Consent turns an approved interaction into an authorization response. Like
+// Authorize, the response mode decides only how the parameters travel: in
+// form_post mode the hosted UI is handed a form to submit rather than a URL to
+// follow.
+func (a *pgOIDCGrants) Consent(
+	ctx context.Context, cmd domain.OIDCConsentCmd,
+) (*domain.OIDCAuthorizeResult, error) {
 	if cmd.SessionID == "" || cmd.AccountID == "" {
-		return "", domain.ErrForbidden
+		return nil, domain.ErrForbidden
 	}
 
-	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
-		row, err := models.FindIamInteraction(ctx, a.db.Bobx(), cmd.InteractionID)
+	mode := ""
+
+	target, err := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
+		row, env, err := a.claimedInteraction(ctx, cmd)
 		if err != nil {
-			return "", translatePgErr("interaction", err)
-		}
-
-		if oidcInteractionExpired(row) {
-			return "", domain.ErrFlowExpired
-		}
-
-		if row.SessionID.GetOrZero() != cmd.SessionID {
-			return "", domain.ErrForbidden
-		}
-
-		var env oidcInteractionEnvelope
-		if err := unmarshal(row.Data, &env); err != nil {
 			return "", err
-		}
-
-		if env.AccountID == "" || env.AccountID != cmd.AccountID {
-			return "", domain.ErrForbidden
 		}
 
 		in := env.Interaction
 
 		if cmd.Remember && in.ClientID != "" {
-			grant := domain.Grant{
-				ID:        newUUID(),
-				AccountID: cmd.AccountID,
-				ClientID:  in.ClientID,
-				Scopes:    cmd.GrantedScopes,
-				GrantedAt: nowUTC(),
-			}
-			if err := a.persistGrant(ctx, row.ProjectID, &grant); err != nil {
-				return "", err
-			}
-
-			if err := a.emitter.Emit(ctx, domain.Event{
-				Type:        "oidc.grant.created",
-				ProjectID:   row.ProjectID,
-				Environment: "",
-				AggregateID: grant.ID,
-				Payload:     &grant,
-			}); err != nil {
+			if err := a.rememberGrant(ctx, row.ProjectID, in.ClientID, cmd); err != nil {
 				return "", err
 			}
 		}
@@ -446,46 +420,123 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			return "", err
 		}
 
-		// Mint a one-time authorization code (opaque, sha256-hashed at rest, so
-		// it stays revocable) bound to the consenting user/client/scopes. The
-		// Token authorization_code branch resolves the principal from the
-		// user_id/client_id columns and the scopes from the data envelope, then
-		// mints+signs the access/id tokens with our key.
-		scopes := cmd.GrantedScopes
-		if len(scopes) == 0 {
-			scopes = in.Scopes
-		}
+		mode = in.ResponseMode
 
-		code, authCodeRow, err := a.issueAuthorizationCode(ctx, authCodeRequest{
-			projectID:   row.ProjectID,
-			environment: row.Environment,
-			accountID:   cmd.AccountID,
-			sessionID:   cmd.SessionID,
-			authTime:    env.AuthTime,
-			interaction: in,
-			scopes:      scopes,
-		})
-		if err != nil {
-			return "", err
-		}
+		return a.consentedCode(ctx, cmd, row, env)
+	})
+	if err != nil {
+		return nil, err
+	}
 
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "oidc.token.issued",
-			ProjectID:   row.ProjectID,
-			Environment: "",
-			AggregateID: authCodeRow.ID,
-			Payload: map[string]any{
-				"grant_type": "authorization_code",
-				"client_id":  in.ClientID,
-				"account_id": cmd.AccountID,
-				"scopes":     scopes,
-			},
-		}); err != nil {
-			return "", err
-		}
+	return oidcAuthorizeResult(target, mode), nil
+}
 
-		return oidcAuthorizationResponse(in.RedirectURI, code, in.State, in.ResponseMode,
-			oidcIssuer(a.db.PublicURL, row.ProjectID, row.Environment)), nil
+// consentedCode mints the authorization code a consent decided on and renders
+// the response that carries it. The code is opaque and sha256-hashed at rest,
+// so it stays revocable; the token endpoint resolves the principal from the
+// row's columns and the scopes from its envelope. Assumes an ambient
+// transaction.
+func (a *pgOIDCGrants) consentedCode(
+	ctx context.Context,
+	cmd domain.OIDCConsentCmd,
+	row *models.IamInteraction,
+	env oidcInteractionEnvelope,
+) (string, error) {
+	in := env.Interaction
+
+	scopes := cmd.GrantedScopes
+	if len(scopes) == 0 {
+		scopes = in.Scopes
+	}
+
+	code, authCodeRow, err := a.issueAuthorizationCode(ctx, authCodeRequest{
+		projectID:   row.ProjectID,
+		environment: row.Environment,
+		accountID:   cmd.AccountID,
+		sessionID:   cmd.SessionID,
+		authTime:    env.AuthTime,
+		interaction: in,
+		scopes:      scopes,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        eventTokenIssued,
+		ProjectID:   row.ProjectID,
+		Environment: "",
+		AggregateID: authCodeRow.ID,
+		Payload: map[string]any{
+			payloadGrantType: string(oidc.GrantTypeCode),
+			claimClientID:    in.ClientID,
+			payloadAccountID: cmd.AccountID,
+			payloadScopes:    scopes,
+		},
+	}); err != nil {
+		return "", err
+	}
+
+	return oidcAuthorizationResponse(in.RedirectURI, code, in.State, in.ResponseMode,
+		oidcIssuer(a.db.PublicURL, row.ProjectID, row.Environment)), nil
+}
+
+// claimedInteraction loads the interaction a consent refers to and checks that
+// the caller is the one who claimed it. Both the session and the account have to
+// match: the interaction handle travels in a URL, so possession of it is not on
+// its own permission to decide the request.
+func (a *pgOIDCGrants) claimedInteraction(
+	ctx context.Context, cmd domain.OIDCConsentCmd,
+) (*models.IamInteraction, oidcInteractionEnvelope, error) {
+	var env oidcInteractionEnvelope
+
+	row, err := models.FindIamInteraction(ctx, a.db.Bobx(), cmd.InteractionID)
+	if err != nil {
+		return nil, env, translatePgErr("interaction", err)
+	}
+
+	if oidcInteractionExpired(row) {
+		return nil, env, domain.ErrFlowExpired
+	}
+
+	if row.SessionID.GetOrZero() != cmd.SessionID {
+		return nil, env, domain.ErrForbidden
+	}
+
+	if err := unmarshal(row.Data, &env); err != nil {
+		return nil, env, err
+	}
+
+	if env.AccountID == "" || env.AccountID != cmd.AccountID {
+		return nil, env, domain.ErrForbidden
+	}
+
+	return row, env, nil
+}
+
+// rememberGrant records a consent the user asked to be remembered, so the next
+// authorization request from the same client is answered without a screen.
+// Assumes an ambient transaction.
+func (a *pgOIDCGrants) rememberGrant(
+	ctx context.Context, projectID, clientID string, cmd domain.OIDCConsentCmd,
+) error {
+	grant := domain.Grant{
+		ID:        newUUID(),
+		AccountID: cmd.AccountID,
+		ClientID:  clientID,
+		Scopes:    cmd.GrantedScopes,
+		GrantedAt: nowUTC(),
+	}
+	if err := a.persistGrant(ctx, projectID, &grant); err != nil {
+		return err
+	}
+
+	return a.emitter.Emit(ctx, domain.Event{
+		Type:        "oidc.grant.created",
+		ProjectID:   projectID,
+		Environment: "",
+		AggregateID: grant.ID,
+		Payload:     &grant,
 	})
 }
 
@@ -586,6 +637,8 @@ func oidcAuthorizationResponse(redirectURI, code, state, mode, issuer string) st
 	if mode == oidcResponseModeFragment {
 		return redirectURI + "#" + params.Encode()
 	}
+	// form_post is split back apart by oidcFormPostOf, which reads the query —
+	// so build one here and let the caller move it into a body.
 
 	sep := "?"
 	if strings.Contains(redirectURI, "?") {
@@ -597,8 +650,12 @@ func oidcAuthorizationResponse(redirectURI, code, state, mode, issuer string) st
 
 // Reject cancels the interaction and returns the redirect carrying the OAuth2
 // error back to the client. Public operation (no session binding).
-func (a *pgOIDCGrants) Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (string, error) {
-	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
+func (a *pgOIDCGrants) Reject(
+	ctx context.Context, cmd domain.OIDCRejectCmd,
+) (*domain.OIDCAuthorizeResult, error) {
+	mode := ""
+
+	target, err := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
 		row, err := models.FindIamInteraction(ctx, a.db.Bobx(), cmd.InteractionID)
 		if err != nil {
 			return "", translatePgErr("interaction", err)
@@ -642,9 +699,16 @@ func (a *pgOIDCGrants) Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (st
 			errCode = "access_denied"
 		}
 
+		mode = in.ResponseMode
+
 		return oidcErrorRedirect(in.RedirectURI, errCode, cmd.ErrorDescription, in.State,
 			oidcIssuer(a.db.PublicURL, row.ProjectID, row.Environment)), nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return oidcAuthorizeResult(target, mode), nil
 }
 
 // ===== grants =====
@@ -963,12 +1027,34 @@ const (
 	oidcPromptSelectAccount = "select_account"
 )
 
+// Event type and payload keys shared by the paths that issue tokens. They are
+// part of the webhook contract, so they are named once rather than retyped.
+const (
+	// #nosec G101 -- an event type name, not a credential.
+	eventTokenIssued = "oidc.token.issued"
+	payloadGrantType = "grant_type"
+	payloadAccountID = "account_id"
+	payloadScopes    = "scopes"
+)
+
 // oidcResponseModeQuery / oidcResponseModeFragment are the response modes the
 // discovery document advertises.
 const (
 	oidcResponseModeQuery    = "query"
 	oidcResponseModeFragment = "fragment"
+	oidcResponseModeFormPost = "form_post"
 )
+
+// oidcResponseModeSupported reports whether a requested response mode is one we
+// can actually deliver. An empty value means the default, `query`.
+func oidcResponseModeSupported(mode string) bool {
+	switch mode {
+	case "", oidcResponseModeQuery, oidcResponseModeFragment, oidcResponseModeFormPost:
+		return true
+	default:
+		return false
+	}
+}
 
 // authorizeIntent is what the authorization request asks us to do about the
 // user's existing session, once prompt and max_age have been read.
@@ -1161,16 +1247,46 @@ func (a *pgOIDCGrants) silentFailure(ctx context.Context, cmd domain.OIDCAuthori
 // become a redirect carrying `error` and the caller's `state`. Nothing is
 // persisted until the client is known, so an unknown client_id can no longer
 // mint interaction rows.
-func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCmd) (string, error) {
-	// A pushed request (RFC 9126) supplies the whole authorization request. Only
-	// client_id is read from the query alongside it; everything else is ignored,
-	// so a query parameter cannot override what the client lodged over an
-	// authenticated back channel.
-	// A signed request object replaces the query parameters it carries (RFC 9101).
+// Authorize answers an authorization request. It resolves the request down to a
+// single URL and then, in form_post mode, turns the response destined for the
+// client into a form instead. The split is deliberate: every path below builds
+// the same parameters either way, so the response mode changes only how they
+// travel, never what they say.
+func (a *pgOIDCGrants) Authorize(
+	ctx context.Context, cmd domain.OIDCAuthorizeCmd,
+) (*domain.OIDCAuthorizeResult, error) {
+	// Resolve first: a pushed request (RFC 9126) or a signed request object
+	// (RFC 9101) replaces the query parameters, and the response mode is one of
+	// the things they replace — so the mode that decides how the response
+	// travels has to be read after that, not before.
+	resolved, err := a.resolveAuthorizeRequest(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	target, err := a.authorize(ctx, resolved)
+	if err != nil {
+		return nil, err
+	}
+
+	return oidcAuthorizeResult(target, resolved.ResponseMode), nil
+}
+
+// resolveAuthorizeRequest applies the two mechanisms that can supply an
+// authorization request from somewhere other than the query string.
+//
+// A pushed request supplies the whole request: only client_id is read from the
+// query alongside it, so a query parameter cannot override what the client
+// lodged over an authenticated back channel. A signed request object replaces
+// the parameters it carries, so nothing in the browser's URL can alter what the
+// client asked for.
+func (a *pgOIDCGrants) resolveAuthorizeRequest(
+	ctx context.Context, cmd domain.OIDCAuthorizeCmd,
+) (domain.OIDCAuthorizeCmd, error) {
 	if cmd.Request != "" {
 		resolved, err := a.consumeRequestObject(ctx, cmd)
 		if err != nil {
-			return "", err
+			return cmd, err
 		}
 
 		cmd = resolved
@@ -1179,12 +1295,94 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 	if cmd.RequestURI != "" {
 		pushed, err := a.consumePushedRequest(ctx, cmd.RequestURI, cmd.ClientID)
 		if err != nil {
-			return "", err
+			return cmd, err
 		}
 
 		cmd = pushed
 	}
 
+	return cmd, nil
+}
+
+// oidcAuthorizeResult converts a resolved target into the result the API layer
+// renders. Only an absolute URL is a response to the client; the interaction
+// redirect is relative and stays a redirect whatever the client asked for.
+func oidcAuthorizeResult(target, mode string) *domain.OIDCAuthorizeResult {
+	if mode != oidcResponseModeFormPost || !oidcIsAbsoluteURL(target) {
+		return &domain.OIDCAuthorizeResult{RedirectTo: target}
+	}
+
+	post, ok := oidcFormPostOf(target)
+	if !ok {
+		return &domain.OIDCAuthorizeResult{RedirectTo: target}
+	}
+
+	return &domain.OIDCAuthorizeResult{FormPost: post}
+}
+
+// oidcIsAbsoluteURL distinguishes a client redirect_uri from the interaction
+// path we serve ourselves.
+func oidcIsAbsoluteURL(raw string) bool {
+	return strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://")
+}
+
+// oidcFormPostOf splits a response URL into the form the browser posts. The URL
+// was built in query mode, so its parameters are exactly the response
+// parameters — the form carries the same set, just in a body.
+func oidcFormPostOf(raw string) (*domain.OIDCFormPost, bool) {
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return nil, false
+	}
+
+	fields := make(map[string]string, len(parsed.Query()))
+	for key, values := range parsed.Query() {
+		if len(values) > 0 {
+			fields[key] = values[0]
+		}
+	}
+
+	parsed.RawQuery = ""
+	parsed.Fragment = ""
+
+	return &domain.OIDCFormPost{Action: parsed.String(), Fields: fields}, true
+}
+
+// authorizeRequestError checks everything about a request that can be decided
+// from the request itself, once the client and its redirect_uri are known. It
+// returns the OAuth2 error code and description to send back, or empty strings
+// when the request is well-formed.
+func authorizeRequestError(
+	app *domain.AppClient, cmd domain.OIDCAuthorizeCmd, scopes []string,
+) (string, string) {
+	if cmd.ResponseType != oidcResponseTypeCode {
+		return oidcErrUnsupportedResponseType, "only response_type=code is supported"
+	}
+
+	if len(scopes) == 0 {
+		return oidcErrInvalidRequest, "scope is required"
+	}
+
+	if errCode, desc := oidcCheckPKCERequest(app, cmd.CodeChallenge, cmd.CodeChallengeMethod); errCode != "" {
+		return errCode, desc
+	}
+
+	if bad, ok := authorizeScopesAllowed(app, scopes); !ok {
+		return "invalid_scope", "the client is not allowed the scope " + bad
+	}
+
+	if !oidcResponseModeSupported(cmd.ResponseMode) {
+		return "unsupported_response_mode",
+			"only query, fragment and form_post response modes are supported"
+	}
+
+	return "", ""
+}
+
+// authorize resolves a request whose parameters are already settled down to a
+// single URL: either the interaction UI, or the client's redirect_uri carrying
+// the response.
+func (a *pgOIDCGrants) authorize(ctx context.Context, cmd domain.OIDCAuthorizeCmd) (string, error) {
 	clientRow, app, err := a.resolveAuthorizeClient(ctx, cmd.ClientID)
 	if err != nil {
 		return "", err
@@ -1199,30 +1397,9 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 	// errors travel back to the client instead of being shown to the user.
 	issuer := oidcIssuer(a.db.PublicURL, clientRow.ProjectID, clientRow.Environment)
 
-	if cmd.ResponseType != oidcResponseTypeCode {
-		return oidcErrorRedirect(redirectURI, oidcErrUnsupportedResponseType,
-			"only response_type=code is supported", cmd.State, issuer), nil
-	}
-
 	scopes := splitScopes(cmd.Scope)
-	if len(scopes) == 0 {
-		return oidcErrorRedirect(redirectURI, oidcErrInvalidRequest,
-			"scope is required", cmd.State, issuer), nil
-	}
-
-	if errCode, desc := oidcCheckPKCERequest(app, cmd.CodeChallenge, cmd.CodeChallengeMethod); errCode != "" {
+	if errCode, desc := authorizeRequestError(app, cmd, scopes); errCode != "" {
 		return oidcErrorRedirect(redirectURI, errCode, desc, cmd.State, issuer), nil
-	}
-
-	if bad, ok := authorizeScopesAllowed(app, scopes); !ok {
-		return oidcErrorRedirect(redirectURI, "invalid_scope",
-			"the client is not allowed the scope "+bad, cmd.State, issuer), nil
-	}
-
-	if cmd.ResponseMode != "" &&
-		cmd.ResponseMode != oidcResponseModeQuery && cmd.ResponseMode != oidcResponseModeFragment {
-		return oidcErrorRedirect(redirectURI, "unsupported_response_mode",
-			"only query and fragment response modes are supported", cmd.State, issuer), nil
 	}
 
 	intent, promptErr := parseAuthorizePrompt(cmd.Prompt)
@@ -1251,6 +1428,20 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 		return oidcErrorRedirect(redirectURI, a.silentFailure(ctx, cmd), "", cmd.State, issuer), nil
 	}
 
+	return a.startInteraction(ctx, cmd, clientRow, redirectURI, scopes)
+}
+
+// startInteraction persists the pending authorization request and returns the
+// path the user-agent is sent to. Everything the token endpoint later checks —
+// PKCE, redirect_uri, nonce, state — is bound here, so the browser cannot alter
+// it between the screen and the code.
+func (a *pgOIDCGrants) startInteraction(
+	ctx context.Context,
+	cmd domain.OIDCAuthorizeCmd,
+	clientRow *models.IamAppClient,
+	redirectURI string,
+	scopes []string,
+) (string, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
 		in := domain.Interaction{
 			ID:          newUUID(),
@@ -2755,7 +2946,9 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 		DeviceAuthorizationEndpoint: root + "/oauth2/device_authorization",
 		EndSessionEndpoint:          root + "/oauth2/logout",
 		ResponseTypesSupported:      []string{oidcResponseTypeCode},
-		ResponseModesSupported:      []string{"query", "fragment"},
+		ResponseModesSupported: []string{
+			oidcResponseModeQuery, oidcResponseModeFragment, oidcResponseModeFormPost,
+		},
 		GrantTypesSupported: []oidc.GrantType{
 			oidc.GrantTypeCode, oidc.GrantTypeRefreshToken, oidc.GrantTypeDeviceCode,
 		},

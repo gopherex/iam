@@ -8719,7 +8719,7 @@ func (s *Server) handleGetOauth2AuthorizeRequest(args [0]string, argsEscaped boo
 
 	var rawBody []byte
 
-	var response *GetOauth2AuthorizeFound
+	var response GetOauth2AuthorizeRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -8788,7 +8788,7 @@ func (s *Server) handleGetOauth2AuthorizeRequest(args [0]string, argsEscaped boo
 		type (
 			Request  = struct{}
 			Params   = GetOauth2AuthorizeParams
-			Response = *GetOauth2AuthorizeFound
+			Response = GetOauth2AuthorizeRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,

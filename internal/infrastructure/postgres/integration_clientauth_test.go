@@ -299,14 +299,14 @@ func TestRequestObjectWinsOverTheQuery(t *testing.T) {
 	})
 
 	// The query says something else entirely; the object must win.
-	redirect, err := f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+	redirect, err := redirectOf(f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
 		ClientID:     f.clientID,
 		Request:      object,
 		ResponseType: "token",
 		RedirectURI:  "https://evil.example.net/cb",
 		Scope:        "openid groups",
 		State:        "from-the-query",
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Authorize with a request object: %v", err)
 	}

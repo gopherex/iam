@@ -10,6 +10,7 @@ package api
 
 import (
 	"context"
+	"html/template"
 	"net/url"
 	"strings"
 
@@ -27,16 +28,16 @@ type OIDCGrants interface {
 	CompleteLogin(ctx context.Context, interactionID, accountID, sessionID string) error
 	// Consent records the resource-owner's consent decision and returns the
 	// redirect target the user-agent should follow next.
-	Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (string, error)
+	Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (*domain.OIDCAuthorizeResult, error)
 	// Reject cancels the interaction and returns the redirect target carrying
 	// the OAuth2 error back to the client. It is a public operation.
-	Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (string, error)
+	Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (*domain.OIDCAuthorizeResult, error)
 	ListGrants(ctx context.Context, accountID string) ([]domain.Grant, error)
 	RevokeGrant(ctx context.Context, accountID, grantID string) error
 
 	// Authorize handles the front-channel authorization request and returns the
 	// redirect URL the user-agent must follow next. Public operation.
-	Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCmd) (string, error)
+	Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCmd) (*domain.OIDCAuthorizeResult, error)
 	// Logout ends the session named by the id_token_hint and returns where to
 	// send the browser, plus whether to clear its session cookies. Public.
 	Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (*domain.OIDCLogoutResult, error)
@@ -114,9 +115,11 @@ func (s *OIDCProviderService) DeleteV1OauthGrantsByGrantId(ctx context.Context, 
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *OIDCProviderService) GetOauth2Authorize(ctx context.Context, params oas.GetOauth2AuthorizeParams) (r *oas.GetOauth2AuthorizeFound, _ error) {
+func (s *OIDCProviderService) GetOauth2Authorize(
+	ctx context.Context, params oas.GetOauth2AuthorizeParams,
+) (oas.GetOauth2AuthorizeRes, error) {
 	// Public front-channel operation: the client is identified by client_id.
-	redirectTo, err := s.deps.Grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+	res, err := s.deps.Grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
 		ClientID:            params.ClientID,
 		ResponseType:        params.ResponseType.Or(""),
 		RedirectURI:         params.RedirectURI.Or(""),
@@ -135,7 +138,14 @@ func (s *OIDCProviderService) GetOauth2Authorize(ctx context.Context, params oas
 		return nil, err
 	}
 
-	return &oas.GetOauth2AuthorizeFound{Location: optURI(redirectTo)}, nil
+	// form_post answers with a document, not a redirect: the response parameters
+	// go in a POST body, so they never reach the address bar or the Referer of
+	// whatever the client renders next.
+	if res.FormPost != nil {
+		return &oas.GetOauth2AuthorizeOK{Data: strings.NewReader(renderFormPost(res.FormPost))}, nil
+	}
+
+	return &oas.GetOauth2AuthorizeFound{Location: optURI(res.RedirectTo)}, nil
 }
 
 func (s *OIDCProviderService) GetOauth2Logout(ctx context.Context, params oas.GetOauth2LogoutParams) (r *oas.GetOauth2LogoutFound, _ error) {
@@ -457,7 +467,7 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdConsent(ctx c
 		return nil, err
 	}
 
-	redirectTo, err := s.deps.Grants.Consent(ctx, domain.OIDCConsentCmd{
+	res, err := s.deps.Grants.Consent(ctx, domain.OIDCConsentCmd{
 		InteractionID: params.InteractionID,
 		AccountID:     p.AccountID,
 		SessionID:     p.SessionID,
@@ -468,9 +478,14 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdConsent(ctx c
 		return nil, err
 	}
 
-	return &oas.PostV1OauthInteractionByInteractionIdConsentOK{
-		RedirectTo: oas.NewOptString(redirectTo),
-	}, nil
+	out := &oas.PostV1OauthInteractionByInteractionIdConsentOK{
+		RedirectTo: oas.NewOptString(res.RedirectTo),
+	}
+	if res.FormPost != nil {
+		out.FormPost = oas.NewOptFormPostResponse(oasFormPost(res.FormPost))
+	}
+
+	return out, nil
 }
 
 func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, req oas.OptPostV1OauthInteractionByInteractionIdLoginReq, params oas.PostV1OauthInteractionByInteractionIdLoginParams) (*oas.PostV1OauthInteractionByInteractionIdLoginOK, error) {
@@ -493,14 +508,19 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdReject(ctx co
 		cmd.ErrorDescription = v.ErrorDescription.Or("")
 	}
 
-	redirectTo, err := s.deps.Grants.Reject(ctx, cmd)
+	res, err := s.deps.Grants.Reject(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return &oas.PostV1OauthInteractionByInteractionIdRejectOK{
-		RedirectTo: oas.NewOptString(redirectTo),
-	}, nil
+	out := &oas.PostV1OauthInteractionByInteractionIdRejectOK{
+		RedirectTo: oas.NewOptString(res.RedirectTo),
+	}
+	if res.FormPost != nil {
+		out.FormPost = oas.NewOptFormPostResponse(oasFormPost(res.FormPost))
+	}
+
+	return out, nil
 }
 
 // oasOIDCDevicePending maps a pending device authorization to its oas
@@ -695,4 +715,50 @@ func requireRegistrationOwner(ctx context.Context, clientID string) error {
 	}
 
 	return nil
+}
+
+// ----- form_post response mode -----
+
+// oasFormPost renders a form-post response onto the wire.
+func oasFormPost(post *domain.OIDCFormPost) oas.FormPostResponse {
+	fields := make(oas.FormPostResponseFields, len(post.Fields))
+	for name, value := range post.Fields {
+		fields[name] = value
+	}
+
+	return oas.FormPostResponse{Action: post.Action, Fields: fields}
+}
+
+// formPostTemplate is the page a form_post authorization response is delivered
+// as. It submits itself; the noscript button is the fallback for the small
+// number of user-agents that would otherwise strand the user on a blank page.
+const formPostTemplate = `<!DOCTYPE html>
+<html>
+<head><title>Submitting…</title></head>
+<body onload="document.forms[0].submit()">
+<form method="post" action="{{.Action}}">
+{{range $name, $value := .Fields}}<input type="hidden" name="{{$name}}" value="{{$value}}"/>
+{{end}}<noscript><button type="submit">Continue</button></noscript>
+</form>
+</body>
+</html>
+`
+
+// renderFormPost builds the self-submitting document. Every value is escaped by
+// html/template: the fields carry a state the client chose, and a client that
+// put markup in its own state must not end up executing it here.
+func renderFormPost(post *domain.OIDCFormPost) string {
+	doc, err := template.New("form_post").Parse(formPostTemplate)
+	if err != nil {
+		return ""
+	}
+
+	var out strings.Builder
+	if err := doc.Execute(&out, post); err != nil {
+		// Executing a fixed template over strings cannot fail in practice; if it
+		// somehow does, an empty document is safer than a partial one.
+		return ""
+	}
+
+	return out.String()
 }

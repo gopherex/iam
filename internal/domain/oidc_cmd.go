@@ -54,6 +54,27 @@ type OIDCAuthorizeCmd struct {
 	Request string
 }
 
+// OIDCFormPost is an authorization response delivered as an auto-submitting
+// HTML form (OAuth 2.0 Form Post Response Mode) instead of a redirect. The
+// response parameters travel in a POST body, so they never appear in the
+// browser's address bar, its history, or the Referer header of the page the
+// client renders next.
+type OIDCFormPost struct {
+	// Action is the client's registered redirect_uri, the form's target.
+	Action string
+	// Fields are the response parameters, posted as form fields.
+	Fields map[string]string
+}
+
+// OIDCAuthorizeResult is how an authorization request is answered: either the
+// user-agent is redirected somewhere (the interaction UI, or the client's
+// redirect_uri carrying the response), or the response is form-posted back.
+// Exactly one of the two is set.
+type OIDCAuthorizeResult struct {
+	RedirectTo string
+	FormPost   *OIDCFormPost
+}
+
 // OIDCClientRegistration is a client's metadata in the shape RFC 7591 defines.
 // It is deliberately its own type rather than AppClient: the registration API is
 // a public contract with standard field names, and letting the storage type

@@ -859,6 +859,32 @@ func TestFlowSubmitRequestPayload_EncodeDecode(t *testing.T) {
 	typ2 = make(FlowSubmitRequestPayload)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestFormPostResponse_EncodeDecode(t *testing.T) {
+	var typ FormPostResponse
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FormPostResponse
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestFormPostResponseFields_EncodeDecode(t *testing.T) {
+	var typ FormPostResponseFields
+	typ = make(FormPostResponseFields)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 FormPostResponseFields
+	typ2 = make(FormPostResponseFields)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestGetMgmtV1ProjectsByProjectIdAdminTokensOK_EncodeDecode(t *testing.T) {
 	var typ GetMgmtV1ProjectsByProjectIdAdminTokensOK
 	typ = make(GetMgmtV1ProjectsByProjectIdAdminTokensOK)

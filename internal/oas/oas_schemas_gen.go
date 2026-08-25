@@ -3677,6 +3677,50 @@ func (s *FlowSubmitRequestPayload) init() FlowSubmitRequestPayload {
 	return m
 }
 
+// An authorization response to be delivered as a self-submitting HTML form
+// (`response_mode=form_post`) instead of a redirect. POST every field in `fields` to `action` as
+// `application/x-www-form-urlencoded`. Present only when the client asked for `form_post`; otherwise
+// follow `redirect_to`.
+// Ref: #/components/schemas/FormPostResponse
+type FormPostResponse struct {
+	// The client's registered redirect_uri — the form's target.
+	Action string `json:"action"`
+	// The response parameters, posted as form fields.
+	Fields FormPostResponseFields `json:"fields"`
+}
+
+// GetAction returns the value of Action.
+func (s *FormPostResponse) GetAction() string {
+	return s.Action
+}
+
+// GetFields returns the value of Fields.
+func (s *FormPostResponse) GetFields() FormPostResponseFields {
+	return s.Fields
+}
+
+// SetAction sets the value of Action.
+func (s *FormPostResponse) SetAction(val string) {
+	s.Action = val
+}
+
+// SetFields sets the value of Fields.
+func (s *FormPostResponse) SetFields(val FormPostResponseFields) {
+	s.Fields = val
+}
+
+// The response parameters, posted as form fields.
+type FormPostResponseFields map[string]string
+
+func (s *FormPostResponseFields) init() FormPostResponseFields {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
 type GetMgmtV1ProjectsByProjectIdAdminTokensOK map[string]jx.Raw
 
 func (s *GetMgmtV1ProjectsByProjectIdAdminTokensOK) init() GetMgmtV1ProjectsByProjectIdAdminTokensOK {
@@ -3823,6 +3867,24 @@ func (s *GetOauth2AuthorizeFound) GetLocation() OptURI {
 func (s *GetOauth2AuthorizeFound) SetLocation(val OptURI) {
 	s.Location = val
 }
+
+func (*GetOauth2AuthorizeFound) getOauth2AuthorizeRes() {}
+
+type GetOauth2AuthorizeOK struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s GetOauth2AuthorizeOK) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+func (*GetOauth2AuthorizeOK) getOauth2AuthorizeRes() {}
 
 // GetOauth2LogoutFound is response for GetOauth2Logout operation.
 type GetOauth2LogoutFound struct {
@@ -8654,6 +8716,52 @@ func (o OptFlowSubmitRequestPayload) Get() (v FlowSubmitRequestPayload, ok bool)
 
 // Or returns value if set, or given parameter if does not.
 func (o OptFlowSubmitRequestPayload) Or(d FlowSubmitRequestPayload) FlowSubmitRequestPayload {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFormPostResponse returns new OptFormPostResponse with value set to v.
+func NewOptFormPostResponse(v FormPostResponse) OptFormPostResponse {
+	return OptFormPostResponse{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFormPostResponse is optional FormPostResponse.
+type OptFormPostResponse struct {
+	Value FormPostResponse
+	Set   bool
+}
+
+// IsSet returns true if OptFormPostResponse was set.
+func (o OptFormPostResponse) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFormPostResponse) Reset() {
+	var v FormPostResponse
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFormPostResponse) SetTo(v FormPostResponse) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFormPostResponse) Get() (v FormPostResponse, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFormPostResponse) Or(d FormPostResponse) FormPostResponse {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -16940,7 +17048,8 @@ func (s *PostV1DeviceDenyReq) SetUserCode(val string) {
 }
 
 type PostV1OauthInteractionByInteractionIdConsentOK struct {
-	RedirectTo OptString `json:"redirect_to"`
+	RedirectTo OptString           `json:"redirect_to"`
+	FormPost   OptFormPostResponse `json:"form_post"`
 }
 
 // GetRedirectTo returns the value of RedirectTo.
@@ -16948,9 +17057,19 @@ func (s *PostV1OauthInteractionByInteractionIdConsentOK) GetRedirectTo() OptStri
 	return s.RedirectTo
 }
 
+// GetFormPost returns the value of FormPost.
+func (s *PostV1OauthInteractionByInteractionIdConsentOK) GetFormPost() OptFormPostResponse {
+	return s.FormPost
+}
+
 // SetRedirectTo sets the value of RedirectTo.
 func (s *PostV1OauthInteractionByInteractionIdConsentOK) SetRedirectTo(val OptString) {
 	s.RedirectTo = val
+}
+
+// SetFormPost sets the value of FormPost.
+func (s *PostV1OauthInteractionByInteractionIdConsentOK) SetFormPost(val OptFormPostResponse) {
+	s.FormPost = val
 }
 
 type PostV1OauthInteractionByInteractionIdConsentReq struct {
@@ -17007,7 +17126,8 @@ func (s *PostV1OauthInteractionByInteractionIdLoginReq) SetFlowToken(val OptStri
 }
 
 type PostV1OauthInteractionByInteractionIdRejectOK struct {
-	RedirectTo OptString `json:"redirect_to"`
+	RedirectTo OptString           `json:"redirect_to"`
+	FormPost   OptFormPostResponse `json:"form_post"`
 }
 
 // GetRedirectTo returns the value of RedirectTo.
@@ -17015,9 +17135,19 @@ func (s *PostV1OauthInteractionByInteractionIdRejectOK) GetRedirectTo() OptStrin
 	return s.RedirectTo
 }
 
+// GetFormPost returns the value of FormPost.
+func (s *PostV1OauthInteractionByInteractionIdRejectOK) GetFormPost() OptFormPostResponse {
+	return s.FormPost
+}
+
 // SetRedirectTo sets the value of RedirectTo.
 func (s *PostV1OauthInteractionByInteractionIdRejectOK) SetRedirectTo(val OptString) {
 	s.RedirectTo = val
+}
+
+// SetFormPost sets the value of FormPost.
+func (s *PostV1OauthInteractionByInteractionIdRejectOK) SetFormPost(val OptFormPostResponse) {
+	s.FormPost = val
 }
 
 type PostV1OauthInteractionByInteractionIdRejectReq struct {
