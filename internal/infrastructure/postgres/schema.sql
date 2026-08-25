@@ -255,6 +255,11 @@ CREATE TABLE iam_app_clients (
   data        jsonb NOT NULL
 );
 CREATE INDEX idx_iam_app_clients_project ON iam_app_clients (project_id);
+-- A client managing itself (RFC 7592) presents a registration access token; it
+-- is matched by digest, which without this index is a scan over every client.
+CREATE INDEX idx_iam_app_clients_registration_token
+ON iam_app_clients ((data ->> 'RegistrationTokenHash'))
+WHERE data ->> 'RegistrationTokenHash' IS NOT NULL;
 
 CREATE TABLE iam_app_secrets (
   id         text PRIMARY KEY,

@@ -317,6 +317,40 @@ func (a *pgAuthenticator) Client(ctx context.Context, clientID, secret string) (
 	}, nil
 }
 
+// RegistrationClient validates a client's own registration access token
+// (RFC 7592). The token is stored as a digest on the client it manages, so this
+// is a single indexed lookup by that digest: the principal it returns can act on
+// that client and on nothing else.
+func (a *pgAuthenticator) RegistrationClient(ctx context.Context, token string) (*domain.Principal, error) {
+	if strings.TrimSpace(token) == "" {
+		return nil, domain.ErrUnauthorized
+	}
+
+	var (
+		clientID  string
+		projectID string
+		env       string
+	)
+
+	err := a.db.TxDB.QueryRow(ctx,
+		`SELECT id, project_id, environment
+		   FROM iam_app_clients
+		  WHERE data->>'RegistrationTokenHash' = $1
+		  LIMIT 1`,
+		adminSHA256(token),
+	).Scan(&clientID, &projectID, &env)
+	if err != nil {
+		return nil, domain.ErrUnauthorized
+	}
+
+	return &domain.Principal{
+		Kind:        domain.PrincipalClient,
+		ProjectID:   projectID,
+		Environment: env,
+		ClientID:    clientID,
+	}, nil
+}
+
 // OAuth2 validates an oauth2 bearer access token (OIDC-issued): a verified JWT.
 func (a *pgAuthenticator) OAuth2(ctx context.Context, token string) (*domain.Principal, error) {
 	claims, err := a.verifyJWT(ctx, token)

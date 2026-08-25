@@ -1615,6 +1615,12 @@ type OAuthSocialInvoker interface {
 //
 // x-gen-operation-group: OIDCProvider
 type OIDCProviderInvoker interface {
+	// DeleteOauth2RegisterByClientId invokes deleteOauth2RegisterByClientId operation.
+	//
+	// Delete a registered client (RFC 7592).
+	//
+	// DELETE /oauth2/register/{client_id}
+	DeleteOauth2RegisterByClientId(ctx context.Context, params DeleteOauth2RegisterByClientIdParams, options ...RequestOption) (*Ok, error)
 	// DeleteV1OauthGrantsByGrantId invokes deleteV1OauthGrantsByGrantId operation.
 	//
 	// Revoke an OAuth grant.
@@ -1649,6 +1655,12 @@ type OIDCProviderInvoker interface {
 	//
 	// GET /oauth2/logout
 	GetOauth2Logout(ctx context.Context, params GetOauth2LogoutParams, options ...RequestOption) (*GetOauth2LogoutFound, error)
+	// GetOauth2RegisterByClientId invokes getOauth2RegisterByClientId operation.
+	//
+	// Read a registered client (RFC 7592).
+	//
+	// GET /oauth2/register/{client_id}
+	GetOauth2RegisterByClientId(ctx context.Context, params GetOauth2RegisterByClientIdParams, options ...RequestOption) (*ClientRegistrationResponse, error)
 	// GetOauth2Userinfo invokes getOauth2Userinfo operation.
 	//
 	// OIDC UserInfo.
@@ -1718,6 +1730,17 @@ type OIDCProviderInvoker interface {
 	//
 	// POST /oauth2/par
 	PostOauth2Par(ctx context.Context, request *PushedAuthorizationRequest, options ...RequestOption) (*PostOauth2ParCreated, error)
+	// PostOauth2Register invokes postOauth2Register operation.
+	//
+	// Registers an OAuth client and returns its credentials.
+	// Registration is NOT open: it requires a project-admin token as the initial access token. IAM is
+	// multi-tenant, and open registration would let anyone create clients inside somebody else's project
+	// — the admin token is what says which project the new client belongs to.
+	// The response carries a `registration_access_token`, which is the only credential that can read,
+	// update or delete this client through `registration_client_uri`.
+	//
+	// POST /oauth2/register
+	PostOauth2Register(ctx context.Context, request *ClientRegistration, params PostOauth2RegisterParams, options ...RequestOption) (*ClientRegistrationResponse, error)
 	// PostOauth2Revoke invokes postOauth2Revoke operation.
 	//
 	// RFC 7009 token revocation.
@@ -1763,6 +1786,13 @@ type OIDCProviderInvoker interface {
 	//
 	// POST /v1/oauth/interaction/{interaction_id}/reject
 	PostV1OauthInteractionByInteractionIdReject(ctx context.Context, request OptPostV1OauthInteractionByInteractionIdRejectReq, params PostV1OauthInteractionByInteractionIdRejectParams, options ...RequestOption) (*PostV1OauthInteractionByInteractionIdRejectOK, error)
+	// PutOauth2RegisterByClientId invokes putOauth2RegisterByClientId operation.
+	//
+	// Replaces the client's metadata. Absent fields are cleared, as RFC 7592 requires — this is a
+	// replacement, not a patch.
+	//
+	// PUT /oauth2/register/{client_id}
+	PutOauth2RegisterByClientId(ctx context.Context, request *ClientRegistration, params PutOauth2RegisterByClientIdParams, options ...RequestOption) (*ClientRegistrationResponse, error)
 }
 
 // OperatorInvoker invokes operations described by OpenAPI v3 specification.
@@ -2541,6 +2571,157 @@ func (c *Client) sendDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx contex
 
 	stage = "DecodeResponse"
 	result, err := decodeDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// DeleteOauth2RegisterByClientId invokes deleteOauth2RegisterByClientId operation.
+//
+// Delete a registered client (RFC 7592).
+//
+// DELETE /oauth2/register/{client_id}
+func (c *Client) DeleteOauth2RegisterByClientId(ctx context.Context, params DeleteOauth2RegisterByClientIdParams, options ...RequestOption) (*Ok, error) {
+	res, err := c.sendDeleteOauth2RegisterByClientId(ctx, params, options...)
+	return res, err
+}
+
+func (c *Client) sendDeleteOauth2RegisterByClientId(ctx context.Context, params DeleteOauth2RegisterByClientIdParams, requestOptions ...RequestOption) (res *Ok, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("deleteOauth2RegisterByClientId"),
+		semconv.HTTPRequestMethodKey.String("DELETE"),
+		semconv.URLTemplateKey.String("/oauth2/register/{client_id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, DeleteOauth2RegisterByClientIdOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [2]string
+	pathParts[0] = "/oauth2/register/"
+	{
+		// Encode "client_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "client_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ClientID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "DELETE", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:RegistrationToken"
+			switch err := c.securityRegistrationToken(ctx, DeleteOauth2RegisterByClientIdOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"RegistrationToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodeDeleteOauth2RegisterByClientIdResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -9725,6 +9906,157 @@ func (c *Client) sendGetOauth2Logout(ctx context.Context, params GetOauth2Logout
 
 	stage = "DecodeResponse"
 	result, err := decodeGetOauth2LogoutResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetOauth2RegisterByClientId invokes getOauth2RegisterByClientId operation.
+//
+// Read a registered client (RFC 7592).
+//
+// GET /oauth2/register/{client_id}
+func (c *Client) GetOauth2RegisterByClientId(ctx context.Context, params GetOauth2RegisterByClientIdParams, options ...RequestOption) (*ClientRegistrationResponse, error) {
+	res, err := c.sendGetOauth2RegisterByClientId(ctx, params, options...)
+	return res, err
+}
+
+func (c *Client) sendGetOauth2RegisterByClientId(ctx context.Context, params GetOauth2RegisterByClientIdParams, requestOptions ...RequestOption) (res *ClientRegistrationResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getOauth2RegisterByClientId"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/oauth2/register/{client_id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetOauth2RegisterByClientIdOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [2]string
+	pathParts[0] = "/oauth2/register/"
+	{
+		// Encode "client_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "client_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ClientID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:RegistrationToken"
+			switch err := c.securityRegistrationToken(ctx, GetOauth2RegisterByClientIdOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"RegistrationToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodeGetOauth2RegisterByClientIdResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -30646,6 +30978,173 @@ func (c *Client) sendPostOauth2Par(ctx context.Context, request *PushedAuthoriza
 	return result, nil
 }
 
+// PostOauth2Register invokes postOauth2Register operation.
+//
+// Registers an OAuth client and returns its credentials.
+// Registration is NOT open: it requires a project-admin token as the initial access token. IAM is
+// multi-tenant, and open registration would let anyone create clients inside somebody else's project
+// — the admin token is what says which project the new client belongs to.
+// The response carries a `registration_access_token`, which is the only credential that can read,
+// update or delete this client through `registration_client_uri`.
+//
+// POST /oauth2/register
+func (c *Client) PostOauth2Register(ctx context.Context, request *ClientRegistration, params PostOauth2RegisterParams, options ...RequestOption) (*ClientRegistrationResponse, error) {
+	res, err := c.sendPostOauth2Register(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPostOauth2Register(ctx context.Context, request *ClientRegistration, params PostOauth2RegisterParams, requestOptions ...RequestOption) (res *ClientRegistrationResponse, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postOauth2Register"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/oauth2/register"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostOauth2RegisterOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [1]string
+	pathParts[0] = "/oauth2/register"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostOauth2RegisterRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:AdminToken"
+			switch err := c.securityAdminToken(ctx, PostOauth2RegisterOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"AdminToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostOauth2RegisterResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // PostOauth2Revoke invokes postOauth2Revoke operation.
 //
 // RFC 7009 token revocation.
@@ -50753,6 +51252,170 @@ func (c *Client) sendPostV1UsersMeExport(ctx context.Context, requestOptions ...
 
 	stage = "DecodeResponse"
 	result, err := decodePostV1UsersMeExportResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PutOauth2RegisterByClientId invokes putOauth2RegisterByClientId operation.
+//
+// Replaces the client's metadata. Absent fields are cleared, as RFC 7592 requires — this is a
+// replacement, not a patch.
+//
+// PUT /oauth2/register/{client_id}
+func (c *Client) PutOauth2RegisterByClientId(ctx context.Context, request *ClientRegistration, params PutOauth2RegisterByClientIdParams, options ...RequestOption) (*ClientRegistrationResponse, error) {
+	res, err := c.sendPutOauth2RegisterByClientId(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPutOauth2RegisterByClientId(ctx context.Context, request *ClientRegistration, params PutOauth2RegisterByClientIdParams, requestOptions ...RequestOption) (res *ClientRegistrationResponse, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("putOauth2RegisterByClientId"),
+		semconv.HTTPRequestMethodKey.String("PUT"),
+		semconv.URLTemplateKey.String("/oauth2/register/{client_id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PutOauth2RegisterByClientIdOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [2]string
+	pathParts[0] = "/oauth2/register/"
+	{
+		// Encode "client_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "client_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ClientID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "PUT", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePutOauth2RegisterByClientIdRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:RegistrationToken"
+			switch err := c.securityRegistrationToken(ctx, PutOauth2RegisterByClientIdOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"RegistrationToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePutOauth2RegisterByClientIdResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

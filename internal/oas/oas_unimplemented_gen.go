@@ -40,6 +40,15 @@ func (UnimplementedHandler) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx
 	return r, ht.ErrNotImplemented
 }
 
+// DeleteOauth2RegisterByClientId implements deleteOauth2RegisterByClientId operation.
+//
+// Delete a registered client (RFC 7592).
+//
+// DELETE /oauth2/register/{client_id}
+func (UnimplementedHandler) DeleteOauth2RegisterByClientId(ctx context.Context, params DeleteOauth2RegisterByClientIdParams) (r *Ok, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // DeleteV1AuthFlowsByFlowToken implements deleteV1AuthFlowsByFlowToken operation.
 //
 // Abandon a flow.
@@ -413,6 +422,15 @@ func (UnimplementedHandler) GetOauth2Authorize(ctx context.Context, params GetOa
 //
 // GET /oauth2/logout
 func (UnimplementedHandler) GetOauth2Logout(ctx context.Context, params GetOauth2LogoutParams) (r *GetOauth2LogoutFound, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetOauth2RegisterByClientId implements getOauth2RegisterByClientId operation.
+//
+// Read a registered client (RFC 7592).
+//
+// GET /oauth2/register/{client_id}
+func (UnimplementedHandler) GetOauth2RegisterByClientId(ctx context.Context, params GetOauth2RegisterByClientIdParams) (r *ClientRegistrationResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1526,6 +1544,20 @@ func (UnimplementedHandler) PostOauth2Par(ctx context.Context, req *PushedAuthor
 	return r, ht.ErrNotImplemented
 }
 
+// PostOauth2Register implements postOauth2Register operation.
+//
+// Registers an OAuth client and returns its credentials.
+// Registration is NOT open: it requires a project-admin token as the initial access token. IAM is
+// multi-tenant, and open registration would let anyone create clients inside somebody else's project
+// — the admin token is what says which project the new client belongs to.
+// The response carries a `registration_access_token`, which is the only credential that can read,
+// update or delete this client through `registration_client_uri`.
+//
+// POST /oauth2/register
+func (UnimplementedHandler) PostOauth2Register(ctx context.Context, req *ClientRegistration, params PostOauth2RegisterParams) (r *ClientRegistrationResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // PostOauth2Revoke implements postOauth2Revoke operation.
 //
 // RFC 7009 token revocation.
@@ -2627,6 +2659,16 @@ func (UnimplementedHandler) PostV1UsersMeConsents(ctx context.Context, req *Post
 //
 // POST /v1/users/me/export
 func (UnimplementedHandler) PostV1UsersMeExport(ctx context.Context) (r *PostV1UsersMeExportOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PutOauth2RegisterByClientId implements putOauth2RegisterByClientId operation.
+//
+// Replaces the client's metadata. Absent fields are cleared, as RFC 7592 requires — this is a
+// replacement, not a patch.
+//
+// PUT /oauth2/register/{client_id}
+func (UnimplementedHandler) PutOauth2RegisterByClientId(ctx context.Context, req *ClientRegistration, params PutOauth2RegisterByClientIdParams) (r *ClientRegistrationResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

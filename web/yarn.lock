@@ -499,7 +499,7 @@
   integrity sha512-eztSXjDhPhcpxNIiGTgMebdLP9qS4rWkysuE1V7c+DjOR0qiezaiDaTwQE7bTnG5HxAY/8M43XKDvs3cYq6ZYQ==
 
 "@gopherex/iam-sdk@file:../ts/packages/sdk":
-  version "0.0.0"
+  version "1.5.0"
   dependencies:
     "@hey-api/client-fetch" "^0.10.0"
 

@@ -18,6 +18,10 @@ type Authenticator interface {
 	SCIM(ctx context.Context, token string) (*domain.Principal, error)              // scimToken
 	Client(ctx context.Context, clientID, secret string) (*domain.Principal, error) // clientSecretBasic
 	OAuth2(ctx context.Context, token string) (*domain.Principal, error)            // oauth2
+	// RegistrationClient validates a client's own registration access token
+	// (RFC 7592). The principal it returns names exactly one client — the token
+	// authorizes managing that client and nothing else.
+	RegistrationClient(ctx context.Context, token string) (*domain.Principal, error) // registrationToken
 }
 
 // ----- principal in context -----
@@ -134,5 +138,12 @@ func (h securityHandler) HandleClientSecretBasic(ctx context.Context, _ oas.Oper
 
 func (h securityHandler) HandleOAuth2(ctx context.Context, _ oas.OperationName, t oas.OAuth2) (context.Context, error) {
 	p, err := h.a.OAuth2(ctx, t.Token)
+	return h.auth(ctx, p, err)
+}
+
+func (h securityHandler) HandleRegistrationToken(
+	ctx context.Context, _ oas.OperationName, t oas.RegistrationToken,
+) (context.Context, error) {
+	p, err := h.a.RegistrationClient(ctx, t.Token)
 	return h.auth(ctx, p, err)
 }

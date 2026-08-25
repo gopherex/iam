@@ -467,6 +467,91 @@ func decodeDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams(args [2]string
 	return params, nil
 }
 
+// DeleteOauth2RegisterByClientIdParams is parameters of deleteOauth2RegisterByClientId operation.
+type DeleteOauth2RegisterByClientIdParams struct {
+	ClientID string
+}
+
+func unpackDeleteOauth2RegisterByClientIdParams(packed middleware.Parameters) (params DeleteOauth2RegisterByClientIdParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "client_id",
+			In:   "path",
+		}
+		params.ClientID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeDeleteOauth2RegisterByClientIdParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteOauth2RegisterByClientIdParams, _ error) {
+	// Decode path: client_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "client_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ClientID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     256,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.ClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "client_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DeleteV1AuthFlowsByFlowTokenParams is parameters of deleteV1AuthFlowsByFlowToken operation.
 type DeleteV1AuthFlowsByFlowTokenParams struct {
 	XClientID string
@@ -8933,6 +9018,91 @@ func decodeGetOauth2LogoutParams(args [0]string, argsEscaped bool, r *http.Reque
 		return params, &ogenerrors.DecodeParamError{
 			Name: "state",
 			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetOauth2RegisterByClientIdParams is parameters of getOauth2RegisterByClientId operation.
+type GetOauth2RegisterByClientIdParams struct {
+	ClientID string
+}
+
+func unpackGetOauth2RegisterByClientIdParams(packed middleware.Parameters) (params GetOauth2RegisterByClientIdParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "client_id",
+			In:   "path",
+		}
+		params.ClientID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetOauth2RegisterByClientIdParams(args [1]string, argsEscaped bool, r *http.Request) (params GetOauth2RegisterByClientIdParams, _ error) {
+	// Decode path: client_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "client_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ClientID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     256,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.ClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "client_id",
+			In:   "path",
 			Err:  err,
 		}
 	}
@@ -31850,6 +32020,97 @@ func decodePostMgmtV1ProjectsByProjectIdEnvironmentsParams(args [1]string, argsE
 	return params, nil
 }
 
+// PostOauth2RegisterParams is parameters of postOauth2Register operation.
+type PostOauth2RegisterParams struct {
+	// Selects the project environment (e.g. live / test / staging) the call operates in, giving
+	// Stripe-like test/live data isolation. Absent or empty means the default "live" environment.
+	XEnvironment OptString `json:",omitempty,omitzero"`
+}
+
+func unpackPostOauth2RegisterParams(packed middleware.Parameters) (params PostOauth2RegisterParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Environment",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.XEnvironment = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodePostOauth2RegisterParams(args [0]string, argsEscaped bool, r *http.Request) (params PostOauth2RegisterParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: X-Environment.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotXEnvironmentVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotXEnvironmentVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.XEnvironment.SetTo(paramsDotXEnvironmentVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.XEnvironment.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Environment",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // PostV1AuthAccessRequestsParams is parameters of postV1AuthAccessRequests operation.
 type PostV1AuthAccessRequestsParams struct {
 	XClientID string
@@ -49089,6 +49350,91 @@ func decodePostV1TestSeedParams(args [0]string, argsEscaped bool, r *http.Reques
 		return params, &ogenerrors.DecodeParamError{
 			Name: "X-Environment",
 			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// PutOauth2RegisterByClientIdParams is parameters of putOauth2RegisterByClientId operation.
+type PutOauth2RegisterByClientIdParams struct {
+	ClientID string
+}
+
+func unpackPutOauth2RegisterByClientIdParams(packed middleware.Parameters) (params PutOauth2RegisterByClientIdParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "client_id",
+			In:   "path",
+		}
+		params.ClientID = packed[key].(string)
+	}
+	return params
+}
+
+func decodePutOauth2RegisterByClientIdParams(args [1]string, argsEscaped bool, r *http.Request) (params PutOauth2RegisterByClientIdParams, _ error) {
+	// Decode path: client_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "client_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ClientID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     256,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.ClientID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "client_id",
+			In:   "path",
 			Err:  err,
 		}
 	}

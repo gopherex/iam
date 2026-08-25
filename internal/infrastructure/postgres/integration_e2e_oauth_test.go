@@ -683,6 +683,7 @@ func TestE2EOIDCProviderDiscovery(t *testing.T) {
 			"device_authorization_endpoint":         ts.URL + "/oauth2/device_authorization",
 			"end_session_endpoint":                  ts.URL + "/oauth2/logout",
 			"pushed_authorization_request_endpoint": ts.URL + "/oauth2/par",
+			"registration_endpoint":                 ts.URL + "/oauth2/register",
 			"jwks_uri":                              fmt.Sprintf("%s/p/%s/e/live/.well-known/jwks.json", ts.URL, projectID),
 		}
 		for field, want := range wantEndpoints {

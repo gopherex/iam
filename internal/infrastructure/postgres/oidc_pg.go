@@ -2793,6 +2793,11 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 	// whose request_uri we issue ourselves.
 	m["request_parameter_supported"] = true
 	m["request_object_signing_alg_values_supported"] = oidcAssertionAlgorithms()
+	// RFC 7591. Registration is not open: the endpoint takes a project-admin
+	// token as the initial access token, which is also what says which project
+	// the new client lands in.
+	m["registration_endpoint"] = root + "/oauth2/register"
+
 	m["prompt_values_supported"] = []string{
 		oidcPromptNone, oidcPromptLogin, oidcPromptConsent, oidcPromptSelectAccount,
 	}

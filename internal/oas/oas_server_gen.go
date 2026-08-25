@@ -1540,6 +1540,12 @@ type OAuthSocialHandler interface {
 //
 // x-ogen-operation-group: OIDCProvider
 type OIDCProviderHandler interface {
+	// DeleteOauth2RegisterByClientId implements deleteOauth2RegisterByClientId operation.
+	//
+	// Delete a registered client (RFC 7592).
+	//
+	// DELETE /oauth2/register/{client_id}
+	DeleteOauth2RegisterByClientId(ctx context.Context, params DeleteOauth2RegisterByClientIdParams) (*Ok, error)
 	// DeleteV1OauthGrantsByGrantId implements deleteV1OauthGrantsByGrantId operation.
 	//
 	// Revoke an OAuth grant.
@@ -1574,6 +1580,12 @@ type OIDCProviderHandler interface {
 	//
 	// GET /oauth2/logout
 	GetOauth2Logout(ctx context.Context, params GetOauth2LogoutParams) (*GetOauth2LogoutFound, error)
+	// GetOauth2RegisterByClientId implements getOauth2RegisterByClientId operation.
+	//
+	// Read a registered client (RFC 7592).
+	//
+	// GET /oauth2/register/{client_id}
+	GetOauth2RegisterByClientId(ctx context.Context, params GetOauth2RegisterByClientIdParams) (*ClientRegistrationResponse, error)
 	// GetOauth2Userinfo implements getOauth2Userinfo operation.
 	//
 	// OIDC UserInfo.
@@ -1643,6 +1655,17 @@ type OIDCProviderHandler interface {
 	//
 	// POST /oauth2/par
 	PostOauth2Par(ctx context.Context, req *PushedAuthorizationRequest) (*PostOauth2ParCreated, error)
+	// PostOauth2Register implements postOauth2Register operation.
+	//
+	// Registers an OAuth client and returns its credentials.
+	// Registration is NOT open: it requires a project-admin token as the initial access token. IAM is
+	// multi-tenant, and open registration would let anyone create clients inside somebody else's project
+	// — the admin token is what says which project the new client belongs to.
+	// The response carries a `registration_access_token`, which is the only credential that can read,
+	// update or delete this client through `registration_client_uri`.
+	//
+	// POST /oauth2/register
+	PostOauth2Register(ctx context.Context, req *ClientRegistration, params PostOauth2RegisterParams) (*ClientRegistrationResponse, error)
 	// PostOauth2Revoke implements postOauth2Revoke operation.
 	//
 	// RFC 7009 token revocation.
@@ -1688,6 +1711,13 @@ type OIDCProviderHandler interface {
 	//
 	// POST /v1/oauth/interaction/{interaction_id}/reject
 	PostV1OauthInteractionByInteractionIdReject(ctx context.Context, req OptPostV1OauthInteractionByInteractionIdRejectReq, params PostV1OauthInteractionByInteractionIdRejectParams) (*PostV1OauthInteractionByInteractionIdRejectOK, error)
+	// PutOauth2RegisterByClientId implements putOauth2RegisterByClientId operation.
+	//
+	// Replaces the client's metadata. Absent fields are cleared, as RFC 7592 requires — this is a
+	// replacement, not a patch.
+	//
+	// PUT /oauth2/register/{client_id}
+	PutOauth2RegisterByClientId(ctx context.Context, req *ClientRegistration, params PutOauth2RegisterByClientIdParams) (*ClientRegistrationResponse, error)
 }
 
 // OperatorHandler handles operations described by OpenAPI v3 specification.

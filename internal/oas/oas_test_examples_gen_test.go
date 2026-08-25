@@ -269,6 +269,78 @@ func TestChallenge_EncodeDecode(t *testing.T) {
 	var typ2 Challenge
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestClientRegistration_EncodeDecode(t *testing.T) {
+	var typ ClientRegistration
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ClientRegistration
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestClientRegistrationApplicationType_EncodeDecode(t *testing.T) {
+	var typ ClientRegistrationApplicationType
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ClientRegistrationApplicationType
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestClientRegistrationResponse_EncodeDecode(t *testing.T) {
+	var typ ClientRegistrationResponse
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ClientRegistrationResponse
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestClientRegistrationResponseApplicationType_EncodeDecode(t *testing.T) {
+	var typ ClientRegistrationResponseApplicationType
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ClientRegistrationResponseApplicationType
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestClientRegistrationResponseTokenEndpointAuthMethod_EncodeDecode(t *testing.T) {
+	var typ ClientRegistrationResponseTokenEndpointAuthMethod
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ClientRegistrationResponseTokenEndpointAuthMethod
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestClientRegistrationTokenEndpointAuthMethod_EncodeDecode(t *testing.T) {
+	var typ ClientRegistrationTokenEndpointAuthMethod
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ClientRegistrationTokenEndpointAuthMethod
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestCodeExchangeRequest_EncodeDecode(t *testing.T) {
 	var typ CodeExchangeRequest
 	typ.SetFake()

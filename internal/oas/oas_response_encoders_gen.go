@@ -57,6 +57,20 @@ func encodeDeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvResponse(response *Ok
 	return nil
 }
 
+func encodeDeleteOauth2RegisterByClientIdResponse(response *Ok, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeDeleteV1AuthFlowsByFlowTokenResponse(response *DeleteV1AuthFlowsByFlowTokenNoContent, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(204)
 	span.SetStatus(codes.Ok, http.StatusText(204))
@@ -703,6 +717,28 @@ func encodeGetOauth2LogoutResponse(response *GetOauth2LogoutFound, w http.Respon
 	}
 	w.WriteHeader(302)
 	span.SetStatus(codes.Ok, http.StatusText(302))
+
+	return nil
+}
+
+func encodeGetOauth2RegisterByClientIdResponse(response *ClientRegistrationResponse, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
 
 	return nil
 }
@@ -3361,6 +3397,28 @@ func encodePostOauth2ParResponse(response *PostOauth2ParCreated, w http.Response
 	return nil
 }
 
+func encodePostOauth2RegisterResponse(response *ClientRegistrationResponse, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(201)
+	span.SetStatus(codes.Ok, http.StatusText(201))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodePostOauth2RevokeResponse(response *PostOauth2RevokeOK, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -5943,6 +6001,28 @@ func encodePostV1UsersMeConsentsResponse(response *PostV1UsersMeConsentsOK, w ht
 }
 
 func encodePostV1UsersMeExportResponse(response *PostV1UsersMeExportOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodePutOauth2RegisterByClientIdResponse(response *ClientRegistrationResponse, w http.ResponseWriter, span trace.Span) error {
 	if err := func() error {
 		if err := response.Validate(); err != nil {
 			return err

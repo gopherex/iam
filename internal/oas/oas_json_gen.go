@@ -650,9 +650,15 @@ func (s *AppClient) encodeFields(e *jx.Encoder) {
 			s.Disabled.Encode(e)
 		}
 	}
+	{
+		if s.DynamicallyRegistered.Set {
+			e.FieldStart("dynamically_registered")
+			s.DynamicallyRegistered.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfAppClient = [12]string{
+var jsonFieldsNameOfAppClient = [13]string{
 	0:  "id",
 	1:  "name",
 	2:  "type",
@@ -665,6 +671,7 @@ var jsonFieldsNameOfAppClient = [12]string{
 	9:  "post_logout_redirect_uris",
 	10: "backchannel_logout_uri",
 	11: "disabled",
+	12: "dynamically_registered",
 }
 
 // Decode decodes AppClient from json.
@@ -831,6 +838,16 @@ func (s *AppClient) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"disabled\"")
+			}
+		case "dynamically_registered":
+			if err := func() error {
+				s.DynamicallyRegistered.Reset()
+				if err := s.DynamicallyRegistered.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"dynamically_registered\"")
 			}
 		default:
 			return d.Skip()
@@ -2373,6 +2390,829 @@ func (s *Challenge) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *Challenge) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ClientRegistration) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ClientRegistration) encodeFields(e *jx.Encoder) {
+	{
+		if s.ClientName.Set {
+			e.FieldStart("client_name")
+			s.ClientName.Encode(e)
+		}
+	}
+	{
+		if s.RedirectUris != nil {
+			e.FieldStart("redirect_uris")
+			e.ArrStart()
+			for _, elem := range s.RedirectUris {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.ApplicationType.Set {
+			e.FieldStart("application_type")
+			s.ApplicationType.Encode(e)
+		}
+	}
+	{
+		if s.TokenEndpointAuthMethod.Set {
+			e.FieldStart("token_endpoint_auth_method")
+			s.TokenEndpointAuthMethod.Encode(e)
+		}
+	}
+	{
+		if s.GrantTypes != nil {
+			e.FieldStart("grant_types")
+			e.ArrStart()
+			for _, elem := range s.GrantTypes {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.ResponseTypes != nil {
+			e.FieldStart("response_types")
+			e.ArrStart()
+			for _, elem := range s.ResponseTypes {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Scope.Set {
+			e.FieldStart("scope")
+			s.Scope.Encode(e)
+		}
+	}
+	{
+		if s.Jwks.Set {
+			e.FieldStart("jwks")
+			s.Jwks.Encode(e)
+		}
+	}
+	{
+		if s.JwksURI.Set {
+			e.FieldStart("jwks_uri")
+			s.JwksURI.Encode(e)
+		}
+	}
+	{
+		if s.PostLogoutRedirectUris != nil {
+			e.FieldStart("post_logout_redirect_uris")
+			e.ArrStart()
+			for _, elem := range s.PostLogoutRedirectUris {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.BackchannelLogoutURI.Set {
+			e.FieldStart("backchannel_logout_uri")
+			s.BackchannelLogoutURI.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfClientRegistration = [11]string{
+	0:  "client_name",
+	1:  "redirect_uris",
+	2:  "application_type",
+	3:  "token_endpoint_auth_method",
+	4:  "grant_types",
+	5:  "response_types",
+	6:  "scope",
+	7:  "jwks",
+	8:  "jwks_uri",
+	9:  "post_logout_redirect_uris",
+	10: "backchannel_logout_uri",
+}
+
+// Decode decodes ClientRegistration from json.
+func (s *ClientRegistration) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ClientRegistration to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "client_name":
+			if err := func() error {
+				s.ClientName.Reset()
+				if err := s.ClientName.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"client_name\"")
+			}
+		case "redirect_uris":
+			if err := func() error {
+				s.RedirectUris = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.RedirectUris = append(s.RedirectUris, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"redirect_uris\"")
+			}
+		case "application_type":
+			if err := func() error {
+				s.ApplicationType.Reset()
+				if err := s.ApplicationType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"application_type\"")
+			}
+		case "token_endpoint_auth_method":
+			if err := func() error {
+				s.TokenEndpointAuthMethod.Reset()
+				if err := s.TokenEndpointAuthMethod.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"token_endpoint_auth_method\"")
+			}
+		case "grant_types":
+			if err := func() error {
+				s.GrantTypes = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.GrantTypes = append(s.GrantTypes, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"grant_types\"")
+			}
+		case "response_types":
+			if err := func() error {
+				s.ResponseTypes = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.ResponseTypes = append(s.ResponseTypes, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"response_types\"")
+			}
+		case "scope":
+			if err := func() error {
+				s.Scope.Reset()
+				if err := s.Scope.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"scope\"")
+			}
+		case "jwks":
+			if err := func() error {
+				s.Jwks.Reset()
+				if err := s.Jwks.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"jwks\"")
+			}
+		case "jwks_uri":
+			if err := func() error {
+				s.JwksURI.Reset()
+				if err := s.JwksURI.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"jwks_uri\"")
+			}
+		case "post_logout_redirect_uris":
+			if err := func() error {
+				s.PostLogoutRedirectUris = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.PostLogoutRedirectUris = append(s.PostLogoutRedirectUris, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"post_logout_redirect_uris\"")
+			}
+		case "backchannel_logout_uri":
+			if err := func() error {
+				s.BackchannelLogoutURI.Reset()
+				if err := s.BackchannelLogoutURI.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"backchannel_logout_uri\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ClientRegistration")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ClientRegistration) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ClientRegistration) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ClientRegistrationApplicationType as json.
+func (s ClientRegistrationApplicationType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes ClientRegistrationApplicationType from json.
+func (s *ClientRegistrationApplicationType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ClientRegistrationApplicationType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch ClientRegistrationApplicationType(v) {
+	case ClientRegistrationApplicationTypeWeb:
+		*s = ClientRegistrationApplicationTypeWeb
+	case ClientRegistrationApplicationTypeNative:
+		*s = ClientRegistrationApplicationTypeNative
+	default:
+		*s = ClientRegistrationApplicationType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s ClientRegistrationApplicationType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ClientRegistrationApplicationType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ClientRegistrationResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ClientRegistrationResponse) encodeFields(e *jx.Encoder) {
+	{
+		if s.ClientName.Set {
+			e.FieldStart("client_name")
+			s.ClientName.Encode(e)
+		}
+	}
+	{
+		if s.RedirectUris != nil {
+			e.FieldStart("redirect_uris")
+			e.ArrStart()
+			for _, elem := range s.RedirectUris {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.ApplicationType.Set {
+			e.FieldStart("application_type")
+			s.ApplicationType.Encode(e)
+		}
+	}
+	{
+		if s.TokenEndpointAuthMethod.Set {
+			e.FieldStart("token_endpoint_auth_method")
+			s.TokenEndpointAuthMethod.Encode(e)
+		}
+	}
+	{
+		if s.GrantTypes != nil {
+			e.FieldStart("grant_types")
+			e.ArrStart()
+			for _, elem := range s.GrantTypes {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.ResponseTypes != nil {
+			e.FieldStart("response_types")
+			e.ArrStart()
+			for _, elem := range s.ResponseTypes {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Scope.Set {
+			e.FieldStart("scope")
+			s.Scope.Encode(e)
+		}
+	}
+	{
+		if s.Jwks.Set {
+			e.FieldStart("jwks")
+			s.Jwks.Encode(e)
+		}
+	}
+	{
+		if s.JwksURI.Set {
+			e.FieldStart("jwks_uri")
+			s.JwksURI.Encode(e)
+		}
+	}
+	{
+		if s.PostLogoutRedirectUris != nil {
+			e.FieldStart("post_logout_redirect_uris")
+			e.ArrStart()
+			for _, elem := range s.PostLogoutRedirectUris {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.BackchannelLogoutURI.Set {
+			e.FieldStart("backchannel_logout_uri")
+			s.BackchannelLogoutURI.Encode(e)
+		}
+	}
+	{
+		if s.ClientID.Set {
+			e.FieldStart("client_id")
+			s.ClientID.Encode(e)
+		}
+	}
+	{
+		if s.ClientSecret.Set {
+			e.FieldStart("client_secret")
+			s.ClientSecret.Encode(e)
+		}
+	}
+	{
+		if s.ClientIDIssuedAt.Set {
+			e.FieldStart("client_id_issued_at")
+			s.ClientIDIssuedAt.Encode(e)
+		}
+	}
+	{
+		if s.RegistrationAccessToken.Set {
+			e.FieldStart("registration_access_token")
+			s.RegistrationAccessToken.Encode(e)
+		}
+	}
+	{
+		if s.RegistrationClientURI.Set {
+			e.FieldStart("registration_client_uri")
+			s.RegistrationClientURI.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfClientRegistrationResponse = [16]string{
+	0:  "client_name",
+	1:  "redirect_uris",
+	2:  "application_type",
+	3:  "token_endpoint_auth_method",
+	4:  "grant_types",
+	5:  "response_types",
+	6:  "scope",
+	7:  "jwks",
+	8:  "jwks_uri",
+	9:  "post_logout_redirect_uris",
+	10: "backchannel_logout_uri",
+	11: "client_id",
+	12: "client_secret",
+	13: "client_id_issued_at",
+	14: "registration_access_token",
+	15: "registration_client_uri",
+}
+
+// Decode decodes ClientRegistrationResponse from json.
+func (s *ClientRegistrationResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ClientRegistrationResponse to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "client_name":
+			if err := func() error {
+				s.ClientName.Reset()
+				if err := s.ClientName.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"client_name\"")
+			}
+		case "redirect_uris":
+			if err := func() error {
+				s.RedirectUris = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.RedirectUris = append(s.RedirectUris, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"redirect_uris\"")
+			}
+		case "application_type":
+			if err := func() error {
+				s.ApplicationType.Reset()
+				if err := s.ApplicationType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"application_type\"")
+			}
+		case "token_endpoint_auth_method":
+			if err := func() error {
+				s.TokenEndpointAuthMethod.Reset()
+				if err := s.TokenEndpointAuthMethod.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"token_endpoint_auth_method\"")
+			}
+		case "grant_types":
+			if err := func() error {
+				s.GrantTypes = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.GrantTypes = append(s.GrantTypes, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"grant_types\"")
+			}
+		case "response_types":
+			if err := func() error {
+				s.ResponseTypes = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.ResponseTypes = append(s.ResponseTypes, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"response_types\"")
+			}
+		case "scope":
+			if err := func() error {
+				s.Scope.Reset()
+				if err := s.Scope.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"scope\"")
+			}
+		case "jwks":
+			if err := func() error {
+				s.Jwks.Reset()
+				if err := s.Jwks.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"jwks\"")
+			}
+		case "jwks_uri":
+			if err := func() error {
+				s.JwksURI.Reset()
+				if err := s.JwksURI.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"jwks_uri\"")
+			}
+		case "post_logout_redirect_uris":
+			if err := func() error {
+				s.PostLogoutRedirectUris = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.PostLogoutRedirectUris = append(s.PostLogoutRedirectUris, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"post_logout_redirect_uris\"")
+			}
+		case "backchannel_logout_uri":
+			if err := func() error {
+				s.BackchannelLogoutURI.Reset()
+				if err := s.BackchannelLogoutURI.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"backchannel_logout_uri\"")
+			}
+		case "client_id":
+			if err := func() error {
+				s.ClientID.Reset()
+				if err := s.ClientID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"client_id\"")
+			}
+		case "client_secret":
+			if err := func() error {
+				s.ClientSecret.Reset()
+				if err := s.ClientSecret.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"client_secret\"")
+			}
+		case "client_id_issued_at":
+			if err := func() error {
+				s.ClientIDIssuedAt.Reset()
+				if err := s.ClientIDIssuedAt.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"client_id_issued_at\"")
+			}
+		case "registration_access_token":
+			if err := func() error {
+				s.RegistrationAccessToken.Reset()
+				if err := s.RegistrationAccessToken.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"registration_access_token\"")
+			}
+		case "registration_client_uri":
+			if err := func() error {
+				s.RegistrationClientURI.Reset()
+				if err := s.RegistrationClientURI.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"registration_client_uri\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ClientRegistrationResponse")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ClientRegistrationResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ClientRegistrationResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ClientRegistrationResponseApplicationType as json.
+func (s ClientRegistrationResponseApplicationType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes ClientRegistrationResponseApplicationType from json.
+func (s *ClientRegistrationResponseApplicationType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ClientRegistrationResponseApplicationType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch ClientRegistrationResponseApplicationType(v) {
+	case ClientRegistrationResponseApplicationTypeWeb:
+		*s = ClientRegistrationResponseApplicationTypeWeb
+	case ClientRegistrationResponseApplicationTypeNative:
+		*s = ClientRegistrationResponseApplicationTypeNative
+	default:
+		*s = ClientRegistrationResponseApplicationType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s ClientRegistrationResponseApplicationType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ClientRegistrationResponseApplicationType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ClientRegistrationResponseTokenEndpointAuthMethod as json.
+func (s ClientRegistrationResponseTokenEndpointAuthMethod) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes ClientRegistrationResponseTokenEndpointAuthMethod from json.
+func (s *ClientRegistrationResponseTokenEndpointAuthMethod) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ClientRegistrationResponseTokenEndpointAuthMethod to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch ClientRegistrationResponseTokenEndpointAuthMethod(v) {
+	case ClientRegistrationResponseTokenEndpointAuthMethodNone:
+		*s = ClientRegistrationResponseTokenEndpointAuthMethodNone
+	case ClientRegistrationResponseTokenEndpointAuthMethodClientSecretBasic:
+		*s = ClientRegistrationResponseTokenEndpointAuthMethodClientSecretBasic
+	case ClientRegistrationResponseTokenEndpointAuthMethodClientSecretPost:
+		*s = ClientRegistrationResponseTokenEndpointAuthMethodClientSecretPost
+	case ClientRegistrationResponseTokenEndpointAuthMethodPrivateKeyJwt:
+		*s = ClientRegistrationResponseTokenEndpointAuthMethodPrivateKeyJwt
+	default:
+		*s = ClientRegistrationResponseTokenEndpointAuthMethod(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s ClientRegistrationResponseTokenEndpointAuthMethod) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ClientRegistrationResponseTokenEndpointAuthMethod) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ClientRegistrationTokenEndpointAuthMethod as json.
+func (s ClientRegistrationTokenEndpointAuthMethod) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes ClientRegistrationTokenEndpointAuthMethod from json.
+func (s *ClientRegistrationTokenEndpointAuthMethod) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ClientRegistrationTokenEndpointAuthMethod to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch ClientRegistrationTokenEndpointAuthMethod(v) {
+	case ClientRegistrationTokenEndpointAuthMethodNone:
+		*s = ClientRegistrationTokenEndpointAuthMethodNone
+	case ClientRegistrationTokenEndpointAuthMethodClientSecretBasic:
+		*s = ClientRegistrationTokenEndpointAuthMethodClientSecretBasic
+	case ClientRegistrationTokenEndpointAuthMethodClientSecretPost:
+		*s = ClientRegistrationTokenEndpointAuthMethodClientSecretPost
+	case ClientRegistrationTokenEndpointAuthMethodPrivateKeyJwt:
+		*s = ClientRegistrationTokenEndpointAuthMethodPrivateKeyJwt
+	default:
+		*s = ClientRegistrationTokenEndpointAuthMethod(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s ClientRegistrationTokenEndpointAuthMethod) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ClientRegistrationTokenEndpointAuthMethod) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -15524,6 +16364,138 @@ func (s OptBool) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptBool) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ClientRegistrationApplicationType as json.
+func (o OptClientRegistrationApplicationType) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes ClientRegistrationApplicationType from json.
+func (o *OptClientRegistrationApplicationType) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptClientRegistrationApplicationType to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptClientRegistrationApplicationType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptClientRegistrationApplicationType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ClientRegistrationResponseApplicationType as json.
+func (o OptClientRegistrationResponseApplicationType) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes ClientRegistrationResponseApplicationType from json.
+func (o *OptClientRegistrationResponseApplicationType) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptClientRegistrationResponseApplicationType to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptClientRegistrationResponseApplicationType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptClientRegistrationResponseApplicationType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ClientRegistrationResponseTokenEndpointAuthMethod as json.
+func (o OptClientRegistrationResponseTokenEndpointAuthMethod) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes ClientRegistrationResponseTokenEndpointAuthMethod from json.
+func (o *OptClientRegistrationResponseTokenEndpointAuthMethod) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptClientRegistrationResponseTokenEndpointAuthMethod to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptClientRegistrationResponseTokenEndpointAuthMethod) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptClientRegistrationResponseTokenEndpointAuthMethod) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ClientRegistrationTokenEndpointAuthMethod as json.
+func (o OptClientRegistrationTokenEndpointAuthMethod) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes ClientRegistrationTokenEndpointAuthMethod from json.
+func (o *OptClientRegistrationTokenEndpointAuthMethod) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptClientRegistrationTokenEndpointAuthMethod to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptClientRegistrationTokenEndpointAuthMethod) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptClientRegistrationTokenEndpointAuthMethod) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -31906,9 +32878,15 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) encodeFields(e *jx.Encoder) {
 			s.Disabled.Encode(e)
 		}
 	}
+	{
+		if s.DynamicallyRegistered.Set {
+			e.FieldStart("dynamically_registered")
+			s.DynamicallyRegistered.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [12]string{
+var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [13]string{
 	0:  "id",
 	1:  "name",
 	2:  "type",
@@ -31921,6 +32899,7 @@ var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [12]string{
 	9:  "post_logout_redirect_uris",
 	10: "backchannel_logout_uri",
 	11: "disabled",
+	12: "dynamically_registered",
 }
 
 // Decode decodes PostV1ProjectsByProjectIdAdminAppsReq from json.
@@ -32090,6 +33069,16 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"disabled\"")
+			}
+		case "dynamically_registered":
+			if err := func() error {
+				s.DynamicallyRegistered.Reset()
+				if err := s.DynamicallyRegistered.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"dynamically_registered\"")
 			}
 		default:
 			return d.Skip()

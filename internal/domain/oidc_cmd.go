@@ -54,6 +54,47 @@ type OIDCAuthorizeCmd struct {
 	Request string
 }
 
+// OIDCClientRegistration is a client's metadata in the shape RFC 7591 defines.
+// It is deliberately its own type rather than AppClient: the registration API is
+// a public contract with standard field names, and letting the storage type
+// drive it would leak our naming into somebody else's client library.
+type OIDCClientRegistration struct {
+	ClientID                string
+	ClientName              string
+	RedirectURIs            []string
+	ApplicationType         string
+	TokenEndpointAuthMethod string
+	GrantTypes              []string
+	ResponseTypes           []string
+	Scope                   []string
+	JWKS                    string
+	JWKSURI                 string
+	PostLogoutRedirectURIs  []string
+	BackchannelLogoutURI    string
+	// IssuedAt is when the client was registered.
+	IssuedAt time.Time
+	// ClientSecret and RegistrationAccessToken are returned once, at
+	// registration; afterwards only their digests are kept.
+	ClientSecret            string
+	RegistrationAccessToken string
+	RegistrationClientURI   string
+}
+
+// OIDCClientRegisterCmd registers a client inside a project environment.
+type OIDCClientRegisterCmd struct {
+	ProjectID    string
+	Environment  string
+	Registration OIDCClientRegistration
+}
+
+// OIDCClientUpdateCmd replaces a registered client's metadata. RFC 7592 makes
+// this a replacement, not a patch: a field left out is cleared.
+type OIDCClientUpdateCmd struct {
+	ClientID     string
+	ProjectID    string
+	Registration OIDCClientRegistration
+}
+
 // OIDCLogoutResult is the outcome of an RP-initiated logout: where to send the
 // browser, and whether its session cookies should be cleared on the way.
 type OIDCLogoutResult struct {

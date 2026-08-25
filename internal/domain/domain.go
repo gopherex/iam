@@ -185,6 +185,12 @@ type AppClient struct {
 	// the client's own infrastructure.
 	JWKS    string
 	JWKSURI string
+	// RegistrationTokenHash is the sha256 of the client's registration access
+	// token (RFC 7592). Only the digest is kept: the token itself is shown once,
+	// at registration.
+	RegistrationTokenHash string
+	// TokenEndpointAuthMethod records how the client authenticates, as registered.
+	TokenEndpointAuthMethod string
 }
 
 // ===== Project aggregate (admin / operator) =====

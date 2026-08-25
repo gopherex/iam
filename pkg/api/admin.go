@@ -3279,6 +3279,10 @@ func oasAppClient(a *domain.AppClient) oas.AppClient {
 		RedirectUris:   a.RedirectURIs,
 		AllowedOrigins: a.AllowedOrigins,
 		Disabled:       oas.NewOptBool(a.Disabled),
+		// A dynamically registered client holds a registration access token and
+		// can rewrite its own metadata; the console says so rather than letting
+		// an operator wonder where the client came from.
+		DynamicallyRegistered: oas.NewOptBool(a.RegistrationTokenHash != ""),
 
 		PostLogoutRedirectUris: a.PostLogoutRedirectURIs,
 		Scopes:                 a.Scopes,

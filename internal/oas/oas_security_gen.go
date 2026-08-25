@@ -31,6 +31,10 @@ type SecurityHandler interface {
 	// HandleOAuth2 handles oauth2 security.
 	// IAM as OAuth 2.0 / OIDC provider.
 	HandleOAuth2(ctx context.Context, operationName OperationName, t OAuth2) (context.Context, error)
+	// HandleRegistrationToken handles registrationToken security.
+	// A client's own registration access token (RFC 7592), handed back when it registered. It authorises
+	// reading, updating and deleting THAT client and nothing else.
+	HandleRegistrationToken(ctx context.Context, operationName OperationName, t RegistrationToken) (context.Context, error)
 	// HandleScimToken handles scimToken security.
 	// Per-connection SCIM bearer token.
 	HandleScimToken(ctx context.Context, operationName OperationName, t ScimToken) (context.Context, error)
@@ -141,6 +145,7 @@ var operationRolesAdminToken = map[string][]string{
 	PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOperation:                       []string{},
 	PatchV1ProjectsByProjectIdAdminUsersByUserIdOperation:                           []string{},
 	PatchV1ProjectsByProjectIdAdminWebhooksByIdOperation:                            []string{},
+	PostOauth2RegisterOperation:                                                     []string{},
 	PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOperation:                []string{},
 	PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOperation:                   []string{},
 	PostV1ProjectsByProjectIdAdminApiKeysOperation:                                  []string{},
@@ -407,6 +412,34 @@ func GetOAuth2ScopesForOAuth2(operation string) []string {
 	return result
 }
 
+// operationRolesRegistrationToken is a private map storing roles per operation.
+var operationRolesRegistrationToken = map[string][]string{
+	DeleteOauth2RegisterByClientIdOperation: []string{},
+	GetOauth2RegisterByClientIdOperation:    []string{},
+	PutOauth2RegisterByClientIdOperation:    []string{},
+}
+
+// GetRolesForRegistrationToken returns the required roles for the given operation.
+//
+// This is useful for authorization scenarios where you need to know which roles
+// are required for an operation.
+//
+// Example:
+//
+//	requiredRoles := GetRolesForRegistrationToken(AddPetOperation)
+//
+// Returns nil if the operation has no role requirements or if the operation is unknown.
+func GetRolesForRegistrationToken(operation string) []string {
+	roles, ok := operationRolesRegistrationToken[operation]
+	if !ok {
+		return nil
+	}
+	// Return a copy to prevent external modification
+	result := make([]string, len(roles))
+	copy(result, roles)
+	return result
+}
+
 // operationRolesScimToken is a private map storing roles per operation.
 var operationRolesScimToken = map[string][]string{
 	DeleteV1ScimV2ByConnectionIdGroupsByGroupIdOperation:   []string{},
@@ -559,6 +592,23 @@ func (s *Server) securityOAuth2(ctx context.Context, operationName OperationName
 	return rctx, true, err
 }
 
+func (s *Server) securityRegistrationToken(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {
+	var t RegistrationToken
+	token, ok := findAuthorization(req.Header, "Bearer")
+	if !ok {
+		return ctx, false, nil
+	}
+	t.Token = token
+	t.Roles = operationRolesRegistrationToken[operationName]
+	rctx, err := s.sec.HandleRegistrationToken(ctx, operationName, t)
+	if errors.Is(err, ogenerrors.ErrSkipServerSecurity) {
+		return nil, false, nil
+	} else if err != nil {
+		return nil, false, err
+	}
+	return rctx, true, err
+}
+
 func (s *Server) securityScimToken(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {
 	var t ScimToken
 	token, ok := findAuthorization(req.Header, "Bearer")
@@ -613,6 +663,10 @@ type SecuritySource interface {
 	// OAuth2 provides oauth2 security value.
 	// IAM as OAuth 2.0 / OIDC provider.
 	OAuth2(ctx context.Context, operationName OperationName, client *Client) (OAuth2, error)
+	// RegistrationToken provides registrationToken security value.
+	// A client's own registration access token (RFC 7592), handed back when it registered. It authorises
+	// reading, updating and deleting THAT client and nothing else.
+	RegistrationToken(ctx context.Context, operationName OperationName, client *Client) (RegistrationToken, error)
 	// ScimToken provides scimToken security value.
 	// Per-connection SCIM bearer token.
 	ScimToken(ctx context.Context, operationName OperationName, client *Client) (ScimToken, error)
@@ -657,6 +711,14 @@ func (s *Client) securityOAuth2(ctx context.Context, operationName OperationName
 	t, err := s.sec.OAuth2(ctx, operationName, s)
 	if err != nil {
 		return errors.Wrap(err, "security source \"OAuth2\"")
+	}
+	req.Header.Set("Authorization", "Bearer "+t.Token)
+	return nil
+}
+func (s *Client) securityRegistrationToken(ctx context.Context, operationName OperationName, req *http.Request) error {
+	t, err := s.sec.RegistrationToken(ctx, operationName, s)
+	if err != nil {
+		return errors.Wrap(err, "security source \"RegistrationToken\"")
 	}
 	req.Header.Set("Authorization", "Bearer "+t.Token)
 	return nil

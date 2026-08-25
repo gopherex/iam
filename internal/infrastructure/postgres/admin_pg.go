@@ -1395,6 +1395,15 @@ func (a *pgAdminApps) applyAppClient(
 		return id, a.upsertApp(ctx, &after, true)
 	}
 
+	// A desired-state document describes configuration, not credentials. The
+	// registration access token a dynamically registered client holds is not in
+	// it, so carrying it forward is what keeps an IaC apply from silently
+	// revoking the client's ability to manage itself.
+	after.RegistrationTokenHash = before.RegistrationTokenHash
+	if after.TokenEndpointAuthMethod == "" {
+		after.TokenEndpointAuthMethod = before.TokenEndpointAuthMethod
+	}
+
 	same, err := appClientsEqual(before, &after)
 	if err != nil {
 		return "", err

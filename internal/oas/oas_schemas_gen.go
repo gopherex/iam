@@ -329,6 +329,10 @@ type AppClient struct {
 	// exactly like an unknown client_id, so an integration can be suspended and restored without
 	// re-issuing its registration.
 	Disabled OptBool `json:"disabled"`
+	// True when the client registered itself through `/oauth2/register` (RFC 7591) rather than being
+	// created here. Such a client manages its own metadata with the registration access token it was
+	// issued; edits made here are still authoritative, but the client can overwrite them.
+	DynamicallyRegistered OptBool `json:"dynamically_registered"`
 }
 
 // GetID returns the value of ID.
@@ -391,6 +395,11 @@ func (s *AppClient) GetDisabled() OptBool {
 	return s.Disabled
 }
 
+// GetDynamicallyRegistered returns the value of DynamicallyRegistered.
+func (s *AppClient) GetDynamicallyRegistered() OptBool {
+	return s.DynamicallyRegistered
+}
+
 // SetID sets the value of ID.
 func (s *AppClient) SetID(val OptString) {
 	s.ID = val
@@ -449,6 +458,11 @@ func (s *AppClient) SetBackchannelLogoutURI(val OptNilString) {
 // SetDisabled sets the value of Disabled.
 func (s *AppClient) SetDisabled(val OptBool) {
 	s.Disabled = val
+}
+
+// SetDynamicallyRegistered sets the value of DynamicallyRegistered.
+func (s *AppClient) SetDynamicallyRegistered(val OptBool) {
+	s.DynamicallyRegistered = val
 }
 
 // Ref: #/components/schemas/AppClientApplyResult
@@ -1166,6 +1180,520 @@ func (s *Challenge) SetExpiresAt(val Timestamp) {
 // SetType sets the value of Type.
 func (s *Challenge) SetType(val OptString) {
 	s.Type = val
+}
+
+// A client's metadata in the names RFC 7591 defines, so a standards client can register itself
+// without knowing anything about this API. Fields the server does not implement are ignored rather
+// than rejected, as the RFC requires.
+// Ref: #/components/schemas/ClientRegistration
+type ClientRegistration struct {
+	ClientName      OptString                            `json:"client_name"`
+	RedirectUris    []string                             `json:"redirect_uris"`
+	ApplicationType OptClientRegistrationApplicationType `json:"application_type"`
+	// `none` registers a public client (PKCE required at authorization); anything else registers a
+	// confidential one and returns a secret.
+	TokenEndpointAuthMethod OptClientRegistrationTokenEndpointAuthMethod `json:"token_endpoint_auth_method"`
+	GrantTypes              []string                                     `json:"grant_types"`
+	ResponseTypes           []string                                     `json:"response_types"`
+	// Space-delimited scopes the client may request.
+	Scope                  OptString    `json:"scope"`
+	Jwks                   OptNilString `json:"jwks"`
+	JwksURI                OptNilString `json:"jwks_uri"`
+	PostLogoutRedirectUris []string     `json:"post_logout_redirect_uris"`
+	BackchannelLogoutURI   OptNilString `json:"backchannel_logout_uri"`
+}
+
+// GetClientName returns the value of ClientName.
+func (s *ClientRegistration) GetClientName() OptString {
+	return s.ClientName
+}
+
+// GetRedirectUris returns the value of RedirectUris.
+func (s *ClientRegistration) GetRedirectUris() []string {
+	return s.RedirectUris
+}
+
+// GetApplicationType returns the value of ApplicationType.
+func (s *ClientRegistration) GetApplicationType() OptClientRegistrationApplicationType {
+	return s.ApplicationType
+}
+
+// GetTokenEndpointAuthMethod returns the value of TokenEndpointAuthMethod.
+func (s *ClientRegistration) GetTokenEndpointAuthMethod() OptClientRegistrationTokenEndpointAuthMethod {
+	return s.TokenEndpointAuthMethod
+}
+
+// GetGrantTypes returns the value of GrantTypes.
+func (s *ClientRegistration) GetGrantTypes() []string {
+	return s.GrantTypes
+}
+
+// GetResponseTypes returns the value of ResponseTypes.
+func (s *ClientRegistration) GetResponseTypes() []string {
+	return s.ResponseTypes
+}
+
+// GetScope returns the value of Scope.
+func (s *ClientRegistration) GetScope() OptString {
+	return s.Scope
+}
+
+// GetJwks returns the value of Jwks.
+func (s *ClientRegistration) GetJwks() OptNilString {
+	return s.Jwks
+}
+
+// GetJwksURI returns the value of JwksURI.
+func (s *ClientRegistration) GetJwksURI() OptNilString {
+	return s.JwksURI
+}
+
+// GetPostLogoutRedirectUris returns the value of PostLogoutRedirectUris.
+func (s *ClientRegistration) GetPostLogoutRedirectUris() []string {
+	return s.PostLogoutRedirectUris
+}
+
+// GetBackchannelLogoutURI returns the value of BackchannelLogoutURI.
+func (s *ClientRegistration) GetBackchannelLogoutURI() OptNilString {
+	return s.BackchannelLogoutURI
+}
+
+// SetClientName sets the value of ClientName.
+func (s *ClientRegistration) SetClientName(val OptString) {
+	s.ClientName = val
+}
+
+// SetRedirectUris sets the value of RedirectUris.
+func (s *ClientRegistration) SetRedirectUris(val []string) {
+	s.RedirectUris = val
+}
+
+// SetApplicationType sets the value of ApplicationType.
+func (s *ClientRegistration) SetApplicationType(val OptClientRegistrationApplicationType) {
+	s.ApplicationType = val
+}
+
+// SetTokenEndpointAuthMethod sets the value of TokenEndpointAuthMethod.
+func (s *ClientRegistration) SetTokenEndpointAuthMethod(val OptClientRegistrationTokenEndpointAuthMethod) {
+	s.TokenEndpointAuthMethod = val
+}
+
+// SetGrantTypes sets the value of GrantTypes.
+func (s *ClientRegistration) SetGrantTypes(val []string) {
+	s.GrantTypes = val
+}
+
+// SetResponseTypes sets the value of ResponseTypes.
+func (s *ClientRegistration) SetResponseTypes(val []string) {
+	s.ResponseTypes = val
+}
+
+// SetScope sets the value of Scope.
+func (s *ClientRegistration) SetScope(val OptString) {
+	s.Scope = val
+}
+
+// SetJwks sets the value of Jwks.
+func (s *ClientRegistration) SetJwks(val OptNilString) {
+	s.Jwks = val
+}
+
+// SetJwksURI sets the value of JwksURI.
+func (s *ClientRegistration) SetJwksURI(val OptNilString) {
+	s.JwksURI = val
+}
+
+// SetPostLogoutRedirectUris sets the value of PostLogoutRedirectUris.
+func (s *ClientRegistration) SetPostLogoutRedirectUris(val []string) {
+	s.PostLogoutRedirectUris = val
+}
+
+// SetBackchannelLogoutURI sets the value of BackchannelLogoutURI.
+func (s *ClientRegistration) SetBackchannelLogoutURI(val OptNilString) {
+	s.BackchannelLogoutURI = val
+}
+
+type ClientRegistrationApplicationType string
+
+const (
+	ClientRegistrationApplicationTypeWeb    ClientRegistrationApplicationType = "web"
+	ClientRegistrationApplicationTypeNative ClientRegistrationApplicationType = "native"
+)
+
+// AllValues returns all ClientRegistrationApplicationType values.
+func (ClientRegistrationApplicationType) AllValues() []ClientRegistrationApplicationType {
+	return []ClientRegistrationApplicationType{
+		ClientRegistrationApplicationTypeWeb,
+		ClientRegistrationApplicationTypeNative,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ClientRegistrationApplicationType) MarshalText() ([]byte, error) {
+	switch s {
+	case ClientRegistrationApplicationTypeWeb:
+		return []byte(s), nil
+	case ClientRegistrationApplicationTypeNative:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ClientRegistrationApplicationType) UnmarshalText(data []byte) error {
+	switch ClientRegistrationApplicationType(data) {
+	case ClientRegistrationApplicationTypeWeb:
+		*s = ClientRegistrationApplicationTypeWeb
+		return nil
+	case ClientRegistrationApplicationTypeNative:
+		*s = ClientRegistrationApplicationTypeNative
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Merged schema.
+// Ref: #/components/schemas/ClientRegistrationResponse
+type ClientRegistrationResponse struct {
+	ClientName      OptString                                    `json:"client_name"`
+	RedirectUris    []string                                     `json:"redirect_uris"`
+	ApplicationType OptClientRegistrationResponseApplicationType `json:"application_type"`
+	// `none` registers a public client (PKCE required at authorization); anything else registers a
+	// confidential one and returns a secret.
+	TokenEndpointAuthMethod OptClientRegistrationResponseTokenEndpointAuthMethod `json:"token_endpoint_auth_method"`
+	GrantTypes              []string                                             `json:"grant_types"`
+	ResponseTypes           []string                                             `json:"response_types"`
+	// Space-delimited scopes the client may request.
+	Scope                  OptString    `json:"scope"`
+	Jwks                   OptNilString `json:"jwks"`
+	JwksURI                OptNilString `json:"jwks_uri"`
+	PostLogoutRedirectUris []string     `json:"post_logout_redirect_uris"`
+	BackchannelLogoutURI   OptNilString `json:"backchannel_logout_uri"`
+	ClientID               OptString    `json:"client_id"`
+	// Returned once, at registration, for a confidential client.
+	ClientSecret     OptNilString `json:"client_secret"`
+	ClientIDIssuedAt OptInt       `json:"client_id_issued_at"`
+	// Returned once. Authorises reading, updating and deleting this client through
+	// registration_client_uri (RFC 7592).
+	RegistrationAccessToken OptNilString `json:"registration_access_token"`
+	RegistrationClientURI   OptNilString `json:"registration_client_uri"`
+}
+
+// GetClientName returns the value of ClientName.
+func (s *ClientRegistrationResponse) GetClientName() OptString {
+	return s.ClientName
+}
+
+// GetRedirectUris returns the value of RedirectUris.
+func (s *ClientRegistrationResponse) GetRedirectUris() []string {
+	return s.RedirectUris
+}
+
+// GetApplicationType returns the value of ApplicationType.
+func (s *ClientRegistrationResponse) GetApplicationType() OptClientRegistrationResponseApplicationType {
+	return s.ApplicationType
+}
+
+// GetTokenEndpointAuthMethod returns the value of TokenEndpointAuthMethod.
+func (s *ClientRegistrationResponse) GetTokenEndpointAuthMethod() OptClientRegistrationResponseTokenEndpointAuthMethod {
+	return s.TokenEndpointAuthMethod
+}
+
+// GetGrantTypes returns the value of GrantTypes.
+func (s *ClientRegistrationResponse) GetGrantTypes() []string {
+	return s.GrantTypes
+}
+
+// GetResponseTypes returns the value of ResponseTypes.
+func (s *ClientRegistrationResponse) GetResponseTypes() []string {
+	return s.ResponseTypes
+}
+
+// GetScope returns the value of Scope.
+func (s *ClientRegistrationResponse) GetScope() OptString {
+	return s.Scope
+}
+
+// GetJwks returns the value of Jwks.
+func (s *ClientRegistrationResponse) GetJwks() OptNilString {
+	return s.Jwks
+}
+
+// GetJwksURI returns the value of JwksURI.
+func (s *ClientRegistrationResponse) GetJwksURI() OptNilString {
+	return s.JwksURI
+}
+
+// GetPostLogoutRedirectUris returns the value of PostLogoutRedirectUris.
+func (s *ClientRegistrationResponse) GetPostLogoutRedirectUris() []string {
+	return s.PostLogoutRedirectUris
+}
+
+// GetBackchannelLogoutURI returns the value of BackchannelLogoutURI.
+func (s *ClientRegistrationResponse) GetBackchannelLogoutURI() OptNilString {
+	return s.BackchannelLogoutURI
+}
+
+// GetClientID returns the value of ClientID.
+func (s *ClientRegistrationResponse) GetClientID() OptString {
+	return s.ClientID
+}
+
+// GetClientSecret returns the value of ClientSecret.
+func (s *ClientRegistrationResponse) GetClientSecret() OptNilString {
+	return s.ClientSecret
+}
+
+// GetClientIDIssuedAt returns the value of ClientIDIssuedAt.
+func (s *ClientRegistrationResponse) GetClientIDIssuedAt() OptInt {
+	return s.ClientIDIssuedAt
+}
+
+// GetRegistrationAccessToken returns the value of RegistrationAccessToken.
+func (s *ClientRegistrationResponse) GetRegistrationAccessToken() OptNilString {
+	return s.RegistrationAccessToken
+}
+
+// GetRegistrationClientURI returns the value of RegistrationClientURI.
+func (s *ClientRegistrationResponse) GetRegistrationClientURI() OptNilString {
+	return s.RegistrationClientURI
+}
+
+// SetClientName sets the value of ClientName.
+func (s *ClientRegistrationResponse) SetClientName(val OptString) {
+	s.ClientName = val
+}
+
+// SetRedirectUris sets the value of RedirectUris.
+func (s *ClientRegistrationResponse) SetRedirectUris(val []string) {
+	s.RedirectUris = val
+}
+
+// SetApplicationType sets the value of ApplicationType.
+func (s *ClientRegistrationResponse) SetApplicationType(val OptClientRegistrationResponseApplicationType) {
+	s.ApplicationType = val
+}
+
+// SetTokenEndpointAuthMethod sets the value of TokenEndpointAuthMethod.
+func (s *ClientRegistrationResponse) SetTokenEndpointAuthMethod(val OptClientRegistrationResponseTokenEndpointAuthMethod) {
+	s.TokenEndpointAuthMethod = val
+}
+
+// SetGrantTypes sets the value of GrantTypes.
+func (s *ClientRegistrationResponse) SetGrantTypes(val []string) {
+	s.GrantTypes = val
+}
+
+// SetResponseTypes sets the value of ResponseTypes.
+func (s *ClientRegistrationResponse) SetResponseTypes(val []string) {
+	s.ResponseTypes = val
+}
+
+// SetScope sets the value of Scope.
+func (s *ClientRegistrationResponse) SetScope(val OptString) {
+	s.Scope = val
+}
+
+// SetJwks sets the value of Jwks.
+func (s *ClientRegistrationResponse) SetJwks(val OptNilString) {
+	s.Jwks = val
+}
+
+// SetJwksURI sets the value of JwksURI.
+func (s *ClientRegistrationResponse) SetJwksURI(val OptNilString) {
+	s.JwksURI = val
+}
+
+// SetPostLogoutRedirectUris sets the value of PostLogoutRedirectUris.
+func (s *ClientRegistrationResponse) SetPostLogoutRedirectUris(val []string) {
+	s.PostLogoutRedirectUris = val
+}
+
+// SetBackchannelLogoutURI sets the value of BackchannelLogoutURI.
+func (s *ClientRegistrationResponse) SetBackchannelLogoutURI(val OptNilString) {
+	s.BackchannelLogoutURI = val
+}
+
+// SetClientID sets the value of ClientID.
+func (s *ClientRegistrationResponse) SetClientID(val OptString) {
+	s.ClientID = val
+}
+
+// SetClientSecret sets the value of ClientSecret.
+func (s *ClientRegistrationResponse) SetClientSecret(val OptNilString) {
+	s.ClientSecret = val
+}
+
+// SetClientIDIssuedAt sets the value of ClientIDIssuedAt.
+func (s *ClientRegistrationResponse) SetClientIDIssuedAt(val OptInt) {
+	s.ClientIDIssuedAt = val
+}
+
+// SetRegistrationAccessToken sets the value of RegistrationAccessToken.
+func (s *ClientRegistrationResponse) SetRegistrationAccessToken(val OptNilString) {
+	s.RegistrationAccessToken = val
+}
+
+// SetRegistrationClientURI sets the value of RegistrationClientURI.
+func (s *ClientRegistrationResponse) SetRegistrationClientURI(val OptNilString) {
+	s.RegistrationClientURI = val
+}
+
+type ClientRegistrationResponseApplicationType string
+
+const (
+	ClientRegistrationResponseApplicationTypeWeb    ClientRegistrationResponseApplicationType = "web"
+	ClientRegistrationResponseApplicationTypeNative ClientRegistrationResponseApplicationType = "native"
+)
+
+// AllValues returns all ClientRegistrationResponseApplicationType values.
+func (ClientRegistrationResponseApplicationType) AllValues() []ClientRegistrationResponseApplicationType {
+	return []ClientRegistrationResponseApplicationType{
+		ClientRegistrationResponseApplicationTypeWeb,
+		ClientRegistrationResponseApplicationTypeNative,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ClientRegistrationResponseApplicationType) MarshalText() ([]byte, error) {
+	switch s {
+	case ClientRegistrationResponseApplicationTypeWeb:
+		return []byte(s), nil
+	case ClientRegistrationResponseApplicationTypeNative:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ClientRegistrationResponseApplicationType) UnmarshalText(data []byte) error {
+	switch ClientRegistrationResponseApplicationType(data) {
+	case ClientRegistrationResponseApplicationTypeWeb:
+		*s = ClientRegistrationResponseApplicationTypeWeb
+		return nil
+	case ClientRegistrationResponseApplicationTypeNative:
+		*s = ClientRegistrationResponseApplicationTypeNative
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// `none` registers a public client (PKCE required at authorization); anything else registers a
+// confidential one and returns a secret.
+type ClientRegistrationResponseTokenEndpointAuthMethod string
+
+const (
+	ClientRegistrationResponseTokenEndpointAuthMethodNone              ClientRegistrationResponseTokenEndpointAuthMethod = "none"
+	ClientRegistrationResponseTokenEndpointAuthMethodClientSecretBasic ClientRegistrationResponseTokenEndpointAuthMethod = "client_secret_basic"
+	ClientRegistrationResponseTokenEndpointAuthMethodClientSecretPost  ClientRegistrationResponseTokenEndpointAuthMethod = "client_secret_post"
+	ClientRegistrationResponseTokenEndpointAuthMethodPrivateKeyJwt     ClientRegistrationResponseTokenEndpointAuthMethod = "private_key_jwt"
+)
+
+// AllValues returns all ClientRegistrationResponseTokenEndpointAuthMethod values.
+func (ClientRegistrationResponseTokenEndpointAuthMethod) AllValues() []ClientRegistrationResponseTokenEndpointAuthMethod {
+	return []ClientRegistrationResponseTokenEndpointAuthMethod{
+		ClientRegistrationResponseTokenEndpointAuthMethodNone,
+		ClientRegistrationResponseTokenEndpointAuthMethodClientSecretBasic,
+		ClientRegistrationResponseTokenEndpointAuthMethodClientSecretPost,
+		ClientRegistrationResponseTokenEndpointAuthMethodPrivateKeyJwt,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ClientRegistrationResponseTokenEndpointAuthMethod) MarshalText() ([]byte, error) {
+	switch s {
+	case ClientRegistrationResponseTokenEndpointAuthMethodNone:
+		return []byte(s), nil
+	case ClientRegistrationResponseTokenEndpointAuthMethodClientSecretBasic:
+		return []byte(s), nil
+	case ClientRegistrationResponseTokenEndpointAuthMethodClientSecretPost:
+		return []byte(s), nil
+	case ClientRegistrationResponseTokenEndpointAuthMethodPrivateKeyJwt:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ClientRegistrationResponseTokenEndpointAuthMethod) UnmarshalText(data []byte) error {
+	switch ClientRegistrationResponseTokenEndpointAuthMethod(data) {
+	case ClientRegistrationResponseTokenEndpointAuthMethodNone:
+		*s = ClientRegistrationResponseTokenEndpointAuthMethodNone
+		return nil
+	case ClientRegistrationResponseTokenEndpointAuthMethodClientSecretBasic:
+		*s = ClientRegistrationResponseTokenEndpointAuthMethodClientSecretBasic
+		return nil
+	case ClientRegistrationResponseTokenEndpointAuthMethodClientSecretPost:
+		*s = ClientRegistrationResponseTokenEndpointAuthMethodClientSecretPost
+		return nil
+	case ClientRegistrationResponseTokenEndpointAuthMethodPrivateKeyJwt:
+		*s = ClientRegistrationResponseTokenEndpointAuthMethodPrivateKeyJwt
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// `none` registers a public client (PKCE required at authorization); anything else registers a
+// confidential one and returns a secret.
+type ClientRegistrationTokenEndpointAuthMethod string
+
+const (
+	ClientRegistrationTokenEndpointAuthMethodNone              ClientRegistrationTokenEndpointAuthMethod = "none"
+	ClientRegistrationTokenEndpointAuthMethodClientSecretBasic ClientRegistrationTokenEndpointAuthMethod = "client_secret_basic"
+	ClientRegistrationTokenEndpointAuthMethodClientSecretPost  ClientRegistrationTokenEndpointAuthMethod = "client_secret_post"
+	ClientRegistrationTokenEndpointAuthMethodPrivateKeyJwt     ClientRegistrationTokenEndpointAuthMethod = "private_key_jwt"
+)
+
+// AllValues returns all ClientRegistrationTokenEndpointAuthMethod values.
+func (ClientRegistrationTokenEndpointAuthMethod) AllValues() []ClientRegistrationTokenEndpointAuthMethod {
+	return []ClientRegistrationTokenEndpointAuthMethod{
+		ClientRegistrationTokenEndpointAuthMethodNone,
+		ClientRegistrationTokenEndpointAuthMethodClientSecretBasic,
+		ClientRegistrationTokenEndpointAuthMethodClientSecretPost,
+		ClientRegistrationTokenEndpointAuthMethodPrivateKeyJwt,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ClientRegistrationTokenEndpointAuthMethod) MarshalText() ([]byte, error) {
+	switch s {
+	case ClientRegistrationTokenEndpointAuthMethodNone:
+		return []byte(s), nil
+	case ClientRegistrationTokenEndpointAuthMethodClientSecretBasic:
+		return []byte(s), nil
+	case ClientRegistrationTokenEndpointAuthMethodClientSecretPost:
+		return []byte(s), nil
+	case ClientRegistrationTokenEndpointAuthMethodPrivateKeyJwt:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ClientRegistrationTokenEndpointAuthMethod) UnmarshalText(data []byte) error {
+	switch ClientRegistrationTokenEndpointAuthMethod(data) {
+	case ClientRegistrationTokenEndpointAuthMethodNone:
+		*s = ClientRegistrationTokenEndpointAuthMethodNone
+		return nil
+	case ClientRegistrationTokenEndpointAuthMethodClientSecretBasic:
+		*s = ClientRegistrationTokenEndpointAuthMethodClientSecretBasic
+		return nil
+	case ClientRegistrationTokenEndpointAuthMethodClientSecretPost:
+		*s = ClientRegistrationTokenEndpointAuthMethodClientSecretPost
+		return nil
+	case ClientRegistrationTokenEndpointAuthMethodPrivateKeyJwt:
+		*s = ClientRegistrationTokenEndpointAuthMethodPrivateKeyJwt
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 type ClientSecretBasic struct {
@@ -6930,6 +7458,190 @@ func (o OptBool) Get() (v bool, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptClientRegistrationApplicationType returns new OptClientRegistrationApplicationType with value set to v.
+func NewOptClientRegistrationApplicationType(v ClientRegistrationApplicationType) OptClientRegistrationApplicationType {
+	return OptClientRegistrationApplicationType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptClientRegistrationApplicationType is optional ClientRegistrationApplicationType.
+type OptClientRegistrationApplicationType struct {
+	Value ClientRegistrationApplicationType
+	Set   bool
+}
+
+// IsSet returns true if OptClientRegistrationApplicationType was set.
+func (o OptClientRegistrationApplicationType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptClientRegistrationApplicationType) Reset() {
+	var v ClientRegistrationApplicationType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptClientRegistrationApplicationType) SetTo(v ClientRegistrationApplicationType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptClientRegistrationApplicationType) Get() (v ClientRegistrationApplicationType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptClientRegistrationApplicationType) Or(d ClientRegistrationApplicationType) ClientRegistrationApplicationType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptClientRegistrationResponseApplicationType returns new OptClientRegistrationResponseApplicationType with value set to v.
+func NewOptClientRegistrationResponseApplicationType(v ClientRegistrationResponseApplicationType) OptClientRegistrationResponseApplicationType {
+	return OptClientRegistrationResponseApplicationType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptClientRegistrationResponseApplicationType is optional ClientRegistrationResponseApplicationType.
+type OptClientRegistrationResponseApplicationType struct {
+	Value ClientRegistrationResponseApplicationType
+	Set   bool
+}
+
+// IsSet returns true if OptClientRegistrationResponseApplicationType was set.
+func (o OptClientRegistrationResponseApplicationType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptClientRegistrationResponseApplicationType) Reset() {
+	var v ClientRegistrationResponseApplicationType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptClientRegistrationResponseApplicationType) SetTo(v ClientRegistrationResponseApplicationType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptClientRegistrationResponseApplicationType) Get() (v ClientRegistrationResponseApplicationType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptClientRegistrationResponseApplicationType) Or(d ClientRegistrationResponseApplicationType) ClientRegistrationResponseApplicationType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptClientRegistrationResponseTokenEndpointAuthMethod returns new OptClientRegistrationResponseTokenEndpointAuthMethod with value set to v.
+func NewOptClientRegistrationResponseTokenEndpointAuthMethod(v ClientRegistrationResponseTokenEndpointAuthMethod) OptClientRegistrationResponseTokenEndpointAuthMethod {
+	return OptClientRegistrationResponseTokenEndpointAuthMethod{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptClientRegistrationResponseTokenEndpointAuthMethod is optional ClientRegistrationResponseTokenEndpointAuthMethod.
+type OptClientRegistrationResponseTokenEndpointAuthMethod struct {
+	Value ClientRegistrationResponseTokenEndpointAuthMethod
+	Set   bool
+}
+
+// IsSet returns true if OptClientRegistrationResponseTokenEndpointAuthMethod was set.
+func (o OptClientRegistrationResponseTokenEndpointAuthMethod) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptClientRegistrationResponseTokenEndpointAuthMethod) Reset() {
+	var v ClientRegistrationResponseTokenEndpointAuthMethod
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptClientRegistrationResponseTokenEndpointAuthMethod) SetTo(v ClientRegistrationResponseTokenEndpointAuthMethod) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptClientRegistrationResponseTokenEndpointAuthMethod) Get() (v ClientRegistrationResponseTokenEndpointAuthMethod, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptClientRegistrationResponseTokenEndpointAuthMethod) Or(d ClientRegistrationResponseTokenEndpointAuthMethod) ClientRegistrationResponseTokenEndpointAuthMethod {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptClientRegistrationTokenEndpointAuthMethod returns new OptClientRegistrationTokenEndpointAuthMethod with value set to v.
+func NewOptClientRegistrationTokenEndpointAuthMethod(v ClientRegistrationTokenEndpointAuthMethod) OptClientRegistrationTokenEndpointAuthMethod {
+	return OptClientRegistrationTokenEndpointAuthMethod{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptClientRegistrationTokenEndpointAuthMethod is optional ClientRegistrationTokenEndpointAuthMethod.
+type OptClientRegistrationTokenEndpointAuthMethod struct {
+	Value ClientRegistrationTokenEndpointAuthMethod
+	Set   bool
+}
+
+// IsSet returns true if OptClientRegistrationTokenEndpointAuthMethod was set.
+func (o OptClientRegistrationTokenEndpointAuthMethod) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptClientRegistrationTokenEndpointAuthMethod) Reset() {
+	var v ClientRegistrationTokenEndpointAuthMethod
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptClientRegistrationTokenEndpointAuthMethod) SetTo(v ClientRegistrationTokenEndpointAuthMethod) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptClientRegistrationTokenEndpointAuthMethod) Get() (v ClientRegistrationTokenEndpointAuthMethod, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptClientRegistrationTokenEndpointAuthMethod) Or(d ClientRegistrationTokenEndpointAuthMethod) ClientRegistrationTokenEndpointAuthMethod {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -16565,6 +17277,10 @@ type PostV1ProjectsByProjectIdAdminAppsReq struct {
 	// exactly like an unknown client_id, so an integration can be suspended and restored without
 	// re-issuing its registration.
 	Disabled OptBool `json:"disabled"`
+	// True when the client registered itself through `/oauth2/register` (RFC 7591) rather than being
+	// created here. Such a client manages its own metadata with the registration access token it was
+	// issued; edits made here are still authoritative, but the client can overwrite them.
+	DynamicallyRegistered OptBool `json:"dynamically_registered"`
 }
 
 // GetID returns the value of ID.
@@ -16627,6 +17343,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetDisabled() OptBool {
 	return s.Disabled
 }
 
+// GetDynamicallyRegistered returns the value of DynamicallyRegistered.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetDynamicallyRegistered() OptBool {
+	return s.DynamicallyRegistered
+}
+
 // SetID sets the value of ID.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetID(val OptString) {
 	s.ID = val
@@ -16685,6 +17406,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetBackchannelLogoutURI(val OptN
 // SetDisabled sets the value of Disabled.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetDisabled(val OptBool) {
 	s.Disabled = val
+}
+
+// SetDynamicallyRegistered sets the value of DynamicallyRegistered.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetDynamicallyRegistered(val OptBool) {
+	s.DynamicallyRegistered = val
 }
 
 type PostV1ProjectsByProjectIdAdminAppsReqType string
@@ -19733,6 +20459,31 @@ func (s *RegistrationConfigPasswordStrategy) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+type RegistrationToken struct {
+	Token string
+	Roles []string
+}
+
+// GetToken returns the value of Token.
+func (s *RegistrationToken) GetToken() string {
+	return s.Token
+}
+
+// GetRoles returns the value of Roles.
+func (s *RegistrationToken) GetRoles() []string {
+	return s.Roles
+}
+
+// SetToken sets the value of Token.
+func (s *RegistrationToken) SetToken(val string) {
+	s.Token = val
+}
+
+// SetRoles sets the value of Roles.
+func (s *RegistrationToken) SetRoles(val []string) {
+	s.Roles = val
 }
 
 // Ref: #/components/schemas/RetentionPolicy

@@ -8,6 +8,10 @@ func (s *AppClient) setDefaults() {
 		val := bool(false)
 		s.Disabled.SetTo(val)
 	}
+	{
+		val := bool(false)
+		s.DynamicallyRegistered.SetTo(val)
+	}
 }
 
 // setDefaults set default value of fields.
@@ -79,6 +83,10 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) setDefaults() {
 	{
 		val := bool(false)
 		s.Disabled.SetTo(val)
+	}
+	{
+		val := bool(false)
+		s.DynamicallyRegistered.SetTo(val)
 	}
 }
 

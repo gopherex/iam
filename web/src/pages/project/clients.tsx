@@ -103,9 +103,20 @@ export function ClientsPage() {
       accessorKey: 'type',
       header: 'Type',
       cell: ({ row }) => (
-        <Badge variant={typeVariant(row.original.type)}>
-          {appTypeLabel(row.original.type)}
-        </Badge>
+        <span className="flex items-center gap-1.5">
+          <Badge variant={typeVariant(row.original.type)}>
+            {appTypeLabel(row.original.type)}
+          </Badge>
+          {/* A self-registered client holds a registration access token and can
+              rewrite its own metadata, so an edit made here is not necessarily
+              the last word. Saying where it came from is the difference between
+              that being understood and being a mystery. */}
+          {row.original.dynamically_registered ? (
+            <Badge variant="outline" title="Registered through /oauth2/register (RFC 7591)">
+              self-registered
+            </Badge>
+          ) : null}
+        </span>
       ),
     },
     {

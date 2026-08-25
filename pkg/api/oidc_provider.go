@@ -11,6 +11,7 @@ package api
 import (
 	"context"
 	"net/url"
+	"strings"
 
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
@@ -76,6 +77,13 @@ type OIDCGrants interface {
 	// OpenIDConfiguration returns the discovery document for a project
 	// environment. Public.
 	OpenIDConfiguration(ctx context.Context, projectID, env string) (map[string]any, error)
+
+	// RegisterClient / ReadClient / UpdateClient / DeleteClient are dynamic
+	// client registration (RFC 7591) and the management it implies (RFC 7592).
+	RegisterClient(ctx context.Context, cmd domain.OIDCClientRegisterCmd) (*domain.OIDCClientRegistration, error)
+	ReadClient(ctx context.Context, clientID string) (*domain.OIDCClientRegistration, error)
+	UpdateClient(ctx context.Context, cmd domain.OIDCClientUpdateCmd) (*domain.OIDCClientRegistration, error)
+	DeleteClient(ctx context.Context, clientID string) error
 }
 
 type OIDCProviderDeps struct{ Grants OIDCGrants }
@@ -520,4 +528,171 @@ func oasOAuthGrant(g domain.Grant) oas.OAuthGrant {
 		Scopes:    g.Scopes,
 		GrantedAt: oas.NewOptTimestamp(oas.Timestamp(g.GrantedAt)),
 	}
+}
+
+// ----- dynamic client registration (RFC 7591 / 7592) -----
+
+// oidcRegistrationFrom reads RFC 7591 metadata off the wire.
+func oidcRegistrationFrom(req *oas.ClientRegistration) domain.OIDCClientRegistration {
+	return domain.OIDCClientRegistration{
+		ClientName:              req.ClientName.Or(""),
+		RedirectURIs:            req.RedirectUris,
+		ApplicationType:         string(req.ApplicationType.Or("")),
+		TokenEndpointAuthMethod: string(req.TokenEndpointAuthMethod.Or("")),
+		GrantTypes:              req.GrantTypes,
+		ResponseTypes:           req.ResponseTypes,
+		Scope:                   splitSpaceDelimited(req.Scope.Or("")),
+		JWKS:                    req.Jwks.Or(""),
+		JWKSURI:                 req.JwksURI.Or(""),
+		PostLogoutRedirectURIs:  req.PostLogoutRedirectUris,
+		BackchannelLogoutURI:    req.BackchannelLogoutURI.Or(""),
+	}
+}
+
+// oasClientRegistration renders registration metadata back onto the wire. The
+// secret and the registration access token are present only right after
+// registration — afterwards only their digests exist.
+func oasClientRegistration(reg *domain.OIDCClientRegistration) *oas.ClientRegistrationResponse {
+	out := &oas.ClientRegistrationResponse{
+		ClientName:             oas.NewOptString(reg.ClientName),
+		RedirectUris:           reg.RedirectURIs,
+		GrantTypes:             reg.GrantTypes,
+		ResponseTypes:          reg.ResponseTypes,
+		PostLogoutRedirectUris: reg.PostLogoutRedirectURIs,
+		ClientID:               oas.NewOptString(reg.ClientID),
+		ClientIDIssuedAt:       oas.NewOptInt(int(reg.IssuedAt.Unix())),
+	}
+
+	if reg.ApplicationType != "" {
+		out.ApplicationType = oas.NewOptClientRegistrationResponseApplicationType(
+			oas.ClientRegistrationResponseApplicationType(reg.ApplicationType))
+	}
+
+	if reg.TokenEndpointAuthMethod != "" {
+		out.TokenEndpointAuthMethod = oas.NewOptClientRegistrationResponseTokenEndpointAuthMethod(
+			oas.ClientRegistrationResponseTokenEndpointAuthMethod(reg.TokenEndpointAuthMethod))
+	}
+
+	if len(reg.Scope) > 0 {
+		out.Scope = oas.NewOptString(strings.Join(reg.Scope, " "))
+	}
+
+	if reg.JWKS != "" {
+		out.Jwks = oas.NewOptNilString(reg.JWKS)
+	}
+
+	if reg.JWKSURI != "" {
+		out.JwksURI = oas.NewOptNilString(reg.JWKSURI)
+	}
+
+	if reg.BackchannelLogoutURI != "" {
+		out.BackchannelLogoutURI = oas.NewOptNilString(reg.BackchannelLogoutURI)
+	}
+
+	if reg.ClientSecret != "" {
+		out.ClientSecret = oas.NewOptNilString(reg.ClientSecret)
+	}
+
+	if reg.RegistrationAccessToken != "" {
+		out.RegistrationAccessToken = oas.NewOptNilString(reg.RegistrationAccessToken)
+	}
+
+	if reg.RegistrationClientURI != "" {
+		out.RegistrationClientURI = oas.NewOptNilString(reg.RegistrationClientURI)
+	}
+
+	return out
+}
+
+// splitSpaceDelimited splits an OAuth space-delimited list.
+func splitSpaceDelimited(v string) []string {
+	return strings.Fields(v)
+}
+
+func (s *OIDCProviderService) PostOauth2Register(
+	ctx context.Context, req *oas.ClientRegistration, params oas.PostOauth2RegisterParams,
+) (*oas.ClientRegistrationResponse, error) {
+	// The initial access token is a project-admin token: it is what says which
+	// project the new client belongs to. Registration is never open here.
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	reg, err := s.deps.Grants.RegisterClient(ctx, domain.OIDCClientRegisterCmd{
+		ProjectID:    p.ProjectID,
+		Environment:  params.XEnvironment.Or(""),
+		Registration: oidcRegistrationFrom(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return oasClientRegistration(reg), nil
+}
+
+func (s *OIDCProviderService) GetOauth2RegisterByClientId(
+	ctx context.Context, params oas.GetOauth2RegisterByClientIdParams,
+) (*oas.ClientRegistrationResponse, error) {
+	if err := requireRegistrationOwner(ctx, params.ClientID); err != nil {
+		return nil, err
+	}
+
+	reg, err := s.deps.Grants.ReadClient(ctx, params.ClientID)
+	if err != nil {
+		return nil, err
+	}
+
+	return oasClientRegistration(reg), nil
+}
+
+func (s *OIDCProviderService) PutOauth2RegisterByClientId(
+	ctx context.Context, req *oas.ClientRegistration, params oas.PutOauth2RegisterByClientIdParams,
+) (*oas.ClientRegistrationResponse, error) {
+	if err := requireRegistrationOwner(ctx, params.ClientID); err != nil {
+		return nil, err
+	}
+
+	p, _ := PrincipalFrom(ctx)
+
+	reg, err := s.deps.Grants.UpdateClient(ctx, domain.OIDCClientUpdateCmd{
+		ClientID:     params.ClientID,
+		ProjectID:    p.ProjectID,
+		Registration: oidcRegistrationFrom(req),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return oasClientRegistration(reg), nil
+}
+
+func (s *OIDCProviderService) DeleteOauth2RegisterByClientId(
+	ctx context.Context, params oas.DeleteOauth2RegisterByClientIdParams,
+) (*oas.Ok, error) {
+	if err := requireRegistrationOwner(ctx, params.ClientID); err != nil {
+		return nil, err
+	}
+
+	if err := s.deps.Grants.DeleteClient(ctx, params.ClientID); err != nil {
+		return nil, err
+	}
+
+	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
+}
+
+// requireRegistrationOwner checks that the registration access token presented
+// belongs to the client being managed. The token authorizes exactly one client;
+// without this check any registered client could manage any other.
+func requireRegistrationOwner(ctx context.Context, clientID string) error {
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return err
+	}
+
+	if p.ClientID == "" || p.ClientID != clientID {
+		return domain.ErrClientNotFound
+	}
+
+	return nil
 }

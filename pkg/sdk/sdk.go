@@ -419,6 +419,12 @@ func (s staticSecuritySource) ScimToken(context.Context, oas.OperationName, *oas
 	return oas.ScimToken{Token: s.token}, nil
 }
 
+func (s staticSecuritySource) RegistrationToken(
+	context.Context, oas.OperationName, *oas.Client,
+) (oas.RegistrationToken, error) {
+	return oas.RegistrationToken{Token: s.token}, nil
+}
+
 func (s staticSecuritySource) ServiceToken(context.Context, oas.OperationName, *oas.Client) (oas.ServiceToken, error) {
 	return oas.ServiceToken{Token: s.token}, nil
 }

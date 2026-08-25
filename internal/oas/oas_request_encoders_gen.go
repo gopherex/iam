@@ -760,6 +760,20 @@ func encodePostOauth2ParRequest(
 	return nil
 }
 
+func encodePostOauth2RegisterRequest(
+	req *ClientRegistration,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodePostOauth2RevokeRequest(
 	req *PostOauth2RevokeReq,
 	r *http.Request,
@@ -2561,6 +2575,20 @@ func encodePostV1TokensVerifyRequest(
 
 func encodePostV1UsersMeConsentsRequest(
 	req *PostV1UsersMeConsentsReq,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodePutOauth2RegisterByClientIdRequest(
+	req *ClientRegistration,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

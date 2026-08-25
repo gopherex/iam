@@ -219,6 +219,11 @@ func (s *AppClient) SetFake() {
 			s.Disabled.SetFake()
 		}
 	}
+	{
+		{
+			s.DynamicallyRegistered.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.
@@ -505,6 +510,225 @@ func (s *Challenge) SetFake() {
 			s.Type.SetFake()
 		}
 	}
+}
+
+// SetFake set fake values.
+func (s *ClientRegistration) SetFake() {
+	{
+		{
+			s.ClientName.SetFake()
+		}
+	}
+	{
+		{
+			s.RedirectUris = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.RedirectUris = append(s.RedirectUris, elem)
+			}
+		}
+	}
+	{
+		{
+			s.ApplicationType.SetFake()
+		}
+	}
+	{
+		{
+			s.TokenEndpointAuthMethod.SetFake()
+		}
+	}
+	{
+		{
+			s.GrantTypes = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.GrantTypes = append(s.GrantTypes, elem)
+			}
+		}
+	}
+	{
+		{
+			s.ResponseTypes = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.ResponseTypes = append(s.ResponseTypes, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Scope.SetFake()
+		}
+	}
+	{
+		{
+			s.Jwks.SetFake()
+		}
+	}
+	{
+		{
+			s.JwksURI.SetFake()
+		}
+	}
+	{
+		{
+			s.PostLogoutRedirectUris = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.PostLogoutRedirectUris = append(s.PostLogoutRedirectUris, elem)
+			}
+		}
+	}
+	{
+		{
+			s.BackchannelLogoutURI.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *ClientRegistrationApplicationType) SetFake() {
+	*s = ClientRegistrationApplicationTypeWeb
+}
+
+// SetFake set fake values.
+func (s *ClientRegistrationResponse) SetFake() {
+	{
+		{
+			s.ClientName.SetFake()
+		}
+	}
+	{
+		{
+			s.RedirectUris = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.RedirectUris = append(s.RedirectUris, elem)
+			}
+		}
+	}
+	{
+		{
+			s.ApplicationType.SetFake()
+		}
+	}
+	{
+		{
+			s.TokenEndpointAuthMethod.SetFake()
+		}
+	}
+	{
+		{
+			s.GrantTypes = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.GrantTypes = append(s.GrantTypes, elem)
+			}
+		}
+	}
+	{
+		{
+			s.ResponseTypes = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.ResponseTypes = append(s.ResponseTypes, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Scope.SetFake()
+		}
+	}
+	{
+		{
+			s.Jwks.SetFake()
+		}
+	}
+	{
+		{
+			s.JwksURI.SetFake()
+		}
+	}
+	{
+		{
+			s.PostLogoutRedirectUris = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.PostLogoutRedirectUris = append(s.PostLogoutRedirectUris, elem)
+			}
+		}
+	}
+	{
+		{
+			s.BackchannelLogoutURI.SetFake()
+		}
+	}
+	{
+		{
+			s.ClientID.SetFake()
+		}
+	}
+	{
+		{
+			s.ClientSecret.SetFake()
+		}
+	}
+	{
+		{
+			s.ClientIDIssuedAt.SetFake()
+		}
+	}
+	{
+		{
+			s.RegistrationAccessToken.SetFake()
+		}
+	}
+	{
+		{
+			s.RegistrationClientURI.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *ClientRegistrationResponseApplicationType) SetFake() {
+	*s = ClientRegistrationResponseApplicationTypeWeb
+}
+
+// SetFake set fake values.
+func (s *ClientRegistrationResponseTokenEndpointAuthMethod) SetFake() {
+	*s = ClientRegistrationResponseTokenEndpointAuthMethodNone
+}
+
+// SetFake set fake values.
+func (s *ClientRegistrationTokenEndpointAuthMethod) SetFake() {
+	*s = ClientRegistrationTokenEndpointAuthMethodNone
 }
 
 // SetFake set fake values.
@@ -3101,6 +3325,42 @@ func (s *OptBool) SetFake() {
 	var elem bool
 	{
 		elem = true
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptClientRegistrationApplicationType) SetFake() {
+	var elem ClientRegistrationApplicationType
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptClientRegistrationResponseApplicationType) SetFake() {
+	var elem ClientRegistrationResponseApplicationType
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptClientRegistrationResponseTokenEndpointAuthMethod) SetFake() {
+	var elem ClientRegistrationResponseTokenEndpointAuthMethod
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptClientRegistrationTokenEndpointAuthMethod) SetFake() {
+	var elem ClientRegistrationTokenEndpointAuthMethod
+	{
+		elem.SetFake()
 	}
 	s.SetTo(elem)
 }
@@ -6214,6 +6474,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetFake() {
 	{
 		{
 			s.Disabled.SetFake()
+		}
+	}
+	{
+		{
+			s.DynamicallyRegistered.SetFake()
 		}
 	}
 }
