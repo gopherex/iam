@@ -28,6 +28,9 @@ var gcSweeps = []gcSweep{
 	{"iam_interactions", `DELETE FROM iam_interactions WHERE expires_at IS NOT NULL AND expires_at < now()`},
 	{"iam_device_codes", `DELETE FROM iam_device_codes WHERE expires_at < now()`},
 	{"iam_par_requests", `DELETE FROM iam_par_requests WHERE expires_at < now()`},
+	// A revoked token stops needing a denylist entry once it has expired on its
+	// own; keeping it would grow the table without adding any protection.
+	{"iam_revoked_tokens", `DELETE FROM iam_revoked_tokens WHERE expires_at < now()`},
 	// Sessions/refresh tokens have a nullable expires_at; a revoked-but-unexpired
 	// refresh token is kept for reuse detection until it expires, so only prune
 	// past-expiry rows (they can no longer be used or detected against).

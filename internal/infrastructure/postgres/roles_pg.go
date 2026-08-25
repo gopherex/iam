@@ -20,8 +20,11 @@ import (
 	"github.com/gopherex/iam/pkg/api"
 )
 
-// eventFieldUserID is the user key inside emitted event payloads.
-const eventFieldUserID = "user_id"
+// eventFieldUserID / eventFieldSessionID are payload keys of emitted events.
+const (
+	eventFieldUserID    = "user_id"
+	eventFieldSessionID = "session_id"
+)
 
 // pgRoles is the Postgres-backed role-assignment store. It is shared by the
 // admin API and the token-minting path.

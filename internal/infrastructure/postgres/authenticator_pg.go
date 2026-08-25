@@ -82,6 +82,20 @@ func (a *pgAuthenticator) verifyJWT(ctx context.Context, token string) (map[stri
 	if err != nil {
 		return nil, domain.ErrUnauthorized
 	}
+	// A revoked token still verifies — that is what "stateless" means — so the
+	// denylist is the only thing standing between RFC 7009 revocation and a
+	// token that keeps working until it expires. Checked here so every
+	// credential path (bearer, oauth2, introspection) honors it.
+	jti, _ := verified["jti"].(string)
+
+	denied, derr := tokenDenied(ctx, a.db, jti)
+	if derr != nil {
+		return nil, derr
+	}
+
+	if denied {
+		return nil, domain.ErrTokenRevoked
+	}
 
 	return verified, nil
 }

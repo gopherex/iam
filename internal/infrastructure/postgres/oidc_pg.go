@@ -31,6 +31,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -132,6 +133,13 @@ type oidcTokenSubject struct {
 	clientID  string
 	nonce     string
 	scopes    []string
+	// sessionID ties the grant to the IAM browser session it was authorized
+	// from. It is what makes an issued token killable: revoking the session
+	// revokes its refresh tokens, and back-channel logout names it as `sid`.
+	sessionID string
+	// authTime is when the user actually authenticated, for the `auth_time`
+	// claim and the max_age check.
+	authTime time.Time
 }
 
 // oidcHasScope reports whether the openid scope is present (id_token is only
@@ -168,6 +176,10 @@ var _ api.OIDCGrants = (*pgOIDCGrants)(nil)
 type oidcInteractionEnvelope struct {
 	domain.Interaction
 	AccountID string `json:"account_id,omitempty"`
+	// AuthTime is when the session that claimed this interaction authenticated.
+	// It becomes the id_token's `auth_time` and is what a max_age request is
+	// measured against.
+	AuthTime time.Time `json:"auth_time,omitempty"`
 }
 
 // ===== local helpers =====
@@ -323,6 +335,7 @@ func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, account
 
 		env.AccountID = accountID
 		env.SessionID = sessionID
+		env.AuthTime = nowUTC()
 
 		raw, err := marshal(&env)
 		if err != nil {
@@ -451,6 +464,8 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			Nonce:               in.Nonce,
 			CodeChallenge:       in.CodeChallenge,
 			CodeChallengeMethod: in.CodeChallengeMethod,
+			SessionID:           cmd.SessionID,
+			AuthTime:            env.AuthTime,
 		})
 		if err != nil {
 			return "", err
@@ -1079,6 +1094,15 @@ func (a *pgOIDCGrants) BackchannelLogout(ctx context.Context, cmd domain.OIDCBac
 // up the persisted hashes; mintTokenResponse then mints real RS256-signed access,
 // id and (for offline_access) refresh tokens via the project Signer.
 func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[string]any, error) {
+	// The refresh grant runs outside the shared transaction on purpose. Spending
+	// the presented token — and, when it turns out to have been replayed, burning
+	// the session it belonged to — must COMMIT even though the exchange itself
+	// then fails. Inside one transaction the rejection would roll the burn back
+	// and reuse detection would detect and then forget.
+	if cmd.GrantType == "refresh_token" {
+		return a.tokenRefreshGrant(ctx, cmd)
+	}
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]any, error) {
 		switch cmd.GrantType {
 		case "authorization_code":
@@ -1164,6 +1188,8 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 				clientID:  effectiveClientID,
 				nonce:     codeData.Nonce,
 				scopes:    splitScopesFromData(row.Data),
+				sessionID: codeData.SessionID,
+				authTime:  codeData.AuthTime,
 			}
 			if err := a.emitter.Emit(ctx, domain.Event{
 				Type:        "oidc.token.issued",
@@ -1239,58 +1265,141 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 				// RFC 8628: still pending.
 				return nil, domain.ErrBadRequest
 			}
-		case "refresh_token":
-			if cmd.RefreshToken == "" {
-				return nil, domain.ErrBadRequest
-			}
-			// The refresh token is a signed RS256 JWT (typ=refresh). Verify it
-			// against the REQUEST tenant (the authenticated client's project) —
-			// never the token's self-asserted issuer: a token from another tenant
-			// fails signature verification against this project's keys.
-			projectID := cmd.ProjectID
-
-			env := cmd.Env
-			if env == "" {
-				env = oidcDefaultEnv
-			}
-
-			if projectID == "" {
-				return nil, domain.ErrInvalidToken
-			}
-
-			sub, clientID, scopes, err := a.verifyRefreshToken(ctx, projectID, env, cmd.RefreshToken)
-			if err != nil {
-				return nil, err
-			}
-
-			effectiveClientID := firstNonEmpty(clientID, cmd.ClientID, cmd.AuthenticatedClientID)
-			if err := a.emitter.Emit(ctx, domain.Event{
-				Type:        "oidc.token.refreshed",
-				ProjectID:   projectID,
-				Environment: env,
-				AggregateID: sub,
-				Payload: map[string]any{
-					"subject":    sub,
-					"client_id":  effectiveClientID,
-					"scopes":     scopes,
-					"project_id": projectID,
-					"env":        env,
-				},
-			}); err != nil {
-				return nil, err
-			}
-
-			return a.mintTokenResponse(ctx, oidcTokenSubject{
-				projectID: projectID,
-				env:       env,
-				subject:   sub,
-				clientID:  effectiveClientID,
-				scopes:    scopes,
-			})
 		default:
 			return nil, domain.ErrUnsupportedGrant
 		}
 	})
+}
+
+// tokenRefreshGrant exchanges a refresh token, rotating it. It manages its own
+// transactions: see Token for why the spend must not share one with the mint.
+func (a *pgOIDCGrants) tokenRefreshGrant(ctx context.Context, cmd domain.OIDCTokenCmd) (map[string]any, error) {
+	if cmd.RefreshToken == "" {
+		return nil, domain.ErrBadRequest
+	}
+	// The refresh token is a signed RS256 JWT (typ=refresh). Verify it
+	// against the REQUEST tenant (the authenticated client's project) —
+	// never the token's self-asserted issuer: a token from another tenant
+	// fails signature verification against this project's keys.
+	projectID := cmd.ProjectID
+
+	env := cmd.Env
+	if env == "" {
+		env = oidcDefaultEnv
+	}
+
+	if projectID == "" {
+		return nil, domain.ErrInvalidToken
+	}
+
+	sub, tokenClientID, scopes, err := a.verifyRefreshToken(ctx, projectID, env, cmd.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+	// Who is asking, before the record has a chance to answer for them.
+	presenter := firstNonEmpty(cmd.AuthenticatedClientID, cmd.ClientID, tokenClientID)
+
+	// Spend the presented token in its own transaction, and take the grant from
+	// the RECORD rather than the token's own claims: rotation limits the damage
+	// of a leak, and a replayed token burns the whole session. The spend (and the
+	// burn) must commit even when this exchange is then rejected.
+	var stored oidcRefreshData
+
+	row, err := withTxRet(ctx, a.db, func(ctx context.Context) (*models.IamRefreshToken, error) {
+		redeemed, data, rerr := a.oidcRedeemRefreshToken(ctx, projectID, env, cmd.RefreshToken)
+		stored = data
+
+		return redeemed, rerr
+	})
+	if err != nil {
+		if rerr := a.reportReuse(ctx, err, row, stored, env); rerr != nil {
+			return nil, rerr
+		}
+
+		return nil, err
+	}
+
+	if len(stored.Scopes) > 0 {
+		scopes = stored.Scopes
+	}
+
+	// A refresh token belongs to the client it was issued to. Compare against
+	// the presenter, not against a value the record just supplied.
+	if stored.ClientID != "" && presenter != stored.ClientID {
+		return nil, domain.ErrInvalidGrant.WithMessage("refresh token was issued to a different client")
+	}
+
+	effectiveClientID := firstNonEmpty(stored.ClientID, presenter)
+
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "oidc.token.refreshed",
+		ProjectID:   projectID,
+		Environment: env,
+		AggregateID: sub,
+		Payload: map[string]any{
+			"subject":    sub,
+			"client_id":  effectiveClientID,
+			"scopes":     scopes,
+			"project_id": projectID,
+			"env":        env,
+		},
+	}); err != nil {
+		return nil, err
+	}
+
+	return a.mintTokenResponse(ctx, oidcTokenSubject{
+		projectID: projectID,
+		env:       env,
+		subject:   sub,
+		clientID:  effectiveClientID,
+		scopes:    scopes,
+		nonce:     stored.Nonce,
+		sessionID: row.SessionID,
+	})
+}
+
+// reportReuse records a detected refresh-token replay. The burn itself already
+// committed (see oidcRedeemRefreshToken); this runs outside the rolled-back
+// transaction so the security event is not lost with it.
+func (a *pgOIDCGrants) reportReuse(
+	ctx context.Context, err error, row *models.IamRefreshToken, stored oidcRefreshData, env string,
+) error {
+	if !errors.Is(err, domain.ErrTokenUsed) || row == nil {
+		return nil
+	}
+
+	return a.emitter.Emit(ctx, domain.Event{
+		Type:        "oidc.token.reuse_detected",
+		ProjectID:   row.ProjectID,
+		Environment: env,
+		AggregateID: row.SessionID,
+		Payload: map[string]any{
+			eventFieldSessionID: row.SessionID,
+			eventFieldUserID:    row.UserID,
+			"client_id":         stored.ClientID,
+		},
+	})
+}
+
+// denyAccessToken adds a presented access token to the revocation denylist and
+// returns its jti. A token that does not verify for this tenant is left alone —
+// RFC 7009 makes an unmatched token a no-op success, not an error.
+func (a *pgOIDCGrants) denyAccessToken(ctx context.Context, cmd domain.OIDCRevokeCmd) (string, error) {
+	verified, verifyErr := a.db.Signer().Verify(ctx, cmd.ProjectID, cmd.Env, cmd.Token)
+	if verifyErr != nil {
+		//nolint:nilerr // RFC 7009: a token we cannot match is a no-op success,
+		// not a failure — telling the caller which tokens exist would be an oracle.
+		return "", nil
+	}
+
+	jti := peekString(verified, claimTokenID)
+
+	var expiresAt time.Time
+	if exp, ok := verified["exp"].(float64); ok {
+		expiresAt = time.Unix(int64(exp), 0).UTC()
+	}
+
+	return jti, denyToken(ctx, a.db, cmd.ProjectID, cmd.Env, jti, expiresAt)
 }
 
 // verifyRefreshToken validates a signed refresh-token JWT against the project's
@@ -1358,6 +1467,18 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 	issuer := oidcIssuer(a.db.PublicURL, sub.projectID, env)
 	now := nowUTC()
 
+	// Token lifetimes come from the project's session_policy, like every other
+	// token IAM issues. They used to be constants compiled in here, so a project
+	// could configure the lifetime of its core-auth sessions and not of the
+	// tokens its own OIDC provider handed out.
+	accessTTL, refreshTTL := oidcAccessTTL, oidcRefreshTTL
+
+	if a.cfg != nil {
+		if sp, perr := a.cfg.SessionPolicy(ctx, sub.projectID); perr == nil {
+			accessTTL, refreshTTL = sp.AccessTTL, sp.RefreshTTL
+		}
+	}
+
 	// The `groups` scope projects the user's IAM role assignments into the token.
 	// The values are read from storage, never taken from the request: a client
 	// can ask for the scope, but it cannot ask for a role.
@@ -1385,6 +1506,10 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		claimClientID:  sub.clientID,
 		claimScope:     joinScopes(sub.scopes),
 		claimTokenType: tokenTypeAccess,
+		// jti names this token so revocation can name it back; sid ties it to the
+		// session, so revoking the session kills it and back-channel logout can
+		// tell relying parties which one ended.
+		claimTokenID: newUUID(),
 		// pid/env identify the tenant whose key signed this token. The verifier
 		// selects the signing key by them, so a token without pid cannot be
 		// verified at all — including at our own userinfo endpoint, which is
@@ -1396,7 +1521,11 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		accessClaims[claimGroups] = groups
 	}
 
-	access, err := a.db.Signer().Sign(ctx, sub.projectID, env, accessClaims, oidcAccessTTL)
+	if sub.sessionID != "" {
+		accessClaims[claimSessionID] = sub.sessionID
+	}
+
+	access, err := a.db.Signer().Sign(ctx, sub.projectID, env, accessClaims, accessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -1404,7 +1533,7 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 	resp := oidc.AccessTokenResponse{
 		AccessToken: access,
 		TokenType:   "Bearer",
-		ExpiresIn:   uint64(oidcAccessTTL / time.Second),
+		ExpiresIn:   uint64(accessTTL / time.Second),
 		Scope:       oidc.SpaceDelimitedArray(sub.scopes),
 	}
 
@@ -1417,7 +1546,7 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 	}
 
 	if oidcHasScope(sub.scopes, "openid") {
-		idToken, err := a.mintIDToken(ctx, sub, env, issuer, access, now, groups, scopeClaims)
+		idToken, err := a.mintIDToken(ctx, sub, env, issuer, access, now, groups, scopeClaims, accessTTL)
 		if err != nil {
 			return nil, err
 		}
@@ -1427,17 +1556,28 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 
 	// refresh_token: signed, rotatable JWT for offline_access requests.
 	if oidcHasScope(sub.scopes, "offline_access") {
-		refresh, err := a.db.Signer().Sign(ctx, sub.projectID, env, map[string]any{
+		refreshClaims := map[string]any{
 			claimIssuer:      issuer,
 			claimSubject:     sub.subject,
 			claimAudience:    sub.clientID,
 			claimClientID:    sub.clientID,
 			claimScope:       joinScopes(sub.scopes),
 			claimTokenType:   tokenTypeRefresh,
+			claimTokenID:     newUUID(),
 			claimProjectID:   sub.projectID,
 			claimEnvironment: env,
-		}, oidcRefreshTTL)
+		}
+		if sub.sessionID != "" {
+			refreshClaims[claimSessionID] = sub.sessionID
+		}
+
+		refresh, err := a.db.Signer().Sign(ctx, sub.projectID, env, refreshClaims, refreshTTL)
 		if err != nil {
+			return nil, err
+		}
+		// Record it. A refresh token that exists only as a signature cannot be
+		// rotated, cannot be revoked, and cannot be detected when it is replayed.
+		if err := a.storeOIDCRefreshToken(ctx, sub, env, refresh, refreshTTL); err != nil {
 			return nil, err
 		}
 
@@ -1454,13 +1594,13 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 // standard claims.
 func (a *pgOIDCGrants) mintIDToken(
 	ctx context.Context, sub oidcTokenSubject, env, issuer, accessToken string, now time.Time,
-	groups []string, scopeClaims map[string]any,
+	groups []string, scopeClaims map[string]any, ttl time.Duration,
 ) (string, error) {
 	idc := oidc.NewIDTokenClaims(
 		issuer,
 		sub.subject,
 		[]string{sub.clientID},
-		now.Add(oidcIDTokenTTL),
+		now.Add(ttl),
 		now,
 		sub.nonce,
 		"",  // acr
@@ -1494,7 +1634,15 @@ func (a *pgOIDCGrants) mintIDToken(
 		claims[k] = v
 	}
 
-	return a.db.Signer().Sign(ctx, sub.projectID, env, claims, oidcIDTokenTTL)
+	if sub.sessionID != "" {
+		claims[claimSessionID] = sub.sessionID
+	}
+
+	if !sub.authTime.IsZero() {
+		claims["auth_time"] = sub.authTime.Unix()
+	}
+
+	return a.db.Signer().Sign(ctx, sub.projectID, env, claims, ttl)
 }
 
 // oidcClaimsMap marshals an OIDC claims/response struct to the generic map the
@@ -1548,6 +1696,18 @@ func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospect
 	}
 
 	claims, err := a.db.Signer().Verify(ctx, cmd.ProjectID, env, cmd.Token)
+	if err == nil {
+		// A revoked token is inactive, whatever its signature says.
+		denied, derr := tokenDenied(ctx, a.db, peekString(claims, claimTokenID))
+		if derr != nil {
+			return nil, derr
+		}
+
+		if denied {
+			return inactive, nil
+		}
+	}
+
 	if err != nil {
 		return inactive, nil
 	}
@@ -1617,14 +1777,44 @@ func (a *pgOIDCGrants) Revoke(ctx context.Context, cmd domain.OIDCRevokeCmd) err
 				return err
 			}
 		}
-		// Access/refresh tokens are stateless, signature-verifiable RS256 JWTs;
-		// short-circuit revocation of a single stateless token would require a
-		// per-jti denylist store, which is not one of this adapter's owned
-		// tables. The auth-code material above is revoked by hash. RFC 7009: any
-		// token we cannot match is a no-op success.
+
 		aggregateID := ""
 		if len(rows) > 0 {
 			aggregateID = rows[0].ID
+		}
+		// A refresh token is a record, so revoking it is a write. RFC 7009 asks
+		// the server to accept either token type here regardless of the hint.
+		refreshRows, err := models.IamRefreshTokens.Query(
+			sm.Where(models.IamRefreshTokens.Columns.Hash.EQ(psql.Arg(hash))),
+			sm.Where(models.IamRefreshTokens.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
+			sm.Limit(1),
+		).All(ctx, a.db.Bobx())
+		if err != nil {
+			return fmt.Errorf("read refresh token: %w", err)
+		}
+
+		if len(refreshRows) > 0 {
+			var data oidcRefreshData
+			if len(refreshRows[0].Data) > 0 {
+				if uerr := unmarshal(refreshRows[0].Data, &data); uerr != nil {
+					return uerr
+				}
+			}
+
+			if err := a.markRefreshRevoked(ctx, refreshRows[0], data); err != nil {
+				return err
+			}
+
+			aggregateID = refreshRows[0].ID
+		}
+		// An access token is verified offline and can only be stopped by naming it.
+		jti, derr := a.denyAccessToken(ctx, cmd)
+		if derr != nil {
+			return derr
+		}
+
+		if aggregateID == "" {
+			aggregateID = jti
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -2224,6 +2414,9 @@ type authCodeData struct {
 	// "a verifier must NOT be presented".
 	CodeChallenge       string `json:"code_challenge,omitempty"`
 	CodeChallengeMethod string `json:"code_challenge_method,omitempty"`
+	// SessionID / AuthTime come from the interaction the code was minted from.
+	SessionID string    `json:"session_id,omitempty"`
+	AuthTime  time.Time `json:"auth_time,omitempty"`
 }
 
 // parseAuthCodeData unmarshals the auth-code data envelope.

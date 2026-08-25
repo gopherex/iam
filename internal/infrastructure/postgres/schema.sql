@@ -107,6 +107,18 @@ CREATE INDEX idx_iam_refresh_hash ON iam_refresh_tokens (hash);
 -- MFA / passkeys / challenges
 -- ============================================================
 
+-- Revoked stateless tokens, by jti. Access tokens are signed JWTs verified
+-- offline, so the only way to kill one before it expires is to name it here;
+-- rows are swept once the token they name has expired anyway.
+CREATE TABLE iam_revoked_tokens (
+  jti         text PRIMARY KEY,
+  project_id  text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
+  expires_at  timestamptz NOT NULL,
+  revoked_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_iam_revoked_tokens_expiry ON iam_revoked_tokens (expires_at);
+
 CREATE TABLE iam_factors (
   id         text PRIMARY KEY,
   project_id text NOT NULL,
