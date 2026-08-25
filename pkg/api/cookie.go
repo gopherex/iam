@@ -3,13 +3,29 @@ package api
 import (
 	"net/http"
 	"time"
+
+	"github.com/gopherex/iam/internal/domain"
 )
 
-// Default cookie lifetimes for the refresh handler (match the adapters' access /
-// refresh token TTLs).
-const (
-	cookieRefreshTTL = 30 * 24 * time.Hour
-)
+// cookieRefreshFallbackTTL is used only when a minted session does not carry a
+// refresh lifetime (an adapter that predates RefreshExpiresIn). The real value
+// comes from the project's session_policy, via Session.RefreshExpiresIn — a
+// cookie that outlives or undercuts the token it carries is a session that ends
+// at a time nobody configured.
+const cookieRefreshFallbackTTL = 30 * 24 * time.Hour
+
+// SessionCookiesFor renders the cookie pair for a minted session, taking both
+// lifetimes from the session itself (i.e. from the project's session_policy).
+func SessionCookiesFor(sess *domain.Session) []string {
+	access := time.Duration(sess.ExpiresIn) * time.Second
+
+	refresh := time.Duration(sess.RefreshExpiresIn) * time.Second
+	if refresh <= 0 {
+		refresh = cookieRefreshFallbackTTL
+	}
+
+	return SessionCookies(sess.AccessToken, sess.RefreshToken, access, refresh)
+}
 
 // SessionCookies renders the access + refresh Set-Cookie header pair for a
 // cookie-mode session. The access cookie (SessionCookieName) is sent on every

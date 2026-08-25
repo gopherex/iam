@@ -9,6 +9,7 @@ package postgres
 import (
 	"time"
 
+	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/pkg/api"
 )
 
@@ -16,4 +17,11 @@ import (
 // -mode login (delegates to the shared pkg/api builder).
 func sessionCookies(access, refresh string, accessTTL, refreshTTL time.Duration) []string {
 	return api.SessionCookies(access, refresh, accessTTL, refreshTTL)
+}
+
+// sessionCookiesFor renders the pair for a minted session, taking both lifetimes
+// from the session — i.e. from the project's session_policy — so a browser login
+// does not silently get a different lifetime than the policy configures.
+func sessionCookiesFor(sess *domain.Session) []string {
+	return api.SessionCookiesFor(sess)
 }

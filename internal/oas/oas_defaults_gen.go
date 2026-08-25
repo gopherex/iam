@@ -19,6 +19,14 @@ func (s *DeleteV1SessionsReq) setDefaults() {
 }
 
 // setDefaults set default value of fields.
+func (s *FlowCreateRequest) setDefaults() {
+	{
+		val := bool(false)
+		s.CookieMode.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
 func (s *PasswordChangeRequest) setDefaults() {
 	{
 		val := bool(false)

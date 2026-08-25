@@ -904,6 +904,19 @@ components:
         name:
           type: string
           maxLength: 256
+        cookie_mode:
+          type: boolean
+          default: false
+          description: >-
+            Ask for the completed session to be returned as HttpOnly cookies
+            (`iam_session` / `iam_refresh`) instead of in the response body.
+            Browsers set it: it is what establishes the browser session the
+            OIDC provider's hosted pages need in order to recognise an
+            already-signed-in user, so a second relying party does not re-prompt
+            for a password. Programmatic clients leave it false and keep
+            receiving the tokens in the body. Declared once at creation and
+            honoured for the whole flow, including a flow that completes in the
+            same request.
         captcha_token:
           type: string
           maxLength: 4096

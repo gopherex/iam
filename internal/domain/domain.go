@@ -44,8 +44,14 @@ type Session struct {
 	AAL          int
 	AccessToken  string
 	RefreshToken string
-	ExpiresIn    int
-	CreatedAt    time.Time
+	// ExpiresIn / RefreshExpiresIn are the access and refresh lifetimes in
+	// seconds, as resolved from the project's session_policy. Cookie-mode
+	// callers use them for the session cookies' Max-Age, so the browser session
+	// lives exactly as long as the policy says — not as long as a constant
+	// compiled into the transport layer.
+	ExpiresIn        int
+	RefreshExpiresIn int
+	CreatedAt        time.Time
 	// Device / management metadata (stored in the iam_sessions data envelope;
 	// snake-cased so it round-trips with the rename/trust paths). Powers
 	// self-managed-session UIs.

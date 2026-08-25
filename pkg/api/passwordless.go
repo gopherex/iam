@@ -10,15 +10,10 @@ package api
 
 import (
 	"context"
-	"time"
 
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
 )
-
-// magicLinkRefreshCookieTTL bounds the refresh cookie set by the magic-link
-// callback; the access cookie uses the session's own TTL.
-const magicLinkRefreshCookieTTL = 30 * 24 * time.Hour
 
 type PasswordlessAccounts interface {
 	StartOTP(ctx context.Context, projectID, identifier, channel, purpose, locale string) (*domain.Challenge, error)
@@ -92,9 +87,7 @@ func (s *PasswordlessService) GetV1AuthMagicLinkCallback(ctx context.Context, pa
 	}
 
 	out := &oas.GetV1AuthMagicLinkCallbackFound{Location: optURI(redirect)}
-	out.SetCookie = SessionCookies(
-		sess.AccessToken, sess.RefreshToken,
-		time.Duration(sess.ExpiresIn)*time.Second, magicLinkRefreshCookieTTL)
+	out.SetCookie = SessionCookiesFor(sess)
 
 	return out, nil
 }

@@ -446,21 +446,22 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	refreshHash := coreAuthSHA256(refreshPlain)
 	meta := domain.RequestMetaFromContext(ctx)
 	sess := &domain.Session{
-		ID:           sessionID,
-		AccountID:    acc.ID,
-		ProjectID:    acc.ProjectID,
-		ClientID:     clientID,
-		AMR:          amr,
-		AAL:          aal,
-		AccessToken:  accessToken,
-		RefreshToken: refreshPlain,
-		ExpiresIn:    int(sp.AccessTTL / time.Second),
-		CreatedAt:    now,
-		DeviceName:   meta.DeviceName,
-		IP:           meta.IP,
-		UserAgent:    meta.UserAgent,
-		Fingerprint:  meta.Fingerprint,
-		LastActiveAt: now,
+		ID:               sessionID,
+		AccountID:        acc.ID,
+		ProjectID:        acc.ProjectID,
+		ClientID:         clientID,
+		AMR:              amr,
+		AAL:              aal,
+		AccessToken:      accessToken,
+		RefreshToken:     refreshPlain,
+		ExpiresIn:        int(sp.AccessTTL / time.Second),
+		RefreshExpiresIn: int(sp.RefreshTTL / time.Second),
+		CreatedAt:        now,
+		DeviceName:       meta.DeviceName,
+		IP:               meta.IP,
+		UserAgent:        meta.UserAgent,
+		Fingerprint:      meta.Fingerprint,
+		LastActiveAt:     now,
 	}
 
 	rawSess, err := marshal(sess)
@@ -585,16 +586,17 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 	}
 
 	sess := &domain.Session{
-		ID:           row.ID,
-		AccountID:    acc.ID,
-		ProjectID:    acc.ProjectID,
-		ClientID:     clientID,
-		AMR:          amr,
-		AAL:          aal,
-		AccessToken:  accessToken,
-		RefreshToken: refreshPlain,
-		ExpiresIn:    int(sp.AccessTTL / time.Second),
-		CreatedAt:    prev.CreatedAt,
+		ID:               row.ID,
+		AccountID:        acc.ID,
+		ProjectID:        acc.ProjectID,
+		ClientID:         clientID,
+		AMR:              amr,
+		AAL:              aal,
+		AccessToken:      accessToken,
+		RefreshToken:     refreshPlain,
+		ExpiresIn:        int(sp.AccessTTL / time.Second),
+		RefreshExpiresIn: int(sp.RefreshTTL / time.Second),
+		CreatedAt:        prev.CreatedAt,
 		// Carry the device identity across refresh; refresh the IP/last-active
 		// from the current request when available.
 		DeviceName:   prev.DeviceName,

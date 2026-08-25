@@ -10,7 +10,6 @@ package api
 
 import (
 	"context"
-	"time"
 
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
@@ -643,7 +642,7 @@ func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.Op
 	// Rotate both cookies for a cookie-mode refresh; token-mode callers get the
 	// rotated tokens in the body only.
 	if cookieMode {
-		out.SetCookie = SessionCookies(sess.AccessToken, sess.RefreshToken, time.Duration(sess.ExpiresIn)*time.Second, cookieRefreshTTL)
+		out.SetCookie = SessionCookiesFor(sess)
 	}
 
 	return out, nil

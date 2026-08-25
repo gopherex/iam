@@ -40,11 +40,6 @@ import (
 )
 
 const (
-	// oauthSocialAccessTTL / oauthSocialRefreshTTL bound the minted access and
-	// refresh JWTs.
-	oauthSocialAccessTTL  = 10 * time.Minute
-	oauthSocialRefreshTTL = 30 * 24 * time.Hour
-
 	// oauthSocialExchangeCodeTTL bounds the single-use exchange code that maps a
 	// minted session to the ?code= redirect handed back by CompleteLoginRedirect.
 	oauthSocialExchangeCodeTTL = 5 * time.Minute
@@ -600,7 +595,7 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 
 	return domain.OAuthSocialCallbackResult{
 		RedirectURL: redirect,
-		SetCookie:   sessionCookies(sess.AccessToken, sess.RefreshToken, oauthSocialAccessTTL, oauthSocialRefreshTTL),
+		SetCookie:   sessionCookiesFor(sess),
 	}, nil
 }
 

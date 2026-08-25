@@ -2425,9 +2425,16 @@ type FlowCreateRequest struct {
 	// E.164 phone number for the phone_otp method (signin/recovery).
 	Phone OptString `json:"phone"`
 	// OAuth provider id for the oauth signin method.
-	Provider     OptString `json:"provider"`
-	Password     OptString `json:"password"`
-	Name         OptString `json:"name"`
+	Provider OptString `json:"provider"`
+	Password OptString `json:"password"`
+	Name     OptString `json:"name"`
+	// Ask for the completed session to be returned as HttpOnly cookies (`iam_session` / `iam_refresh`)
+	// instead of in the response body. Browsers set it: it is what establishes the browser session the
+	// OIDC provider's hosted pages need in order to recognise an already-signed-in user, so a second
+	// relying party does not re-prompt for a password. Programmatic clients leave it false and keep
+	// receiving the tokens in the body. Declared once at creation and honoured for the whole flow,
+	// including a flow that completes in the same request.
+	CookieMode   OptBool   `json:"cookie_mode"`
 	CaptchaToken OptString `json:"captcha_token"`
 	// Optional per-flow override for the cross-device "continue" deep-link base. Its origin
 	// (scheme+host) must match the project's configured app_base_url origin; otherwise it is ignored and
@@ -2480,6 +2487,11 @@ func (s *FlowCreateRequest) GetPassword() OptString {
 // GetName returns the value of Name.
 func (s *FlowCreateRequest) GetName() OptString {
 	return s.Name
+}
+
+// GetCookieMode returns the value of CookieMode.
+func (s *FlowCreateRequest) GetCookieMode() OptBool {
+	return s.CookieMode
 }
 
 // GetCaptchaToken returns the value of CaptchaToken.
@@ -2540,6 +2552,11 @@ func (s *FlowCreateRequest) SetPassword(val OptString) {
 // SetName sets the value of Name.
 func (s *FlowCreateRequest) SetName(val OptString) {
 	s.Name = val
+}
+
+// SetCookieMode sets the value of CookieMode.
+func (s *FlowCreateRequest) SetCookieMode(val OptBool) {
+	s.CookieMode = val
 }
 
 // SetCaptchaToken sets the value of CaptchaToken.

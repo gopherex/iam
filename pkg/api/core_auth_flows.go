@@ -48,12 +48,27 @@ var _ oas.CoreAuthHandler = (*CoreAuthFlowService)(nil)
 // carries the (current) flow_token while the flow is pending, and is cleared once
 // the flow is terminal (completed/aborted). This keeps the token out of JS while
 // still allowing GET /v1/auth/flows/current to resume by cookie.
+//
+// A flow that COMPLETES in cookie mode also establishes the browser session:
+// the minted access and refresh tokens go back as HttpOnly cookies instead of
+// being left in the response body for the page to hold. Without this the hosted
+// provider UI had no way to obtain a session cookie at all — password login and
+// the flow engine only ever returned tokens in JSON — so nothing could tell that
+// the user was already signed in, and every relying party re-prompted for a
+// password. A programmatic client presents no cookie, is not in cookie mode, and
+// keeps receiving the session in the body exactly as before.
 func flowHeaders(fs *domain.FlowState) *oas.FlowStateHeaders {
 	out := &oas.FlowStateHeaders{Response: *oasFlowState(fs)}
 	if fs.Flow.Status == domain.FlowStatusPending {
 		out.SetCookie = FlowCookieSet(fs.FlowToken, cookieFlowTTL)
-	} else {
-		out.SetCookie = FlowCookieClear()
+
+		return out
+	}
+
+	out.SetCookie = FlowCookieClear()
+
+	if fs.Session != nil && fs.Session.AccessToken != "" && fs.Flow.CookieMode {
+		out.SetCookie = append(out.SetCookie, SessionCookiesFor(fs.Session)...)
 	}
 
 	return out
@@ -80,6 +95,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.Flow
 		Locale:       req.Locale.Or(""),
 		InviteToken:  req.InviteToken.Or(""),
 		Consents:     consents,
+		CookieMode:   req.CookieMode.Or(false),
 	})
 	if err != nil {
 		return nil, err

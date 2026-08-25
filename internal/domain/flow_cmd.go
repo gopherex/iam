@@ -35,6 +35,13 @@ type Flow struct {
 	// AvailableMethods is the set of alternate methods the client may switch to
 	// mid-flow (surfaced as next_actions). Server-computed at create time.
 	AvailableMethods []string
+	// CookieMode records that a browser is driving this flow. When it completes,
+	// the minted session is handed back as HttpOnly cookies instead of being left
+	// in the response body for the page to hold — which is what makes a browser
+	// session (and therefore SSO across relying parties) possible at all. It is
+	// declared once at create time and survives resume, because the single
+	// round-trip case completes before any cookie could have been sent back.
+	CookieMode bool
 }
 
 // FlowKind is the auth flow category, selecting the state machine.
@@ -177,6 +184,10 @@ type FlowCreateCmd struct {
 	// Consents carries signup-time consent acceptances collected by the client
 	// before the identity proof. The flow records them only after verification.
 	Consents []AccountConsentAcceptance
+	// CookieMode asks for the completed session to be returned as HttpOnly
+	// cookies rather than in the response body. Browsers set it; programmatic
+	// clients leave it false and keep receiving tokens they can store themselves.
+	CookieMode bool
 }
 
 // FlowGetCmd retrieves a live flow by its opaque token (project-scoped).

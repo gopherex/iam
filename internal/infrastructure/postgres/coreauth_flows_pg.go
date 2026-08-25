@@ -108,6 +108,7 @@ type flowData struct {
 	Error            *domain.FlowError                 `json:"error,omitempty"`
 	Method           string                            `json:"method,omitempty"`
 	AvailableMethods []string                          `json:"available_methods,omitempty"`
+	CookieMode       bool                              `json:"cookie_mode,omitempty"`
 }
 
 // flowDataRM serializes a flowData into a json.RawMessage for the setter.
@@ -196,6 +197,7 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 		Error:            data.Error,
 		Method:           data.Method,
 		AvailableMethods: data.AvailableMethods,
+		CookieMode:       data.CookieMode,
 	}
 	if uid, ok := row.UserID.Get(); ok {
 		f.UserID = uid
@@ -221,6 +223,7 @@ func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *
 		Error:            f.Error,
 		Method:           f.Method,
 		AvailableMethods: f.AvailableMethods,
+		CookieMode:       f.CookieMode,
 	})
 	if err != nil {
 		return err
@@ -264,6 +267,7 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 		Error:            f.Error,
 		Method:           f.Method,
 		AvailableMethods: f.AvailableMethods,
+		CookieMode:       f.CookieMode,
 	})
 	if err != nil {
 		return "", err
@@ -409,6 +413,7 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 		},
 		ConsentsAccepted: cmd.Consents,
 		Method:           cmd.Method,
+		CookieMode:       cmd.CookieMode,
 	}
 
 	var state *domain.FlowState

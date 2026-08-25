@@ -5321,6 +5321,12 @@ func (s *FlowCreateRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.CookieMode.Set {
+			e.FieldStart("cookie_mode")
+			s.CookieMode.Encode(e)
+		}
+	}
+	{
 		if s.CaptchaToken.Set {
 			e.FieldStart("captcha_token")
 			s.CaptchaToken.Encode(e)
@@ -5356,7 +5362,7 @@ func (s *FlowCreateRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfFlowCreateRequest = [12]string{
+var jsonFieldsNameOfFlowCreateRequest = [13]string{
 	0:  "kind",
 	1:  "method",
 	2:  "email",
@@ -5364,11 +5370,12 @@ var jsonFieldsNameOfFlowCreateRequest = [12]string{
 	4:  "provider",
 	5:  "password",
 	6:  "name",
-	7:  "captcha_token",
-	8:  "redirect_to",
-	9:  "locale",
-	10: "invite_token",
-	11: "consents",
+	7:  "cookie_mode",
+	8:  "captcha_token",
+	9:  "redirect_to",
+	10: "locale",
+	11: "invite_token",
+	12: "consents",
 }
 
 // Decode decodes FlowCreateRequest from json.
@@ -5377,6 +5384,7 @@ func (s *FlowCreateRequest) Decode(d *jx.Decoder) error {
 		return errors.New("invalid: unable to decode FlowCreateRequest to nil")
 	}
 	var requiredBitSet [2]uint8
+	s.setDefaults()
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -5449,6 +5457,16 @@ func (s *FlowCreateRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "cookie_mode":
+			if err := func() error {
+				s.CookieMode.Reset()
+				if err := s.CookieMode.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"cookie_mode\"")
 			}
 		case "captcha_token":
 			if err := func() error {

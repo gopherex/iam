@@ -1062,6 +1062,11 @@ func (s *FlowCreateRequest) SetFake() {
 	}
 	{
 		{
+			s.CookieMode.SetFake()
+		}
+	}
+	{
+		{
 			s.CaptchaToken.SetFake()
 		}
 	}
