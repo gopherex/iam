@@ -231,6 +231,23 @@ in the response body:
 await iam.flow.start({ kind: 'signin', email, password, cookieMode: true });
 ```
 
+## Admin surface
+
+The project-admin operations are the generated ones — there is no hand-written
+wrapper, because an admin panel drives them directly:
+
+```ts
+import {
+  putV1ProjectsByProjectIdAdminUsersByUserIdRoles,   // assign IAM roles -> groups claim
+  getV1ProjectsByProjectIdAdminConfig,               // every config document at once
+  putV1ProjectsByProjectIdAdminConfig,               // apply them, ?dry_run=true to plan
+  putV1ProjectsByProjectIdAdminClients,              // desired-state client list, ?prune=true
+} from '@gopherex/iam-sdk';
+```
+
+App clients carry the OIDC provider's per-client settings: `scopes` (allow-list),
+`post_logout_redirect_uris`, `backchannel_logout_uri` and `disabled`.
+
 ## `iam.config`
 
 ```ts

@@ -6,6 +6,8 @@ import {
   getV1ProjectsByProjectIdAdminUsers,
   getV1ProjectsByProjectIdAdminUsersByUserId,
   getV1ProjectsByProjectIdAdminUsersByUserIdGrants,
+  getV1ProjectsByProjectIdAdminUsersByUserIdRoles,
+  putV1ProjectsByProjectIdAdminUsersByUserIdRoles,
   getV1ProjectsByProjectIdAdminUsersByUserIdIdentities,
   getV1ProjectsByProjectIdAdminUsersByUserIdSessions,
   patchV1ProjectsByProjectIdAdminUsersByUserId,
@@ -536,7 +538,7 @@ interface UserDetailDialogProps {
 }
 
 function UserDetailDialog({ user, projectId, onClose, onReload }: UserDetailDialogProps) {
-  const [tab, setTab] = useState<'info' | 'sessions' | 'identities' | 'grants'>('info');
+  const [tab, setTab] = useState<'info' | 'roles' | 'sessions' | 'identities' | 'grants'>('info');
   const [open, setOpen] = useState(true);
 
   function handleOpenChange(v: boolean) {
@@ -554,7 +556,7 @@ function UserDetailDialog({ user, projectId, onClose, onReload }: UserDetailDial
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-1 border-b pb-2">
-          {(['info', 'sessions', 'identities', 'grants'] as const).map((t) => (
+          {(['info', 'roles', 'sessions', 'identities', 'grants'] as const).map((t) => (
             <button
               key={t}
               type="button"
@@ -572,6 +574,9 @@ function UserDetailDialog({ user, projectId, onClose, onReload }: UserDetailDial
         {tab === 'info' && (
           <UserInfoTab user={user} projectId={projectId} onReload={onReload} />
         )}
+        {tab === 'roles' && (
+          <UserRolesTab user={user} projectId={projectId} />
+        )}
         {tab === 'sessions' && (
           <UserSessionsTab user={user} projectId={projectId} />
         )}
@@ -583,6 +588,98 @@ function UserDetailDialog({ user, projectId, onClose, onReload }: UserDetailDial
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── roles tab ───────────────────────────────────────────────────────────────
+
+// UserRolesTab edits the user's IAM roles for the selected environment.
+//
+// Roles are what the OIDC `groups` scope projects into the `groups` claim, so
+// this screen is how an operator decides what a relying party — ArgoCD, Grafana
+// — will see this person as. They are environment-scoped: the same person can be
+// ops in test and viewer in live.
+function UserRolesTab({ user, projectId }: { user: User; projectId: string }) {
+  const { data, loading, error, reload } = useApi(
+    () =>
+      call(
+        getV1ProjectsByProjectIdAdminUsersByUserIdRoles({
+          path: { project_id: projectId, user_id: user.id },
+        }),
+      ),
+    [projectId, user.id],
+  );
+
+  const [draft, setDraft] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveErr, setSaveErr] = useState<string | null>(null);
+
+  const roles = data?.roles ?? [];
+  const value = draft ?? roles.join(' ');
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setSaveErr(null);
+    try {
+      await call(
+        putV1ProjectsByProjectIdAdminUsersByUserIdRoles({
+          path: { project_id: projectId, user_id: user.id },
+          body: { roles: value.split(/\s+/).filter(Boolean) },
+        }),
+      );
+      toast.success('Roles updated');
+      setDraft(null);
+      reload();
+    } catch (err) {
+      setSaveErr(err instanceof Error ? err.message : 'Failed to save roles');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState error={error} onRetry={reload} />;
+
+  return (
+    <form onSubmit={save} className="space-y-4 py-2">
+      <div className="flex flex-wrap gap-1.5">
+        {roles.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No roles assigned.</p>
+        ) : (
+          roles.map((role) => (
+            <Badge key={role} variant="secondary" className="font-mono">
+              {role}
+            </Badge>
+          ))
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="user-roles">Roles</Label>
+        <Input
+          id="user-roles"
+          value={value}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="ops platform:admin"
+          className="font-mono"
+        />
+        <p className="text-xs text-muted-foreground">
+          Space-separated, for the selected environment. Letters, digits and{' '}
+          <code>_ - . : /</code>. Delivered in the <code>groups</code> claim to clients granted the{' '}
+          <code>groups</code> scope.
+        </p>
+      </div>
+
+      {saveErr && <p className="text-sm text-destructive">{saveErr}</p>}
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={saving || draft === null}>
+          {saving && <Loader2 className="size-4 animate-spin" />}
+          Save roles
+        </Button>
+      </div>
+    </form>
   );
 }
 

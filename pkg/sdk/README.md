@@ -57,6 +57,25 @@ roles under
 `PUT /v1/projects/{project_id}/admin/users/{user_id}/roles`. The values are the
 ones an admin assigned; a client can ask for the scope, never for a role.
 
+## Revocation and the validation mode
+
+IAM can revoke an access token before it expires: `/oauth2/revoke`, ending the
+session, or reuse detection on a refresh token all put it on a denylist. Whether
+this SDK notices depends on the mode:
+
+| Mode | Sees a revocation |
+| --- | --- |
+| `remote` | yes — every call asks IAM, which checks the denylist |
+| `hybrid` | no — local verification succeeds, so it never falls through to remote |
+| `local` | no — the process never asks IAM anything |
+
+Local verification is offline by design; that is what makes it fast, and it is
+why a revoked token keeps verifying until it expires on its own. The exposure is
+one access-token lifetime — the project's `session_policy.access_ttl`, 10 minutes
+by default. Use `remote` where a revocation must take effect at once (admin
+consoles, anything money moves through), and shorten `access_ttl` where `local`
+is worth its latency.
+
 ## gRPC
 
 Use the separate package so non-gRPC users do not import gRPC APIs:

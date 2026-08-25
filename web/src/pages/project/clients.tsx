@@ -44,6 +44,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -514,6 +515,12 @@ function ClientDetailDialog({
   const [allowedOrigins, setAllowedOrigins] = useState(
     (initialClient.allowed_origins ?? []).join('\n'),
   );
+  const [scopes, setScopes] = useState((initialClient.scopes ?? []).join(' '));
+  const [postLogoutUris, setPostLogoutUris] = useState(
+    (initialClient.post_logout_redirect_uris ?? []).join('\n'),
+  );
+  const [backchannelUri, setBackchannelUri] = useState(initialClient.backchannel_logout_uri ?? '');
+  const [disabled, setDisabled] = useState(initialClient.disabled ?? false);
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
 
@@ -541,6 +548,13 @@ function ClientDetailDialog({
             type,
             redirect_uris: uris,
             allowed_origins: origins,
+            scopes: scopes.split(/\s+/).filter(Boolean),
+            post_logout_redirect_uris: postLogoutUris
+              .split('\n')
+              .map((u) => u.trim())
+              .filter(Boolean),
+            backchannel_logout_uri: backchannelUri.trim() || null,
+            disabled,
           },
         }),
       );
@@ -623,6 +637,56 @@ function ClientDetailDialog({
                     are dropped server-side.
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="d-scopes">Allowed scopes</Label>
+                  <Input
+                    id="d-scopes"
+                    value={scopes}
+                    onChange={(e) => setScopes(e.target.value)}
+                    placeholder="openid email profile"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Space-separated. Empty means no restriction; a request for anything outside the
+                    list is refused with invalid_scope.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="d-post-logout">Post-logout redirect URIs</Label>
+                  <textarea
+                    id="d-post-logout"
+                    value={postLogoutUris}
+                    onChange={(e) => setPostLogoutUris(e.target.value)}
+                    rows={2}
+                    placeholder="https://app.example.com/signed-out"
+                    className="h-auto w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    One per line. Matched exactly; anything else is refused rather than followed.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="d-backchannel">Back-channel logout URI</Label>
+                  <Input
+                    id="d-backchannel"
+                    value={backchannelUri}
+                    onChange={(e) => setBackchannelUri(e.target.value)}
+                    placeholder="https://app.example.com/oidc/backchannel-logout"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Receives a signed logout_token when a session this client holds a grant on ends.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="d-disabled"
+                    checked={disabled}
+                    onCheckedChange={(v) => setDisabled(v === true)}
+                  />
+                  <Label htmlFor="d-disabled" className="font-normal">
+                    Disabled — refused at /oauth2/authorize like an unknown client
+                  </Label>
+                </div>
+
                 {saveErr && <p className="text-sm text-destructive">{saveErr}</p>}
 
                 <DialogFooter className="items-center">

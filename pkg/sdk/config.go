@@ -11,12 +11,22 @@ import (
 type ValidationMode string
 
 const (
-	// ValidationModeRemote calls IAM /v1/tokens/verify for every token.
+	// ValidationModeRemote calls IAM /v1/tokens/verify for every token. It is the
+	// only mode that sees a REVOCATION: IAM checks its denylist there, so a token
+	// revoked through /oauth2/revoke (or by the session ending) stops working
+	// immediately.
 	ValidationModeRemote ValidationMode = "remote"
 	// ValidationModeLocal verifies JWTs in-process using IAM's public JWKS.
+	//
+	// It never asks IAM anything, which is the point — and the cost: a revoked
+	// token still verifies until it expires, because nothing tells this process
+	// that it was revoked. Choose it when that window (the project's access_ttl,
+	// 10 minutes by default) is acceptable, and shorten access_ttl if it is not.
 	ValidationModeLocal ValidationMode = "local"
 	// ValidationModeHybrid verifies locally first and falls back to remote verify
-	// when local verification cannot authenticate the token.
+	// when local verification cannot authenticate the token. Local verification
+	// SUCCEEDS for a revoked token, so this mode inherits the local window rather
+	// than the remote guarantee.
 	ValidationModeHybrid ValidationMode = "hybrid"
 )
 
