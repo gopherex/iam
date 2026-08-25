@@ -307,6 +307,10 @@ type AppClient struct {
 	Environment    OptString        `json:"environment"`
 	RedirectUris   []string         `json:"redirect_uris"`
 	AllowedOrigins []string         `json:"allowed_origins"`
+	// Scopes this client may request. Empty means no restriction. A request for a scope outside the list
+	// is refused with `invalid_scope` rather than quietly trimmed, so a misconfigured client fails
+	// loudly.
+	Scopes []string `json:"scopes"`
 	// URIs the browser may be sent to after an RP-initiated logout. Matched exactly, like redirect_uris
 	// — an unregistered value is ignored rather than followed, so logout cannot be turned into an open
 	// redirect.
@@ -348,6 +352,11 @@ func (s *AppClient) GetRedirectUris() []string {
 // GetAllowedOrigins returns the value of AllowedOrigins.
 func (s *AppClient) GetAllowedOrigins() []string {
 	return s.AllowedOrigins
+}
+
+// GetScopes returns the value of Scopes.
+func (s *AppClient) GetScopes() []string {
+	return s.Scopes
 }
 
 // GetPostLogoutRedirectUris returns the value of PostLogoutRedirectUris.
@@ -393,6 +402,11 @@ func (s *AppClient) SetRedirectUris(val []string) {
 // SetAllowedOrigins sets the value of AllowedOrigins.
 func (s *AppClient) SetAllowedOrigins(val []string) {
 	s.AllowedOrigins = val
+}
+
+// SetScopes sets the value of Scopes.
+func (s *AppClient) SetScopes(val []string) {
+	s.Scopes = val
 }
 
 // SetPostLogoutRedirectUris sets the value of PostLogoutRedirectUris.
@@ -16476,6 +16490,10 @@ type PostV1ProjectsByProjectIdAdminAppsReq struct {
 	Environment    OptString                                 `json:"environment"`
 	RedirectUris   []string                                  `json:"redirect_uris"`
 	AllowedOrigins []string                                  `json:"allowed_origins"`
+	// Scopes this client may request. Empty means no restriction. A request for a scope outside the list
+	// is refused with `invalid_scope` rather than quietly trimmed, so a misconfigured client fails
+	// loudly.
+	Scopes []string `json:"scopes"`
 	// URIs the browser may be sent to after an RP-initiated logout. Matched exactly, like redirect_uris
 	// — an unregistered value is ignored rather than followed, so logout cannot be turned into an open
 	// redirect.
@@ -16517,6 +16535,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetRedirectUris() []string {
 // GetAllowedOrigins returns the value of AllowedOrigins.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetAllowedOrigins() []string {
 	return s.AllowedOrigins
+}
+
+// GetScopes returns the value of Scopes.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetScopes() []string {
+	return s.Scopes
 }
 
 // GetPostLogoutRedirectUris returns the value of PostLogoutRedirectUris.
@@ -16562,6 +16585,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetRedirectUris(val []string) {
 // SetAllowedOrigins sets the value of AllowedOrigins.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetAllowedOrigins(val []string) {
 	s.AllowedOrigins = val
+}
+
+// SetScopes sets the value of Scopes.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetScopes(val []string) {
+	s.Scopes = val
 }
 
 // SetPostLogoutRedirectUris sets the value of PostLogoutRedirectUris.
@@ -19189,10 +19217,6 @@ type PushedAuthorizationRequest struct {
 	ResponseMode        OptString                                        `json:"response_mode"`
 	Prompt              OptString                                        `json:"prompt"`
 	LoginHint           OptString                                        `json:"login_hint"`
-	// Request object JWT (RFC 9101).
-	Request             OptString `json:"request"`
-	ClientAssertionType OptString `json:"client_assertion_type"`
-	ClientAssertion     OptString `json:"client_assertion"`
 }
 
 // GetResponseType returns the value of ResponseType.
@@ -19250,21 +19274,6 @@ func (s *PushedAuthorizationRequest) GetLoginHint() OptString {
 	return s.LoginHint
 }
 
-// GetRequest returns the value of Request.
-func (s *PushedAuthorizationRequest) GetRequest() OptString {
-	return s.Request
-}
-
-// GetClientAssertionType returns the value of ClientAssertionType.
-func (s *PushedAuthorizationRequest) GetClientAssertionType() OptString {
-	return s.ClientAssertionType
-}
-
-// GetClientAssertion returns the value of ClientAssertion.
-func (s *PushedAuthorizationRequest) GetClientAssertion() OptString {
-	return s.ClientAssertion
-}
-
 // SetResponseType sets the value of ResponseType.
 func (s *PushedAuthorizationRequest) SetResponseType(val string) {
 	s.ResponseType = val
@@ -19318,21 +19327,6 @@ func (s *PushedAuthorizationRequest) SetPrompt(val OptString) {
 // SetLoginHint sets the value of LoginHint.
 func (s *PushedAuthorizationRequest) SetLoginHint(val OptString) {
 	s.LoginHint = val
-}
-
-// SetRequest sets the value of Request.
-func (s *PushedAuthorizationRequest) SetRequest(val OptString) {
-	s.Request = val
-}
-
-// SetClientAssertionType sets the value of ClientAssertionType.
-func (s *PushedAuthorizationRequest) SetClientAssertionType(val OptString) {
-	s.ClientAssertionType = val
-}
-
-// SetClientAssertion sets the value of ClientAssertion.
-func (s *PushedAuthorizationRequest) SetClientAssertion(val OptString) {
-	s.ClientAssertion = val
 }
 
 type PushedAuthorizationRequestCodeChallengeMethod string

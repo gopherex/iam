@@ -118,6 +118,8 @@ func (s *OIDCProviderService) GetOauth2Authorize(ctx context.Context, params oas
 		CodeChallengeMethod: params.CodeChallengeMethod.Or(""),
 		Nonce:               params.Nonce.Or(""),
 		Prompt:              params.Prompt.Or(""),
+		MaxAge:              params.MaxAge.Or(0),
+		ResponseMode:        params.ResponseMode.Or(""),
 		RequestURI:          params.RequestURI.Or(""),
 	})
 	if err != nil {
@@ -328,9 +330,6 @@ func (s *OIDCProviderService) PostOauth2Par(ctx context.Context, req *oas.Pushed
 		ResponseMode:        req.ResponseMode.Or(""),
 		Prompt:              req.Prompt.Or(""),
 		LoginHint:           req.LoginHint.Or(""),
-		Request:             req.Request.Or(""),
-		ClientAssertionType: req.ClientAssertionType.Or(""),
-		ClientAssertion:     req.ClientAssertion.Or(""),
 	})
 	if perr != nil {
 		return nil, perr

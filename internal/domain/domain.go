@@ -176,6 +176,9 @@ type AppClient struct {
 	// client holds a grant on ends (OpenID Connect Back-Channel Logout 1.0).
 	// Empty means the client is not notified.
 	BackchannelLogoutURI string
+	// Scopes the client may request. Empty means no restriction — a project that
+	// has not thought about it is not silently narrowed.
+	Scopes []string
 }
 
 // ===== Project aggregate (admin / operator) =====
@@ -226,6 +229,12 @@ type Interaction struct {
 	// relying parties use it as their CSRF defense and reject a callback without
 	// it, so it has to survive the interaction.
 	State string `json:"state,omitempty"`
+	// Prompt is the request's prompt parameter, so the UI knows whether it must
+	// force re-authentication or the consent screen rather than offering to
+	// continue as the signed-in user.
+	Prompt string `json:"prompt,omitempty"`
+	// ResponseMode selects how the response is returned (query or fragment).
+	ResponseMode string `json:"response_mode,omitempty"`
 }
 
 // ===== Read models =====
@@ -318,6 +327,7 @@ type AppClientCmd struct {
 	Disabled               bool
 	PostLogoutRedirectURIs []string
 	BackchannelLogoutURI   string
+	Scopes                 []string
 }
 
 type ProjectCmd struct {

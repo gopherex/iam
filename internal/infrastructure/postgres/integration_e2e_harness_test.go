@@ -171,7 +171,8 @@ func e2eServer(t *testing.T) *httptest.Server {
 	pipeline := api.RequestMetaMiddleware(
 		api.EnvironmentMiddleware(
 			api.CSRFMiddleware(platform)(
-				api.CookieAuthMiddleware(srv))))
+				api.CookieAuthMiddleware(
+					api.SoftAuthMiddleware(auth)(srv)))))
 	ts := httptest.NewServer(pipeline)
 	t.Cleanup(ts.Close)
 	// Point the deployment's public base URL at the live harness server, exactly

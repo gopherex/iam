@@ -448,61 +448,21 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 		// Token authorization_code branch resolves the principal from the
 		// user_id/client_id columns and the scopes from the data envelope, then
 		// mints+signs the access/id tokens with our key.
-		code, err := oidcRandToken(32)
-		if err != nil {
-			return "", err
-		}
-
 		scopes := cmd.GrantedScopes
 		if len(scopes) == 0 {
 			scopes = in.Scopes
 		}
 
-		codeData, err := marshal(authCodeData{
-			Scopes:              scopes,
-			RedirectURI:         in.RedirectURI,
-			Nonce:               in.Nonce,
-			CodeChallenge:       in.CodeChallenge,
-			CodeChallengeMethod: in.CodeChallengeMethod,
-			SessionID:           cmd.SessionID,
-			AuthTime:            env.AuthTime,
+		code, authCodeRow, err := a.issueAuthorizationCode(ctx, authCodeRequest{
+			projectID:   row.ProjectID,
+			environment: row.Environment,
+			accountID:   cmd.AccountID,
+			sessionID:   cmd.SessionID,
+			authTime:    env.AuthTime,
+			interaction: in,
+			scopes:      scopes,
 		})
 		if err != nil {
-			return "", err
-		}
-
-		rm := json.RawMessage(codeData)
-		uid := null.From(cmd.AccountID)
-		cid := null.From(in.ClientID)
-
-		// The interaction carries the environment of the client it was created
-		// for; the authorization code inherits it so the token minted from the
-		// code is signed by — and carries the issuer of — the right environment.
-		acEnv := row.Environment
-		if acEnv == "" {
-			var err error
-			if acEnv, err = effectiveEnv(ctx, a.db, row.ProjectID, oidcDefaultEnv); err != nil {
-				return "", err
-			}
-		}
-
-		setter := &models.IamAuthCodeSetter{
-			ID:          ptr(newUUID()),
-			ProjectID:   &row.ProjectID,
-			Environment: &acEnv,
-			CodeHash:    ptr(oidcHashToken(code)),
-			ClientID:    &cid,
-			UserID:      &uid,
-			ExpiresAt:   ptr(nowUTC().Add(10 * time.Minute)),
-			Data:        &rm,
-		}
-
-		authCodeRow, err := models.IamAuthCodes.Insert(setter).One(ctx, a.db.Bobx())
-		if err != nil {
-			if isUniqueViolation(err) {
-				return "", domain.ErrConflict
-			}
-
 			return "", err
 		}
 
@@ -521,20 +481,100 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			return "", err
 		}
 
-		return oidcAuthorizationRedirect(in.RedirectURI, code, in.State), nil
+		return oidcAuthorizationResponse(in.RedirectURI, code, in.State, in.ResponseMode), nil
 	})
 }
 
-// oidcAuthorizationRedirect builds the successful authorization response: the
-// code, plus the client's `state` unmodified when it sent one. RFC 6749 §4.1.2
-// requires state back, and relying parties treat its absence as a CSRF failure
-// and refuse the callback outright.
-func oidcAuthorizationRedirect(redirectURI, code, state string) string {
+// authCodeRequest is everything one authorization code is minted from.
+type authCodeRequest struct {
+	projectID   string
+	environment string
+	accountID   string
+	sessionID   string
+	authTime    time.Time
+	interaction domain.Interaction
+	scopes      []string
+}
+
+// oidcAuthCodeBytes is the entropy of an authorization code.
+const oidcAuthCodeBytes = 32
+
+// oidcAuthCodeTTL bounds an authorization code. It is redeemed immediately by
+// the client, so it stays short (RFC 6749 §4.1.2 recommends under ten minutes).
+const oidcAuthCodeTTL = 10 * time.Minute
+
+// issueAuthorizationCode mints a one-time authorization code for a decided
+// request. Both paths that can decide one — the consent screen, and a silent
+// request satisfied by an existing session and grant — go through here, so a
+// code minted without UI carries exactly the same bindings (PKCE, redirect_uri,
+// nonce, session, auth time) as one minted with it. Assumes an ambient
+// transaction.
+func (a *pgOIDCGrants) issueAuthorizationCode(
+	ctx context.Context, req authCodeRequest,
+) (string, *models.IamAuthCode, error) {
+	code, err := oidcRandToken(oidcAuthCodeBytes)
+	if err != nil {
+		return "", nil, err
+	}
+
+	raw, err := marshal(authCodeData{
+		Scopes:              req.scopes,
+		RedirectURI:         req.interaction.RedirectURI,
+		Nonce:               req.interaction.Nonce,
+		CodeChallenge:       req.interaction.CodeChallenge,
+		CodeChallengeMethod: req.interaction.CodeChallengeMethod,
+		SessionID:           req.sessionID,
+		AuthTime:            req.authTime,
+	})
+	if err != nil {
+		return "", nil, err
+	}
+
+	data := json.RawMessage(raw)
+	uid := null.From(req.accountID)
+	cid := null.From(req.interaction.ClientID)
+
+	env := req.environment
+	if env == "" {
+		if env, err = effectiveEnv(ctx, a.db, req.projectID, oidcDefaultEnv); err != nil {
+			return "", nil, err
+		}
+	}
+
+	row, err := models.IamAuthCodes.Insert(&models.IamAuthCodeSetter{
+		ID:          ptr(newUUID()),
+		ProjectID:   &req.projectID,
+		Environment: &env,
+		CodeHash:    ptr(oidcHashToken(code)),
+		ClientID:    &cid,
+		UserID:      &uid,
+		ExpiresAt:   ptr(nowUTC().Add(oidcAuthCodeTTL)),
+		Data:        &data,
+	}).One(ctx, a.db.Bobx())
+	if err != nil {
+		if isUniqueViolation(err) {
+			return "", nil, domain.ErrConflict
+		}
+
+		return "", nil, fmt.Errorf("insert authorization code: %w", err)
+	}
+
+	return code, row, nil
+}
+
+// oidcAuthorizationResponse renders the success response in the requested mode.
+// `fragment` keeps the code out of the Referer header and out of server logs at
+// the redirect target, which is why clients ask for it.
+func oidcAuthorizationResponse(redirectURI, code, state, mode string) string {
 	params := url.Values{}
 	params.Set("code", code)
 
 	if state != "" {
 		params.Set("state", state)
+	}
+
+	if mode == oidcResponseModeFragment {
+		return redirectURI + "#" + params.Encode()
 	}
 
 	sep := "?"
@@ -556,6 +596,16 @@ func (a *pgOIDCGrants) Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (st
 
 		if oidcInteractionExpired(row) {
 			return "", domain.ErrFlowExpired
+		}
+		// Canceling is public, because the user may want to back out before they
+		// have signed in and there is no session to check then. Once someone HAS
+		// claimed the interaction, only they may cancel it — otherwise anyone who
+		// learned the id could end a stranger's sign-in.
+		if bound := row.SessionID.GetOrZero(); bound != "" {
+			principal, ok := api.SoftPrincipalFrom(ctx)
+			if !ok || principal.SessionID != bound {
+				return "", domain.ErrForbidden
+			}
 		}
 
 		var in domain.Interaction
@@ -888,6 +938,201 @@ func oidcErrorRedirect(redirectURI, code, description, state string) string {
 	return redirectURI + sep + params.Encode()
 }
 
+// Prompt values (OIDC Core §3.1.2.1).
+const (
+	oidcPromptNone          = "none"
+	oidcPromptLogin         = "login"
+	oidcPromptConsent       = "consent"
+	oidcPromptSelectAccount = "select_account"
+)
+
+// oidcResponseModeQuery / oidcResponseModeFragment are the response modes the
+// discovery document advertises.
+const (
+	oidcResponseModeQuery    = "query"
+	oidcResponseModeFragment = "fragment"
+)
+
+// authorizeIntent is what the authorization request asks us to do about the
+// user's existing session, once prompt and max_age have been read.
+type authorizeIntent struct {
+	// silent forbids showing any UI: the request either succeeds against an
+	// existing session and grant, or comes back as an error (prompt=none).
+	silent bool
+	// forceLogin re-authenticates even when a valid session exists.
+	forceLogin bool
+	// forceConsent shows the consent screen even when the scopes were granted
+	// before.
+	forceConsent bool
+}
+
+// parseAuthorizePrompt reads the prompt parameter. `none` is exclusive: asking
+// for no UI and for a login screen in the same breath is a contradiction the
+// spec makes an error rather than guessing at.
+func parseAuthorizePrompt(prompt string) (authorizeIntent, string) {
+	var intent authorizeIntent
+
+	values := strings.Fields(prompt)
+	for _, v := range values {
+		switch v {
+		case oidcPromptNone:
+			intent.silent = true
+		case oidcPromptLogin, oidcPromptSelectAccount:
+			intent.forceLogin = true
+		case oidcPromptConsent:
+			intent.forceConsent = true
+		default:
+			return intent, "prompt value " + v + " is not supported"
+		}
+	}
+
+	if intent.silent && len(values) > 1 {
+		return intent, "prompt=none cannot be combined with other prompt values"
+	}
+
+	return intent, ""
+}
+
+// authorizeScopesAllowed checks the request against the client's scope
+// allow-list. An empty list means the project has not restricted the client, and
+// a scope outside a non-empty list is refused rather than trimmed: silently
+// issuing a narrower token than asked for produces failures far from the cause.
+func authorizeScopesAllowed(app *domain.AppClient, scopes []string) (string, bool) {
+	if len(app.Scopes) == 0 {
+		return "", true
+	}
+
+	for _, scope := range scopes {
+		if !containsString(app.Scopes, scope) {
+			return scope, false
+		}
+	}
+
+	return "", true
+}
+
+// oidcSessionAuthTime returns when a live session authenticated, and whether it
+// is still live at all.
+func (a *pgOIDCGrants) oidcSessionAuthTime(ctx context.Context, projectID, sessionID string) (time.Time, bool) {
+	if sessionID == "" {
+		return time.Time{}, false
+	}
+
+	row, err := models.FindIamSession(ctx, a.db.Bobx(), sessionID)
+	if err != nil || row.ProjectID != projectID {
+		return time.Time{}, false
+	}
+
+	if exp, ok := row.ExpiresAt.Get(); ok && !exp.IsZero() && exp.Before(nowUTC()) {
+		return time.Time{}, false
+	}
+
+	return row.CreatedAt, true
+}
+
+// authorizeSilently answers an authorization request from what we already know:
+// a live IAM session, and a remembered grant covering the scopes asked for. It
+// reports whether it decided the request.
+//
+// This is what makes it single sign-on rather than repeated sign-on. It is also
+// where max_age is enforced: a session older than the client is willing to rely
+// on is not good enough, however valid it still is.
+func (a *pgOIDCGrants) authorizeSilently(
+	ctx context.Context,
+	cmd domain.OIDCAuthorizeCmd,
+	app *domain.AppClient,
+	clientRow *models.IamAppClient,
+	redirectURI string,
+	scopes []string,
+) (string, bool, error) {
+	principal, ok := api.SoftPrincipalFrom(ctx)
+	if !ok || principal.AccountID == "" || principal.SessionID == "" {
+		return "", false, nil
+	}
+
+	if principal.ProjectID != clientRow.ProjectID {
+		return "", false, nil // a session in another tenant is not this one's
+	}
+
+	authTime, live := a.oidcSessionAuthTime(ctx, clientRow.ProjectID, principal.SessionID)
+	if !live {
+		return "", false, nil
+	}
+
+	if cmd.MaxAge > 0 && nowUTC().Sub(authTime) > time.Duration(cmd.MaxAge)*time.Second {
+		return "", false, nil // too old to rely on; re-authenticate
+	}
+
+	if consentErr := a.oidcVerifyConsent(ctx, clientRow.ProjectID, principal.AccountID, cmd.ClientID); consentErr != nil {
+		//nolint:nilerr // No remembered grant is not a failure: it means the user
+		// has to decide, which is the interaction the caller falls through to.
+		return "", false, nil
+	}
+
+	interaction := domain.Interaction{
+		ClientID:            cmd.ClientID,
+		Scopes:              scopes,
+		RedirectURI:         redirectURI,
+		Nonce:               cmd.Nonce,
+		CodeChallenge:       cmd.CodeChallenge,
+		CodeChallengeMethod: cmd.CodeChallengeMethod,
+		State:               cmd.State,
+	}
+
+	code, err := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
+		issued, row, ierr := a.issueAuthorizationCode(ctx, authCodeRequest{
+			projectID:   clientRow.ProjectID,
+			environment: clientRow.Environment,
+			accountID:   principal.AccountID,
+			sessionID:   principal.SessionID,
+			authTime:    authTime,
+			interaction: interaction,
+			scopes:      scopes,
+		})
+		if ierr != nil {
+			return "", ierr
+		}
+
+		return issued, a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.token.issued",
+			ProjectID:   clientRow.ProjectID,
+			Environment: clientRow.Environment,
+			AggregateID: row.ID,
+			Payload: map[string]any{
+				"grant_type": "authorization_code",
+				"client_id":  cmd.ClientID,
+				"account_id": principal.AccountID,
+				"scopes":     scopes,
+				"silent":     true,
+			},
+		})
+	})
+	if err != nil {
+		return "", false, err
+	}
+
+	return oidcAuthorizationResponse(redirectURI, code, cmd.State, cmd.ResponseMode), true, nil
+}
+
+// silentFailure names what a prompt=none request was missing: somewhere to get a
+// user from, or a decision the user has not made. Telling the client which lets
+// it choose between a redirect and a prompt.
+func (a *pgOIDCGrants) silentFailure(ctx context.Context, cmd domain.OIDCAuthorizeCmd) string {
+	principal, ok := api.SoftPrincipalFrom(ctx)
+	if !ok || principal.AccountID == "" {
+		return "login_required"
+	}
+
+	if cmd.MaxAge > 0 {
+		if authTime, live := a.oidcSessionAuthTime(ctx, principal.ProjectID, principal.SessionID); live &&
+			nowUTC().Sub(authTime) > time.Duration(cmd.MaxAge)*time.Second {
+			return "login_required"
+		}
+	}
+
+	return "consent_required"
+}
+
 // Authorize builds a front-channel interaction for the request and returns the
 // redirect to the login/consent UI. Public operation.
 //
@@ -939,6 +1184,43 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 		return oidcErrorRedirect(redirectURI, errCode, desc, cmd.State), nil
 	}
 
+	if bad, ok := authorizeScopesAllowed(app, scopes); !ok {
+		return oidcErrorRedirect(redirectURI, "invalid_scope",
+			"the client is not allowed the scope "+bad, cmd.State), nil
+	}
+
+	if cmd.ResponseMode != "" &&
+		cmd.ResponseMode != oidcResponseModeQuery && cmd.ResponseMode != oidcResponseModeFragment {
+		return oidcErrorRedirect(redirectURI, "unsupported_response_mode",
+			"only query and fragment response modes are supported", cmd.State), nil
+	}
+
+	intent, promptErr := parseAuthorizePrompt(cmd.Prompt)
+	if promptErr != "" {
+		return oidcErrorRedirect(redirectURI, oidcErrInvalidRequest, promptErr, cmd.State), nil
+	}
+
+	// Single sign-on happens here: a caller who already holds a valid IAM session
+	// and has granted these scopes before is answered with a code, not with a
+	// login screen. It is also the only way prompt=none can succeed, since that
+	// forbids showing any UI at all.
+	if !intent.forceLogin && !intent.forceConsent {
+		redirect, decided, err := a.authorizeSilently(ctx, cmd, app, clientRow, redirectURI, scopes)
+		if err != nil {
+			return "", err
+		}
+
+		if decided {
+			return redirect, nil
+		}
+	}
+
+	if intent.silent {
+		// No UI allowed, and the request could not be satisfied from what we
+		// already know. Say which of the two things is missing.
+		return oidcErrorRedirect(redirectURI, a.silentFailure(ctx, cmd), "", cmd.State), nil
+	}
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
 		in := domain.Interaction{
 			ID:          newUUID(),
@@ -951,6 +1233,8 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 			CodeChallenge:       cmd.CodeChallenge,
 			CodeChallengeMethod: cmd.CodeChallengeMethod,
 			State:               cmd.State,
+			Prompt:              cmd.Prompt,
+			ResponseMode:        cmd.ResponseMode,
 		}
 
 		raw, err := marshal(&in)
@@ -1953,12 +2237,6 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 		return nil, err
 	}
 
-	if cmd.Request != "" {
-		// Request objects (RFC 9101) are not implemented; accepting one here
-		// would silently drop the parameters it carries.
-		return nil, domain.ErrBadRequest.WithMessage("the request parameter is not supported")
-	}
-
 	redirectURI, err := authorizeRedirectURI(app, cmd.RedirectURI)
 	if err != nil {
 		return nil, err
@@ -2085,6 +2363,7 @@ func (a *pgOIDCGrants) consumePushedRequest(
 			CodeChallengeMethod: pushed.CodeChallengeMethod,
 			Nonce:               pushed.Nonce,
 			Prompt:              pushed.Prompt,
+			ResponseMode:        pushed.ResponseMode,
 		}, nil
 	})
 }
@@ -2433,6 +2712,12 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 	// The pushed-authorization-request endpoint has no field on the discovery
 	// struct in this lib version; advertise it explicitly (RFC 9126).
 	m["pushed_authorization_request_endpoint"] = root + "/oauth2/par"
+	// The prompt values the authorization endpoint acts on. The struct in this
+	// lib version has no field for them; advertising them is only honest now that
+	// they are honored rather than ignored.
+	m["prompt_values_supported"] = []string{
+		oidcPromptNone, oidcPromptLogin, oidcPromptConsent, oidcPromptSelectAccount,
+	}
 
 	return m, nil
 }

@@ -248,6 +248,7 @@ type AdminAppClientDesired struct {
 	Disabled               bool
 	PostLogoutRedirectURIs []string
 	BackchannelLogoutURI   string
+	Scopes                 []string
 }
 
 // AdminAppsApplyCmd reconciles a project environment's app clients against a

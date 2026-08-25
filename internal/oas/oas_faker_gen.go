@@ -177,6 +177,18 @@ func (s *AppClient) SetFake() {
 	}
 	{
 		{
+			s.Scopes = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.Scopes = append(s.Scopes, elem)
+			}
+		}
+	}
+	{
+		{
 			s.PostLogoutRedirectUris = nil
 			for i := 0; i < 0; i++ {
 				var elem string
@@ -6147,6 +6159,18 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetFake() {
 					elem = "string"
 				}
 				s.AllowedOrigins = append(s.AllowedOrigins, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Scopes = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.Scopes = append(s.Scopes, elem)
 			}
 		}
 	}

@@ -8562,6 +8562,14 @@ func (s *Server) handleGetOauth2AuthorizeRequest(args [0]string, argsEscaped boo
 					In:   "query",
 				}: params.Nonce,
 				{
+					Name: "max_age",
+					In:   "query",
+				}: params.MaxAge,
+				{
+					Name: "response_mode",
+					In:   "query",
+				}: params.ResponseMode,
+				{
 					Name: "prompt",
 					In:   "query",
 				}: params.Prompt,

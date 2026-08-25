@@ -7680,7 +7680,14 @@ type GetOauth2AuthorizeParams struct {
 	// `code_challenge_methods_supported` in the discovery document).
 	CodeChallengeMethod OptString `json:",omitempty,omitzero"`
 	Nonce               OptString `json:",omitempty,omitzero"`
-	Prompt              OptString `json:",omitempty,omitzero"`
+	// Maximum age, in seconds, of the authentication being relied on. A session older than this is
+	// re-authenticated even if it is otherwise valid; the resulting id_token's `auth_time` says when
+	// that happened.
+	MaxAge OptInt `json:",omitempty,omitzero"`
+	// How the authorization response is returned: `query` (default) or `fragment`. Anything else is
+	// `unsupported_response_mode`.
+	ResponseMode OptString `json:",omitempty,omitzero"`
+	Prompt       OptString `json:",omitempty,omitzero"`
 	// The `request_uri` returned by `/oauth2/par` (RFC 9126). When present it supplies the whole
 	// authorization request: every other query parameter except `client_id` is ignored, and the pushed
 	// request is single-use — replaying a consumed or expired `request_uri` is `invalid_request_uri`.
@@ -7756,6 +7763,24 @@ func unpackGetOauth2AuthorizeParams(packed middleware.Parameters) (params GetOau
 		}
 		if v, ok := packed[key]; ok {
 			params.Nonce = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "max_age",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.MaxAge = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "response_mode",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ResponseMode = v.(OptString)
 		}
 	}
 	{
@@ -8309,6 +8334,140 @@ func decodeGetOauth2AuthorizeParams(args [0]string, argsEscaped bool, r *http.Re
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "nonce",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: max_age.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "max_age",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotMaxAgeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotMaxAgeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.MaxAge.SetTo(paramsDotMaxAgeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.MaxAge.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           0,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "max_age",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: response_mode.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "response_mode",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotResponseModeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotResponseModeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ResponseMode.SetTo(paramsDotResponseModeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.ResponseMode.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     32,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "response_mode",
 			In:   "query",
 			Err:  err,
 		}
@@ -10499,8 +10658,12 @@ type GetV1AuthOauthByProviderStartParams struct {
 	RedirectTo    string
 	State         OptString `json:",omitempty,omitzero"`
 	CodeChallenge OptString `json:",omitempty,omitzero"`
-	Prompt        OptString `json:",omitempty,omitzero"`
-	LoginHint     OptString `json:",omitempty,omitzero"`
+	// Space-delimited: `none`, `login`, `consent`, `select_account`. `none` never shows UI — it
+	// returns `login_required` or `consent_required` instead — and cannot be combined with the others.
+	// `login` and `select_account` force re-authentication; `consent` forces the consent screen even
+	// when the user already granted these scopes.
+	Prompt    OptString `json:",omitempty,omitzero"`
+	LoginHint OptString `json:",omitempty,omitzero"`
 }
 
 func unpackGetV1AuthOauthByProviderStartParams(packed middleware.Parameters) (params GetV1AuthOauthByProviderStartParams) {

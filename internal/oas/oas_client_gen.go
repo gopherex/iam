@@ -9444,6 +9444,40 @@ func (c *Client) sendGetOauth2Authorize(ctx context.Context, params GetOauth2Aut
 		}
 	}
 	{
+		// Encode "max_age" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "max_age",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.MaxAge.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "response_mode" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "response_mode",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.ResponseMode.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
 		// Encode "prompt" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
 			Name:    "prompt",

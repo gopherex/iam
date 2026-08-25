@@ -42,7 +42,13 @@ type OIDCAuthorizeCmd struct {
 	CodeChallengeMethod string
 	Nonce               string
 	Prompt              string
-	RequestURI          string
+	// MaxAge bounds how old the relied-upon authentication may be, in seconds.
+	// Negative means the client did not ask.
+	MaxAge int
+	// ResponseMode selects how the response is returned: query (default) or
+	// fragment.
+	ResponseMode string
+	RequestURI   string
 }
 
 // OIDCLogoutResult is the outcome of an RP-initiated logout: where to send the
@@ -148,9 +154,6 @@ type OIDCParCmd struct {
 	ResponseMode        string
 	Prompt              string
 	LoginHint           string
-	Request             string
-	ClientAssertionType string
-	ClientAssertion     string
 }
 
 // OIDCParResult is the result of a pushed authorization request: an opaque

@@ -202,11 +202,6 @@ func TestPARValidatesAtPushTime(t *testing.T) {
 			mutate: func(c *domain.OIDCParCmd) { c.CodeChallengeMethod = "plain" },
 			want:   domain.ErrBadRequest,
 		},
-		{
-			name:   "request object not supported",
-			mutate: func(c *domain.OIDCParCmd) { c.Request = "eyJ..." },
-			want:   domain.ErrBadRequest,
-		},
 	}
 
 	for _, tt := range tests {

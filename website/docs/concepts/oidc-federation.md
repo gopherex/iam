@@ -86,6 +86,42 @@ so nothing in the browser's URL can override what the client lodged.
 Request objects (`request`, RFC 9101) are not supported and are refused rather
 than silently ignored.
 
+### Reusing an existing session (`prompt`, `max_age`)
+
+An authorization request from a browser that already holds an IAM session and
+has granted these scopes before is answered with a **code**, not a login screen.
+That is the difference between single sign-on and signing on once per
+application; `/oauth2/authorize` reads the session cookie for exactly this.
+
+`prompt` is honored:
+
+| Value | Effect |
+| --- | --- |
+| *(absent)* | reuse the session and a remembered grant when both are there |
+| `none` | never show UI — answer with a code, or `login_required` / `consent_required` |
+| `login`, `select_account` | re-authenticate even though the session is valid |
+| `consent` | show the consent screen even though the scopes were granted |
+
+`none` cannot be combined with the others: asking for no UI and for a login
+screen at once is a contradiction, and is answered `invalid_request`. `prompt=none`
+is what an SPA runs in a hidden iframe to renew silently — rendering a login page
+there is the same as failing.
+
+`max_age` bounds how old the relied-upon authentication may be. A session past it
+is re-authenticated however valid it still is, and the resulting id_token's
+`auth_time` says when that happened.
+
+`response_mode=fragment` returns the code in the fragment instead of the query,
+keeping it out of the `Referer` header and the redirect target's logs.
+
+### Scopes a client may request
+
+A client can be given a `scopes` allow-list. A request for anything outside it is
+refused with `invalid_scope` rather than quietly trimmed — issuing a narrower
+token than was asked for produces failures a long way from their cause. An empty
+list means no restriction, so a project that has not thought about it is not
+silently narrowed.
+
 ### PKCE
 
 PKCE (RFC 7636) is enforced, and `S256` is the only method — `plain` is not

@@ -1068,6 +1068,7 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 
 			PostLogoutRedirectURIs: cmd.PostLogoutRedirectURIs,
 			BackchannelLogoutURI:   cmd.BackchannelLogoutURI,
+			Scopes:                 cmd.Scopes,
 		}
 
 		raw, err := marshal(app)
@@ -1156,6 +1157,10 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 
 		if v, ok := patch["backchannel_logout_uri"].(string); ok {
 			app.BackchannelLogoutURI = v
+		}
+
+		if v, ok := patchStrings(patch, "scopes"); ok {
+			app.Scopes = v
 		}
 
 		raw, err := marshal(app)
@@ -1269,6 +1274,7 @@ func desiredToAppClient(
 
 		PostLogoutRedirectURIs: desired.PostLogoutRedirectURIs,
 		BackchannelLogoutURI:   desired.BackchannelLogoutURI,
+		Scopes:                 desired.Scopes,
 	}
 }
 

@@ -1048,6 +1048,16 @@ components:
           items:
             type: string
           maxItems: 1000
+        scopes:
+          type: array
+          description: >-
+            Scopes this client may request. Empty means no restriction. A request
+            for a scope outside the list is refused with `invalid_scope` rather
+            than quietly trimmed, so a misconfigured client fails loudly.
+          items:
+            type: string
+            maxLength: 256
+          maxItems: 100
         post_logout_redirect_uris:
           type: array
           description: >-
@@ -2417,16 +2427,6 @@ components:
           type: string
           maxLength: 1024
         login_hint:
-          type: string
-          maxLength: 1024
-        request:
-          type: string
-          description: Request object JWT (RFC 9101).
-          maxLength: 1024
-        client_assertion_type:
-          type: string
-          maxLength: 1024
-        client_assertion:
           type: string
           maxLength: 1024
 paths:
@@ -3853,6 +3853,12 @@ paths:
       - name: prompt
         in: query
         required: false
+        description: >-
+          Space-delimited: `none`, `login`, `consent`, `select_account`. `none`
+          never shows UI — it returns `login_required` or `consent_required`
+          instead — and cannot be combined with the others. `login` and
+          `select_account` force re-authentication; `consent` forces the consent
+          screen even when the user already granted these scopes.
         schema:
           type: string
           maxLength: 1024
@@ -7630,6 +7636,25 @@ paths:
         schema:
           type: string
           maxLength: 1024
+      - name: max_age
+        in: query
+        required: false
+        description: >-
+          Maximum age, in seconds, of the authentication being relied on. A
+          session older than this is re-authenticated even if it is otherwise
+          valid; the resulting id_token's `auth_time` says when that happened.
+        schema:
+          type: integer
+          minimum: 0
+      - name: response_mode
+        in: query
+        required: false
+        description: >-
+          How the authorization response is returned: `query` (default) or
+          `fragment`. Anything else is `unsupported_response_mode`.
+        schema:
+          type: string
+          maxLength: 32
       - name: prompt
         in: query
         required: false

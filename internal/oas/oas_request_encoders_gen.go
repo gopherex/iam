@@ -755,54 +755,6 @@ func encodePostOauth2ParRequest(
 			return errors.Wrap(err, "encode query")
 		}
 	}
-	{
-		// Encode "request" form field.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "request",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := request.Request.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "client_assertion_type" form field.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "client_assertion_type",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := request.ClientAssertionType.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "client_assertion" form field.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "client_assertion",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := request.ClientAssertion.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return errors.Wrap(err, "encode query")
-		}
-	}
 	encoded := q.Values().Encode()
 	ht.SetBody(r, strings.NewReader(encoded), contentType)
 	return nil
