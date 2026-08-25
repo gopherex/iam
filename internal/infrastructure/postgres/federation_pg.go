@@ -514,7 +514,7 @@ func fedVerifyIDToken(ctx context.Context, cfg *domain.FederationOidcConfig, raw
 	}
 
 	if cfg.Issuer != "" {
-		if iss, _ := claims["iss"].(string); iss != cfg.Issuer {
+		if iss, _ := claims[claimIssuer].(string); iss != cfg.Issuer {
 			return nil, domain.ErrInvalidToken
 		}
 	}
@@ -2044,26 +2044,26 @@ func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.A
 	}
 
 	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		"iss": oidcIssuer(acct.ProjectID, signEnv),
-		"sub": acct.ID,
-		"sid": sessionID,
-		"pid": acct.ProjectID,
-		"aal": 1,
-		"amr": []string{amr},
-		"typ": "access",
-		"env": signEnv,
+		claimIssuer:      oidcIssuer(a.db.PublicURL, acct.ProjectID, signEnv),
+		claimSubject:     acct.ID,
+		claimSessionID:   sessionID,
+		claimProjectID:   acct.ProjectID,
+		claimAAL:         1,
+		claimAMR:         []string{amr},
+		claimTokenType:   tokenTypeAccess,
+		claimEnvironment: signEnv,
 	}, fedAccessTTL)
 	if err != nil {
 		return nil, err
 	}
 
 	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		"iss": oidcIssuer(acct.ProjectID, signEnv),
-		"sub": acct.ID,
-		"sid": sessionID,
-		"pid": acct.ProjectID,
-		"typ": "refresh",
-		"env": signEnv,
+		claimIssuer:      oidcIssuer(a.db.PublicURL, acct.ProjectID, signEnv),
+		claimSubject:     acct.ID,
+		claimSessionID:   sessionID,
+		claimProjectID:   acct.ProjectID,
+		claimTokenType:   tokenTypeRefresh,
+		claimEnvironment: signEnv,
 	}, fedRefreshTTL)
 	if err != nil {
 		return nil, err

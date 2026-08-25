@@ -322,6 +322,10 @@ linters:
           - contextcheck
           - varnamelen
           - dupword
+          # White-box tests: the package's own unexported helpers (issuer
+          # building, claim parsing, password scoring) are tested directly, so
+          # test files live in the package under test, not in an _test package.
+          - testpackage
         path: _test\.go
       - linters:
           - govet

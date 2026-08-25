@@ -25,6 +25,10 @@ import (
 var testDB *DB
 var testDSN string
 
+// testPublicURL is the default service.http.public_url for adapter tests that do
+// not run behind the httptest harness.
+const testPublicURL = "https://iam.test"
+
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 	container, err := tcpostgres.Run(ctx, "postgres:17",
@@ -49,6 +53,13 @@ func TestMain(m *testing.M) {
 	if err := db.Migrate(ctx); err != nil {
 		panic("migrate: " + err.Error())
 	}
+	// Every adapter builds the OIDC issuer (and the absolute URLs in the
+	// discovery document) from the deployment's public base URL. Production
+	// installs it from service.http.public_url; tests need a valid absolute base
+	// for the same reason. e2eServer overrides it with the live httptest URL so
+	// the issuer really does prefix the discovery URL under test.
+	db.UsePublicURL(testPublicURL)
+
 	testDB = db
 	testDSN = dsn
 

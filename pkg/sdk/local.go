@@ -64,8 +64,8 @@ func NewLocalVerifier(config LocalConfig) (*LocalVerifier, error) {
 	environment := strings.TrimSpace(config.Environment)
 
 	issuer := strings.TrimSpace(config.Issuer)
-	if issuer == "" && projectID != "" && environment != "" {
-		issuer = issuerFor(projectID, environment)
+	if issuer == "" {
+		issuer = issuerFor(config.BaseURL, projectID, environment)
 	}
 
 	jwksURL := strings.TrimSpace(config.JWKSURL)
@@ -296,17 +296,46 @@ func buildJWKSURL(baseURL, projectID, environment string) (string, error) {
 	return url.JoinPath(baseURL, "p", projectID, "e", environment, ".well-known", "jwks.json")
 }
 
-func issuerFor(projectID, environment string) string {
-	return "/p/" + projectID + "/e/" + environment
-}
-
-func parseIssuer(issuer string) (projectID, environment string) {
-	parts := strings.Split(issuer, "/")
-	if len(parts) == 5 && parts[0] == "" && parts[1] == "p" && parts[3] == "e" {
-		return parts[2], parts[4]
+// issuerFor builds the canonical absolute issuer for a tenant:
+// "<baseURL>/p/<projectID>/e/<environment>". IAM issues nothing else — the
+// issuer is an absolute URL that prefixes the tenant's discovery document
+// (OIDC Discovery 1.0 §3). Returns "" when baseURL is unknown, which leaves the
+// issuer check disabled rather than pinning a wrong value.
+func issuerFor(baseURL, projectID, environment string) string {
+	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	if baseURL == "" || projectID == "" || environment == "" {
+		return ""
 	}
 
-	return "", ""
+	return baseURL + "/p/" + projectID + "/e/" + environment
+}
+
+// issuerTenantSegments is the length of the tenant suffix every IAM issuer path
+// ends with: "p", <projectID>, "e", <environment>.
+const issuerTenantSegments = 4
+
+// parseIssuer recovers the project id and environment from an absolute IAM
+// issuer of the form "<base>/p/<projectID>/e/<environment>", returning empty
+// strings for anything else. The deployment base is not known here, so the
+// tenant path is matched as the tail of the issuer's path; callers only reach
+// this after the token's signature has been verified against a pinned JWKS.
+func parseIssuer(issuer string) (string, string) {
+	u, err := url.Parse(strings.TrimSpace(issuer))
+	if err != nil || !u.IsAbs() || u.Host == "" {
+		return "", ""
+	}
+
+	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
+	if len(parts) < issuerTenantSegments {
+		return "", ""
+	}
+
+	tail := parts[len(parts)-issuerTenantSegments:]
+	if tail[0] != "p" || tail[2] != "e" || tail[1] == "" || tail[3] == "" {
+		return "", ""
+	}
+
+	return tail[1], tail[3]
 }
 
 func claimContains(claims Claims, key string, want string) bool {

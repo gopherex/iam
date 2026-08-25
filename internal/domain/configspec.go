@@ -185,9 +185,10 @@ func strictUnmarshal(raw []byte, v any) error {
 	return nil
 }
 
-// validateAbsoluteHTTPURL ensures s is an absolute http(s) URL (used for
-// app_base_url and consent document URLs).
-func validateAbsoluteHTTPURL(field, s string) error {
+// ValidateAbsoluteHTTPURL ensures s is an absolute http(s) URL. It is the single
+// absolute-URL validator in the codebase: config docs (app_base_url, consent
+// document URLs) and the service-level public base URL all go through it.
+func ValidateAbsoluteHTTPURL(field, s string) error {
 	u, err := url.Parse(strings.TrimSpace(s))
 	if err != nil || !u.IsAbs() || u.Host == "" {
 		return ErrValidation.WithMessage(field + " must be an absolute http(s) URL")
@@ -272,7 +273,7 @@ func (c AuthConfigSpec) Validate() error {
 	}
 
 	if c.AppBaseURL != nil && strings.TrimSpace(*c.AppBaseURL) != "" {
-		if err := validateAbsoluteHTTPURL("app_base_url", *c.AppBaseURL); err != nil {
+		if err := ValidateAbsoluteHTTPURL("app_base_url", *c.AppBaseURL); err != nil {
 			return err
 		}
 	}
@@ -719,7 +720,7 @@ func (c ConsentConfigSpec) Validate() error {
 		}
 
 		if d.URL != nil && strings.TrimSpace(*d.URL) != "" {
-			if err := validateAbsoluteHTTPURL(at("url"), *d.URL); err != nil {
+			if err := ValidateAbsoluteHTTPURL(at("url"), *d.URL); err != nil {
 				return err
 			}
 		}

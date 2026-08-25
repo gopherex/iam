@@ -67,6 +67,11 @@ func run() error {
 		return err
 	}
 
+	if err := cfg.Normalize(); err != nil {
+		slog.Error("config invalid", "err", err)
+		return err
+	}
+
 	ctx := context.Background()
 
 	// ----- telemetry -----
@@ -114,6 +119,10 @@ func run() error {
 	}
 
 	db.UseCipher(cph)
+	// The public base URL is the OIDC issuer prefix and the origin of every
+	// absolute URL the service advertises. Normalize() already proved it is an
+	// absolute http(s) URL without a trailing slash.
+	db.UsePublicURL(cfg.Service.HTTP.PublicURL)
 
 	if cfg.Service.Auth.EncryptionKey == "" {
 		log.Error("secrets-at-rest encryption is DISABLED — set service.auth.encryption_key (base64 32-byte AES-256 key) before running in production")

@@ -22,6 +22,7 @@ config file at all** — just `IAM_*` env.
 
 | Variable | Purpose |
 | --- | --- |
+| `IAM_SERVICE_HTTP_PUBLIC_URL` | **absolute base URL this deployment is reachable at** (e.g. `https://auth.example.com`, no trailing slash). It is the OIDC issuer prefix and every absolute URL in the discovery document. The service refuses to start without it. |
 | `IAM_SERVICE_AUTH_ENCRYPTION_KEY` | **base64 32-byte AES-256 key**; encrypts reversible secrets at rest. The service refuses to start without it. |
 | `IAM_SERVICE_AUTH_MASTER_KEY` | operator credential for the admin panel + `/mgmt/v1/*` API. Empty disables the `masterKey` scheme. |
 | `IAM_INFRA_POSTGRES_*` | Postgres connection (below) |
@@ -50,6 +51,7 @@ openssl rand -base64 32
 | Variable | Default | Notes |
 | --- | --- | --- |
 | `IAM_SERVICE_HTTP_ADDR` | `:8080` | API + admin SPA |
+| `IAM_SERVICE_HTTP_PUBLIC_URL` | — | **required.** Public origin (+ optional path prefix) clients reach IAM at. Issuer = `{public_url}/p/{project_id}/e/{env}`. Deliberately never derived from `Host` / `X-Forwarded-*`: a request header must not be able to decide the issuer clients pin. |
 | `IAM_SERVICE_HTTP_PROBE_ADDR` | `:8081` | probe listener; set `=ADDR` (or `:8080`) to mount `/healthz/*` on the API port |
 | `IAM_SERVICE_HTTP_READ_TIMEOUT_SEC` | `15` | |
 | `IAM_SERVICE_HTTP_WRITE_TIMEOUT_SEC` | `30` | |
@@ -90,6 +92,7 @@ infra:
 service:
   http:
     addr: ":8080"
+    public_url: "https://auth.example.com"   # required; OIDC issuer base
     trusted_proxies: ["10.0.0.0/8"]
   auth:
     master_key: ""          # prefer IAM_SERVICE_AUTH_MASTER_KEY

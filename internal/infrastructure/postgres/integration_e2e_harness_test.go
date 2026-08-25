@@ -172,6 +172,12 @@ func e2eServer(t *testing.T) *httptest.Server {
 				api.CookieAuthMiddleware(srv))))
 	ts := httptest.NewServer(pipeline)
 	t.Cleanup(ts.Close)
+	// Point the deployment's public base URL at the live harness server, exactly
+	// as an operator points service.http.public_url at their origin. Only then is
+	// the advertised issuer a real prefix of the discovery URL tests fetch.
+	prevPublicURL := testDB.PublicURL
+	testDB.UsePublicURL(ts.URL)
+	t.Cleanup(func() { testDB.PublicURL = prevPublicURL })
 	return ts
 }
 

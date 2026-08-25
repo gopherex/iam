@@ -82,6 +82,8 @@ func (a *PgOperator) CreateProject(ctx context.Context, cmd domain.ProjectCmd) (
 			return nil, err
 		}
 
+		env.Issuer = a.environmentIssuer(env.ProjectID, env.Name)
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "project.created",
 			ProjectID:   proj.ID,
@@ -276,6 +278,8 @@ func (a *PgOperator) CreateEnvironment(ctx context.Context, cmd domain.Environme
 		if err := a.insertEnvironment(ctx, env); err != nil {
 			return nil, err
 		}
+
+		env.Issuer = a.environmentIssuer(env.ProjectID, env.Name)
 		// Keep the project's environment list in sync.
 		var p domain.Project
 		if err := unmarshal(prow.Data, &p); err != nil {
@@ -314,7 +318,14 @@ func (a *PgOperator) CreateEnvironment(ctx context.Context, cmd domain.Environme
 }
 
 func (a *PgOperator) insertEnvironment(ctx context.Context, env *domain.Environment) error {
-	raw, err := marshal(env)
+	// Issuer is derived from the deployment's public base URL at read time
+	// (environmentIssuer), never persisted: storing it would freeze the origin of
+	// a live environment at whatever public_url happened to be configured when it
+	// was created.
+	stored := *env
+	stored.Issuer = ""
+
+	raw, err := marshal(&stored)
 	if err != nil {
 		return err
 	}
@@ -327,10 +338,6 @@ func (a *PgOperator) insertEnvironment(ctx context.Context, env *domain.Environm
 		CreatedAt: ptr(env.CreatedAt),
 		Data:      &rm,
 	}
-	if env.Issuer != "" {
-		v := null.From(env.Issuer)
-		setter.Issuer = &v
-	}
 
 	if _, err := models.IamEnvironments.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {
@@ -341,6 +348,14 @@ func (a *PgOperator) insertEnvironment(ctx context.Context, env *domain.Environm
 	}
 
 	return nil
+}
+
+// environmentIssuer returns the canonical absolute OIDC issuer for a project
+// environment. It is the single derivation used by every environment read, so
+// the operator API can never report an issuer that differs from the one the
+// discovery document and the minted tokens carry.
+func (a *PgOperator) environmentIssuer(projectID, name string) string {
+	return oidcIssuer(a.db.PublicURL, projectID, name)
 }
 
 func (a *PgOperator) ListEnvironments(ctx context.Context, projectID string) ([]domain.Environment, error) {
@@ -357,6 +372,8 @@ func (a *PgOperator) ListEnvironments(ctx context.Context, projectID string) ([]
 		if err := unmarshal(row.Data, &e); err != nil {
 			return nil, err
 		}
+
+		e.Issuer = a.environmentIssuer(e.ProjectID, e.Name)
 
 		out = append(out, e)
 	}
@@ -382,6 +399,8 @@ func (a *PgOperator) GetEnvironment(ctx context.Context, projectID, env string) 
 	if err := unmarshal(row.Data, &e); err != nil {
 		return nil, err
 	}
+
+	e.Issuer = a.environmentIssuer(e.ProjectID, e.Name)
 
 	return &e, nil
 }

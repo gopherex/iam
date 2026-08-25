@@ -49,6 +49,11 @@ services:
 
       # IAM server config: service.http.*
       IAM_SERVICE_HTTP_ADDR: ${IAM_SERVICE_HTTP_ADDR:-:8080}
+      # REQUIRED: absolute base URL the deployment is reachable at. It is the
+      # OIDC issuer prefix ({public_url}/p/{project_id}/e/{env}) and every
+      # absolute URL in the discovery document; the service refuses to start
+      # without it. Point it at your public origin behind a proxy/TLS.
+      IAM_SERVICE_HTTP_PUBLIC_URL: ${IAM_SERVICE_HTTP_PUBLIC_URL:-http://localhost:8080}
       # Compose default mounts probes on the API port for one exposed listener.
       # Set to :8081 to match the application default separate probe listener.
       IAM_SERVICE_HTTP_PROBE_ADDR: ${IAM_SERVICE_HTTP_PROBE_ADDR:-:8080}

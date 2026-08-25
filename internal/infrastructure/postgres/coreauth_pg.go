@@ -418,19 +418,19 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	}
 
 	claims := map[string]any{
-		"iss": oidcIssuer(acc.ProjectID, signEnv),
-		"sub": acc.ID,
-		"sid": sessionID,
-		"jti": newUUID(),
-		"pid": acc.ProjectID,
-		"aud": aud,
-		"aal": aal,
-		"amr": amr,
-		"typ": "access",
-		"env": signEnv,
+		claimIssuer:      oidcIssuer(a.db.PublicURL, acc.ProjectID, signEnv),
+		claimSubject:     acc.ID,
+		claimSessionID:   sessionID,
+		claimTokenID:     newUUID(),
+		claimProjectID:   acc.ProjectID,
+		claimAudience:    aud,
+		claimAAL:         aal,
+		claimAMR:         amr,
+		claimTokenType:   tokenTypeAccess,
+		claimEnvironment: signEnv,
 	}
 	if clientID != "" {
-		claims["client_id"] = clientID
+		claims[claimClientID] = clientID
 	}
 
 	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, claims, sp.AccessTTL)
@@ -559,19 +559,19 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 	}
 
 	claims := map[string]any{
-		"iss": oidcIssuer(acc.ProjectID, signEnv),
-		"sub": acc.ID,
-		"sid": row.ID,
-		"jti": newUUID(),
-		"pid": acc.ProjectID,
-		"aud": aud,
-		"aal": aal,
-		"amr": amr,
-		"typ": "access",
-		"env": signEnv,
+		claimIssuer:      oidcIssuer(a.db.PublicURL, acc.ProjectID, signEnv),
+		claimSubject:     acc.ID,
+		claimSessionID:   row.ID,
+		claimTokenID:     newUUID(),
+		claimProjectID:   acc.ProjectID,
+		claimAudience:    aud,
+		claimAAL:         aal,
+		claimAMR:         amr,
+		claimTokenType:   tokenTypeAccess,
+		claimEnvironment: signEnv,
 	}
 	if clientID != "" {
-		claims["client_id"] = clientID
+		claims[claimClientID] = clientID
 	}
 
 	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, claims, sp.AccessTTL)
@@ -3451,22 +3451,22 @@ func (a *pgCoreAuth) CurrentClaims(ctx context.Context, sessionID string) (map[s
 	}
 
 	claims := map[string]any{
-		"sub": sess.AccountID,
-		"sid": sess.ID,
-		"aal": sess.AAL,
-		"amr": sess.AMR,
-		"iss": oidcIssuer(row.ProjectID, env),
-		"pid": row.ProjectID,
-		"env": env,
-		"typ": "access",
+		claimSubject:     sess.AccountID,
+		claimSessionID:   sess.ID,
+		claimAAL:         sess.AAL,
+		claimAMR:         sess.AMR,
+		claimIssuer:      oidcIssuer(a.db.PublicURL, row.ProjectID, env),
+		claimProjectID:   row.ProjectID,
+		claimEnvironment: env,
+		claimTokenType:   tokenTypeAccess,
 	}
 	if sess.ClientID != "" {
-		claims["aud"] = sess.ClientID
-		claims["client_id"] = sess.ClientID
+		claims[claimAudience] = sess.ClientID
+		claims[claimClientID] = sess.ClientID
 	}
 
 	if v, ok := row.ExpiresAt.Get(); ok {
-		claims["exp"] = v.Unix()
+		claims[claimExpiresAt] = v.Unix()
 	}
 
 	return claims, nil

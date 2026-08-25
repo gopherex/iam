@@ -13,6 +13,10 @@ else (orchestration, TLS, secrets) is layered on top.
 
 - [ ] **Postgres** reachable, `IAM_INFRA_POSTGRES_SSLMODE=require` (or
   `verify-full`).
+- [ ] **`IAM_SERVICE_HTTP_PUBLIC_URL`** — the absolute public origin clients
+      reach IAM at (`https://auth.example.com`). It becomes the OIDC issuer and
+      every URL in the discovery document; the service will not start without it,
+      and changing it later invalidates issuer pins in every relying party.
 - [ ] **`IAM_SERVICE_AUTH_ENCRYPTION_KEY`** — a real `openssl rand -base64 32`
   value, stored in your secret manager, **stable forever** (rotating it orphans
   existing encrypted secrets).

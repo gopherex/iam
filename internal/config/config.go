@@ -5,7 +5,22 @@
 // tags, populated by the generic LoadConfig[T].
 package config
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/gopherex/iam/internal/domain"
+)
+
+// ErrPublicURLRequired is returned by Normalize when service.http.public_url is
+// unset. It has no safe default: the value is the OIDC issuer every relying
+// party pins, and it cannot be inferred from request headers without letting a
+// client choose the issuer.
+var ErrPublicURLRequired = errors.New(
+	"service.http.public_url is required: set the absolute base URL this deployment is reachable at " +
+		"(e.g. https://auth.example.com) via SERVICE_HTTP_PUBLIC_URL",
+)
 
 // Postgres is the connection config for the IAM store.
 type Postgres struct {
@@ -44,6 +59,13 @@ type HTTP struct {
 	// bypass IP-keyed rate limiting. Set to the LB subnet in proxied deploys
 	// (e.g. "10.0.0.0/8"). Env: SERVICE_HTTP_TRUSTED_PROXIES (comma-separated).
 	TrustedProxies []string `mapstructure:"trusted_proxies"`
+	// PublicURL is the absolute base URL this deployment is reachable at
+	// (scheme://host[:port][/prefix], no trailing slash). It is the sole source
+	// of the OIDC issuer and of every absolute URL the service advertises, so it
+	// is REQUIRED: the service refuses to start without it. It is deliberately
+	// NOT derived from Host / X-Forwarded-* — a request header cannot be allowed
+	// to decide the issuer clients pin. Env: SERVICE_HTTP_PUBLIC_URL.
+	PublicURL string `default:"" mapstructure:"public_url"`
 }
 
 // Logger is the structured-logging config.
@@ -98,4 +120,26 @@ type Service struct {
 type Config struct {
 	Infra   Infrastructure `mapstructure:"infra"`
 	Service Service        `mapstructure:"service"`
+}
+
+// Normalize canonicalizes and validates the values the loader cannot express as
+// struct tags. It is called once, immediately after loading, and a returned
+// error aborts startup.
+//
+// Today that is service.http.public_url: it is required, must be an absolute
+// http(s) URL, and is stored without its trailing slash so callers can
+// concatenate paths onto it directly.
+func (c *Config) Normalize() error {
+	pub := strings.TrimRight(strings.TrimSpace(c.Service.HTTP.PublicURL), "/")
+	if pub == "" {
+		return ErrPublicURLRequired
+	}
+
+	if err := domain.ValidateAbsoluteHTTPURL("service.http.public_url", pub); err != nil {
+		return err
+	}
+
+	c.Service.HTTP.PublicURL = pub
+
+	return nil
 }

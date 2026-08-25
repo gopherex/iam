@@ -57,10 +57,49 @@ const (
 	oidcRefreshTTL = 30 * 24 * time.Hour
 )
 
-// oidcIssuer returns the canonical issuer string for project/env, matching the
-// discovery document's `issuer` value.
-func oidcIssuer(projectID, env string) string {
-	return fmt.Sprintf("/p/%s/e/%s", projectID, env)
+// JWT claim names minted and inspected across the core-auth, federation and
+// OIDC token paths. Naming them once keeps the spelling identical everywhere a
+// token is built or read.
+const (
+	claimIssuer      = "iss"
+	claimSubject     = "sub"
+	claimSessionID   = "sid"
+	claimTokenID     = "jti"
+	claimProjectID   = "pid"
+	claimAudience    = "aud"
+	claimAAL         = "aal"
+	claimAMR         = "amr"
+	claimTokenType   = "typ"
+	claimEnvironment = "env"
+	claimClientID    = "client_id"
+	claimScope       = "scope"
+	claimExpiresAt   = "exp"
+)
+
+// Values of the `typ` claim. IAM mints three token kinds and each verify path
+// checks the kind it expects, so a refresh token can never be presented as an
+// access token.
+const (
+	tokenTypeAccess  = "access"
+	tokenTypeRefresh = "refresh"
+)
+
+// oidcIssuer returns the canonical issuer for project/env: the deployment's
+// absolute public base URL followed by the tenant path. OIDC Discovery 1.0 §3
+// requires the issuer to be an absolute https URL that is a literal prefix of
+// the URL the discovery document is served from — go-oidc and every other
+// conforming client verify exactly that, so the base MUST be the configured
+// service.http.public_url and never anything derived from a request header.
+//
+// base is expected normalized (absolute, no trailing slash); a caller that
+// passes an empty base gets an empty issuer, which fails closed everywhere it
+// is compared.
+func oidcIssuer(base, projectID, env string) string {
+	if base == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("%s/p/%s/e/%s", base, projectID, env)
 }
 
 // oidcTokenSubject identifies the principal a token family is minted for and
@@ -553,7 +592,7 @@ func (a *pgOIDCGrants) Logout(ctx context.Context, cmd domain.OIDCLogoutCmd) (st
 			return "", domain.ErrInvalidToken
 		}
 
-		projectID, env := oidcParseIssuer(peekString(peek, "iss"))
+		projectID, env := oidcParseIssuer(a.db.PublicURL, peekString(peek, claimIssuer))
 		if projectID == "" {
 			return "", domain.ErrInvalidToken
 		}
@@ -612,7 +651,7 @@ func (a *pgOIDCGrants) BackchannelLogout(ctx context.Context, cmd domain.OIDCBac
 		return domain.ErrInvalidToken
 	}
 
-	projectID, env := oidcParseIssuer(peekString(peek, "iss"))
+	projectID, env := oidcParseIssuer(a.db.PublicURL, peekString(peek, claimIssuer))
 	if projectID == "" {
 		return domain.ErrInvalidToken
 	}
@@ -864,13 +903,25 @@ func (a *pgOIDCGrants) verifyRefreshToken(ctx context.Context, projectID, env, t
 	return sub, clientID, scopes, nil
 }
 
-// oidcParseIssuer extracts (projectID, env) from a "/p/<projectID>/e/<env>"
-// issuer string. Returns empty strings if the issuer is not in that form.
-func oidcParseIssuer(iss string) (projectID, env string) {
-	parts := strings.Split(iss, "/")
-	// "" / "p" / <projectID> / "e" / <env>
-	if len(parts) == 5 && parts[0] == "" && parts[1] == "p" && parts[3] == "e" {
-		return parts[2], parts[4]
+// oidcParseIssuer extracts (projectID, env) from an absolute issuer of the form
+// "<base>/p/<projectID>/e/<env>". It returns empty strings unless the issuer is
+// exactly that — in particular an issuer whose origin/base path is not this
+// deployment's is rejected rather than parsed, so a token minted by a foreign
+// issuer can never route to one of our tenants.
+func oidcParseIssuer(base, iss string) (string, string) {
+	if base == "" || iss == "" {
+		return "", ""
+	}
+
+	rest, ok := strings.CutPrefix(iss, base+"/")
+	if !ok {
+		return "", ""
+	}
+
+	parts := strings.Split(rest, "/")
+	// "p" / <projectID> / "e" / <env>
+	if len(parts) == 4 && parts[0] == "p" && parts[2] == "e" && parts[1] != "" && parts[3] != "" {
+		return parts[1], parts[3]
 	}
 
 	return "", ""
@@ -891,12 +942,12 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		env = oidcDefaultEnv
 	}
 
-	issuer := oidcIssuer(sub.projectID, env)
+	issuer := oidcIssuer(a.db.PublicURL, sub.projectID, env)
 	now := nowUTC()
 
 	// Access token: signed RS256 JWT carrying the standard access claims.
 	access, err := a.db.Signer().Sign(ctx, sub.projectID, env, map[string]any{
-		"iss":       issuer,
+		claimIssuer: issuer,
 		"sub":       sub.subject,
 		"aud":       sub.clientID,
 		"client_id": sub.clientID,
@@ -929,7 +980,7 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 	// refresh_token: signed, rotatable JWT for offline_access requests.
 	if oidcHasScope(sub.scopes, "offline_access") {
 		refresh, err := a.db.Signer().Sign(ctx, sub.projectID, env, map[string]any{
-			"iss":       issuer,
+			claimIssuer: issuer,
 			"sub":       sub.subject,
 			"aud":       sub.clientID,
 			"client_id": sub.clientID,
@@ -1039,7 +1090,7 @@ func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospect
 		return inactive, nil
 	}
 
-	if iss, _ := claims["iss"].(string); iss != oidcIssuer(cmd.ProjectID, env) {
+	if iss, _ := claims[claimIssuer].(string); iss != oidcIssuer(a.db.PublicURL, cmd.ProjectID, env) {
 		return inactive, nil // issuer does not match the request tenant
 	}
 
@@ -1052,7 +1103,7 @@ func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospect
 		resp.ClientID = v
 	}
 
-	if v, ok := claims["iss"].(string); ok {
+	if v, ok := claims[claimIssuer].(string); ok {
 		resp.Issuer = v
 	}
 
@@ -1382,17 +1433,22 @@ func (a *pgOIDCGrants) JWKS(ctx context.Context, projectID, env string) (map[str
 // names) and marshaled to the generic map the oas layer emits. The signing
 // algorithm advertised matches the Signer (RS256).
 func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env string) (map[string]any, error) {
-	base := oidcIssuer(projectID, env)
+	root := a.db.PublicURL
+	// issuer is the deployment base + tenant path, which is exactly the prefix of
+	// the URL this document is served from
+	// (<issuer>/.well-known/openid-configuration). Conforming clients (go-oidc and
+	// friends) reject the document outright when the two disagree.
+	issuer := oidcIssuer(root, projectID, env)
 	cfg := &oidc.DiscoveryConfiguration{
-		Issuer:                           base,
-		AuthorizationEndpoint:            "/oauth2/authorize",
-		TokenEndpoint:                    "/oauth2/token",
-		UserinfoEndpoint:                 "/oauth2/userinfo",
-		JwksURI:                          base + "/.well-known/jwks.json",
-		IntrospectionEndpoint:            "/oauth2/introspect",
-		RevocationEndpoint:               "/oauth2/revoke",
-		DeviceAuthorizationEndpoint:      "/oauth2/device_authorization",
-		EndSessionEndpoint:               "/oauth2/logout",
+		Issuer:                           issuer,
+		AuthorizationEndpoint:            root + "/oauth2/authorize",
+		TokenEndpoint:                    root + "/oauth2/token",
+		UserinfoEndpoint:                 root + "/oauth2/userinfo",
+		JwksURI:                          issuer + "/.well-known/jwks.json",
+		IntrospectionEndpoint:            root + "/oauth2/introspect",
+		RevocationEndpoint:               root + "/oauth2/revoke",
+		DeviceAuthorizationEndpoint:      root + "/oauth2/device_authorization",
+		EndSessionEndpoint:               root + "/oauth2/logout",
 		ResponseTypesSupported:           []string{"code"},
 		ResponseModesSupported:           []string{"query", "fragment"},
 		GrantTypesSupported:              []oidc.GrantType{oidc.GrantTypeCode, oidc.GrantTypeRefreshToken, oidc.GrantTypeDeviceCode},
@@ -1413,7 +1469,7 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 	}
 	// The pushed-authorization-request endpoint has no field on the discovery
 	// struct in this lib version; advertise it explicitly (RFC 9126).
-	m["pushed_authorization_request_endpoint"] = "/oauth2/par"
+	m["pushed_authorization_request_endpoint"] = root + "/oauth2/par"
 
 	return m, nil
 }

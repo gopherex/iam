@@ -82,7 +82,7 @@ func TestNewAuthenticatorHybridPrefersLocal(t *testing.T) {
 	}
 
 	token := key.sign(t, map[string]any{
-		"iss": "/p/proj_123/e/live",
+		"iss": server.URL + "/p/proj_123/e/live",
 		"sub": "acct_123",
 		"aud": "api",
 		"typ": "access",

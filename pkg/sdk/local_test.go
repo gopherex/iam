@@ -34,7 +34,7 @@ func TestLocalVerifierAuthenticate(t *testing.T) {
 	}
 
 	token := key.sign(t, map[string]any{
-		"iss":       "/p/proj_123/e/live",
+		"iss":       server.URL + "/p/proj_123/e/live",
 		"sub":       "acct_123",
 		"aud":       "api",
 		"client_id": "api",
@@ -84,7 +84,7 @@ func TestLocalVerifierRejectsInvalidAudience(t *testing.T) {
 	}
 
 	token := key.sign(t, map[string]any{
-		"iss": "/p/proj_123/e/live",
+		"iss": server.URL + "/p/proj_123/e/live",
 		"sub": "acct_123",
 		"aud": "other",
 		"typ": "access",
@@ -118,7 +118,7 @@ func TestLocalVerifierHTTPMiddleware(t *testing.T) {
 	}
 
 	token := key.sign(t, map[string]any{
-		"iss": "/p/proj_123/e/live",
+		"iss": server.URL + "/p/proj_123/e/live",
 		"sub": "acct_123",
 		"aud": "api",
 		"typ": "access",

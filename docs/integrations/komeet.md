@@ -12,10 +12,14 @@ The stable join keys are the access-token `sub` (user) and `sid` (session/device
   `aud`, `aal`, `amr` and `typ=access`. `client_id` is present when the login is
   associated with a client. OAuth/OIDC tokens additionally carry their granted
   `scope`.
-- The canonical issuer is `/p/{project_id}/e/{environment}`. Verify the JWT
-  locally with `GET /p/{project_id}/e/{environment}/.well-known/jwks.json`, pin
-  the expected issuer, project, environment, audience/client and access-token
-  type, and cache keys by `kid`.
+- The canonical issuer is the absolute URL
+  `{public_url}/p/{project_id}/e/{environment}`, where `{public_url}` is the
+  IAM deployment's configured public base URL (`service.http.public_url`, e.g.
+  `https://iam.naukograd.space`). It is a literal prefix of the discovery
+  document's own URL, as OIDC Discovery 1.0 §3 requires. Verify the JWT locally
+  with `GET {public_url}/p/{project_id}/e/{environment}/.well-known/jwks.json`,
+  pin the expected issuer, project, environment, audience/client and
+  access-token type, and cache keys by `kid`.
 - `POST /v1/auth/token/refresh` rotates a refresh token and returns a new access
   token without creating a new device session. The default refresh lifetime is
   30 days. Reuse detection and idle/absolute limits are controlled by the

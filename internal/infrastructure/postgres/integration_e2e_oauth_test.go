@@ -644,6 +644,56 @@ func TestE2EOIDCProviderDiscovery(t *testing.T) {
 		}
 	})
 
+	// OIDC Discovery 1.0 §3: issuer MUST be an absolute URL and MUST be a literal
+	// prefix of the URL the document is served from. go-oidc (ArgoCD,
+	// oauth2-proxy, kube-oidc-proxy) refuses the provider outright otherwise.
+	t.Run("issuer_is_absolute_and_prefixes_discovery_url", func(t *testing.T) {
+		u := fmt.Sprintf("%s/p/%s/e/live/.well-known/openid-configuration", ts.URL, projectID)
+		r := e2eReq(t, ctx, http.MethodGet, u, nil, nil)
+		e2eWantStatus(t, r, http.StatusOK)
+		var doc map[string]any
+		e2eDecode(t, r, &doc)
+
+		issuer, _ := doc["issuer"].(string)
+		if want := fmt.Sprintf("%s/p/%s/e/live", ts.URL, projectID); issuer != want {
+			t.Fatalf("issuer = %q, want %q", issuer, want)
+		}
+		if want := issuer + "/.well-known/openid-configuration"; u != want {
+			t.Fatalf("discovery URL %q is not %q — issuer does not prefix it", u, want)
+		}
+	})
+
+	// Every advertised URI must be absolute; a relative endpoint is unusable to a
+	// standards client and was the reason IAM could not act as an SSO provider.
+	t.Run("all_endpoints_absolute", func(t *testing.T) {
+		u := fmt.Sprintf("%s/p/%s/e/live/.well-known/openid-configuration", ts.URL, projectID)
+		r := e2eReq(t, ctx, http.MethodGet, u, nil, nil)
+		e2eWantStatus(t, r, http.StatusOK)
+		var doc map[string]any
+		e2eDecode(t, r, &doc)
+
+		wantEndpoints := map[string]string{
+			"authorization_endpoint":                ts.URL + "/oauth2/authorize",
+			"token_endpoint":                        ts.URL + "/oauth2/token",
+			"userinfo_endpoint":                     ts.URL + "/oauth2/userinfo",
+			"introspection_endpoint":                ts.URL + "/oauth2/introspect",
+			"revocation_endpoint":                   ts.URL + "/oauth2/revoke",
+			"device_authorization_endpoint":         ts.URL + "/oauth2/device_authorization",
+			"end_session_endpoint":                  ts.URL + "/oauth2/logout",
+			"pushed_authorization_request_endpoint": ts.URL + "/oauth2/par",
+			"jwks_uri":                              fmt.Sprintf("%s/p/%s/e/live/.well-known/jwks.json", ts.URL, projectID),
+		}
+		for field, want := range wantEndpoints {
+			got, _ := doc[field].(string)
+			if got != want {
+				t.Errorf("%s = %q, want %q", field, got, want)
+			}
+			if !strings.HasPrefix(got, "http://") && !strings.HasPrefix(got, "https://") {
+				t.Errorf("%s = %q is not an absolute URL", field, got)
+			}
+		}
+	})
+
 	t.Run("unknown_project_returns_200", func(t *testing.T) {
 		// NOTE: OpenIDConfiguration builds a static discovery document from the
 		// project_id path param without any DB lookup, so any project ID (even
@@ -656,6 +706,42 @@ func TestE2EOIDCProviderDiscovery(t *testing.T) {
 			t.Fatalf("unexpected 500 for unknown project discovery: %s", r.Body)
 		}
 	})
+}
+
+// TestE2ECoreAuthTokenIssuerIsAbsolute pins that the same absolute issuer the
+// discovery document advertises is the `iss` of ordinary core-auth tokens —
+// oidcIssuer feeds both, so a resource server can pin one value for all of them.
+func TestE2ECoreAuthTokenIssuerIsAbsolute(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID := e2eProject(t, ctx)
+
+	r := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/sign-up",
+		map[string]any{"email": fmt.Sprintf("iss+%s@example.com", newUUID()), "password": "Sup3rStr0ng!Pass"},
+		map[string]string{"X-Client-Id": projectID, "X-Environment": "live"},
+	)
+	e2eWantStatus(t, r, http.StatusOK)
+
+	var body struct {
+		Session struct {
+			AccessToken string `json:"access_token"`
+		} `json:"session"`
+	}
+	e2eDecode(t, r, &body)
+
+	if body.Session.AccessToken == "" {
+		t.Fatalf("sign-up returned no access token: %s", r.Body)
+	}
+
+	claims := testDB.Signer().UnverifiedClaims(body.Session.AccessToken)
+	if claims == nil {
+		t.Fatal("access token has no readable claims")
+	}
+
+	iss, _ := claims["iss"].(string)
+	if want := fmt.Sprintf("%s/p/%s/e/live", ts.URL, projectID); iss != want {
+		t.Fatalf("access token iss = %q, want %q", iss, want)
+	}
 }
 
 // TestE2EOIDCProviderDiscoveryContainsExpectedFields ensures the discovery

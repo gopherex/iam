@@ -29,7 +29,12 @@ discovery and JWKS:
 /p/{project_id}/e/{env}/.well-known/jwks.json
 ```
 
-The canonical **issuer** is `/p/{project_id}/e/{environment}`. Tokens are RS256
+The canonical **issuer** is the absolute URL
+`{public_url}/p/{project_id}/e/{environment}`, built from the deployment's
+configured public base URL (`service.http.public_url`). Every URI in the
+discovery document is absolute, and the issuer is a literal prefix of the
+discovery document's own URL — the property conforming clients (`go-oidc`, and
+therefore ArgoCD, oauth2-proxy, kube-oidc-proxy) verify. Tokens are RS256
 JWTs minted by the project's signing key; discovery and JWKS are per project and
 environment.
 

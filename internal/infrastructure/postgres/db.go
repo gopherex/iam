@@ -64,6 +64,11 @@ type DB struct {
 	// Cipher encrypts reversible secrets at rest (signing-key PEMs, TOTP secrets).
 	// Defaults to a passthrough cipher; cmd installs a real one via UseCipher.
 	Cipher Cipher
+	// PublicURL is the absolute base URL this deployment is reachable at, with no
+	// trailing slash (service.http.public_url). Adapters build the OIDC issuer and
+	// every advertised absolute URL from it; cmd installs it via UsePublicURL
+	// after config validation, so it is never empty in a running server.
+	PublicURL string
 }
 
 // Connect opens a pgx pool against dsn and builds the tx manager / executors.
@@ -133,6 +138,16 @@ func Connect(ctx context.Context, dsn string, opts ...ConnectOption) (*DB, error
 func (db *DB) UseCipher(c Cipher) {
 	if c != nil {
 		db.Cipher = c
+	}
+}
+
+// UsePublicURL installs the absolute public base URL (call once after Connect,
+// before serving). The value must already be normalized — absolute http(s), no
+// trailing slash; config.Normalize guarantees that. An empty value is ignored so
+// a mis-wired caller cannot silently strip the issuer origin.
+func (db *DB) UsePublicURL(u string) {
+	if u != "" {
+		db.PublicURL = u
 	}
 }
 
