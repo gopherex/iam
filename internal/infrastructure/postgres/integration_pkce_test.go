@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/gopherex/iam/internal/domain"
@@ -406,4 +407,97 @@ func TestOIDCScopeClaimsFollowConsent(t *testing.T) {
 			}
 		}
 	})
+}
+
+// TestOIDCAuthorizationResponseCarriesState: RFC 6749 §4.1.2 requires `state`
+// back on the authorization response. Relying parties use it as their CSRF
+// defence — oauth2-proxy refuses the callback outright without it — so dropping
+// it makes the provider unusable no matter how correct everything else is.
+func TestOIDCAuthorizationResponseCarriesState(t *testing.T) {
+	ctx := context.Background()
+	f := newPKCEFixture(t, ctx, "spa")
+
+	const state = "opaque-client-state-123"
+
+	redirect, err := f.grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
+		ClientID:            f.clientID,
+		ResponseType:        "code",
+		RedirectURI:         f.redirectURI,
+		Scope:               "openid",
+		State:               state,
+		CodeChallenge:       challengeFor(pkceVerifier),
+		CodeChallengeMethod: "S256",
+	})
+	if err != nil {
+		t.Fatalf("Authorize: %v", err)
+	}
+
+	interactionID := strings.TrimPrefix(redirect, "/oauth/interaction/")
+
+	sessionID := "sess-" + newUUID()
+	if err := f.grants.CompleteLogin(ctx, interactionID, f.userID, sessionID); err != nil {
+		t.Fatalf("CompleteLogin: %v", err)
+	}
+
+	consent, err := f.grants.Consent(ctx, domain.OIDCConsentCmd{
+		InteractionID: interactionID,
+		AccountID:     f.userID,
+		SessionID:     sessionID,
+		GrantedScopes: []string{"openid"},
+	})
+	if err != nil {
+		t.Fatalf("Consent: %v", err)
+	}
+
+	parsed, err := url.Parse(consent)
+	if err != nil {
+		t.Fatalf("parse consent redirect: %v", err)
+	}
+
+	if got := parsed.Query().Get("state"); got != state {
+		t.Fatalf("state = %q, want %q — the client will reject this callback", got, state)
+	}
+	if parsed.Query().Get("code") == "" {
+		t.Fatal("no code alongside the state")
+	}
+}
+
+// TestOIDCAccessTokenIsSelfVerifiable: the provider must accept its own tokens.
+// The verifier selects a signing key by the `pid` claim, and OIDC-minted tokens
+// carried none — so /oauth2/userinfo answered 401 to a token this very service
+// had just issued, and any relying party resolving claims there gave up.
+func TestOIDCAccessTokenIsSelfVerifiable(t *testing.T) {
+	ctx := context.Background()
+	f := newPKCEFixture(t, ctx, "spa")
+
+	resp, err := f.grants.mintTokenResponse(ctx, oidcTokenSubject{
+		projectID: f.projectID,
+		env:       "live",
+		subject:   f.userID,
+		clientID:  f.clientID,
+		scopes:    []string{"openid", "email"},
+	})
+	if err != nil {
+		t.Fatalf("mintTokenResponse: %v", err)
+	}
+
+	access, _ := resp["access_token"].(string)
+	if access == "" {
+		t.Fatal("no access_token")
+	}
+
+	principal, err := NewAuthenticator(testDB, e2eMasterKey).OAuth2(ctx, access)
+	if err != nil {
+		t.Fatalf("the provider rejected its own access token: %v", err)
+	}
+
+	if principal.ProjectID != f.projectID {
+		t.Errorf("principal project = %q, want %q", principal.ProjectID, f.projectID)
+	}
+	if principal.AccountID != f.userID {
+		t.Errorf("principal account = %q, want %q", principal.AccountID, f.userID)
+	}
+	if len(principal.Scopes) == 0 {
+		t.Error("principal carries no scopes; userinfo cannot gate its claims")
+	}
 }

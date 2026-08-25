@@ -111,6 +111,25 @@ Confidential clients are authenticated against the secrets issued for them under
 `admin/apps/{app_id}/secrets`. A client may hold several at once, so a secret can
 be rotated in before the old one is deleted; any issued secret authenticates.
 
+### Verified against a real client
+
+The provider is checked against `oauth2-proxy` and against the `go-oidc` library
+it and ArgoCD are built on, not only against assertions of our own: discovery,
+the authorization code exchange with `client_secret_basic`, id_token
+verification against the published JWKS, and claim resolution through
+`/oauth2/userinfo`. An assertion we write ourselves will happily agree with a
+document no standards client accepts.
+
+Two things such a client insists on that are easy to miss:
+
+- `state` comes back on the authorization response unmodified (RFC 6749
+  §4.1.2). Relying parties treat it as their CSRF defense and refuse a callback
+  without it.
+- `email_verified` must be true before most proxies will accept the login.
+  oauth2-proxy rejects an unverified address unless started with
+  `--insecure-oidc-allow-unverified-email`, so verify the address (or turn on
+  verification at signup) before wiring one up.
+
 ### Claims in the id_token
 
 The scopes a client is granted decide what the id_token says about the person:

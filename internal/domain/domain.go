@@ -213,6 +213,11 @@ type Interaction struct {
 	// verifier against them.
 	CodeChallenge       string `json:"code_challenge,omitempty"`
 	CodeChallengeMethod string `json:"code_challenge_method,omitempty"`
+	// State is the client's opaque value from the authorization request. RFC
+	// 6749 §4.1.2 requires it back, unmodified, on the authorization response;
+	// relying parties use it as their CSRF defense and reject a callback without
+	// it, so it has to survive the interaction.
+	State string `json:"state,omitempty"`
 }
 
 // ===== Read models =====

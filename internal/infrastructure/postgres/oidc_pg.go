@@ -506,19 +506,28 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			return "", err
 		}
 
-		return oidcAppendQuery(in.RedirectURI, "code", code), nil
+		return oidcAuthorizationRedirect(in.RedirectURI, code, in.State), nil
 	})
 }
 
-// oidcAppendQuery appends a single key=value query parameter to a URL,
-// choosing the correct separator.
-func oidcAppendQuery(rawurl, key, value string) string {
+// oidcAuthorizationRedirect builds the successful authorization response: the
+// code, plus the client's `state` unmodified when it sent one. RFC 6749 §4.1.2
+// requires state back, and relying parties treat its absence as a CSRF failure
+// and refuse the callback outright.
+func oidcAuthorizationRedirect(redirectURI, code, state string) string {
+	params := url.Values{}
+	params.Set("code", code)
+
+	if state != "" {
+		params.Set("state", state)
+	}
+
 	sep := "?"
-	if strings.Contains(rawurl, "?") {
+	if strings.Contains(redirectURI, "?") {
 		sep = "&"
 	}
 
-	return fmt.Sprintf("%s%s%s=%s", rawurl, sep, key, value)
+	return redirectURI + sep + params.Encode()
 }
 
 // Reject cancels the interaction and returns the redirect carrying the OAuth2
@@ -558,7 +567,7 @@ func (a *pgOIDCGrants) Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (st
 			errCode = "access_denied"
 		}
 
-		return fmt.Sprintf("%s?error=%s&error_description=%s", in.RedirectURI, errCode, cmd.ErrorDescription), nil
+		return oidcErrorRedirect(in.RedirectURI, errCode, cmd.ErrorDescription, in.State), nil
 	})
 }
 
@@ -926,6 +935,7 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 			// mints, and the token endpoint checks the verifier against it.
 			CodeChallenge:       cmd.CodeChallenge,
 			CodeChallengeMethod: cmd.CodeChallengeMethod,
+			State:               cmd.State,
 		}
 
 		raw, err := marshal(&in)
@@ -1369,12 +1379,17 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 
 	// Access token: signed RS256 JWT carrying the standard access claims.
 	accessClaims := map[string]any{
-		claimIssuer:      issuer,
-		claimSubject:     sub.subject,
-		claimAudience:    sub.clientID,
-		claimClientID:    sub.clientID,
-		claimScope:       joinScopes(sub.scopes),
-		claimTokenType:   tokenTypeAccess,
+		claimIssuer:    issuer,
+		claimSubject:   sub.subject,
+		claimAudience:  sub.clientID,
+		claimClientID:  sub.clientID,
+		claimScope:     joinScopes(sub.scopes),
+		claimTokenType: tokenTypeAccess,
+		// pid/env identify the tenant whose key signed this token. The verifier
+		// selects the signing key by them, so a token without pid cannot be
+		// verified at all — including at our own userinfo endpoint, which is
+		// where relying parties resolve claims the id_token did not carry.
+		claimProjectID:   sub.projectID,
 		claimEnvironment: env,
 	}
 	if groups != nil {
@@ -1419,6 +1434,7 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 			claimClientID:    sub.clientID,
 			claimScope:       joinScopes(sub.scopes),
 			claimTokenType:   tokenTypeRefresh,
+			claimProjectID:   sub.projectID,
 			claimEnvironment: env,
 		}, oidcRefreshTTL)
 		if err != nil {
