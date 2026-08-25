@@ -428,7 +428,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 		})),
 		api.WithFederation(api.NewFederationService(api.FederationDeps{
 			Connections: postgres.NewPgFederationConnections(db, emitter),
-			Runtime:     postgres.NewPgFederationRuntime(db, emitter),
+			Runtime:     postgres.NewPgFederationRuntime(db, emitter, cfgReader),
 			Scim:        postgres.NewPgFederationScim(db, emitter),
 		})),
 		api.WithOIDCProvider(api.NewOIDCProviderService(api.OIDCProviderDeps{

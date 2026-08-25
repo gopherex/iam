@@ -134,7 +134,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 		})),
 		api.WithFederation(api.NewFederationService(api.FederationDeps{
 			Connections: NewPgFederationConnections(testDB, em),
-			Runtime:     NewPgFederationRuntime(testDB, em),
+			Runtime:     NewPgFederationRuntime(testDB, em, NewConfigReader(testDB, time.Second)),
 			Scim:        NewPgFederationScim(testDB, em),
 		})),
 		api.WithOIDCProvider(api.NewOIDCProviderService(api.OIDCProviderDeps{

@@ -1348,6 +1348,9 @@ func fedEmailDomain(email string) string {
 type pgFederationRuntime struct {
 	db      *DB
 	emitter Emitter
+	// cfg resolves the project's session_policy when minting a login session; a
+	// nil cfg falls back to the default TTLs (see NewPgCoreAuth).
+	cfg *configReader
 }
 
 const (
@@ -1355,19 +1358,14 @@ const (
 	// a federated (SSO) login session.
 	fedDefaultEnv = "live"
 
-	// fedAccessTTL / fedRefreshTTL bound the access and refresh JWTs minted for an
-	// SSO-provisioned session.
-	fedAccessTTL  = 10 * time.Minute
-	fedRefreshTTL = 30 * 24 * time.Hour
-
 	// fedExchangeCodeTTL bounds the single-use exchange code that maps a verified
 	// external subject's minted session to the /v1/sso/exchange leg.
 	fedExchangeCodeTTL = 5 * time.Minute
 )
 
 // NewPgFederationRuntime builds the Postgres-backed FederationRuntime adapter.
-func NewPgFederationRuntime(db *DB, emitter Emitter) *pgFederationRuntime {
-	return &pgFederationRuntime{db: db, emitter: emitter}
+func NewPgFederationRuntime(db *DB, emitter Emitter, cfg *configReader) *pgFederationRuntime {
+	return &pgFederationRuntime{db: db, emitter: emitter, cfg: cfg}
 }
 
 var _ api.FederationRuntime = (*pgFederationRuntime)(nil)
@@ -1476,13 +1474,13 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	)
 
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
-		code, accessToken, refreshToken, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, provider, "oidc", subject, email)
+		code, sess, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, provider, "oidc", subject, email)
 		if err != nil {
 			return err
 		}
 
 		exchangeCode = code
-		cookie = sessionCookies(accessToken, refreshToken, fedAccessTTL, fedRefreshTTL)
+		cookie = sessionCookiesFor(sess)
 
 		return a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.sso.oidc_callback",
@@ -1599,13 +1597,14 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 	)
 
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
-		code, accessToken, refreshToken, err := a.fedProvisionAndStoreCode(ctx, row.ProjectID, cmd.ConnectionID, cmd.ConnectionID, "saml", subject, email)
+		code, sess, err := a.fedProvisionAndStoreCode(
+			ctx, row.ProjectID, cmd.ConnectionID, cmd.ConnectionID, "saml", subject, email)
 		if err != nil {
 			return err
 		}
 
 		exchangeCode = code
-		cookie = sessionCookies(accessToken, refreshToken, fedAccessTTL, fedRefreshTTL)
+		cookie = sessionCookiesFor(sess)
 
 		return a.emitter.Emit(ctx, domain.Event{
 			Type:        "federation.sso.saml_acs",
@@ -1774,13 +1773,15 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 // persists a single-use exchange code (sha256(code) -> minted session JSON,
 // user_id = account id, expires_at = now+5m). The opaque code is returned for the
 // /v1/sso/exchange redirect; only its hash is stored.
-func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, projectID, connectionID, provider, idType, providerAccountID, email string) (string, string, string, error) {
+func (a *pgFederationRuntime) fedProvisionAndStoreCode(
+	ctx context.Context, projectID, connectionID, provider, idType, providerAccountID, email string,
+) (string, *domain.Session, error) {
 	code, err := fedRandomToken()
 	if err != nil {
-		return "", "", "", err
+		return "", nil, err
 	}
 
-	var accessToken, refreshToken string
+	var minted *domain.Session
 
 	err = a.db.withTx(ctx, func(ctx context.Context) error {
 		acct, sess, err := a.fedProvisionSubject(ctx, projectID, connectionID, provider, idType, providerAccountID, email)
@@ -1788,8 +1789,7 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, proj
 			return err
 		}
 
-		accessToken = sess.AccessToken
-		refreshToken = sess.RefreshToken
+		minted = sess
 
 		raw, err := marshal(sess)
 		if err != nil {
@@ -1828,10 +1828,10 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(ctx context.Context, proj
 		return nil
 	})
 	if err != nil {
-		return "", "", "", err
+		return "", nil, err
 	}
 
-	return code, accessToken, refreshToken, nil
+	return code, minted, nil
 }
 
 // fedProvisionSubject mirrors oauthsocial.resolveLoginAndMint for SSO: it finds an
@@ -2032,79 +2032,20 @@ func (a *pgFederationRuntime) fedLoadAccount(ctx context.Context, projectID, use
 	return &acct, nil
 }
 
-// fedMintSession creates an iam_sessions row for an account and returns it with a
-// signed RS256 JWT access token (minted by the project Signer) plus a refresh
-// token signed by the same key. amr carries the SSO method ("saml" | "oidc").
+// fedMintSession creates the login session for a federated (SSO) sign-in.
+//
+// It goes through mintSessionVia — the single session-minting seam every other
+// login path uses — rather than signing its own tokens. Doing it separately cost
+// more than duplicated code: the refresh token was never recorded in
+// iam_refresh_tokens, so /v1/auth/token/refresh rejected it as unknown and an
+// enterprise SSO session simply expired after the access token did, with no way
+// to extend it. Going through the seam also brings rotation, reuse detection,
+// revocation with the session, and lifetimes from the project's session_policy
+// instead of constants compiled in here.
+//
+// amr carries the SSO method ("saml" | "oidc").
 func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.Account, amr string) (*domain.Session, error) {
-	sessionID := newUUID()
-
-	signEnv, err := resolveSignEnv(ctx, a.db, acct.ProjectID, fedDefaultEnv)
-	if err != nil {
-		return nil, err
-	}
-
-	access, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		claimIssuer:      oidcIssuer(a.db.PublicURL, acct.ProjectID, signEnv),
-		claimSubject:     acct.ID,
-		claimSessionID:   sessionID,
-		claimProjectID:   acct.ProjectID,
-		claimAAL:         1,
-		claimAMR:         []string{amr},
-		claimTokenType:   tokenTypeAccess,
-		claimEnvironment: signEnv,
-	}, fedAccessTTL)
-	if err != nil {
-		return nil, err
-	}
-
-	refresh, err := a.db.Signer().Sign(ctx, acct.ProjectID, signEnv, map[string]any{
-		claimIssuer:      oidcIssuer(a.db.PublicURL, acct.ProjectID, signEnv),
-		claimSubject:     acct.ID,
-		claimSessionID:   sessionID,
-		claimProjectID:   acct.ProjectID,
-		claimTokenType:   tokenTypeRefresh,
-		claimEnvironment: signEnv,
-	}, fedRefreshTTL)
-	if err != nil {
-		return nil, err
-	}
-
-	meta := domain.RequestMetaFromContext(ctx)
-	sess := &domain.Session{
-		ID:           sessionID,
-		AccountID:    acct.ID,
-		ProjectID:    acct.ProjectID,
-		AMR:          []string{amr},
-		AAL:          1,
-		AccessToken:  access,
-		RefreshToken: refresh,
-		ExpiresIn:    int(fedAccessTTL / time.Second),
-		CreatedAt:    nowUTC(),
-		DeviceName:   meta.DeviceName,
-		IP:           meta.IP,
-		UserAgent:    meta.UserAgent,
-		Fingerprint:  meta.Fingerprint,
-	}
-
-	raw, err := marshal(sess)
-	if err != nil {
-		return nil, err
-	}
-
-	rm := json.RawMessage(raw)
-
-	setter := &models.IamSessionSetter{
-		ID:        &sess.ID,
-		ProjectID: &sess.ProjectID,
-		UserID:    &sess.AccountID,
-		Aal:       ptr(int32(sess.AAL)),
-		Data:      &rm,
-	}
-	if _, err := models.IamSessions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-		return nil, err
-	}
-
-	return sess, nil
+	return mintSessionVia(ctx, a.db, a.emitter, a.cfg, acct, "", []string{amr}, 1)
 }
 
 // ===========================================================================
