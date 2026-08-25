@@ -113,7 +113,11 @@ var (
 	// RFC 6749 §5.2 invalid_grant: the presented authorization grant is invalid,
 	// expired, revoked, or does not match the request it was issued for — which
 	// is also how a failed PKCE verification is reported.
-	ErrInvalidGrant       = newErr(http.StatusBadRequest, "invalid_grant", "The authorization grant is invalid.")
+	ErrInvalidGrant = newErr(http.StatusBadRequest, "invalid_grant", "The authorization grant is invalid.")
+	// RFC 9126 §4 invalid_request_uri: the pushed request is unknown, expired or
+	// already redeemed. It cannot be reported on a redirect, because without the
+	// pushed request there is no validated redirect_uri to report it on.
+	ErrInvalidRequestURI  = newErr(http.StatusBadRequest, "invalid_request_uri", "The request_uri is unknown or expired.")
 	ErrInvalidClient      = newErr(http.StatusBadRequest, "invalid_client", "Unknown or disabled OAuth client.")
 	ErrInvalidRedirectURI = newErr(http.StatusBadRequest, "invalid_redirect_uri",
 		"The redirect_uri is not registered for this client.")

@@ -833,6 +833,19 @@ func oidcErrorRedirect(redirectURI, code, description, state string) string {
 // persisted until the client is known, so an unknown client_id can no longer
 // mint interaction rows.
 func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCmd) (string, error) {
+	// A pushed request (RFC 9126) supplies the whole authorization request. Only
+	// client_id is read from the query alongside it; everything else is ignored,
+	// so a query parameter cannot override what the client lodged over an
+	// authenticated back channel.
+	if cmd.RequestURI != "" {
+		pushed, err := a.consumePushedRequest(ctx, cmd.RequestURI, cmd.ClientID)
+		if err != nil {
+			return "", err
+		}
+
+		cmd = pushed
+	}
+
 	clientRow, app, err := a.resolveAuthorizeClient(ctx, cmd.ClientID)
 	if err != nil {
 		return "", err
@@ -1555,14 +1568,58 @@ func (a *pgOIDCGrants) Revoke(ctx context.Context, cmd domain.OIDCRevokeCmd) err
 }
 
 // PushAuthorizationRequest stores a PAR and returns its request_uri (RFC 9126).
+// oidcParTTL is the lifetime of a pushed authorization request. RFC 9126 §2.2
+// recommends keeping it short — the client redeems it immediately.
+const oidcParTTL = 90 * time.Second
+
+// oidcParRequestURIPrefix is the RFC 9126 URN namespace for a pushed request.
+const oidcParRequestURIPrefix = "urn:ietf:params:oauth:request_uri:"
+
 func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.OIDCParCmd) (*domain.OIDCParResult, error) {
+	// RFC 9126 §2.1: the pushed request must be validated as the authorization
+	// endpoint would validate it. Doing it here means a request that could never
+	// be authorized is refused now, instead of after the user has been walked
+	// through a login screen. It also means the request_uri, once issued, always
+	// names a request whose client and redirect_uri are already known good.
+	clientRow, app, err := a.resolveAuthorizeClient(ctx, cmd.ClientID)
+	if err != nil {
+		return nil, err
+	}
+
+	if cmd.Request != "" {
+		// Request objects (RFC 9101) are not implemented; accepting one here
+		// would silently drop the parameters it carries.
+		return nil, domain.ErrBadRequest.WithMessage("the request parameter is not supported")
+	}
+
+	redirectURI, err := authorizeRedirectURI(app, cmd.RedirectURI)
+	if err != nil {
+		return nil, err
+	}
+
+	if cmd.ResponseType != oidcResponseTypeCode {
+		return nil, domain.ErrBadRequest.WithMessage("only response_type=code is supported")
+	}
+
+	if len(splitScopes(cmd.Scope)) == 0 {
+		return nil, domain.ErrBadRequest.WithMessage("scope is required")
+	}
+
+	if errCode, desc := oidcCheckPKCERequest(app, cmd.CodeChallenge, cmd.CodeChallengeMethod); errCode != "" {
+		return nil, domain.ErrBadRequest.WithMessage(desc)
+	}
+
+	// Store the resolved redirect_uri so redeeming the request cannot depend on
+	// re-deriving it later.
+	cmd.RedirectURI = redirectURI
+
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.OIDCParResult, error) {
 		opaque, err := oidcRandToken(32)
 		if err != nil {
 			return nil, err
 		}
 
-		requestURI := "urn:ietf:params:oauth:request_uri:" + opaque
+		requestURI := oidcParRequestURIPrefix + opaque
 
 		raw, err := marshal(&cmd)
 		if err != nil {
@@ -1571,15 +1628,13 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 
 		rm := json.RawMessage(raw)
 
-		const ttl = 90 // seconds, RFC 9126 recommended upper bound
-
 		cid := null.From(cmd.ClientID)
 		setter := &models.IamParRequestSetter{
 			ID:         ptr(newUUID()),
-			ProjectID:  ptr(cmd.ClientID), // routing key; project resolved by client
+			ProjectID:  ptr(clientRow.ProjectID),
 			RequestURI: &requestURI,
 			ClientID:   &cid,
-			ExpiresAt:  ptr(nowUTC().Add(ttl * time.Second)),
+			ExpiresAt:  ptr(nowUTC().Add(oidcParTTL)),
 			Data:       &rm,
 		}
 
@@ -1592,11 +1647,11 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 			return nil, err
 		}
 
-		result := &domain.OIDCParResult{RequestURI: requestURI, ExpiresIn: ttl}
+		result := &domain.OIDCParResult{RequestURI: requestURI, ExpiresIn: int(oidcParTTL / time.Second)}
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "oidc.par.created",
-			ProjectID:   cmd.ClientID, // routing key; project resolved by client
-			Environment: "",
+			ProjectID:   clientRow.ProjectID,
+			Environment: clientRow.Environment,
 			AggregateID: parRow.ID,
 			Payload:     result,
 		}); err != nil {
@@ -1604,6 +1659,66 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 		}
 
 		return result, nil
+	})
+}
+
+// consumePushedRequest redeems a request_uri and returns the authorization
+// request that was pushed under it.
+//
+// The request is single-use: it is deleted as it is read, so a request_uri that
+// leaks through the user-agent cannot be replayed. It is also bound to the
+// client that pushed it — a different client presenting somebody else's
+// request_uri gets nothing.
+func (a *pgOIDCGrants) consumePushedRequest(
+	ctx context.Context, requestURI, clientID string,
+) (domain.OIDCAuthorizeCmd, error) {
+	var out domain.OIDCAuthorizeCmd
+
+	return withTxRet(ctx, a.db, func(ctx context.Context) (domain.OIDCAuthorizeCmd, error) {
+		rows, err := models.IamParRequests.Query(
+			sm.Where(models.IamParRequests.Columns.RequestURI.EQ(psql.Arg(requestURI))),
+			sm.Limit(1),
+		).All(ctx, a.db.Bobx())
+		if err != nil {
+			return out, fmt.Errorf("read pushed request: %w", err)
+		}
+
+		if len(rows) == 0 {
+			return out, domain.ErrInvalidRequestURI
+		}
+
+		row := rows[0]
+
+		// Consume first: an expired or mismatched request is dropped too, so a
+		// leaked request_uri cannot be probed repeatedly.
+		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
+			return out, err
+		}
+
+		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
+			return out, domain.ErrInvalidRequestURI
+		}
+
+		if bound := row.ClientID.GetOrZero(); bound != "" && bound != clientID {
+			return out, domain.ErrInvalidRequestURI
+		}
+
+		var pushed domain.OIDCParCmd
+		if err := unmarshal(row.Data, &pushed); err != nil {
+			return out, err
+		}
+
+		return domain.OIDCAuthorizeCmd{
+			ClientID:            pushed.ClientID,
+			ResponseType:        pushed.ResponseType,
+			RedirectURI:         pushed.RedirectURI,
+			Scope:               pushed.Scope,
+			State:               pushed.State,
+			CodeChallenge:       pushed.CodeChallenge,
+			CodeChallengeMethod: pushed.CodeChallengeMethod,
+			Nonce:               pushed.Nonce,
+			Prompt:              pushed.Prompt,
+		}, nil
 	})
 }
 

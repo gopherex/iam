@@ -7656,14 +7656,19 @@ func decodeGetMgmtV1ProjectsByProjectIdFeaturesParams(args [1]string, argsEscape
 // GetOauth2AuthorizeParams is parameters of getOauth2Authorize operation.
 type GetOauth2AuthorizeParams struct {
 	ClientID string
-	// Only `code` is supported. Any other value is answered per RFC 6749 §4.1.2.1 — a redirect back
-	// to the client's registered redirect_uri carrying `error=unsupported_response_type` and the
-	// original `state` — so the value is accepted here as a free string rather than rejected by schema
-	// validation before the client has been resolved.
-	ResponseType string
-	RedirectURI  string
-	Scope        string
-	State        OptString `json:",omitempty,omitzero"`
+	// Only `code` is supported. Required unless the request was pushed (`request_uri`), in which case
+	// the pushed value is used and this one is ignored. Any other value is answered per RFC 6749 §4.1.2.
+	// 1 — a redirect back to the client's registered redirect_uri carrying
+	// `error=unsupported_response_type` and the original `state` — so the value is accepted here as a
+	// free string rather than rejected by schema validation before the client has been resolved.
+	ResponseType OptString `json:",omitempty,omitzero"`
+	// Required unless the request was pushed (`request_uri`). May be omitted by a client that registered
+	// exactly one redirect_uri.
+	RedirectURI OptString `json:",omitempty,omitzero"`
+	// Required unless the request was pushed (`request_uri`), in which case the pushed value is used and
+	// this one is ignored.
+	Scope OptString `json:",omitempty,omitzero"`
+	State OptString `json:",omitempty,omitzero"`
 	// PKCE challenge (RFC 7636), `BASE64URL(SHA256(code_verifier))`. Required for public clients (`spa`,
 	// `native`); optional for confidential clients, which authenticate with a secret. When present it is
 	// bound to the authorization code and the matching `code_verifier` MUST be presented at the token
@@ -7676,7 +7681,10 @@ type GetOauth2AuthorizeParams struct {
 	CodeChallengeMethod OptString `json:",omitempty,omitzero"`
 	Nonce               OptString `json:",omitempty,omitzero"`
 	Prompt              OptString `json:",omitempty,omitzero"`
-	RequestURI          OptString `json:",omitempty,omitzero"`
+	// The `request_uri` returned by `/oauth2/par` (RFC 9126). When present it supplies the whole
+	// authorization request: every other query parameter except `client_id` is ignored, and the pushed
+	// request is single-use — replaying a consumed or expired `request_uri` is `invalid_request_uri`.
+	RequestURI OptString `json:",omitempty,omitzero"`
 }
 
 func unpackGetOauth2AuthorizeParams(packed middleware.Parameters) (params GetOauth2AuthorizeParams) {
@@ -7692,21 +7700,27 @@ func unpackGetOauth2AuthorizeParams(packed middleware.Parameters) (params GetOau
 			Name: "response_type",
 			In:   "query",
 		}
-		params.ResponseType = packed[key].(string)
+		if v, ok := packed[key]; ok {
+			params.ResponseType = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
 			Name: "redirect_uri",
 			In:   "query",
 		}
-		params.RedirectURI = packed[key].(string)
+		if v, ok := packed[key]; ok {
+			params.RedirectURI = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
 			Name: "scope",
 			In:   "query",
 		}
-		params.Scope = packed[key].(string)
+		if v, ok := packed[key]; ok {
+			params.Scope = v.(OptString)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -7833,43 +7847,55 @@ func decodeGetOauth2AuthorizeParams(args [0]string, argsEscaped bool, r *http.Re
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				val, err := d.DecodeValue()
-				if err != nil {
+				var paramsDotResponseTypeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotResponseTypeVal = c
+					return nil
+				}(); err != nil {
 					return err
 				}
-
-				c, err := conv.ToString(val)
-				if err != nil {
-					return err
-				}
-
-				params.ResponseType = c
+				params.ResponseType.SetTo(paramsDotResponseTypeVal)
 				return nil
 			}); err != nil {
 				return err
 			}
 			if err := func() error {
-				if err := (validate.String{
-					MinLength:     0,
-					MinLengthSet:  false,
-					MaxLength:     256,
-					MaxLengthSet:  true,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(params.ResponseType)); err != nil {
-					return errors.Wrap(err, "string")
+				if value, ok := params.ResponseType.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     256,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
 				}
 				return nil
 			}(); err != nil {
 				return err
 			}
-		} else {
-			return err
 		}
 		return nil
 	}(); err != nil {
@@ -7889,43 +7915,55 @@ func decodeGetOauth2AuthorizeParams(args [0]string, argsEscaped bool, r *http.Re
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				val, err := d.DecodeValue()
-				if err != nil {
+				var paramsDotRedirectURIVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotRedirectURIVal = c
+					return nil
+				}(); err != nil {
 					return err
 				}
-
-				c, err := conv.ToString(val)
-				if err != nil {
-					return err
-				}
-
-				params.RedirectURI = c
+				params.RedirectURI.SetTo(paramsDotRedirectURIVal)
 				return nil
 			}); err != nil {
 				return err
 			}
 			if err := func() error {
-				if err := (validate.String{
-					MinLength:     0,
-					MinLengthSet:  false,
-					MaxLength:     2048,
-					MaxLengthSet:  true,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(params.RedirectURI)); err != nil {
-					return errors.Wrap(err, "string")
+				if value, ok := params.RedirectURI.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     2048,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
 				}
 				return nil
 			}(); err != nil {
 				return err
 			}
-		} else {
-			return err
 		}
 		return nil
 	}(); err != nil {
@@ -7945,43 +7983,55 @@ func decodeGetOauth2AuthorizeParams(args [0]string, argsEscaped bool, r *http.Re
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				val, err := d.DecodeValue()
-				if err != nil {
+				var paramsDotScopeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotScopeVal = c
+					return nil
+				}(); err != nil {
 					return err
 				}
-
-				c, err := conv.ToString(val)
-				if err != nil {
-					return err
-				}
-
-				params.Scope = c
+				params.Scope.SetTo(paramsDotScopeVal)
 				return nil
 			}); err != nil {
 				return err
 			}
 			if err := func() error {
-				if err := (validate.String{
-					MinLength:     0,
-					MinLengthSet:  false,
-					MaxLength:     1024,
-					MaxLengthSet:  true,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(params.Scope)); err != nil {
-					return errors.Wrap(err, "string")
+				if value, ok := params.Scope.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     0,
+							MinLengthSet:  false,
+							MaxLength:     1024,
+							MaxLengthSet:  true,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
 				}
 				return nil
 			}(); err != nil {
 				return err
 			}
-		} else {
-			return err
 		}
 		return nil
 	}(); err != nil {

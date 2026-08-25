@@ -7544,6 +7544,11 @@ paths:
         clients, must use `S256`, and is bound to the issued authorization code —
         the token endpoint rejects the exchange unless the matching
         `code_verifier` is presented.
+
+
+        A request pushed to `/oauth2/par` is replayed here by passing its
+        `request_uri` together with `client_id`; the pushed parameters are used
+        and everything else in the query string is ignored (RFC 9126 §4).
       security: []
       parameters:
       - name: client_id
@@ -7554,25 +7559,33 @@ paths:
           maxLength: 256
       - name: response_type
         in: query
-        required: true
+        required: false
         description: >-
-          Only `code` is supported. Any other value is answered per RFC 6749
-          §4.1.2.1 — a redirect back to the client's registered redirect_uri
-          carrying `error=unsupported_response_type` and the original `state` —
-          so the value is accepted here as a free string rather than rejected by
-          schema validation before the client has been resolved.
+          Only `code` is supported. Required unless the request was pushed
+          (`request_uri`), in which case the pushed value is used and this one is
+          ignored. Any other value is answered per RFC 6749 §4.1.2.1 — a redirect
+          back to the client's registered redirect_uri carrying
+          `error=unsupported_response_type` and the original `state` — so the
+          value is accepted here as a free string rather than rejected by schema
+          validation before the client has been resolved.
         schema:
           type: string
           maxLength: 256
       - name: redirect_uri
         in: query
-        required: true
+        required: false
+        description: >-
+          Required unless the request was pushed (`request_uri`). May be omitted
+          by a client that registered exactly one redirect_uri.
         schema:
           type: string
           maxLength: 2048
       - name: scope
         in: query
-        required: true
+        required: false
+        description: >-
+          Required unless the request was pushed (`request_uri`), in which case
+          the pushed value is used and this one is ignored.
         schema:
           type: string
           maxLength: 1024
@@ -7623,6 +7636,11 @@ paths:
       - name: request_uri
         in: query
         required: false
+        description: >-
+          The `request_uri` returned by `/oauth2/par` (RFC 9126). When present it
+          supplies the whole authorization request: every other query parameter
+          except `client_id` is ignored, and the pushed request is single-use —
+          replaying a consumed or expired `request_uri` is `invalid_request_uri`.
         schema:
           type: string
           maxLength: 2048
@@ -7876,6 +7894,15 @@ paths:
       tags:
       - OIDC Provider
       summary: Pushed Authorization Request.
+      description: >-
+        Lodges an authorization request with the server and returns a single-use
+        `request_uri` to pass to `/oauth2/authorize` (RFC 9126). The request is
+        validated exactly as the authorization endpoint would validate it — the
+        client, the `redirect_uri`, `response_type`, `scope` and PKCE — so a
+        request that could never be authorized is refused at push time rather
+        than after the user has been sent to a login screen. The `client_id` must
+        be the authenticated client's own. A pushed request expires in 90 seconds
+        and can be redeemed once.
       requestBody:
         required: true
         content:

@@ -55,6 +55,37 @@ original `state`.
 A client can be switched off with `disabled: true` instead of being deleted;
 the authorization endpoint then treats it exactly like an unknown `client_id`.
 
+### Pushed authorization requests (PAR)
+
+A client can lodge its authorization request over the authenticated back channel
+instead of putting it in the browser's query string:
+
+```bash
+# 1. push — client-authenticated, returns a single-use request_uri
+curl -sX POST https://auth.example.com/oauth2/par \
+  -u "$CLIENT_ID:$CLIENT_SECRET" \
+  -d response_type=code -d client_id="$CLIENT_ID" \
+  -d redirect_uri=https://app.example.com/cb -d scope=openid \
+  -d code_challenge="$CHALLENGE" -d code_challenge_method=S256
+
+# 2. redeem — only client_id and request_uri go through the user-agent
+https://auth.example.com/oauth2/authorize?client_id=$CLIENT_ID&request_uri=urn:ietf:params:oauth:request_uri:…
+```
+
+The pushed request is validated **at push time**, exactly as the authorization
+endpoint would validate it — client, `redirect_uri`, `response_type`, `scope`,
+PKCE — so a request that could never be authorized is refused immediately rather
+than after the user has been walked through a login screen. The `client_id` in
+the body must be the authenticated client's own.
+
+Redemption is single-use and bound to the client that pushed it; a replayed,
+expired or foreign `request_uri` is `invalid_request_uri`. When `request_uri` is
+present every other query parameter except `client_id` is ignored (RFC 9126 §4),
+so nothing in the browser's URL can override what the client lodged.
+
+Request objects (`request`, RFC 9101) are not supported and are refused rather
+than silently ignored.
+
 ### PKCE
 
 PKCE (RFC 7636) is enforced, and `S256` is the only method — `plain` is not

@@ -8430,6 +8430,9 @@ func (s *Server) handleGetMgmtV1ProjectsByProjectIdFeaturesRequest(args [1]strin
 // PKCE (RFC 7636) is enforced: `code_challenge` is required for public clients, must use `S256`, and
 // is bound to the issued authorization code — the token endpoint rejects the exchange unless the
 // matching `code_verifier` is presented.
+// A request pushed to `/oauth2/par` is replayed here by passing its `request_uri` together with
+// `client_id`; the pushed parameters are used and everything else in the query string is ignored
+// (RFC 9126 §4).
 //
 // GET /oauth2/authorize
 func (s *Server) handleGetOauth2AuthorizeRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -32860,7 +32863,12 @@ func (s *Server) handlePostOauth2IntrospectRequest(args [0]string, argsEscaped b
 
 // handlePostOauth2ParRequest handles postOauth2Par operation.
 //
-// Pushed Authorization Request.
+// Lodges an authorization request with the server and returns a single-use `request_uri` to pass to
+// `/oauth2/authorize` (RFC 9126). The request is validated exactly as the authorization endpoint
+// would validate it — the client, the `redirect_uri`, `response_type`, `scope` and PKCE — so a
+// request that could never be authorized is refused at push time rather than after the user has been
+// sent to a login screen. The `client_id` must be the authenticated client's own. A pushed request
+// expires in 90 seconds and can be redeemed once.
 //
 // POST /oauth2/par
 func (s *Server) handlePostOauth2ParRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

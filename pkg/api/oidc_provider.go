@@ -108,9 +108,9 @@ func (s *OIDCProviderService) GetOauth2Authorize(ctx context.Context, params oas
 	// Public front-channel operation: the client is identified by client_id.
 	redirectTo, err := s.deps.Grants.Authorize(ctx, domain.OIDCAuthorizeCmd{
 		ClientID:            params.ClientID,
-		ResponseType:        params.ResponseType,
-		RedirectURI:         params.RedirectURI,
-		Scope:               params.Scope,
+		ResponseType:        params.ResponseType.Or(""),
+		RedirectURI:         params.RedirectURI.Or(""),
+		Scope:               params.Scope.Or(""),
 		State:               params.State.Or(""),
 		CodeChallenge:       params.CodeChallenge.Or(""),
 		CodeChallengeMethod: params.CodeChallengeMethod.Or(""),
@@ -273,10 +273,22 @@ func (s *OIDCProviderService) PostOauth2Introspect(ctx context.Context, req *oas
 }
 
 func (s *OIDCProviderService) PostOauth2Par(ctx context.Context, req *oas.PushedAuthorizationRequest) (r *oas.PostOauth2ParCreated, _ error) {
-	// Client-authenticated pushed authorization request (RFC 9126).
+	// Client-authenticated pushed authorization request (RFC 9126). A client may
+	// only push a request for itself: the client_id in the body must be the one
+	// that authenticated, or a client could lodge a request under another's
+	// identity and have it honored at the authorization endpoint.
+	p, err := requirePrincipal(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if p.ClientID != "" && req.ClientID != p.ClientID {
+		return nil, domain.ErrInvalidClient.WithMessage("client_id does not match the authenticated client")
+	}
+
 	parRedirect := req.RedirectURI.Or(url.URL{})
 
-	res, err := s.deps.Grants.PushAuthorizationRequest(ctx, domain.OIDCParCmd{
+	res, perr := s.deps.Grants.PushAuthorizationRequest(ctx, domain.OIDCParCmd{
 		ResponseType:        req.ResponseType,
 		ClientID:            req.ClientID,
 		RedirectURI:         parRedirect.String(),
@@ -292,8 +304,8 @@ func (s *OIDCProviderService) PostOauth2Par(ctx context.Context, req *oas.Pushed
 		ClientAssertionType: req.ClientAssertionType.Or(""),
 		ClientAssertion:     req.ClientAssertion.Or(""),
 	})
-	if err != nil {
-		return nil, err
+	if perr != nil {
+		return nil, perr
 	}
 
 	return &oas.PostOauth2ParCreated{
