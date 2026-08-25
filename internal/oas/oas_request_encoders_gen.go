@@ -2589,6 +2589,34 @@ func encodePostV1UsersMeConsentsRequest(
 	return nil
 }
 
+func encodePutV1ProjectsByProjectIdAdminClientsRequest(
+	req *AppClientDesiredState,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodePutV1ProjectsByProjectIdAdminConfigRequest(
+	req *ProjectConfig,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodePutV1ProjectsByProjectIdAdminConsentsRequest(
 	req *ConsentConfig,
 	r *http.Request,

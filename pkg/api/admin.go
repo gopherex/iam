@@ -51,6 +51,9 @@ type AdminApps interface {
 	Delete(ctx context.Context, projectID, environment, appID string) error
 	AddSecret(ctx context.Context, projectID, environment, appID, name string) (*domain.AdminSecret, error)
 	DeleteSecret(ctx context.Context, projectID, environment, appID, secretID string) error
+	// Apply reconciles the environment's clients against a desired-state list in
+	// one transaction, optionally pruning clients the list omits.
+	Apply(ctx context.Context, cmd domain.AdminAppsApplyCmd) (*domain.AdminAppsApplyResult, error)
 }
 
 // AdminServiceAccounts is the machine-identity slice exposed to project admins.
@@ -91,6 +94,12 @@ type AdminConnections interface {
 // document is carried opaquely as a domain.AdminConfigDoc the adapter validates
 // and persists.
 type AdminConfig interface {
+	// GetConfigBundle reads every configuration document at once; ApplyConfig
+	// writes a whole bundle atomically. Together they are the desired-state
+	// (plan/apply) surface over the per-document endpoints below.
+	GetConfigBundle(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigBundle, error)
+	ApplyConfig(ctx context.Context, cmd domain.AdminConfigApplyCmd) (*domain.AdminConfigApplyResult, error)
+
 	GetAuthConfig(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
 	UpdateAuthConfig(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
 	GetPasswordPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
@@ -2979,6 +2988,218 @@ func webhookUpdateCmd(projectID, environment, id string, req *oas.PatchV1Project
 	}
 
 	return cmd, nil
+}
+
+// ----- desired-state (IaC) apply -----
+
+// oasProjectConfigToBundle converts the wire bundle into per-document config
+// docs. Only the documents the caller actually sent end up in the bundle; the
+// adapter leaves the rest untouched.
+func oasProjectConfigToBundle(req *oas.ProjectConfig) domain.AdminConfigBundle {
+	out := domain.AdminConfigBundle{}
+
+	if v, ok := req.Auth.Get(); ok {
+		out[domain.ConfigDocAuth] = oasEncodeConfig(&v)
+	}
+
+	if v, ok := req.PasswordPolicy.Get(); ok {
+		out[domain.ConfigDocPasswordPolicy] = oasEncodeConfig(&v)
+	}
+
+	if v, ok := req.SessionPolicy.Get(); ok {
+		out[domain.ConfigDocSessionPolicy] = oasEncodeConfig(&v)
+	}
+
+	if v, ok := req.MfaPolicy.Get(); ok {
+		out[domain.ConfigDocMFAPolicy] = oasEncodeConfig(&v)
+	}
+
+	if v, ok := req.RateLimits.Get(); ok {
+		out[domain.ConfigDocRateLimits] = oasEncodeConfig(&v)
+	}
+
+	return out
+}
+
+// oasProjectConfig renders a config bundle back onto the wire type. An unset
+// document decodes into its zero value, so the response always carries every
+// document key.
+func oasProjectConfig(bundle domain.AdminConfigBundle) (oas.ProjectConfig, error) {
+	var out oas.ProjectConfig
+
+	var authCfg oas.AuthConfig
+	if err := oasDecodeConfig(bundle[domain.ConfigDocAuth], &authCfg); err != nil {
+		return out, err
+	}
+
+	out.Auth = oas.NewOptAuthConfig(authCfg)
+
+	var passwordPolicy oas.PasswordPolicy
+	if err := oasDecodeConfig(bundle[domain.ConfigDocPasswordPolicy], &passwordPolicy); err != nil {
+		return out, err
+	}
+
+	out.PasswordPolicy = oas.NewOptPasswordPolicy(passwordPolicy)
+
+	var sessionPolicy oas.SessionPolicy
+	if err := oasDecodeConfig(bundle[domain.ConfigDocSessionPolicy], &sessionPolicy); err != nil {
+		return out, err
+	}
+
+	out.SessionPolicy = oas.NewOptSessionPolicy(sessionPolicy)
+
+	var mfaPolicy oas.MfaPolicy
+	if err := oasDecodeConfig(bundle[domain.ConfigDocMFAPolicy], &mfaPolicy); err != nil {
+		return out, err
+	}
+
+	out.MfaPolicy = oas.NewOptMfaPolicy(mfaPolicy)
+
+	var rateLimits oas.RateLimits
+	if err := oasDecodeConfig(bundle[domain.ConfigDocRateLimits], &rateLimits); err != nil {
+		return out, err
+	}
+
+	out.RateLimits = oas.NewOptRateLimits(rateLimits)
+
+	return out, nil
+}
+
+// oasConfigApplyResult renders a bulk-config change set onto the wire type.
+func oasConfigApplyResult(res *domain.AdminConfigApplyResult) (*oas.ConfigApplyResult, error) {
+	cfg, err := oasProjectConfig(res.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	out := &oas.ConfigApplyResult{
+		DryRun:  oas.NewOptBool(res.DryRun),
+		Config:  oas.NewOptProjectConfig(cfg),
+		Changes: make([]oas.ConfigDocumentChange, 0, len(res.Changes)),
+	}
+
+	for _, c := range res.Changes {
+		change := oas.ConfigDocumentChange{
+			Document: oas.NewOptConfigDocumentChangeDocument(oas.ConfigDocumentChangeDocument(c.Document)),
+			Action:   oas.NewOptConfigDocumentChangeAction(oas.ConfigDocumentChangeAction(c.Action)),
+			After:    oas.NewOptConfigDocumentChangeAfter(oas.ConfigDocumentChangeAfter(c.After)),
+		}
+		if c.Before == nil {
+			change.Before.SetToNull()
+		} else {
+			change.Before = oas.NewOptNilConfigDocumentChangeBefore(oas.ConfigDocumentChangeBefore(c.Before))
+		}
+
+		out.Changes = append(out.Changes, change)
+	}
+
+	return out, nil
+}
+
+// oasAppClientsApplyResult renders a desired-state client change set onto the
+// wire type.
+func oasAppClientsApplyResult(res *domain.AdminAppsApplyResult) *oas.AppClientApplyResult {
+	out := &oas.AppClientApplyResult{
+		DryRun:  oas.NewOptBool(res.DryRun),
+		Prune:   oas.NewOptBool(res.Prune),
+		Changes: make([]oas.AppClientChange, 0, len(res.Changes)),
+	}
+
+	for _, c := range res.Changes {
+		change := oas.AppClientChange{
+			ID:     oas.NewOptString(c.ID),
+			Action: oas.NewOptAppClientChangeAction(oas.AppClientChangeAction(c.Action)),
+		}
+		if c.Before == nil {
+			change.Before.SetToNull()
+		} else {
+			change.Before = oas.NewOptNilAppClient(oasAppClient(c.Before))
+		}
+
+		if c.After == nil {
+			change.After.SetToNull()
+		} else {
+			change.After = oas.NewOptNilAppClient(oasAppClient(c.After))
+		}
+
+		out.Changes = append(out.Changes, change)
+	}
+
+	return out
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminConfig(
+	ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigParams,
+) (*oas.ProjectConfig, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	bundle, err := s.deps.Config.GetConfigBundle(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := oasProjectConfig(bundle)
+	if err != nil {
+		return nil, err
+	}
+
+	return &out, nil
+}
+
+func (s *AdminService) PutV1ProjectsByProjectIdAdminConfig(
+	ctx context.Context, req *oas.ProjectConfig, params oas.PutV1ProjectsByProjectIdAdminConfigParams,
+) (*oas.ConfigApplyResult, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	res, err := s.deps.Config.ApplyConfig(ctx, domain.AdminConfigApplyCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Docs:        oasProjectConfigToBundle(req),
+		DryRun:      params.DryRun.Or(false),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return oasConfigApplyResult(res)
+}
+
+func (s *AdminService) PutV1ProjectsByProjectIdAdminClients(
+	ctx context.Context, req *oas.AppClientDesiredState, params oas.PutV1ProjectsByProjectIdAdminClientsParams,
+) (*oas.AppClientApplyResult, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	clients := make([]domain.AdminAppClientDesired, 0, len(req.Clients))
+	for i := range req.Clients {
+		c := &req.Clients[i]
+		clients = append(clients, domain.AdminAppClientDesired{
+			ID:             c.ID.Or(""),
+			Name:           c.Name.Or(""),
+			Type:           string(c.Type.Or("")),
+			RedirectURIs:   c.RedirectUris,
+			AllowedOrigins: c.AllowedOrigins,
+			Disabled:       c.Disabled.Or(false),
+		})
+	}
+
+	res, err := s.deps.Apps.Apply(ctx, domain.AdminAppsApplyCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Clients:     clients,
+		Prune:       params.Prune.Or(false),
+		DryRun:      params.DryRun.Or(false),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return oasAppClientsApplyResult(res), nil
 }
 
 // oasAppClient maps a domain AppClient onto the generated oas.AppClient.

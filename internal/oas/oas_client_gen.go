@@ -345,6 +345,13 @@ type AdminInvoker interface {
 	//
 	// GET /v1/projects/{project_id}/admin/audit-logs/{audit_id}
 	GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams, options ...RequestOption) (*GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK, error)
+	// GetV1ProjectsByProjectIdAdminConfig invokes getV1ProjectsByProjectIdAdminConfig operation.
+	//
+	// The whole project configuration in one object, keyed by document name. Feed it straight back to
+	// PUT to apply a desired state; an unset document comes back as an empty object.
+	//
+	// GET /v1/projects/{project_id}/admin/config
+	GetV1ProjectsByProjectIdAdminConfig(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigParams, options ...RequestOption) (*ProjectConfig, error)
 	// GetV1ProjectsByProjectIdAdminConfigAuth invokes getV1ProjectsByProjectIdAdminConfigAuth operation.
 	//
 	// Get auth config.
@@ -885,6 +892,26 @@ type AdminInvoker interface {
 	//
 	// POST /v1/test/seed
 	PostV1TestSeed(ctx context.Context, request PostV1TestSeedReq, params PostV1TestSeedParams, options ...RequestOption) (*Ok, error)
+	// PutV1ProjectsByProjectIdAdminClients invokes putV1ProjectsByProjectIdAdminClients operation.
+	//
+	// Reconciles the project environment's app clients against the list in the body, in a single
+	// transaction. Clients are matched by `id`: a known id is updated in place, an unknown or absent id
+	// is created. With `prune=true` clients that exist on the server but are absent from the list are
+	// deleted; by default they are left alone. With `dry_run=true` nothing is written and the response
+	// is the change set the request would produce. The per-client CRUD under `admin/apps` remains
+	// available and operates on the same clients.
+	//
+	// PUT /v1/projects/{project_id}/admin/clients
+	PutV1ProjectsByProjectIdAdminClients(ctx context.Context, request *AppClientDesiredState, params PutV1ProjectsByProjectIdAdminClientsParams, options ...RequestOption) (*AppClientApplyResult, error)
+	// PutV1ProjectsByProjectIdAdminConfig invokes putV1ProjectsByProjectIdAdminConfig operation.
+	//
+	// Applies the documents present in the body in a single transaction: each one goes through the same
+	// strict validation as its own PATCH endpoint (unknown keys are rejected), and either all of them
+	// land or none do. Documents omitted from the body are left untouched. With `dry_run=true` nothing
+	// is written and the response is the change set the request would produce.
+	//
+	// PUT /v1/projects/{project_id}/admin/config
+	PutV1ProjectsByProjectIdAdminConfig(ctx context.Context, request *ProjectConfig, params PutV1ProjectsByProjectIdAdminConfigParams, options ...RequestOption) (*ConfigApplyResult, error)
 	// PutV1ProjectsByProjectIdAdminConsents invokes putV1ProjectsByProjectIdAdminConsents operation.
 	//
 	// Set required consents.
@@ -14399,6 +14426,176 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context
 
 	stage = "DecodeResponse"
 	result, err := decodeGetV1ProjectsByProjectIdAdminAuditLogsByAuditIdResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetV1ProjectsByProjectIdAdminConfig invokes getV1ProjectsByProjectIdAdminConfig operation.
+//
+// The whole project configuration in one object, keyed by document name. Feed it straight back to
+// PUT to apply a desired state; an unset document comes back as an empty object.
+//
+// GET /v1/projects/{project_id}/admin/config
+func (c *Client) GetV1ProjectsByProjectIdAdminConfig(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigParams, options ...RequestOption) (*ProjectConfig, error) {
+	res, err := c.sendGetV1ProjectsByProjectIdAdminConfig(ctx, params, options...)
+	return res, err
+}
+
+func (c *Client) sendGetV1ProjectsByProjectIdAdminConfig(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigParams, requestOptions ...RequestOption) (res *ProjectConfig, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getV1ProjectsByProjectIdAdminConfig"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/projects/{project_id}/admin/config"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetV1ProjectsByProjectIdAdminConfigOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [3]string
+	pathParts[0] = "/v1/projects/"
+	{
+		// Encode "project_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ProjectID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/admin/config"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:AdminToken"
+			switch err := c.securityAdminToken(ctx, GetV1ProjectsByProjectIdAdminConfigOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"AdminToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodeGetV1ProjectsByProjectIdAdminConfigResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -50254,6 +50451,463 @@ func (c *Client) sendPostV1UsersMeExport(ctx context.Context, requestOptions ...
 
 	stage = "DecodeResponse"
 	result, err := decodePostV1UsersMeExportResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PutV1ProjectsByProjectIdAdminClients invokes putV1ProjectsByProjectIdAdminClients operation.
+//
+// Reconciles the project environment's app clients against the list in the body, in a single
+// transaction. Clients are matched by `id`: a known id is updated in place, an unknown or absent id
+// is created. With `prune=true` clients that exist on the server but are absent from the list are
+// deleted; by default they are left alone. With `dry_run=true` nothing is written and the response
+// is the change set the request would produce. The per-client CRUD under `admin/apps` remains
+// available and operates on the same clients.
+//
+// PUT /v1/projects/{project_id}/admin/clients
+func (c *Client) PutV1ProjectsByProjectIdAdminClients(ctx context.Context, request *AppClientDesiredState, params PutV1ProjectsByProjectIdAdminClientsParams, options ...RequestOption) (*AppClientApplyResult, error) {
+	res, err := c.sendPutV1ProjectsByProjectIdAdminClients(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPutV1ProjectsByProjectIdAdminClients(ctx context.Context, request *AppClientDesiredState, params PutV1ProjectsByProjectIdAdminClientsParams, requestOptions ...RequestOption) (res *AppClientApplyResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("putV1ProjectsByProjectIdAdminClients"),
+		semconv.HTTPRequestMethodKey.String("PUT"),
+		semconv.URLTemplateKey.String("/v1/projects/{project_id}/admin/clients"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PutV1ProjectsByProjectIdAdminClientsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [3]string
+	pathParts[0] = "/v1/projects/"
+	{
+		// Encode "project_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ProjectID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/admin/clients"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "dry_run" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "dry_run",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.DryRun.Get(); ok {
+				return e.EncodeValue(conv.BoolToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "prune" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "prune",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Prune.Get(); ok {
+				return e.EncodeValue(conv.BoolToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "PUT", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePutV1ProjectsByProjectIdAdminClientsRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Idempotency-Key",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IdempotencyKey.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:AdminToken"
+			switch err := c.securityAdminToken(ctx, PutV1ProjectsByProjectIdAdminClientsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"AdminToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePutV1ProjectsByProjectIdAdminClientsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PutV1ProjectsByProjectIdAdminConfig invokes putV1ProjectsByProjectIdAdminConfig operation.
+//
+// Applies the documents present in the body in a single transaction: each one goes through the same
+// strict validation as its own PATCH endpoint (unknown keys are rejected), and either all of them
+// land or none do. Documents omitted from the body are left untouched. With `dry_run=true` nothing
+// is written and the response is the change set the request would produce.
+//
+// PUT /v1/projects/{project_id}/admin/config
+func (c *Client) PutV1ProjectsByProjectIdAdminConfig(ctx context.Context, request *ProjectConfig, params PutV1ProjectsByProjectIdAdminConfigParams, options ...RequestOption) (*ConfigApplyResult, error) {
+	res, err := c.sendPutV1ProjectsByProjectIdAdminConfig(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPutV1ProjectsByProjectIdAdminConfig(ctx context.Context, request *ProjectConfig, params PutV1ProjectsByProjectIdAdminConfigParams, requestOptions ...RequestOption) (res *ConfigApplyResult, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("putV1ProjectsByProjectIdAdminConfig"),
+		semconv.HTTPRequestMethodKey.String("PUT"),
+		semconv.URLTemplateKey.String("/v1/projects/{project_id}/admin/config"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PutV1ProjectsByProjectIdAdminConfigOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [3]string
+	pathParts[0] = "/v1/projects/"
+	{
+		// Encode "project_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ProjectID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/admin/config"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "dry_run" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "dry_run",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.DryRun.Get(); ok {
+				return e.EncodeValue(conv.BoolToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "PUT", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePutV1ProjectsByProjectIdAdminConfigRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Idempotency-Key",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IdempotencyKey.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:AdminToken"
+			switch err := c.securityAdminToken(ctx, PutV1ProjectsByProjectIdAdminConfigOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"AdminToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePutV1ProjectsByProjectIdAdminConfigResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

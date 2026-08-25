@@ -270,6 +270,13 @@ type AdminHandler interface {
 	//
 	// GET /v1/projects/{project_id}/admin/audit-logs/{audit_id}
 	GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams) (*GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK, error)
+	// GetV1ProjectsByProjectIdAdminConfig implements getV1ProjectsByProjectIdAdminConfig operation.
+	//
+	// The whole project configuration in one object, keyed by document name. Feed it straight back to
+	// PUT to apply a desired state; an unset document comes back as an empty object.
+	//
+	// GET /v1/projects/{project_id}/admin/config
+	GetV1ProjectsByProjectIdAdminConfig(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigParams) (*ProjectConfig, error)
 	// GetV1ProjectsByProjectIdAdminConfigAuth implements getV1ProjectsByProjectIdAdminConfigAuth operation.
 	//
 	// Get auth config.
@@ -810,6 +817,26 @@ type AdminHandler interface {
 	//
 	// POST /v1/test/seed
 	PostV1TestSeed(ctx context.Context, req PostV1TestSeedReq, params PostV1TestSeedParams) (*Ok, error)
+	// PutV1ProjectsByProjectIdAdminClients implements putV1ProjectsByProjectIdAdminClients operation.
+	//
+	// Reconciles the project environment's app clients against the list in the body, in a single
+	// transaction. Clients are matched by `id`: a known id is updated in place, an unknown or absent id
+	// is created. With `prune=true` clients that exist on the server but are absent from the list are
+	// deleted; by default they are left alone. With `dry_run=true` nothing is written and the response
+	// is the change set the request would produce. The per-client CRUD under `admin/apps` remains
+	// available and operates on the same clients.
+	//
+	// PUT /v1/projects/{project_id}/admin/clients
+	PutV1ProjectsByProjectIdAdminClients(ctx context.Context, req *AppClientDesiredState, params PutV1ProjectsByProjectIdAdminClientsParams) (*AppClientApplyResult, error)
+	// PutV1ProjectsByProjectIdAdminConfig implements putV1ProjectsByProjectIdAdminConfig operation.
+	//
+	// Applies the documents present in the body in a single transaction: each one goes through the same
+	// strict validation as its own PATCH endpoint (unknown keys are rejected), and either all of them
+	// land or none do. Documents omitted from the body are left untouched. With `dry_run=true` nothing
+	// is written and the response is the change set the request would produce.
+	//
+	// PUT /v1/projects/{project_id}/admin/config
+	PutV1ProjectsByProjectIdAdminConfig(ctx context.Context, req *ProjectConfig, params PutV1ProjectsByProjectIdAdminConfigParams) (*ConfigApplyResult, error)
 	// PutV1ProjectsByProjectIdAdminConsents implements putV1ProjectsByProjectIdAdminConsents operation.
 	//
 	// Set required consents.

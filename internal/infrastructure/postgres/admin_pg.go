@@ -32,6 +32,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"text/template"
 	"time"
 
@@ -1172,41 +1173,260 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 
 func (a *pgAdminApps) Delete(ctx context.Context, projectID, environment, appID string) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
-		row, _, err := a.findApp(ctx, projectID, environment, appID)
-		if err != nil {
+		return a.deleteApp(ctx, projectID, environment, appID)
+	})
+}
+
+// deleteApp removes an app client and cascades its secrets. It assumes an
+// ambient transaction so a desired-state apply can delete several clients
+// atomically.
+func (a *pgAdminApps) deleteApp(ctx context.Context, projectID, environment, appID string) error {
+	row, _, err := a.findApp(ctx, projectID, environment, appID)
+	if err != nil {
+		return err
+	}
+	// Cascade the app's secrets first.
+	secrets, err := models.IamAppSecrets.Query(
+		sm.Where(models.IamAppSecrets.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamAppSecrets.Columns.AppID.EQ(psql.Arg(appID))),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return fmt.Errorf("list app secrets: %w", err)
+	}
+
+	for _, s := range secrets {
+		if err := s.Delete(ctx, a.db.Bobx()); err != nil {
 			return err
 		}
-		// Cascade the app's secrets first.
-		secrets, err := models.IamAppSecrets.Query(
-			sm.Where(models.IamAppSecrets.Columns.ProjectID.EQ(psql.Arg(projectID))),
-			sm.Where(models.IamAppSecrets.Columns.AppID.EQ(psql.Arg(appID))),
-		).All(ctx, a.db.Bobx())
-		if err != nil {
+	}
+
+	if err := row.Delete(ctx, a.db.Bobx()); err != nil {
+		return err
+	}
+
+	return a.emitter.Emit(ctx, domain.Event{
+		Type:        "app_client.deleted",
+		ProjectID:   projectID,
+		Environment: "",
+		AggregateID: appID,
+		Payload:     map[string]any{"id": appID, "project_id": projectID},
+	})
+}
+
+// desiredToAppClient renders one desired-state entry into the stored shape,
+// with the tenant fields filled in from the request.
+func desiredToAppClient(
+	projectID, environment string, desired domain.AdminAppClientDesired, id string,
+) domain.AppClient {
+	return domain.AppClient{
+		ID:             id,
+		ProjectID:      projectID,
+		Environment:    environment,
+		Name:           desired.Name,
+		Type:           desired.Type,
+		RedirectURIs:   desired.RedirectURIs,
+		AllowedOrigins: domain.NormalizeOrigins(desired.AllowedOrigins),
+		Disabled:       desired.Disabled,
+	}
+}
+
+// appClientsEqual compares two clients by their stored representation, so an
+// apply that changes nothing is reported as unchanged rather than as a write.
+func appClientsEqual(a, b *domain.AppClient) (bool, error) {
+	rawA, err := marshal(a)
+	if err != nil {
+		return false, err
+	}
+
+	rawB, err := marshal(b)
+	if err != nil {
+		return false, err
+	}
+
+	return bytes.Equal(rawA, rawB), nil
+}
+
+// upsertApp writes one app client, inserting when the row does not exist yet.
+// It assumes an ambient transaction.
+func (a *pgAdminApps) upsertApp(ctx context.Context, app *domain.AppClient, create bool) error {
+	raw, err := marshal(app)
+	if err != nil {
+		return err
+	}
+
+	data := json.RawMessage(raw)
+
+	if create {
+		if _, err := models.IamAppClients.Insert(&models.IamAppClientSetter{
+			ID:          &app.ID,
+			ProjectID:   &app.ProjectID,
+			Environment: ptr(app.Environment),
+			Name:        ptr(app.Name),
+			Type:        ptr(app.Type),
+			Data:        &data,
+		}).One(ctx, a.db.Bobx()); err != nil {
+			if isUniqueViolation(err) {
+				return domain.ErrConflict
+			}
+
 			return err
 		}
 
-		for _, s := range secrets {
-			if err := s.Delete(ctx, a.db.Bobx()); err != nil {
-				return err
+		return a.emitter.Emit(ctx, domain.Event{
+			Type:        "app_client.created",
+			ProjectID:   app.ProjectID,
+			Environment: app.Environment,
+			AggregateID: app.ID,
+			Payload:     app,
+		})
+	}
+
+	row, _, err := a.findApp(ctx, app.ProjectID, app.Environment, app.ID)
+	if err != nil {
+		return err
+	}
+
+	if err := row.Update(ctx, a.db.Bobx(), &models.IamAppClientSetter{
+		Name:      ptr(app.Name),
+		Type:      ptr(app.Type),
+		Data:      &data,
+		UpdatedAt: ptr(nowUTC()),
+	}); err != nil {
+		return err
+	}
+
+	return a.emitter.Emit(ctx, domain.Event{
+		Type:        "app_client.updated",
+		ProjectID:   app.ProjectID,
+		Environment: app.Environment,
+		AggregateID: app.ID,
+		Payload:     app,
+	})
+}
+
+// applyAppClient reconciles one desired client against the stored one (before,
+// nil when it does not exist yet), records the outcome on result and returns the
+// id the entry resolved to. Assumes an ambient transaction unless the apply is a
+// dry run.
+func (a *pgAdminApps) applyAppClient(
+	ctx context.Context,
+	cmd domain.AdminAppsApplyCmd,
+	env string,
+	desired domain.AdminAppClientDesired,
+	before *domain.AppClient,
+	result *domain.AdminAppsApplyResult,
+) (string, error) {
+	id := desired.ID
+	if id == "" {
+		id = newUUID()
+	}
+
+	after := desiredToAppClient(cmd.ProjectID, env, desired, id)
+
+	if before == nil {
+		result.Changes = append(result.Changes, domain.AdminAppClientChange{
+			ID: id, Action: domain.ApplyActionCreate, After: &after,
+		})
+
+		if cmd.DryRun {
+			return id, nil
+		}
+
+		return id, a.upsertApp(ctx, &after, true)
+	}
+
+	same, err := appClientsEqual(before, &after)
+	if err != nil {
+		return "", err
+	}
+
+	if same {
+		result.Changes = append(result.Changes, domain.AdminAppClientChange{
+			ID: id, Action: domain.ApplyActionUnchanged, Before: before, After: &after,
+		})
+
+		return id, nil
+	}
+
+	result.Changes = append(result.Changes, domain.AdminAppClientChange{
+		ID: id, Action: domain.ApplyActionUpdate, Before: before, After: &after,
+	})
+
+	if cmd.DryRun {
+		return id, nil
+	}
+
+	return id, a.upsertApp(ctx, &after, false)
+}
+
+// Apply reconciles the project environment's app clients against a desired-state
+// list, in one transaction.
+//
+// Matching is by id. An entry whose id already exists is replaced wholesale (a
+// desired state describes the client completely, unlike PATCH); an entry with an
+// unknown or empty id is created, honoring a caller-supplied id so an external
+// applicator can name its clients deterministically. Clients absent from the
+// list are deleted only when Prune is set, so a partial list cannot destroy what
+// it does not know about. Under DryRun the same comparison runs and nothing is
+// written.
+func (a *pgAdminApps) Apply(
+	ctx context.Context, cmd domain.AdminAppsApplyCmd,
+) (*domain.AdminAppsApplyResult, error) {
+	env := adminEnv(cmd.Environment)
+
+	apply := func(ctx context.Context) (*domain.AdminAppsApplyResult, error) {
+		current, err := a.List(ctx, cmd.ProjectID, env)
+		if err != nil {
+			return nil, err
+		}
+
+		byID := make(map[string]*domain.AppClient, len(current))
+		for i := range current {
+			byID[current[i].ID] = &current[i]
+		}
+
+		result := &domain.AdminAppsApplyResult{DryRun: cmd.DryRun, Prune: cmd.Prune}
+		seen := make(map[string]struct{}, len(cmd.Clients))
+
+		for i := range cmd.Clients {
+			id, err := a.applyAppClient(ctx, cmd, env, cmd.Clients[i], byID[cmd.Clients[i].ID], result)
+			if err != nil {
+				return nil, err
+			}
+
+			seen[id] = struct{}{}
+		}
+
+		if !cmd.Prune {
+			return result, nil
+		}
+
+		for i := range current {
+			if _, kept := seen[current[i].ID]; kept {
+				continue
+			}
+
+			gone := current[i]
+			result.Changes = append(result.Changes, domain.AdminAppClientChange{
+				ID: gone.ID, Action: domain.ApplyActionDelete, Before: &gone,
+			})
+
+			if !cmd.DryRun {
+				if err := a.deleteApp(ctx, cmd.ProjectID, env, gone.ID); err != nil {
+					return nil, err
+				}
 			}
 		}
 
-		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
-			return err
-		}
+		return result, nil
+	}
 
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "app_client.deleted",
-			ProjectID:   projectID,
-			Environment: "",
-			AggregateID: appID,
-			Payload:     map[string]any{"id": appID, "project_id": projectID},
-		}); err != nil {
-			return err
-		}
+	if cmd.DryRun {
+		// Nothing is written, so the reads need no transaction of their own.
+		return apply(ctx)
+	}
 
-		return nil
-	})
+	return withTxRet(ctx, a.db, apply)
 }
 
 func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, environment, appID, name string) (*domain.AdminSecret, error) {
@@ -1294,6 +1514,9 @@ func (a *pgAdminApps) DeleteSecret(ctx context.Context, projectID, environment, 
 // AdminConfig — iam_config + iam_providers + iam_email_templates
 // =====================================================================
 
+// eventFieldEnvironment is the environment key inside emitted event payloads.
+const eventFieldEnvironment = "environment"
+
 type pgAdminConfig struct {
 	db      *DB
 	emitter Emitter
@@ -1357,175 +1580,285 @@ func configDocToRawJSON(doc domain.AdminConfigDoc) ([]byte, error) {
 	return json.Marshal(rawDoc)
 }
 
-// putConfigDoc upserts one iam_config(project, env, key) envelope from a doc.
-func (a *pgAdminConfig) putConfigDoc(ctx context.Context, projectID, env, key string, doc domain.AdminConfigDoc) (domain.AdminConfigDoc, error) {
+// putConfigDoc upserts one iam_config(project, env, key) envelope from a doc,
+// in its own transaction.
+func (a *pgAdminConfig) putConfigDoc(
+	ctx context.Context, projectID, env, key string, doc domain.AdminConfigDoc,
+) (domain.AdminConfigDoc, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (domain.AdminConfigDoc, error) {
-		// Store REAL JSON. domain.AdminConfigDoc is map[string]jx.Raw; json.Marshal
-		// of that base64-encodes each value ([]byte semantics), which round-trips
-		// via getConfigDoc but is opaque to any plain-JSON reader (flow engine,
-		// public config). Convert through json.RawMessage so values stay raw JSON.
-		rawDoc := make(map[string]json.RawMessage, len(doc))
-		for k, v := range doc {
-			rawDoc[k] = json.RawMessage(v)
-		}
+		return doc, a.writeConfigDoc(ctx, projectID, env, key, doc)
+	})
+}
 
-		raw, err := json.Marshal(rawDoc)
+// writeConfigDoc is the upsert itself. It assumes an ambient transaction, so a
+// bulk apply can land several documents atomically by opening one transaction
+// around repeated calls.
+func (a *pgAdminConfig) writeConfigDoc(
+	ctx context.Context, projectID, env, key string, doc domain.AdminConfigDoc,
+) error {
+	// Store REAL JSON. domain.AdminConfigDoc is map[string]jx.Raw; json.Marshal
+	// of that base64-encodes each value ([]byte semantics), which round-trips
+	// via getConfigDoc but is opaque to any plain-JSON reader (flow engine,
+	// public config). Convert through json.RawMessage so values stay raw JSON.
+	raw, err := configDocToRawJSON(doc)
+	if err != nil {
+		return err
+	}
+
+	data := json.RawMessage(raw)
+	env = adminEnv(env)
+
+	existing, err := models.IamConfigs.Query(
+		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(env))),
+		sm.Where(models.IamConfigs.Columns.Key.EQ(psql.Arg(key))),
+	).One(ctx, a.db.Bobx())
+	if err != nil && !adminIsNotFound(err) {
+		return fmt.Errorf("read config document %q: %w", key, err)
+	}
+
+	if err == nil {
+		if uerr := existing.Update(ctx, a.db.Bobx(), &models.IamConfigSetter{
+			Data:      &data,
+			UpdatedAt: ptr(nowUTC()),
+		}); uerr != nil {
+			return uerr
+		}
+	} else {
+		if _, ierr := models.IamConfigs.Insert(&models.IamConfigSetter{
+			ProjectID:   &projectID,
+			Environment: &env,
+			Key:         &key,
+			Data:        &data,
+		}).One(ctx, a.db.Bobx()); ierr != nil {
+			return fmt.Errorf("insert config document %q: %w", key, ierr)
+		}
+	}
+
+	return a.emitter.Emit(ctx, domain.Event{
+		Type:        "config.updated",
+		ProjectID:   projectID,
+		Environment: env,
+		AggregateID: projectID,
+		Payload:     map[string]any{"project_id": projectID, eventFieldEnvironment: env, "key": key, "doc": doc},
+	})
+}
+
+// validateAndPutConfigDoc is the write path shared by every single-document
+// update endpoint: strict parse + validate for the named document, then upsert.
+func (a *pgAdminConfig) validateAndPutConfigDoc(
+	ctx context.Context, cmd domain.AdminConfigUpdateCmd, key string,
+) (domain.AdminConfigDoc, error) {
+	if err := validateConfigDoc(key, cmd.Doc); err != nil {
+		return nil, err
+	}
+
+	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, key, cmd.Doc)
+}
+
+// validateConfigDoc renders a doc to its canonical stored bytes and runs the
+// document's own strict validator over them (fail-closed, unknown keys
+// rejected).
+func validateConfigDoc(key string, doc domain.AdminConfigDoc) error {
+	raw, err := configDocToRawJSON(doc)
+	if err != nil {
+		return err
+	}
+
+	return domain.ValidateConfigDocument(key, raw)
+}
+
+// GetConfigBundle reads every configuration document for the project
+// environment in one pass. An unset document comes back as an empty doc, so the
+// result is always a complete picture the caller can edit and PUT back.
+func (a *pgAdminConfig) GetConfigBundle(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) (domain.AdminConfigBundle, error) {
+	out := make(domain.AdminConfigBundle, len(domain.ConfigDocuments()))
+
+	for _, key := range domain.ConfigDocuments() {
+		doc, err := a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, key)
 		if err != nil {
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
-		env = adminEnv(env)
+		out[key] = doc
+	}
 
-		existing, err := models.IamConfigs.Query(
-			sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
-			sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(env))),
-			sm.Where(models.IamConfigs.Columns.Key.EQ(psql.Arg(key))),
-		).One(ctx, a.db.Bobx())
-		if err != nil && !adminIsNotFound(err) {
+	return out, nil
+}
+
+// ApplyConfig applies a bundle of configuration documents as one unit.
+//
+// Every document is validated with its own strict validator BEFORE anything is
+// written, so a bundle that is bad anywhere leaves the project untouched rather
+// than half-applied; the writes then happen inside a single transaction.
+// Documents absent from the bundle are left alone — a partial bundle must not
+// silently reset what it does not mention. Under DryRun the change set is
+// computed from the same comparison and nothing is written.
+func (a *pgAdminConfig) ApplyConfig(
+	ctx context.Context, cmd domain.AdminConfigApplyCmd,
+) (*domain.AdminConfigApplyResult, error) {
+	// Validate first: a rejected document must not leave earlier ones applied.
+	for _, key := range domain.ConfigDocuments() {
+		doc, ok := cmd.Docs[key]
+		if !ok {
+			continue
+		}
+
+		if err := validateConfigDoc(key, doc); err != nil {
 			return nil, err
 		}
+	}
 
-		if err == nil {
-			if uerr := existing.Update(ctx, a.db.Bobx(), &models.IamConfigSetter{
-				Data:      &rm,
-				UpdatedAt: ptr(nowUTC()),
-			}); uerr != nil {
-				return nil, uerr
-			}
-		} else {
-			if _, ierr := models.IamConfigs.Insert(&models.IamConfigSetter{
-				ProjectID:   &projectID,
-				Environment: &env,
-				Key:         &key,
-				Data:        &rm,
-			}).One(ctx, a.db.Bobx()); ierr != nil {
-				return nil, ierr
+	for key := range cmd.Docs {
+		if !containsString(domain.ConfigDocuments(), key) {
+			return nil, domain.ErrValidation.WithMessage("unknown configuration document: " + key)
+		}
+	}
+
+	apply := func(ctx context.Context) (*domain.AdminConfigApplyResult, error) {
+		result := &domain.AdminConfigApplyResult{
+			DryRun: cmd.DryRun,
+			Config: make(domain.AdminConfigBundle, len(domain.ConfigDocuments())),
+		}
+
+		for _, key := range domain.ConfigDocuments() {
+			if err := a.applyConfigDoc(ctx, cmd, key, result); err != nil {
+				return nil, err
 			}
 		}
 
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "config.updated",
-			ProjectID:   projectID,
-			Environment: env,
-			AggregateID: projectID,
-			Payload:     map[string]any{"project_id": projectID, "environment": env, "key": key, "doc": doc},
-		}); err != nil {
-			return nil, err
-		}
+		return result, nil
+	}
 
-		return doc, nil
-	})
+	if cmd.DryRun {
+		// Nothing is written, so the reads need no transaction of their own.
+		return apply(ctx)
+	}
+
+	return withTxRet(ctx, a.db, apply)
 }
 
-func (a *pgAdminConfig) GetAuthConfig(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
-	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "auth")
+// applyConfigDoc reconciles one document and records the outcome on result.
+// A document the request does not mention keeps whatever is stored. Assumes an
+// ambient transaction unless the apply is a dry run.
+func (a *pgAdminConfig) applyConfigDoc(
+	ctx context.Context, cmd domain.AdminConfigApplyCmd, key string, result *domain.AdminConfigApplyResult,
+) error {
+	before, err := a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, key)
+	if err != nil {
+		return err
+	}
+
+	desired, ok := cmd.Docs[key]
+	if !ok {
+		result.Config[key] = before
+		return nil
+	}
+
+	action, err := configDocAction(before, desired)
+	if err != nil {
+		return err
+	}
+
+	change := domain.AdminConfigDocChange{Document: key, Action: action, After: desired}
+	if len(before) > 0 {
+		change.Before = before
+	}
+
+	result.Changes = append(result.Changes, change)
+	result.Config[key] = desired
+
+	if cmd.DryRun || action == domain.ApplyActionUnchanged {
+		return nil
+	}
+
+	return a.writeConfigDoc(ctx, cmd.ProjectID, cmd.Environment, key, desired)
 }
 
-func (a *pgAdminConfig) UpdateAuthConfig(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
-	raw, err := configDocToRawJSON(cmd.Doc)
+// configDocAction classifies a document write: absent before means create,
+// byte-identical canonical JSON means unchanged, anything else is an update.
+func configDocAction(before, after domain.AdminConfigDoc) (string, error) {
+	if len(before) == 0 {
+		return domain.ApplyActionCreate, nil
+	}
+
+	beforeRaw, err := configDocToRawJSON(before)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	spec, err := domain.ParseAuthConfig(raw)
+	afterRaw, err := configDocToRawJSON(after)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	if err := spec.Validate(); err != nil {
-		return nil, err
+	if bytes.Equal(beforeRaw, afterRaw) {
+		return domain.ApplyActionUnchanged, nil
 	}
 
-	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "auth", cmd.Doc)
+	return domain.ApplyActionUpdate, nil
 }
 
-func (a *pgAdminConfig) GetPasswordPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
-	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "password_policy")
+func (a *pgAdminConfig) GetAuthConfig(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, domain.ConfigDocAuth)
 }
 
-func (a *pgAdminConfig) UpdatePasswordPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
-	raw, err := configDocToRawJSON(cmd.Doc)
-	if err != nil {
-		return nil, err
-	}
-
-	spec, err := domain.ParsePasswordPolicy(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := spec.Validate(); err != nil {
-		return nil, err
-	}
-
-	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "password_policy", cmd.Doc)
+func (a *pgAdminConfig) UpdateAuthConfig(
+	ctx context.Context, cmd domain.AdminConfigUpdateCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.validateAndPutConfigDoc(ctx, cmd, domain.ConfigDocAuth)
 }
 
-func (a *pgAdminConfig) GetSessionPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
-	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "session_policy")
+func (a *pgAdminConfig) GetPasswordPolicy(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, domain.ConfigDocPasswordPolicy)
 }
 
-func (a *pgAdminConfig) UpdateSessionPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
-	raw, err := configDocToRawJSON(cmd.Doc)
-	if err != nil {
-		return nil, err
-	}
-
-	spec, err := domain.ParseSessionPolicy(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := spec.Validate(); err != nil {
-		return nil, err
-	}
-
-	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "session_policy", cmd.Doc)
+func (a *pgAdminConfig) UpdatePasswordPolicy(
+	ctx context.Context, cmd domain.AdminConfigUpdateCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.validateAndPutConfigDoc(ctx, cmd, domain.ConfigDocPasswordPolicy)
 }
 
-func (a *pgAdminConfig) GetRateLimits(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
-	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "rate_limits")
+func (a *pgAdminConfig) GetSessionPolicy(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, domain.ConfigDocSessionPolicy)
 }
 
-func (a *pgAdminConfig) UpdateRateLimits(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
-	raw, err := configDocToRawJSON(cmd.Doc)
-	if err != nil {
-		return nil, err
-	}
-
-	spec, err := domain.ParseRateLimits(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := spec.Validate(); err != nil {
-		return nil, err
-	}
-
-	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "rate_limits", cmd.Doc)
+func (a *pgAdminConfig) UpdateSessionPolicy(
+	ctx context.Context, cmd domain.AdminConfigUpdateCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.validateAndPutConfigDoc(ctx, cmd, domain.ConfigDocSessionPolicy)
 }
 
-func (a *pgAdminConfig) GetMfaPolicy(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {
-	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "mfa_policy")
+func (a *pgAdminConfig) GetRateLimits(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, domain.ConfigDocRateLimits)
 }
 
-func (a *pgAdminConfig) UpdateMfaPolicy(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
-	raw, err := configDocToRawJSON(cmd.Doc)
-	if err != nil {
-		return nil, err
-	}
+func (a *pgAdminConfig) UpdateRateLimits(
+	ctx context.Context, cmd domain.AdminConfigUpdateCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.validateAndPutConfigDoc(ctx, cmd, domain.ConfigDocRateLimits)
+}
 
-	spec, err := domain.ParseMFAPolicy(raw)
-	if err != nil {
-		return nil, err
-	}
+func (a *pgAdminConfig) GetMfaPolicy(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, domain.ConfigDocMFAPolicy)
+}
 
-	if err := spec.Validate(); err != nil {
-		return nil, err
-	}
-
-	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "mfa_policy", cmd.Doc)
+func (a *pgAdminConfig) UpdateMfaPolicy(
+	ctx context.Context, cmd domain.AdminConfigUpdateCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.validateAndPutConfigDoc(ctx, cmd, domain.ConfigDocMFAPolicy)
 }
 
 func (a *pgAdminConfig) GetConsent(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error) {

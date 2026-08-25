@@ -449,6 +449,169 @@ func (s *AppClient) SetTokenProfile(val OptNilString) {
 	s.TokenProfile = val
 }
 
+// Ref: #/components/schemas/AppClientApplyResult
+type AppClientApplyResult struct {
+	// True when nothing was written.
+	DryRun OptBool `json:"dry_run"`
+	// Whether absent clients were (or would be) deleted.
+	Prune   OptBool           `json:"prune"`
+	Changes []AppClientChange `json:"changes"`
+}
+
+// GetDryRun returns the value of DryRun.
+func (s *AppClientApplyResult) GetDryRun() OptBool {
+	return s.DryRun
+}
+
+// GetPrune returns the value of Prune.
+func (s *AppClientApplyResult) GetPrune() OptBool {
+	return s.Prune
+}
+
+// GetChanges returns the value of Changes.
+func (s *AppClientApplyResult) GetChanges() []AppClientChange {
+	return s.Changes
+}
+
+// SetDryRun sets the value of DryRun.
+func (s *AppClientApplyResult) SetDryRun(val OptBool) {
+	s.DryRun = val
+}
+
+// SetPrune sets the value of Prune.
+func (s *AppClientApplyResult) SetPrune(val OptBool) {
+	s.Prune = val
+}
+
+// SetChanges sets the value of Changes.
+func (s *AppClientApplyResult) SetChanges(val []AppClientChange) {
+	s.Changes = val
+}
+
+// What an apply did (or would do) to one app client.
+// Ref: #/components/schemas/AppClientChange
+type AppClientChange struct {
+	ID     OptString                `json:"id"`
+	Action OptAppClientChangeAction `json:"action"`
+	// Stored client before the apply; null for a create.
+	Before OptNilAppClient `json:"before"`
+	// Client after the apply; null for a delete.
+	After OptNilAppClient `json:"after"`
+}
+
+// GetID returns the value of ID.
+func (s *AppClientChange) GetID() OptString {
+	return s.ID
+}
+
+// GetAction returns the value of Action.
+func (s *AppClientChange) GetAction() OptAppClientChangeAction {
+	return s.Action
+}
+
+// GetBefore returns the value of Before.
+func (s *AppClientChange) GetBefore() OptNilAppClient {
+	return s.Before
+}
+
+// GetAfter returns the value of After.
+func (s *AppClientChange) GetAfter() OptNilAppClient {
+	return s.After
+}
+
+// SetID sets the value of ID.
+func (s *AppClientChange) SetID(val OptString) {
+	s.ID = val
+}
+
+// SetAction sets the value of Action.
+func (s *AppClientChange) SetAction(val OptAppClientChangeAction) {
+	s.Action = val
+}
+
+// SetBefore sets the value of Before.
+func (s *AppClientChange) SetBefore(val OptNilAppClient) {
+	s.Before = val
+}
+
+// SetAfter sets the value of After.
+func (s *AppClientChange) SetAfter(val OptNilAppClient) {
+	s.After = val
+}
+
+type AppClientChangeAction string
+
+const (
+	AppClientChangeActionCreate    AppClientChangeAction = "create"
+	AppClientChangeActionUpdate    AppClientChangeAction = "update"
+	AppClientChangeActionDelete    AppClientChangeAction = "delete"
+	AppClientChangeActionUnchanged AppClientChangeAction = "unchanged"
+)
+
+// AllValues returns all AppClientChangeAction values.
+func (AppClientChangeAction) AllValues() []AppClientChangeAction {
+	return []AppClientChangeAction{
+		AppClientChangeActionCreate,
+		AppClientChangeActionUpdate,
+		AppClientChangeActionDelete,
+		AppClientChangeActionUnchanged,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AppClientChangeAction) MarshalText() ([]byte, error) {
+	switch s {
+	case AppClientChangeActionCreate:
+		return []byte(s), nil
+	case AppClientChangeActionUpdate:
+		return []byte(s), nil
+	case AppClientChangeActionDelete:
+		return []byte(s), nil
+	case AppClientChangeActionUnchanged:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AppClientChangeAction) UnmarshalText(data []byte) error {
+	switch AppClientChangeAction(data) {
+	case AppClientChangeActionCreate:
+		*s = AppClientChangeActionCreate
+		return nil
+	case AppClientChangeActionUpdate:
+		*s = AppClientChangeActionUpdate
+		return nil
+	case AppClientChangeActionDelete:
+		*s = AppClientChangeActionDelete
+		return nil
+	case AppClientChangeActionUnchanged:
+		*s = AppClientChangeActionUnchanged
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// The complete desired set of app clients for the project environment. An entry with an `id` that
+// already exists is updated in place; an entry with an unknown or absent `id` is created (a supplied
+// id is honoured, so an external applicator can name its clients deterministically).
+// Ref: #/components/schemas/AppClientDesiredState
+type AppClientDesiredState struct {
+	Clients []AppClient `json:"clients"`
+}
+
+// GetClients returns the value of Clients.
+func (s *AppClientDesiredState) GetClients() []AppClient {
+	return s.Clients
+}
+
+// SetClients sets the value of Clients.
+func (s *AppClientDesiredState) SetClients(val []AppClient) {
+	s.Clients = val
+}
+
 type AppClientType string
 
 const (
@@ -1104,6 +1267,231 @@ func (s *CodeExchangeRequestGrantType) UnmarshalText(data []byte) error {
 	switch CodeExchangeRequestGrantType(data) {
 	case CodeExchangeRequestGrantTypeAuthCode:
 		*s = CodeExchangeRequestGrantTypeAuthCode
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ConfigApplyResult
+type ConfigApplyResult struct {
+	// True when nothing was written.
+	DryRun  OptBool                `json:"dry_run"`
+	Changes []ConfigDocumentChange `json:"changes"`
+	Config  OptProjectConfig       `json:"config"`
+}
+
+// GetDryRun returns the value of DryRun.
+func (s *ConfigApplyResult) GetDryRun() OptBool {
+	return s.DryRun
+}
+
+// GetChanges returns the value of Changes.
+func (s *ConfigApplyResult) GetChanges() []ConfigDocumentChange {
+	return s.Changes
+}
+
+// GetConfig returns the value of Config.
+func (s *ConfigApplyResult) GetConfig() OptProjectConfig {
+	return s.Config
+}
+
+// SetDryRun sets the value of DryRun.
+func (s *ConfigApplyResult) SetDryRun(val OptBool) {
+	s.DryRun = val
+}
+
+// SetChanges sets the value of Changes.
+func (s *ConfigApplyResult) SetChanges(val []ConfigDocumentChange) {
+	s.Changes = val
+}
+
+// SetConfig sets the value of Config.
+func (s *ConfigApplyResult) SetConfig(val OptProjectConfig) {
+	s.Config = val
+}
+
+// What an apply did (or would do) to one configuration document.
+// Ref: #/components/schemas/ConfigDocumentChange
+type ConfigDocumentChange struct {
+	// Document name, the same key used in ProjectConfig.
+	Document OptConfigDocumentChangeDocument `json:"document"`
+	Action   OptConfigDocumentChangeAction   `json:"action"`
+	// Stored document before the apply; null when it did not exist.
+	Before OptNilConfigDocumentChangeBefore `json:"before"`
+	// Document after the apply (or the one that would be written).
+	After OptConfigDocumentChangeAfter `json:"after"`
+}
+
+// GetDocument returns the value of Document.
+func (s *ConfigDocumentChange) GetDocument() OptConfigDocumentChangeDocument {
+	return s.Document
+}
+
+// GetAction returns the value of Action.
+func (s *ConfigDocumentChange) GetAction() OptConfigDocumentChangeAction {
+	return s.Action
+}
+
+// GetBefore returns the value of Before.
+func (s *ConfigDocumentChange) GetBefore() OptNilConfigDocumentChangeBefore {
+	return s.Before
+}
+
+// GetAfter returns the value of After.
+func (s *ConfigDocumentChange) GetAfter() OptConfigDocumentChangeAfter {
+	return s.After
+}
+
+// SetDocument sets the value of Document.
+func (s *ConfigDocumentChange) SetDocument(val OptConfigDocumentChangeDocument) {
+	s.Document = val
+}
+
+// SetAction sets the value of Action.
+func (s *ConfigDocumentChange) SetAction(val OptConfigDocumentChangeAction) {
+	s.Action = val
+}
+
+// SetBefore sets the value of Before.
+func (s *ConfigDocumentChange) SetBefore(val OptNilConfigDocumentChangeBefore) {
+	s.Before = val
+}
+
+// SetAfter sets the value of After.
+func (s *ConfigDocumentChange) SetAfter(val OptConfigDocumentChangeAfter) {
+	s.After = val
+}
+
+type ConfigDocumentChangeAction string
+
+const (
+	ConfigDocumentChangeActionCreate    ConfigDocumentChangeAction = "create"
+	ConfigDocumentChangeActionUpdate    ConfigDocumentChangeAction = "update"
+	ConfigDocumentChangeActionUnchanged ConfigDocumentChangeAction = "unchanged"
+)
+
+// AllValues returns all ConfigDocumentChangeAction values.
+func (ConfigDocumentChangeAction) AllValues() []ConfigDocumentChangeAction {
+	return []ConfigDocumentChangeAction{
+		ConfigDocumentChangeActionCreate,
+		ConfigDocumentChangeActionUpdate,
+		ConfigDocumentChangeActionUnchanged,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ConfigDocumentChangeAction) MarshalText() ([]byte, error) {
+	switch s {
+	case ConfigDocumentChangeActionCreate:
+		return []byte(s), nil
+	case ConfigDocumentChangeActionUpdate:
+		return []byte(s), nil
+	case ConfigDocumentChangeActionUnchanged:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ConfigDocumentChangeAction) UnmarshalText(data []byte) error {
+	switch ConfigDocumentChangeAction(data) {
+	case ConfigDocumentChangeActionCreate:
+		*s = ConfigDocumentChangeActionCreate
+		return nil
+	case ConfigDocumentChangeActionUpdate:
+		*s = ConfigDocumentChangeActionUpdate
+		return nil
+	case ConfigDocumentChangeActionUnchanged:
+		*s = ConfigDocumentChangeActionUnchanged
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Document after the apply (or the one that would be written).
+type ConfigDocumentChangeAfter map[string]jx.Raw
+
+func (s *ConfigDocumentChangeAfter) init() ConfigDocumentChangeAfter {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// Stored document before the apply; null when it did not exist.
+type ConfigDocumentChangeBefore map[string]jx.Raw
+
+func (s *ConfigDocumentChangeBefore) init() ConfigDocumentChangeBefore {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// Document name, the same key used in ProjectConfig.
+type ConfigDocumentChangeDocument string
+
+const (
+	ConfigDocumentChangeDocumentAuth           ConfigDocumentChangeDocument = "auth"
+	ConfigDocumentChangeDocumentPasswordPolicy ConfigDocumentChangeDocument = "password_policy"
+	ConfigDocumentChangeDocumentSessionPolicy  ConfigDocumentChangeDocument = "session_policy"
+	ConfigDocumentChangeDocumentMfaPolicy      ConfigDocumentChangeDocument = "mfa_policy"
+	ConfigDocumentChangeDocumentRateLimits     ConfigDocumentChangeDocument = "rate_limits"
+)
+
+// AllValues returns all ConfigDocumentChangeDocument values.
+func (ConfigDocumentChangeDocument) AllValues() []ConfigDocumentChangeDocument {
+	return []ConfigDocumentChangeDocument{
+		ConfigDocumentChangeDocumentAuth,
+		ConfigDocumentChangeDocumentPasswordPolicy,
+		ConfigDocumentChangeDocumentSessionPolicy,
+		ConfigDocumentChangeDocumentMfaPolicy,
+		ConfigDocumentChangeDocumentRateLimits,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ConfigDocumentChangeDocument) MarshalText() ([]byte, error) {
+	switch s {
+	case ConfigDocumentChangeDocumentAuth:
+		return []byte(s), nil
+	case ConfigDocumentChangeDocumentPasswordPolicy:
+		return []byte(s), nil
+	case ConfigDocumentChangeDocumentSessionPolicy:
+		return []byte(s), nil
+	case ConfigDocumentChangeDocumentMfaPolicy:
+		return []byte(s), nil
+	case ConfigDocumentChangeDocumentRateLimits:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ConfigDocumentChangeDocument) UnmarshalText(data []byte) error {
+	switch ConfigDocumentChangeDocument(data) {
+	case ConfigDocumentChangeDocumentAuth:
+		*s = ConfigDocumentChangeDocumentAuth
+		return nil
+	case ConfigDocumentChangeDocumentPasswordPolicy:
+		*s = ConfigDocumentChangeDocumentPasswordPolicy
+		return nil
+	case ConfigDocumentChangeDocumentSessionPolicy:
+		*s = ConfigDocumentChangeDocumentSessionPolicy
+		return nil
+	case ConfigDocumentChangeDocumentMfaPolicy:
+		*s = ConfigDocumentChangeDocumentMfaPolicy
+		return nil
+	case ConfigDocumentChangeDocumentRateLimits:
+		*s = ConfigDocumentChangeDocumentRateLimits
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -6155,6 +6543,52 @@ func (o OptAppClient) Or(d AppClient) AppClient {
 	return d
 }
 
+// NewOptAppClientChangeAction returns new OptAppClientChangeAction with value set to v.
+func NewOptAppClientChangeAction(v AppClientChangeAction) OptAppClientChangeAction {
+	return OptAppClientChangeAction{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAppClientChangeAction is optional AppClientChangeAction.
+type OptAppClientChangeAction struct {
+	Value AppClientChangeAction
+	Set   bool
+}
+
+// IsSet returns true if OptAppClientChangeAction was set.
+func (o OptAppClientChangeAction) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAppClientChangeAction) Reset() {
+	var v AppClientChangeAction
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAppClientChangeAction) SetTo(v AppClientChangeAction) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAppClientChangeAction) Get() (v AppClientChangeAction, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAppClientChangeAction) Or(d AppClientChangeAction) AppClientChangeAction {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptAppClientType returns new OptAppClientType with value set to v.
 func NewOptAppClientType(v AppClientType) OptAppClientType {
 	return OptAppClientType{
@@ -6293,6 +6727,52 @@ func (o OptAuditLogData) Or(d AuditLogData) AuditLogData {
 	return d
 }
 
+// NewOptAuthConfig returns new OptAuthConfig with value set to v.
+func NewOptAuthConfig(v AuthConfig) OptAuthConfig {
+	return OptAuthConfig{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAuthConfig is optional AuthConfig.
+type OptAuthConfig struct {
+	Value AuthConfig
+	Set   bool
+}
+
+// IsSet returns true if OptAuthConfig was set.
+func (o OptAuthConfig) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAuthConfig) Reset() {
+	var v AuthConfig
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAuthConfig) SetTo(v AuthConfig) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAuthConfig) Get() (v AuthConfig, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAuthConfig) Or(d AuthConfig) AuthConfig {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
 	return OptBool{
@@ -6333,6 +6813,144 @@ func (o OptBool) Get() (v bool, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptConfigDocumentChangeAction returns new OptConfigDocumentChangeAction with value set to v.
+func NewOptConfigDocumentChangeAction(v ConfigDocumentChangeAction) OptConfigDocumentChangeAction {
+	return OptConfigDocumentChangeAction{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptConfigDocumentChangeAction is optional ConfigDocumentChangeAction.
+type OptConfigDocumentChangeAction struct {
+	Value ConfigDocumentChangeAction
+	Set   bool
+}
+
+// IsSet returns true if OptConfigDocumentChangeAction was set.
+func (o OptConfigDocumentChangeAction) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptConfigDocumentChangeAction) Reset() {
+	var v ConfigDocumentChangeAction
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptConfigDocumentChangeAction) SetTo(v ConfigDocumentChangeAction) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptConfigDocumentChangeAction) Get() (v ConfigDocumentChangeAction, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptConfigDocumentChangeAction) Or(d ConfigDocumentChangeAction) ConfigDocumentChangeAction {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptConfigDocumentChangeAfter returns new OptConfigDocumentChangeAfter with value set to v.
+func NewOptConfigDocumentChangeAfter(v ConfigDocumentChangeAfter) OptConfigDocumentChangeAfter {
+	return OptConfigDocumentChangeAfter{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptConfigDocumentChangeAfter is optional ConfigDocumentChangeAfter.
+type OptConfigDocumentChangeAfter struct {
+	Value ConfigDocumentChangeAfter
+	Set   bool
+}
+
+// IsSet returns true if OptConfigDocumentChangeAfter was set.
+func (o OptConfigDocumentChangeAfter) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptConfigDocumentChangeAfter) Reset() {
+	var v ConfigDocumentChangeAfter
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptConfigDocumentChangeAfter) SetTo(v ConfigDocumentChangeAfter) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptConfigDocumentChangeAfter) Get() (v ConfigDocumentChangeAfter, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptConfigDocumentChangeAfter) Or(d ConfigDocumentChangeAfter) ConfigDocumentChangeAfter {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptConfigDocumentChangeDocument returns new OptConfigDocumentChangeDocument with value set to v.
+func NewOptConfigDocumentChangeDocument(v ConfigDocumentChangeDocument) OptConfigDocumentChangeDocument {
+	return OptConfigDocumentChangeDocument{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptConfigDocumentChangeDocument is optional ConfigDocumentChangeDocument.
+type OptConfigDocumentChangeDocument struct {
+	Value ConfigDocumentChangeDocument
+	Set   bool
+}
+
+// IsSet returns true if OptConfigDocumentChangeDocument was set.
+func (o OptConfigDocumentChangeDocument) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptConfigDocumentChangeDocument) Reset() {
+	var v ConfigDocumentChangeDocument
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptConfigDocumentChangeDocument) SetTo(v ConfigDocumentChangeDocument) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptConfigDocumentChangeDocument) Get() (v ConfigDocumentChangeDocument, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptConfigDocumentChangeDocument) Or(d ConfigDocumentChangeDocument) ConfigDocumentChangeDocument {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -7765,6 +8383,178 @@ func (o OptJobStatus) Or(d JobStatus) JobStatus {
 	return d
 }
 
+// NewOptMfaPolicy returns new OptMfaPolicy with value set to v.
+func NewOptMfaPolicy(v MfaPolicy) OptMfaPolicy {
+	return OptMfaPolicy{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMfaPolicy is optional MfaPolicy.
+type OptMfaPolicy struct {
+	Value MfaPolicy
+	Set   bool
+}
+
+// IsSet returns true if OptMfaPolicy was set.
+func (o OptMfaPolicy) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMfaPolicy) Reset() {
+	var v MfaPolicy
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMfaPolicy) SetTo(v MfaPolicy) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMfaPolicy) Get() (v MfaPolicy, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMfaPolicy) Or(d MfaPolicy) MfaPolicy {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilAppClient returns new OptNilAppClient with value set to v.
+func NewOptNilAppClient(v AppClient) OptNilAppClient {
+	return OptNilAppClient{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilAppClient is optional nullable AppClient.
+type OptNilAppClient struct {
+	Value AppClient
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilAppClient was set.
+func (o OptNilAppClient) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilAppClient) Reset() {
+	var v AppClient
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilAppClient) SetTo(v AppClient) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilAppClient) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilAppClient) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v AppClient
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilAppClient) Get() (v AppClient, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilAppClient) Or(d AppClient) AppClient {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilConfigDocumentChangeBefore returns new OptNilConfigDocumentChangeBefore with value set to v.
+func NewOptNilConfigDocumentChangeBefore(v ConfigDocumentChangeBefore) OptNilConfigDocumentChangeBefore {
+	return OptNilConfigDocumentChangeBefore{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilConfigDocumentChangeBefore is optional nullable ConfigDocumentChangeBefore.
+type OptNilConfigDocumentChangeBefore struct {
+	Value ConfigDocumentChangeBefore
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilConfigDocumentChangeBefore was set.
+func (o OptNilConfigDocumentChangeBefore) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilConfigDocumentChangeBefore) Reset() {
+	var v ConfigDocumentChangeBefore
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilConfigDocumentChangeBefore) SetTo(v ConfigDocumentChangeBefore) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilConfigDocumentChangeBefore) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilConfigDocumentChangeBefore) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v ConfigDocumentChangeBefore
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilConfigDocumentChangeBefore) Get() (v ConfigDocumentChangeBefore, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilConfigDocumentChangeBefore) Or(d ConfigDocumentChangeBefore) ConfigDocumentChangeBefore {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilErrorEnvelopeErrorDetails returns new OptNilErrorEnvelopeErrorDetails with value set to v.
 func NewOptNilErrorEnvelopeErrorDetails(v ErrorEnvelopeErrorDetails) OptNilErrorEnvelopeErrorDetails {
 	return OptNilErrorEnvelopeErrorDetails{
@@ -8372,6 +9162,52 @@ func (o OptOAuthGrantClient) Get() (v OAuthGrantClient, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptOAuthGrantClient) Or(d OAuthGrantClient) OAuthGrantClient {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptPasswordPolicy returns new OptPasswordPolicy with value set to v.
+func NewOptPasswordPolicy(v PasswordPolicy) OptPasswordPolicy {
+	return OptPasswordPolicy{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPasswordPolicy is optional PasswordPolicy.
+type OptPasswordPolicy struct {
+	Value PasswordPolicy
+	Set   bool
+}
+
+// IsSet returns true if OptPasswordPolicy was set.
+func (o OptPasswordPolicy) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPasswordPolicy) Reset() {
+	var v PasswordPolicy
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPasswordPolicy) SetTo(v PasswordPolicy) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPasswordPolicy) Get() (v PasswordPolicy, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPasswordPolicy) Or(d PasswordPolicy) PasswordPolicy {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -10318,6 +11154,52 @@ func (o OptProject) Or(d Project) Project {
 	return d
 }
 
+// NewOptProjectConfig returns new OptProjectConfig with value set to v.
+func NewOptProjectConfig(v ProjectConfig) OptProjectConfig {
+	return OptProjectConfig{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptProjectConfig is optional ProjectConfig.
+type OptProjectConfig struct {
+	Value ProjectConfig
+	Set   bool
+}
+
+// IsSet returns true if OptProjectConfig was set.
+func (o OptProjectConfig) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptProjectConfig) Reset() {
+	var v ProjectConfig
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptProjectConfig) SetTo(v ProjectConfig) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptProjectConfig) Get() (v ProjectConfig, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptProjectConfig) Or(d ProjectConfig) ProjectConfig {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptProjectFeatureGates returns new OptProjectFeatureGates with value set to v.
 func NewOptProjectFeatureGates(v ProjectFeatureGates) OptProjectFeatureGates {
 	return OptProjectFeatureGates{
@@ -10634,6 +11516,52 @@ func (o OptPushedAuthorizationRequestCodeChallengeMethod) Get() (v PushedAuthori
 
 // Or returns value if set, or given parameter if does not.
 func (o OptPushedAuthorizationRequestCodeChallengeMethod) Or(d PushedAuthorizationRequestCodeChallengeMethod) PushedAuthorizationRequestCodeChallengeMethod {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRateLimits returns new OptRateLimits with value set to v.
+func NewOptRateLimits(v RateLimits) OptRateLimits {
+	return OptRateLimits{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRateLimits is optional RateLimits.
+type OptRateLimits struct {
+	Value RateLimits
+	Set   bool
+}
+
+// IsSet returns true if OptRateLimits was set.
+func (o OptRateLimits) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRateLimits) Reset() {
+	var v RateLimits
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRateLimits) SetTo(v RateLimits) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRateLimits) Get() (v RateLimits, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRateLimits) Or(d RateLimits) RateLimits {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -11324,6 +12252,52 @@ func (o OptSessionAal) Get() (v SessionAal, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptSessionAal) Or(d SessionAal) SessionAal {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSessionPolicy returns new OptSessionPolicy with value set to v.
+func NewOptSessionPolicy(v SessionPolicy) OptSessionPolicy {
+	return OptSessionPolicy{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSessionPolicy is optional SessionPolicy.
+type OptSessionPolicy struct {
+	Value SessionPolicy
+	Set   bool
+}
+
+// IsSet returns true if OptSessionPolicy was set.
+func (o OptSessionPolicy) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSessionPolicy) Reset() {
+	var v SessionPolicy
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSessionPolicy) SetTo(v SessionPolicy) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSessionPolicy) Get() (v SessionPolicy, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSessionPolicy) Or(d SessionPolicy) SessionPolicy {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -17942,6 +18916,67 @@ func (s *Project) SetEnvironments(val []string) {
 // SetCreatedAt sets the value of CreatedAt.
 func (s *Project) SetCreatedAt(val OptTimestamp) {
 	s.CreatedAt = val
+}
+
+// Every project configuration document in one object, keyed by document name. This is the
+// desired-state view of `admin/config/*`: read it, edit it, PUT it back.
+// Ref: #/components/schemas/ProjectConfig
+type ProjectConfig struct {
+	Auth           OptAuthConfig     `json:"auth"`
+	PasswordPolicy OptPasswordPolicy `json:"password_policy"`
+	SessionPolicy  OptSessionPolicy  `json:"session_policy"`
+	MfaPolicy      OptMfaPolicy      `json:"mfa_policy"`
+	RateLimits     OptRateLimits     `json:"rate_limits"`
+}
+
+// GetAuth returns the value of Auth.
+func (s *ProjectConfig) GetAuth() OptAuthConfig {
+	return s.Auth
+}
+
+// GetPasswordPolicy returns the value of PasswordPolicy.
+func (s *ProjectConfig) GetPasswordPolicy() OptPasswordPolicy {
+	return s.PasswordPolicy
+}
+
+// GetSessionPolicy returns the value of SessionPolicy.
+func (s *ProjectConfig) GetSessionPolicy() OptSessionPolicy {
+	return s.SessionPolicy
+}
+
+// GetMfaPolicy returns the value of MfaPolicy.
+func (s *ProjectConfig) GetMfaPolicy() OptMfaPolicy {
+	return s.MfaPolicy
+}
+
+// GetRateLimits returns the value of RateLimits.
+func (s *ProjectConfig) GetRateLimits() OptRateLimits {
+	return s.RateLimits
+}
+
+// SetAuth sets the value of Auth.
+func (s *ProjectConfig) SetAuth(val OptAuthConfig) {
+	s.Auth = val
+}
+
+// SetPasswordPolicy sets the value of PasswordPolicy.
+func (s *ProjectConfig) SetPasswordPolicy(val OptPasswordPolicy) {
+	s.PasswordPolicy = val
+}
+
+// SetSessionPolicy sets the value of SessionPolicy.
+func (s *ProjectConfig) SetSessionPolicy(val OptSessionPolicy) {
+	s.SessionPolicy = val
+}
+
+// SetMfaPolicy sets the value of MfaPolicy.
+func (s *ProjectConfig) SetMfaPolicy(val OptMfaPolicy) {
+	s.MfaPolicy = val
+}
+
+// SetRateLimits sets the value of RateLimits.
+func (s *ProjectConfig) SetRateLimits(val OptRateLimits) {
+	s.RateLimits = val
 }
 
 type ProjectFeatureGates map[string]bool

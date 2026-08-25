@@ -202,6 +202,78 @@ func ValidateAbsoluteHTTPURL(field, s string) error {
 }
 
 // ---------------------------------------------------------------------------
+// Document registry — the documents a bulk apply may carry
+// ---------------------------------------------------------------------------
+
+// Names of the project-config documents, identical to the iam_config `key`
+// column and to the keys of the bulk config object.
+const (
+	ConfigDocAuth           = "auth"
+	ConfigDocPasswordPolicy = "password_policy"
+	ConfigDocSessionPolicy  = "session_policy"
+	ConfigDocMFAPolicy      = "mfa_policy"
+	ConfigDocRateLimits     = "rate_limits"
+)
+
+// ConfigDocuments returns the ordered set of documents the bulk get/apply
+// surface covers. Order is fixed so a change set reads the same way every time.
+func ConfigDocuments() []string {
+	return []string{
+		ConfigDocAuth,
+		ConfigDocPasswordPolicy,
+		ConfigDocSessionPolicy,
+		ConfigDocMFAPolicy,
+		ConfigDocRateLimits,
+	}
+}
+
+// ValidateConfigDocument runs the strict parse+validate for one document by
+// name. It is the same code path each single-document endpoint uses, so a bulk
+// apply cannot be a way around the per-document rules (including unknown-key
+// rejection). An unknown document name is itself a validation failure.
+func ValidateConfigDocument(name string, raw []byte) error {
+	switch name {
+	case ConfigDocAuth:
+		spec, err := ParseAuthConfig(raw)
+		if err != nil {
+			return err
+		}
+
+		return spec.Validate()
+	case ConfigDocPasswordPolicy:
+		spec, err := ParsePasswordPolicy(raw)
+		if err != nil {
+			return err
+		}
+
+		return spec.Validate()
+	case ConfigDocSessionPolicy:
+		spec, err := ParseSessionPolicy(raw)
+		if err != nil {
+			return err
+		}
+
+		return spec.Validate()
+	case ConfigDocMFAPolicy:
+		spec, err := ParseMFAPolicy(raw)
+		if err != nil {
+			return err
+		}
+
+		return spec.Validate()
+	case ConfigDocRateLimits:
+		spec, err := ParseRateLimits(raw)
+		if err != nil {
+			return err
+		}
+
+		return spec.Validate()
+	default:
+		return ErrValidation.WithMessage("unknown configuration document: " + name)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // auth doc — iam_config key="auth"
 // ---------------------------------------------------------------------------
 

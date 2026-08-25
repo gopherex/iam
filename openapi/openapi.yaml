@@ -413,6 +413,28 @@ components:
         type: string
         maxLength: 1024
       description: Optional key to safely retry a create without duplicating it.
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: >-
+        Compute the change set and return it without writing anything. This is
+        the `plan` half of an apply: the response is the same diff the real
+        request would produce.
+    Prune:
+      name: prune
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: >-
+        Delete objects that exist on the server but are absent from the desired
+        state. Off by default, so a partial list cannot silently destroy objects
+        it does not know about.
   responses:
     Default:
       description: Error. Branch on the stable `error.code`, never on the HTTP status.
@@ -1050,6 +1072,118 @@ components:
           - string
           - 'null'
           maxLength: 1024
+    ProjectConfig:
+      type: object
+      description: >-
+        Every project configuration document in one object, keyed by document
+        name. This is the desired-state view of `admin/config/*`: read it, edit
+        it, PUT it back.
+      properties:
+        auth:
+          $ref: '#/components/schemas/AuthConfig'
+        password_policy:
+          $ref: '#/components/schemas/PasswordPolicy'
+        session_policy:
+          $ref: '#/components/schemas/SessionPolicy'
+        mfa_policy:
+          $ref: '#/components/schemas/MfaPolicy'
+        rate_limits:
+          $ref: '#/components/schemas/RateLimits'
+    ConfigDocumentChange:
+      type: object
+      description: What an apply did (or would do) to one configuration document.
+      properties:
+        document:
+          type: string
+          description: Document name, the same key used in ProjectConfig.
+          enum:
+          - auth
+          - password_policy
+          - session_policy
+          - mfa_policy
+          - rate_limits
+        action:
+          type: string
+          enum:
+          - create
+          - update
+          - unchanged
+        before:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+          description: Stored document before the apply; null when it did not exist.
+        after:
+          type: object
+          additionalProperties: true
+          description: Document after the apply (or the one that would be written).
+    ConfigApplyResult:
+      type: object
+      properties:
+        dry_run:
+          type: boolean
+          description: True when nothing was written.
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigDocumentChange'
+          maxItems: 100
+        config:
+          $ref: '#/components/schemas/ProjectConfig'
+    AppClientDesiredState:
+      type: object
+      required:
+      - clients
+      description: >-
+        The complete desired set of app clients for the project environment. An
+        entry with an `id` that already exists is updated in place; an entry with
+        an unknown or absent `id` is created (a supplied id is honoured, so an
+        external applicator can name its clients deterministically).
+      properties:
+        clients:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppClient'
+          maxItems: 1000
+    AppClientChange:
+      type: object
+      description: What an apply did (or would do) to one app client.
+      properties:
+        id:
+          type: string
+          maxLength: 256
+        action:
+          type: string
+          enum:
+          - create
+          - update
+          - delete
+          - unchanged
+        before:
+          anyOf:
+          - $ref: '#/components/schemas/AppClient'
+          - type: 'null'
+          description: Stored client before the apply; null for a create.
+        after:
+          anyOf:
+          - $ref: '#/components/schemas/AppClient'
+          - type: 'null'
+          description: Client after the apply; null for a delete.
+    AppClientApplyResult:
+      type: object
+      properties:
+        dry_run:
+          type: boolean
+          description: True when nothing was written.
+        prune:
+          type: boolean
+          description: Whether absent clients were (or would be) deleted.
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppClientChange'
+          maxItems: 2000
     RegistrationConfig:
       type: object
       properties:
@@ -9005,6 +9139,52 @@ paths:
       - project
       - environment
       x-ogen-operation-group: Admin
+  /v1/projects/{project_id}/admin/clients:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    - $ref: '#/components/parameters/XEnvironment'
+    put:
+      operationId: putV1ProjectsByProjectIdAdminClients
+      x-since: 1.5.0
+      tags:
+      - Admin Apps
+      summary: Apply a desired-state list of app clients.
+      description: >-
+        Reconciles the project environment's app clients against the list in the
+        body, in a single transaction. Clients are matched by `id`: a known id is
+        updated in place, an unknown or absent id is created. With `prune=true`
+        clients that exist on the server but are absent from the list are
+        deleted; by default they are left alone. With `dry_run=true` nothing is
+        written and the response is the change set the request would produce.
+        The per-client CRUD under `admin/apps` remains available and operates on
+        the same clients.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppClientDesiredState'
+      responses:
+        '200':
+          description: The change set.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppClientApplyResult'
+        default:
+          $ref: '#/components/responses/Default'
+      security:
+      - adminToken: []
+      x-audience: project-admin
+      x-scopes:
+      - project
+      - environment
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/Prune'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/apps:
     parameters:
     - $ref: '#/components/parameters/ProjectId'
@@ -9274,6 +9454,77 @@ paths:
       x-scopes:
       - project
       - environment
+      x-ogen-operation-group: Admin
+  /v1/projects/{project_id}/admin/config:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    - $ref: '#/components/parameters/XEnvironment'
+    get:
+      operationId: getV1ProjectsByProjectIdAdminConfig
+      x-since: 1.5.0
+      tags:
+      - Admin Config
+      summary: Get every configuration document.
+      description: >-
+        The whole project configuration in one object, keyed by document name.
+        Feed it straight back to PUT to apply a desired state; an unset document
+        comes back as an empty object.
+      responses:
+        '200':
+          description: Configuration documents.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectConfig'
+        default:
+          $ref: '#/components/responses/Default'
+      security:
+      - adminToken: []
+      x-audience: project-admin
+      x-scopes:
+      - project
+      - environment
+      parameters:
+      - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
+    put:
+      operationId: putV1ProjectsByProjectIdAdminConfig
+      x-since: 1.5.0
+      tags:
+      - Admin Config
+      summary: Apply every configuration document at once.
+      description: >-
+        Applies the documents present in the body in a single transaction: each
+        one goes through the same strict validation as its own PATCH endpoint
+        (unknown keys are rejected), and either all of them land or none do.
+        Documents omitted from the body are left untouched. With `dry_run=true`
+        nothing is written and the response is the change set the request would
+        produce.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectConfig'
+      responses:
+        '200':
+          description: The change set, and the resulting configuration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigApplyResult'
+        default:
+          $ref: '#/components/responses/Default'
+      security:
+      - adminToken: []
+      x-audience: project-admin
+      x-scopes:
+      - project
+      - environment
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/XEnvironment'
       x-ogen-operation-group: Admin
   /v1/projects/{project_id}/admin/config/auth:
     parameters:

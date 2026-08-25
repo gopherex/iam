@@ -172,6 +172,92 @@ type AdminConfigUpdateCmd struct {
 	Doc         AdminConfigDoc
 }
 
+// ----- Desired-state (IaC) apply -----
+
+// Actions a desired-state apply reports per object. They describe what the
+// apply did, or — under dry-run — what it would do.
+const (
+	ApplyActionCreate    = "create"
+	ApplyActionUpdate    = "update"
+	ApplyActionDelete    = "delete"
+	ApplyActionUnchanged = "unchanged"
+)
+
+// AdminConfigBundle is every project-config document in one value, keyed by
+// document name (domain.ConfigDoc*). A missing key means "not present in this
+// request"; an empty doc means "the document is unset".
+type AdminConfigBundle map[string]AdminConfigDoc
+
+// AdminConfigApplyCmd applies a whole bundle of configuration documents in one
+// transaction. Documents absent from Docs are left untouched — a partial bundle
+// must not silently reset the documents it does not mention.
+type AdminConfigApplyCmd struct {
+	ProjectID   string
+	Environment string
+	Docs        AdminConfigBundle
+	// DryRun computes the change set and writes nothing (the `plan` half).
+	DryRun bool
+}
+
+// AdminConfigDocChange is what an apply did, or would do, to one document.
+// Before is nil when the document did not exist.
+type AdminConfigDocChange struct {
+	Document string
+	Action   string
+	Before   AdminConfigDoc
+	After    AdminConfigDoc
+}
+
+// AdminConfigApplyResult is the outcome of a bulk config apply: the per-document
+// change set plus the resulting (or would-be) state of every document.
+type AdminConfigApplyResult struct {
+	DryRun  bool
+	Changes []AdminConfigDocChange
+	Config  AdminConfigBundle
+}
+
+// AdminAppClientDesired is one entry of a desired-state client list. An ID that
+// already exists is updated in place; an unknown or empty ID is created (a
+// supplied ID is honored so an external applicator can name its clients
+// deterministically instead of discovering server-generated ids).
+type AdminAppClientDesired struct {
+	ID             string
+	Name           string
+	Type           string
+	RedirectURIs   []string
+	AllowedOrigins []string
+	Disabled       bool
+}
+
+// AdminAppsApplyCmd reconciles a project environment's app clients against a
+// desired-state list.
+type AdminAppsApplyCmd struct {
+	ProjectID   string
+	Environment string
+	Clients     []AdminAppClientDesired
+	// Prune deletes clients that exist but are absent from Clients. Off by
+	// default so a partial list cannot destroy clients it does not know about.
+	Prune bool
+	// DryRun computes the change set and writes nothing.
+	DryRun bool
+}
+
+// AdminAppClientChange is what an apply did, or would do, to one app client.
+// Before is nil for a create, After is nil for a delete.
+type AdminAppClientChange struct {
+	ID     string
+	Action string
+	Before *AppClient
+	After  *AppClient
+}
+
+// AdminAppsApplyResult is the outcome of a desired-state client apply.
+type AdminAppsApplyResult struct {
+	DryRun  bool
+	Prune   bool
+	Changes []AdminAppClientChange
+}
+
 // ----- Notification providers (email / sms) -----
 
 // AdminProvider is a configured notification provider (email or SMS). Config is

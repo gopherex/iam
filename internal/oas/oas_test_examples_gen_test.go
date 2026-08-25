@@ -85,6 +85,54 @@ func TestAppClient_EncodeDecode(t *testing.T) {
 	var typ2 AppClient
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestAppClientApplyResult_EncodeDecode(t *testing.T) {
+	var typ AppClientApplyResult
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AppClientApplyResult
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAppClientChange_EncodeDecode(t *testing.T) {
+	var typ AppClientChange
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AppClientChange
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAppClientChangeAction_EncodeDecode(t *testing.T) {
+	var typ AppClientChangeAction
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AppClientChangeAction
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAppClientDesiredState_EncodeDecode(t *testing.T) {
+	var typ AppClientDesiredState
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AppClientDesiredState
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestAppClientType_EncodeDecode(t *testing.T) {
 	var typ AppClientType
 	typ.SetFake()
@@ -243,6 +291,82 @@ func TestCodeExchangeRequestGrantType_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 CodeExchangeRequestGrantType
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestConfigApplyResult_EncodeDecode(t *testing.T) {
+	var typ ConfigApplyResult
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ConfigApplyResult
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestConfigDocumentChange_EncodeDecode(t *testing.T) {
+	var typ ConfigDocumentChange
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ConfigDocumentChange
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestConfigDocumentChangeAction_EncodeDecode(t *testing.T) {
+	var typ ConfigDocumentChangeAction
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ConfigDocumentChangeAction
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestConfigDocumentChangeAfter_EncodeDecode(t *testing.T) {
+	var typ ConfigDocumentChangeAfter
+	typ = make(ConfigDocumentChangeAfter)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ConfigDocumentChangeAfter
+	typ2 = make(ConfigDocumentChangeAfter)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestConfigDocumentChangeBefore_EncodeDecode(t *testing.T) {
+	var typ ConfigDocumentChangeBefore
+	typ = make(ConfigDocumentChangeBefore)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ConfigDocumentChangeBefore
+	typ2 = make(ConfigDocumentChangeBefore)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestConfigDocumentChangeDocument_EncodeDecode(t *testing.T) {
+	var typ ConfigDocumentChangeDocument
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ConfigDocumentChangeDocument
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestConsentAcceptance_EncodeDecode(t *testing.T) {
@@ -4967,6 +5091,18 @@ func TestProject_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 Project
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestProjectConfig_EncodeDecode(t *testing.T) {
+	var typ ProjectConfig
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ProjectConfig
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestProjectFeatureGates_EncodeDecode(t *testing.T) {

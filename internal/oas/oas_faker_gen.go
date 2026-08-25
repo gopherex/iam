@@ -213,6 +213,77 @@ func (s *AppClient) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *AppClientApplyResult) SetFake() {
+	{
+		{
+			s.DryRun.SetFake()
+		}
+	}
+	{
+		{
+			s.Prune.SetFake()
+		}
+	}
+	{
+		{
+			s.Changes = nil
+			for i := 0; i < 0; i++ {
+				var elem AppClientChange
+				{
+					elem.SetFake()
+				}
+				s.Changes = append(s.Changes, elem)
+			}
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *AppClientChange) SetFake() {
+	{
+		{
+			s.ID.SetFake()
+		}
+	}
+	{
+		{
+			s.Action.SetFake()
+		}
+	}
+	{
+		{
+			s.Before.SetFake()
+		}
+	}
+	{
+		{
+			s.After.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *AppClientChangeAction) SetFake() {
+	*s = AppClientChangeActionCreate
+}
+
+// SetFake set fake values.
+func (s *AppClientDesiredState) SetFake() {
+	{
+		{
+			s.Clients = nil
+			for i := 0; i < 0; i++ {
+				var elem AppClient
+				{
+					elem.SetFake()
+				}
+				s.Clients = append(s.Clients, elem)
+			}
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *AppClientType) SetFake() {
 	*s = AppClientTypeSpa
 }
@@ -449,6 +520,88 @@ func (s *CodeExchangeRequest) SetFake() {
 // SetFake set fake values.
 func (s *CodeExchangeRequestGrantType) SetFake() {
 	*s = CodeExchangeRequestGrantTypeAuthCode
+}
+
+// SetFake set fake values.
+func (s *ConfigApplyResult) SetFake() {
+	{
+		{
+			s.DryRun.SetFake()
+		}
+	}
+	{
+		{
+			s.Changes = nil
+			for i := 0; i < 0; i++ {
+				var elem ConfigDocumentChange
+				{
+					elem.SetFake()
+				}
+				s.Changes = append(s.Changes, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Config.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *ConfigDocumentChange) SetFake() {
+	{
+		{
+			s.Document.SetFake()
+		}
+	}
+	{
+		{
+			s.Action.SetFake()
+		}
+	}
+	{
+		{
+			s.Before.SetFake()
+		}
+	}
+	{
+		{
+			s.After.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *ConfigDocumentChangeAction) SetFake() {
+	*s = ConfigDocumentChangeActionCreate
+}
+
+// SetFake set fake values.
+func (s *ConfigDocumentChangeAfter) SetFake() {
+	var (
+		elem jx.Raw
+		m    map[string]jx.Raw = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
+	}
+}
+
+// SetFake set fake values.
+func (s *ConfigDocumentChangeBefore) SetFake() {
+	var (
+		elem jx.Raw
+		m    map[string]jx.Raw = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
+	}
+}
+
+// SetFake set fake values.
+func (s *ConfigDocumentChangeDocument) SetFake() {
+	*s = ConfigDocumentChangeDocumentAuth
 }
 
 // SetFake set fake values.
@@ -2845,6 +2998,15 @@ func (s *OptAppClient) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptAppClientChangeAction) SetFake() {
+	var elem AppClientChangeAction
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
 func (s *OptAppClientType) SetFake() {
 	var elem AppClientType
 	{
@@ -2872,10 +3034,46 @@ func (s *OptAuditLogData) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptAuthConfig) SetFake() {
+	var elem AuthConfig
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
 func (s *OptBool) SetFake() {
 	var elem bool
 	{
 		elem = true
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptConfigDocumentChangeAction) SetFake() {
+	var elem ConfigDocumentChangeAction
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptConfigDocumentChangeAfter) SetFake() {
+	var elem ConfigDocumentChangeAfter
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptConfigDocumentChangeDocument) SetFake() {
+	var elem ConfigDocumentChangeDocument
+	{
+		elem.SetFake()
 	}
 	s.SetTo(elem)
 }
@@ -3151,6 +3349,27 @@ func (s *OptJobStatus) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptMfaPolicy) SetFake() {
+	var elem MfaPolicy
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptNilAppClient) SetFake() {
+	s.Null = true
+	s.Set = true
+}
+
+// SetFake set fake values.
+func (s *OptNilConfigDocumentChangeBefore) SetFake() {
+	s.Null = true
+	s.Set = true
+}
+
+// SetFake set fake values.
 func (s *OptNilErrorEnvelopeErrorDetails) SetFake() {
 	s.Null = true
 	s.Set = true
@@ -3207,6 +3426,15 @@ func (s *OptNilTimestamp) SetFake() {
 // SetFake set fake values.
 func (s *OptOAuthGrantClient) SetFake() {
 	var elem OAuthGrantClient
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptPasswordPolicy) SetFake() {
+	var elem PasswordPolicy
 	{
 		elem.SetFake()
 	}
@@ -3583,6 +3811,15 @@ func (s *OptProject) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptProjectConfig) SetFake() {
+	var elem ProjectConfig
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
 func (s *OptProjectFeatureGates) SetFake() {
 	var elem ProjectFeatureGates
 	{
@@ -3630,6 +3867,15 @@ func (s *OptPublicConfigProject) SetFake() {
 // SetFake set fake values.
 func (s *OptPublicConfigProjectBranding) SetFake() {
 	var elem PublicConfigProjectBranding
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptRateLimits) SetFake() {
+	var elem RateLimits
 	{
 		elem.SetFake()
 	}
@@ -3765,6 +4011,15 @@ func (s *OptSession) SetFake() {
 // SetFake set fake values.
 func (s *OptSessionAal) SetFake() {
 	var elem SessionAal
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptSessionPolicy) SetFake() {
+	var elem SessionPolicy
 	{
 		elem.SetFake()
 	}
@@ -7261,6 +7516,35 @@ func (s *Project) SetFake() {
 	{
 		{
 			s.CreatedAt.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *ProjectConfig) SetFake() {
+	{
+		{
+			s.Auth.SetFake()
+		}
+	}
+	{
+		{
+			s.PasswordPolicy.SetFake()
+		}
+	}
+	{
+		{
+			s.SessionPolicy.SetFake()
+		}
+	}
+	{
+		{
+			s.MfaPolicy.SetFake()
+		}
+	}
+	{
+		{
+			s.RateLimits.SetFake()
 		}
 	}
 }

@@ -45,6 +45,15 @@ First runnable product. A single project/env can do full password-based auth.
 - **Risk**: risk rules & events, rate limits, blocks.
 - **Test mode**: test clock, seed, reset, captured-message inbox.
 
+## v1.5.0 — Desired-state configuration (IaC)
+
+- **Config bundle**: read every project-config document at once, and apply a
+  whole bundle in one transaction with per-document validation unchanged.
+- **Client reconciliation**: a desired-state list of app clients, with opt-in
+  pruning of clients the list omits.
+- **Plan**: `dry_run` on both applies returns the before/after change set and
+  writes nothing.
+
 ## v2.0.0 — IAM as OIDC provider
 
 New product role: IAM becomes an OAuth2/OIDC identity provider.

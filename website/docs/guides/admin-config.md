@@ -15,6 +15,48 @@ Get an `adminToken` from the operator plane
 (`POST /mgmt/v1/projects/{id}/admin-tokens`) — see the
 [Operator guide](/self-hosting/operator).
 
+## Desired state (plan & apply)
+
+Every configuration document can also be read and written as one object, so an
+external applicator does not have to GET, diff and PATCH each document itself.
+
+```bash
+# read the whole configuration
+curl -s https://auth.example.com/v1/projects/prj_7Fk2/admin/config \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# plan: return the change set, write nothing
+curl -sX PUT 'https://auth.example.com/v1/projects/prj_7Fk2/admin/config?dry_run=true' \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+  -d '{"auth":{"methods":["email"]},"password_policy":{"min_length":12}}'
+
+# apply: all documents in one transaction, all-or-nothing
+curl -sX PUT https://auth.example.com/v1/projects/prj_7Fk2/admin/config \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+  -d '{"auth":{"methods":["email"]},"password_policy":{"min_length":12}}'
+```
+
+Each document is validated exactly as its own endpoint validates it, and every
+document is validated **before** anything is written, so a bundle that is bad
+anywhere leaves the project untouched instead of half-applied. Documents you
+omit are left alone.
+
+App clients have the same shape:
+
+```bash
+# reconcile the client list; prune=true also deletes clients you left out
+curl -sX PUT 'https://auth.example.com/v1/projects/prj_7Fk2/admin/clients?prune=true' \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+  -d '{"clients":[{"id":"app_web","name":"Web","type":"spa",
+                   "redirect_uris":["https://app.example.com/cb"]}]}'
+```
+
+Clients are matched by `id`, and an `id` you supply is honoured on create, so a
+repeated apply of the same file is a no-op. `prune` is off by default: a partial
+list cannot delete clients it does not know about. Both PUTs accept
+`?dry_run=true` and an `Idempotency-Key` header. The response lists what was
+created, updated and deleted, with `before`/`after` for each object.
+
 ## Auth methods & registration
 
 ```bash
