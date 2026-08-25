@@ -481,7 +481,8 @@ func (a *pgOIDCGrants) Consent(ctx context.Context, cmd domain.OIDCConsentCmd) (
 			return "", err
 		}
 
-		return oidcAuthorizationResponse(in.RedirectURI, code, in.State, in.ResponseMode), nil
+		return oidcAuthorizationResponse(in.RedirectURI, code, in.State, in.ResponseMode,
+			oidcIssuer(a.db.PublicURL, row.ProjectID, row.Environment)), nil
 	})
 }
 
@@ -565,12 +566,18 @@ func (a *pgOIDCGrants) issueAuthorizationCode(
 // oidcAuthorizationResponse renders the success response in the requested mode.
 // `fragment` keeps the code out of the Referer header and out of server logs at
 // the redirect target, which is why clients ask for it.
-func oidcAuthorizationResponse(redirectURI, code, state, mode string) string {
+func oidcAuthorizationResponse(redirectURI, code, state, mode, issuer string) string {
 	params := url.Values{}
 	params.Set("code", code)
 
 	if state != "" {
 		params.Set("state", state)
+	}
+	// RFC 9207: the response says which provider issued it. A client registered
+	// with more than one OP can otherwise be tricked into redeeming a code at the
+	// wrong one — the code was honest, the destination was not.
+	if issuer != "" {
+		params.Set("iss", issuer)
 	}
 
 	if mode == oidcResponseModeFragment {
@@ -632,7 +639,8 @@ func (a *pgOIDCGrants) Reject(ctx context.Context, cmd domain.OIDCRejectCmd) (st
 			errCode = "access_denied"
 		}
 
-		return oidcErrorRedirect(in.RedirectURI, errCode, cmd.ErrorDescription, in.State), nil
+		return oidcErrorRedirect(in.RedirectURI, errCode, cmd.ErrorDescription, in.State,
+			oidcIssuer(a.db.PublicURL, row.ProjectID, row.Environment)), nil
 	})
 }
 
@@ -918,7 +926,7 @@ func oidcVerifyPKCE(challenge, method, verifier string) error {
 // oidcErrorRedirect builds the OAuth2 error redirect back to an already
 // validated redirect_uri (RFC 6749 §4.1.2.1). state is echoed verbatim when the
 // client sent one, so the client can match the response to its request.
-func oidcErrorRedirect(redirectURI, code, description, state string) string {
+func oidcErrorRedirect(redirectURI, code, description, state, issuer string) string {
 	params := url.Values{}
 	params.Set("error", code)
 
@@ -928,6 +936,12 @@ func oidcErrorRedirect(redirectURI, code, description, state string) string {
 
 	if state != "" {
 		params.Set("state", state)
+	}
+	// RFC 9207: name the issuer on error responses too. A client talking to
+	// several providers otherwise cannot tell which one refused it, which is half
+	// of the mix-up attack the parameter exists to stop.
+	if issuer != "" {
+		params.Set("iss", issuer)
 	}
 
 	sep := "?"
@@ -1111,7 +1125,8 @@ func (a *pgOIDCGrants) authorizeSilently(
 		return "", false, err
 	}
 
-	return oidcAuthorizationResponse(redirectURI, code, cmd.State, cmd.ResponseMode), true, nil
+	return oidcAuthorizationResponse(redirectURI, code, cmd.State, cmd.ResponseMode,
+		oidcIssuer(a.db.PublicURL, clientRow.ProjectID, clientRow.Environment)), true, nil
 }
 
 // silentFailure names what a prompt=none request was missing: somewhere to get a
@@ -1169,35 +1184,37 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 
 	// From here the redirect target is a URI this client registered, so request
 	// errors travel back to the client instead of being shown to the user.
+	issuer := oidcIssuer(a.db.PublicURL, clientRow.ProjectID, clientRow.Environment)
+
 	if cmd.ResponseType != oidcResponseTypeCode {
 		return oidcErrorRedirect(redirectURI, oidcErrUnsupportedResponseType,
-			"only response_type=code is supported", cmd.State), nil
+			"only response_type=code is supported", cmd.State, issuer), nil
 	}
 
 	scopes := splitScopes(cmd.Scope)
 	if len(scopes) == 0 {
 		return oidcErrorRedirect(redirectURI, oidcErrInvalidRequest,
-			"scope is required", cmd.State), nil
+			"scope is required", cmd.State, issuer), nil
 	}
 
 	if errCode, desc := oidcCheckPKCERequest(app, cmd.CodeChallenge, cmd.CodeChallengeMethod); errCode != "" {
-		return oidcErrorRedirect(redirectURI, errCode, desc, cmd.State), nil
+		return oidcErrorRedirect(redirectURI, errCode, desc, cmd.State, issuer), nil
 	}
 
 	if bad, ok := authorizeScopesAllowed(app, scopes); !ok {
 		return oidcErrorRedirect(redirectURI, "invalid_scope",
-			"the client is not allowed the scope "+bad, cmd.State), nil
+			"the client is not allowed the scope "+bad, cmd.State, issuer), nil
 	}
 
 	if cmd.ResponseMode != "" &&
 		cmd.ResponseMode != oidcResponseModeQuery && cmd.ResponseMode != oidcResponseModeFragment {
 		return oidcErrorRedirect(redirectURI, "unsupported_response_mode",
-			"only query and fragment response modes are supported", cmd.State), nil
+			"only query and fragment response modes are supported", cmd.State, issuer), nil
 	}
 
 	intent, promptErr := parseAuthorizePrompt(cmd.Prompt)
 	if promptErr != "" {
-		return oidcErrorRedirect(redirectURI, oidcErrInvalidRequest, promptErr, cmd.State), nil
+		return oidcErrorRedirect(redirectURI, oidcErrInvalidRequest, promptErr, cmd.State, issuer), nil
 	}
 
 	// Single sign-on happens here: a caller who already holds a valid IAM session
@@ -1218,7 +1235,7 @@ func (a *pgOIDCGrants) Authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 	if intent.silent {
 		// No UI allowed, and the request could not be satisfied from what we
 		// already know. Say which of the two things is missing.
-		return oidcErrorRedirect(redirectURI, a.silentFailure(ctx, cmd), "", cmd.State), nil
+		return oidcErrorRedirect(redirectURI, a.silentFailure(ctx, cmd), "", cmd.State, issuer), nil
 	}
 
 	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
@@ -2715,6 +2732,9 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 	// The prompt values the authorization endpoint acts on. The struct in this
 	// lib version has no field for them; advertising them is only honest now that
 	// they are honored rather than ignored.
+	// RFC 9207: we name ourselves on every authorization response, so clients can
+	// and should check it.
+	m["authorization_response_iss_parameter_supported"] = true
 	m["prompt_values_supported"] = []string{
 		oidcPromptNone, oidcPromptLogin, oidcPromptConsent, oidcPromptSelectAccount,
 	}

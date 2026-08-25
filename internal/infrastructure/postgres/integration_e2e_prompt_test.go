@@ -355,3 +355,54 @@ func TestAuthorizeResponseModeFragment(t *testing.T) {
 		t.Fatalf("no code in fragment %q", frag)
 	}
 }
+
+// TestAuthorizeResponseNamesTheIssuer covers RFC 9207: every authorization
+// response says which provider produced it. A client registered with more than
+// one OP can otherwise be steered into redeeming an honest code at the wrong
+// provider — the mix-up attack the parameter exists to stop.
+func TestAuthorizeResponseNamesTheIssuer(t *testing.T) {
+	ctx := context.Background()
+	f, authorize := promptSetup(t, ctx)
+
+	wantIssuer := fmt.Sprintf("%s/p/%s/e/live", f.baseURL, f.projectID)
+
+	// Error response.
+	_, location := authorize("&prompt=none%20login")
+
+	parsed, _ := url.Parse(location)
+	if got := parsed.Query().Get("iss"); got != wantIssuer {
+		t.Fatalf("error response iss = %q, want %q", got, wantIssuer)
+	}
+
+	// Success response.
+	_, location = authorize("")
+	f.grantConsent(t, ctx, strings.TrimPrefix(location, "/oauth/interaction/"))
+
+	_, location = authorize("")
+
+	parsed, _ = url.Parse(location)
+	if got := parsed.Query().Get("iss"); got != wantIssuer {
+		t.Fatalf("success response iss = %q, want %q", got, wantIssuer)
+	}
+	if parsed.Query().Get("code") == "" {
+		t.Fatalf("no code alongside iss: %q", location)
+	}
+}
+
+// TestDiscoveryAdvertisesIssParameter: a client only checks `iss` if the
+// metadata tells it to.
+func TestDiscoveryAdvertisesIssParameter(t *testing.T) {
+	ctx := context.Background()
+	f, _ := promptSetup(t, ctx)
+
+	r := e2eReq(t, ctx, http.MethodGet,
+		fmt.Sprintf("%s/p/%s/e/live/.well-known/openid-configuration", f.baseURL, f.projectID), nil, nil)
+	e2eWantStatus(t, r, http.StatusOK)
+
+	var doc map[string]any
+	e2eDecode(t, r, &doc)
+
+	if supported, _ := doc["authorization_response_iss_parameter_supported"].(bool); !supported {
+		t.Fatalf("authorization_response_iss_parameter_supported = %v, want true", doc["authorization_response_iss_parameter_supported"])
+	}
+}

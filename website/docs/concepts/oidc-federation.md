@@ -114,6 +114,15 @@ is re-authenticated however valid it still is, and the resulting id_token's
 `response_mode=fragment` returns the code in the fragment instead of the query,
 keeping it out of the `Referer` header and the redirect target's logs.
 
+### The response names the issuer (RFC 9207)
+
+Every authorization response — success and error alike — carries `iss`, the
+provider that produced it. A client registered with more than one provider can
+otherwise be steered into redeeming a perfectly honest code at the wrong one;
+the code is genuine, the destination is not. Discovery advertises
+`authorization_response_iss_parameter_supported: true`, and a client that checks
+it closes that class of mix-up.
+
 ### Scopes a client may request
 
 A client can be given a `scopes` allow-list. A request for anything outside it is
