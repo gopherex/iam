@@ -111,6 +111,23 @@ Confidential clients are authenticated against the secrets issued for them under
 `admin/apps/{app_id}/secrets`. A client may hold several at once, so a secret can
 be rotated in before the old one is deleted; any issued secret authenticates.
 
+### Claims in the id_token
+
+The scopes a client is granted decide what the id_token says about the person:
+
+| Scope | Claims |
+| --- | --- |
+| `openid` | `sub`, plus the standard `iss` / `aud` / `exp` / `at_hash` |
+| `email` | `email`, `email_verified` |
+| `profile` | `name`, `locale`, `phone_number`, `phone_number_verified`, `updated_at` |
+| `groups` | `groups` — see below |
+
+`email` matters out of proportion: oauth2-proxy, Grafana and most relying parties
+identify the signed-in person by it and refuse a token without one. `/oauth2/userinfo`
+returns the same claims for the same scopes, so a client that falls back to it
+gets the same answer — and a client granted only `openid` gets a subject and
+nothing else from either.
+
 ### Roles in the token (`groups`)
 
 Relying parties (ArgoCD, Grafana, …) need to know *who* the user is inside your

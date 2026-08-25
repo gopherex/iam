@@ -4,6 +4,7 @@ go 1.26.2
 
 require (
 	github.com/aarondl/opt v0.0.0-20250607033636-982744e1bd65
+	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/crewjam/saml v0.5.1
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.2.0

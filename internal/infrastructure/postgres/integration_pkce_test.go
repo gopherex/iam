@@ -334,3 +334,76 @@ func TestOIDCConfidentialClientSecret(t *testing.T) {
 		}
 	})
 }
+
+// TestOIDCScopeClaimsFollowConsent: profile and email claims appear only for the
+// scopes the client was granted. A relying party needs `email` to name the user,
+// and a client that was not granted it must not receive it anyway.
+func TestOIDCScopeClaimsFollowConsent(t *testing.T) {
+	ctx := context.Background()
+	f := newPKCEFixture(t, ctx, "spa")
+
+	// Give the account something to disclose.
+	if _, err := NewPgAdminUsers(testDB, nopEmitter{}).Update(ctx, domain.AdminUserUpdateCmd{
+		ProjectID:   f.projectID,
+		Environment: "live",
+		AccountID:   f.userID,
+		Name:        "Ada Lovelace",
+	}); err != nil {
+		t.Fatalf("set user name: %v", err)
+	}
+
+	claimsFor := func(t *testing.T, scopes []string) map[string]any {
+		t.Helper()
+		resp, err := f.grants.mintTokenResponse(ctx, oidcTokenSubject{
+			projectID: f.projectID,
+			env:       "live",
+			subject:   f.userID,
+			clientID:  f.clientID,
+			scopes:    scopes,
+		})
+		if err != nil {
+			t.Fatalf("mintTokenResponse: %v", err)
+		}
+		idToken, _ := resp["id_token"].(string)
+		if idToken == "" {
+			t.Fatalf("no id_token for scopes %v", scopes)
+		}
+		claims := testDB.Signer().UnverifiedClaims(idToken)
+		if claims == nil {
+			t.Fatal("id_token has no readable claims")
+		}
+		return claims
+	}
+
+	t.Run("email_scope_discloses_email", func(t *testing.T) {
+		claims := claimsFor(t, []string{"openid", "email"})
+		if got, _ := claims["email"].(string); got == "" {
+			t.Fatalf("no email claim with the email scope: %v", claims)
+		}
+		if _, ok := claims["email_verified"]; !ok {
+			t.Error("email disclosed without email_verified")
+		}
+		if _, ok := claims["name"]; ok {
+			t.Error("name disclosed without the profile scope")
+		}
+	})
+
+	t.Run("profile_scope_discloses_name", func(t *testing.T) {
+		claims := claimsFor(t, []string{"openid", "profile"})
+		if got, _ := claims["name"].(string); got != "Ada Lovelace" {
+			t.Fatalf("name claim = %q, want the account name", got)
+		}
+		if _, ok := claims["email"]; ok {
+			t.Error("email disclosed without the email scope")
+		}
+	})
+
+	t.Run("bare_openid_discloses_nothing", func(t *testing.T) {
+		claims := claimsFor(t, []string{"openid"})
+		for _, key := range []string{"email", "email_verified", "name", "phone_number"} {
+			if _, ok := claims[key]; ok {
+				t.Errorf("%s disclosed to a client granted only openid", key)
+			}
+		}
+	})
+}

@@ -1395,8 +1395,14 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 
 	// id_token: only for openid requests. Built from the zitadel IDTokenClaims
 	// struct (correct field names), then signed by OUR key via the Signer.
+	// Profile / email claims for the scopes the client was granted.
+	scopeClaims, err := a.oidcScopeClaims(ctx, sub.subject, sub.scopes)
+	if err != nil {
+		return nil, err
+	}
+
 	if oidcHasScope(sub.scopes, "openid") {
-		idToken, err := a.mintIDToken(ctx, sub, env, issuer, access, now, groups)
+		idToken, err := a.mintIDToken(ctx, sub, env, issuer, access, now, groups, scopeClaims)
 		if err != nil {
 			return nil, err
 		}
@@ -1431,7 +1437,8 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 // (nil unless the `groups` scope was granted) and is carried alongside the
 // standard claims.
 func (a *pgOIDCGrants) mintIDToken(
-	ctx context.Context, sub oidcTokenSubject, env, issuer, accessToken string, now time.Time, groups []string,
+	ctx context.Context, sub oidcTokenSubject, env, issuer, accessToken string, now time.Time,
+	groups []string, scopeClaims map[string]any,
 ) (string, error) {
 	idc := oidc.NewIDTokenClaims(
 		issuer,
@@ -1465,6 +1472,10 @@ func (a *pgOIDCGrants) mintIDToken(
 
 	if groups != nil {
 		claims[claimGroups] = groups
+	}
+
+	for k, v := range scopeClaims {
+		claims[k] = v
 	}
 
 	return a.db.Signer().Sign(ctx, sub.projectID, env, claims, oidcIDTokenTTL)
@@ -1872,13 +1883,94 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 // port); the signing of a signed userinfo response is the token subsystem's job.
 func (a *pgOIDCGrants) Userinfo(ctx context.Context, accountID, sessionID string) (map[string]any, error) {
 	// The bearer principal is already authenticated upstream (the access-token
-	// JWT was verified by the auth middleware), so the userinfo body is the
-	// resolved subject. Resolving richer profile/email claims requires the
-	// account aggregate (a separate port not wired into this adapter); a signed
-	// (JWT) userinfo response is only returned under content negotiation, which
-	// the oas layer does not request. Shape it via the OIDC UserInfo struct so
-	// the claim names are spec-correct.
-	return oidcClaimsMap(&oidc.UserInfo{Subject: accountID})
+	// JWT was verified by the auth middleware), so the subject is settled. A
+	// relying party that falls back to userinfo because the id_token was thin
+	// must find the same profile/email claims here, or it still cannot name the
+	// user. The claim names come from the OIDC UserInfo struct so they stay
+	// spec-correct.
+	out, err := oidcClaimsMap(&oidc.UserInfo{Subject: accountID})
+	if err != nil {
+		return nil, err
+	}
+	// Only the scopes the presented access token actually carries: userinfo must
+	// not become a way around the consent the user gave. A token granted plain
+	// `openid` gets a subject and nothing else.
+	var granted []string
+	if p, ok := api.PrincipalFrom(ctx); ok && p != nil {
+		granted = p.Scopes
+	}
+
+	extra, err := a.oidcScopeClaims(ctx, accountID, granted)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range extra {
+		out[k] = v
+	}
+
+	return out, nil
+}
+
+// oidcScopeClaims resolves the standard OIDC profile/email claims a relying
+// party expects for the scopes it was granted (OIDC Core §5.4).
+//
+// It matters more than it looks: oauth2-proxy, Grafana and friends identify the
+// signed-in person by the `email` claim and refuse a token without one. An
+// id_token carrying nothing but `sub` authenticates a subject nobody can name.
+//
+// Only granted scopes contribute — a client that asked for neither gets neither.
+func (a *pgOIDCGrants) oidcScopeClaims(ctx context.Context, accountID string, scopes []string) (map[string]any, error) {
+	out := map[string]any{}
+
+	wantEmail := oidcHasScope(scopes, oidc.ScopeEmail)
+	wantProfile := oidcHasScope(scopes, oidc.ScopeProfile)
+
+	if accountID == "" || (!wantEmail && !wantProfile) {
+		return out, nil
+	}
+
+	row, err := models.FindIamUser(ctx, a.db.Bobx(), accountID)
+	if err != nil {
+		if isStorageNotFound(translatePgErr("user", err)) {
+			// A subject with no account row discloses nothing rather than failing
+			// the token: the token itself is still valid for what it asserts.
+			return out, nil
+		}
+
+		return nil, err
+	}
+
+	var acct domain.Account
+	if err := unmarshal(row.Data, &acct); err != nil {
+		return nil, err
+	}
+
+	if wantEmail && acct.PrimaryEmail != "" {
+		out["email"] = acct.PrimaryEmail
+		out["email_verified"] = acct.EmailVerified
+	}
+
+	if wantProfile {
+		if acct.Name != "" {
+			out["name"] = acct.Name
+		}
+
+		if acct.Locale != "" {
+			out["locale"] = acct.Locale
+		}
+
+		if acct.PrimaryPhone != "" {
+			out["phone_number"] = acct.PrimaryPhone
+			out["phone_number_verified"] = acct.PhoneVerified
+		}
+
+		if !acct.UpdatedAt.IsZero() {
+			out["updated_at"] = acct.UpdatedAt.Unix()
+		}
+	}
+
+	return out, nil
 }
 
 // ===== device verification UI =====
