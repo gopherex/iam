@@ -16,7 +16,9 @@ import {
   type PostV1OauthInteractionByInteractionIdRejectResponse,
   type GetV1OauthGrantsResponse,
 } from '../gen';
+import { client as sharedClient } from '../gen/client.gen';
 import { IamAuthError } from './types';
+import { createCsrfProvider, csrfFailed, type CsrfProvider } from './csrf';
 
 function oidcError(result: { error?: unknown; response?: Response }): IamAuthError {
   const status = result.response?.status;
@@ -32,10 +34,41 @@ function oidcError(result: { error?: unknown; response?: Response }): IamAuthErr
  * Use this when building your own consent, device-authorization, or interaction UI.
  */
 export class IamOidc {
+  private readonly _csrf: CsrfProvider;
+
   constructor(
     private readonly _client: Client,
     private readonly _headers: () => { 'X-Client-Id': string },
-  ) {}
+    csrf?: CsrfProvider,
+  ) {
+    this._csrf = csrf ?? createCsrfProvider(_client, () => this._headers() as Record<string, string>);
+  }
+
+  /**
+   * Headers for a state-changing call: the tenant plus a CSRF token.
+   *
+   * The token is attached unconditionally. A cookie-mode browser needs it, and a
+   * bearer caller is never challenged, so carrying it costs nothing and removes
+   * the one thing every consumer would otherwise have to reimplement.
+   */
+  private async _writeHeaders(): Promise<Record<string, string>> {
+    const headers: Record<string, string> = { ...(this._headers() as Record<string, string>) };
+    const token = await this._csrf.token();
+    if (token) headers['X-Csrf-Token'] = token;
+    return headers;
+  }
+
+  /**
+   * Run a state-changing call, refreshing the CSRF token once if the server
+   * rejects it. A rotated token must not surface to the user as a failed login.
+   */
+  private async _write<T>(call: (headers: Record<string, string>) => Promise<T>): Promise<T> {
+    const first = await call(await this._writeHeaders());
+    if (!csrfFailed(first as { error?: unknown })) return first;
+
+    this._csrf.invalidate();
+    return call(await this._writeHeaders());
+  }
 
   /**
    * Retrieve the device-authorization page data (client info + requested scopes).
@@ -54,21 +87,25 @@ export class IamOidc {
 
   /** Approve a device-authorization request identified by `userCode`. */
   async approveDevice(userCode: string): Promise<{ error: IamAuthError | null }> {
-    const r = await postV1DeviceApprove({
-      client: this._client,
-      headers: this._headers(),
-      body: { user_code: userCode },
-    });
+    const r = await this._write((headers) =>
+      postV1DeviceApprove({
+        client: this._client,
+        headers: headers as never,
+        body: { user_code: userCode },
+      }),
+    );
     return { error: r.error ? oidcError(r) : null };
   }
 
   /** Deny a device-authorization request identified by `userCode`. */
   async denyDevice(userCode: string): Promise<{ error: IamAuthError | null }> {
-    const r = await postV1DeviceDeny({
-      client: this._client,
-      headers: this._headers(),
-      body: { user_code: userCode },
-    });
+    const r = await this._write((headers) =>
+      postV1DeviceDeny({
+        client: this._client,
+        headers: headers as never,
+        body: { user_code: userCode },
+      }),
+    );
     return { error: r.error ? oidcError(r) : null };
   }
 
@@ -91,12 +128,14 @@ export class IamOidc {
     interactionId: string,
     payload?: { flowToken?: string },
   ): Promise<{ data: PostV1OauthInteractionByInteractionIdLoginResponse | null; error: IamAuthError | null }> {
-    const r = await postV1OauthInteractionByInteractionIdLogin({
-      client: this._client,
-      headers: this._headers(),
-      path: { interaction_id: interactionId },
-      body: { flow_token: payload?.flowToken },
-    });
+    const r = await this._write((headers) =>
+      postV1OauthInteractionByInteractionIdLogin({
+        client: this._client,
+        headers: headers as never,
+        path: { interaction_id: interactionId },
+        body: { flow_token: payload?.flowToken },
+      }),
+    );
     if (r.error) return { data: null, error: oidcError(r) };
     return { data: r.data ?? null, error: null };
   }
@@ -109,15 +148,17 @@ export class IamOidc {
     interactionId: string,
     payload?: { grantedScopes?: Array<string>; remember?: boolean },
   ): Promise<{ data: PostV1OauthInteractionByInteractionIdConsentResponse | null; error: IamAuthError | null }> {
-    const r = await postV1OauthInteractionByInteractionIdConsent({
-      client: this._client,
-      headers: this._headers(),
-      path: { interaction_id: interactionId },
-      body: {
-        granted_scopes: payload?.grantedScopes,
-        remember: payload?.remember,
-      },
-    });
+    const r = await this._write((headers) =>
+      postV1OauthInteractionByInteractionIdConsent({
+        client: this._client,
+        headers: headers as never,
+        path: { interaction_id: interactionId },
+        body: {
+          granted_scopes: payload?.grantedScopes,
+          remember: payload?.remember,
+        },
+      }),
+    );
     if (r.error) return { data: null, error: oidcError(r) };
     return { data: r.data ?? null, error: null };
   }
@@ -130,15 +171,17 @@ export class IamOidc {
     interactionId: string,
     payload?: { error?: string; errorDescription?: string },
   ): Promise<{ data: PostV1OauthInteractionByInteractionIdRejectResponse | null; error: IamAuthError | null }> {
-    const r = await postV1OauthInteractionByInteractionIdReject({
-      client: this._client,
-      headers: this._headers(),
-      path: { interaction_id: interactionId },
-      body: {
-        error: payload?.error,
-        error_description: payload?.errorDescription,
-      },
-    });
+    const r = await this._write((headers) =>
+      postV1OauthInteractionByInteractionIdReject({
+        client: this._client,
+        headers: headers as never,
+        path: { interaction_id: interactionId },
+        body: {
+          error: payload?.error,
+          error_description: payload?.errorDescription,
+        },
+      }),
+    );
     if (r.error) return { data: null, error: oidcError(r) };
     return { data: r.data ?? null, error: null };
   }
@@ -156,11 +199,47 @@ export class IamOidc {
 
   /** Revoke an OAuth grant (de-authorize an application). */
   async revokeGrant(grantId: string): Promise<{ error: IamAuthError | null }> {
-    const r = await deleteV1OauthGrantsByGrantId({
-      client: this._client,
-      headers: this._headers(),
-      path: { grant_id: grantId },
-    });
+    const r = await this._write((headers) =>
+      deleteV1OauthGrantsByGrantId({
+        client: this._client,
+        headers: headers as never,
+        path: { grant_id: grantId },
+      }),
+    );
     return { error: r.error ? oidcError(r) : null };
   }
+}
+
+/**
+ * createIamOidc builds the OIDC end-user namespace on its own, for a page that
+ * has no session of its own to manage.
+ *
+ * The hosted login / consent / device screens are exactly that case: they
+ * authenticate the user through the flow engine and then act on the interaction
+ * with the resulting cookie session. They need this namespace and nothing else
+ * from the client, and they must not have to hand-roll the CSRF handshake it
+ * already performs.
+ */
+export function createIamOidc(options: {
+  /** IAM base URL. Empty (the default) means same-origin. */
+  baseUrl?: string;
+  /** Project id, sent as X-Client-Id. */
+  clientId: string;
+  /** Project environment, sent as X-Environment when set. */
+  environment?: string;
+  /** Fetch client to use; defaults to the SDK's shared one. */
+  client?: Client;
+}): IamOidc {
+  const http = options.client ?? sharedClient;
+  if (options.baseUrl !== undefined) {
+    http.setConfig({ baseUrl: options.baseUrl });
+  }
+
+  const headers = () => {
+    const out: Record<string, string> = { 'X-Client-Id': options.clientId };
+    if (options.environment) out['X-Environment'] = options.environment;
+    return out as { 'X-Client-Id': string };
+  };
+
+  return new IamOidc(http, headers);
 }

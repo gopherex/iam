@@ -71,7 +71,10 @@ export type {
   CredentialResult,
 } from './auth/webauthn';
 export { IamTokens } from './auth/tokens';
-export { IamOidc } from './auth/oidc';
+export { IamOidc, createIamOidc } from './auth/oidc';
+// Cookie-mode CSRF handshake, exposed for callers driving their own requests.
+export { createCsrfProvider, csrfFailed } from './auth/csrf';
+export type { CsrfProvider } from './auth/csrf';
 // Admin invitation management (project-admin token; separate from the user
 // client). Redemption is iam.flow.redeemInvite on the user client.
 export { IamInvitesAdmin, createIamInvitesAdmin } from './auth/invites';

@@ -22,13 +22,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle, Loader2, ShieldCheck, UserRound } from 'lucide-react';
-import {
-  getV1AuthSession,
-  getV1OauthInteractionByInteractionId,
-  postV1OauthInteractionByInteractionIdConsent,
-  postV1OauthInteractionByInteractionIdLogin,
-  postV1OauthInteractionByInteractionIdReject,
-} from '@gopherex/iam-sdk';
+import { createIamOidc, getV1AuthSession, getV1OauthInteractionByInteractionId } from '@gopherex/iam-sdk';
 
 import { FlowSteps, flowStepMeta } from '@/components/flow-steps';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -43,8 +37,9 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { interpolate, resolveLocale, scopeLabel, translator, type T } from '@/lib/i18n';
-import { csrfHeaders, providerErrorKey } from '@/lib/provider-api';
-import { call, type ApiError } from '@/lib/sdk';
+import { providerErrorKey } from '@/lib/provider-api';
+import { IamAuthError } from '@gopherex/iam-sdk';
+import { call } from '@/lib/sdk';
 import { useFlow } from '@/lib/use-flow';
 
 interface InteractionContext {
@@ -78,8 +73,18 @@ export function InteractionPage() {
   const appName = ctx?.client?.name || ctx?.client?.id || '';
   const flow = useFlow();
 
+  // The SDK namespace owns the cookie-mode CSRF handshake; it can only be built
+  // once the interaction has told us which project we are in.
+  const oidc = useMemo(
+    () =>
+      ctx?.project_id
+        ? createIamOidc({ baseUrl: '', clientId: ctx.project_id, environment: ctx.environment })
+        : null,
+    [ctx?.project_id, ctx?.environment],
+  );
+
   const fail = useCallback((err: unknown) => {
-    setErrorKey(providerErrorKey((err as ApiError)?.code));
+    setErrorKey(providerErrorKey((err as IamAuthError)?.code));
     setScreen('error');
   }, []);
 
@@ -117,23 +122,18 @@ export function InteractionPage() {
 
   // ---- claim the interaction with the current browser session ----
   const claim = useCallback(async () => {
-    if (!ctx?.project_id) return;
+    if (!oidc) return;
     setBusy(true);
     try {
-      await call(
-        postV1OauthInteractionByInteractionIdLogin({
-          path: { interaction_id: id },
-          headers: await csrfHeaders(ctx.project_id, ctx.environment),
-          body: {},
-        }),
-      );
+      const { error } = await oidc.loginInteraction(id);
+      if (error) throw error;
       await load();
     } catch (err) {
       fail(err);
     } finally {
       setBusy(false);
     }
-  }, [ctx?.project_id, ctx?.environment, id, load, fail]);
+  }, [oidc, id, load, fail]);
 
   // Once the embedded sign-in flow completes it has left a session cookie
   // behind, so the interaction can be claimed exactly like an existing session.
@@ -149,27 +149,19 @@ export function InteractionPage() {
   }
 
   async function decide(allow: boolean) {
-    if (!ctx?.project_id) return;
+    if (!oidc) return;
     setBusy(true);
     try {
-      const headers = await csrfHeaders(ctx.project_id, ctx.environment);
-      const res = allow
-        ? await call(
-            postV1OauthInteractionByInteractionIdConsent({
-              path: { interaction_id: id },
-              headers,
-              body: { granted_scopes: ctx.requested_scopes ?? [], remember },
-            }),
-          )
-        : await call(
-            postV1OauthInteractionByInteractionIdReject({
-              path: { interaction_id: id },
-              headers,
-              body: { error: 'access_denied' },
-            }),
-          );
+      const { data, error } = allow
+        ? await oidc.consentInteraction(id, {
+            grantedScopes: ctx?.requested_scopes ?? [],
+            remember,
+          })
+        : await oidc.rejectInteraction(id, { error: 'access_denied' });
 
-      const to = (res as { redirect_to?: string } | undefined)?.redirect_to;
+      if (error) throw error;
+
+      const to = (data as { redirect_to?: string } | undefined)?.redirect_to;
       if (to) {
         leave(to);
         return;

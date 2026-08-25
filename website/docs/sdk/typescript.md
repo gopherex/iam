@@ -200,8 +200,35 @@ await iam.oidc.getDevice(userCode);
 await iam.oidc.approveDevice(userCode);
 await iam.oidc.getInteraction(interactionId);
 await iam.oidc.consentInteraction(interactionId, { grantedScopes, remember: true });
+await iam.oidc.loginInteraction(interactionId);
 await iam.oidc.listGrants();
 await iam.oidc.revokeGrant(grantId);
+```
+
+Every state-changing call here carries the cookie-mode **CSRF token** for you:
+the namespace fetches it from `/v1/csrf`, caches it, attaches it, and retries
+once if the server says it is stale. You do not need to perform that handshake
+yourself, and a bearer-token caller is unaffected (IAM does not challenge a
+request whose credential is not ambient).
+
+A page that has no session of its own to manage — a hosted login, consent or
+device screen — can build the namespace alone:
+
+```ts
+import { createIamOidc } from '@gopherex/iam-sdk';
+
+// project id comes from GET /v1/oauth/interaction/{id}, which the browser can
+// call knowing nothing but the interaction id
+const oidc = createIamOidc({ clientId: projectId });
+await oidc.consentInteraction(interactionId, { grantedScopes, remember: true });
+```
+
+To establish the browser session those screens rely on, start the sign-in flow
+in cookie mode — the completed session comes back as HttpOnly cookies instead of
+in the response body:
+
+```ts
+await iam.flow.start({ kind: 'signin', email, password, cookieMode: true });
 ```
 
 ## `iam.config`

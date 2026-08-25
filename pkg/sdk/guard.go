@@ -52,6 +52,27 @@ func (p *Principal) HasAllScopes(scopes ...string) bool {
 	return true
 }
 
+// InGroup reports whether the principal holds the given IAM role, as carried by
+// the `groups` claim. The claim is present only when the token was issued with
+// the `groups` scope, so a resource server that needs roles must request it.
+func (p *Principal) InGroup(group string) bool {
+	if p == nil || group == "" {
+		return false
+	}
+
+	return slices.Contains(p.Groups, group)
+}
+
+// InAnyGroup reports whether the principal holds at least one of groups. With no
+// groups it returns true (no constraint).
+func (p *Principal) InAnyGroup(groups ...string) bool {
+	if len(groups) == 0 {
+		return true
+	}
+
+	return slices.ContainsFunc(groups, p.InGroup)
+}
+
 // HasAMR reports whether the principal authenticated with the given method
 // (e.g. "pwd", "otp", "webauthn").
 func (p *Principal) HasAMR(method string) bool {

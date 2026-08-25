@@ -102,3 +102,50 @@ func TestRequireAALHTTP(t *testing.T) {
 		t.Fatalf("aal short: want 403, got %d", c)
 	}
 }
+
+func TestPrincipalGroups(t *testing.T) {
+	t.Parallel()
+
+	p := &Principal{Groups: []string{"ops", "platform:admin"}}
+
+	if !p.InGroup("ops") || !p.InGroup("platform:admin") {
+		t.Fatal("InGroup missed a role the principal holds")
+	}
+
+	if p.InGroup("viewer") || p.InGroup("") {
+		t.Fatal("InGroup matched a role the principal does not hold")
+	}
+
+	if !p.InAnyGroup("viewer", "ops") {
+		t.Fatal("InAnyGroup should match on any one role")
+	}
+
+	if p.InAnyGroup("viewer", "auditor") {
+		t.Fatal("InAnyGroup matched with no overlap")
+	}
+
+	// No constraint means no constraint.
+	if !p.InAnyGroup() {
+		t.Fatal("InAnyGroup with no arguments should not constrain")
+	}
+
+	// A nil principal is unauthenticated, not privileged.
+	var nilp *Principal
+	if nilp.InGroup("ops") || nilp.InAnyGroup("ops") {
+		t.Fatal("a nil principal must hold no roles")
+	}
+}
+
+func TestPrincipalGroupsFromClaims(t *testing.T) {
+	t.Parallel()
+
+	p := principalFromClaims(Claims{
+		"sub":    "acct_1",
+		"pid":    "proj_1",
+		"groups": []any{"ops", "viewer"},
+	})
+
+	if !p.InGroup("ops") || !p.InGroup("viewer") {
+		t.Fatalf("groups claim was not surfaced: %+v", p.Groups)
+	}
+}

@@ -41,7 +41,12 @@ type Principal struct {
 	Scopes      []string
 	AAL         int
 	AMR         []string
-	Claims      Claims
+	// Groups are the subject's IAM roles, present when the token was issued with
+	// the `groups` scope. A resource server maps them onto its own permissions —
+	// it is the reason the claim exists, so it is surfaced here rather than left
+	// for every caller to dig out of Claims.
+	Groups []string
+	Claims Claims
 }
 
 // VerifyResult is IAM's token-verification response after decoding raw claims.
@@ -312,6 +317,7 @@ func principalFromClaims(claims Claims) Principal {
 		Scopes:      claimStringSlice(claims, "scope", "scp"),
 		AAL:         claimInt(claims, "aal"),
 		AMR:         claimStringSlice(claims, "amr"),
+		Groups:      claimStringSlice(claims, "groups"),
 		Claims:      claims,
 	}
 }

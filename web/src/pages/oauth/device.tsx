@@ -11,7 +11,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle, Loader2, MonitorSmartphone } from 'lucide-react';
-import { getV1Device, postV1DeviceApprove, postV1DeviceDeny } from '@gopherex/iam-sdk';
+import { createIamOidc } from '@gopherex/iam-sdk';
 
 import { FlowSteps } from '@/components/flow-steps';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -26,8 +26,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { interpolate, resolveLocale, scopeLabel, translator, type T } from '@/lib/i18n';
-import { csrfHeaders, providerErrorKey } from '@/lib/provider-api';
-import { call, type ApiError } from '@/lib/sdk';
+import { providerErrorKey } from '@/lib/provider-api';
+import { IamAuthError } from '@gopherex/iam-sdk';
 import { useFlow } from '@/lib/use-flow';
 
 interface DeviceContext {
@@ -57,8 +57,14 @@ export function DevicePage() {
   const flow = useFlow();
   const appName = String((ctx?.client as { name?: string })?.name ?? '');
 
+  // The SDK namespace owns the cookie-mode CSRF handshake.
+  const oidc = useMemo(
+    () => (projectId ? createIamOidc({ baseUrl: '', clientId: projectId }) : null),
+    [projectId],
+  );
+
   const fail = useCallback((err: unknown) => {
-    const apiErr = err as ApiError;
+    const apiErr = err as IamAuthError;
     setErrorKey(apiErr?.code === 'not_found' ? 'device.expired' : providerErrorKey(apiErr?.code));
     setScreen('error');
   }, []);
@@ -72,13 +78,9 @@ export function DevicePage() {
     }
     setBusy(true);
     try {
-      const got = (await call(
-        getV1Device({
-          query: { user_code: code.trim() },
-          headers: { 'X-Client-Id': projectId },
-        }),
-      )) as DeviceContext;
-      setCtx(got);
+      const { data, error } = await oidc!.getDevice(code.trim());
+      if (error) throw error;
+      setCtx((data ?? {}) as DeviceContext);
       setScreen('confirm');
     } catch (err) {
       fail(err);
@@ -88,20 +90,18 @@ export function DevicePage() {
   }
 
   async function decide(approve: boolean) {
+    if (!oidc) return;
     setBusy(true);
     try {
-      const headers = await csrfHeaders(projectId);
-      if (approve) {
-        await call(postV1DeviceApprove({ headers, body: { user_code: code.trim() } }));
-        setScreen('approved');
-      } else {
-        await call(postV1DeviceDeny({ headers, body: { user_code: code.trim() } }));
-        setScreen('denied');
-      }
+      const { error } = approve
+        ? await oidc.approveDevice(code.trim())
+        : await oidc.denyDevice(code.trim());
+      if (error) throw error;
+      setScreen(approve ? 'approved' : 'denied');
     } catch (err) {
       // Approving needs a signed-in browser; send an anonymous visitor through
       // the same sign-in flow rather than a dead end.
-      if ((err as ApiError)?.status === 401) {
+      if ((err as IamAuthError)?.status === 401) {
         setScreen('signin');
         return;
       }
