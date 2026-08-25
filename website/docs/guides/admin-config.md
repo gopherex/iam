@@ -140,6 +140,14 @@ curl -sX PATCH .../admin/config/password-policy -H "Authorization: Bearer $ADMIN
 | `breached_check` | `false` only | the breach corpus is not wired up; `true` is refused rather than accepted as a no-op |
 | `history` | `0` only | reuse history is not implemented; any positive value is refused |
 
+**Account lockout** is not configurable and is always on: **10** consecutive
+wrong passwords lock that credential for **15 minutes**. It is deliberately
+moderate — high enough that a fat-fingered password does not lock anyone out,
+low enough to throttle credential stuffing that spreads across IPs and so slips
+past [rate limits](#rate_limits). The short duration is what stops the lockout
+itself becoming a denial of service against a chosen victim. Only password
+sign-in is affected; passwordless and MFA paths are unaffected.
+
 ### `session_policy`
 
 ```bash
