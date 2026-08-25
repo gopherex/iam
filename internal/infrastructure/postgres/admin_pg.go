@@ -379,6 +379,11 @@ func (a *pgAdminUsers) Delete(ctx context.Context, projectID, environment, accou
 		if _, err := a.revokeSessions(ctx, projectID, environment, accountID, "", "user_deleted"); err != nil {
 			return err
 		}
+		// Role assignments must not outlive the user, or a recreated id would
+		// inherit them (and with them the `groups` claim).
+		if err := deleteUserRoles(ctx, a.db, projectID, adminEnv(environment), accountID); err != nil {
+			return err
+		}
 
 		if err := row.Delete(ctx, a.db.Bobx()); err != nil {
 			return err

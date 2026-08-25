@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"reflect"
 	"testing"
 )
 
@@ -357,6 +358,75 @@ func TestE2EAdminClientsApply(t *testing.T) {
 		}
 		if !ids[wantedID] {
 			t.Fatal("prune deleted a client that is in the list")
+		}
+	})
+}
+
+// TestE2EAdminUserRoles covers the admin role surface end to end: replace a
+// user's roles, read them back, and reject a malformed label.
+func TestE2EAdminUserRoles(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, token := e2eProjectAdmin(t, ctx)
+
+	// Create a user through the runtime sign-up so the id is a real account.
+	rSignUp := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/sign-up",
+		map[string]any{"email": fmt.Sprintf("roles+%s@example.com", newUUID()), "password": "Sup3rStr0ng!Pass"},
+		map[string]string{"X-Client-Id": projectID, "X-Environment": "live"},
+	)
+	e2eWantStatus(t, rSignUp, http.StatusOK)
+
+	var signUp struct {
+		User struct {
+			ID string `json:"id"`
+		} `json:"user"`
+	}
+	e2eDecode(t, rSignUp, &signUp)
+	if signUp.User.ID == "" {
+		t.Fatalf("sign-up returned no user id: %s", rSignUp.Body)
+	}
+
+	rolesURL := fmt.Sprintf("%s/v1/projects/%s/admin/users/%s/roles", ts.URL, projectID, signUp.User.ID)
+
+	t.Run("starts_empty", func(t *testing.T) {
+		r := e2eReq(t, ctx, http.MethodGet, rolesURL, nil, e2eBearer(token))
+		e2eWantStatus(t, r, http.StatusOK)
+
+		var body struct {
+			Roles []string `json:"roles"`
+		}
+		e2eDecode(t, r, &body)
+		if len(body.Roles) != 0 {
+			t.Fatalf("roles = %v, want empty", body.Roles)
+		}
+	})
+
+	t.Run("put_replaces_and_sorts", func(t *testing.T) {
+		r := e2eReq(t, ctx, http.MethodPut, rolesURL,
+			map[string]any{"roles": []string{"viewer", "ops", "viewer"}}, e2eBearer(token))
+		e2eWantStatus(t, r, http.StatusOK)
+
+		var body struct {
+			Roles []string `json:"roles"`
+		}
+		e2eDecode(t, r, &body)
+		if want := []string{"ops", "viewer"}; !reflect.DeepEqual(body.Roles, want) {
+			t.Fatalf("roles = %v, want %v", body.Roles, want)
+		}
+
+		rGet := e2eReq(t, ctx, http.MethodGet, rolesURL, nil, e2eBearer(token))
+		e2eWantStatus(t, rGet, http.StatusOK)
+		e2eDecode(t, rGet, &body)
+		if want := []string{"ops", "viewer"}; !reflect.DeepEqual(body.Roles, want) {
+			t.Fatalf("roles after GET = %v, want %v", body.Roles, want)
+		}
+	})
+
+	t.Run("rejects_malformed_role", func(t *testing.T) {
+		r := e2eReq(t, ctx, http.MethodPut, rolesURL,
+			map[string]any{"roles": []string{"not a role"}}, e2eBearer(token))
+		if r.Status != http.StatusUnprocessableEntity && r.Status != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 422/400 for a malformed role; body: %s", r.Status, r.Body)
 		}
 	})
 }

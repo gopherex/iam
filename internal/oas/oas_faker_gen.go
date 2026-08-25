@@ -8564,6 +8564,22 @@ func (s *UserMetadata) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *UserRoles) SetFake() {
+	{
+		{
+			s.Roles = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.Roles = append(s.Roles, elem)
+			}
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *UserStatus) SetFake() {
 	*s = UserStatusActive
 }

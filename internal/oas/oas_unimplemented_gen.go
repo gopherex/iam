@@ -1000,6 +1000,17 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities
 	return r, ht.ErrNotImplemented
 }
 
+// GetV1ProjectsByProjectIdAdminUsersByUserIdRoles implements getV1ProjectsByProjectIdAdminUsersByUserIdRoles operation.
+//
+// Roles are labels IAM owns, assigned per project environment. They are the only source of the
+// `groups` claim: a client that is granted the `groups` scope receives exactly these values in its
+// access and id token.
+//
+// GET /v1/projects/{project_id}/admin/users/{user_id}/roles
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminUsersByUserIdRoles(ctx context.Context, params GetV1ProjectsByProjectIdAdminUsersByUserIdRolesParams) (r *UserRoles, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetV1ProjectsByProjectIdAdminUsersByUserIdSessions implements getV1ProjectsByProjectIdAdminUsersByUserIdSessions operation.
 //
 // List a user's sessions.
@@ -2655,6 +2666,17 @@ func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminI18nByLocale(ctx contex
 //
 // PUT /v1/projects/{project_id}/admin/retention-policy
 func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, req *RetentionPolicy, params PutV1ProjectsByProjectIdAdminRetentionPolicyParams) (r *RetentionPolicy, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PutV1ProjectsByProjectIdAdminUsersByUserIdRoles implements putV1ProjectsByProjectIdAdminUsersByUserIdRoles operation.
+//
+// Desired state: the user ends up with exactly the roles in the body, in this environment. A role
+// absent from the list is unassigned. Values are de-duplicated and returned sorted, so the `groups`
+// claim is stable.
+//
+// PUT /v1/projects/{project_id}/admin/users/{user_id}/roles
+func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminUsersByUserIdRoles(ctx context.Context, req *UserRoles, params PutV1ProjectsByProjectIdAdminUsersByUserIdRolesParams) (r *UserRoles, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

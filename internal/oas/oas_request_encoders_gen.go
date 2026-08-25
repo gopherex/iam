@@ -2673,6 +2673,20 @@ func encodePutV1ProjectsByProjectIdAdminRetentionPolicyRequest(
 	return nil
 }
 
+func encodePutV1ProjectsByProjectIdAdminUsersByUserIdRolesRequest(
+	req *UserRoles,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodePutV1ScimV2ByConnectionIdGroupsByGroupIdRequest(
 	req PutV1ScimV2ByConnectionIdGroupsByGroupIdReq,
 	r *http.Request,

@@ -2199,6 +2199,28 @@ func encodeGetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesResponse(response
 	return nil
 }
 
+func encodeGetV1ProjectsByProjectIdAdminUsersByUserIdRolesResponse(response *UserRoles, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeGetV1ProjectsByProjectIdAdminUsersByUserIdSessionsResponse(response *GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK, w http.ResponseWriter, span trace.Span) error {
 	if err := func() error {
 		if err := response.Validate(); err != nil {
@@ -6005,6 +6027,28 @@ func encodePutV1ProjectsByProjectIdAdminI18nByLocaleResponse(response PutV1Proje
 }
 
 func encodePutV1ProjectsByProjectIdAdminRetentionPolicyResponse(response *RetentionPolicy, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodePutV1ProjectsByProjectIdAdminUsersByUserIdRolesResponse(response *UserRoles, w http.ResponseWriter, span trace.Span) error {
 	if err := func() error {
 		if err := response.Validate(); err != nil {
 			return err

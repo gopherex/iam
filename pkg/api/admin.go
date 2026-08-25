@@ -93,6 +93,13 @@ type AdminConnections interface {
 // session-policy / consent documents plus feature flags and i18n bundles. Each
 // document is carried opaquely as a domain.AdminConfigDoc the adapter validates
 // and persists.
+// AdminRoles is the role-assignment slice. Roles are IAM-owned labels scoped to
+// a project environment; they are the only source of the OIDC `groups` claim.
+type AdminRoles interface {
+	ListRoles(ctx context.Context, cmd domain.AdminUserRolesCmd) ([]string, error)
+	SetRoles(ctx context.Context, cmd domain.AdminUserRolesSetCmd) ([]string, error)
+}
+
 type AdminConfig interface {
 	// GetConfigBundle reads every configuration document at once; ApplyConfig
 	// writes a whole bundle atomically. Together they are the desired-state
@@ -194,6 +201,7 @@ type AdminDeps struct {
 	APIKeys         AdminAPIKeys
 	Connections     AdminConnections
 	Config          AdminConfig
+	Roles           AdminRoles
 	Keys            AdminKeys
 	AccessRequests  AdminAccessRequests
 	Invites         AdminInvites
@@ -2988,6 +2996,54 @@ func webhookUpdateCmd(projectID, environment, id string, req *oas.PatchV1Project
 	}
 
 	return cmd, nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdRoles(
+	ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdRolesParams,
+) (*oas.UserRoles, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	roles, err := s.deps.Roles.ListRoles(ctx, domain.AdminUserRolesCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		UserID:      params.UserID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &oas.UserRoles{Roles: rolesOrEmpty(roles)}, nil
+}
+
+func (s *AdminService) PutV1ProjectsByProjectIdAdminUsersByUserIdRoles(
+	ctx context.Context, req *oas.UserRoles, params oas.PutV1ProjectsByProjectIdAdminUsersByUserIdRolesParams,
+) (*oas.UserRoles, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	roles, err := s.deps.Roles.SetRoles(ctx, domain.AdminUserRolesSetCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		UserID:      params.UserID,
+		Roles:       req.Roles,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &oas.UserRoles{Roles: rolesOrEmpty(roles)}, nil
+}
+
+// rolesOrEmpty keeps `roles` a JSON array rather than null when a user has none.
+func rolesOrEmpty(roles []string) []string {
+	if roles == nil {
+		return []string{}
+	}
+
+	return roles
 }
 
 // ----- desired-state (IaC) apply -----

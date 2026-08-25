@@ -115,6 +115,7 @@ const (
 	GetV1ProjectsByProjectIdAdminUsersByUserIdOperation                             OperationName = "GetV1ProjectsByProjectIdAdminUsersByUserId"
 	GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOperation                       OperationName = "GetV1ProjectsByProjectIdAdminUsersByUserIdGrants"
 	GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOperation                   OperationName = "GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities"
+	GetV1ProjectsByProjectIdAdminUsersByUserIdRolesOperation                        OperationName = "GetV1ProjectsByProjectIdAdminUsersByUserIdRoles"
 	GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOperation                     OperationName = "GetV1ProjectsByProjectIdAdminUsersByUserIdSessions"
 	GetV1ProjectsByProjectIdAdminWebhookDeliveriesOperation                         OperationName = "GetV1ProjectsByProjectIdAdminWebhookDeliveries"
 	GetV1ProjectsByProjectIdAdminWebhooksOperation                                  OperationName = "GetV1ProjectsByProjectIdAdminWebhooks"
@@ -298,6 +299,7 @@ const (
 	PutV1ProjectsByProjectIdAdminFeaturesOperation                                  OperationName = "PutV1ProjectsByProjectIdAdminFeatures"
 	PutV1ProjectsByProjectIdAdminI18nByLocaleOperation                              OperationName = "PutV1ProjectsByProjectIdAdminI18nByLocale"
 	PutV1ProjectsByProjectIdAdminRetentionPolicyOperation                           OperationName = "PutV1ProjectsByProjectIdAdminRetentionPolicy"
+	PutV1ProjectsByProjectIdAdminUsersByUserIdRolesOperation                        OperationName = "PutV1ProjectsByProjectIdAdminUsersByUserIdRoles"
 	PutV1ScimV2ByConnectionIdGroupsByGroupIdOperation                               OperationName = "PutV1ScimV2ByConnectionIdGroupsByGroupId"
 	PutV1ScimV2ByConnectionIdUsersByScimUserIdOperation                             OperationName = "PutV1ScimV2ByConnectionIdUsersByScimUserId"
 )

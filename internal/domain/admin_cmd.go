@@ -172,6 +172,25 @@ type AdminConfigUpdateCmd struct {
 	Doc         AdminConfigDoc
 }
 
+// ----- Roles -----
+
+// AdminUserRolesCmd addresses one user's role assignments inside a project
+// environment.
+type AdminUserRolesCmd struct {
+	ProjectID   string
+	Environment string
+	UserID      string
+}
+
+// AdminUserRolesSetCmd replaces a user's roles with exactly Roles. Assignments
+// are a desired-state list: whatever is not in it is removed.
+type AdminUserRolesSetCmd struct {
+	ProjectID   string
+	Environment string
+	UserID      string
+	Roles       []string
+}
+
 // ----- Desired-state (IaC) apply -----
 
 // Actions a desired-state apply reports per object. They describe what the

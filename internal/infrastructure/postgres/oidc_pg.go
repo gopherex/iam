@@ -75,7 +75,26 @@ const (
 	claimClientID    = "client_id"
 	claimScope       = "scope"
 	claimExpiresAt   = "exp"
+	// claimGroups carries the user's IAM roles. It is emitted only when the
+	// `groups` scope was granted, and its values come from the role assignments
+	// in iam_user_roles — never from anything the client sent.
+	claimGroups = "groups"
 )
+
+// oidcScopeGroups asks for the user's IAM roles in the `groups` claim of the
+// access and id token. Relying parties (ArgoCD, Grafana, ...) map that claim
+// onto their own permissions.
+const oidcScopeGroups = "groups"
+
+// oidcClaimsSupported is the claims_supported list of the discovery document:
+// what a client can expect to find in a token from this provider.
+func oidcClaimsSupported() []string {
+	return []string{
+		claimIssuer, claimSubject, claimAudience, claimExpiresAt, "iat", "auth_time",
+		"nonce", "at_hash", "azp", claimSessionID, claimScope, claimClientID,
+		claimTokenType, claimEnvironment, claimGroups,
+	}
+}
 
 // Values of the `typ` claim. IAM mints three token kinds and each verify path
 // checks the kind it expects, so a refresh token can never be presented as an
@@ -1070,16 +1089,40 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 	issuer := oidcIssuer(a.db.PublicURL, sub.projectID, env)
 	now := nowUTC()
 
+	// The `groups` scope projects the user's IAM role assignments into the token.
+	// The values are read from storage, never taken from the request: a client
+	// can ask for the scope, but it cannot ask for a role.
+	// A granted scope always yields the claim, empty list included: "asked and
+	// has no roles" must be distinguishable from "did not ask".
+	var groups []string
+
+	if oidcHasScope(sub.scopes, oidcScopeGroups) {
+		roles, err := userRoles(ctx, a.db, sub.projectID, env, sub.subject)
+		if err != nil {
+			return nil, err
+		}
+
+		groups = roles
+		if groups == nil {
+			groups = []string{}
+		}
+	}
+
 	// Access token: signed RS256 JWT carrying the standard access claims.
-	access, err := a.db.Signer().Sign(ctx, sub.projectID, env, map[string]any{
-		claimIssuer: issuer,
-		"sub":       sub.subject,
-		"aud":       sub.clientID,
-		"client_id": sub.clientID,
-		"scope":     joinScopes(sub.scopes),
-		"typ":       "access",
-		"env":       env,
-	}, oidcAccessTTL)
+	accessClaims := map[string]any{
+		claimIssuer:      issuer,
+		claimSubject:     sub.subject,
+		claimAudience:    sub.clientID,
+		claimClientID:    sub.clientID,
+		claimScope:       joinScopes(sub.scopes),
+		claimTokenType:   tokenTypeAccess,
+		claimEnvironment: env,
+	}
+	if groups != nil {
+		accessClaims[claimGroups] = groups
+	}
+
+	access, err := a.db.Signer().Sign(ctx, sub.projectID, env, accessClaims, oidcAccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -1094,7 +1137,7 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 	// id_token: only for openid requests. Built from the zitadel IDTokenClaims
 	// struct (correct field names), then signed by OUR key via the Signer.
 	if oidcHasScope(sub.scopes, "openid") {
-		idToken, err := a.mintIDToken(ctx, sub, env, issuer, access, now)
+		idToken, err := a.mintIDToken(ctx, sub, env, issuer, access, now, groups)
 		if err != nil {
 			return nil, err
 		}
@@ -1105,13 +1148,13 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 	// refresh_token: signed, rotatable JWT for offline_access requests.
 	if oidcHasScope(sub.scopes, "offline_access") {
 		refresh, err := a.db.Signer().Sign(ctx, sub.projectID, env, map[string]any{
-			claimIssuer: issuer,
-			"sub":       sub.subject,
-			"aud":       sub.clientID,
-			"client_id": sub.clientID,
-			"scope":     joinScopes(sub.scopes),
-			"typ":       "refresh",
-			"env":       env,
+			claimIssuer:      issuer,
+			claimSubject:     sub.subject,
+			claimAudience:    sub.clientID,
+			claimClientID:    sub.clientID,
+			claimScope:       joinScopes(sub.scopes),
+			claimTokenType:   tokenTypeRefresh,
+			claimEnvironment: env,
 		}, oidcRefreshTTL)
 		if err != nil {
 			return nil, err
@@ -1125,8 +1168,12 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 
 // mintIDToken builds an OIDC id_token for sub using the zitadel IDTokenClaims
 // struct for correct claim names, sets the access-token hash (at_hash), and
-// signs it with OUR project key via the Signer.
-func (a *pgOIDCGrants) mintIDToken(ctx context.Context, sub oidcTokenSubject, env, issuer, accessToken string, now time.Time) (string, error) {
+// signs it with OUR project key via the Signer. groups is the resolved role list
+// (nil unless the `groups` scope was granted) and is carried alongside the
+// standard claims.
+func (a *pgOIDCGrants) mintIDToken(
+	ctx context.Context, sub oidcTokenSubject, env, issuer, accessToken string, now time.Time, groups []string,
+) (string, error) {
 	idc := oidc.NewIDTokenClaims(
 		issuer,
 		sub.subject,
@@ -1155,7 +1202,11 @@ func (a *pgOIDCGrants) mintIDToken(ctx context.Context, sub oidcTokenSubject, en
 	delete(claims, "exp")
 	delete(claims, "iat")
 	delete(claims, "nbf")
-	claims["env"] = env
+	claims[claimEnvironment] = env
+
+	if groups != nil {
+		claims[claimGroups] = groups
+	}
 
 	return a.db.Signer().Sign(ctx, sub.projectID, env, claims, oidcIDTokenTTL)
 }
@@ -1565,20 +1616,25 @@ func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env s
 	// friends) reject the document outright when the two disagree.
 	issuer := oidcIssuer(root, projectID, env)
 	cfg := &oidc.DiscoveryConfiguration{
-		Issuer:                           issuer,
-		AuthorizationEndpoint:            root + "/oauth2/authorize",
-		TokenEndpoint:                    root + "/oauth2/token",
-		UserinfoEndpoint:                 root + "/oauth2/userinfo",
-		JwksURI:                          issuer + "/.well-known/jwks.json",
-		IntrospectionEndpoint:            root + "/oauth2/introspect",
-		RevocationEndpoint:               root + "/oauth2/revoke",
-		DeviceAuthorizationEndpoint:      root + "/oauth2/device_authorization",
-		EndSessionEndpoint:               root + "/oauth2/logout",
-		ResponseTypesSupported:           []string{"code"},
-		ResponseModesSupported:           []string{"query", "fragment"},
-		GrantTypesSupported:              []oidc.GrantType{oidc.GrantTypeCode, oidc.GrantTypeRefreshToken, oidc.GrantTypeDeviceCode},
-		SubjectTypesSupported:            []string{"public"},
-		ScopesSupported:                  []string{oidc.ScopeOpenID, oidc.ScopeProfile, oidc.ScopeEmail, oidc.ScopeOfflineAccess},
+		Issuer:                      issuer,
+		AuthorizationEndpoint:       root + "/oauth2/authorize",
+		TokenEndpoint:               root + "/oauth2/token",
+		UserinfoEndpoint:            root + "/oauth2/userinfo",
+		JwksURI:                     issuer + "/.well-known/jwks.json",
+		IntrospectionEndpoint:       root + "/oauth2/introspect",
+		RevocationEndpoint:          root + "/oauth2/revoke",
+		DeviceAuthorizationEndpoint: root + "/oauth2/device_authorization",
+		EndSessionEndpoint:          root + "/oauth2/logout",
+		ResponseTypesSupported:      []string{oidcResponseTypeCode},
+		ResponseModesSupported:      []string{"query", "fragment"},
+		GrantTypesSupported: []oidc.GrantType{
+			oidc.GrantTypeCode, oidc.GrantTypeRefreshToken, oidc.GrantTypeDeviceCode,
+		},
+		SubjectTypesSupported: []string{"public"},
+		ScopesSupported: []string{
+			oidc.ScopeOpenID, oidc.ScopeProfile, oidc.ScopeEmail, oidc.ScopeOfflineAccess, oidcScopeGroups,
+		},
+		ClaimsSupported:                  oidcClaimsSupported(),
 		IDTokenSigningAlgValuesSupported: []string{"RS256"},
 		TokenEndpointAuthMethodsSupported: []oidc.AuthMethod{
 			oidc.AuthMethodBasic, oidc.AuthMethodPost, oidc.AuthMethodNone,

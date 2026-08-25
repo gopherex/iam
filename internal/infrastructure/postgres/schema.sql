@@ -29,6 +29,21 @@ CREATE INDEX idx_iam_users_project ON iam_users (project_id);
 CREATE UNIQUE INDEX uq_iam_users_email ON iam_users (project_id, environment, primary_email) WHERE primary_email IS NOT NULL;
 CREATE UNIQUE INDEX uq_iam_users_phone ON iam_users (project_id, environment, primary_phone) WHERE primary_phone IS NOT NULL;
 
+-- Role assignments. A role is a plain label owned by IAM; it is what the OIDC
+-- `groups` scope projects into the `groups` claim, so a relying party (ArgoCD,
+-- Grafana, ...) can map an IAM user onto its own permissions. Scoped to
+-- project+environment: the same person can be an operator in test and a viewer
+-- in live.
+CREATE TABLE iam_user_roles (
+  project_id  text NOT NULL,
+  environment text NOT NULL DEFAULT 'live',
+  user_id     text NOT NULL,
+  role        text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (project_id, environment, user_id, role)
+);
+CREATE INDEX idx_iam_user_roles_user ON iam_user_roles (project_id, environment, user_id);
+
 CREATE TABLE iam_credentials (
   id         text PRIMARY KEY,
   project_id text NOT NULL,

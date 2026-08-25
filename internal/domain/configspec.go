@@ -202,6 +202,67 @@ func ValidateAbsoluteHTTPURL(field, s string) error {
 }
 
 // ---------------------------------------------------------------------------
+// Roles
+// ---------------------------------------------------------------------------
+
+// maxRoleLength bounds a role label. Roles travel in the `groups` claim of every
+// token issued to a user, so an unbounded label would inflate every token.
+const maxRoleLength = 128
+
+// roleAllowed is the character set a role label may use: the labels relying
+// parties actually configure (ops, platform:admin, team_a, viewer-ro) with no
+// whitespace, no separators that would be ambiguous in a claim, and nothing
+// that could be mistaken for structure.
+func roleAllowed(r rune) bool {
+	switch {
+	case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9':
+		return true
+	case r == '_', r == '-', r == '.', r == ':', r == '/':
+		return true
+	default:
+		return false
+	}
+}
+
+// NormalizeRoles validates a desired-state role list and returns it sorted and
+// de-duplicated, so the same set always produces the same `groups` claim.
+func NormalizeRoles(roles []string) ([]string, error) {
+	seen := make(map[string]struct{}, len(roles))
+	out := make([]string, 0, len(roles))
+
+	for _, raw := range roles {
+		role := strings.TrimSpace(raw)
+		if role == "" {
+			return nil, ErrValidation.WithMessage("role must not be empty")
+		}
+
+		if len(role) > maxRoleLength {
+			return nil, ErrValidation.WithMessage(
+				fmt.Sprintf("role %q is longer than %d characters", role, maxRoleLength))
+		}
+
+		for _, r := range role {
+			if !roleAllowed(r) {
+				return nil, ErrValidation.WithMessage(
+					fmt.Sprintf("role %q contains an unsupported character %q", role, string(r)))
+			}
+		}
+
+		if _, dup := seen[role]; dup {
+			continue
+		}
+
+		seen[role] = struct{}{}
+
+		out = append(out, role)
+	}
+
+	sort.Strings(out)
+
+	return out, nil
+}
+
+// ---------------------------------------------------------------------------
 // Document registry — the documents a bulk apply may carry
 // ---------------------------------------------------------------------------
 

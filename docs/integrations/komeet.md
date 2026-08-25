@@ -20,6 +20,11 @@ The stable join keys are the access-token `sub` (user) and `sid` (session/device
   with `GET {public_url}/p/{project_id}/e/{environment}/.well-known/jwks.json`,
   pin the expected issuer, project, environment, audience/client and
   access-token type, and cache keys by `kid`.
+- OAuth/OIDC tokens carry a `groups` claim (array of strings) when the client was
+  granted the `groups` scope. Its values are the user's IAM role assignments for
+  the project environment, managed at
+  `PUT /v1/projects/{project_id}/admin/users/{user_id}/roles`. Core-auth tokens
+  have no scopes and therefore no `groups` claim.
 - `POST /v1/auth/token/refresh` rotates a refresh token and returns a new access
   token without creating a new device session. The default refresh lifetime is
   30 days. Reuse detection and idle/absolute limits are controlled by the

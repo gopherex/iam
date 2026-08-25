@@ -117,6 +117,7 @@ var operationRolesAdminToken = map[string][]string{
 	GetV1ProjectsByProjectIdAdminUsersByUserIdOperation:                             []string{},
 	GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOperation:                       []string{},
 	GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOperation:                   []string{},
+	GetV1ProjectsByProjectIdAdminUsersByUserIdRolesOperation:                        []string{},
 	GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOperation:                     []string{},
 	GetV1ProjectsByProjectIdAdminWebhookDeliveriesOperation:                         []string{},
 	GetV1ProjectsByProjectIdAdminWebhooksOperation:                                  []string{},
@@ -199,6 +200,7 @@ var operationRolesAdminToken = map[string][]string{
 	PutV1ProjectsByProjectIdAdminFeaturesOperation:                                  []string{},
 	PutV1ProjectsByProjectIdAdminI18nByLocaleOperation:                              []string{},
 	PutV1ProjectsByProjectIdAdminRetentionPolicyOperation:                           []string{},
+	PutV1ProjectsByProjectIdAdminUsersByUserIdRolesOperation:                        []string{},
 }
 
 // GetRolesForAdminToken returns the required roles for the given operation.

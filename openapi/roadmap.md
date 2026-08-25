@@ -45,7 +45,7 @@ First runnable product. A single project/env can do full password-based auth.
 - **Risk**: risk rules & events, rate limits, blocks.
 - **Test mode**: test clock, seed, reset, captured-message inbox.
 
-## v1.5.0 — Desired-state configuration (IaC)
+## v1.5.0 — Desired-state configuration (IaC) + roles
 
 - **Config bundle**: read every project-config document at once, and apply a
   whole bundle in one transaction with per-document validation unchanged.
@@ -53,6 +53,8 @@ First runnable product. A single project/env can do full password-based auth.
   pruning of clients the list omits.
 - **Plan**: `dry_run` on both applies returns the before/after change set and
   writes nothing.
+- **Roles**: per-environment role assignment for a user, and the OIDC `groups`
+  scope that projects those roles into the access and id token.
 
 ## v2.0.0 — IAM as OIDC provider
 

@@ -432,6 +432,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 			APIKeys:         postgres.NewPgAdminAPIKeys(db, emitter),
 			Connections:     postgres.NewPgAdminConnections(db, emitter),
 			Config:          postgres.NewPgAdminConfig(db, emitter),
+			Roles:           postgres.NewPgRoles(db, emitter),
 			Keys:            postgres.NewPgAdminKeys(db, emitter),
 			AccessRequests:  postgres.NewPgAdminAccessRequests(db, emitter),
 			Invites:         postgres.NewPgInvites(db, emitter),

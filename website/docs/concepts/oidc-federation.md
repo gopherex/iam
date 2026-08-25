@@ -55,6 +55,33 @@ original `state`.
 A client can be switched off with `disabled: true` instead of being deleted;
 the authorization endpoint then treats it exactly like an unknown `client_id`.
 
+### Roles in the token (`groups`)
+
+Relying parties (ArgoCD, Grafana, …) need to know *who* the user is inside your
+organisation, not just that they authenticated. IAM assigns **roles** — plain
+labels — to a user per project environment:
+
+```bash
+# the user ends up with exactly these roles in this environment
+curl -sX PUT https://auth.example.com/v1/projects/prj_7Fk2/admin/users/usr_9/roles \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H "X-Environment: live" \
+  -H "Content-Type: application/json" \
+  -d '{"roles":["ops","platform:admin"]}'
+```
+
+A client that is granted the **`groups`** scope receives them as a `groups`
+claim (array of strings) in both the access token and the id_token. The values
+come only from what an admin assigned; a client can ask for the scope, but it
+cannot ask for a role. A granted scope always produces the claim — an empty
+array when the user has no roles — so "asked and has none" is distinguishable
+from "did not ask". Without the scope the claim is absent entirely.
+
+Roles are environment-scoped: the same person can be `ops` in `test` and
+`viewer` in `live`. Allowed characters are letters, digits and `_ - . : /`.
+
+This is deliberately separate from a token profile's `claims_template`, which is
+a static per-client map and cannot express anything about the individual user.
+
 ### Building your own consent / device / interaction UI
 
 The runtime exposes helper endpoints (and SDK methods, see

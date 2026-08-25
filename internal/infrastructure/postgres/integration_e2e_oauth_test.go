@@ -36,6 +36,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -692,6 +693,27 @@ func TestE2EOIDCProviderDiscovery(t *testing.T) {
 			if !strings.HasPrefix(got, "http://") && !strings.HasPrefix(got, "https://") {
 				t.Errorf("%s = %q is not an absolute URL", field, got)
 			}
+		}
+	})
+
+	// The `groups` scope is what lets a relying party map an IAM user onto its
+	// own permissions; it has to be discoverable, along with the claim it emits.
+	t.Run("advertises_groups_scope_and_claim", func(t *testing.T) {
+		u := fmt.Sprintf("%s/p/%s/e/live/.well-known/openid-configuration", ts.URL, projectID)
+		r := e2eReq(t, ctx, http.MethodGet, u, nil, nil)
+		e2eWantStatus(t, r, http.StatusOK)
+
+		var doc struct {
+			ScopesSupported []string `json:"scopes_supported"`
+			ClaimsSupported []string `json:"claims_supported"`
+		}
+		e2eDecode(t, r, &doc)
+
+		if !slices.Contains(doc.ScopesSupported, "groups") {
+			t.Errorf("scopes_supported = %v, want it to contain groups", doc.ScopesSupported)
+		}
+		if !slices.Contains(doc.ClaimsSupported, "groups") {
+			t.Errorf("claims_supported = %v, want it to contain groups", doc.ClaimsSupported)
 		}
 	})
 

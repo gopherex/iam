@@ -21211,6 +21211,24 @@ func (s *UserMetadata) init() UserMetadata {
 	return m
 }
 
+// A user's roles in one project environment. Roles are plain labels owned by IAM; they are what the
+// OIDC `groups` scope projects into the `groups` claim. Allowed characters are letters, digits and
+// `_ - . : /`.
+// Ref: #/components/schemas/UserRoles
+type UserRoles struct {
+	Roles []string `json:"roles"`
+}
+
+// GetRoles returns the value of Roles.
+func (s *UserRoles) GetRoles() []string {
+	return s.Roles
+}
+
+// SetRoles sets the value of Roles.
+func (s *UserRoles) SetRoles(val []string) {
+	s.Roles = val
+}
+
 // Ref: #/components/schemas/UserStatus
 type UserStatus string
 

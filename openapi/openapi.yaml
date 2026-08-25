@@ -1072,6 +1072,21 @@ components:
           - string
           - 'null'
           maxLength: 1024
+    UserRoles:
+      type: object
+      required:
+      - roles
+      description: >-
+        A user's roles in one project environment. Roles are plain labels owned
+        by IAM; they are what the OIDC `groups` scope projects into the `groups`
+        claim. Allowed characters are letters, digits and `_ - . : /`.
+      properties:
+        roles:
+          type: array
+          items:
+            type: string
+            maxLength: 128
+          maxItems: 1000
     ProjectConfig:
       type: object
       description: >-
@@ -8920,6 +8935,84 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Ok'
+        default:
+          $ref: '#/components/responses/Default'
+      security:
+      - adminToken: []
+      x-audience: project-admin
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: Admin
+  /v1/projects/{project_id}/admin/users/{user_id}/roles:
+    get:
+      operationId: getV1ProjectsByProjectIdAdminUsersByUserIdRoles
+      x-since: 1.5.0
+      tags:
+      - Admin Users
+      summary: List a user's roles.
+      description: >-
+        Roles are labels IAM owns, assigned per project environment. They are the
+        only source of the `groups` claim: a client that is granted the `groups`
+        scope receives exactly these values in its access and id token.
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      - $ref: '#/components/parameters/XEnvironment'
+      responses:
+        '200':
+          description: Roles.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRoles'
+        default:
+          $ref: '#/components/responses/Default'
+      security:
+      - adminToken: []
+      x-audience: project-admin
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: Admin
+    put:
+      operationId: putV1ProjectsByProjectIdAdminUsersByUserIdRoles
+      x-since: 1.5.0
+      tags:
+      - Admin Users
+      summary: Replace a user's roles.
+      description: >-
+        Desired state: the user ends up with exactly the roles in the body, in
+        this environment. A role absent from the list is unassigned. Values are
+        de-duplicated and returned sorted, so the `groups` claim is stable.
+      parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/XEnvironment'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRoles'
+      responses:
+        '200':
+          description: Roles.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRoles'
         default:
           $ref: '#/components/responses/Default'
       security:

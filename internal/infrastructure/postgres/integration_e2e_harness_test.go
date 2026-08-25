@@ -147,6 +147,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 			APIKeys:         NewPgAdminAPIKeys(testDB, em),
 			Connections:     NewPgAdminConnections(testDB, em),
 			Config:          NewPgAdminConfig(testDB, em),
+			Roles:           NewPgRoles(testDB, em),
 			Keys:            NewPgAdminKeys(testDB, em),
 			AccessRequests:  NewPgAdminAccessRequests(testDB, em),
 			Invites:         NewPgInvites(testDB, em),
