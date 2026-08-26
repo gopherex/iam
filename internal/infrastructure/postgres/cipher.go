@@ -23,6 +23,13 @@ import (
 // cipherPrefix tags an AES-256-GCM v1 ciphertext.
 const cipherPrefix = "enc:v1:"
 
+var (
+	errEncryptedSecretNoKey = errors.New("postgres: encrypted secret found but no encryption key is configured")
+	errEncryptionKeyNotB64  = errors.New("postgres: encryption key must be base64-encoded")
+	errEncryptionKeyBadSize = errors.New("postgres: encryption key must decode to 32 bytes (AES-256)")
+	errCiphertextTooShort   = errors.New("postgres: ciphertext too short")
+)
+
 // Cipher encrypts and decrypts reversible secrets at rest.
 type Cipher interface {
 	// Encrypt returns the enc:v1 ciphertext of plaintext.
@@ -44,7 +51,7 @@ func (identityCipher) Encrypt(plaintext string) (string, error) { return plainte
 
 func (identityCipher) Decrypt(value string) (string, error) {
 	if strings.HasPrefix(value, cipherPrefix) {
-		return "", errors.New("postgres: encrypted secret found but no encryption key is configured")
+		return "", errEncryptedSecretNoKey
 	}
 
 	return value, nil
@@ -62,11 +69,11 @@ func NewCipher(keyB64 string) (Cipher, error) {
 
 	key, err := base64.StdEncoding.DecodeString(keyB64)
 	if err != nil {
-		return nil, errors.New("postgres: encryption key must be base64-encoded")
+		return nil, errEncryptionKeyNotB64
 	}
 
 	if len(key) != 32 {
-		return nil, errors.New("postgres: encryption key must decode to 32 bytes (AES-256)")
+		return nil, errEncryptionKeyBadSize
 	}
 
 	block, err := aes.NewCipher(key)
@@ -105,7 +112,7 @@ func (c *aesCipher) Decrypt(value string) (string, error) {
 
 	ns := c.aead.NonceSize()
 	if len(raw) < ns {
-		return "", errors.New("postgres: ciphertext too short")
+		return "", errCiphertextTooShort
 	}
 
 	nonce, ct := raw[:ns], raw[ns:]

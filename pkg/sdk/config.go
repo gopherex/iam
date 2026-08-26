@@ -30,6 +30,10 @@ const (
 	ValidationModeHybrid ValidationMode = "hybrid"
 )
 
+// ErrUnsupportedValidationMode is returned by NewAuthenticator for an
+// AuthenticatorConfig.Mode that names none of the ValidationMode constants.
+var ErrUnsupportedValidationMode = errors.New("iam sdk: unsupported validation mode")
+
 // AuthenticatorConfig is the high-level SDK wiring config for resource servers.
 // It is intentionally tagged like internal/config service structs, so callers
 // can load it with the same structconf/mapstructure pipeline.
@@ -68,7 +72,7 @@ func NewAuthenticator(config AuthenticatorConfig) (Authenticator, error) {
 
 		return NewHybridVerifier(local, remote), nil
 	default:
-		return nil, errors.New("iam sdk: unsupported validation mode")
+		return nil, ErrUnsupportedValidationMode
 	}
 }
 

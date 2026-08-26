@@ -59,7 +59,7 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 	// the same postgres package; this assertion is safe within the package.
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, errors.New("recovery flow: accounts adapter is not *pgCoreAuth")
+		return nil, fmt.Errorf("recovery flow: %w", errAccountsNotPgCoreAuth)
 	}
 
 	// Channel dispatch: phone-OTP recovery mirrors the email path with an SMS
@@ -363,7 +363,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.I
 	// Type-assert for internal challenge access. Safe: same package.
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, errors.New("recovery verify_email: accounts is not *pgCoreAuth")
+		return nil, fmt.Errorf("recovery verify_email: %w", errAccountsNotPgCoreAuth)
 	}
 
 	// Attempt to load and consume the challenge inside a transaction.
@@ -431,7 +431,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.I
 
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, errors.New("recovery verify_phone: accounts is not *pgCoreAuth")
+		return nil, fmt.Errorf("recovery verify_phone: %w", errAccountsNotPgCoreAuth)
 	}
 
 	res, consumeErr := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
@@ -493,7 +493,7 @@ func (a *pgCoreAuthFlows) recoverySetPassword(ctx context.Context, row *models.I
 	// Type-assert for internal session/credential helpers. Same package.
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, errors.New("recovery set_password: accounts is not *pgCoreAuth")
+		return nil, fmt.Errorf("recovery set_password: %w", errAccountsNotPgCoreAuth)
 	}
 
 	sess, err := recoveryResetPassword(ctx, a, pgCA, f, password)

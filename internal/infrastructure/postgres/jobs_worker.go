@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -18,6 +19,11 @@ import (
 const (
 	jobsWorkerInterval = 5 * time.Second
 	auditExportMaxRows = 50000
+)
+
+var (
+	errUnknownJobType             = errors.New("unknown job type")
+	errUnsupportedPasswordHashFmt = errors.New("unsupported password_hash_format")
 )
 
 // RunJobsWorker drains pending async jobs (audit exports, user imports) one at a
@@ -79,7 +85,7 @@ func (db *DB) drainOneJob(ctx context.Context, log *xlog.Logger) bool {
 	case "user_export", "account_export":
 		result, perr = db.processDataExport(ctx, projectID, d.Spec)
 	default:
-		perr = fmt.Errorf("unknown job type %q", typ)
+		perr = fmt.Errorf("%w: %q", errUnknownJobType, typ)
 	}
 
 	db.finishJob(ctx, id, d, result, perr, log)
@@ -230,7 +236,7 @@ func (db *DB) importOneUser(ctx context.Context, projectID, email, name, hash, f
 	// verifies. Reject anything else rather than store an unusable credential.
 	if hash != "" {
 		if format != "" && format != "bcrypt" {
-			return fmt.Errorf("unsupported password_hash_format %q", format)
+			return fmt.Errorf("%w: %q", errUnsupportedPasswordHashFmt, format)
 		}
 
 		if len(hash) < 4 || hash[0] != '$' || hash[1] != '2' {

@@ -24,6 +24,10 @@ var (
 	ErrMissingToken = errors.New("iam sdk: missing bearer token")
 	// ErrInvalidToken is returned when IAM rejects the incoming bearer token.
 	ErrInvalidToken = errors.New("iam sdk: invalid bearer token")
+	// ErrBaseURLRequired is returned by New when Config.BaseURL is empty.
+	ErrBaseURLRequired = errors.New("iam sdk: base url is required")
+	// ErrCredentialRequired is returned by New when Config.Credential is empty.
+	ErrCredentialRequired = errors.New("iam sdk: credential is required")
 )
 
 // Claims is the decoded claim set returned by IAM token verification.
@@ -110,12 +114,12 @@ func Refresh(ctx context.Context, auth Authenticator) error {
 func New(config Config) (*Client, error) {
 	baseURL := strings.TrimSpace(config.BaseURL)
 	if baseURL == "" {
-		return nil, errors.New("iam sdk: base url is required")
+		return nil, ErrBaseURLRequired
 	}
 
 	credential := strings.TrimSpace(config.Credential)
 	if credential == "" {
-		return nil, errors.New("iam sdk: credential is required")
+		return nil, ErrCredentialRequired
 	}
 
 	opts := []oas.ClientOption(nil)

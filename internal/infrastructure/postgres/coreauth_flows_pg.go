@@ -643,7 +643,7 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 	case ac.Channel == "sms" || f.Method == domain.FlowMethodPhoneOTP:
 		core, ok := a.accounts.(*pgCoreAuth)
 		if !ok {
-			return nil, "", errors.New("flow resend: accounts is not *pgCoreAuth")
+			return nil, "", fmt.Errorf("flow resend: %w", errAccountsNotPgCoreAuth)
 		}
 
 		pl := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
@@ -662,7 +662,7 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 	case f.Method == domain.FlowMethodMagicLink:
 		core, ok := a.accounts.(*pgCoreAuth)
 		if !ok {
-			return nil, "", errors.New("flow resend: accounts is not *pgCoreAuth")
+			return nil, "", fmt.Errorf("flow resend: %w", errAccountsNotPgCoreAuth)
 		}
 
 		pl := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
@@ -705,7 +705,7 @@ func (a *pgCoreAuthFlows) flowIssueRecoveryEmailChallenge(ctx context.Context, f
 
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, errors.New("flow recovery challenge: accounts is not *pgCoreAuth")
+		return nil, fmt.Errorf("flow recovery challenge: %w", errAccountsNotPgCoreAuth)
 	}
 
 	code, err := coreAuthRandomCode()
@@ -1135,7 +1135,7 @@ func (a *pgCoreAuthFlows) signupSetPassword(ctx context.Context, row *models.Iam
 
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, errors.New("signup set_password: accounts is not *pgCoreAuth")
+		return nil, fmt.Errorf("signup set_password: %w", errAccountsNotPgCoreAuth)
 	}
 
 	sess, err := withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Session, error) {
@@ -1232,7 +1232,7 @@ func (a *pgCoreAuthFlows) signupRecordAcceptedConsents(ctx context.Context, f *d
 
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return errors.New("signup record consents: accounts is not *pgCoreAuth")
+		return fmt.Errorf("signup record consents: %w", errAccountsNotPgCoreAuth)
 	}
 
 	localeByKey := pgCA.coreAuthConsentLocales(ctx, f.ProjectID, "")
@@ -1314,7 +1314,7 @@ func (a *pgCoreAuthFlows) signupCompleteWithExistingSession(ctx context.Context,
 func (a *pgCoreAuthFlows) signupCompleteWithFreshSession(ctx context.Context, row *models.IamFlow, f *domain.Flow, accepted []domain.AccountConsentAcceptance) (*domain.FlowState, error) {
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, errors.New("signup complete with consents: accounts is not *pgCoreAuth")
+		return nil, fmt.Errorf("signup complete with consents: %w", errAccountsNotPgCoreAuth)
 	}
 
 	f.ConsentsRequired = nil

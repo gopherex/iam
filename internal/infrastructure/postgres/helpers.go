@@ -27,6 +27,13 @@ var (
 	ErrConflict       = errors.New("conflict")
 )
 
+// errAccountsNotPgCoreAuth guards the several places that type-assert the
+// CoreAuthAccounts port back to *pgCoreAuth to reach its unexported helpers
+// (both adapters live in this package, so the assertion is safe in practice).
+// It should never actually fail; the sentinel exists so a broken wiring shows
+// up as this specific error rather than an untyped panic-adjacent message.
+var errAccountsNotPgCoreAuth = errors.New("accounts adapter is not *pgCoreAuth")
+
 func ptr[T any](v T) *T { return &v }
 
 // marshal serializes a record to a JSONB blob.

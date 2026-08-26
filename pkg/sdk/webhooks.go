@@ -18,6 +18,15 @@ var (
 	ErrWebhookStaleTimestamp   = errors.New("iam sdk: webhook timestamp outside allowed skew")
 	ErrWebhookInvalidSignature = errors.New("iam sdk: invalid webhook signature")
 	ErrWebhookMalformedBody    = errors.New("iam sdk: malformed webhook body")
+	// ErrWebhookMaxSkewNegative is returned when WebhookVerifierConfig.MaxSkew
+	// is negative.
+	ErrWebhookMaxSkewNegative = errors.New("iam sdk: webhook max skew must not be negative")
+	// ErrWebhookSecretRequired is returned when the webhook signing secret is
+	// empty.
+	ErrWebhookSecretRequired = errors.New("iam sdk: webhook signing secret is required")
+	// ErrWebhookSecretInvalid is returned when a whsec_-prefixed signing
+	// secret does not decode to a non-empty value.
+	ErrWebhookSecretInvalid = errors.New("iam sdk: invalid webhook signing secret")
 )
 
 // WebhookVerifierConfig configures Standard Webhooks verification. Replay
@@ -99,7 +108,7 @@ func NewWebhookVerifier(config WebhookVerifierConfig) (*WebhookVerifier, error) 
 	}
 
 	if maxSkew < 0 {
-		return nil, errors.New("iam sdk: webhook max skew must not be negative")
+		return nil, ErrWebhookMaxSkewNegative
 	}
 
 	now := config.Now
@@ -153,13 +162,13 @@ func (v *WebhookVerifier) Verify(headers http.Header, body []byte) (*WebhookEven
 func decodeWebhookSecret(value string) ([]byte, error) {
 	value = strings.TrimSpace(value)
 	if value == "" {
-		return nil, errors.New("iam sdk: webhook signing secret is required")
+		return nil, ErrWebhookSecretRequired
 	}
 
 	if encoded, ok := strings.CutPrefix(value, "whsec_"); ok {
 		secret, err := base64.StdEncoding.DecodeString(encoded)
 		if err != nil || len(secret) == 0 {
-			return nil, errors.New("iam sdk: invalid webhook signing secret")
+			return nil, ErrWebhookSecretInvalid
 		}
 
 		return secret, nil

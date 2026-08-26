@@ -156,6 +156,22 @@ func (p *Publisher) publishSMS(ctx context.Context, ev eventEnvelope, job smsJob
 // publishSMS can ack the outbox message instead of retrying forever.
 var errNoSMSProvider = errors.New("notifications: no enabled sms provider")
 
+// SMS config-validation and delivery failures. Each provider-specific
+// requirement gets its own sentinel so callers could errors.Is a specific
+// cause; errUnsupportedSMSProviderType is shared by the two places (decode
+// time, send time) that reject an unknown provider type.
+var (
+	errUnsupportedSMSProviderType = errors.New("notifications: unsupported sms provider type")
+	errTwilioInvalidURL           = errors.New("notifications: twilio url must be a valid https URL")
+	errTwilioMissingFields        = errors.New("notifications: twilio requires account_sid, auth_token and from")
+	errGenericSMSMissingURL       = errors.New("notifications: generic sms provider requires url")
+	errGenericSMSInvalidURL       = errors.New("notifications: generic sms url must be a valid https URL")
+	errAWSSNSMissingRegion        = errors.New("notifications: aws_sns requires region (or an explicit endpoint)")
+	errAWSSNSInvalidEndpoint      = errors.New("notifications: aws_sns endpoint must be a valid https URL")
+	errAWSSNSMissingCredentials   = errors.New("notifications: aws_sns requires access_key_id and secret_access_key")
+	errSMSGatewayResponse         = errors.New("notifications: sms gateway returned an error")
+)
+
 type smsConfig struct {
 	Type      string // "generic" | "twilio" | "aws_sns"
 	URL       string // generic: webhook URL; twilio: Messages endpoint (derived)
@@ -240,7 +256,7 @@ func decodeSMSConfig(cipher postgres.Cipher, typ string, raw map[string]json.Raw
 	case "aws_sns":
 		err = finishAWSSNSConfig(cipher, raw, cfg)
 	default:
-		err = fmt.Errorf("notifications: unsupported sms provider type %q", typ)
+		err = fmt.Errorf("%w: %q", errUnsupportedSMSProviderType, typ)
 	}
 
 	if err != nil {
@@ -302,11 +318,11 @@ func finishTwilioSMSConfig(raw map[string]json.RawMessage, cfg *smsConfig) error
 	// Never send the basic-auth credential over cleartext http, even if the
 	// operator overrode the endpoint (downgrade protection, same as generic).
 	if u, err := url.Parse(cfg.URL); err != nil || u.Scheme != "https" || u.Host == "" {
-		return errors.New("notifications: twilio url must be a valid https URL")
+		return errTwilioInvalidURL
 	}
 
 	if sid == "" || cfg.Password == "" || cfg.From == "" {
-		return errors.New("notifications: twilio requires account_sid, auth_token and from")
+		return errTwilioMissingFields
 	}
 
 	return nil
@@ -315,12 +331,12 @@ func finishTwilioSMSConfig(raw map[string]json.RawMessage, cfg *smsConfig) error
 // finishGenericSMSConfig validates the operator-supplied generic endpoint.
 func finishGenericSMSConfig(cfg *smsConfig) error {
 	if cfg.URL == "" {
-		return errors.New("notifications: generic sms provider requires url")
+		return errGenericSMSMissingURL
 	}
 	// Never send credentials over cleartext http (downgrade protection).
 	u, err := url.Parse(cfg.URL)
 	if err != nil || u.Scheme != "https" || u.Host == "" {
-		return errors.New("notifications: generic sms url must be a valid https URL")
+		return errGenericSMSInvalidURL
 	}
 
 	return nil
@@ -356,18 +372,18 @@ func finishAWSSNSConfig(cipher postgres.Cipher, raw map[string]json.RawMessage, 
 
 	if cfg.Endpoint == "" {
 		if cfg.Region == "" {
-			return errors.New("notifications: aws_sns requires region (or an explicit endpoint)")
+			return errAWSSNSMissingRegion
 		}
 
 		cfg.Endpoint = "https://sns." + cfg.Region + ".amazonaws.com"
 	}
 
 	if u, err := url.Parse(cfg.Endpoint); err != nil || u.Scheme != "https" || u.Host == "" {
-		return errors.New("notifications: aws_sns endpoint must be a valid https URL")
+		return errAWSSNSInvalidEndpoint
 	}
 
 	if cfg.AccessKeyID == "" || cfg.SecretAccessKey == "" {
-		return errors.New("notifications: aws_sns requires access_key_id and secret_access_key")
+		return errAWSSNSMissingCredentials
 	}
 
 	if cfg.Region == "" {
@@ -395,7 +411,7 @@ func (c *smsConfig) send(ctx context.Context, to, text string) error {
 	case "aws_sns":
 		return c.sendAwsSNS(ctx, to, text)
 	default:
-		return fmt.Errorf("notifications: unsupported sms provider type %q", c.Type)
+		return fmt.Errorf("%w: %q", errUnsupportedSMSProviderType, c.Type)
 	}
 }
 
@@ -451,7 +467,7 @@ func (c *smsConfig) do(req *http.Request) error {
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
-		return fmt.Errorf("notifications: sms gateway returned %d: %s", resp.StatusCode, strings.TrimSpace(string(snippet)))
+		return fmt.Errorf("%w %d: %s", errSMSGatewayResponse, resp.StatusCode, strings.TrimSpace(string(snippet)))
 	}
 
 	return nil

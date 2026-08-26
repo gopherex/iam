@@ -39,6 +39,10 @@ import (
 	"github.com/gopherex/iam/web"
 )
 
+// errEncryptionKeyRequired guards startup: secrets-at-rest encryption must be
+// configured before the service accepts traffic.
+var errEncryptionKeyRequired = errors.New("service.auth.encryption_key is required")
+
 // apiPathPrefixes returns the URL namespaces served by the generated API.
 // Anything outside them falls through to the SPA, which is how the hosted OIDC
 // provider screens under /oauth/ are reached: /oauth2/ is the protocol surface
@@ -259,7 +263,7 @@ func startServing(sd *xshutdown.Manager, httpSrv, probeSrv *http.Server, probeAd
 func setupDatabase(ctx context.Context, cfg *config.Config, log *xlog.Logger) (*postgres.DB, error) {
 	if cfg.Service.Auth.EncryptionKey == "" {
 		log.Error("secrets-at-rest encryption is DISABLED — set service.auth.encryption_key (base64 32-byte AES-256 key) before running in production")
-		return nil, errors.New("service.auth.encryption_key is required")
+		return nil, errEncryptionKeyRequired
 	}
 
 	db, err := postgres.Connect(ctx, cfg.Infra.Postgres.DSN(),

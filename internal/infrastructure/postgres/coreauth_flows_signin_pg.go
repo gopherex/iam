@@ -70,7 +70,7 @@ func init() {
 func (a *pgCoreAuthFlows) signinPasswordless() (*pgPasswordlessAccounts, error) {
 	core, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
-		return nil, errors.New("signin flow: accounts adapter is not *pgCoreAuth")
+		return nil, fmt.Errorf("signin flow: %w", errAccountsNotPgCoreAuth)
 	}
 
 	return NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core), nil

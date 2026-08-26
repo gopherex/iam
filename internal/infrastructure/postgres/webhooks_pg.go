@@ -33,6 +33,12 @@ const (
 	webhookMaxRedirects      = 3
 )
 
+var (
+	errWebhookNonPublicAddress = errors.New("webhook: refusing to connect to non-public address")
+	errWebhookTooManyRedirects = errors.New("webhook: too many redirects")
+	errWebhookBadStatus        = errors.New("webhook returned an unsuccessful HTTP status")
+)
+
 type webhookData struct {
 	URL                      string    `json:"url"`
 	Events                   []string  `json:"events"`
@@ -82,7 +88,7 @@ func newWebhookHTTPClient(timeout time.Duration) *http.Client {
 			}
 
 			if ip := net.ParseIP(host); ip != nil && isBlockedWebhookIP(ip) {
-				return fmt.Errorf("webhook: refusing to connect to non-public address %s", ip)
+				return fmt.Errorf("%w: %s", errWebhookNonPublicAddress, ip)
 			}
 
 			return nil
@@ -94,7 +100,7 @@ func newWebhookHTTPClient(timeout time.Duration) *http.Client {
 		Transport: &http.Transport{DialContext: dialer.DialContext},
 		CheckRedirect: func(_ *http.Request, via []*http.Request) error {
 			if len(via) >= webhookMaxRedirects {
-				return errors.New("webhook: too many redirects")
+				return errWebhookTooManyRedirects
 			}
 
 			return nil
@@ -833,7 +839,7 @@ func (a *PgWebhooks) sendWebhookRequest(req *http.Request) (*int, string, error)
 	}
 
 	if requestErr == nil && (response.StatusCode < 200 || response.StatusCode >= 300) {
-		requestErr = fmt.Errorf("webhook returned HTTP %d", response.StatusCode)
+		requestErr = fmt.Errorf("%w: HTTP %d", errWebhookBadStatus, response.StatusCode)
 	}
 
 	return &status, responseBody, requestErr

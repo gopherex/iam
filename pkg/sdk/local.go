@@ -17,6 +17,27 @@ import (
 
 const defaultJWKSCacheTTL = 5 * time.Minute
 
+var (
+	// ErrProjectIDRequired is returned when a local JWKS URL must be derived
+	// but no project id was configured.
+	ErrProjectIDRequired = errors.New("iam sdk: project id is required for local jwks url")
+	// ErrEnvironmentRequired is returned when a local JWKS URL must be derived
+	// but no environment was configured.
+	ErrEnvironmentRequired = errors.New("iam sdk: environment is required for local jwks url")
+	// ErrLocalBaseURLRequired is returned when building a local JWKS URL with
+	// no base URL configured.
+	ErrLocalBaseURLRequired = errors.New("iam sdk: base url is required for local jwks url")
+	// ErrInvalidTokenType, ErrInvalidIssuer, ErrInvalidProject,
+	// ErrInvalidEnvironment, ErrInvalidAudience are validateClaims' rejection
+	// reasons; VerifyResult.Error carries err.Error() verbatim as the
+	// machine-readable code a caller sees.
+	ErrInvalidTokenType   = errors.New("invalid_token_type")
+	ErrInvalidIssuer      = errors.New("invalid_issuer")
+	ErrInvalidProject     = errors.New("invalid_project")
+	ErrInvalidEnvironment = errors.New("invalid_environment")
+	ErrInvalidAudience    = errors.New("invalid_audience")
+)
+
 // LocalConfig configures local JWT verification using IAM's public JWKS.
 type LocalConfig struct {
 	// BaseURL is the IAM public base URL. It is used to build JWKSURL when
@@ -71,11 +92,11 @@ func NewLocalVerifier(config LocalConfig) (*LocalVerifier, error) {
 	jwksURL := strings.TrimSpace(config.JWKSURL)
 	if jwksURL == "" {
 		if projectID == "" {
-			return nil, errors.New("iam sdk: project id is required for local jwks url")
+			return nil, ErrProjectIDRequired
 		}
 
 		if environment == "" {
-			return nil, errors.New("iam sdk: environment is required for local jwks url")
+			return nil, ErrEnvironmentRequired
 		}
 
 		var err error
@@ -237,11 +258,11 @@ func (v *LocalVerifier) keySetFor(ctx context.Context, forceRefresh bool) (jwk.S
 
 func (v *LocalVerifier) validateClaims(claims Claims) error {
 	if v.tokenType != "" && claimString(claims, "typ") != v.tokenType {
-		return errors.New("invalid_token_type")
+		return ErrInvalidTokenType
 	}
 
 	if v.issuer != "" && claimString(claims, "iss") != v.issuer {
-		return errors.New("invalid_issuer")
+		return ErrInvalidIssuer
 	}
 
 	if v.projectID != "" {
@@ -251,7 +272,7 @@ func (v *LocalVerifier) validateClaims(claims Claims) error {
 		}
 
 		if pid != v.projectID {
-			return errors.New("invalid_project")
+			return ErrInvalidProject
 		}
 	}
 
@@ -262,12 +283,12 @@ func (v *LocalVerifier) validateClaims(claims Claims) error {
 		}
 
 		if env != v.environment {
-			return errors.New("invalid_environment")
+			return ErrInvalidEnvironment
 		}
 	}
 
 	if v.audience != "" && !claimContains(claims, "aud", v.audience) && !claimContains(claims, "client_id", v.audience) {
-		return errors.New("invalid_audience")
+		return ErrInvalidAudience
 	}
 
 	return nil
@@ -290,7 +311,7 @@ func tokenClaims(tok jwt.Token) (Claims, error) {
 func buildJWKSURL(baseURL, projectID, environment string) (string, error) {
 	baseURL = strings.TrimSpace(baseURL)
 	if baseURL == "" {
-		return "", errors.New("iam sdk: base url is required for local jwks url")
+		return "", ErrLocalBaseURLRequired
 	}
 
 	return url.JoinPath(baseURL, "p", projectID, "e", environment, ".well-known", "jwks.json")

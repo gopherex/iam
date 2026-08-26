@@ -202,7 +202,7 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	}
 
 	if job.To == "" {
-		return fmt.Errorf("notifications: email event %s has no recipient", ev.Type)
+		return fmt.Errorf("%w: %s", errEmailNoRecipient, ev.Type)
 	}
 	// Resolve the effective locale: the request locale carried on the event, else
 	// the recipient account's locale, else the project default, else "en".
@@ -596,6 +596,14 @@ func (p *Publisher) smtpProvider(ctx context.Context, projectID string) (*smtpCo
 // not wedge the outbox on every verification email.
 var errNoSMTPProvider = errors.New("notifications: no enabled smtp provider")
 
+// errEmailNoRecipient, errSMTPConfigIncomplete, errSMTPNoStartTLS are the
+// email publisher's other terminal validation/delivery failures.
+var (
+	errEmailNoRecipient     = errors.New("notifications: email event has no recipient")
+	errSMTPConfigIncomplete = errors.New("notifications: smtp host and from are required")
+	errSMTPNoStartTLS       = errors.New("notifications: SMTP server does not advertise STARTTLS; set start_tls=false only for a trusted local relay")
+)
+
 func (p *Publisher) decodeSMTPConfig(raw map[string]json.RawMessage) (*smtpConfig, error) {
 	cfg := &smtpConfig{
 		Host:     rawString(raw, "host"),
@@ -641,7 +649,7 @@ func (p *Publisher) decodeSMTPConfig(raw map[string]json.RawMessage) (*smtpConfi
 	}
 
 	if cfg.Host == "" || cfg.From == "" {
-		return nil, errors.New("notifications: smtp host and from are required")
+		return nil, errSMTPConfigIncomplete
 	}
 
 	return cfg, nil
@@ -855,7 +863,7 @@ func (c *smtpConfig) connect(ctx context.Context, addr string) (*smtp.Client, er
 	if c.StartTLS {
 		if ok, _ := client.Extension("STARTTLS"); !ok {
 			_ = client.Close()
-			return nil, fmt.Errorf("notifications: SMTP server %s does not advertise STARTTLS; set start_tls=false only for a trusted local relay", c.Host)
+			return nil, fmt.Errorf("%w: %s", errSMTPNoStartTLS, c.Host)
 		}
 
 		if err := client.StartTLS(&tls.Config{ServerName: c.Host, MinVersion: tls.VersionTLS12}); err != nil {
