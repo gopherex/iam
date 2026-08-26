@@ -651,6 +651,12 @@ func (s *AppClient) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.TokenProfileID.Set {
+			e.FieldStart("token_profile_id")
+			s.TokenProfileID.Encode(e)
+		}
+	}
+	{
 		if s.DynamicallyRegistered.Set {
 			e.FieldStart("dynamically_registered")
 			s.DynamicallyRegistered.Encode(e)
@@ -658,7 +664,7 @@ func (s *AppClient) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfAppClient = [13]string{
+var jsonFieldsNameOfAppClient = [14]string{
 	0:  "id",
 	1:  "name",
 	2:  "type",
@@ -671,7 +677,8 @@ var jsonFieldsNameOfAppClient = [13]string{
 	9:  "post_logout_redirect_uris",
 	10: "backchannel_logout_uri",
 	11: "disabled",
-	12: "dynamically_registered",
+	12: "token_profile_id",
+	13: "dynamically_registered",
 }
 
 // Decode decodes AppClient from json.
@@ -838,6 +845,16 @@ func (s *AppClient) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"disabled\"")
+			}
+		case "token_profile_id":
+			if err := func() error {
+				s.TokenProfileID.Reset()
+				if err := s.TokenProfileID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"token_profile_id\"")
 			}
 		case "dynamically_registered":
 			if err := func() error {
@@ -33146,6 +33163,12 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.TokenProfileID.Set {
+			e.FieldStart("token_profile_id")
+			s.TokenProfileID.Encode(e)
+		}
+	}
+	{
 		if s.DynamicallyRegistered.Set {
 			e.FieldStart("dynamically_registered")
 			s.DynamicallyRegistered.Encode(e)
@@ -33153,7 +33176,7 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [13]string{
+var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [14]string{
 	0:  "id",
 	1:  "name",
 	2:  "type",
@@ -33166,7 +33189,8 @@ var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminAppsReq = [13]string{
 	9:  "post_logout_redirect_uris",
 	10: "backchannel_logout_uri",
 	11: "disabled",
-	12: "dynamically_registered",
+	12: "token_profile_id",
+	13: "dynamically_registered",
 }
 
 // Decode decodes PostV1ProjectsByProjectIdAdminAppsReq from json.
@@ -33336,6 +33360,16 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"disabled\"")
+			}
+		case "token_profile_id":
+			if err := func() error {
+				s.TokenProfileID.Reset()
+				if err := s.TokenProfileID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"token_profile_id\"")
 			}
 		case "dynamically_registered":
 			if err := func() error {

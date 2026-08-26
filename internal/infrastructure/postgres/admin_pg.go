@@ -1078,6 +1078,7 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 			Scopes:                 cmd.Scopes,
 			JWKS:                   cmd.JWKS,
 			JWKSURI:                cmd.JWKSURI,
+			TokenProfileID:         cmd.TokenProfileID,
 		}
 
 		raw, err := marshal(app)
@@ -1166,6 +1167,10 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 
 		if v, ok := patch["backchannel_logout_uri"].(string); ok {
 			app.BackchannelLogoutURI = v
+		}
+
+		if v, ok := patch["token_profile_id"].(string); ok {
+			app.TokenProfileID = v
 		}
 
 		if v, ok := patchStrings(patch, "scopes"); ok {
@@ -1291,6 +1296,7 @@ func desiredToAppClient(
 
 		PostLogoutRedirectURIs: desired.PostLogoutRedirectURIs,
 		BackchannelLogoutURI:   desired.BackchannelLogoutURI,
+		TokenProfileID:         desired.TokenProfileID,
 		Scopes:                 desired.Scopes,
 		JWKS:                   desired.JWKS,
 		JWKSURI:                desired.JWKSURI,
@@ -2921,12 +2927,16 @@ func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminCo
 func adminTokenProfileToDomain(row *models.IamTokenProfile) domain.AdminTokenProfile {
 	p := domain.AdminTokenProfile{ID: row.ID, Name: row.Name}
 	if len(row.Data) > 0 {
+		// json.RawMessage, not jx.Raw: both are []byte, but only RawMessage keeps
+		// the bytes as they are. Decoding into jx.Raw makes encoding/json try to
+		// base64-decode real JSON, which is how a stored template came back as
+		// noise.
 		var d struct {
-			Name           string            `json:"name"`
-			Audience       string            `json:"audience"`
-			AccessTTL      int               `json:"access_ttl"`
-			RefreshTTL     int               `json:"refresh_ttl"`
-			ClaimsTemplate map[string]jx.Raw `json:"claims_template"`
+			Name           string                     `json:"name"`
+			Audience       string                     `json:"audience"`
+			AccessTTL      int                        `json:"access_ttl"`
+			RefreshTTL     int                        `json:"refresh_ttl"`
+			ClaimsTemplate map[string]json.RawMessage `json:"claims_template"`
 		}
 		if err := json.Unmarshal(row.Data, &d); err == nil {
 			if d.Name != "" {
@@ -2936,7 +2946,12 @@ func adminTokenProfileToDomain(row *models.IamTokenProfile) domain.AdminTokenPro
 			p.Audience = d.Audience
 			p.AccessTTL = d.AccessTTL
 			p.RefreshTTL = d.RefreshTTL
-			p.ClaimsTemplate = d.ClaimsTemplate
+			if len(d.ClaimsTemplate) > 0 {
+				p.ClaimsTemplate = make(map[string]jx.Raw, len(d.ClaimsTemplate))
+				for name, raw := range d.ClaimsTemplate {
+					p.ClaimsTemplate[name] = jx.Raw(raw)
+				}
+			}
 		}
 	}
 
@@ -2979,8 +2994,12 @@ func (a *pgAdminKeys) CreateTokenProfile(ctx context.Context, cmd domain.AdminTo
 		}
 
 		name := adminProfileName(cmd.Profile)
-
-		raw, err := json.Marshal(cmd.Profile)
+		// Store REAL JSON: a doc is map[string]jx.Raw, and json.Marshal of that
+		// base64-encodes every value ([]byte semantics). It round-trips through
+		// the same encoder, which is why nothing noticed — but every typed reader
+		// saw a base64 string where a value should be, so a profile's audience,
+		// lifetimes and claims were silently never applied.
+		raw, err := configDocToRawJSON(cmd.Profile)
 		if err != nil {
 			return nil, err
 		}
@@ -3039,7 +3058,7 @@ func (a *pgAdminKeys) UpdateTokenProfile(ctx context.Context, cmd domain.AdminTo
 			name = row.Name
 		}
 
-		raw, err := json.Marshal(cmd.Profile)
+		raw, err := configDocToRawJSON(cmd.Profile)
 		if err != nil {
 			return nil, err
 		}

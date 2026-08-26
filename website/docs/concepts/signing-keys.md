@@ -67,29 +67,36 @@ Keys are per **environment**: rotating in `test` does not touch `live`.
 
 ## Token profiles
 
-A token profile is a named set of token settings for one audience:
+A token profile is a named set of token settings for one audience, and a client
+is bound to at most one. That is the shape the question usually has: one relying
+party needs a five-minute token with its own `aud`, another needs an hour.
 
 ```bash
 curl -sX POST .../admin/token-profiles -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"api","audience":"https://api.example.com","access_ttl":600,
        "claims_template":{"tier":"standard"}}'
+# -> { "profile": { "id": "tp_api", ... } }
 
-# render what a profile would produce for a given user
+# bind a client to it
+curl -sX PATCH .../admin/apps/app_web -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" -d '{"token_profile_id":"tp_api"}'
+
+# render what it would produce for a given user
 curl -sX POST .../admin/token-profiles/tp_api/preview -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" -d '{"user_id":"usr_9"}'
-# -> { "claims": { ... } }
 ```
 
-`claims_template` is a static map merged into the claims — the same values for
-everybody the profile applies to. Anything that varies per user belongs in
-[roles and the `groups` claim](/concepts/oidc-federation) instead; a template
-cannot express it.
+Tokens minted for a bound client then carry the profile's `aud`, its lifetimes
+and its template claims. Anything the profile leaves unset stays as the
+project's [`session_policy`](/guides/admin-config), so a profile that only
+shortens a lifetime does only that. An unbound client is unaffected, and a
+binding pointing at a deleted profile falls back to the defaults rather than
+failing the mint.
 
-:::note Defined and previewable, not yet applied at minting
-Profiles are stored and `preview` renders them, but the token minting path does
-not select a profile yet: issued tokens use the project's
-[`session_policy`](/guides/admin-config) lifetimes and the standard claim set.
-Use a profile to model the intent; do not rely on it changing an issued token
-today.
-:::
+`claims_template` is a static map — the same values for everybody the profile
+applies to. A claim the provider owns (`sub`, `iss`, `aud` beyond the profile's
+own, `exp`, `jti`, `sid`, `scope`, `groups`, …) is ignored rather than
+overwritten: letting a template rewrite `sub` would be an impersonation
+primitive. Anything that varies per user belongs in
+[roles and the `groups` claim](/concepts/oidc-federation) instead.

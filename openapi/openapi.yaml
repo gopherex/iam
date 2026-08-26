@@ -1110,6 +1110,19 @@ components:
             refused at /oauth2/authorize exactly like an unknown client_id, so
             an integration can be suspended and restored without re-issuing its
             registration.
+        token_profile_id:
+          type:
+          - string
+          - 'null'
+          description: >-
+            Binds this client to a token profile: the `aud` its tokens carry,
+            how long they live, and a fixed set of extra claims. Unset means the
+            project's session policy and the standard claim set. A profile
+            cannot express anything about the individual user — that is what
+            roles and the `groups` scope are for — and a template naming a claim
+            the provider owns (`sub`, `iss`, `exp`, …) is ignored for that claim
+            rather than allowed to rewrite it.
+          maxLength: 256
         dynamically_registered:
           type: boolean
           default: false

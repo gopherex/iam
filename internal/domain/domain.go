@@ -191,6 +191,10 @@ type AppClient struct {
 	RegistrationTokenHash string
 	// TokenEndpointAuthMethod records how the client authenticates, as registered.
 	TokenEndpointAuthMethod string
+	// TokenProfileID binds the client to a token profile: what `aud` its tokens
+	// carry, how long they live, and a fixed set of extra claims. Empty means the
+	// project's defaults.
+	TokenProfileID string
 }
 
 // ===== Project aggregate (admin / operator) =====
@@ -342,6 +346,7 @@ type AppClientCmd struct {
 	Scopes                 []string
 	JWKS                   string
 	JWKSURI                string
+	TokenProfileID         string
 }
 
 type ProjectCmd struct {

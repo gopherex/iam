@@ -221,6 +221,11 @@ func (s *AppClient) SetFake() {
 	}
 	{
 		{
+			s.TokenProfileID.SetFake()
+		}
+	}
+	{
+		{
 			s.DynamicallyRegistered.SetFake()
 		}
 	}
@@ -6527,6 +6532,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetFake() {
 	{
 		{
 			s.Disabled.SetFake()
+		}
+	}
+	{
+		{
+			s.TokenProfileID.SetFake()
 		}
 	}
 	{

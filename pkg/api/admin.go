@@ -2028,6 +2028,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, r
 
 		PostLogoutRedirectURIs: req.PostLogoutRedirectUris,
 		BackchannelLogoutURI:   req.BackchannelLogoutURI.Or(""),
+		TokenProfileID:         req.TokenProfileID.Or(""),
 		Scopes:                 req.Scopes,
 		JWKS:                   req.Jwks.Or(""),
 		JWKSURI:                req.JwksURI.Or(""),
@@ -3260,6 +3261,7 @@ func (s *AdminService) PutV1ProjectsByProjectIdAdminClients(
 
 			PostLogoutRedirectURIs: c.PostLogoutRedirectUris,
 			BackchannelLogoutURI:   c.BackchannelLogoutURI.Or(""),
+			TokenProfileID:         c.TokenProfileID.Or(""),
 			Scopes:                 c.Scopes,
 			JWKS:                   c.Jwks.Or(""),
 			JWKSURI:                c.JwksURI.Or(""),
@@ -3306,6 +3308,10 @@ func oasAppClient(a *domain.AppClient) oas.AppClient {
 	}
 	if a.BackchannelLogoutURI != "" {
 		out.BackchannelLogoutURI = oas.NewOptNilString(a.BackchannelLogoutURI)
+	}
+
+	if a.TokenProfileID != "" {
+		out.TokenProfileID = oas.NewOptNilString(a.TokenProfileID)
 	}
 	if a.Type != "" {
 		out.Type = oas.NewOptAppClientType(oas.AppClientType(a.Type))

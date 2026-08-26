@@ -329,6 +329,12 @@ type AppClient struct {
 	// exactly like an unknown client_id, so an integration can be suspended and restored without
 	// re-issuing its registration.
 	Disabled OptBool `json:"disabled"`
+	// Binds this client to a token profile: the `aud` its tokens carry, how long they live, and a fixed
+	// set of extra claims. Unset means the project's session policy and the standard claim set. A
+	// profile cannot express anything about the individual user — that is what roles and the `groups`
+	// scope are for — and a template naming a claim the provider owns (`sub`, `iss`, `exp`, …) is
+	// ignored for that claim rather than allowed to rewrite it.
+	TokenProfileID OptNilString `json:"token_profile_id"`
 	// True when the client registered itself through `/oauth2/register` (RFC 7591) rather than being
 	// created here. Such a client manages its own metadata with the registration access token it was
 	// issued; edits made here are still authoritative, but the client can overwrite them.
@@ -395,6 +401,11 @@ func (s *AppClient) GetDisabled() OptBool {
 	return s.Disabled
 }
 
+// GetTokenProfileID returns the value of TokenProfileID.
+func (s *AppClient) GetTokenProfileID() OptNilString {
+	return s.TokenProfileID
+}
+
 // GetDynamicallyRegistered returns the value of DynamicallyRegistered.
 func (s *AppClient) GetDynamicallyRegistered() OptBool {
 	return s.DynamicallyRegistered
@@ -458,6 +469,11 @@ func (s *AppClient) SetBackchannelLogoutURI(val OptNilString) {
 // SetDisabled sets the value of Disabled.
 func (s *AppClient) SetDisabled(val OptBool) {
 	s.Disabled = val
+}
+
+// SetTokenProfileID sets the value of TokenProfileID.
+func (s *AppClient) SetTokenProfileID(val OptNilString) {
+	s.TokenProfileID = val
 }
 
 // SetDynamicallyRegistered sets the value of DynamicallyRegistered.
@@ -17471,6 +17487,12 @@ type PostV1ProjectsByProjectIdAdminAppsReq struct {
 	// exactly like an unknown client_id, so an integration can be suspended and restored without
 	// re-issuing its registration.
 	Disabled OptBool `json:"disabled"`
+	// Binds this client to a token profile: the `aud` its tokens carry, how long they live, and a fixed
+	// set of extra claims. Unset means the project's session policy and the standard claim set. A
+	// profile cannot express anything about the individual user — that is what roles and the `groups`
+	// scope are for — and a template naming a claim the provider owns (`sub`, `iss`, `exp`, …) is
+	// ignored for that claim rather than allowed to rewrite it.
+	TokenProfileID OptNilString `json:"token_profile_id"`
 	// True when the client registered itself through `/oauth2/register` (RFC 7591) rather than being
 	// created here. Such a client manages its own metadata with the registration access token it was
 	// issued; edits made here are still authoritative, but the client can overwrite them.
@@ -17537,6 +17559,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetDisabled() OptBool {
 	return s.Disabled
 }
 
+// GetTokenProfileID returns the value of TokenProfileID.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetTokenProfileID() OptNilString {
+	return s.TokenProfileID
+}
+
 // GetDynamicallyRegistered returns the value of DynamicallyRegistered.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) GetDynamicallyRegistered() OptBool {
 	return s.DynamicallyRegistered
@@ -17600,6 +17627,11 @@ func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetBackchannelLogoutURI(val OptN
 // SetDisabled sets the value of Disabled.
 func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetDisabled(val OptBool) {
 	s.Disabled = val
+}
+
+// SetTokenProfileID sets the value of TokenProfileID.
+func (s *PostV1ProjectsByProjectIdAdminAppsReq) SetTokenProfileID(val OptNilString) {
+	s.TokenProfileID = val
 }
 
 // SetDynamicallyRegistered sets the value of DynamicallyRegistered.

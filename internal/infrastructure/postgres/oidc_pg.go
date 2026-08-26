@@ -2130,6 +2130,10 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 			accessTTL, refreshTTL = sp.AccessTTL, sp.RefreshTTL
 		}
 	}
+	// A client bound to a token profile gets that profile's audience, lifetimes
+	// and extra claims. Everything the profile leaves unset stays as the
+	// project's default.
+	profile := a.resolveClientTokenProfile(ctx, sub.clientID)
 
 	// The `groups` scope projects the user's IAM role assignments into the token.
 	// The values are read from storage, never taken from the request: a client
@@ -2150,8 +2154,14 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		}
 	}
 
-	// Access token: signed RS256 JWT carrying the standard access claims.
-	accessClaims := map[string]any{
+	// Access token: signed RS256 JWT carrying the standard access claims. The
+	// profile's template goes in first so a standard claim always wins over it.
+	accessClaims := tokenProfileClaims(profile)
+	if accessClaims == nil {
+		accessClaims = map[string]any{}
+	}
+
+	for name, value := range map[string]any{
 		claimIssuer:    issuer,
 		claimSubject:   sub.subject,
 		claimAudience:  sub.clientID,
@@ -2168,7 +2178,12 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		// where relying parties resolve claims the id_token did not carry.
 		claimProjectID:   sub.projectID,
 		claimEnvironment: env,
+	} {
+		accessClaims[name] = value
 	}
+
+	accessTTL, refreshTTL = applyTokenProfile(profile, accessClaims, accessTTL, refreshTTL)
+
 	if groups != nil {
 		accessClaims[claimGroups] = groups
 	}

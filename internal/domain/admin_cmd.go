@@ -251,6 +251,7 @@ type AdminAppClientDesired struct {
 	Scopes                 []string
 	JWKS                   string
 	JWKSURI                string
+	TokenProfileID         string
 }
 
 // AdminAppsApplyCmd reconciles a project environment's app clients against a
