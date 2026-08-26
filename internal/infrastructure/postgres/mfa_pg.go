@@ -1109,7 +1109,7 @@ func (a *pgMFAAccounts) mfaInsertChallenge(ctx context.Context, projectID, accou
 		return err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 	subject := null.From(accountID)
 
 	setter := &models.IamChallengeSetter{
@@ -1121,7 +1121,7 @@ func (a *pgMFAAccounts) mfaInsertChallenge(ctx context.Context, projectID, accou
 		ExpiresAt:   ptr(ch.ExpiresAt),
 		Consumed:    ptr(false),
 		CreatedAt:   ptr(nowUTC()),
-		Data:        &rm,
+		Data:        &rawData,
 	}
 	if data.FlowTokenHash != "" {
 		ch := null.From(data.FlowTokenHash)
@@ -1249,7 +1249,7 @@ func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accou
 		return err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 
 	encSecret, err := a.db.Cipher.Encrypt(secret)
 	if err != nil {
@@ -1265,7 +1265,7 @@ func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accou
 		Status:      ptr(f.Status),
 		Secret:      ptr(encSecret),
 		CreatedAt:   ptr(nowUTC()),
-		Data:        &rm,
+		Data:        &rawData,
 	}
 	if _, err := models.IamFactors.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {

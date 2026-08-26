@@ -1120,16 +1120,16 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func oasHook(h domain.AdminHook) oas.Hook {
+func oasHook(hook domain.AdminHook) oas.Hook {
 	out := oas.Hook{
-		ID:        oas.NewOptString(h.ID),
-		URL:       oas.NewOptString(h.URL),
-		TimeoutMs: oas.NewOptInt(h.TimeoutMs),
-		Enabled:   oas.NewOptBool(h.Enabled),
+		ID:        oas.NewOptString(hook.ID),
+		URL:       oas.NewOptString(hook.URL),
+		TimeoutMs: oas.NewOptInt(hook.TimeoutMs),
+		Enabled:   oas.NewOptBool(hook.Enabled),
 	}
 
 	var ht oas.HookType
-	if err := ht.UnmarshalText([]byte(h.Type)); err == nil {
+	if err := ht.UnmarshalText([]byte(hook.Type)); err == nil {
 		out.Type = oas.NewOptHookType(ht)
 	}
 
@@ -1286,15 +1286,15 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.C
 	return out, nil
 }
 
-func oasJob(j domain.AdminJob) oas.Job {
+func oasJob(job domain.AdminJob) oas.Job {
 	out := oas.Job{
-		ID:       oas.NewOptString(j.ID),
-		Type:     oas.NewOptString(j.Type),
-		Progress: oas.NewOptJobProgress(oas.JobProgress{Processed: oas.NewOptInt(j.Progress)}),
+		ID:       oas.NewOptString(job.ID),
+		Type:     oas.NewOptString(job.Type),
+		Progress: oas.NewOptJobProgress(oas.JobProgress{Processed: oas.NewOptInt(job.Progress)}),
 	}
 
 	var st oas.JobStatus
-	if err := st.UnmarshalText([]byte(jobAPIStatus(j.Status))); err == nil {
+	if err := st.UnmarshalText([]byte(jobAPIStatus(job.Status))); err == nil {
 		out.Status = oas.NewOptJobStatus(st)
 	}
 
@@ -2011,13 +2011,13 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx 
 		cmd.Reason = v.Reason.Or("")
 	}
 
-	ar, err := s.deps.AccessRequests.Deny(ctx, cmd)
+	accessReq, err := s.deps.AccessRequests.Deny(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	return &oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK{
-		Request: oas.NewOptAccessRequest(oasAdminAccessRequest(ar)),
+		Request: oas.NewOptAccessRequest(oasAdminAccessRequest(accessReq)),
 	}, nil
 }
 
@@ -2549,13 +2549,13 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx co
 		return nil, err
 	}
 
-	sa, err := s.deps.ServiceAccounts.Get(ctx, params.ProjectID, params.SaID)
+	svcAcct, err := s.deps.ServiceAccounts.Get(ctx, params.ProjectID, params.SaID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK{
-		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(sa)),
+		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(svcAcct)),
 	}, nil
 }
 
@@ -2564,7 +2564,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context
 		return nil, err
 	}
 
-	sa, err := s.deps.ServiceAccounts.Create(ctx, domain.ServiceAccountCmd{
+	svcAcct, err := s.deps.ServiceAccounts.Create(ctx, domain.ServiceAccountCmd{
 		ProjectID: params.ProjectID,
 		Name:      req.Name,
 		Scopes:    req.Scopes,
@@ -2574,7 +2574,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context
 	}
 
 	return &oas.PostV1ProjectsByProjectIdAdminServiceAccountsCreated{
-		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(sa)),
+		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(svcAcct)),
 	}, nil
 }
 
@@ -2583,7 +2583,7 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx 
 		return nil, err
 	}
 
-	sa, err := s.deps.ServiceAccounts.Update(ctx, domain.AdminServiceAccountUpdateCmd{
+	svcAcct, err := s.deps.ServiceAccounts.Update(ctx, domain.AdminServiceAccountUpdateCmd{
 		ProjectID:        params.ProjectID,
 		ServiceAccountID: params.SaID,
 		Scopes:           req.Scopes,
@@ -2594,7 +2594,7 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx 
 	}
 
 	return &oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK{
-		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(sa)),
+		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(svcAcct)),
 	}, nil
 }
 
@@ -3383,17 +3383,17 @@ func oasDecodeConfig(doc domain.AdminConfigDoc, dst jxDecoder) error {
 }
 
 // oasAdminAccessRequest maps a domain access request to its wire form.
-func oasAdminAccessRequest(ar *domain.CoreAuthAccessRequest) oas.AccessRequest {
+func oasAdminAccessRequest(accessReq *domain.CoreAuthAccessRequest) oas.AccessRequest {
 	out := oas.AccessRequest{
-		ID:    oas.NewOptString(ar.ID),
-		Email: oas.NewOptString(ar.Email),
+		ID:    oas.NewOptString(accessReq.ID),
+		Email: oas.NewOptString(accessReq.Email),
 	}
-	if ar.Reason != "" {
-		out.Reason = oas.NewOptNilString(ar.Reason)
+	if accessReq.Reason != "" {
+		out.Reason = oas.NewOptNilString(accessReq.Reason)
 	}
 
-	if ar.Status != "" {
-		out.Status = oas.NewOptAccessRequestStatus(oas.AccessRequestStatus(ar.Status))
+	if accessReq.Status != "" {
+		out.Status = oas.NewOptAccessRequestStatus(oas.AccessRequestStatus(accessReq.Status))
 	}
 
 	return out

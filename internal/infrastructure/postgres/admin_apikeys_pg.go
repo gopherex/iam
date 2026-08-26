@@ -112,7 +112,7 @@ func (a *pgAdminAPIKeys) Create(ctx context.Context, cmd domain.AdminAPIKeyCmd) 
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 		setter := &models.IamAPIKeySetter{
 			ID:        &key.ID,
 			ProjectID: &key.ProjectID,
@@ -120,7 +120,7 @@ func (a *pgAdminAPIKeys) Create(ctx context.Context, cmd domain.AdminAPIKeyCmd) 
 			Hash:      &hash,
 			Disabled:  &key.Disabled,
 			CreatedAt: &now,
-			Data:      &rm,
+			Data:      &rawData,
 		}
 
 		if !cmd.ExpiresAt.IsZero() {

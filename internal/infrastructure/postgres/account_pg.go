@@ -595,7 +595,7 @@ func (a *pgAccountStore) Activity(ctx context.Context, cmd domain.AccountActivit
 	}
 
 	for _, row := range rows {
-		ev := domain.AccountActivityEvent{
+		activityEvent := domain.AccountActivityEvent{
 			ID:   row.ID,
 			Type: row.Type,
 			At:   row.At,
@@ -609,11 +609,11 @@ func (a *pgAccountStore) Activity(ctx context.Context, cmd domain.AccountActivit
 				return nil, err
 			}
 
-			ev.IP = env.IP
-			ev.Device = env.Device
+			activityEvent.IP = env.IP
+			activityEvent.Device = env.Device
 		}
 
-		page.Events = append(page.Events, ev)
+		page.Events = append(page.Events, activityEvent)
 	}
 
 	if page.HasMore && len(page.Events) > 0 {
@@ -727,7 +727,7 @@ func (a *pgAccountStore) StartExport(ctx context.Context, accountID string) (*do
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 		now := nowUTC()
 
 		setter := &models.IamJobSetter{
@@ -737,7 +737,7 @@ func (a *pgAccountStore) StartExport(ctx context.Context, accountID string) (*do
 			Status:    ptr(job.Status),
 			CreatedAt: ptr(now),
 			UpdatedAt: ptr(now),
-			Data:      &rm,
+			Data:      &rawData,
 		}
 		if _, err := models.IamJobs.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
@@ -826,7 +826,7 @@ func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.Acco
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 		codeHash := null.From(accountHashToken(code))
 		subject := null.From(cmd.TargetIdentifier)
 
@@ -839,7 +839,7 @@ func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.Acco
 			ExpiresAt: ptr(expires),
 			Consumed:  ptr(false),
 			CreatedAt: ptr(nowUTC()),
-			Data:      &rm,
+			Data:      &rawData,
 		}
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err

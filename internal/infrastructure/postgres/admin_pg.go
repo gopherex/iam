@@ -221,7 +221,7 @@ func insertAdminUserRow(ctx context.Context, db *DB, cmd domain.RegisterCmd, env
 		return nil, err
 	}
 
-	rm := json.RawMessage(raw)
+	rawAccount := json.RawMessage(raw)
 
 	setter := &models.IamUserSetter{
 		ID:          &acc.ID,
@@ -229,7 +229,7 @@ func insertAdminUserRow(ctx context.Context, db *DB, cmd domain.RegisterCmd, env
 		Environment: &env,
 		Kind:        ptr(acc.Kind),
 		Status:      ptr(acc.Status),
-		Data:        &rm,
+		Data:        &rawAccount,
 	}
 	if acc.PrimaryEmail != "" {
 		v := null.From(acc.PrimaryEmail)
@@ -269,7 +269,7 @@ func insertAdminUserPassword(ctx context.Context, db *DB, projectID, userID, pas
 
 	crm := json.RawMessage(craw)
 
-	cs := &models.IamCredentialSetter{
+	credSetter := &models.IamCredentialSetter{
 		ID:        ptr(newUUID()),
 		ProjectID: &projectID,
 		UserID:    &userID,
@@ -277,7 +277,7 @@ func insertAdminUserPassword(ctx context.Context, db *DB, projectID, userID, pas
 		Secret:    ptr(string(hash)),
 		Data:      &crm,
 	}
-	_, err = models.IamCredentials.Insert(cs).One(ctx, db.Bobx())
+	_, err = models.IamCredentials.Insert(credSetter).One(ctx, db.Bobx())
 
 	return err
 }
@@ -568,7 +568,7 @@ func (a *pgAdminUsers) Anonymize(ctx context.Context, cmd domain.AdminUserAnonym
 			return err
 		}
 
-		rm := json.RawMessage(raw)
+		rawAccount := json.RawMessage(raw)
 		nullEmail := null.FromPtr[string](nil)
 
 		nullPhone := null.FromPtr[string](nil)
@@ -576,7 +576,7 @@ func (a *pgAdminUsers) Anonymize(ctx context.Context, cmd domain.AdminUserAnonym
 			Status:       ptr(acc.Status),
 			PrimaryEmail: &nullEmail,
 			PrimaryPhone: &nullPhone,
-			Data:         &rm,
+			Data:         &rawAccount,
 			UpdatedAt:    ptr(acc.UpdatedAt),
 		}); err != nil {
 			return err
@@ -1106,14 +1106,14 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawApp := json.RawMessage(raw)
 		if _, err := models.IamAppClients.Insert(&models.IamAppClientSetter{
 			ID:          &app.ID,
 			ProjectID:   &app.ProjectID,
 			Environment: ptr(app.Environment),
 			Name:        ptr(app.Name),
 			Type:        ptr(app.Type),
-			Data:        &rm,
+			Data:        &rawApp,
 		}).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
@@ -2041,7 +2041,7 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawFeatures := json.RawMessage(raw)
 		env := adminEnv(cmd.Environment)
 
 		existing, err := models.IamConfigs.Query(
@@ -2054,7 +2054,7 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 		}
 
 		if err == nil {
-			if uerr := existing.Update(ctx, a.db.Bobx(), &models.IamConfigSetter{Data: &rm, UpdatedAt: ptr(nowUTC())}); uerr != nil {
+			if uerr := existing.Update(ctx, a.db.Bobx(), &models.IamConfigSetter{Data: &rawFeatures, UpdatedAt: ptr(nowUTC())}); uerr != nil {
 				return nil, uerr
 			}
 		} else {
@@ -2062,7 +2062,7 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 				ProjectID:   &cmd.ProjectID,
 				Environment: &env,
 				Key:         ptr("features"),
-				Data:        &rm,
+				Data:        &rawFeatures,
 			}).One(ctx, a.db.Bobx()); ierr != nil {
 				return nil, ierr
 			}
@@ -2168,16 +2168,16 @@ func adminProviderToDomain(cipher Cipher, row *models.IamProvider) (domain.Admin
 		return p, nil
 	}
 
-	var d adminProviderData
-	if err := json.Unmarshal(row.Data, &d); err != nil {
+	var providerData adminProviderData
+	if err := json.Unmarshal(row.Data, &providerData); err != nil {
 		return p, nil //nolint:nilerr // malformed envelope: fall back to the row's own columns
 	}
 
-	if d.Type != "" {
-		p.Type = d.Type
+	if providerData.Type != "" {
+		p.Type = providerData.Type
 	}
 
-	cfg, err := decryptProviderConfig(cipher, jsonToRaw(d.Config))
+	cfg, err := decryptProviderConfig(cipher, jsonToRaw(providerData.Config))
 	if err != nil {
 		return domain.AdminProvider{}, err
 	}
@@ -2210,14 +2210,14 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawProviderData := json.RawMessage(raw)
 		if _, err := models.IamProviders.Insert(&models.IamProviderSetter{
 			ID:        &id,
 			ProjectID: &cmd.ProjectID,
 			Kind:      &kind,
 			Provider:  ptr(cmd.Type),
 			Enabled:   ptr(cmd.Enabled),
-			Data:      &rm,
+			Data:      &rawProviderData,
 		}).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
@@ -2470,10 +2470,10 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawTemplate := json.RawMessage(raw)
 		if cur != nil {
 			if err := cur.Update(ctx, a.db.Bobx(), &models.IamEmailTemplateSetter{
-				Data:      &rm,
+				Data:      &rawTemplate,
 				UpdatedAt: ptr(nowUTC()),
 			}); err != nil {
 				return nil, err
@@ -2484,7 +2484,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 				ProjectID: &cmd.ProjectID,
 				Key:       ptr(cmd.TemplateID),
 				Locale:    ptr(locale),
-				Data:      &rm,
+				Data:      &rawTemplate,
 			}).One(ctx, a.db.Bobx()); err != nil {
 				return nil, err
 			}
@@ -2873,7 +2873,7 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawKey := json.RawMessage(raw)
 		// Generate the RSA-2048 private key material and persist it (PEM) so the
 		// Signer can mint/verify project tokens with this kid.
 		pemStr, err := newRSAKeyPEM()
@@ -2886,7 +2886,7 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 			return nil, err
 		}
 
-		pv := null.From(encPem)
+		privatePem := null.From(encPem)
 		if _, err := models.IamSigningKeys.Insert(&models.IamSigningKeySetter{
 			Kid:         &kid,
 			ProjectID:   &cmd.ProjectID,
@@ -2894,8 +2894,8 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 			Alg:         ptr(key.Alg),
 			Use:         ptr(key.Use),
 			Status:      ptr(key.Status),
-			PrivatePem:  &pv,
-			Data:        &rm,
+			PrivatePem:  &privatePem,
+			Data:        &rawKey,
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
 		}
@@ -2982,28 +2982,28 @@ func adminTokenProfileToDomain(row *models.IamTokenProfile) domain.AdminTokenPro
 	// the bytes as they are. Decoding into jx.Raw makes encoding/json try to
 	// base64-decode real JSON, which is how a stored template came back as
 	// noise.
-	var d struct {
+	var decoded struct {
 		Name           string                     `json:"name"`
 		Audience       string                     `json:"audience"`
 		AccessTTL      int                        `json:"access_ttl"`
 		RefreshTTL     int                        `json:"refresh_ttl"`
 		ClaimsTemplate map[string]json.RawMessage `json:"claims_template"`
 	}
-	if err := json.Unmarshal(row.Data, &d); err != nil {
+	if err := json.Unmarshal(row.Data, &decoded); err != nil {
 		return p // malformed envelope: fall back to the row's own columns
 	}
 
-	if d.Name != "" {
-		p.Name = d.Name
+	if decoded.Name != "" {
+		p.Name = decoded.Name
 	}
 
-	p.Audience = d.Audience
-	p.AccessTTL = d.AccessTTL
-	p.RefreshTTL = d.RefreshTTL
+	p.Audience = decoded.Audience
+	p.AccessTTL = decoded.AccessTTL
+	p.RefreshTTL = decoded.RefreshTTL
 
-	if len(d.ClaimsTemplate) > 0 {
-		p.ClaimsTemplate = make(map[string]jx.Raw, len(d.ClaimsTemplate))
-		for name, raw := range d.ClaimsTemplate {
+	if len(decoded.ClaimsTemplate) > 0 {
+		p.ClaimsTemplate = make(map[string]jx.Raw, len(decoded.ClaimsTemplate))
+		for name, raw := range decoded.ClaimsTemplate {
 			p.ClaimsTemplate[name] = jx.Raw(raw)
 		}
 	}
@@ -3255,22 +3255,22 @@ var _ api.AdminAccessRequests = (*pgAdminAccessRequests)(nil)
 const adminAccessRequestPageSize = 50
 
 func accessRequestToDomain(row *models.IamAccessRequest) domain.CoreAuthAccessRequest {
-	ar := domain.CoreAuthAccessRequest{
+	request := domain.CoreAuthAccessRequest{
 		ID:        row.ID,
 		ProjectID: row.ProjectID,
 		Email:     row.Email,
 		Status:    row.Status,
 	}
 	if len(row.Data) > 0 {
-		_ = unmarshal(row.Data, &ar) // envelope carries Reason and any extra fields
+		_ = unmarshal(row.Data, &request) // envelope carries Reason and any extra fields
 	}
 	// Keep lookup columns authoritative over the envelope copy.
-	ar.ID = row.ID
-	ar.ProjectID = row.ProjectID
-	ar.Email = row.Email
-	ar.Status = row.Status
+	request.ID = row.ID
+	request.ProjectID = row.ProjectID
+	request.Email = row.Email
+	request.Status = row.Status
 
-	return ar
+	return request
 }
 
 func (a *pgAdminAccessRequests) findRequest(ctx context.Context, projectID, requestID string) (*models.IamAccessRequest, error) {
@@ -3335,10 +3335,10 @@ func (a *pgAdminAccessRequests) Approve(ctx context.Context, cmd domain.AdminAcc
 			return nil, err
 		}
 
-		ar := accessRequestToDomain(row)
+		request := accessRequestToDomain(row)
 
-		ar.Status = "approved"
-		if err := a.persistDecision(ctx, row, ar, cmd.ActorID, ""); err != nil {
+		request.Status = "approved"
+		if err := a.persistDecision(ctx, row, request, cmd.ActorID, ""); err != nil {
 			return nil, err
 		}
 
@@ -3346,16 +3346,16 @@ func (a *pgAdminAccessRequests) Approve(ctx context.Context, cmd domain.AdminAcc
 			Type:        "access_request.approved",
 			ProjectID:   cmd.ProjectID,
 			Environment: "",
-			AggregateID: ar.ID,
-			Payload:     ar,
+			AggregateID: request.ID,
+			Payload:     request,
 		}); err != nil {
 			return nil, err
 		}
 
 		out := map[string]jx.Raw{
-			"id":     jx.Raw(adminJSONString(ar.ID)),
-			"status": jx.Raw(adminJSONString(ar.Status)),
-			"email":  jx.Raw(adminJSONString(ar.Email)),
+			"id":     jx.Raw(adminJSONString(request.ID)),
+			"status": jx.Raw(adminJSONString(request.Status)),
+			"email":  jx.Raw(adminJSONString(request.Email)),
 		}
 
 		return out, nil
@@ -3369,11 +3369,11 @@ func (a *pgAdminAccessRequests) Deny(ctx context.Context, cmd domain.AdminAccess
 			return nil, err
 		}
 
-		ar := accessRequestToDomain(row)
-		ar.Status = "denied"
+		request := accessRequestToDomain(row)
+		request.Status = "denied"
 
-		ar.Reason = cmd.Reason
-		if err := a.persistDecision(ctx, row, ar, cmd.ActorID, cmd.Reason); err != nil {
+		request.Reason = cmd.Reason
+		if err := a.persistDecision(ctx, row, request, cmd.ActorID, cmd.Reason); err != nil {
 			return nil, err
 		}
 
@@ -3381,13 +3381,13 @@ func (a *pgAdminAccessRequests) Deny(ctx context.Context, cmd domain.AdminAccess
 			Type:        "access_request.denied",
 			ProjectID:   cmd.ProjectID,
 			Environment: "",
-			AggregateID: ar.ID,
-			Payload:     ar,
+			AggregateID: request.ID,
+			Payload:     request,
 		}); err != nil {
 			return nil, err
 		}
 
-		return &ar, nil
+		return &request, nil
 	})
 }
 

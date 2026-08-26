@@ -191,11 +191,11 @@ func (r *configReader) loadDoc(ctx context.Context, projectID, env, key string, 
 		env = runtimeDefaultEnv
 	}
 
-	ck := cacheKey{projectID: projectID, env: env, key: key}
+	cacheKeyValue := cacheKey{projectID: projectID, env: env, key: key}
 
 	r.mu.RLock()
 
-	ent, ok := r.entries[ck]
+	ent, ok := r.entries[cacheKeyValue]
 	if ok && time.Now().Before(ent.exp) {
 		raw := ent.raw
 
@@ -209,7 +209,7 @@ func (r *configReader) loadDoc(ctx context.Context, projectID, env, key string, 
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if refreshed, hit := r.entries[ck]; hit && time.Now().Before(refreshed.exp) { // another goroutine refreshed
+	if refreshed, hit := r.entries[cacheKeyValue]; hit && time.Now().Before(refreshed.exp) { // another goroutine refreshed
 		return refreshed.raw, nil
 	}
 
@@ -221,14 +221,14 @@ func (r *configReader) loadDoc(ctx context.Context, projectID, env, key string, 
 		// Keep the stale entry (if any); extend its exp briefly to avoid hammering
 		// the DB. With no prior entry, fall back to "absent" (nil) for the same
 		// short window so enforcement uses defaults rather than failing.
-		prev := r.entries[ck]
+		prev := r.entries[cacheKeyValue]
 		prev.exp = time.Now().Add(staleEntryGrace)
-		r.entries[ck] = prev
+		r.entries[cacheKeyValue] = prev
 
 		return prev.raw, nil
 	}
 
-	r.entries[ck] = cacheEntry{raw: raw, exp: time.Now().Add(r.ttl)}
+	r.entries[cacheKeyValue] = cacheEntry{raw: raw, exp: time.Now().Add(r.ttl)}
 
 	return raw, nil
 }

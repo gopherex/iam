@@ -37,35 +37,35 @@ func NewOutboxEmitter(ob *outbox.Outbox) *outboxEmitter { return &outboxEmitter{
 var _ Emitter = (*outboxEmitter)(nil)
 
 // Emit serializes the event and enqueues it on the caller's transaction.
-func (e *outboxEmitter) Emit(ctx context.Context, ev domain.Event) error {
-	if ev.ID == "" {
-		ev.ID = newUUID()
+func (e *outboxEmitter) Emit(ctx context.Context, event domain.Event) error {
+	if event.ID == "" {
+		event.ID = newUUID()
 	}
 
-	if ev.Version == 0 {
-		ev.Version = 1
+	if event.Version == 0 {
+		event.Version = 1
 	}
 
-	if ev.OccurredAt.IsZero() {
-		ev.OccurredAt = nowUTC()
+	if event.OccurredAt.IsZero() {
+		event.OccurredAt = nowUTC()
 	}
 
-	payload, err := json.Marshal(ev)
+	payload, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}
 
 	return e.ob.Enqueue(ctx, outbox.Message{
-		ID:           ev.ID,
-		Topic:        "iam." + aggregateOf(ev.Type),
-		MessageType:  ev.Type,
-		PartitionKey: ev.ProjectID,
+		ID:           event.ID,
+		Topic:        "iam." + aggregateOf(event.Type),
+		MessageType:  event.Type,
+		PartitionKey: event.ProjectID,
 		Payload:      payload,
 		ContentType:  "application/json",
 		Headers: map[string]string{
-			"project_id":  ev.ProjectID,
-			"environment": ev.Environment,
-			"event_id":    ev.ID,
+			"project_id":  event.ProjectID,
+			"environment": event.Environment,
+			"event_id":    event.ID,
 		},
 	})
 }

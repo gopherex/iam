@@ -445,20 +445,20 @@ func oasIdentity(i *domain.Identity) oas.Identity {
 
 // oasAccountActivityEvent maps a domain activity event to its wire form.
 func oasAccountActivityEvent(e *domain.AccountActivityEvent) oas.ActivityEvent {
-	ev := oas.ActivityEvent{
+	event := oas.ActivityEvent{
 		ID:   oas.NewOptString(e.ID),
 		Type: oas.NewOptString(e.Type),
 		At:   oas.NewOptTimestamp(oas.Timestamp(e.At)),
 	}
 	if e.IP != "" {
-		ev.IP = oas.NewOptNilString(e.IP)
+		event.IP = oas.NewOptNilString(e.IP)
 	}
 
 	if e.Device != "" {
-		ev.Device = oas.NewOptNilString(e.Device)
+		event.Device = oas.NewOptNilString(e.Device)
 	}
 
-	return ev
+	return event
 }
 
 // oasAccountConsent maps a domain consent to the GET consents list item.

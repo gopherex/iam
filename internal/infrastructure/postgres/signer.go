@@ -91,7 +91,7 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 			return encErr
 		}
 
-		pv := null.From(encPem)
+		privatePem := null.From(encPem)
 		raw := json.RawMessage(`{}`)
 
 		setter := &models.IamSigningKeySetter{
@@ -101,7 +101,7 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 			Alg:         ptr("RS256"),
 			Use:         ptr("sig"),
 			Status:      ptr("active"),
-			PrivatePem:  &pv,
+			PrivatePem:  &privatePem,
 			Data:        &raw,
 		}
 		if _, err := models.IamSigningKeys.Insert(setter).One(ctx, s.db.Bobx()); err != nil {

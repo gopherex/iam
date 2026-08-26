@@ -128,14 +128,14 @@ func saSetterData(env *saEnvelope) (*json.RawMessage, error) {
 // CreateServiceAccount creates a service account in the command's project.
 func (a *PgMachineIdentities) CreateServiceAccount(ctx context.Context, cmd domain.ServiceAccountCmd) (*domain.ServiceAccount, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.ServiceAccount, error) {
-		sa := domain.ServiceAccount{
+		svcAcct := domain.ServiceAccount{
 			ID:        newUUID(),
 			ProjectID: cmd.ProjectID,
 			Name:      cmd.Name,
 			Scopes:    cmd.Scopes,
 			Disabled:  false,
 		}
-		env := saEnvelope{ServiceAccount: sa}
+		env := saEnvelope{ServiceAccount: svcAcct}
 
 		data, err := saSetterData(&env)
 		if err != nil {
@@ -143,10 +143,10 @@ func (a *PgMachineIdentities) CreateServiceAccount(ctx context.Context, cmd doma
 		}
 
 		setter := &models.IamServiceAccountSetter{
-			ID:        &sa.ID,
-			ProjectID: &sa.ProjectID,
-			Name:      &sa.Name,
-			Disabled:  &sa.Disabled,
+			ID:        &svcAcct.ID,
+			ProjectID: &svcAcct.ProjectID,
+			Name:      &svcAcct.Name,
+			Disabled:  &svcAcct.Disabled,
 			Data:      data,
 		}
 		if _, err := models.IamServiceAccounts.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
@@ -159,14 +159,14 @@ func (a *PgMachineIdentities) CreateServiceAccount(ctx context.Context, cmd doma
 
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.created",
-			ProjectID:   sa.ProjectID,
-			AggregateID: sa.ID,
-			Payload:     &sa,
+			ProjectID:   svcAcct.ProjectID,
+			AggregateID: svcAcct.ID,
+			Payload:     &svcAcct,
 		}); err != nil {
 			return nil, err
 		}
 
-		return &sa, nil
+		return &svcAcct, nil
 	})
 }
 
@@ -261,17 +261,17 @@ func (a *PgMachineIdentities) UpdateServiceAccount(ctx context.Context, cmd doma
 			return nil, err
 		}
 
-		sa := env.ServiceAccount
+		svcAcct := env.ServiceAccount
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.updated",
-			ProjectID:   sa.ProjectID,
-			AggregateID: sa.ID,
-			Payload:     &sa,
+			ProjectID:   svcAcct.ProjectID,
+			AggregateID: svcAcct.ID,
+			Payload:     &svcAcct,
 		}); err != nil {
 			return nil, err
 		}
 
-		return &sa, nil
+		return &svcAcct, nil
 	})
 }
 
@@ -526,7 +526,7 @@ func (a *PgMachineIdentities) CreateAPIKey(ctx context.Context, cmd domain.APIKe
 			return result{}, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 
 		setter := &models.IamAPIKeySetter{
 			ID:        &key.ID,
@@ -534,7 +534,7 @@ func (a *PgMachineIdentities) CreateAPIKey(ctx context.Context, cmd domain.APIKe
 			Prefix:    &key.Prefix,
 			Hash:      &hash,
 			Disabled:  &key.Disabled,
-			Data:      &rm,
+			Data:      &rawData,
 		}
 		if _, err := models.IamAPIKeys.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {

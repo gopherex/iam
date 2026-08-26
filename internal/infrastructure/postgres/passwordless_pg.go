@@ -413,7 +413,7 @@ func (a *pgPasswordlessAccounts) insertChallenge(ctx context.Context, env *chall
 			return err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 		subject := null.From(env.Subject)
 		codeHash := null.From(env.CodeHash)
 
@@ -432,7 +432,7 @@ func (a *pgPasswordlessAccounts) insertChallenge(ctx context.Context, env *chall
 			ExpiresAt:   &env.ExpiresAt,
 			Consumed:    ptr(false),
 			CreatedAt:   &env.CreatedAt,
-			Data:        &rm,
+			Data:        &rawData,
 		}
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return translatePgErr("challenge", err)
@@ -728,14 +728,14 @@ func (a *pgPasswordlessAccounts) insertUser(ctx context.Context, acc *domain.Acc
 		return err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 	setter.ID = &acc.ID
 	setter.ProjectID = &acc.ProjectID
 	setter.Environment = &environment
 	setter.Kind = ptr(acc.Kind)
 	setter.Status = ptr(acc.Status)
 
-	setter.Data = &rm
+	setter.Data = &rawData
 	if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		return err
 	}

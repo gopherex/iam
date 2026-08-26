@@ -294,7 +294,7 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 			ExpiresAt: nowUTC().Add(webauthnChallengeTTL),
 			PublicKey: publicKey,
 		}
-		rm := json.RawMessage(data)
+		rawData := json.RawMessage(data)
 		hash := null.From(webauthnHash(session.Challenge))
 
 		setter := &models.IamChallengeSetter{
@@ -305,7 +305,7 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 			CodeHash:    &hash,
 			ExpiresAt:   ptr(ch.ExpiresAt),
 			Consumed:    ptr(false),
-			Data:        &rm,
+			Data:        &rawData,
 		}
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return nil, err
@@ -819,7 +819,7 @@ func (a *pgWebAuthnAccounts) webauthnInsertCredentialRow(ctx context.Context, pr
 		return nil, err
 	}
 
-	rm := json.RawMessage(data)
+	rawData := json.RawMessage(data)
 	pubKey := null.From(libCred.PublicKey)
 
 	setter := &models.IamWebauthnCredentialSetter{
@@ -831,7 +831,7 @@ func (a *pgWebAuthnAccounts) webauthnInsertCredentialRow(ctx context.Context, pr
 		PublicKey:    &pubKey,
 		SignCount:    ptr(int64(libCred.Authenticator.SignCount)),
 		CreatedAt:    &now,
-		Data:         &rm,
+		Data:         &rawData,
 	}
 	if _, err := models.IamWebauthnCredentials.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {

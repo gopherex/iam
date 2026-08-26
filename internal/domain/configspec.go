@@ -781,64 +781,64 @@ func (c RateLimitsSpec) Validate() error {
 // enum-checked, action (if set) must be a supported action — RateLimitActions
 // is empty, so any non-empty action currently fails — and limit/window must
 // be positive and within the maximum.
-func (r RateLimitRuleSpec) validate(at func(string) string, maxLimit, maxWindow int) error {
-	if err := r.validateBy(at); err != nil {
+func (r RateLimitRuleSpec) validate(fieldPath func(string) string, maxLimit, maxWindow int) error {
+	if err := r.validateBy(fieldPath); err != nil {
 		return err
 	}
 
-	if err := r.validateEndpoint(at); err != nil {
+	if err := r.validateEndpoint(fieldPath); err != nil {
 		return err
 	}
 
 	if r.Action != nil && strings.TrimSpace(*r.Action) != "" && !RateLimitActions.Has(*r.Action) {
-		return ErrValidation.WithMessage(at("action") + " not supported yet")
+		return ErrValidation.WithMessage(fieldPath("action") + " not supported yet")
 	}
 
 	if r.Limit == nil || *r.Limit < 1 {
-		return ErrValidation.WithMessage(at("limit") + " must be >= 1")
+		return ErrValidation.WithMessage(fieldPath("limit") + " must be >= 1")
 	}
 
 	if *r.Limit > maxLimit {
-		return ErrValidation.WithMessage(at("limit") + " exceeds maximum")
+		return ErrValidation.WithMessage(fieldPath("limit") + " exceeds maximum")
 	}
 
 	if r.WindowSeconds == nil || *r.WindowSeconds < 1 {
-		return ErrValidation.WithMessage(at("window_seconds") + " must be >= 1")
+		return ErrValidation.WithMessage(fieldPath("window_seconds") + " must be >= 1")
 	}
 
 	if *r.WindowSeconds > maxWindow {
-		return ErrValidation.WithMessage(at("window_seconds") + " exceeds maximum")
+		return ErrValidation.WithMessage(fieldPath("window_seconds") + " exceeds maximum")
 	}
 
 	return nil
 }
 
-func (r RateLimitRuleSpec) validateBy(at func(string) string) error {
+func (r RateLimitRuleSpec) validateBy(fieldPath func(string) string) error {
 	if r.By == nil || strings.TrimSpace(*r.By) == "" {
-		return ErrValidation.WithMessage(at("by") + " is required")
+		return ErrValidation.WithMessage(fieldPath("by") + " is required")
 	}
 
 	if !RateLimitBy.Has(*r.By) {
 		return ErrValidation.WithDetails(map[string]any{
-			"field":   at("by"),
+			"field":   fieldPath("by"),
 			"value":   *r.By,
 			"allowed": RateLimitBy.List(),
-		}).WithMessage(at("by") + ": unsupported subject")
+		}).WithMessage(fieldPath("by") + ": unsupported subject")
 	}
 
 	return nil
 }
 
-func (r RateLimitRuleSpec) validateEndpoint(at func(string) string) error {
+func (r RateLimitRuleSpec) validateEndpoint(fieldPath func(string) string) error {
 	if r.Endpoint == nil || strings.TrimSpace(*r.Endpoint) == "" {
-		return ErrValidation.WithMessage(at("endpoint") + " is required")
+		return ErrValidation.WithMessage(fieldPath("endpoint") + " is required")
 	}
 
 	if !RateLimitEndpoints.Has(*r.Endpoint) {
 		return ErrValidation.WithDetails(map[string]any{
-			"field": at("endpoint"),
+			"field": fieldPath("endpoint"),
 			"value": *r.Endpoint,
-		}).WithMessage(at("endpoint") + ": unsupported endpoint")
+		}).WithMessage(fieldPath("endpoint") + ": unsupported endpoint")
 	}
 
 	return nil
@@ -909,20 +909,20 @@ func (c ConsentConfigSpec) Validate() error {
 
 // validateRequiredPresentability enforces that a required:true document is
 // actually presentable to a user: a title, plus either a body or a url.
-func (d ConsentDocumentSpec) validateRequiredPresentability(at func(string) string) error {
+func (d ConsentDocumentSpec) validateRequiredPresentability(fieldPath func(string) string) error {
 	if d.Required == nil || !*d.Required {
 		return nil
 	}
 
 	if d.Title == nil || strings.TrimSpace(*d.Title) == "" {
-		return ErrValidation.WithMessage(at("title") + " is required for a required consent")
+		return ErrValidation.WithMessage(fieldPath("title") + " is required for a required consent")
 	}
 
 	hasBody := d.Body != nil && strings.TrimSpace(*d.Body) != ""
 	hasURL := d.URL != nil && strings.TrimSpace(*d.URL) != ""
 
 	if !hasBody && !hasURL {
-		return ErrValidation.WithMessage(at("body") + " or " + at("url") + " is required for a required consent")
+		return ErrValidation.WithMessage(fieldPath("body") + " or " + fieldPath("url") + " is required for a required consent")
 	}
 
 	return nil
@@ -930,33 +930,33 @@ func (d ConsentDocumentSpec) validateRequiredPresentability(at func(string) stri
 
 // validate checks one consent document's own fields (not cross-document
 // uniqueness, which the caller tracks) and returns its dedup key.
-func (d ConsentDocumentSpec) validate(at func(string) string) (consentDocKey, error) {
+func (d ConsentDocumentSpec) validate(fieldPath func(string) string) (consentDocKey, error) {
 	const maxBody = 64 * 1024
 
 	key := strings.TrimSpace(d.Key)
 	if key == "" {
-		return consentDocKey{}, ErrValidation.WithMessage(at("key") + " is required")
+		return consentDocKey{}, ErrValidation.WithMessage(fieldPath("key") + " is required")
 	}
 
 	version := strings.TrimSpace(d.Version)
 	if version == "" {
-		return consentDocKey{}, ErrValidation.WithMessage(at("version") + " is required")
+		return consentDocKey{}, ErrValidation.WithMessage(fieldPath("version") + " is required")
 	}
 
-	if err := d.validateRequiredPresentability(at); err != nil {
+	if err := d.validateRequiredPresentability(fieldPath); err != nil {
 		return consentDocKey{}, err
 	}
 
 	if d.Body != nil && len(*d.Body) > maxBody {
-		return consentDocKey{}, ErrValidation.WithMessage(at("body") + " exceeds maximum size")
+		return consentDocKey{}, ErrValidation.WithMessage(fieldPath("body") + " exceeds maximum size")
 	}
 
 	if d.Locale != nil && strings.TrimSpace(*d.Locale) == "" && *d.Locale != "" {
-		return consentDocKey{}, ErrValidation.WithMessage(at("locale") + " must not be blank")
+		return consentDocKey{}, ErrValidation.WithMessage(fieldPath("locale") + " must not be blank")
 	}
 
 	if d.URL != nil && strings.TrimSpace(*d.URL) != "" {
-		if err := ValidateAbsoluteHTTPURL(at("url"), *d.URL); err != nil {
+		if err := ValidateAbsoluteHTTPURL(fieldPath("url"), *d.URL); err != nil {
 			return consentDocKey{}, err
 		}
 	}

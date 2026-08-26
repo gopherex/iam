@@ -660,46 +660,46 @@ func requireScimConnection(ctx context.Context, connectionID string) error {
 
 // oasFederationScimUserMap projects a generated SCIM User onto a free-form
 // attribute map the SCIM port consumes (the adapter owns schema semantics).
-func oasFederationScimUserMap(u *oas.ScimUser) map[string]any {
+func oasFederationScimUserMap(scimUser *oas.ScimUser) map[string]any {
 	m := map[string]any{}
-	if u == nil {
+	if scimUser == nil {
 		return m
 	}
 
-	if len(u.Schemas) > 0 {
-		m["schemas"] = u.Schemas
+	if len(scimUser.Schemas) > 0 {
+		m["schemas"] = scimUser.Schemas
 	}
 
-	if v, ok := u.ID.Get(); ok {
+	if v, ok := scimUser.ID.Get(); ok {
 		m["id"] = v
 	}
 
-	if v, ok := u.UserName.Get(); ok {
+	if v, ok := scimUser.UserName.Get(); ok {
 		m["userName"] = v
 	}
 
-	if v, ok := u.ExternalId.Get(); ok {
+	if v, ok := scimUser.ExternalId.Get(); ok {
 		m["externalId"] = v
 	}
 
-	if v, ok := u.Active.Get(); ok {
+	if v, ok := scimUser.Active.Get(); ok {
 		m["active"] = v
 	}
 
-	if name, ok := u.Name.Get(); ok {
+	if name, ok := scimUser.Name.Get(); ok {
 		m["name"] = anyMap(name)
 	}
 
-	if len(u.Emails) > 0 {
-		emails := make([]map[string]any, 0, len(u.Emails))
-		for i := range u.Emails {
-			emails = append(emails, anyMap(u.Emails[i]))
+	if len(scimUser.Emails) > 0 {
+		emails := make([]map[string]any, 0, len(scimUser.Emails))
+		for i := range scimUser.Emails {
+			emails = append(emails, anyMap(scimUser.Emails[i]))
 		}
 
 		m["emails"] = emails
 	}
 
-	for k, raw := range u.AdditionalProps {
+	for k, raw := range scimUser.AdditionalProps {
 		m[k] = raw
 	}
 
@@ -707,17 +707,17 @@ func oasFederationScimUserMap(u *oas.ScimUser) map[string]any {
 }
 
 // oasDomain maps a domain Domain to its oas representation.
-func oasDomain(d *domain.Domain) oas.Domain {
+func oasDomain(domainObj *domain.Domain) oas.Domain {
 	out := oas.Domain{
-		ID:     oas.NewOptString(d.ID),
-		Domain: oas.NewOptString(d.Domain),
+		ID:     oas.NewOptString(domainObj.ID),
+		Domain: oas.NewOptString(domainObj.Domain),
 	}
-	if d.Status != "" {
-		out.Status = oas.NewOptDomainStatus(oas.DomainStatus(d.Status))
+	if domainObj.Status != "" {
+		out.Status = oas.NewOptDomainStatus(oas.DomainStatus(domainObj.Status))
 	}
 
-	if d.ConnectionID != "" {
-		out.ConnectionID = oas.NewOptNilString(d.ConnectionID)
+	if domainObj.ConnectionID != "" {
+		out.ConnectionID = oas.NewOptNilString(domainObj.ConnectionID)
 	}
 
 	return out

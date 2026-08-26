@@ -67,13 +67,13 @@ func generatedErrorDetails(stage string, err error) map[string]any {
 		details["error"] = err.Error()
 	}
 
-	var op operationContext
-	if errors.As(err, &op) {
-		if id := op.OperationID(); id != "" {
+	var opCtx operationContext
+	if errors.As(err, &opCtx) {
+		if id := opCtx.OperationID(); id != "" {
 			details["operation_id"] = id
 		}
 
-		if name := op.OperationName(); name != "" {
+		if name := opCtx.OperationName(); name != "" {
 			details["operation"] = name
 		}
 	}
@@ -92,19 +92,19 @@ func generatedErrorDetails(stage string, err error) map[string]any {
 // none.
 //
 //nolint:contextcheck // deliberate fallback; see above.
-func logGeneratedError(ctx context.Context, r *http.Request, de *domain.Error, err error) {
+func logGeneratedError(ctx context.Context, r *http.Request, domainErr *domain.Error, err error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
 	level := slog.LevelWarn
-	if de.Status >= http.StatusInternalServerError {
+	if domainErr.Status >= http.StatusInternalServerError {
 		level = slog.LevelError
 	}
 
 	attrs := []slog.Attr{
-		slog.Int("status", de.Status),
-		slog.String("code", de.Code),
+		slog.Int("status", domainErr.Status),
+		slog.String("code", domainErr.Code),
 	}
 	if err != nil {
 		attrs = append(attrs, slog.String("err", err.Error()))
@@ -117,13 +117,13 @@ func logGeneratedError(ctx context.Context, r *http.Request, de *domain.Error, e
 		}
 	}
 
-	var op operationContext
-	if errors.As(err, &op) {
-		if id := op.OperationID(); id != "" {
+	var opCtx operationContext
+	if errors.As(err, &opCtx) {
+		if id := opCtx.OperationID(); id != "" {
 			attrs = append(attrs, slog.String("operation_id", id))
 		}
 
-		if name := op.OperationName(); name != "" {
+		if name := opCtx.OperationName(); name != "" {
 			attrs = append(attrs, slog.String("operation", name))
 		}
 	}
@@ -131,13 +131,13 @@ func logGeneratedError(ctx context.Context, r *http.Request, de *domain.Error, e
 	slog.LogAttrs(ctx, level, "api generated error", attrs...)
 }
 
-func writeEnvelope(w http.ResponseWriter, de *domain.Error) {
+func writeEnvelope(w http.ResponseWriter, domainErr *domain.Error) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(de.Status)
+	w.WriteHeader(domainErr.Status)
 
-	envelope := map[string]any{"code": de.Code, "message": de.Message}
-	if len(de.Details) > 0 {
-		envelope["details"] = de.Details
+	envelope := map[string]any{"code": domainErr.Code, "message": domainErr.Message}
+	if len(domainErr.Details) > 0 {
+		envelope["details"] = domainErr.Details
 	}
 
 	body := map[string]any{"error": envelope}

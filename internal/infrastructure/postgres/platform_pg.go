@@ -49,31 +49,31 @@ type platformConsentConfig struct {
 // the envelope are dropped rather than promised to clients, preserving the
 // stored doc's order), and locale/registration overrides are applied when set.
 func applyPublicAuthConfig(cfg *domain.PublicConfig, rawData []byte) error {
-	var ac platformAuthConfig
-	if err := unmarshal(rawData, &ac); err != nil {
+	var authConfig platformAuthConfig
+	if err := unmarshal(rawData, &authConfig); err != nil {
 		return err
 	}
 
-	methods := make([]string, 0, len(ac.Methods))
-	for _, m := range ac.Methods {
+	methods := make([]string, 0, len(authConfig.Methods))
+	for _, m := range authConfig.Methods {
 		if domain.SupportedAuthMethods.Has(m) {
 			methods = append(methods, m)
 		}
 	}
 
 	cfg.Methods = methods
-	if len(ac.Locales) > 0 {
-		cfg.Locales = ac.Locales
+	if len(authConfig.Locales) > 0 {
+		cfg.Locales = authConfig.Locales
 	}
 
-	if ac.DefaultLocale != "" {
-		cfg.DefaultLocale = ac.DefaultLocale
+	if authConfig.DefaultLocale != "" {
+		cfg.DefaultLocale = authConfig.DefaultLocale
 	}
 
-	if ac.Registration != nil {
+	if authConfig.Registration != nil {
 		cfg.Registration = &domain.RegistrationInfo{
-			Mode:             ac.Registration.Mode,
-			PasswordStrategy: ac.Registration.PasswordStrategy,
+			Mode:             authConfig.Registration.Mode,
+			PasswordStrategy: authConfig.Registration.PasswordStrategy,
 		}
 	}
 

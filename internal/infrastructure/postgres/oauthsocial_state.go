@@ -61,7 +61,7 @@ func (a *pgOAuthSocial) storeState(ctx context.Context, projectID, provider, sta
 		return err
 	}
 
-	rm := json.RawMessage(data)
+	rawData := json.RawMessage(data)
 	id := newUUID()
 	typ := "oauth_state"
 	ch := null.From(oauthHashState(state))
@@ -71,7 +71,7 @@ func (a *pgOAuthSocial) storeState(ctx context.Context, projectID, provider, sta
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		setter := &models.IamChallengeSetter{
 			ID: &id, ProjectID: &projectID, Type: &typ,
-			Subject: &sub, CodeHash: &ch, ExpiresAt: &exp, Data: &rm,
+			Subject: &sub, CodeHash: &ch, ExpiresAt: &exp, Data: &rawData,
 		}
 		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
 
@@ -113,14 +113,14 @@ func (a *pgOAuthSocial) consumeState(ctx context.Context, projectID, provider, s
 			return domain.ErrBadRequest.WithMessage("state provider mismatch")
 		}
 
-		var d oauthStateData
+		var stateData oauthStateData
 		if len(row.Data) > 0 {
-			if err := json.Unmarshal(row.Data, &d); err != nil {
+			if err := json.Unmarshal(row.Data, &stateData); err != nil {
 				return domain.ErrBadRequest.WithMessage("corrupted OAuth state data")
 			}
 		}
 
-		redirect, accountID = d.Redirect, d.AccountID
+		redirect, accountID = stateData.Redirect, stateData.AccountID
 		consumed := true
 
 		return row.Update(ctx, a.db.Bobx(), &models.IamChallengeSetter{Consumed: &consumed})

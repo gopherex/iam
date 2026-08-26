@@ -61,13 +61,13 @@ func (a *pgRisk) ListRules(ctx context.Context, projectID string) ([]domain.Admi
 			return nil, err
 		}
 
-		var d riskRuleData
+		var ruleData riskRuleData
 
-		_ = json.Unmarshal(raw, &d)
+		_ = json.Unmarshal(raw, &ruleData)
 
 		out = append(out, domain.AdminRiskRule{
-			ID: id, Name: d.Name, Signal: d.Signal, Condition: d.Condition,
-			Action: d.Action, Enabled: enabled,
+			ID: id, Name: ruleData.Name, Signal: ruleData.Signal, Condition: ruleData.Condition,
+			Action: ruleData.Action, Enabled: enabled,
 		})
 	}
 

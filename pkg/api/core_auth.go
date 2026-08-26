@@ -161,7 +161,7 @@ func (s *CoreAuthService) GetV1TokensCurrent(ctx context.Context) (*oas.GetV1Tok
 
 func (s *CoreAuthService) PostV1AuthAccessRequests(ctx context.Context, req *oas.PostV1AuthAccessRequestsReq, params oas.PostV1AuthAccessRequestsParams) (*oas.PostV1AuthAccessRequestsOK, error) {
 	// Public op (security: []): the project is taken from X-Client-Id.
-	ar, err := s.deps.Accounts.CreateAccessRequest(ctx, domain.CoreAuthAccessRequestCmd{
+	accessReq, err := s.deps.Accounts.CreateAccessRequest(ctx, domain.CoreAuthAccessRequestCmd{
 		ProjectID:    params.XClientID,
 		Email:        req.Email,
 		Reason:       req.Reason.Or(""),
@@ -172,7 +172,7 @@ func (s *CoreAuthService) PostV1AuthAccessRequests(ctx context.Context, req *oas
 	}
 
 	return &oas.PostV1AuthAccessRequestsOK{
-		Request: oas.NewOptAccessRequest(oasCoreAuthAccessRequest(ar)),
+		Request: oas.NewOptAccessRequest(oasCoreAuthAccessRequest(accessReq)),
 	}, nil
 }
 
@@ -615,25 +615,25 @@ func (s *CoreAuthService) PostV1AuthImpersonateRedeem(ctx context.Context, req *
 }
 
 func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.OptRefreshRequest, params oas.PostV1AuthTokenRefreshParams) (*oas.AuthResultHeaders, error) {
-	rt := ""
+	refreshToken := ""
 	if v, ok := req.Get(); ok {
-		rt = v.RefreshToken.Or("")
+		refreshToken = v.RefreshToken.Or("")
 	}
 	// Cookie mode: when the body omits the token, take it from the refresh cookie.
 	cookieMode := false
 
-	if rt == "" {
+	if refreshToken == "" {
 		if v, ok := params.IamRefresh.Get(); ok && v != "" {
-			rt = v
+			refreshToken = v
 			cookieMode = true
 		}
 	}
 
-	if rt == "" {
+	if refreshToken == "" {
 		return nil, domain.ErrInvalidToken.WithMessage("refresh_token is required")
 	}
 
-	acct, sess, err := s.deps.Accounts.Refresh(ctx, rt)
+	acct, sess, err := s.deps.Accounts.Refresh(ctx, refreshToken)
 	if err != nil {
 		return nil, err
 	}
@@ -720,17 +720,17 @@ func (s *CoreAuthService) PostV1TokensVerify(ctx context.Context, req *oas.PostV
 // ----- service-local mappers -----
 
 // oasCoreAuthAccessRequest maps a domain access request to its wire form.
-func oasCoreAuthAccessRequest(ar *domain.CoreAuthAccessRequest) oas.AccessRequest {
+func oasCoreAuthAccessRequest(accessReq *domain.CoreAuthAccessRequest) oas.AccessRequest {
 	out := oas.AccessRequest{
-		ID:    oas.NewOptString(ar.ID),
-		Email: oas.NewOptString(ar.Email),
+		ID:    oas.NewOptString(accessReq.ID),
+		Email: oas.NewOptString(accessReq.Email),
 	}
-	if ar.Reason != "" {
-		out.Reason = oas.NewOptNilString(ar.Reason)
+	if accessReq.Reason != "" {
+		out.Reason = oas.NewOptNilString(accessReq.Reason)
 	}
 
-	if ar.Status != "" {
-		out.Status = oas.NewOptAccessRequestStatus(oas.AccessRequestStatus(ar.Status))
+	if accessReq.Status != "" {
+		out.Status = oas.NewOptAccessRequestStatus(oas.AccessRequestStatus(accessReq.Status))
 	}
 
 	return out

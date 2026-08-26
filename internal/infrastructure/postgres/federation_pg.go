@@ -129,31 +129,31 @@ func fedConnectionFromRow(
 
 // fedDomainFromRow rebuilds a domain.Domain from its envelope.
 func fedDomainFromRow(row *models.IamDomain) (*domain.Domain, error) {
-	var d domain.Domain
+	var dom domain.Domain
 	if len(row.Data) > 0 {
-		if err := unmarshal(row.Data, &d); err != nil {
+		if err := unmarshal(row.Data, &dom); err != nil {
 			return nil, err
 		}
 	}
 
-	d.ID = row.ID
+	dom.ID = row.ID
 
-	d.ProjectID = row.ProjectID
-	if d.Domain == "" {
-		d.Domain = row.Domain
+	dom.ProjectID = row.ProjectID
+	if dom.Domain == "" {
+		dom.Domain = row.Domain
 	}
 
-	if d.Status == "" {
-		d.Status = row.Status
+	if dom.Status == "" {
+		dom.Status = row.Status
 	}
 
-	if d.ConnectionID == "" {
+	if dom.ConnectionID == "" {
 		if v, ok := row.ConnectionID.Get(); ok {
-			d.ConnectionID = v
+			dom.ConnectionID = v
 		}
 	}
 
-	return &d, nil
+	return &dom, nil
 }
 
 // fedTokenFromRow rebuilds a domain.ScimToken from its envelope (secret excluded;
@@ -264,7 +264,7 @@ func fedConnSetter(cipher Cipher, c *domain.Connection) (*models.IamSsoConnectio
 		return nil, err
 	}
 
-	rm := json.RawMessage(raw)
+	rawConn := json.RawMessage(raw)
 
 	setter := &models.IamSsoConnectionSetter{
 		ID:        &c.ID,
@@ -272,7 +272,7 @@ func fedConnSetter(cipher Cipher, c *domain.Connection) (*models.IamSsoConnectio
 		Type:      ptr(c.Type),
 		Status:    ptr(c.Status),
 		Name:      ptr(c.Name),
-		Data:      &rm,
+		Data:      &rawConn,
 	}
 	if c.ExternalRef != "" {
 		v := null.From(c.ExternalRef)
@@ -328,15 +328,15 @@ func fedParseCertificatePEM(pemStr string) (*x509.Certificate, error) {
 	return cert, nil
 }
 
-// fedApplySamlURLs sets sp's Acs/Metadata URLs from cfg when configured.
-func fedApplySamlURLs(sp *saml.ServiceProvider, cfg *domain.FederationSamlConfig) error {
+// fedApplySamlURLs sets serviceProvider's Acs/Metadata URLs from cfg when configured.
+func fedApplySamlURLs(serviceProvider *saml.ServiceProvider, cfg *domain.FederationSamlConfig) error {
 	if cfg.AcsURL != "" {
 		u, err := url.Parse(cfg.AcsURL)
 		if err != nil {
 			return domain.ErrProviderError
 		}
 
-		sp.AcsURL = *u
+		serviceProvider.AcsURL = *u
 	}
 
 	if cfg.MetadataURL != "" {
@@ -345,7 +345,7 @@ func fedApplySamlURLs(sp *saml.ServiceProvider, cfg *domain.FederationSamlConfig
 			return domain.ErrProviderError
 		}
 
-		sp.MetadataURL = *u
+		serviceProvider.MetadataURL = *u
 	}
 
 	return nil
@@ -395,16 +395,16 @@ func fedResolveIDPMetadata(cfg *domain.FederationSamlConfig) (*saml.EntityDescri
 	}
 }
 
-// fedApplySamlSPKeypair sets sp's optional signing keypair from cfg (enables
-// signed AuthnRequests + a signing cert in the SP metadata document).
-func fedApplySamlSPKeypair(sp *saml.ServiceProvider, cfg *domain.FederationSamlConfig) error {
+// fedApplySamlSPKeypair sets serviceProvider's optional signing keypair from cfg
+// (enables signed AuthnRequests + a signing cert in the SP metadata document).
+func fedApplySamlSPKeypair(serviceProvider *saml.ServiceProvider, cfg *domain.FederationSamlConfig) error {
 	if cfg.SPPrivateKeyPEM != "" {
 		key, err := fedParsePrivateKeyPEM(cfg.SPPrivateKeyPEM)
 		if err != nil {
 			return err
 		}
 
-		sp.Key = key
+		serviceProvider.Key = key
 	}
 
 	if cfg.SPCertificatePEM != "" {
@@ -413,7 +413,7 @@ func fedApplySamlSPKeypair(sp *saml.ServiceProvider, cfg *domain.FederationSamlC
 			return err
 		}
 
-		sp.Certificate = cert
+		serviceProvider.Certificate = cert
 	}
 
 	return nil
@@ -432,11 +432,11 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 
 	cfg := c.Config.Saml
 
-	sp := &saml.ServiceProvider{
+	serviceProvider := &saml.ServiceProvider{
 		EntityID: cfg.EntityID,
 	}
 
-	if err := fedApplySamlURLs(sp, cfg); err != nil {
+	if err := fedApplySamlURLs(serviceProvider, cfg); err != nil {
 		return nil, err
 	}
 
@@ -445,13 +445,13 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 		return nil, err
 	}
 
-	sp.IDPMetadata = idpMetadata
+	serviceProvider.IDPMetadata = idpMetadata
 
-	if err := fedApplySamlSPKeypair(sp, cfg); err != nil {
+	if err := fedApplySamlSPKeypair(serviceProvider, cfg); err != nil {
 		return nil, err
 	}
 
-	return sp, nil
+	return serviceProvider, nil
 }
 
 // fedSamlSubject extracts the external subject (a stable opaque id) and email
@@ -1135,7 +1135,7 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 		// stores it on the connection's SAML config; the new public certificate
 		// (PEM) is returned and also advertised in the SP metadata document. The
 		// private key never leaves the envelope.
-		certPEM, keyPEM, fp, err := fedGenerateSPCertificate(conn.ID)
+		certPEM, keyPEM, fingerprint, err := fedGenerateSPCertificate(conn.ID)
 		if err != nil {
 			return "", err
 		}
@@ -1150,7 +1150,7 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 
 		conn.Config.Saml.SPCertificatePEM = certPEM
 		conn.Config.Saml.SPPrivateKeyPEM = keyPEM
-		conn.ExternalRef = fp // fingerprint as the stable external reference
+		conn.ExternalRef = fingerprint // fingerprint as the stable external reference
 
 		setter, err := fedConnSetter(a.db.Cipher, conn)
 		if err != nil {
@@ -1194,13 +1194,13 @@ func (a *pgFederationConnections) AddDomain(ctx context.Context, projectID, conn
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawDomain := json.RawMessage(raw)
 		setter := &models.IamDomainSetter{
 			ID:        &dom.ID,
 			ProjectID: &dom.ProjectID,
 			Domain:    ptr(dom.Domain),
 			Status:    ptr(dom.Status),
-			Data:      &rm,
+			Data:      &rawDomain,
 		}
 
 		if connectionID != "" {
@@ -1258,13 +1258,13 @@ func (a *pgFederationConnections) VerifyDomain(ctx context.Context, projectID, d
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawDomain := json.RawMessage(raw)
 		verifiedAt := null.From(nowUTC())
 
 		setter := &models.IamDomainSetter{
 			Status:     ptr("verified"),
 			VerifiedAt: &verifiedAt,
-			Data:       &rm,
+			Data:       &rawDomain,
 		}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
@@ -1378,14 +1378,14 @@ func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domai
 			return result{}, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawToken := json.RawMessage(raw)
 
 		setter := &models.IamScimTokenSetter{
 			ID:           &tok.ID,
 			ProjectID:    &tok.ProjectID,
 			ConnectionID: &tok.ConnectionID,
 			Hash:         ptr(fedHashToken(secret)), // store only the hash, never plaintext
-			Data:         &rm,
+			Data:         &rawToken,
 		}
 		if _, err := models.IamScimTokens.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
@@ -1680,7 +1680,7 @@ func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.Federati
 		return nil, err
 	}
 
-	sp, err := fedSamlServiceProvider(conn)
+	serviceProvider, err := fedSamlServiceProvider(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -1692,7 +1692,7 @@ func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.Federati
 		relayState = cmd.RedirectTo
 	}
 
-	redirectURL, err := sp.MakeRedirectAuthenticationRequest(relayState)
+	redirectURL, err := serviceProvider.MakeRedirectAuthenticationRequest(relayState)
 	if err != nil {
 		return nil, domain.ErrSSOError
 	}
@@ -1716,7 +1716,7 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 		return nil, err
 	}
 
-	sp, err := fedSamlServiceProvider(conn)
+	serviceProvider, err := fedSamlServiceProvider(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -1739,7 +1739,7 @@ func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.Federation
 		return nil, domain.ErrSSOError.WithMessage("unsolicited SAML response")
 	}
 
-	assertion, err := sp.ParseXMLResponse(decoded, []string{}, sp.AcsURL)
+	assertion, err := serviceProvider.ParseXMLResponse(decoded, []string{}, serviceProvider.AcsURL)
 	if err != nil {
 		return nil, domain.ErrSSOError
 	}
@@ -1804,21 +1804,21 @@ func (a *pgFederationRuntime) SamlSlo(ctx context.Context, connectionID string) 
 		return nil, err
 	}
 
-	sp, err := fedSamlServiceProvider(conn)
+	serviceProvider, err := fedSamlServiceProvider(conn)
 	if err != nil {
 		return nil, err
 	}
 	// Resolve the IdP's Single-Logout endpoint from its metadata. Building the
-	// fully-signed LogoutRequest (sp.MakeRedirectLogoutRequest) additionally needs
+	// fully-signed LogoutRequest (serviceProvider.MakeRedirectLogoutRequest) additionally needs
 	// the user's NameID, which this signature (connection id only, no session
 	// context) does not carry; the per-subject LogoutRequest is therefore built by
 	// the caller leg that holds the session. We return the real IdP SLO location.
-	sloLocation := sp.GetSLOBindingLocation(saml.HTTPRedirectBinding)
+	sloLocation := serviceProvider.GetSLOBindingLocation(saml.HTTPRedirectBinding)
 	if sloLocation == "" {
 		// No SLO endpoint advertised by the IdP — nothing to redirect to.
 		return nil, domain.ErrSSOError
 	}
-	// NOTE: the per-subject signed LogoutRequest (sp.MakeRedirectLogoutRequest)
+	// NOTE: the per-subject signed LogoutRequest (serviceProvider.MakeRedirectLogoutRequest)
 	// needs the user's NameID, which the connection-scoped port signature does
 	// not carry; the caller leg holding the session builds it. We return the
 	// verified IdP SLO location.
@@ -1846,7 +1846,7 @@ func (a *pgFederationRuntime) SamlMetadata(ctx context.Context, connectionID str
 		return nil, err
 	}
 
-	sp, err := fedSamlServiceProvider(conn)
+	serviceProvider, err := fedSamlServiceProvider(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -1854,7 +1854,7 @@ func (a *pgFederationRuntime) SamlMetadata(ctx context.Context, connectionID str
 	// library. The embedded signing certificate is the connection's SP certificate
 	// when stored; when absent the metadata is rendered without a signing
 	// KeyDescriptor (the SP simply runs without request signing).
-	md := sp.Metadata()
+	md := serviceProvider.Metadata()
 
 	out, err := xmlMarshalIndent(md)
 	if err != nil {
@@ -1967,7 +1967,7 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(
 			return err
 		}
 
-		rm := json.RawMessage(raw)
+		rawSess := json.RawMessage(raw)
 		uid := null.From(acct.ID)
 
 		setter := &models.IamAuthCodeSetter{
@@ -1976,7 +1976,7 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(
 			CodeHash:  ptr(fedHashToken(code)),
 			UserID:    &uid,
 			ExpiresAt: ptr(nowUTC().Add(fedExchangeCodeTTL)),
-			Data:      &rm,
+			Data:      &rawSess,
 		}
 		if _, err := models.IamAuthCodes.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
@@ -2106,14 +2106,14 @@ func (a *pgFederationRuntime) fedInsertIdentity(ctx context.Context, ident *doma
 		return err
 	}
 
-	rm := json.RawMessage(raw)
+	rawIdent := json.RawMessage(raw)
 
 	setter := &models.IamIdentitySetter{
 		ID:        &ident.ID,
 		ProjectID: &projectID,
 		UserID:    &userID,
 		Type:      ptr(ident.Type),
-		Data:      &rm,
+		Data:      &rawIdent,
 	}
 	if ident.Provider != "" {
 		v := null.From(ident.Provider)
@@ -2159,14 +2159,14 @@ func (a *pgFederationRuntime) fedCreateAccount(ctx context.Context, projectID, e
 		return nil, err
 	}
 
-	rm := json.RawMessage(raw)
+	rawAccount := json.RawMessage(raw)
 
 	setter := &models.IamUserSetter{
 		ID:        &acct.ID,
 		ProjectID: &acct.ProjectID,
 		Kind:      ptr(acct.Kind),
 		Status:    ptr(acct.Status),
-		Data:      &rm,
+		Data:      &rawAccount,
 	}
 	if acct.PrimaryEmail != "" {
 		v := null.From(acct.PrimaryEmail)
@@ -2387,14 +2387,14 @@ func (a *pgFederationScim) fedScimCreate(ctx context.Context, cmd domain.Federat
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawAttrs := json.RawMessage(raw)
 
 		setter := &models.IamScimResourceSetter{
 			ID:           &id,
 			ProjectID:    &projectID,
 			ConnectionID: &cmd.ConnectionID,
 			ResourceType: ptr(resourceType),
-			Data:         &rm,
+			Data:         &rawAttrs,
 		}
 		if ext := fedScimExternalID(cmd.Attributes); ext != "" {
 			v := null.From(ext)

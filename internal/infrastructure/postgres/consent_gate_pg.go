@@ -99,25 +99,25 @@ func groupRequiredConsentDocs(docs []domain.ConsentDocumentSpec) (map[string][]c
 
 	var order []string
 
-	for _, d := range docs {
-		if d.Required == nil || !*d.Required {
+	for _, doc := range docs {
+		if doc.Required == nil || !*doc.Required {
 			continue
 		}
 
-		if d.Key == "" || d.Version == "" {
+		if doc.Key == "" || doc.Version == "" {
 			continue
 		}
 
 		loc := ""
-		if d.Locale != nil {
-			loc = *d.Locale
+		if doc.Locale != nil {
+			loc = *doc.Locale
 		}
 
-		if _, ok := byKey[d.Key]; !ok {
-			order = append(order, d.Key)
+		if _, ok := byKey[doc.Key]; !ok {
+			order = append(order, doc.Key)
 		}
 
-		byKey[d.Key] = append(byKey[d.Key], consentDocCandidate{version: d.Version, locale: loc})
+		byKey[doc.Key] = append(byKey[doc.Key], consentDocCandidate{version: doc.Version, locale: loc})
 	}
 
 	return byKey, order

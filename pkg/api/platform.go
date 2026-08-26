@@ -121,26 +121,26 @@ func oasPublicConfig(c *domain.PublicConfig) *oas.PublicConfig {
 	return r
 }
 
-func oasConsentDocument(d *domain.ConsentDocument) oas.ConsentDocument {
+func oasConsentDocument(doc *domain.ConsentDocument) oas.ConsentDocument {
 	out := oas.ConsentDocument{
-		Key:     d.Key,
-		Version: d.Version,
+		Key:     doc.Key,
+		Version: doc.Version,
 	}
-	if d.Title != "" {
-		out.Title = oas.NewOptString(d.Title)
-	}
-
-	if d.Body != "" {
-		out.Body = oas.NewOptString(d.Body)
+	if doc.Title != "" {
+		out.Title = oas.NewOptString(doc.Title)
 	}
 
-	if d.Locale != "" {
-		out.Locale = oas.NewOptString(d.Locale)
+	if doc.Body != "" {
+		out.Body = oas.NewOptString(doc.Body)
 	}
 
-	out.Required = oas.NewOptBool(d.Required)
-	if d.URL != "" {
-		out.URL = oas.NewOptNilString(d.URL)
+	if doc.Locale != "" {
+		out.Locale = oas.NewOptString(doc.Locale)
+	}
+
+	out.Required = oas.NewOptBool(doc.Required)
+	if doc.URL != "" {
+		out.URL = oas.NewOptNilString(doc.URL)
 	}
 
 	return out

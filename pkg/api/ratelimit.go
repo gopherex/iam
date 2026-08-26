@@ -41,15 +41,15 @@ func newRateLimiter(limit int, window time.Duration) *rateLimiter {
 		limit = 1
 	}
 
-	rl := &rateLimiter{
+	limiter := &rateLimiter{
 		entries: make(map[string]*rateLimitEntry),
 		limit:   limit,
 		window:  window,
 		stop:    make(chan struct{}),
 	}
-	go rl.cleanup()
+	go limiter.cleanup()
 
-	return rl
+	return limiter
 }
 
 // Stop terminates the cleanup goroutine. Safe to call once; idempotent only via
@@ -155,9 +155,9 @@ func RateLimitMiddleware(next http.Handler) http.Handler {
 // behavior. Per-project rules override only limit/window of the existing
 // IP-keyed, path-classified buckets, merged per-endpoint over the defaults.
 func NewRateLimitMiddleware(reader RateLimitConfigReader) func(http.Handler) http.Handler {
-	var pl *projectLimiters
+	var perProjectLimiters *projectLimiters
 	if reader != nil {
-		pl = newProjectLimiters(reader, projectRuleCacheTTL)
+		perProjectLimiters = newProjectLimiters(reader, projectRuleCacheTTL)
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -172,11 +172,11 @@ func NewRateLimitMiddleware(reader RateLimitConfigReader) func(http.Handler) htt
 
 			// Per-project override (limit/window) for this endpoint, if any.
 			// Falls open to the hardcoded limiter on miss or reader error.
-			if pl != nil {
+			if perProjectLimiters != nil {
 				clientID := r.Header.Get("X-Client-Id")
 
 				env := r.Header.Get(EnvironmentHeader)
-				if pLimiter, pKey, found := pl.limiterFor(r.Context(), clientID, env, r.URL.Path, key); found {
+				if pLimiter, pKey, found := perProjectLimiters.limiterFor(r.Context(), clientID, env, r.URL.Path, key); found {
 					limiter, key = pLimiter, pKey
 				}
 			}

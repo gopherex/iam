@@ -69,9 +69,9 @@ func (db *DB) drainOneJob(ctx context.Context, log *xlog.Logger) bool {
 		return false // no pending job (ErrNoRows) or a transient error
 	}
 
-	var d jobData
+	var job jobData
 
-	_ = json.Unmarshal(raw, &d)
+	_ = json.Unmarshal(raw, &job)
 
 	var (
 		result map[string]any
@@ -80,16 +80,16 @@ func (db *DB) drainOneJob(ctx context.Context, log *xlog.Logger) bool {
 
 	switch typ {
 	case "audit_export":
-		result, perr = db.processAuditExport(ctx, projectID, d.Spec)
+		result, perr = db.processAuditExport(ctx, projectID, job.Spec)
 	case "import_users":
-		result, perr = db.processImportUsers(ctx, projectID, d.Spec)
+		result, perr = db.processImportUsers(ctx, projectID, job.Spec)
 	case "user_export", "account_export":
-		result, perr = db.processDataExport(ctx, projectID, d.Spec)
+		result, perr = db.processDataExport(ctx, projectID, job.Spec)
 	default:
 		perr = fmt.Errorf("%w: %q", errUnknownJobType, typ)
 	}
 
-	db.finishJob(ctx, id, d, result, perr, log)
+	db.finishJob(ctx, id, job, result, perr, log)
 
 	return true
 }
@@ -198,16 +198,16 @@ func (db *DB) processImportUsers(ctx context.Context, projectID string, spec map
 	rowErrors := make([]string, 0)
 
 	for _, ua := range usersAny {
-		u, ok := ua.(map[string]any)
+		user, ok := ua.(map[string]any)
 		if !ok {
 			failed++
 
 			continue
 		}
 
-		email, _ := u["email"].(string)
-		name, _ := u["name"].(string)
-		hash, _ := u["password_hash"].(string)
+		email, _ := user["email"].(string)
+		name, _ := user["name"].(string)
+		hash, _ := user["password_hash"].(string)
 
 		if err := db.importOneUser(ctx, projectID, email, name, hash, format); err != nil {
 			failed++

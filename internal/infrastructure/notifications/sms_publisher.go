@@ -42,43 +42,43 @@ type smsJob struct {
 // smsJobFromEvent mirrors emailJobFromEvent (email_publisher.go) but only for
 // SMS-channel delivery events. Returns (smsJob{}, false) for everything else so
 // the email path stays untouched.
-func smsJobFromEvent(ev eventEnvelope) (smsJob, bool) {
-	data := payloadData(ev.Payload)
+func smsJobFromEvent(event eventEnvelope) (smsJob, bool) {
+	data := payloadData(event.Payload)
 
-	job := smsJob{Locale: stringValue(ev.Payload, "locale"), Data: data}
-	switch ev.Type {
+	job := smsJob{Locale: stringValue(event.Payload, "locale"), Data: data}
+	switch event.Type {
 	case "config.test_sms_requested":
-		job.TemplateID = stringValue(ev.Payload, "template_id")
+		job.TemplateID = stringValue(event.Payload, "template_id")
 		if job.TemplateID == "" {
 			job.TemplateID = "otp"
 		}
 
-		job.To = stringValue(ev.Payload, "to")
+		job.To = stringValue(event.Payload, "to")
 	case "auth.otp.started":
-		if stringValue(ev.Payload, "channel") != "sms" {
+		if stringValue(event.Payload, "channel") != "sms" {
 			return smsJob{}, false
 		}
 
 		job.TemplateID = "otp"
-		job.To = phoneRecipient(ev.Payload)
+		job.To = phoneRecipient(event.Payload)
 	case "mfa.challenge.created":
-		if stringValue(ev.Payload, "channel") != "sms" {
+		if stringValue(event.Payload, "channel") != "sms" {
 			return smsJob{}, false
 		}
 
 		job.TemplateID = "mfa_sms"
-		job.To = phoneRecipient(ev.Payload)
+		job.To = phoneRecipient(event.Payload)
 	case "phone.verification.requested":
-		if stringValue(ev.Payload, "channel") != "sms" {
+		if stringValue(event.Payload, "channel") != "sms" {
 			return smsJob{}, false
 		}
 
 		job.TemplateID = "phone_verification"
-		if stringValue(ev.Payload, "purpose") == "change" {
+		if stringValue(event.Payload, "purpose") == "change" {
 			job.TemplateID = "phone_change"
 		}
 
-		job.To = phoneRecipient(ev.Payload)
+		job.To = phoneRecipient(event.Payload)
 	default:
 		return smsJob{}, false
 	}
@@ -106,21 +106,21 @@ func phoneRecipient(payload map[string]any) string {
 // publishSMS resolves the locale, loads the enabled SMS provider, renders the
 // body and sends. Fail-soft on "not configured" (log + nil so the outbox acks),
 // fail-hard on a misconfigured provider or send error (so operators see retries).
-func (p *Publisher) publishSMS(ctx context.Context, ev eventEnvelope, job smsJob) error {
+func (p *Publisher) publishSMS(ctx context.Context, event eventEnvelope, job smsJob) error {
 	if job.To == "" {
 		p.log.Info("sms skipped: event has no recipient",
-			xlog.String("event", ev.Type), xlog.String("project_id", ev.ProjectID))
+			xlog.String("event", event.Type), xlog.String("project_id", event.ProjectID))
 
 		return nil
 	}
 
-	provider, err := p.smsProvider(ctx, ev.ProjectID)
+	provider, err := p.smsProvider(ctx, event.ProjectID)
 	if err != nil {
 		if errors.Is(err, errNoSMSProvider) {
 			// Default state: no SMS provider configured. Preserve the historical
 			// no-op behavior — ack the message, do not retry forever.
 			p.log.Info("sms skipped: no enabled sms provider",
-				xlog.String("event", ev.Type), xlog.String("project_id", ev.ProjectID))
+				xlog.String("event", event.Type), xlog.String("project_id", event.ProjectID))
 
 			return nil
 		}
@@ -128,7 +128,7 @@ func (p *Publisher) publishSMS(ctx context.Context, ev eventEnvelope, job smsJob
 		return err
 	}
 
-	job.Locale = p.resolveLocale(ctx, ev, job.Locale)
+	job.Locale = p.resolveLocale(ctx, event, job.Locale)
 
 	text, err := renderText(defaultSMSText(job.TemplateID, job.Locale), job.Data)
 	if err != nil {
@@ -137,7 +137,7 @@ func (p *Publisher) publishSMS(ctx context.Context, ev eventEnvelope, job smsJob
 
 	if strings.TrimSpace(text) == "" {
 		p.log.Info("sms skipped: empty body",
-			xlog.String("event", ev.Type), xlog.String("template_id", job.TemplateID))
+			xlog.String("event", event.Type), xlog.String("template_id", job.TemplateID))
 
 		return nil
 	}
@@ -147,8 +147,8 @@ func (p *Publisher) publishSMS(ctx context.Context, ev eventEnvelope, job smsJob
 	}
 	// Do not log the phone number or body (PII / OTP code) at info level.
 	p.log.Info("sms sent",
-		xlog.String("event", ev.Type),
-		xlog.String("project_id", ev.ProjectID),
+		xlog.String("event", event.Type),
+		xlog.String("project_id", event.ProjectID),
 		xlog.String("template_id", job.TemplateID),
 		xlog.String("provider", provider.Type),
 	)
@@ -205,16 +205,16 @@ func (p *Publisher) smsProvider(ctx context.Context, projectID string) (*smsConf
 	}
 
 	for _, row := range rows {
-		var d providerData
+		var provData providerData
 		if len(row.Data) > 0 {
-			if err := json.Unmarshal(row.Data, &d); err != nil {
+			if err := json.Unmarshal(row.Data, &provData); err != nil {
 				return nil, err
 			}
 		}
 
 		typ := row.Provider
-		if d.Type != "" {
-			typ = d.Type
+		if provData.Type != "" {
+			typ = provData.Type
 		}
 
 		typ = strings.ToLower(strings.TrimSpace(typ))
@@ -222,7 +222,7 @@ func (p *Publisher) smsProvider(ctx context.Context, projectID string) (*smsConf
 			continue
 		}
 
-		cfg, err := decodeSMSConfig(p.db.Cipher, typ, d.Config)
+		cfg, err := decodeSMSConfig(p.db.Cipher, typ, provData.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -481,29 +481,29 @@ func (c *smsConfig) do(req *http.Request) error {
 // are short and rendered with renderText so {{.code}} etc. interpolate. Russian
 // copy is provided for "ru"; everything else falls back to English.
 func defaultSMSText(key, locale string) string {
-	ru := strings.HasPrefix(strings.ToLower(locale), "ru")
+	isRussian := strings.HasPrefix(strings.ToLower(locale), "ru")
 
 	switch key {
 	case "otp", "mfa_sms":
-		if ru {
+		if isRussian {
 			return "{{.code}} — ваш код подтверждения."
 		}
 
 		return "{{.code}} is your verification code."
 	case "phone_verification":
-		if ru {
+		if isRussian {
 			return "{{.code}} — код подтверждения номера телефона."
 		}
 
 		return "{{.code}} is your phone verification code."
 	case "phone_change":
-		if ru {
+		if isRussian {
 			return "{{.code}} — код для смены номера телефона."
 		}
 
 		return "{{.code}} is your phone change code."
 	default:
-		if ru {
+		if isRussian {
 			return "{{.code}} — ваш код."
 		}
 

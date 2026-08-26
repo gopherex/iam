@@ -118,13 +118,13 @@ func (a *pgAuthenticator) checkSessionLive(ctx context.Context, sid string) erro
 		return domain.ErrUnauthorized
 	}
 
-	if sp, err := a.cfg.SessionPolicyForEnv(ctx, row.ProjectID, row.Environment); err == nil {
+	if policy, err := a.cfg.SessionPolicyForEnv(ctx, row.ProjectID, row.Environment); err == nil {
 		now := nowUTC()
-		if sp.IdleTimeout > 0 && now.Sub(row.LastActiveAt) > sp.IdleTimeout {
+		if policy.IdleTimeout > 0 && now.Sub(row.LastActiveAt) > policy.IdleTimeout {
 			return domain.ErrUnauthorized
 		}
 
-		if sp.AbsoluteTimeout > 0 && now.Sub(row.CreatedAt) > sp.AbsoluteTimeout {
+		if policy.AbsoluteTimeout > 0 && now.Sub(row.CreatedAt) > policy.AbsoluteTimeout {
 			return domain.ErrUnauthorized
 		}
 	}

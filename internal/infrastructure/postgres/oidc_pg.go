@@ -717,27 +717,27 @@ func (a *pgOIDCGrants) Reject(
 
 // persistGrant upserts a remembered grant for (project, user, client). Helper
 // shared by Consent; assumes an ambient transaction.
-func (a *pgOIDCGrants) persistGrant(ctx context.Context, projectID string, g *domain.Grant) error {
+func (a *pgOIDCGrants) persistGrant(ctx context.Context, projectID string, grant *domain.Grant) error {
 	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return err
 	}
 
-	raw, err := marshal(g)
+	raw, err := marshal(grant)
 	if err != nil {
 		return err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 
 	setter := &models.IamOauthGrantSetter{
-		ID:          &g.ID,
+		ID:          &grant.ID,
 		ProjectID:   &projectID,
 		Environment: &env,
-		UserID:      &g.AccountID,
-		ClientID:    &g.ClientID,
-		GrantedAt:   ptr(g.GrantedAt),
-		Data:        &rm,
+		UserID:      &grant.AccountID,
+		ClientID:    &grant.ClientID,
+		GrantedAt:   ptr(grant.GrantedAt),
+		Data:        &rawData,
 	}
 	if _, err := models.IamOauthGrants.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {
@@ -1464,7 +1464,7 @@ func (a *pgOIDCGrants) startInteraction(
 			return "", err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 		cid := null.From(cmd.ClientID)
 		exp := null.From(nowUTC().Add(oidcAuthorizeTTL))
 
@@ -1474,7 +1474,7 @@ func (a *pgOIDCGrants) startInteraction(
 			Environment: ptr(clientRow.Environment),
 			ClientID:    &cid,
 			ExpiresAt:   &exp,
-			Data:        &rm,
+			Data:        &rawData,
 		}
 		if _, err := models.IamInteractions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return "", err
@@ -2619,7 +2619,7 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 
 		cid := null.From(cmd.ClientID)
 		setter := &models.IamParRequestSetter{
@@ -2628,7 +2628,7 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 			RequestURI: &requestURI,
 			ClientID:   &cid,
 			ExpiresAt:  ptr(nowUTC().Add(oidcParTTL)),
-			Data:       &rm,
+			Data:       &rawData,
 		}
 
 		parRow, err := models.IamParRequests.Insert(setter).One(ctx, a.db.Bobx())
@@ -2725,7 +2725,7 @@ func insertDeviceCodeRow(ctx context.Context, db *DB, clientRow *models.IamAppCl
 		return nil, err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 	setter := &models.IamDeviceCodeSetter{
 		ID:          ptr(newUUID()),
 		ProjectID:   ptr(clientRow.ProjectID),
@@ -2734,7 +2734,7 @@ func insertDeviceCodeRow(ctx context.Context, db *DB, clientRow *models.IamAppCl
 		UserCode:    &userCode,
 		Status:      ptr("pending"),
 		ExpiresAt:   &expiresAt,
-		Data:        &rm,
+		Data:        &rawData,
 	}
 
 	row, err := models.IamDeviceCodes.Insert(setter).One(ctx, db.Bobx())

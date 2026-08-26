@@ -295,14 +295,14 @@ func (a *pgAdminConnections) CreateDomain(ctx context.Context, cmd domain.AdminD
 			return nil, err
 		}
 
-		rm := json.RawMessage(rawEnv)
+		rawData := json.RawMessage(rawEnv)
 
 		setter := &models.IamDomainSetter{
 			ID:        &dom.ID,
 			ProjectID: &dom.ProjectID,
 			Domain:    ptr(dom.Domain),
 			Status:    ptr(dom.Status),
-			Data:      &rm,
+			Data:      &rawData,
 		}
 
 		if cmd.ConnectionID != "" {
@@ -401,13 +401,13 @@ func (a *pgAdminConnections) VerifyDomain(ctx context.Context, projectID, domain
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 		verifiedAt := null.From(nowUTC())
 
 		setter := &models.IamDomainSetter{
 			Status:     ptr("verified"),
 			VerifiedAt: &verifiedAt,
-			Data:       &rm,
+			Data:       &rawData,
 		}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err

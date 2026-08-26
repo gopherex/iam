@@ -57,18 +57,18 @@ var _ oas.CoreAuthHandler = (*CoreAuthFlowService)(nil)
 // the user was already signed in, and every relying party re-prompted for a
 // password. A programmatic client presents no cookie, is not in cookie mode, and
 // keeps receiving the session in the body exactly as before.
-func flowHeaders(fs *domain.FlowState) *oas.FlowStateHeaders {
-	out := &oas.FlowStateHeaders{Response: *oasFlowState(fs)}
-	if fs.Flow.Status == domain.FlowStatusPending {
-		out.SetCookie = FlowCookieSet(fs.FlowToken, cookieFlowTTL)
+func flowHeaders(flowState *domain.FlowState) *oas.FlowStateHeaders {
+	out := &oas.FlowStateHeaders{Response: *oasFlowState(flowState)}
+	if flowState.Flow.Status == domain.FlowStatusPending {
+		out.SetCookie = FlowCookieSet(flowState.FlowToken, cookieFlowTTL)
 
 		return out
 	}
 
 	out.SetCookie = FlowCookieClear()
 
-	if fs.Session != nil && fs.Session.AccessToken != "" && fs.Flow.CookieMode {
-		out.SetCookie = append(out.SetCookie, SessionCookiesFor(fs.Session)...)
+	if flowState.Session != nil && flowState.Session.AccessToken != "" && flowState.Flow.CookieMode {
+		out.SetCookie = append(out.SetCookie, SessionCookiesFor(flowState.Session)...)
 	}
 
 	return out
@@ -81,7 +81,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.Flow
 		consents = append(consents, domain.AccountConsentAcceptance{Key: c.Key, Version: c.Version})
 	}
 
-	fs, err := s.deps.Flows.Create(ctx, domain.FlowCreateCmd{
+	flowState, err := s.deps.Flows.Create(ctx, domain.FlowCreateCmd{
 		ProjectID:    params.XClientID,
 		Kind:         domain.FlowKind(req.Kind),
 		Method:       string(req.Method.Or("")),
@@ -101,12 +101,12 @@ func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.Flow
 		return nil, err
 	}
 
-	return flowHeaders(fs), nil
+	return flowHeaders(flowState), nil
 }
 
 // GetV1AuthFlowsByFlowToken retrieves a live flow by its opaque token.
 func (s *CoreAuthFlowService) GetV1AuthFlowsByFlowToken(ctx context.Context, params oas.GetV1AuthFlowsByFlowTokenParams) (*oas.FlowStateHeaders, error) {
-	fs, err := s.deps.Flows.Get(ctx, domain.FlowGetCmd{
+	flowState, err := s.deps.Flows.Get(ctx, domain.FlowGetCmd{
 		ProjectID: params.XClientID,
 		FlowToken: params.FlowToken,
 	})
@@ -114,7 +114,7 @@ func (s *CoreAuthFlowService) GetV1AuthFlowsByFlowToken(ctx context.Context, par
 		return nil, err
 	}
 
-	return flowHeaders(fs), nil
+	return flowHeaders(flowState), nil
 }
 
 // GetV1AuthFlowsCurrent resumes the flow bound to the iam_flow cookie (§7
@@ -125,7 +125,7 @@ func (s *CoreAuthFlowService) GetV1AuthFlowsCurrent(ctx context.Context, params 
 		return nil, domain.ErrFlowNotFound
 	}
 
-	fs, err := s.deps.Flows.Get(ctx, domain.FlowGetCmd{
+	flowState, err := s.deps.Flows.Get(ctx, domain.FlowGetCmd{
 		ProjectID: params.XClientID,
 		FlowToken: token,
 	})
@@ -133,7 +133,7 @@ func (s *CoreAuthFlowService) GetV1AuthFlowsCurrent(ctx context.Context, params 
 		return nil, err
 	}
 
-	return flowHeaders(fs), nil
+	return flowHeaders(flowState), nil
 }
 
 // PostV1AuthFlowsByFlowTokenSubmit advances the flow state machine.
@@ -153,7 +153,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Conte
 		}
 	}
 
-	fs, err := s.deps.Flows.Submit(ctx, domain.FlowSubmitCmd{
+	flowState, err := s.deps.Flows.Submit(ctx, domain.FlowSubmitCmd{
 		ProjectID: params.XClientID,
 		FlowToken: params.FlowToken,
 		Action:    req.Action,
@@ -163,12 +163,12 @@ func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Conte
 		return nil, err
 	}
 
-	return flowHeaders(fs), nil
+	return flowHeaders(flowState), nil
 }
 
 // PostV1AuthFlowsByFlowTokenResend re-issues the active challenge.
 func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params oas.PostV1AuthFlowsByFlowTokenResendParams) (*oas.FlowStateHeaders, error) {
-	fs, err := s.deps.Flows.Resend(ctx, domain.FlowResendCmd{
+	flowState, err := s.deps.Flows.Resend(ctx, domain.FlowResendCmd{
 		ProjectID: params.XClientID,
 		FlowToken: params.FlowToken,
 	})
@@ -176,7 +176,7 @@ func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenResend(ctx context.Conte
 		return nil, err
 	}
 
-	return flowHeaders(fs), nil
+	return flowHeaders(flowState), nil
 }
 
 // DeleteV1AuthFlowsByFlowToken abandons a live flow.
@@ -190,10 +190,10 @@ func (s *CoreAuthFlowService) DeleteV1AuthFlowsByFlowToken(ctx context.Context, 
 // ─── mapper ───────────────────────────────────────────────────────────────────
 
 // oasFlowState maps a domain.FlowState onto the wire oas.FlowState.
-func oasFlowState(fs *domain.FlowState) *oas.FlowState {
-	f := fs.Flow
+func oasFlowState(flowState *domain.FlowState) *oas.FlowState {
+	f := flowState.Flow
 	out := &oas.FlowState{
-		FlowToken:   fs.FlowToken,
+		FlowToken:   flowState.FlowToken,
 		Kind:        oas.FlowStateKind(f.Kind),
 		Status:      oas.FlowStateStatus(f.Status),
 		Step:        oas.FlowStateStep(f.Step),
@@ -202,41 +202,41 @@ func oasFlowState(fs *domain.FlowState) *oas.FlowState {
 	}
 	// Masked contact (§5 rule 10).
 	if f.Contact.Email != "" || f.Contact.Phone != "" {
-		fc := oas.FlowContact{}
+		contact := oas.FlowContact{}
 		if f.Contact.Email != "" {
-			fc.EmailMasked = oas.NewOptString(maskEmail(f.Contact.Email))
+			contact.EmailMasked = oas.NewOptString(maskEmail(f.Contact.Email))
 		}
 
 		if f.Contact.Phone != "" {
-			fc.PhoneMasked = oas.NewOptString(maskPhone(f.Contact.Phone))
+			contact.PhoneMasked = oas.NewOptString(maskPhone(f.Contact.Phone))
 		}
 
-		out.Contact = oas.NewOptFlowContact(fc)
+		out.Contact = oas.NewOptFlowContact(contact)
 	}
 	// Active challenge (if any).
-	if ac := f.ActiveChallenge; ac != nil {
-		fc := oas.FlowChallenge{
-			Channel:      oas.NewOptString(ac.Channel),
-			ExpiresAt:    oas.NewOptTimestamp(oas.Timestamp(ac.ExpiresAt)),
-			ResendAt:     oas.NewOptTimestamp(oas.Timestamp(ac.ResendAt)),
-			AttemptsLeft: oas.NewOptInt(ac.AttemptsLeft),
+	if activeChallenge := f.ActiveChallenge; activeChallenge != nil {
+		challenge := oas.FlowChallenge{
+			Channel:      oas.NewOptString(activeChallenge.Channel),
+			ExpiresAt:    oas.NewOptTimestamp(oas.Timestamp(activeChallenge.ExpiresAt)),
+			ResendAt:     oas.NewOptTimestamp(oas.Timestamp(activeChallenge.ResendAt)),
+			AttemptsLeft: oas.NewOptInt(activeChallenge.AttemptsLeft),
 		}
-		if len(ac.PublicKey) > 0 {
-			pk := make(oas.FlowChallengePublicKey, len(ac.PublicKey))
-			for k, v := range ac.PublicKey {
+		if len(activeChallenge.PublicKey) > 0 {
+			pubKey := make(oas.FlowChallengePublicKey, len(activeChallenge.PublicKey))
+			for k, v := range activeChallenge.PublicKey {
 				if b, err := json.Marshal(v); err == nil {
-					pk[k] = jx.Raw(b)
+					pubKey[k] = jx.Raw(b)
 				}
 			}
 
-			fc.PublicKey = oas.NewOptFlowChallengePublicKey(pk)
+			challenge.PublicKey = oas.NewOptFlowChallengePublicKey(pubKey)
 		}
 
-		if ac.RedirectURL != "" {
-			fc.RedirectURL = oas.NewOptString(ac.RedirectURL)
+		if activeChallenge.RedirectURL != "" {
+			challenge.RedirectURL = oas.NewOptString(activeChallenge.RedirectURL)
 		}
 
-		out.Challenge = oas.NewOptFlowChallenge(fc)
+		out.Challenge = oas.NewOptFlowChallenge(challenge)
 	}
 	// Consents.
 	if len(f.ConsentsRequired) > 0 {
@@ -258,8 +258,8 @@ func oasFlowState(fs *domain.FlowState) *oas.FlowState {
 		})
 	}
 	// Session (completed only).
-	if fs.Session != nil {
-		out.Session = oas.NewOptSessionTokens(oasSessionTokens(fs.Session))
+	if flowState.Session != nil {
+		out.Session = oas.NewOptSessionTokens(oasSessionTokens(flowState.Session))
 	}
 
 	return out
@@ -319,14 +319,14 @@ func flowNextActions(f *domain.Flow) []string {
 
 // maskEmail returns a***@b.ru-style masked email (§5 rule 10).
 func maskEmail(email string) string {
-	at := strings.IndexByte(email, '@')
-	if at < 0 {
+	atIdx := strings.IndexByte(email, '@')
+	if atIdx < 0 {
 		return "***"
 	}
 
-	local := email[:at]
+	local := email[:atIdx]
 
-	host := email[at:]
+	host := email[atIdx:]
 	if len(local) <= 1 {
 		return "*" + host
 	}

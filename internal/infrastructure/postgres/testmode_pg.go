@@ -88,13 +88,13 @@ func (a *pgTestMode) Seed(ctx context.Context, projectID, env string, spec map[s
 			return err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 		now := nowUTC()
 		emailPtr := ptr(null.From(email))
 
 		_, err = models.IamUsers.Insert(&models.IamUserSetter{
 			ID: &acc.ID, ProjectID: &acc.ProjectID, Environment: &env, Kind: ptr(acc.Kind),
-			Status: ptr(acc.Status), PrimaryEmail: emailPtr, CreatedAt: &now, UpdatedAt: &now, Data: &rm,
+			Status: ptr(acc.Status), PrimaryEmail: emailPtr, CreatedAt: &now, UpdatedAt: &now, Data: &rawData,
 		}).One(ctx, a.db.Bobx())
 		if isUniqueViolation(err) {
 			return nil // idempotent seed

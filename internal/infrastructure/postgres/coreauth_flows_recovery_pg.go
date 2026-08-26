@@ -346,8 +346,8 @@ func advanceRecovery(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlo
 // stays pending and the token does NOT rotate (§5 rule 6). Non-existent-user
 // flows always fail identically (anti-enumeration §5.4).
 func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
-	ac := f.ActiveChallenge
-	if ac == nil {
+	activeChallenge := f.ActiveChallenge
+	if activeChallenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active email challenge")
 	}
 
@@ -356,7 +356,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.I
 		return nil, domain.ErrBadRequest.WithMessage("code or token is required")
 	}
 
-	if ac.AttemptsLeft <= 0 {
+	if activeChallenge.AttemptsLeft <= 0 {
 		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
 	}
 
@@ -375,7 +375,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.I
 	}
 
 	res, consumeErr := withTxRet(ctx, a.db, func(ctx context.Context) (consumeResult, error) {
-		_, data, err := pgCA.coreAuthConsumeChallenge(ctx, f.ProjectID, flowVerifyConsumeCmd(f.ProjectID, "", ac.ChallengeID, code, token), "password_reset")
+		_, data, err := pgCA.coreAuthConsumeChallenge(ctx, f.ProjectID, flowVerifyConsumeCmd(f.ProjectID, "", activeChallenge.ChallengeID, code, token), "password_reset")
 		if err != nil {
 			return consumeResult{}, err
 		}
@@ -384,7 +384,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.I
 	})
 	if consumeErr != nil {
 		// Wrong code/token or challenge not found / consumed: decrement attempts, embed error.
-		ac.AttemptsLeft--
+		activeChallenge.AttemptsLeft--
 		f.Error = &domain.FlowError{Code: "invalid_code", Message: "The verification code is incorrect."}
 		_ = a.db.withTx(ctx, func(ctx context.Context) error {
 			return a.flowSave(ctx, row, f)
@@ -415,8 +415,8 @@ func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.I
 // correct code it advances to set_password; wrong code decrements attempts and
 // stays pending (anti-enumeration identical to the email path).
 func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
-	ac := f.ActiveChallenge
-	if ac == nil {
+	activeChallenge := f.ActiveChallenge
+	if activeChallenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active phone challenge")
 	}
 
@@ -425,7 +425,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.I
 		return nil, domain.ErrBadRequest.WithMessage("code is required")
 	}
 
-	if ac.AttemptsLeft <= 0 {
+	if activeChallenge.AttemptsLeft <= 0 {
 		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
 	}
 
@@ -437,7 +437,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.I
 	res, consumeErr := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
 		_, data, err := pgCA.coreAuthConsumeChallenge(ctx, f.ProjectID, domain.CoreAuthVerifyConsumeCmd{
 			ProjectID:   f.ProjectID,
-			ChallengeID: ac.ChallengeID,
+			ChallengeID: activeChallenge.ChallengeID,
 			Code:        code,
 		}, "phone")
 		if err != nil {
@@ -447,7 +447,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.I
 		return data.AccountID, nil
 	})
 	if consumeErr != nil {
-		ac.AttemptsLeft--
+		activeChallenge.AttemptsLeft--
 		f.Error = &domain.FlowError{Code: "invalid_code", Message: "The verification code is incorrect."}
 		_ = a.db.withTx(ctx, func(ctx context.Context) error {
 			return a.flowSave(ctx, row, f)

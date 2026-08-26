@@ -210,7 +210,7 @@ func flowUnmarshalRow(row *models.IamFlow) (*domain.Flow, error) {
 func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *domain.Flow) error {
 	now := nowUTC()
 
-	rm, err := flowDataRM(flowData{
+	rawData, err := flowDataRM(flowData{
 		Locale:           f.Locale,
 		RedirectTo:       f.RedirectTo,
 		Contact:          f.Contact,
@@ -233,7 +233,7 @@ func (a *pgCoreAuthFlows) flowSave(ctx context.Context, row *models.IamFlow, f *
 		Status:    ptr(string(f.Status)),
 		Step:      ptr(string(f.Step)),
 		UpdatedAt: &now,
-		Data:      &rm,
+		Data:      &rawData,
 	}
 	if f.UserID != "" {
 		setter.UserID = ptr(null.From(f.UserID))
@@ -254,7 +254,7 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 
 	now := nowUTC()
 
-	rm, err := flowDataRM(flowData{
+	rawData, err := flowDataRM(flowData{
 		Locale:           f.Locale,
 		RedirectTo:       f.RedirectTo,
 		Contact:          f.Contact,
@@ -278,7 +278,7 @@ func (a *pgCoreAuthFlows) flowRotate(ctx context.Context, row *models.IamFlow, f
 		Status:    ptr(string(f.Status)),
 		Step:      ptr(string(f.Step)),
 		UpdatedAt: &now,
-		Data:      &rm,
+		Data:      &rawData,
 	}
 	if f.UserID != "" {
 		setter.UserID = ptr(null.From(f.UserID))
@@ -313,7 +313,7 @@ func (a *pgCoreAuthFlows) flowInsert(ctx context.Context, f *domain.Flow, hash s
 		data.RedirectTo = f.RedirectTo
 	}
 
-	rm, err := flowDataRM(data)
+	rawData, err := flowDataRM(data)
 	if err != nil {
 		return err
 	}
@@ -334,7 +334,7 @@ func (a *pgCoreAuthFlows) flowInsert(ctx context.Context, f *domain.Flow, hash s
 		ExpiresAt:   &f.ExpiresAt,
 		CreatedAt:   &f.CreatedAt,
 		UpdatedAt:   &f.UpdatedAt,
-		Data:        &rm,
+		Data:        &rawData,
 	}
 	if f.UserID != "" {
 		uid := null.From(f.UserID)
@@ -447,8 +447,8 @@ func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.Fl
 		return
 	}
 
-	ac := f.ActiveChallenge
-	if ac == nil || ac.Channel != "email" || ac.Code == "" || ac.Token == "" {
+	challenge := f.ActiveChallenge
+	if challenge == nil || challenge.Channel != "email" || challenge.Code == "" || challenge.Token == "" {
 		return
 	}
 
@@ -458,9 +458,9 @@ func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.Fl
 
 	payload := map[string]any{
 		"flow_token":   state.FlowToken,
-		"token":        ac.Token,
-		"code":         ac.Code,
-		"challenge_id": ac.ChallengeID,
+		"token":        challenge.Token,
+		"code":         challenge.Code,
+		"challenge_id": challenge.ChallengeID,
 		"kind":         string(f.Kind),
 		"purpose":      string(f.Kind),
 		"to":           f.Contact.Email,
@@ -591,20 +591,20 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 		return nil, err
 	}
 
-	ac := f.ActiveChallenge
-	if ac == nil {
+	challenge := f.ActiveChallenge
+	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active challenge to resend")
 	}
 	// Rate-limit: check resend_at (§5 rule 7).
-	if nowIn(ctx).Before(ac.ResendAt) {
+	if nowIn(ctx).Before(challenge.ResendAt) {
 		return nil, domain.ErrFlowResendTooSoon.WithDetails(map[string]any{
-			"resend_at": ac.ResendAt.Unix(),
+			"resend_at": challenge.ResendAt.Unix(),
 		})
 	}
 	// Re-issue the active challenge by its channel / the flow's method. Email is
 	// the default (signup verify, recovery email, signup); sms re-issues an OTP;
 	// magic_link re-issues a fresh link.
-	ch, channel, err := a.flowReissueChallenge(ctx, f, ac)
+	ch, channel, err := a.flowReissueChallenge(ctx, f, challenge)
 	if err != nil {
 		return nil, err
 	}
@@ -646,14 +646,14 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 			return nil, "", fmt.Errorf("flow resend: %w", errAccountsNotPgCoreAuth)
 		}
 
-		pl := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
+		passwordless := NewPgPasswordlessAccounts(a.db, a.emitter, a.cfg, core)
 
 		purpose := "signin"
 		if f.Kind == domain.FlowKindRecovery {
 			purpose = "recovery"
 		}
 
-		ch, serr := pl.StartOTP(ctx, f.ProjectID, f.Contact.Phone, "sms", purpose, f.Locale)
+		ch, serr := passwordless.StartOTP(ctx, f.ProjectID, f.Contact.Phone, "sms", purpose, f.Locale)
 		if serr != nil {
 			return nil, "", serr
 		}
@@ -1068,8 +1068,8 @@ func advanceSignup(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 // signupVerifyEmail verifies the email OTP code or link token. On success it
 // rotates the token, completes the flow, and returns a session (§5 rules 2, 8).
 func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
-	ac := f.ActiveChallenge
-	if ac == nil {
+	challenge := f.ActiveChallenge
+	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active email challenge")
 	}
 
@@ -1078,15 +1078,15 @@ func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.Iam
 		return nil, domain.ErrBadRequest.WithMessage("code or token is required")
 	}
 
-	if ac.AttemptsLeft <= 0 {
+	if challenge.AttemptsLeft <= 0 {
 		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
 	}
 
 	// VerifyEmail consumes the challenge and marks the account email_verified.
-	acct, sess, err := a.accounts.VerifyEmail(ctx, flowVerifyConsumeCmd(f.ProjectID, f.UserID, ac.ChallengeID, code, token))
+	acct, sess, err := a.accounts.VerifyEmail(ctx, flowVerifyConsumeCmd(f.ProjectID, f.UserID, challenge.ChallengeID, code, token))
 	if err != nil {
 		// Wrong code/token: decrement attempts, embed error in flow, stay pending (§5 rule 6).
-		ac.AttemptsLeft--
+		challenge.AttemptsLeft--
 		f.Error = &domain.FlowError{Code: "invalid_code", Message: "The verification code is incorrect."}
 		// Best-effort save; ignore error to return the flow state.
 		_ = a.db.withTx(ctx, func(ctx context.Context) error {

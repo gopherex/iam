@@ -42,7 +42,7 @@ func (a *pgFederationRuntime) fedStoreSamlRequest(ctx context.Context, projectID
 		return err
 	}
 
-	rm := json.RawMessage(data)
+	rawData := json.RawMessage(data)
 	id := newUUID()
 	typ := "saml_request"
 	sub := null.From(connectionID)
@@ -52,7 +52,7 @@ func (a *pgFederationRuntime) fedStoreSamlRequest(ctx context.Context, projectID
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		setter := &models.IamChallengeSetter{
 			ID: &id, ProjectID: &projectID, Type: &typ,
-			Subject: &sub, CodeHash: &ch, ExpiresAt: &exp, Data: &rm,
+			Subject: &sub, CodeHash: &ch, ExpiresAt: &exp, Data: &rawData,
 		}
 		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
 

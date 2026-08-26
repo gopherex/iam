@@ -510,7 +510,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	}
 	// Token lifetimes come from the project's session_policy (env-scoped); an
 	// absent doc yields the defaults (access 10m, refresh 30d).
-	sp, err := a.cfg.SessionPolicy(ctx, acc.ProjectID)
+	sessionPolicy, err := a.cfg.SessionPolicy(ctx, acc.ProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -521,7 +521,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		return nil, err
 	}
 
-	accessToken, err := a.coreAuthSignAccessToken(ctx, acc, sessionID, clientID, signEnv, amr, aal, sp.AccessTTL)
+	accessToken, err := a.coreAuthSignAccessToken(ctx, acc, sessionID, clientID, signEnv, amr, aal, sessionPolicy.AccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -532,13 +532,13 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	}
 
 	refreshHash := coreAuthSHA256(refreshPlain)
-	sess := newCoreAuthSession(ctx, sessionID, acc, clientID, amr, aal, accessToken, refreshPlain, sp, now)
+	sess := newCoreAuthSession(ctx, sessionID, acc, clientID, amr, aal, accessToken, refreshPlain, sessionPolicy, now)
 
-	if err := a.coreAuthInsertSessionRow(ctx, sess, signEnv, aal, clientID, now, sp); err != nil {
+	if err := a.coreAuthInsertSessionRow(ctx, sess, signEnv, aal, clientID, now, sessionPolicy); err != nil {
 		return nil, err
 	}
 
-	rt := coreAuthRefreshToken{
+	refreshToken := coreAuthRefreshToken{
 		ID:          newUUID(),
 		ProjectID:   acc.ProjectID,
 		Environment: signEnv,
@@ -546,10 +546,10 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		SessionID:   sessionID,
 		Hash:        refreshHash,
 		Revoked:     false,
-		ExpiresAt:   coreAuthRefreshHorizon(now, now, sp),
+		ExpiresAt:   coreAuthRefreshHorizon(now, now, sessionPolicy),
 		CreatedAt:   now,
 	}
-	if err := a.coreAuthInsertRefreshToken(ctx, rt); err != nil {
+	if err := a.coreAuthInsertRefreshToken(ctx, refreshToken); err != nil {
 		return nil, err
 	}
 
@@ -623,7 +623,7 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		return nil, err
 	}
 
-	sp, err := a.cfg.SessionPolicy(ctx, acc.ProjectID)
+	sessionPolicy, err := a.cfg.SessionPolicy(ctx, acc.ProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -635,7 +635,7 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		return nil, err
 	}
 
-	accessToken, err := a.coreAuthSignAccessToken(ctx, acc, row.ID, clientID, signEnv, amr, aal, sp.AccessTTL)
+	accessToken, err := a.coreAuthSignAccessToken(ctx, acc, row.ID, clientID, signEnv, amr, aal, sessionPolicy.AccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -654,8 +654,8 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		AAL:              aal,
 		AccessToken:      accessToken,
 		RefreshToken:     refreshPlain,
-		ExpiresIn:        int(sp.AccessTTL / time.Second),
-		RefreshExpiresIn: int(sp.RefreshTTL / time.Second),
+		ExpiresIn:        int(sessionPolicy.AccessTTL / time.Second),
+		RefreshExpiresIn: int(sessionPolicy.RefreshTTL / time.Second),
 		CreatedAt:        prev.CreatedAt,
 		// Carry the device identity across refresh; refresh the IP/last-active
 		// from the current request when available.
@@ -670,12 +670,12 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		sess.IP = m.IP
 	}
 
-	refreshHorizon, err := a.coreAuthUpdateRotatedSession(ctx, row, sess, sp, now)
+	refreshHorizon, err := a.coreAuthUpdateRotatedSession(ctx, row, sess, sessionPolicy, now)
 	if err != nil {
 		return nil, err
 	}
 
-	rt := coreAuthRefreshToken{
+	refreshToken := coreAuthRefreshToken{
 		ID:          newUUID(),
 		ProjectID:   acc.ProjectID,
 		Environment: signEnv,
@@ -686,7 +686,7 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		ExpiresAt:   refreshHorizon,
 		CreatedAt:   now,
 	}
-	if err := a.coreAuthInsertRefreshToken(ctx, rt); err != nil {
+	if err := a.coreAuthInsertRefreshToken(ctx, refreshToken); err != nil {
 		return nil, err
 	}
 
@@ -735,25 +735,25 @@ func refreshTokenEnv(rt *coreAuthRefreshToken) *string {
 
 // coreAuthInsertRefreshToken persists a refresh-token envelope row. MUST run
 // inside an open transaction.
-func (a *pgCoreAuth) coreAuthInsertRefreshToken(ctx context.Context, rt coreAuthRefreshToken) error {
-	raw, err := marshal(rt)
+func (a *pgCoreAuth) coreAuthInsertRefreshToken(ctx context.Context, refreshToken coreAuthRefreshToken) error {
+	raw, err := marshal(refreshToken)
 	if err != nil {
 		return err
 	}
 
-	rm := json.RawMessage(raw)
+	rawRefreshToken := json.RawMessage(raw)
 
 	setter := &models.IamRefreshTokenSetter{
-		ID:          &rt.ID,
-		ProjectID:   &rt.ProjectID,
-		Environment: refreshTokenEnv(&rt),
-		UserID:      &rt.UserID,
-		SessionID:   &rt.SessionID,
-		Hash:        &rt.Hash,
-		Revoked:     &rt.Revoked,
-		ExpiresAt:   ptr(null.From(rt.ExpiresAt)),
-		CreatedAt:   &rt.CreatedAt,
-		Data:        &rm,
+		ID:          &refreshToken.ID,
+		ProjectID:   &refreshToken.ProjectID,
+		Environment: refreshTokenEnv(&refreshToken),
+		UserID:      &refreshToken.UserID,
+		SessionID:   &refreshToken.SessionID,
+		Hash:        &refreshToken.Hash,
+		Revoked:     &refreshToken.Revoked,
+		ExpiresAt:   ptr(null.From(refreshToken.ExpiresAt)),
+		CreatedAt:   &refreshToken.CreatedAt,
+		Data:        &rawRefreshToken,
 	}
 	if _, err := models.IamRefreshTokens.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		return err
@@ -777,7 +777,7 @@ func (a *pgCoreAuth) coreAuthInsertChallenge(ctx context.Context, ch coreAuthCha
 		return nil, err
 	}
 
-	rm := json.RawMessage(raw)
+	rawChallenge := json.RawMessage(raw)
 
 	chEnv := ch.Environment
 	if chEnv == "" {
@@ -792,7 +792,7 @@ func (a *pgCoreAuth) coreAuthInsertChallenge(ctx context.Context, ch coreAuthCha
 		ExpiresAt:   &ch.ExpiresAt,
 		Consumed:    ptr(false),
 		CreatedAt:   &ch.CreatedAt,
-		Data:        &rm,
+		Data:        &rawChallenge,
 	}
 	if ch.Subject != "" {
 		setter.Subject = ptr(null.From(ch.Subject))
@@ -1690,7 +1690,7 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 // reuse/expiry, load the account+session, defend against device change and
 // timeout, then rotate. MUST run inside db.withTx / withTxRet.
 func (a *pgCoreAuth) coreAuthRefreshInTx(ctx context.Context, hash string) (coreAuthRefreshResult, error) {
-	row, sp, err := a.coreAuthLoadRefreshRow(ctx, hash)
+	row, sessionPolicy, err := a.coreAuthLoadRefreshRow(ctx, hash)
 	if err != nil {
 		return coreAuthRefreshResult{}, err
 	}
@@ -1698,7 +1698,7 @@ func (a *pgCoreAuth) coreAuthRefreshInTx(ctx context.Context, hash string) (core
 	// Presenting an already-rotated (revoked) refresh token is always rejected
 	// — disabling reuse_detection must never re-enable replay.
 	if row.Revoked {
-		if err := a.coreAuthHandleReusedRefresh(ctx, row, sp); err != nil {
+		if err := a.coreAuthHandleReusedRefresh(ctx, row, sessionPolicy); err != nil {
 			return coreAuthRefreshResult{}, err
 		}
 
@@ -1728,7 +1728,7 @@ func (a *pgCoreAuth) coreAuthRefreshInTx(ctx context.Context, hash string) (core
 		return coreAuthRefreshResult{mismatch: true}, nil
 	}
 
-	expired, err := a.coreAuthCheckSessionTimeout(ctx, row, sessRow, sp)
+	expired, err := a.coreAuthCheckSessionTimeout(ctx, row, sessRow, sessionPolicy)
 	if err != nil {
 		return coreAuthRefreshResult{}, err
 	}
@@ -2031,7 +2031,7 @@ func (a *pgCoreAuth) CreateGuest(ctx context.Context, projectID string) (*domain
 			return guestResult{}, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawAccount := json.RawMessage(raw)
 
 		setter := &models.IamUserSetter{
 			ID:          &acc.ID,
@@ -2041,7 +2041,7 @@ func (a *pgCoreAuth) CreateGuest(ctx context.Context, projectID string) (*domain
 			Status:      ptr(acc.Status),
 			CreatedAt:   &now,
 			UpdatedAt:   &now,
-			Data:        &rm,
+			Data:        &rawAccount,
 		}
 		if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return guestResult{}, err
@@ -2290,14 +2290,14 @@ func (a *pgCoreAuth) VerifyEmail(ctx context.Context, cmd domain.CoreAuthVerifyC
 
 // coreAuthSameOrigin reports whether a and b share scheme+host (case-insensitive).
 func coreAuthSameOrigin(a, b string) bool {
-	ua, err1 := url.Parse(a)
+	urlA, err1 := url.Parse(a)
 
 	ub, err2 := url.Parse(b)
-	if err1 != nil || err2 != nil || ua.Scheme == "" || ua.Host == "" || ub.Scheme == "" || ub.Host == "" {
+	if err1 != nil || err2 != nil || urlA.Scheme == "" || urlA.Host == "" || ub.Scheme == "" || ub.Host == "" {
 		return false
 	}
 
-	return strings.EqualFold(ua.Scheme, ub.Scheme) && strings.EqualFold(ua.Host, ub.Host)
+	return strings.EqualFold(urlA.Scheme, ub.Scheme) && strings.EqualFold(urlA.Host, ub.Host)
 }
 
 // coreAuthSafeRedirect returns candidate only when it is safe from open-redirect
@@ -3037,7 +3037,7 @@ func (a *pgCoreAuth) coreAuthUpsertPasswordCredential(ctx context.Context, proje
 			return mErr
 		}
 
-		rm := json.RawMessage(raw)
+		rawCred := json.RawMessage(raw)
 
 		setter := &models.IamCredentialSetter{
 			ID:          &cred.ID,
@@ -3048,7 +3048,7 @@ func (a *pgCoreAuth) coreAuthUpsertPasswordCredential(ctx context.Context, proje
 			Secret:      &cred.Hash,
 			CreatedAt:   &now,
 			UpdatedAt:   &now,
-			Data:        &rm,
+			Data:        &rawCred,
 		}
 		if _, err := models.IamCredentials.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			return err
@@ -3409,7 +3409,7 @@ func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAut
 
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.CoreAuthAccessRequest, error) {
 		now := nowUTC()
-		ar := &domain.CoreAuthAccessRequest{
+		request := &domain.CoreAuthAccessRequest{
 			ID:        newUUID(),
 			ProjectID: cmd.ProjectID,
 			Email:     cmd.Email,
@@ -3417,22 +3417,22 @@ func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAut
 			Status:    "pending",
 		}
 
-		raw, err := marshal(ar)
+		raw, err := marshal(request)
 		if err != nil {
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawRequest := json.RawMessage(raw)
 
 		setter := &models.IamAccessRequestSetter{
-			ID:          &ar.ID,
-			ProjectID:   &ar.ProjectID,
+			ID:          &request.ID,
+			ProjectID:   &request.ProjectID,
 			Environment: &env,
-			Email:       &ar.Email,
-			Status:      ptr(ar.Status),
+			Email:       &request.Email,
+			Status:      ptr(request.Status),
 			CreatedAt:   &now,
 			UpdatedAt:   &now,
-			Data:        &rm,
+			Data:        &rawRequest,
 		}
 		if _, err := models.IamAccessRequests.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
@@ -3444,15 +3444,15 @@ func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAut
 
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "access_request.created",
-			ProjectID:   ar.ProjectID,
+			ProjectID:   request.ProjectID,
 			Environment: env,
-			AggregateID: ar.ID,
-			Payload:     ar,
+			AggregateID: request.ID,
+			Payload:     request,
 		}); err != nil {
 			return nil, err
 		}
 
-		return ar, nil
+		return request, nil
 	})
 }
 

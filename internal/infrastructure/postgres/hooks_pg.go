@@ -75,8 +75,8 @@ func (a *pgHooks) Get(ctx context.Context, projectID, id string) (*domain.AdminH
 	return &h, nil
 }
 
-func (a *pgHooks) Create(ctx context.Context, projectID string, h domain.AdminHook) (domain.AdminHook, error) {
-	if err := validateWebhookURL(h.URL); err != nil {
+func (a *pgHooks) Create(ctx context.Context, projectID string, hook domain.AdminHook) (domain.AdminHook, error) {
+	if err := validateWebhookURL(hook.URL); err != nil {
 		return domain.AdminHook{}, err
 	}
 
@@ -92,7 +92,7 @@ func (a *pgHooks) Create(ctx context.Context, projectID string, h domain.AdminHo
 
 	id := newUUID()
 
-	raw, err := json.Marshal(hookData{URL: h.URL, TimeoutMs: clampHookTimeout(h.TimeoutMs), SigningSecret: encSecret, FailOpen: h.FailOpen})
+	raw, err := json.Marshal(hookData{URL: hook.URL, TimeoutMs: clampHookTimeout(hook.TimeoutMs), SigningSecret: encSecret, FailOpen: hook.FailOpen})
 	if err != nil {
 		return domain.AdminHook{}, err
 	}
@@ -100,25 +100,25 @@ func (a *pgHooks) Create(ctx context.Context, projectID string, h domain.AdminHo
 	rm := json.RawMessage(raw)
 
 	if _, err := models.IamHooks.Insert(&models.IamHookSetter{
-		ID: &id, ProjectID: &projectID, Type: &h.Type, Enabled: &h.Enabled, Data: &rm,
+		ID: &id, ProjectID: &projectID, Type: &hook.Type, Enabled: &hook.Enabled, Data: &rm,
 	}).One(ctx, a.db.Bobx()); err != nil {
 		return domain.AdminHook{}, err
 	}
 
-	h.ID = id
-	h.SigningSecret = secret // returned once, on create
+	hook.ID = id
+	hook.SigningSecret = secret // returned once, on create
 
-	return h, nil
+	return hook, nil
 }
 
-func (a *pgHooks) Update(ctx context.Context, projectID, id string, h domain.AdminHook) (domain.AdminHook, error) {
+func (a *pgHooks) Update(ctx context.Context, projectID, id string, hook domain.AdminHook) (domain.AdminHook, error) {
 	row, err := models.FindIamHook(ctx, a.db.Bobx(), id)
 	if err != nil || row.ProjectID != projectID {
 		return domain.AdminHook{}, domain.ErrNotFound
 	}
 
-	if h.URL != "" {
-		if err := validateWebhookURL(h.URL); err != nil {
+	if hook.URL != "" {
+		if err := validateWebhookURL(hook.URL); err != nil {
 			return domain.AdminHook{}, err
 		}
 	}
@@ -127,31 +127,31 @@ func (a *pgHooks) Update(ctx context.Context, projectID, id string, h domain.Adm
 
 	_ = json.Unmarshal(row.Data, &cur)
 
-	if h.URL != "" {
-		cur.URL = h.URL
+	if hook.URL != "" {
+		cur.URL = hook.URL
 	}
 
-	if h.TimeoutMs > 0 {
-		cur.TimeoutMs = clampHookTimeout(h.TimeoutMs)
+	if hook.TimeoutMs > 0 {
+		cur.TimeoutMs = clampHookTimeout(hook.TimeoutMs)
 	}
 
-	cur.FailOpen = h.FailOpen
+	cur.FailOpen = hook.FailOpen
 
 	raw, err := json.Marshal(cur)
 	if err != nil {
 		return domain.AdminHook{}, err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 	now := nowUTC()
 
 	typ := row.Type
-	if h.Type != "" {
-		typ = h.Type
+	if hook.Type != "" {
+		typ = hook.Type
 	}
 
 	if err := row.Update(ctx, a.db.Bobx(), &models.IamHookSetter{
-		Type: &typ, Enabled: &h.Enabled, Data: &rm, UpdatedAt: &now,
+		Type: &typ, Enabled: &hook.Enabled, Data: &rawData, UpdatedAt: &now,
 	}); err != nil {
 		return domain.AdminHook{}, err
 	}
@@ -183,16 +183,16 @@ func (a *pgHooks) Test(ctx context.Context, projectID, id string, payload []byte
 		return 0, "", 0, domain.ErrNotFound
 	}
 
-	var d hookData
+	var cfg hookData
 
-	_ = json.Unmarshal(row.Data, &d)
+	_ = json.Unmarshal(row.Data, &cfg)
 
 	if len(payload) == 0 {
 		payload = []byte(`{"test":true}`)
 	}
 
 	started := nowUTC()
-	status, body, _ := a.call(ctx, d, payload)
+	status, body, _ := a.call(ctx, cfg, payload)
 	dur := int(nowUTC().Sub(started).Milliseconds())
 
 	return status, body, dur, nil
@@ -213,14 +213,14 @@ func (a *pgHooks) InvokeHooks(ctx context.Context, projectID, hookType string, p
 	}
 
 	for _, row := range rows {
-		var d hookData
+		var cfg hookData
 
-		_ = json.Unmarshal(row.Data, &d)
+		_ = json.Unmarshal(row.Data, &cfg)
 
-		status, _, callErr := a.call(ctx, d, payload)
+		status, _, callErr := a.call(ctx, cfg, payload)
 		ok := callErr == nil && status >= httpStatusSuccessMin && status < httpStatusSuccessMax
 
-		if !ok && !d.FailOpen {
+		if !ok && !cfg.FailOpen {
 			return false, nil // fail closed: deny the action
 		}
 	}
@@ -230,18 +230,18 @@ func (a *pgHooks) InvokeHooks(ctx context.Context, projectID, hookType string, p
 
 // call performs the signed HTTP POST to the hook, returning status, body and any
 // transport error.
-func (a *pgHooks) call(ctx context.Context, d hookData, payload []byte) (int, string, error) {
-	timeout := time.Duration(clampHookTimeout(d.TimeoutMs)) * time.Millisecond
+func (a *pgHooks) call(ctx context.Context, cfg hookData, payload []byte) (int, string, error) {
+	timeout := time.Duration(clampHookTimeout(cfg.TimeoutMs)) * time.Millisecond
 
 	reqCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(reqCtx, http.MethodPost, d.URL, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodPost, cfg.URL, bytes.NewReader(payload))
 	if err != nil {
 		return 0, "", err
 	}
 
-	secret := d.SigningSecret
+	secret := cfg.SigningSecret
 	if dec, decErr := a.db.Cipher.Decrypt(secret); decErr == nil {
 		secret = dec
 	}
@@ -264,25 +264,25 @@ func (a *pgHooks) call(ctx context.Context, d hookData, payload []byte) (int, st
 	return resp.StatusCode, string(body), nil
 }
 
-func clampHookTimeout(ms int) int {
-	if ms <= 0 {
+func clampHookTimeout(timeoutMs int) int {
+	if timeoutMs <= 0 {
 		return hookDefaultTimeoutMs
 	}
 
-	if ms > hookMaxTimeoutMs {
+	if timeoutMs > hookMaxTimeoutMs {
 		return hookMaxTimeoutMs
 	}
 
-	return ms
+	return timeoutMs
 }
 
 func hookToDomain(row *models.IamHook) domain.AdminHook {
-	var d hookData
+	var cfg hookData
 
-	_ = json.Unmarshal(row.Data, &d)
+	_ = json.Unmarshal(row.Data, &cfg)
 
 	return domain.AdminHook{
-		ID: row.ID, Type: row.Type, URL: d.URL,
-		TimeoutMs: clampHookTimeout(d.TimeoutMs), Enabled: row.Enabled, FailOpen: d.FailOpen,
+		ID: row.ID, Type: row.Type, URL: cfg.URL,
+		TimeoutMs: clampHookTimeout(cfg.TimeoutMs), Enabled: row.Enabled, FailOpen: cfg.FailOpen,
 	}
 }

@@ -112,18 +112,18 @@ func newWebhookHTTPClient(timeout time.Duration) *http.Client {
 
 // isBlockedWebhookIP reports whether ip is a non-public destination a webhook
 // must never reach. Loopback is intentionally allowed (dev escape hatch).
-func isBlockedWebhookIP(ip net.IP) bool {
-	if ip.IsLoopback() {
+func isBlockedWebhookIP(addr net.IP) bool {
+	if addr.IsLoopback() {
 		return false
 	}
 
-	if ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() ||
-		ip.IsMulticast() || ip.IsInterfaceLocalMulticast() || ip.IsPrivate() {
+	if addr.IsUnspecified() || addr.IsLinkLocalUnicast() || addr.IsLinkLocalMulticast() ||
+		addr.IsMulticast() || addr.IsInterfaceLocalMulticast() || addr.IsPrivate() {
 		return true
 	}
 
 	// RFC 6598 carrier-grade NAT (100.64.0.0/10) is not covered by IsPrivate.
-	if ip4 := ip.To4(); ip4 != nil && ip4[0] == 100 && ip4[1] >= 64 && ip4[1] <= 127 {
+	if ip4 := addr.To4(); ip4 != nil && ip4[0] == 100 && ip4[1] >= 64 && ip4[1] <= 127 {
 		return true
 	}
 
@@ -152,21 +152,21 @@ func newWebhookSigningSecret() (string, error) {
 }
 
 func validateWebhookURL(raw string) error {
-	u, err := url.ParseRequestURI(strings.TrimSpace(raw))
-	if err != nil || u.Host == "" {
+	parsedURL, err := url.ParseRequestURI(strings.TrimSpace(raw))
+	if err != nil || parsedURL.Host == "" {
 		return domain.ErrValidation.WithMessage("webhook url must be an absolute URL")
 	}
 
-	if u.User != nil || u.Fragment != "" {
+	if parsedURL.User != nil || parsedURL.Fragment != "" {
 		return domain.ErrValidation.WithMessage("webhook url must not contain userinfo or a fragment")
 	}
 
-	host := u.Hostname()
-	if u.Scheme == "https" {
+	host := parsedURL.Hostname()
+	if parsedURL.Scheme == "https" {
 		return nil
 	}
 
-	if u.Scheme == "http" && (strings.EqualFold(host, "localhost") || isLoopbackIP(host)) {
+	if parsedURL.Scheme == "http" && (strings.EqualFold(host, "localhost") || isLoopbackIP(host)) {
 		return nil
 	}
 
@@ -490,30 +490,30 @@ func (a *PgWebhooks) RotateSecret(ctx context.Context, projectID, environment, i
 	})
 }
 
-func publicEventFromDomain(ev domain.Event) (domain.PublicEvent, string, bool) {
-	if !slices.Contains(domain.SupportedWebhookEvents, ev.Type) {
+func publicEventFromDomain(event domain.Event) (domain.PublicEvent, string, bool) {
+	if !slices.Contains(domain.SupportedWebhookEvents, event.Type) {
 		return domain.PublicEvent{}, "", false
 	}
 
-	if ev.Version == 0 {
-		ev.Version = 1
+	if event.Version == 0 {
+		event.Version = 1
 	}
 
-	if ev.OccurredAt.IsZero() {
-		ev.OccurredAt = nowUTC()
+	if event.OccurredAt.IsZero() {
+		event.OccurredAt = nowUTC()
 	}
 
-	if ev.Environment == "" {
-		ev.Environment = "live"
+	if event.Environment == "" {
+		event.Environment = "live"
 	}
 
 	data := map[string]any{}
 	userID := ""
 
-	switch ev.Type {
+	switch event.Type {
 	case domain.WebhookEventSessionRevoked:
-		payload := sessionRevokedPayload(ev.Payload)
-		if payload.SessionID == "" || payload.UserID == "" || payload.ProjectID != ev.ProjectID {
+		payload := sessionRevokedPayload(event.Payload)
+		if payload.SessionID == "" || payload.UserID == "" || payload.ProjectID != event.ProjectID {
 			return domain.PublicEvent{}, "", false
 		}
 
@@ -524,29 +524,29 @@ func publicEventFromDomain(ev domain.Event) (domain.PublicEvent, string, bool) {
 			"project_id": payload.ProjectID,
 		}
 	case domain.WebhookEventUserBanned:
-		account := accountFromPayload(ev.Payload)
+		account := accountFromPayload(event.Payload)
 
 		userID = account.ID
 		if userID == "" {
-			userID = ev.AggregateID
+			userID = event.AggregateID
 		}
 
 		data = map[string]any{"user_id": userID, "status": "banned"}
 	case domain.WebhookEventUserDeleted:
-		data = publicMap(ev.Payload)
+		data = publicMap(event.Payload)
 
 		userID = firstString(data, "user_id", "id")
 		if userID == "" {
-			userID = ev.AggregateID
+			userID = event.AggregateID
 		}
 
 		data = map[string]any{"user_id": userID}
 	case domain.WebhookEventEmailChanged:
-		account := accountFromPayload(ev.Payload)
+		account := accountFromPayload(event.Payload)
 
 		userID = account.ID
 		if userID == "" {
-			userID = ev.AggregateID
+			userID = event.AggregateID
 		}
 
 		data = map[string]any{
@@ -557,8 +557,8 @@ func publicEventFromDomain(ev domain.Event) (domain.PublicEvent, string, bool) {
 	}
 
 	return domain.PublicEvent{
-		ID: ev.ID, Type: ev.Type, Version: ev.Version, OccurredAt: ev.OccurredAt,
-		ProjectID: ev.ProjectID, Environment: ev.Environment, Data: data,
+		ID: event.ID, Type: event.Type, Version: event.Version, OccurredAt: event.OccurredAt,
+		ProjectID: event.ProjectID, Environment: event.Environment, Data: data,
 	}, userID, true
 }
 

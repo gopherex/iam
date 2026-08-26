@@ -52,7 +52,7 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccounts(c
 		return nil, err
 	}
 
-	sa, err := s.deps.Keys.CreateServiceAccount(ctx, domain.ServiceAccountCmd{
+	svcAcct, err := s.deps.Keys.CreateServiceAccount(ctx, domain.ServiceAccountCmd{
 		ProjectID: params.ProjectID,
 		Name:      req.Name,
 		Scopes:    req.Scopes,
@@ -62,7 +62,7 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccounts(c
 	}
 
 	return &oas.PostV1ProjectsByProjectIdAdminServiceAccountsCreated{
-		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(sa)),
+		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(svcAcct)),
 	}, nil
 }
 
@@ -151,13 +151,13 @@ func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminServiceAccountsByS
 		return nil, err
 	}
 
-	sa, err := s.deps.Keys.GetServiceAccount(ctx, params.ProjectID, params.SaID)
+	svcAcct, err := s.deps.Keys.GetServiceAccount(ctx, params.ProjectID, params.SaID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK{
-		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(sa)),
+		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(svcAcct)),
 	}, nil
 }
 
@@ -176,13 +176,13 @@ func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminServiceAccountsB
 		cmd.Disabled = &v
 	}
 
-	sa, err := s.deps.Keys.UpdateServiceAccount(ctx, cmd)
+	svcAcct, err := s.deps.Keys.UpdateServiceAccount(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	return &oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK{
-		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(sa)),
+		ServiceAccount: oas.NewOptServiceAccount(oasServiceAccount(svcAcct)),
 	}, nil
 }
 

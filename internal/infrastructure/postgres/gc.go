@@ -115,20 +115,20 @@ func (db *DB) gcRetentionSweep(ctx context.Context, log *xlog.Logger) {
 			continue
 		}
 
-		var d struct {
+		var retention struct {
 			AuditLogRetentionDays *int `json:"audit_log_retention_days"`
 			EventRetentionDays    *int `json:"event_retention_days"`
 		}
 
-		_ = json.Unmarshal(raw, &d)
+		_ = json.Unmarshal(raw, &retention)
 
 		p := policy{project: pid}
-		if d.AuditLogRetentionDays != nil {
-			p.auditDays = *d.AuditLogRetentionDays
+		if retention.AuditLogRetentionDays != nil {
+			p.auditDays = *retention.AuditLogRetentionDays
 		}
 
-		if d.EventRetentionDays != nil {
-			p.eventDays = *d.EventRetentionDays
+		if retention.EventRetentionDays != nil {
+			p.eventDays = *retention.EventRetentionDays
 		}
 
 		policies = append(policies, p)

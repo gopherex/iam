@@ -33,15 +33,15 @@ func (a *pgAdminConfig) ListOAuthProviders(ctx context.Context, projectID string
 
 	out := make([]domain.AdminOAuthProvider, 0, len(rows))
 	for _, row := range rows {
-		var d oauthProviderData
+		var providerData oauthProviderData
 
-		_ = json.Unmarshal(row.Data, &d)
+		_ = json.Unmarshal(row.Data, &providerData)
 
 		out = append(out, domain.AdminOAuthProvider{
 			ID:       row.ID,
 			Provider: row.Provider,
-			ClientID: d.ClientID,
-			Scopes:   d.Scopes,
+			ClientID: providerData.ClientID,
+			Scopes:   providerData.Scopes,
 			Enabled:  row.Enabled,
 		})
 	}

@@ -87,15 +87,15 @@ type emailJob struct {
 // applyFlowContinueLink builds the cross-device deep-link and stores it on
 // job.Data, returning ok=false when the send should be skipped (no app base
 // URL configured, or the link could not be built).
-func (p *Publisher) applyFlowContinueLink(ctx context.Context, ev eventEnvelope, job emailJob) (emailJob, bool) {
-	base := p.resolveContinueBase(ctx, ev)
+func (p *Publisher) applyFlowContinueLink(ctx context.Context, event eventEnvelope, job emailJob) (emailJob, bool) {
+	base := p.resolveContinueBase(ctx, event)
 	if base == "" {
-		p.log.Info("flow continue email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
+		p.log.Info("flow continue email skipped: no app base URL for project", xlog.String("project_id", event.ProjectID))
 
 		return job, false
 	}
 
-	link := flowContinueURL(base, stringValue(ev.Payload, "flow_token"), stringValue(ev.Payload, "token"))
+	link := flowContinueURL(base, stringValue(event.Payload, "flow_token"), stringValue(event.Payload, "token"))
 	if link == "" {
 		return job, false
 	}
@@ -109,15 +109,15 @@ func (p *Publisher) applyFlowContinueLink(ctx context.Context, ev eventEnvelope,
 // applyInviteLink builds the accept deep-link and stores it on job.Data,
 // returning ok=false when the send should be skipped (no app base URL
 // configured, or the link could not be built).
-func (p *Publisher) applyInviteLink(ctx context.Context, ev eventEnvelope, job emailJob) (emailJob, bool) {
-	base := p.resolveContinueBase(ctx, ev)
+func (p *Publisher) applyInviteLink(ctx context.Context, event eventEnvelope, job emailJob) (emailJob, bool) {
+	base := p.resolveContinueBase(ctx, event)
 	if base == "" {
-		p.log.Info("invite email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
+		p.log.Info("invite email skipped: no app base URL for project", xlog.String("project_id", event.ProjectID))
 
 		return job, false
 	}
 
-	token := stringValue(ev.Payload, "invite_token")
+	token := stringValue(event.Payload, "invite_token")
 
 	link := inviteURL(base, token)
 	if link == "" {
@@ -155,25 +155,25 @@ func (p *Publisher) resolveSMTPProviderOrSkip(ctx context.Context, ev eventEnvel
 // one, returning ok=false when the send should be skipped instead (see
 // applyFlowContinueLink/applyInviteLink). A template with no link step is a
 // no-op pass-through.
-func (p *Publisher) applyTemplateLink(ctx context.Context, ev eventEnvelope, job emailJob) (emailJob, bool) {
+func (p *Publisher) applyTemplateLink(ctx context.Context, event eventEnvelope, job emailJob) (emailJob, bool) {
 	switch job.TemplateID {
 	case "flow_continue":
 		// Cross-device deep-link from a per-tenant base — the per-flow
 		// redirect_to when its origin is allowed, else the project's
 		// configured app_base_url. With neither, the feature is disabled.
-		return p.applyFlowContinueLink(ctx, ev, job)
+		return p.applyFlowContinueLink(ctx, event, job)
 	case "invite":
 		// Accept deep-link from the per-tenant base (per-invite redirect_to
 		// when allowed, else app_base_url) + raw invite_token.
-		return p.applyInviteLink(ctx, ev, job)
+		return p.applyInviteLink(ctx, event, job)
 	default:
 		return job, true
 	}
 }
 
 func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
-	var ev eventEnvelope
-	if err := json.Unmarshal(msg.Payload, &ev); err != nil {
+	var event eventEnvelope
+	if err := json.Unmarshal(msg.Payload, &event); err != nil {
 		return err
 	}
 
@@ -185,19 +185,19 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	// disjoint from email: emailJobFromEvent returns false for channel=="sms"
 	// (otp/mfa), and smsJobFromEvent returns false for non-sms, so neither
 	// double-sends.
-	if sjob, ok := smsJobFromEvent(ev); ok {
-		return p.publishSMS(ctx, ev, sjob)
+	if sjob, ok := smsJobFromEvent(event); ok {
+		return p.publishSMS(ctx, event, sjob)
 	}
 
 	// A session ending is what relying parties subscribe to with back-channel
 	// logout. Delivering it here rather than from the request that ended the
 	// session means a slow relying party cannot hold up a logout, and a failed
 	// POST is retried by the outbox instead of being lost.
-	if err := p.publishBackchannelLogout(ctx, ev); err != nil {
+	if err := p.publishBackchannelLogout(ctx, event); err != nil {
 		return err
 	}
 
-	job, ok := emailJobFromEvent(ev)
+	job, ok := emailJobFromEvent(event)
 	if !ok {
 		if p.webhooks != nil {
 			return p.webhooks.PublishEvent(ctx, domainEvent)
@@ -207,18 +207,18 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	}
 
 	if job.To == "" {
-		return fmt.Errorf("%w: %s", errEmailNoRecipient, ev.Type)
+		return fmt.Errorf("%w: %s", errEmailNoRecipient, event.Type)
 	}
 	// Resolve the effective locale: the request locale carried on the event, else
 	// the recipient account's locale, else the project default, else "en".
-	job.Locale = p.resolveLocale(ctx, ev, job.Locale)
+	job.Locale = p.resolveLocale(ctx, event, job.Locale)
 
-	job, ok = p.applyTemplateLink(ctx, ev, job)
+	job, ok = p.applyTemplateLink(ctx, event, job)
 	if !ok {
 		return nil
 	}
 
-	provider, skip, err := p.resolveSMTPProviderOrSkip(ctx, ev)
+	provider, skip, err := p.resolveSMTPProviderOrSkip(ctx, event)
 	if err != nil {
 		return err
 	}
@@ -227,7 +227,7 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 		return nil
 	}
 
-	rendered, err := p.renderTemplate(ctx, ev.ProjectID, job)
+	rendered, err := p.renderTemplate(ctx, event.ProjectID, job)
 	if err != nil {
 		return err
 	}
@@ -237,8 +237,8 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	}
 
 	p.log.Info("email sent",
-		xlog.String("event", ev.Type),
-		xlog.String("project_id", ev.ProjectID),
+		xlog.String("event", event.Type),
+		xlog.String("project_id", event.ProjectID),
 		xlog.String("template_id", job.TemplateID),
 		xlog.String("to", job.To),
 	)
@@ -246,57 +246,57 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	return nil
 }
 
-func emailJobFromEvent(ev eventEnvelope) (emailJob, bool) {
-	data := payloadData(ev.Payload)
+func emailJobFromEvent(event eventEnvelope) (emailJob, bool) {
+	data := payloadData(event.Payload)
 	// Locale may be empty here; publishOne resolves it (request → account →
 	// project default → "en") with DB context before rendering.
-	job := emailJob{Locale: stringValue(ev.Payload, "locale"), Data: data}
-	switch ev.Type {
+	job := emailJob{Locale: stringValue(event.Payload, "locale"), Data: data}
+	switch event.Type {
 	case "config.test_email_requested":
-		job.TemplateID = stringValue(ev.Payload, "template_id")
-		job.To = stringValue(ev.Payload, "to")
+		job.TemplateID = stringValue(event.Payload, "template_id")
+		job.To = stringValue(event.Payload, "to")
 	case "auth.otp.started":
-		if stringValue(ev.Payload, "channel") != "email" {
+		if stringValue(event.Payload, "channel") != "email" {
 			return emailJob{}, false
 		}
 
 		job.TemplateID = "otp"
-		job.To = recipient(ev.Payload)
+		job.To = recipient(event.Payload)
 	case "auth.magiclink.started":
 		job.TemplateID = "magic_link"
-		job.To = recipient(ev.Payload)
+		job.To = recipient(event.Payload)
 	case "email.verification.requested":
 		job.TemplateID = "email_verification"
-		if stringValue(ev.Payload, "purpose") == "change" {
+		if stringValue(event.Payload, "purpose") == "change" {
 			job.TemplateID = "email_change"
 		}
 
-		job.To = recipient(ev.Payload)
+		job.To = recipient(event.Payload)
 	case "password.reset_requested":
 		job.TemplateID = "password_reset"
-		job.To = recipient(ev.Payload)
+		job.To = recipient(event.Payload)
 	case "mfa.challenge.created":
-		if stringValue(ev.Payload, "channel") != "email" {
+		if stringValue(event.Payload, "channel") != "email" {
 			return emailJob{}, false
 		}
 
 		job.TemplateID = "mfa_email"
-		job.To = recipient(ev.Payload)
+		job.To = recipient(event.Payload)
 	case "auth.flow.continue":
 		// Cross-device "continue your sign-up" deep-link. continue_url is built in
 		// publishOne from the configured app base URL + flow_token.
 		job.TemplateID = "flow_continue"
-		job.To = recipient(ev.Payload)
+		job.To = recipient(event.Payload)
 	case "invite.created":
 		// Invitation email. invite_url is built in publishOne from the configured
 		// app base URL (or the per-invite redirect_to) + raw invite_token.
 		job.TemplateID = "invite"
-		job.To = recipient(ev.Payload)
+		job.To = recipient(event.Payload)
 	default:
 		return emailJob{}, false
 	}
 
-	return withDerivedTemplateFields(job, ev.Payload), true
+	return withDerivedTemplateFields(job, event.Payload), true
 }
 
 // withDerivedTemplateFields fills in the template-data fields every job shares
@@ -360,15 +360,15 @@ func stringValue(m map[string]any, key string) string {
 // app_base_url, otherwise app_base_url itself. A redirect_to from a foreign
 // origin is dropped (it would phish a valid flow token to an attacker host).
 // Returns "" when the project has no app_base_url configured.
-func (p *Publisher) resolveContinueBase(ctx context.Context, ev eventEnvelope) string {
-	base := p.projectAppBaseURL(ctx, ev.ProjectID, ev.Environment)
-	if redirectTo := stringValue(ev.Payload, "redirect_to"); redirectTo != "" {
+func (p *Publisher) resolveContinueBase(ctx context.Context, event eventEnvelope) string {
+	base := p.projectAppBaseURL(ctx, event.ProjectID, event.Environment)
+	if redirectTo := stringValue(event.Payload, "redirect_to"); redirectTo != "" {
 		if base != "" && sameOrigin(redirectTo, base) {
 			return redirectTo
 		}
 
 		p.log.Info("flow continue: redirect_to origin not allowed; using app_base_url",
-			xlog.String("project_id", ev.ProjectID))
+			xlog.String("project_id", event.ProjectID))
 	}
 
 	return base
@@ -377,18 +377,18 @@ func (p *Publisher) resolveContinueBase(ctx context.Context, ev eventEnvelope) s
 // resolveLocale picks the effective email locale: the request locale already on
 // the event, else the recipient account's locale, else the project default, else
 // "en". Best-effort — any lookup miss just falls through.
-func (p *Publisher) resolveLocale(ctx context.Context, ev eventEnvelope, reqLocale string) string {
+func (p *Publisher) resolveLocale(ctx context.Context, event eventEnvelope, reqLocale string) string {
 	if reqLocale != "" {
 		return reqLocale
 	}
 
-	if accID := stringValue(ev.Payload, "account_id"); accID != "" {
+	if accID := stringValue(event.Payload, "account_id"); accID != "" {
 		if loc := p.accountLocale(ctx, accID); loc != "" {
 			return loc
 		}
 	}
 
-	if loc := p.projectDefaultLocale(ctx, ev.ProjectID); loc != "" {
+	if loc := p.projectDefaultLocale(ctx, event.ProjectID); loc != "" {
 		return loc
 	}
 
@@ -457,14 +457,14 @@ func (p *Publisher) projectAppBaseURL(ctx context.Context, projectID, env string
 
 // sameOrigin reports whether two URLs share scheme + host (incl. port).
 func sameOrigin(a, b string) bool {
-	ua, err1 := url.Parse(a)
+	urlA, err1 := url.Parse(a)
 
 	ub, err2 := url.Parse(b)
-	if err1 != nil || err2 != nil || ua.Scheme == "" || ua.Host == "" || ub.Scheme == "" || ub.Host == "" {
+	if err1 != nil || err2 != nil || urlA.Scheme == "" || urlA.Host == "" || ub.Scheme == "" || ub.Host == "" {
 		return false
 	}
 
-	return strings.EqualFold(ua.Scheme, ub.Scheme) && strings.EqualFold(ua.Host, ub.Host)
+	return strings.EqualFold(urlA.Scheme, ub.Scheme) && strings.EqualFold(urlA.Host, ub.Host)
 }
 
 // flowContinueURL builds the cross-device resume deep-link
@@ -475,22 +475,22 @@ func flowContinueURL(rawBase, flowToken, proofToken string) string {
 		return ""
 	}
 
-	u, err := url.Parse(rawBase)
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+	target, err := url.Parse(rawBase)
+	if err != nil || (target.Scheme != "http" && target.Scheme != "https") || target.Host == "" {
 		return ""
 	}
 
-	u.Path = strings.TrimRight(u.Path, "/") + "/continue"
-	q := u.Query()
-	q.Set("flow", flowToken)
+	target.Path = strings.TrimRight(target.Path, "/") + "/continue"
+	query := target.Query()
+	query.Set("flow", flowToken)
 
 	if proofToken != "" {
-		q.Set("token", proofToken)
+		query.Set("token", proofToken)
 	}
 
-	u.RawQuery = q.Encode()
+	target.RawQuery = query.Encode()
 
-	return u.String()
+	return target.String()
 }
 
 // inviteURL builds the invitation accept deep-link <base>/invite?token=<token>.
@@ -500,17 +500,17 @@ func inviteURL(rawBase, token string) string {
 		return ""
 	}
 
-	u, err := url.Parse(rawBase)
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+	target, err := url.Parse(rawBase)
+	if err != nil || (target.Scheme != "http" && target.Scheme != "https") || target.Host == "" {
 		return ""
 	}
 
-	u.Path = strings.TrimRight(u.Path, "/") + "/invite"
-	q := u.Query()
+	target.Path = strings.TrimRight(target.Path, "/") + "/invite"
+	q := target.Query()
 	q.Set("token", token)
-	u.RawQuery = q.Encode()
+	target.RawQuery = q.Encode()
 
-	return u.String()
+	return target.String()
 }
 
 func linkWithToken(rawBase, token string) string {
@@ -518,27 +518,27 @@ func linkWithToken(rawBase, token string) string {
 		return ""
 	}
 
-	u, err := url.Parse(rawBase)
+	target, err := url.Parse(rawBase)
 	if err != nil {
 		return ""
 	}
 
-	if u.Scheme != "http" && u.Scheme != "https" {
+	if target.Scheme != "http" && target.Scheme != "https" {
 		return ""
 	}
 
-	if u.Host == "" {
+	if target.Host == "" {
 		return ""
 	}
 
-	q := u.Query()
+	q := target.Query()
 	if q.Get("token") == "" {
 		q.Set("token", token)
 	}
 
-	u.RawQuery = q.Encode()
+	target.RawQuery = q.Encode()
 
-	return u.String()
+	return target.String()
 }
 
 type smtpConfig struct {
@@ -568,23 +568,23 @@ func (p *Publisher) smtpProvider(ctx context.Context, projectID string) (*smtpCo
 	}
 
 	for _, row := range rows {
-		var d providerData
+		var provData providerData
 		if len(row.Data) > 0 {
-			if err := json.Unmarshal(row.Data, &d); err != nil {
+			if err := json.Unmarshal(row.Data, &provData); err != nil {
 				return nil, err
 			}
 		}
 
 		typ := row.Provider
-		if d.Type != "" {
-			typ = d.Type
+		if provData.Type != "" {
+			typ = provData.Type
 		}
 
 		if !strings.EqualFold(typ, "smtp") {
 			continue
 		}
 
-		cfg, err := p.decodeSMTPConfig(d.Config)
+		cfg, err := p.decodeSMTPConfig(provData.Config)
 		if err != nil {
 			return nil, err
 		}

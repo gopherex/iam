@@ -542,14 +542,14 @@ func oasOIDCDevicePending(p *domain.OIDCDevicePending) *oas.GetV1DeviceOK {
 }
 
 // oasOAuthGrant maps a domain Grant to its oas representation.
-func oasOAuthGrant(g domain.Grant) oas.OAuthGrant {
+func oasOAuthGrant(grant domain.Grant) oas.OAuthGrant {
 	return oas.OAuthGrant{
-		ID: oas.NewOptString(g.ID),
+		ID: oas.NewOptString(grant.ID),
 		Client: oas.NewOptOAuthGrantClient(oas.OAuthGrantClient{
-			ID: oas.NewOptString(g.ClientID),
+			ID: oas.NewOptString(grant.ClientID),
 		}),
-		Scopes:    g.Scopes,
-		GrantedAt: oas.NewOptTimestamp(oas.Timestamp(g.GrantedAt)),
+		Scopes:    grant.Scopes,
+		GrantedAt: oas.NewOptTimestamp(oas.Timestamp(grant.GrantedAt)),
 	}
 }
 

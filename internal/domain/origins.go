@@ -23,25 +23,25 @@ func NormalizeOrigin(raw string) string {
 		return ""
 	}
 
-	u, err := url.Parse(s)
-	if err != nil || u.Host == "" {
+	parsedURL, err := url.Parse(s)
+	if err != nil || parsedURL.Host == "" {
 		return ""
 	}
 
-	scheme := strings.ToLower(u.Scheme)
+	scheme := strings.ToLower(parsedURL.Scheme)
 	if scheme != "http" && scheme != "https" {
 		return ""
 	}
 
-	if hasOriginOnlyDisallowedParts(u) {
+	if hasOriginOnlyDisallowedParts(parsedURL) {
 		return ""
 	}
 
-	if scheme == "http" && !isLoopbackHost(strings.ToLower(u.Hostname())) {
+	if scheme == "http" && !isLoopbackHost(strings.ToLower(parsedURL.Hostname())) {
 		return ""
 	}
 
-	return scheme + "://" + strings.ToLower(u.Host)
+	return scheme + "://" + strings.ToLower(parsedURL.Host)
 }
 
 // hasOriginOnlyDisallowedParts reports whether u carries anything beyond

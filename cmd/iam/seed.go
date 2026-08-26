@@ -14,9 +14,9 @@ import (
 // usable from the admin panel: the operator (master key) signs in and already
 // has a project to manage. Idempotent — it does nothing once any project exists.
 func seedRoot(ctx context.Context, db *postgres.DB, emitter postgres.Emitter, log *xlog.Logger) error {
-	op := postgres.NewPgOperator(db, emitter)
+	operator := postgres.NewPgOperator(db, emitter)
 
-	projects, err := op.ListProjects(ctx)
+	projects, err := operator.ListProjects(ctx)
 	if err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func seedRoot(ctx context.Context, db *postgres.DB, emitter postgres.Emitter, lo
 		return nil // already seeded / not empty
 	}
 
-	proj, err := op.CreateProject(ctx, domain.ProjectCmd{Name: "Root", Slug: "root", DefaultLocale: "en"})
+	proj, err := operator.CreateProject(ctx, domain.ProjectCmd{Name: "Root", Slug: "root", DefaultLocale: "en"})
 	if err != nil {
 		if errors.Is(err, domain.ErrConflict) {
 			return nil

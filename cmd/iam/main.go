@@ -245,9 +245,9 @@ func startBackgroundWorkers(sd *xshutdown.Manager, ob *outbox.Outbox, db *postgr
 
 // startServing launches the listener goroutines: the probe server (when it
 // has its own listener) and the API server.
-func startServing(sd *xshutdown.Manager, httpSrv, probeSrv *http.Server, probeAddr, apiAddr string, log *xlog.Logger) {
+func startServing(shutdown *xshutdown.Manager, httpSrv, probeSrv *http.Server, probeAddr, apiAddr string, log *xlog.Logger) {
 	if probeSrv != nil {
-		sd.Go(func(context.Context) {
+		shutdown.Go(func(context.Context) {
 			log.Info("probes listening", xlog.String("addr", probeAddr))
 
 			if err := probeSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -256,7 +256,7 @@ func startServing(sd *xshutdown.Manager, httpSrv, probeSrv *http.Server, probeAd
 		})
 	}
 
-	sd.Go(func(context.Context) {
+	shutdown.Go(func(context.Context) {
 		log.Info("listening", xlog.String("addr", apiAddr))
 
 		if err := httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -374,7 +374,7 @@ func loadConfig(configPath string) (*config.Config, error) {
 // transaction as the mutation. When configured, it also seeds the root
 // operator/project so there is something to manage on first boot.
 func setupOutboxAndEmitter(ctx context.Context, cfg *config.Config, db *postgres.DB, webhooks *postgres.PgWebhooks, log *xlog.Logger) (*outbox.Outbox, postgres.Emitter, error) {
-	ob, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, webhooks, log.AppendName("outbox")),
+	outboxRelay, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, webhooks, log.AppendName("outbox")),
 		outbox.WithInstanceID(build.InstanceID),
 		outbox.WithLogger(buildSlogLogger()),
 		outbox.WithPollInterval(time.Second),
@@ -387,7 +387,7 @@ func setupOutboxAndEmitter(ctx context.Context, cfg *config.Config, db *postgres
 		return nil, nil, err
 	}
 
-	emitter := postgres.NewAuditingEmitter(db, postgres.NewOutboxEmitter(ob))
+	emitter := postgres.NewAuditingEmitter(db, postgres.NewOutboxEmitter(outboxRelay))
 
 	if cfg.Service.Auth.SeedRoot {
 		if err := seedRoot(ctx, db, emitter, log); err != nil {
@@ -396,7 +396,7 @@ func setupOutboxAndEmitter(ctx context.Context, cfg *config.Config, db *postgres
 		}
 	}
 
-	return ob, emitter, nil
+	return outboxRelay, emitter, nil
 }
 
 // newServiceLogger builds the application logger and starts the telemetry
@@ -453,7 +453,7 @@ func run() error {
 
 	webhooks := postgres.NewPgWebhooks(db, nil)
 
-	ob, emitter, err := setupOutboxAndEmitter(ctx, cfg, db, webhooks, log)
+	outboxRelay, emitter, err := setupOutboxAndEmitter(ctx, cfg, db, webhooks, log)
 	if err != nil {
 		return err
 	}
@@ -468,16 +468,16 @@ func run() error {
 	httpSrv, probeSrv, live := buildServers(cfg, db, emitter, auth, srv, metricsHandler)
 
 	// ----- shutdown orchestration -----
-	sd := xshutdown.New(ctx,
+	shutdown := xshutdown.New(ctx,
 		xshutdown.WithTimeout(time.Duration(cfg.Service.HTTP.ShutdownSec)*time.Second),
 		xshutdown.WithErrorHandler(func(err error) { log.Error("shutdown error", xlog.Error("err", err)) }),
 	)
-	registerShutdownHooks(sd, httpSrv, probeSrv, live, &telemetryShutdown)
-	startBackgroundWorkers(sd, ob, db, webhooks, log)
-	startServing(sd, httpSrv, probeSrv, probeAddr, cfg.Service.HTTP.Addr, log)
+	registerShutdownHooks(shutdown, httpSrv, probeSrv, live, &telemetryShutdown)
+	startBackgroundWorkers(shutdown, outboxRelay, db, webhooks, log)
+	startServing(shutdown, httpSrv, probeSrv, probeAddr, cfg.Service.HTTP.Addr, log)
 
 	// Block until SIGINT/SIGTERM, then run the registered cleanups.
-	if err := sd.Run(); err != nil {
+	if err := shutdown.Run(); err != nil {
 		log.Error("shutdown completed with errors", xlog.Error("err", err))
 		return err
 	}

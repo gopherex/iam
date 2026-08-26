@@ -97,7 +97,7 @@ func (a *pgAdminServiceAccounts) Get(ctx context.Context, projectID, saID string
 // Create inserts a new service account for the project.
 func (a *pgAdminServiceAccounts) Create(ctx context.Context, cmd domain.ServiceAccountCmd) (*domain.ServiceAccount, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.ServiceAccount, error) {
-		sa := &domain.ServiceAccount{
+		svcAcct := &domain.ServiceAccount{
 			ID:        newUUID(),
 			ProjectID: cmd.ProjectID,
 			Name:      cmd.Name,
@@ -105,18 +105,18 @@ func (a *pgAdminServiceAccounts) Create(ctx context.Context, cmd domain.ServiceA
 			Disabled:  false,
 		}
 
-		raw, err := marshal(sa)
+		raw, err := marshal(svcAcct)
 		if err != nil {
 			return nil, err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 		if _, err := models.IamServiceAccounts.Insert(&models.IamServiceAccountSetter{
-			ID:        &sa.ID,
-			ProjectID: &sa.ProjectID,
-			Name:      &sa.Name,
-			Disabled:  &sa.Disabled,
-			Data:      &rm,
+			ID:        &svcAcct.ID,
+			ProjectID: &svcAcct.ProjectID,
+			Name:      &svcAcct.Name,
+			Disabled:  &svcAcct.Disabled,
+			Data:      &rawData,
 		}).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
 				return nil, domain.ErrConflict
@@ -127,40 +127,40 @@ func (a *pgAdminServiceAccounts) Create(ctx context.Context, cmd domain.ServiceA
 
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.created",
-			ProjectID:   sa.ProjectID,
+			ProjectID:   svcAcct.ProjectID,
 			Environment: "",
-			AggregateID: sa.ID,
-			Payload:     sa,
+			AggregateID: svcAcct.ID,
+			Payload:     svcAcct,
 		}); err != nil {
 			return nil, err
 		}
 
-		return sa, nil
+		return svcAcct, nil
 	})
 }
 
 // Update applies a partial update (scopes / disabled flag) to a service account.
 func (a *pgAdminServiceAccounts) Update(ctx context.Context, cmd domain.AdminServiceAccountUpdateCmd) (*domain.ServiceAccount, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.ServiceAccount, error) {
-		row, sa, err := a.findSA(ctx, cmd.ProjectID, cmd.ServiceAccountID)
+		row, svcAcct, err := a.findSA(ctx, cmd.ProjectID, cmd.ServiceAccountID)
 		if err != nil {
 			return nil, err
 		}
 
 		if cmd.Scopes != nil {
-			sa.Scopes = cmd.Scopes
+			svcAcct.Scopes = cmd.Scopes
 		}
 
-		sa.Disabled = cmd.Disabled
+		svcAcct.Disabled = cmd.Disabled
 
-		raw, err := marshal(sa)
+		raw, err := marshal(svcAcct)
 		if err != nil {
 			return nil, err
 		}
 
 		rm := json.RawMessage(raw)
 		if err := row.Update(ctx, a.db.Bobx(), &models.IamServiceAccountSetter{
-			Disabled:  &sa.Disabled,
+			Disabled:  &svcAcct.Disabled,
 			Data:      &rm,
 			UpdatedAt: ptr(nowUTC()),
 		}); err != nil {
@@ -169,15 +169,15 @@ func (a *pgAdminServiceAccounts) Update(ctx context.Context, cmd domain.AdminSer
 
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "service_account.updated",
-			ProjectID:   sa.ProjectID,
+			ProjectID:   svcAcct.ProjectID,
 			Environment: "",
-			AggregateID: sa.ID,
-			Payload:     sa,
+			AggregateID: svcAcct.ID,
+			Payload:     svcAcct,
 		}); err != nil {
 			return nil, err
 		}
 
-		return sa, nil
+		return svcAcct, nil
 	})
 }
 

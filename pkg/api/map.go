@@ -23,18 +23,18 @@ func optURI(raw string) oas.OptURI {
 // generated contract.
 
 func oasUser(a *domain.Account) oas.User {
-	u := oas.User{
+	user := oas.User{
 		ID:            a.ID,
 		Kind:          oas.UserKind(a.Kind),
 		Status:        oas.UserStatus(a.Status),
 		EmailVerified: oas.NewOptBool(a.EmailVerified),
 	}
 	if a.PrimaryEmail != "" {
-		u.PrimaryEmail = oas.NewOptNilString(a.PrimaryEmail)
+		user.PrimaryEmail = oas.NewOptNilString(a.PrimaryEmail)
 	}
 
 	if a.PrimaryPhone != "" {
-		u.PrimaryPhone = oas.NewOptNilString(a.PrimaryPhone)
+		user.PrimaryPhone = oas.NewOptNilString(a.PrimaryPhone)
 	}
 	// Surface the editable profile (name/locale) so PATCH /v1/users/me and reads
 	// reflect the stored values. Locale is only set when non-empty: an empty
@@ -49,10 +49,10 @@ func oasUser(a *domain.Account) oas.User {
 			prof.Locale = oas.NewOptString(a.Locale)
 		}
 
-		u.Profile = oas.NewOptCoreProfile(prof)
+		user.Profile = oas.NewOptCoreProfile(prof)
 	}
 
-	return u
+	return user
 }
 
 func oasSessionTokens(s *domain.Session) oas.SessionTokens {

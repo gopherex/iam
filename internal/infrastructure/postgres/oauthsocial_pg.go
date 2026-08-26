@@ -196,9 +196,9 @@ func (a *pgOAuthSocial) EnabledProviders(ctx context.Context, projectID string) 
 			return nil, err
 		}
 
-		d := raw.resolved()
+		providerCfg := raw.resolved()
 
-		name := d.Name
+		name := providerCfg.Name
 		if name == "" {
 			name = row.Provider
 		}
@@ -206,7 +206,7 @@ func (a *pgOAuthSocial) EnabledProviders(ctx context.Context, projectID string) 
 		out = append(out, domain.OAuthProvider{
 			ID:     row.Provider,
 			Name:   name,
-			Scopes: d.Scopes,
+			Scopes: providerCfg.Scopes,
 		})
 	}
 
@@ -538,13 +538,13 @@ func (a *pgOAuthSocial) StartLogin(ctx context.Context, cmd domain.OAuthSocialSt
 		return "", domain.ErrBadRequest
 	}
 
-	cfg, d, err := a.loadOAuthConfig(ctx, cmd.ProjectID, cmd.Provider, cmd.RedirectTo)
+	cfg, providerCfg, err := a.loadOAuthConfig(ctx, cmd.ProjectID, cmd.Provider, cmd.RedirectTo)
 	if err != nil {
 		return "", err
 	}
 	// Persist the CSRF state bound to a validated redirect (anti-CSRF + closes
 	// open redirect: only the stored, validated target is used at callback).
-	redirect := oauthSafeRedirect(cmd.RedirectTo, d.RedirectURL)
+	redirect := oauthSafeRedirect(cmd.RedirectTo, providerCfg.RedirectURL)
 	if err := a.storeState(ctx, cmd.ProjectID, cmd.Provider, cmd.State, redirect, ""); err != nil {
 		return "", err
 	}
@@ -596,12 +596,12 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 
 	// Exchange the code (PKCE-protected when a verifier is supplied) for the
 	// userinfo claims, then resolve/create the account and mint the session.
-	cfg, d, err := a.loadOAuthConfig(ctx, cmd.ProjectID, cmd.Provider, cmd.RedirectTo)
+	cfg, providerCfg, err := a.loadOAuthConfig(ctx, cmd.ProjectID, cmd.Provider, cmd.RedirectTo)
 	if err != nil {
 		return domain.OAuthSocialCallbackResult{}, err
 	}
 
-	providerAccountID, email, err := a.oauthExchange(ctx, cfg, d, cmd.Code, cmd.CodeVerifier)
+	providerAccountID, email, err := a.oauthExchange(ctx, cfg, providerCfg, cmd.Code, cmd.CodeVerifier)
 	if err != nil {
 		return domain.OAuthSocialCallbackResult{}, err
 	}
@@ -619,7 +619,7 @@ func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OA
 	}
 
 	if redirect == "" {
-		redirect = d.RedirectURL
+		redirect = providerCfg.RedirectURL
 	}
 
 	redirect = oauthAppendCode(redirect, code)
@@ -663,7 +663,7 @@ func (a *pgOAuthSocial) storeExchangeCode(ctx context.Context, projectID string,
 			return err
 		}
 
-		rm := json.RawMessage(raw)
+		rawData := json.RawMessage(raw)
 		uid := null.From(sess.AccountID)
 
 		setter := &models.IamAuthCodeSetter{
@@ -672,7 +672,7 @@ func (a *pgOAuthSocial) storeExchangeCode(ctx context.Context, projectID string,
 			CodeHash:  ptr(fedHashToken(code)),
 			UserID:    &uid,
 			ExpiresAt: ptr(nowUTC().Add(oauthSocialExchangeCodeTTL)),
-			Data:      &rm,
+			Data:      &rawData,
 		}
 		if _, err := models.IamAuthCodes.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 			if isUniqueViolation(err) {
@@ -838,12 +838,12 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 		return "", domain.ErrForbidden
 	}
 
-	cfg, d, err := a.loadOAuthConfig(ctx, projectID, cmd.Provider, cmd.RedirectTo)
+	cfg, providerCfg, err := a.loadOAuthConfig(ctx, projectID, cmd.Provider, cmd.RedirectTo)
 	if err != nil {
 		return "", err
 	}
 
-	providerAccountID, email, err := a.oauthExchange(ctx, cfg, d, cmd.Code, cmd.CodeVerifier)
+	providerAccountID, email, err := a.oauthExchange(ctx, cfg, providerCfg, cmd.Code, cmd.CodeVerifier)
 	if err != nil {
 		return "", err
 	}
@@ -854,7 +854,7 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 
 	redirect := stateRedirect
 	if redirect == "" {
-		redirect = d.RedirectURL
+		redirect = providerCfg.RedirectURL
 	}
 
 	return redirect, nil
@@ -888,35 +888,35 @@ func (a *pgOAuthSocial) loadOAuthConfig(ctx context.Context, projectID, provider
 		return nil, nil, err
 	}
 
-	d := raw.resolved()
+	providerCfg := raw.resolved()
 	// The admin surface stores the client secret AES-GCM-encrypted; decrypt it
 	// here. A legacy/IaC-provisioned cleartext secret fails to decrypt and is
 	// used as-is, so both storage forms work during the transition.
-	if dec, decErr := a.db.Cipher.Decrypt(d.ClientSecret); decErr == nil {
-		d.ClientSecret = dec
+	if dec, decErr := a.db.Cipher.Decrypt(providerCfg.ClientSecret); decErr == nil {
+		providerCfg.ClientSecret = dec
 	}
 
-	if d.ClientID == "" || d.AuthURL == "" || d.TokenURL == "" {
+	if providerCfg.ClientID == "" || providerCfg.AuthURL == "" || providerCfg.TokenURL == "" {
 		return nil, nil, domain.ErrProviderError.WithMessage("oauth provider misconfigured: missing client_id/auth_url/token_url")
 	}
 
-	redirect := d.RedirectURL
+	redirect := providerCfg.RedirectURL
 	if redirectOverride != "" {
 		redirect = redirectOverride
 	}
 
 	cfg := &oauth2.Config{
-		ClientID:     d.ClientID,
-		ClientSecret: d.ClientSecret,
+		ClientID:     providerCfg.ClientID,
+		ClientSecret: providerCfg.ClientSecret,
 		RedirectURL:  redirect,
-		Scopes:       d.Scopes,
+		Scopes:       providerCfg.Scopes,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  d.AuthURL,
-			TokenURL: d.TokenURL,
+			AuthURL:  providerCfg.AuthURL,
+			TokenURL: providerCfg.TokenURL,
 		},
 	}
 
-	return cfg, &d, nil
+	return cfg, &providerCfg, nil
 }
 
 // oauthExchange swaps the authorization code for a token (golang.org/x/oauth2's
@@ -1022,7 +1022,7 @@ func (a *pgOAuthSocial) insertIdentity(ctx context.Context, ident *domain.Identi
 		return err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 
 	setter := &models.IamIdentitySetter{
 		ID:          &ident.ID,
@@ -1030,7 +1030,7 @@ func (a *pgOAuthSocial) insertIdentity(ctx context.Context, ident *domain.Identi
 		Environment: &env,
 		UserID:      &userID,
 		Type:        ptr(ident.Type),
-		Data:        &rm,
+		Data:        &rawData,
 	}
 	if ident.Provider != "" {
 		v := null.From(ident.Provider)
@@ -1081,7 +1081,7 @@ func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, emai
 		return nil, err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 
 	setter := &models.IamUserSetter{
 		ID:          &acct.ID,
@@ -1089,7 +1089,7 @@ func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, emai
 		Environment: &env,
 		Kind:        ptr(acct.Kind),
 		Status:      ptr(acct.Status),
-		Data:        &rm,
+		Data:        &rawData,
 	}
 	if acct.PrimaryEmail != "" {
 		v := null.From(acct.PrimaryEmail)

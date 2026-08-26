@@ -55,24 +55,24 @@ var _ oas.Handler = (*Service)(nil)
 // errors (internal/domain) carry the stable code + HTTP status; anything else
 // is masked as a 500 internal_error.
 func (s *Service) NewError(_ context.Context, err error) *oas.DefaultStatusCode {
-	de := domain.ErrInternal
+	domainErr := domain.ErrInternal
 
 	var (
-		d  *domain.Error
-		se *ogenerrors.SecurityError
+		matchedErr *domain.Error
+		secErr     *ogenerrors.SecurityError
 	)
 	switch {
-	case errors.As(err, &d):
+	case errors.As(err, &matchedErr):
 		// A wrapped domain error (incl. a SecurityError around a bad credential).
-		de = d
-	case errors.As(err, &se):
+		domainErr = matchedErr
+	case errors.As(err, &secErr):
 		// Missing / unparseable credential — no domain error inside.
-		de = domain.ErrUnauthorized
+		domainErr = domain.ErrUnauthorized
 	}
 
 	return &oas.DefaultStatusCode{
-		StatusCode: de.Status,
-		Response:   newOASErrorEnvelope(de),
+		StatusCode: domainErr.Status,
+		Response:   newOASErrorEnvelope(domainErr),
 	}
 }
 

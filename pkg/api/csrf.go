@@ -53,14 +53,14 @@ func CSRFMiddleware(v csrfVerifier) func(http.Handler) http.Handler {
 			}
 
 			if err := v.VerifyCsrfToken(r.Context(), clientID, token); err != nil {
-				de := domain.ErrInvalidCsrf
+				csrfErr := domain.ErrInvalidCsrf
 
 				e := &domain.Error{}
 				if errors.As(err, &e) {
-					de = e
+					csrfErr = e
 				}
 
-				writeEnvelope(w, de)
+				writeEnvelope(w, csrfErr)
 
 				return
 			}

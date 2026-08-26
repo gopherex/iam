@@ -65,22 +65,22 @@ func passwordBase(pw string) string {
 
 // hasObviousSequence reports a long monotonic run (abcd / 1234 / qwerty-row) or a
 // single repeated character — both trivially guessable.
-func hasObviousSequence(pw string) bool {
-	if pw == "" {
+func hasObviousSequence(password string) bool {
+	if password == "" {
 		return false
 	}
 
-	lower := strings.ToLower(pw)
+	lower := strings.ToLower(password)
 	for _, seq := range []string{"0123456789", "abcdefghijklmnopqrstuvwxyz", "qwertyuiop", "asdfghjkl", "zxcvbnm"} {
 		if len(lower) >= 4 && strings.Contains(seq, lower) {
 			return true
 		}
 	}
 	// All-same character.
-	first, _ := utf8.DecodeRuneInString(pw)
+	first, _ := utf8.DecodeRuneInString(password)
 	allSame := true
 
-	for _, r := range pw {
+	for _, r := range password {
 		if r != first {
 			allSame = false
 			break
@@ -103,13 +103,13 @@ const (
 
 // passwordStrengthScore returns a 0..4 estimate. 0 = trivially weak (too short,
 // common, all one class & sequence), 4 = long and diverse.
-func passwordStrengthScore(pw string) int {
-	n := utf8.RuneCountInString(pw)
+func passwordStrengthScore(password string) int {
+	n := utf8.RuneCountInString(password)
 	if n == 0 {
 		return 0
 	}
 
-	if _, common := commonPasswordBases[passwordBase(pw)]; common {
+	if _, common := commonPasswordBases[passwordBase(password)]; common {
 		return 0
 	}
 
@@ -126,9 +126,9 @@ func passwordStrengthScore(pw string) int {
 		score = 1
 	}
 	// Character-class diversity bonus (beyond a single class).
-	score += passwordCharClasses(pw) - 1
+	score += passwordCharClasses(password) - 1
 	// Penalize obvious sequences / single-char repeats.
-	if hasObviousSequence(pw) {
+	if hasObviousSequence(password) {
 		score -= passwordSequencePenalty
 	}
 

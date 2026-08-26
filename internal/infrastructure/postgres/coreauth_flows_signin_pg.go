@@ -156,14 +156,14 @@ func (a *pgCoreAuthFlows) createSigninOAuth(ctx context.Context, f *domain.Flow,
 		return nil, domain.ErrBadRequest.WithMessage("provider is required for oauth signin")
 	}
 
-	os := NewPgOAuthSocial(a.db, a.emitter, a.cfg)
+	oauthSocial := NewPgOAuthSocial(a.db, a.emitter, a.cfg)
 
 	state, err := coreAuthRandomToken()
 	if err != nil {
 		return nil, err
 	}
 
-	url, err := os.StartLogin(ctx, domain.OAuthSocialStartCmd{
+	url, err := oauthSocial.StartLogin(ctx, domain.OAuthSocialStartCmd{
 		ProjectID:  f.ProjectID,
 		Provider:   cmd.Provider,
 		State:      state,
@@ -440,8 +440,8 @@ func advanceSignin(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 // JSON the client submitted and, on success, completes the flow with the minted
 // session.
 func (a *pgCoreAuthFlows) signinVerifyPasskey(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
-	ac := f.ActiveChallenge
-	if ac == nil {
+	challenge := f.ActiveChallenge
+	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active passkey challenge")
 	}
 
@@ -457,7 +457,7 @@ func (a *pgCoreAuthFlows) signinVerifyPasskey(ctx context.Context, row *models.I
 
 	wa := NewPgWebAuthnAccounts(a.db, a.emitter, a.cfg)
 
-	_, sess, err := wa.FinishLogin(ctx, ac.ChallengeID, cred)
+	_, sess, err := wa.FinishLogin(ctx, challenge.ChallengeID, cred)
 	if err != nil {
 		return a.signinWrongCode(ctx, row, f, cmd, "Passkey verification failed.")
 	}
@@ -468,8 +468,8 @@ func (a *pgCoreAuthFlows) signinVerifyPasskey(ctx context.Context, row *models.I
 // signinOAuthCallback exchanges the provider authorization code (returned to the
 // client and submitted back) for a session, completing the flow.
 func (a *pgCoreAuthFlows) signinOAuthCallback(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
-	ac := f.ActiveChallenge
-	if ac == nil {
+	challenge := f.ActiveChallenge
+	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active oauth challenge")
 	}
 
@@ -480,7 +480,7 @@ func (a *pgCoreAuthFlows) signinOAuthCallback(ctx context.Context, row *models.I
 
 	os := NewPgOAuthSocial(a.db, a.emitter, a.cfg)
 
-	_, sess, err := os.CompleteLogin(ctx, f.ProjectID, ac.Provider, code)
+	_, sess, err := os.CompleteLogin(ctx, f.ProjectID, challenge.Provider, code)
 	if err != nil {
 		return a.signinWrongCode(ctx, row, f, cmd, "OAuth sign-in failed.")
 	}
@@ -493,8 +493,8 @@ func (a *pgCoreAuthFlows) signinOAuthCallback(ctx context.Context, row *models.I
 // On a wrong code it decrements AttemptsLeft, embeds error{invalid_code}, and
 // returns the pending FlowState without a session (mirrors signupVerifyEmail).
 func (a *pgCoreAuthFlows) signinVerifyMFA(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
-	ac := f.ActiveChallenge
-	if ac == nil {
+	challenge := f.ActiveChallenge
+	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active MFA challenge")
 	}
 
@@ -503,13 +503,13 @@ func (a *pgCoreAuthFlows) signinVerifyMFA(ctx context.Context, row *models.IamFl
 		return nil, domain.ErrBadRequest.WithMessage("code is required")
 	}
 
-	if ac.AttemptsLeft <= 0 {
+	if challenge.AttemptsLeft <= 0 {
 		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
 	}
 
 	mfa := NewPgMFAAccounts(a.db, a.emitter, a.cfg)
 
-	_, sess, err := mfa.Verify(ctx, ac.ChallengeID, code)
+	_, sess, err := mfa.Verify(ctx, challenge.ChallengeID, code)
 	if err != nil {
 		return a.signinWrongCode(ctx, row, f, cmd, "The MFA code is incorrect.")
 	}
@@ -520,8 +520,8 @@ func (a *pgCoreAuthFlows) signinVerifyMFA(ctx context.Context, row *models.IamFl
 // signinVerifyOTP verifies the SMS OTP via the passwordless adapter. On success
 // it completes the flow with the minted session and rotates the token.
 func (a *pgCoreAuthFlows) signinVerifyOTP(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
-	ac := f.ActiveChallenge
-	if ac == nil {
+	challenge := f.ActiveChallenge
+	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active otp challenge")
 	}
 
@@ -530,7 +530,7 @@ func (a *pgCoreAuthFlows) signinVerifyOTP(ctx context.Context, row *models.IamFl
 		return nil, domain.ErrBadRequest.WithMessage("code is required")
 	}
 
-	if ac.AttemptsLeft <= 0 {
+	if challenge.AttemptsLeft <= 0 {
 		return nil, domain.ErrChallengeInvalid.WithMessage("challenge exhausted; please resend")
 	}
 
@@ -539,7 +539,7 @@ func (a *pgCoreAuthFlows) signinVerifyOTP(ctx context.Context, row *models.IamFl
 		return nil, err
 	}
 
-	_, sess, err := pl.VerifyOTP(ctx, ac.ChallengeID, code)
+	_, sess, err := pl.VerifyOTP(ctx, challenge.ChallengeID, code)
 	if err != nil {
 		// ErrRateLimited (challenge locked) is surfaced as-is so the client backs off.
 		if errors.Is(err, domain.ErrRateLimited) {

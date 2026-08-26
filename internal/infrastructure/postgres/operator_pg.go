@@ -104,7 +104,7 @@ func (a *PgOperator) insertProject(ctx context.Context, proj *domain.Project) er
 		return err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 
 	setter := &models.IamProjectSetter{
 		ID:        &proj.ID,
@@ -112,7 +112,7 @@ func (a *PgOperator) insertProject(ctx context.Context, proj *domain.Project) er
 		Name:      &proj.Name,
 		CreatedAt: ptr(proj.CreatedAt),
 		UpdatedAt: ptr(proj.CreatedAt),
-		Data:      &rm,
+		Data:      &rawData,
 	}
 	if _, err := models.IamProjects.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {
@@ -330,13 +330,13 @@ func (a *PgOperator) insertEnvironment(ctx context.Context, env *domain.Environm
 		return err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 
 	setter := &models.IamEnvironmentSetter{
 		ProjectID: &env.ProjectID,
 		Name:      &env.Name,
 		CreatedAt: ptr(env.CreatedAt),
-		Data:      &rm,
+		Data:      &rawData,
 	}
 
 	if _, err := models.IamEnvironments.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
@@ -483,7 +483,7 @@ func (a *PgOperator) signAndPersistAdminToken(ctx context.Context, tok domain.Op
 		return "", err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 
 	setter := &models.IamAdminTokenSetter{
 		ID:        &tok.ID,
@@ -491,7 +491,7 @@ func (a *PgOperator) signAndPersistAdminToken(ctx context.Context, tok domain.Op
 		Hash:      &hash,
 		ExpiresAt: ptr(null.From(tok.ExpiresAt)),
 		CreatedAt: ptr(tok.CreatedAt),
-		Data:      &rm,
+		Data:      &rawData,
 	}
 	if _, err := models.IamAdminTokens.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
 		if isUniqueViolation(err) {
@@ -807,7 +807,7 @@ func (a *PgOperator) writeConfig(ctx context.Context, projectID, key string, doc
 		return err
 	}
 
-	rm := json.RawMessage(raw)
+	rawData := json.RawMessage(raw)
 	now := nowUTC()
 
 	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, operatorDefaultEnv, key)
@@ -820,7 +820,7 @@ func (a *PgOperator) writeConfig(ctx context.Context, projectID, key string, doc
 				Environment: &env,
 				Key:         &key,
 				UpdatedAt:   &now,
-				Data:        &rm,
+				Data:        &rawData,
 			}
 			if _, ierr := models.IamConfigs.Insert(setter).One(ctx, a.db.Bobx()); ierr != nil {
 				return ierr
@@ -833,7 +833,7 @@ func (a *PgOperator) writeConfig(ctx context.Context, projectID, key string, doc
 	}
 
 	return row.Update(ctx, a.db.Bobx(), &models.IamConfigSetter{
-		Data:      &rm,
+		Data:      &rawData,
 		UpdatedAt: &now,
 	})
 }
