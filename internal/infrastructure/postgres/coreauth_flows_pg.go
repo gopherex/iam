@@ -448,7 +448,7 @@ func (a *pgCoreAuthFlows) emitFlowContinue(ctx context.Context, state *domain.Fl
 	}
 
 	challenge := f.ActiveChallenge
-	if challenge == nil || challenge.Channel != "email" || challenge.Code == "" || challenge.Token == "" {
+	if challenge == nil || challenge.Channel != coreAuthChallengeEmail || challenge.Code == "" || challenge.Token == "" {
 		return
 	}
 
@@ -640,7 +640,7 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 // adapter; magic_link re-issues a fresh link.
 func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Flow, ac *domain.FlowActiveChallenge) (*domain.Challenge, string, error) {
 	switch {
-	case ac.Channel == "sms" || f.Method == domain.FlowMethodPhoneOTP:
+	case ac.Channel == channelSMS || f.Method == domain.FlowMethodPhoneOTP:
 		core, ok := a.accounts.(*pgCoreAuth)
 		if !ok {
 			return nil, "", fmt.Errorf("flow resend: %w", errAccountsNotPgCoreAuth)
@@ -672,7 +672,7 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 			return nil, "", serr
 		}
 
-		return ch, "email", nil
+		return ch, coreAuthChallengeEmail, nil
 	default:
 		if f.Kind == domain.FlowKindRecovery {
 			ch, serr := a.flowIssueRecoveryEmailChallenge(ctx, f)
@@ -680,7 +680,7 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 				return nil, "", serr
 			}
 
-			return ch, "email", nil
+			return ch, coreAuthChallengeEmail, nil
 		}
 		// Email verification (signup email path).
 		ch, serr := a.accounts.StartEmailVerification(ctx, domain.CoreAuthVerifyStartCmd{
@@ -694,7 +694,7 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 			return nil, "", serr
 		}
 
-		return ch, "email", nil
+		return ch, coreAuthChallengeEmail, nil
 	}
 }
 
@@ -916,7 +916,7 @@ func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *d
 	now := nowUTC()
 	f.ActiveChallenge = &domain.FlowActiveChallenge{
 		ChallengeID:  ch.ID,
-		Channel:      "email",
+		Channel:      coreAuthChallengeEmail,
 		ExpiresAt:    ch.ExpiresAt,
 		ResendAt:     now.Add(flowResendCooloff),
 		AttemptsLeft: flowMaxAttempts,
@@ -1043,7 +1043,7 @@ func advanceSignup(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 	// default case reports as such.
 	switch f.Step {
 	case domain.FlowStepVerifyEmail:
-		if cmd.Action != "verify_email" {
+		if cmd.Action != flowActionVerifyEmail {
 			return nil, domain.ErrBadRequest.WithMessage("expected action verify_email")
 		}
 

@@ -253,7 +253,7 @@ func (db *DB) importOneUser(ctx context.Context, projectID, email, name, hash, f
 
 		acc := domain.Account{
 			ID: newUUID(), ProjectID: projectID, Kind: coreAuthKindHuman,
-			Status: "active", PrimaryEmail: email, Name: name,
+			Status: coreAuthStatusActive, PrimaryEmail: email, Name: name,
 			CreatedAt: nowUTC(), UpdatedAt: nowUTC(),
 		}
 

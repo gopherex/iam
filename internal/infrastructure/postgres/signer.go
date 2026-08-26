@@ -48,7 +48,7 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 	}
 
 	for _, r := range rows {
-		if r.Status != "active" {
+		if r.Status != coreAuthStatusActive {
 			continue
 		}
 
@@ -100,7 +100,7 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 			Environment: &env,
 			Alg:         ptr("RS256"),
 			Use:         ptr("sig"),
-			Status:      ptr("active"),
+			Status:      ptr(coreAuthStatusActive),
 			PrivatePem:  &privatePem,
 			Data:        &raw,
 		}

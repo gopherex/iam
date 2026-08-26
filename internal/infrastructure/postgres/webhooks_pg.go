@@ -820,7 +820,7 @@ func buildWebhookRequest(ctx context.Context, webhook *domain.Webhook, event dom
 // the caller can persist it for debugging), and requestErr is set for a
 // transport failure, a body-read failure, or a non-2xx status.
 func (a *PgWebhooks) sendWebhookRequest(req *http.Request) (*int, string, error) {
-	response, requestErr := a.httpClient.Do(req)
+	response, requestErr := a.httpClient.Do(req) //nolint:gosec // a.httpClient is newWebhookHTTPClient: SSRF is guarded at dial time (isBlockedWebhookIP), not visible to this taint check
 	if response == nil {
 		return nil, "", requestErr
 	}

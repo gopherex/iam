@@ -145,7 +145,7 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 		return nil, err
 	}
 
-	if typ, _ := claims["typ"].(string); typ != "access" {
+	if typ, _ := claims["typ"].(string); typ != tokenTypeAccess {
 		return nil, domain.ErrUnauthorized
 	}
 
@@ -371,7 +371,7 @@ func (a *pgAuthenticator) OAuth2(ctx context.Context, token string) (*domain.Pri
 		return nil, err
 	}
 
-	if typ, _ := claims["typ"].(string); typ != "access" {
+	if typ, _ := claims["typ"].(string); typ != tokenTypeAccess {
 		return nil, domain.ErrUnauthorized
 	}
 

@@ -31,6 +31,17 @@ import (
 
 const defaultLocale = "en"
 
+// schemeHTTP and schemeHTTPS are the URL schemes checked by every deep-link
+// builder and provider-URL validator across this package.
+const (
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
+)
+
+// templateKeyFlowContinue is the emailJob.TemplateID for the cross-device
+// "continue your sign-up" deep-link email.
+const templateKeyFlowContinue = "flow_continue"
+
 const (
 	defaultSMTPPort = 587
 	smtpsPort       = 465
@@ -157,7 +168,7 @@ func (p *Publisher) resolveSMTPProviderOrSkip(ctx context.Context, ev eventEnvel
 // no-op pass-through.
 func (p *Publisher) applyTemplateLink(ctx context.Context, event eventEnvelope, job emailJob) (emailJob, bool) {
 	switch job.TemplateID {
-	case "flow_continue":
+	case templateKeyFlowContinue:
 		// Cross-device deep-link from a per-tenant base — the per-flow
 		// redirect_to when its origin is allowed, else the project's
 		// configured app_base_url. With neither, the feature is disabled.
@@ -285,7 +296,7 @@ func emailJobFromEvent(event eventEnvelope) (emailJob, bool) {
 	case "auth.flow.continue":
 		// Cross-device "continue your sign-up" deep-link. continue_url is built in
 		// publishOne from the configured app base URL + flow_token.
-		job.TemplateID = "flow_continue"
+		job.TemplateID = templateKeyFlowContinue
 		job.To = recipient(event.Payload)
 	case "invite.created":
 		// Invitation email. invite_url is built in publishOne from the configured
@@ -476,7 +487,7 @@ func flowContinueURL(rawBase, flowToken, proofToken string) string {
 	}
 
 	target, err := url.Parse(rawBase)
-	if err != nil || (target.Scheme != "http" && target.Scheme != "https") || target.Host == "" {
+	if err != nil || (target.Scheme != schemeHTTP && target.Scheme != schemeHTTPS) || target.Host == "" {
 		return ""
 	}
 
@@ -501,7 +512,7 @@ func inviteURL(rawBase, token string) string {
 	}
 
 	target, err := url.Parse(rawBase)
-	if err != nil || (target.Scheme != "http" && target.Scheme != "https") || target.Host == "" {
+	if err != nil || (target.Scheme != schemeHTTP && target.Scheme != schemeHTTPS) || target.Host == "" {
 		return ""
 	}
 
@@ -523,7 +534,7 @@ func linkWithToken(rawBase, token string) string {
 		return ""
 	}
 
-	if target.Scheme != "http" && target.Scheme != "https" {
+	if target.Scheme != schemeHTTP && target.Scheme != schemeHTTPS {
 		return ""
 	}
 

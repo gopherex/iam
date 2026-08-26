@@ -547,7 +547,7 @@ func (a *pgAccountStore) Capabilities(ctx context.Context, projectID, accountID 
 		return nil, err
 	}
 
-	active := acc.Status == "active"
+	active := acc.Status == coreAuthStatusActive
 
 	return map[string]bool{
 		"can_login":           active,
@@ -944,7 +944,7 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 			ID:        ptr(newUUID()),
 			ProjectID: ptr(ch.ProjectID),
 			UserID:    ptr(cmd.AccountID),
-			Type:      ptr("email"),
+			Type:      ptr(coreAuthChallengeEmail),
 			Email:     &identEmail,
 			CreatedAt: ptr(nowUTC()),
 		}

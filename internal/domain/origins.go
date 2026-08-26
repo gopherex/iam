@@ -8,6 +8,10 @@ import (
 // maxAllowedOrigins caps how many origins a single client may register.
 const maxAllowedOrigins = 1000
 
+// schemeHTTP is the plain (non-TLS) URL scheme, checked in several places
+// across this package that validate a URL is http(s).
+const schemeHTTP = "http"
+
 // NormalizeOrigin validates and canonicalises a browser origin
 // (scheme://host[:port]). It returns "" for anything that must NOT be allowed
 // as a CORS origin: empty, "*", "null", non-http(s) schemes, missing host, any
@@ -29,7 +33,7 @@ func NormalizeOrigin(raw string) string {
 	}
 
 	scheme := strings.ToLower(parsedURL.Scheme)
-	if scheme != "http" && scheme != "https" {
+	if scheme != schemeHTTP && scheme != "https" {
 		return ""
 	}
 
@@ -37,7 +41,7 @@ func NormalizeOrigin(raw string) string {
 		return ""
 	}
 
-	if scheme == "http" && !isLoopbackHost(strings.ToLower(parsedURL.Hostname())) {
+	if scheme == schemeHTTP && !isLoopbackHost(strings.ToLower(parsedURL.Hostname())) {
 		return ""
 	}
 

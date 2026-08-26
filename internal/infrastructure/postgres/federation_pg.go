@@ -683,7 +683,7 @@ func (a *pgFederationConnections) CreateConnection(ctx context.Context, cmd doma
 			ProjectID: cmd.ProjectID,
 			Type:      cmd.Type,
 			Name:      cmd.Name,
-			Status:    "active",
+			Status:    coreAuthStatusActive,
 			Domains:   cmd.Domains,
 		}
 
@@ -872,7 +872,7 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 
 	if v, ok := patch["enabled"].(bool); ok {
 		if v {
-			c.Status = "active"
+			c.Status = coreAuthStatusActive
 		} else {
 			c.Status = "disabled"
 		}
@@ -2147,7 +2147,7 @@ func (a *pgFederationRuntime) fedCreateAccount(ctx context.Context, projectID, e
 		ID:            newUUID(),
 		ProjectID:     projectID,
 		Kind:          "human",
-		Status:        "active",
+		Status:        coreAuthStatusActive,
 		PrimaryEmail:  email,
 		EmailVerified: email != "", // IdP-asserted email is treated as verified
 		CreatedAt:     nowUTC(),

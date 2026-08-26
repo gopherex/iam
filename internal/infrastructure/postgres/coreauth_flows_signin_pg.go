@@ -327,7 +327,7 @@ func (a *pgCoreAuthFlows) createSigninMagicLink(ctx context.Context, f *domain.F
 		return nil, err
 	}
 
-	return a.signinPersistChallenge(ctx, f, domain.FlowStepVerifyEmail, "email", ch)
+	return a.signinPersistChallenge(ctx, f, domain.FlowStepVerifyEmail, coreAuthChallengeEmail, ch)
 }
 
 // signinPersistChallenge embeds a passwordless challenge into the flow's
@@ -417,7 +417,7 @@ func advanceSignin(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 
 		return a.signinVerifyOTP(ctx, row, f, cmd)
 	case domain.FlowStepVerifyEmail:
-		if cmd.Action != "verify_email" {
+		if cmd.Action != flowActionVerifyEmail {
 			return nil, domain.ErrBadRequest.WithMessage(`expected action "verify_email" at step verify_email`)
 		}
 
@@ -628,7 +628,7 @@ func (a *pgCoreAuthFlows) signinSwitchMethod(ctx context.Context, row *models.Ia
 			return nil, err
 		}
 
-		return a.signinSwitchPersist(ctx, row, f, cmd.FlowToken, method, domain.FlowStepVerifyEmail, "email", ch)
+		return a.signinSwitchPersist(ctx, row, f, cmd.FlowToken, method, domain.FlowStepVerifyEmail, coreAuthChallengeEmail, ch)
 	default:
 		return nil, domain.ErrBadRequest.WithMessage(fmt.Sprintf("cannot switch to method %q", method))
 	}

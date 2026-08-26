@@ -69,7 +69,7 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 	}
 
 	now := nowUTC()
-	f.Method = "email"
+	f.Method = coreAuthChallengeEmail
 	f.Step = domain.FlowStepVerifyEmail
 
 	ac, err := recoveryEmailChallenge(ctx, a, pgCA, f, cmd, now)
@@ -99,7 +99,7 @@ func recoveryEmailChallenge(ctx context.Context, a *pgCoreAuthFlows, pgCA *pgCor
 		// The client gets identical shape; any code submitted will fail.
 		return &domain.FlowActiveChallenge{ //nolint:nilerr // anti-enumeration, see func doc
 			ChallengeID:  newUUID(), // dangling — no DB row
-			Channel:      "email",
+			Channel:      coreAuthChallengeEmail,
 			ExpiresAt:    now.Add(coreAuthChallengeTTL),
 			ResendAt:     now.Add(flowResendCooloff),
 			AttemptsLeft: flowMaxAttempts,
@@ -150,7 +150,7 @@ func recoveryEmailChallenge(ctx context.Context, a *pgCoreAuthFlows, pgCA *pgCor
 
 	return &domain.FlowActiveChallenge{
 		ChallengeID:  ch.ID,
-		Channel:      "email",
+		Channel:      coreAuthChallengeEmail,
 		ExpiresAt:    ch.ExpiresAt,
 		ResendAt:     now.Add(flowResendCooloff),
 		AttemptsLeft: flowMaxAttempts,
@@ -316,7 +316,7 @@ func advanceRecovery(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlo
 	// the default case reports as such.
 	switch f.Step {
 	case domain.FlowStepVerifyEmail:
-		if cmd.Action != "verify_email" {
+		if cmd.Action != flowActionVerifyEmail {
 			return nil, domain.ErrBadRequest.WithMessage("expected action verify_email")
 		}
 

@@ -50,6 +50,10 @@ const (
 	httpStatusSuccessMax = 300 // exclusive
 )
 
+// flowActionVerifyEmail is the resumable-flow submit action for the
+// verify_email step, checked by every recovery/signin flow handler at that step.
+const flowActionVerifyEmail = "verify_email"
+
 func ptr[T any](v T) *T { return &v }
 
 // marshal serializes a record to a JSONB blob.

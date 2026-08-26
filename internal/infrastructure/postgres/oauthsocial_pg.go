@@ -1069,7 +1069,7 @@ func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, emai
 		ID:            newUUID(),
 		ProjectID:     projectID,
 		Kind:          "human",
-		Status:        "active",
+		Status:        coreAuthStatusActive,
 		PrimaryEmail:  email,
 		EmailVerified: email != "", // provider-asserted email is treated as verified
 		CreatedAt:     nowUTC(),

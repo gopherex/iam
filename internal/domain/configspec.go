@@ -214,7 +214,7 @@ func ValidateAbsoluteHTTPURL(field, s string) error {
 		return ErrValidation.WithMessage(field + " must be an absolute http(s) URL")
 	}
 
-	if sc := strings.ToLower(u.Scheme); sc != "http" && sc != "https" {
+	if sc := strings.ToLower(u.Scheme); sc != schemeHTTP && sc != "https" {
 		return ErrValidation.WithMessage(field + " must use http or https")
 	}
 

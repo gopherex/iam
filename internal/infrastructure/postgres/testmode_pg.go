@@ -79,7 +79,7 @@ func (a *pgTestMode) Seed(ctx context.Context, projectID, env string, spec map[s
 
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		acc := domain.Account{
-			ID: newUUID(), ProjectID: projectID, Kind: coreAuthKindHuman, Status: "active",
+			ID: newUUID(), ProjectID: projectID, Kind: coreAuthKindHuman, Status: coreAuthStatusActive,
 			PrimaryEmail: email, Name: name, EmailVerified: true, CreatedAt: nowUTC(), UpdatedAt: nowUTC(),
 		}
 

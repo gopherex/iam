@@ -378,7 +378,7 @@ func (a *pgMFAAccounts) Challenge(ctx context.Context, accountID, factorID strin
 		// Delivery factors (email/sms) carry a one-time code sent out of band;
 		// Verify matches its sha256 against FlowTokenHash. TOTP/WebAuthn need no
 		// delivery — the code comes from the authenticator.
-		deliver := factor.Type == "email" || factor.Type == "sms"
+		deliver := factor.Type == coreAuthChallengeEmail || factor.Type == channelSMS
 
 		var code string
 		if deliver {
@@ -499,13 +499,13 @@ func (a *pgMFAAccounts) mfaBumpChallengeAttempts(ctx context.Context, challengeI
 // mfaPrimaryFactorID prefers factors needing no out-of-band delivery.
 func mfaPrimaryFactorID(factors []domain.Factor) string {
 	for _, f := range factors {
-		if f.Status == "active" && (f.Type == "totp" || f.Type == "webauthn") {
+		if f.Status == coreAuthStatusActive && (f.Type == "totp" || f.Type == "webauthn") {
 			return f.ID
 		}
 	}
 
 	for _, f := range factors {
-		if f.Status == "active" {
+		if f.Status == coreAuthStatusActive {
 			return f.ID
 		}
 	}
@@ -564,7 +564,7 @@ func (a *pgMFAAccounts) mfaVerifyChallengeCode(ctx context.Context, challengeID,
 // the RFC 6238 library.
 func (a *pgMFAAccounts) mfaCheckChallengeCode(ctx context.Context, row *models.IamChallenge, accountID string, data mfaChallengeData, code string) (bool, error) {
 	switch row.Type {
-	case "email", "sms":
+	case coreAuthChallengeEmail, channelSMS:
 		return data.FlowTokenHash != "" &&
 			subtle.ConstantTimeCompare([]byte(mfaSha256Hex(code)), []byte(data.FlowTokenHash)) == 1, nil
 	default:
@@ -577,7 +577,7 @@ func (a *pgMFAAccounts) mfaCheckChallengeCode(ctx context.Context, row *models.I
 			return false, err
 		}
 
-		if factor.Status != "active" {
+		if factor.Status != coreAuthStatusActive {
 			return false, domain.ErrMFAInvalid
 		}
 
@@ -727,7 +727,7 @@ func (a *pgMFAAccounts) EnrollEmail(ctx context.Context, cmd domain.MFAEmailEnro
 		return nil, nil, err
 	}
 
-	return a.mfaEnrollDelivery(ctx, cmd.AccountID, "email", cmd.Email)
+	return a.mfaEnrollDelivery(ctx, cmd.AccountID, coreAuthChallengeEmail, cmd.Email)
 }
 
 // EnrollSMS enrolls an SMS factor and issues a delivery challenge carrying the
@@ -763,7 +763,7 @@ func (a *pgMFAAccounts) VerifyTOTP(ctx context.Context, cmd domain.MFATotpVerify
 			return nil, err
 		}
 
-		f.Status = "active"
+		f.Status = coreAuthStatusActive
 
 		raw, err := marshal(&f)
 		if err != nil {
@@ -772,7 +772,7 @@ func (a *pgMFAAccounts) VerifyTOTP(ctx context.Context, cmd domain.MFATotpVerify
 
 		rm := json.RawMessage(raw)
 
-		setter := &models.IamFactorSetter{Status: ptr("active"), Data: &rm}
+		setter := &models.IamFactorSetter{Status: ptr(coreAuthStatusActive), Data: &rm}
 		if err := row.Update(ctx, a.db.Bobx(), setter); err != nil {
 			return nil, err
 		}
@@ -1041,7 +1041,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 		f := domain.Factor{
 			ID:     newUUID(),
 			Type:   "webauthn",
-			Status: "active",
+			Status: coreAuthStatusActive,
 			Hint:   hint,
 		}
 		if err := a.mfaInsertFactorFor(ctx, row.ProjectID, cmd.AccountID, &f, string(libJSON)); err != nil {

@@ -62,6 +62,9 @@ const (
 	maxOTPAttempts = 5  // failed code submissions before the challenge locks
 )
 
+// channelSMS is the passwordless/MFA "channel" value for SMS delivery.
+const channelSMS = "sms"
+
 // challengeEnvelope is the aggregate stored in the data jsonb column. The
 // queryable columns (project_id, type, subject, code_hash, expires_at,
 // consumed) mirror it for lookups.
@@ -92,7 +95,7 @@ var e164 = regexp.MustCompile(`^\+[1-9]\d{1,14}$`)
 // isPhoneChannel reports whether the channel resolves a user by phone number
 // (sms or whatsapp) rather than by email. An empty channel is email (back-compat).
 func isPhoneChannel(channel string) bool {
-	return channel == "sms" || channel == "whatsapp"
+	return channel == channelSMS || channel == "whatsapp"
 }
 
 // ===== OTP =====
@@ -105,7 +108,7 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 	// empty channel is email (back-compat). whatsapp has no delivery path yet, so
 	// reject it rather than mint a dead challenge the client can never complete.
 	switch channel {
-	case "", "email", "sms":
+	case "", coreAuthChallengeEmail, channelSMS:
 	default:
 		return nil, domain.ErrBadRequest.WithMessage("unsupported otp channel")
 	}
@@ -117,8 +120,8 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 	// Pre-flight: an SMS OTP is useless without an enabled SMS provider. Fail
 	// fast with a clear error instead of committing a challenge whose code can
 	// never be delivered (the outbox SMS path fail-soft acks on no provider).
-	if channel == "sms" {
-		ok, err := providerEnabled(ctx, a.db, projectID, "sms")
+	if channel == channelSMS {
+		ok, err := providerEnabled(ctx, a.db, projectID, channelSMS)
 		if err != nil {
 			return nil, err
 		}
@@ -294,8 +297,8 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 		ID:          newUUID(),
 		ProjectID:   projectID,
 		Environment: reqEnv,
-		Type:        "email",
-		Channel:     "email",
+		Type:        coreAuthChallengeEmail,
+		Channel:     coreAuthChallengeEmail,
 		Purpose:     "login",
 		Subject:     email,
 		RedirectTo:  redirectTo,
@@ -360,7 +363,7 @@ func (a *pgPasswordlessAccounts) VerifyMagicLink(ctx context.Context, token stri
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (*verifyResult, error) {
 		// Magic-link verify carries only the opaque token: look the challenge up
 		// by its sha256 hash (the column is indexable and never stores plaintext).
-		row, err := a.findUnconsumedByHash(ctx, "email", hashToken(token))
+		row, err := a.findUnconsumedByHash(ctx, coreAuthChallengeEmail, hashToken(token))
 		if err != nil {
 			return nil, err
 		}
@@ -629,7 +632,7 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByEmail(ctx context.Context, env
 		ID:            newUUID(),
 		ProjectID:     env.ProjectID,
 		Kind:          "human",
-		Status:        "active",
+		Status:        coreAuthStatusActive,
 		PrimaryEmail:  env.Subject,
 		EmailVerified: true,
 		Locale:        env.Locale,
@@ -697,7 +700,7 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByPhone(ctx context.Context, env
 		ID:            newUUID(),
 		ProjectID:     env.ProjectID,
 		Kind:          "human",
-		Status:        "active",
+		Status:        coreAuthStatusActive,
 		PrimaryPhone:  env.Subject,
 		PhoneVerified: true,
 		Locale:        env.Locale,
@@ -791,7 +794,7 @@ func (a *pgPasswordlessAccounts) persistAccount(ctx context.Context, acc *domain
 func (a *pgPasswordlessAccounts) createSession(ctx context.Context, acct *domain.Account, channel, env string) (*domain.Session, error) {
 	amr := []string{"otp"}
 	if isPhoneChannel(channel) {
-		amr = append(amr, "sms")
+		amr = append(amr, channelSMS)
 	}
 
 	if env != "" {

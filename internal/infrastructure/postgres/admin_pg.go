@@ -208,7 +208,7 @@ func insertAdminUserRow(ctx context.Context, db *DB, cmd domain.RegisterCmd, env
 		ID:           newUUID(),
 		ProjectID:    cmd.ProjectID,
 		Kind:         "human",
-		Status:       "active",
+		Status:       coreAuthStatusActive,
 		PrimaryEmail: cmd.Email,
 		PrimaryPhone: cmd.Phone,
 		Name:         cmd.Name,
@@ -368,7 +368,7 @@ func (a *pgAdminUsers) Unban(ctx context.Context, projectID, environment, accoun
 			return nil, err
 		}
 
-		acc.Status = "active"
+		acc.Status = coreAuthStatusActive
 
 		acc.UpdatedAt = nowUTC()
 		if err := a.persist(ctx, row, acc); err != nil {
@@ -2331,19 +2331,19 @@ func (a *pgAdminConfig) deleteProvider(ctx context.Context, kind string, cmd dom
 }
 
 func (a *pgAdminConfig) ListEmailProviders(ctx context.Context, cmd domain.AdminConfigGetCmd) ([]domain.AdminProvider, error) {
-	return a.listProviders(ctx, cmd.ProjectID, "email")
+	return a.listProviders(ctx, cmd.ProjectID, coreAuthChallengeEmail)
 }
 
 func (a *pgAdminConfig) CreateEmailProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
-	return a.createProvider(ctx, "email", cmd)
+	return a.createProvider(ctx, coreAuthChallengeEmail, cmd)
 }
 
 func (a *pgAdminConfig) UpdateEmailProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
-	return a.updateProvider(ctx, "email", cmd)
+	return a.updateProvider(ctx, coreAuthChallengeEmail, cmd)
 }
 
 func (a *pgAdminConfig) DeleteEmailProvider(ctx context.Context, cmd domain.AdminProviderDeleteCmd) error {
-	return a.deleteProvider(ctx, "email", cmd)
+	return a.deleteProvider(ctx, coreAuthChallengeEmail, cmd)
 }
 
 func (a *pgAdminConfig) ListSmsProviders(ctx context.Context, cmd domain.AdminConfigGetCmd) ([]domain.AdminProvider, error) {
@@ -2545,7 +2545,7 @@ func (a *pgAdminConfig) SendTestEmail(ctx context.Context, cmd domain.AdminTempl
 		return err
 	}
 
-	ok, err := a.hasEnabledProvider(ctx, cmd.ProjectID, "email")
+	ok, err := a.hasEnabledProvider(ctx, cmd.ProjectID, coreAuthChallengeEmail)
 	if err != nil {
 		return err
 	}
@@ -2841,12 +2841,12 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 
 		status := "inactive"
 		if cmd.Activate {
-			status = "active"
+			status = coreAuthStatusActive
 			// Demote the currently-active key(s) when activating the new one.
 			active, err := models.IamSigningKeys.Query(
 				sm.Where(models.IamSigningKeys.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 				sm.Where(models.IamSigningKeys.Columns.Environment.EQ(psql.Arg(env))),
-				sm.Where(models.IamSigningKeys.Columns.Status.EQ(psql.Arg("active"))),
+				sm.Where(models.IamSigningKeys.Columns.Status.EQ(psql.Arg(coreAuthStatusActive))),
 			).All(ctx, a.db.Bobx())
 			if err != nil {
 				return nil, err
@@ -2934,7 +2934,7 @@ func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminCo
 		active, err := models.IamSigningKeys.Query(
 			sm.Where(models.IamSigningKeys.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 			sm.Where(models.IamSigningKeys.Columns.Environment.EQ(psql.Arg(env))),
-			sm.Where(models.IamSigningKeys.Columns.Status.EQ(psql.Arg("active"))),
+			sm.Where(models.IamSigningKeys.Columns.Status.EQ(psql.Arg(coreAuthStatusActive))),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
 			return nil, err
@@ -2950,7 +2950,7 @@ func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminCo
 			}
 		}
 
-		if err := row.Update(ctx, a.db.Bobx(), &models.IamSigningKeySetter{Status: ptr("active")}); err != nil {
+		if err := row.Update(ctx, a.db.Bobx(), &models.IamSigningKeySetter{Status: ptr(coreAuthStatusActive)}); err != nil {
 			return nil, err
 		}
 

@@ -101,7 +101,7 @@ func (a *pgAdminConnections) Create(ctx context.Context, cmd domain.AdminConnect
 			ProjectID:   cmd.ProjectID,
 			Type:        cmd.Type,
 			Name:        cmd.Name,
-			Status:      "active",
+			Status:      coreAuthStatusActive,
 			Domains:     cmd.Domains,
 			ExternalRef: cmd.ExternalRef,
 		}

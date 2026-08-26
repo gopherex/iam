@@ -29,6 +29,9 @@ const smsHTTPTimeout = 10 * time.Second
 // is quoted back into the error.
 const gatewayErrSnippetMaxBytes = 512
 
+// smsChannel is the event payload's "channel" value for SMS-delivery events.
+const smsChannel = "sms"
+
 // smsJob is the SMS analog of emailJob: a template key + the resolved phone
 // recipient. The body is rendered from inline defaults (defaultSMSText) since
 // SMS copy is short and few — no DB-backed catalog for v1.
@@ -55,21 +58,21 @@ func smsJobFromEvent(event eventEnvelope) (smsJob, bool) {
 
 		job.To = stringValue(event.Payload, "to")
 	case "auth.otp.started":
-		if stringValue(event.Payload, "channel") != "sms" {
+		if stringValue(event.Payload, "channel") != smsChannel {
 			return smsJob{}, false
 		}
 
 		job.TemplateID = "otp"
 		job.To = phoneRecipient(event.Payload)
 	case "mfa.challenge.created":
-		if stringValue(event.Payload, "channel") != "sms" {
+		if stringValue(event.Payload, "channel") != smsChannel {
 			return smsJob{}, false
 		}
 
 		job.TemplateID = "mfa_sms"
 		job.To = phoneRecipient(event.Payload)
 	case "phone.verification.requested":
-		if stringValue(event.Payload, "channel") != "sms" {
+		if stringValue(event.Payload, "channel") != smsChannel {
 			return smsJob{}, false
 		}
 
@@ -321,7 +324,7 @@ func finishTwilioSMSConfig(raw map[string]json.RawMessage, cfg *smsConfig) error
 	}
 	// Never send the basic-auth credential over cleartext http, even if the
 	// operator overrode the endpoint (downgrade protection, same as generic).
-	if u, err := url.Parse(cfg.URL); err != nil || u.Scheme != "https" || u.Host == "" {
+	if u, err := url.Parse(cfg.URL); err != nil || u.Scheme != schemeHTTPS || u.Host == "" {
 		return errTwilioInvalidURL
 	}
 
@@ -339,7 +342,7 @@ func finishGenericSMSConfig(cfg *smsConfig) error {
 	}
 	// Never send credentials over cleartext http (downgrade protection).
 	u, err := url.Parse(cfg.URL)
-	if err != nil || u.Scheme != "https" || u.Host == "" {
+	if err != nil || u.Scheme != schemeHTTPS || u.Host == "" {
 		return errGenericSMSInvalidURL
 	}
 
@@ -382,7 +385,7 @@ func finishAWSSNSConfig(cipher postgres.Cipher, raw map[string]json.RawMessage, 
 		cfg.Endpoint = "https://sns." + cfg.Region + ".amazonaws.com"
 	}
 
-	if u, err := url.Parse(cfg.Endpoint); err != nil || u.Scheme != "https" || u.Host == "" {
+	if u, err := url.Parse(cfg.Endpoint); err != nil || u.Scheme != schemeHTTPS || u.Host == "" {
 		return errAWSSNSInvalidEndpoint
 	}
 
@@ -463,7 +466,7 @@ func (c *smsConfig) sendTwilio(ctx context.Context, to, text string) error {
 }
 
 func (c *smsConfig) do(req *http.Request) error {
-	resp, err := c.client().Do(req)
+	resp, err := c.client().Do(req) //nolint:gosec // c.URL is an operator-configured, https-validated provider endpoint (decodeSMSConfig*), not end-user input
 	if err != nil {
 		return err
 	}

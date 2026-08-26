@@ -1615,7 +1615,7 @@ func (a *pgCoreAuth) coreAuthActiveFactors(ctx context.Context, accountID string
 			return nil, err
 		}
 
-		if f.Status == "active" {
+		if f.Status == coreAuthStatusActive {
 			out = append(out, f)
 		}
 	}

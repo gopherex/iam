@@ -233,7 +233,7 @@ func (p *projectLimiters) limiterFor(ctx context.Context, clientID, env, path, i
 	}
 
 	if env == "" {
-		env = "live"
+		env = liveEnvironment
 	}
 
 	scope := clientID + "|" + env
