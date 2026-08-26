@@ -374,7 +374,7 @@ func (a *pgPasswordlessAccounts) VerifyMagicLink(ctx context.Context, token stri
 			return nil, domain.ErrTokenUsed
 		}
 
-		if nowUTC().After(env.ExpiresAt) {
+		if nowIn(ctx).After(env.ExpiresAt) {
 			return nil, domain.ErrChallengeExpired
 		}
 
@@ -467,7 +467,7 @@ func (a *pgPasswordlessAccounts) loadChallengeForVerify(ctx context.Context, cha
 		return nil, nil, domain.ErrTokenUsed
 	}
 
-	if nowUTC().After(env.ExpiresAt) {
+	if nowIn(ctx).After(env.ExpiresAt) {
 		return nil, nil, domain.ErrChallengeExpired
 	}
 

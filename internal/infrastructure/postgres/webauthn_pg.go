@@ -341,7 +341,7 @@ func (a *pgWebAuthnAccounts) loadCeremony(ctx context.Context, projectID, challe
 		return nil, nil, nil, domain.ErrChallengeInvalid
 	}
 
-	if nowUTC().After(row.ExpiresAt) {
+	if nowIn(ctx).After(row.ExpiresAt) {
 		return nil, nil, nil, domain.ErrChallengeExpired
 	}
 
@@ -510,7 +510,7 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 			return loginResult{}, domain.ErrChallengeInvalid
 		}
 
-		if nowUTC().After(row.ExpiresAt) {
+		if nowIn(ctx).After(row.ExpiresAt) {
 			return loginResult{}, domain.ErrChallengeExpired
 		}
 

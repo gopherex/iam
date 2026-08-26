@@ -880,7 +880,7 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 			return result{}, domain.ErrChallengeInvalid
 		}
 
-		if !ch.ExpiresAt.After(nowUTC()) {
+		if !ch.ExpiresAt.After(nowIn(ctx)) {
 			return result{}, domain.ErrChallengeExpired
 		}
 

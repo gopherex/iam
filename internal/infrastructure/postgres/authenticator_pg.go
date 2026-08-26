@@ -120,7 +120,7 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 			return nil, domain.ErrUnauthorized
 		}
 
-		if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
+		if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
 			return nil, domain.ErrUnauthorized
 		}
 		// Idle / absolute timeout from session_policy (in the session's own env, so
@@ -185,7 +185,7 @@ func (a *pgAuthenticator) Admin(ctx context.Context, token string) (*domain.Prin
 		return nil, domain.ErrUnauthorized
 	}
 
-	if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
+	if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
 		return nil, domain.ErrUnauthorized
 	}
 
@@ -239,7 +239,7 @@ func (a *pgAuthenticator) Service(ctx context.Context, token string) (*domain.Pr
 		return nil, domain.ErrUnauthorized
 	}
 
-	if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
+	if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
 		return nil, domain.ErrUnauthorized
 	}
 
@@ -267,7 +267,7 @@ func (a *pgAuthenticator) SCIM(ctx context.Context, token string) (*domain.Princ
 
 	var tok domain.ScimToken
 	if err := unmarshal(row.Data, &tok); err == nil {
-		if !tok.ExpiresAt.IsZero() && nowUTC().After(tok.ExpiresAt) {
+		if !tok.ExpiresAt.IsZero() && nowIn(ctx).After(tok.ExpiresAt) {
 			return nil, domain.ErrUnauthorized
 		}
 	}

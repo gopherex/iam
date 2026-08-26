@@ -1843,7 +1843,7 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 			return result{}, domain.ErrInvalidToken
 		}
 
-		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
+		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
 			return result{}, domain.ErrInvalidToken
 		}
 		// Mark consumed (single-use) before handing back the session.

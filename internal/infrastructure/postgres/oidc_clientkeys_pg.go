@@ -97,7 +97,7 @@ func (c *clientKeyCache) fetch(ctx context.Context, uri string) (jwk.Set, error)
 	entry, ok := c.entries[uri]
 	c.mu.RUnlock()
 
-	if ok && entry.expiresAt.After(nowUTC()) {
+	if ok && entry.expiresAt.After(nowIn(ctx)) {
 		return entry.set, nil
 	}
 

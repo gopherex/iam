@@ -440,7 +440,7 @@ func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExch
 			return result{}, domain.ErrInvalidToken
 		}
 
-		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
+		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
 			return result{}, domain.ErrInvalidToken
 		}
 

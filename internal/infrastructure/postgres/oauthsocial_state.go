@@ -105,7 +105,7 @@ func (a *pgOAuthSocial) consumeState(ctx context.Context, projectID, provider, s
 			return domain.ErrBadRequest.WithMessage("state already used")
 		}
 
-		if nowUTC().After(row.ExpiresAt) {
+		if nowIn(ctx).After(row.ExpiresAt) {
 			return domain.ErrBadRequest.WithMessage("state expired")
 		}
 

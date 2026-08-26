@@ -428,7 +428,7 @@ func (a *pgMFAAccounts) mfaAccountFromFlow(ctx context.Context, projectID, flowT
 		return "", domain.ErrChallengeInvalid
 	}
 
-	if nowUTC().After(row.ExpiresAt) {
+	if nowIn(ctx).After(row.ExpiresAt) {
 		return "", domain.ErrChallengeExpired
 	}
 
@@ -523,7 +523,7 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 			return result{}, domain.ErrChallengeInvalid
 		}
 
-		if nowUTC().After(row.ExpiresAt) {
+		if nowIn(ctx).After(row.ExpiresAt) {
 			return result{}, domain.ErrChallengeExpired
 		}
 
@@ -924,7 +924,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 			return nil, domain.ErrChallengeInvalid
 		}
 
-		if nowUTC().After(row.ExpiresAt) {
+		if nowIn(ctx).After(row.ExpiresAt) {
 			return nil, domain.ErrChallengeExpired
 		}
 

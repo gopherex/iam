@@ -110,7 +110,7 @@ func (a *pgCoreAuth) coreAuthVerifyAccess(ctx context.Context, projectID, token 
 		return claims, nil, nil // session gone == revoked
 	}
 
-	if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
+	if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
 		return claims, nil, nil
 	}
 
@@ -906,7 +906,7 @@ func (a *pgCoreAuth) coreAuthConsumeChallenge(ctx context.Context, projectID str
 		return nil, nil, domain.ErrTokenUsed
 	}
 
-	if !row.ExpiresAt.IsZero() && nowUTC().After(row.ExpiresAt) {
+	if !row.ExpiresAt.IsZero() && nowIn(ctx).After(row.ExpiresAt) {
 		return nil, nil, domain.ErrChallengeExpired
 	}
 	// Verify the supplied factor: a numeric code (hashed) or the opaque token.
@@ -1387,7 +1387,7 @@ func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email,
 
 		// Account lockout: while locked, refuse without testing the password so a
 		// distributed guessing attack cannot keep probing this account.
-		if credData.LockedUntil.After(nowUTC()) {
+		if credData.LockedUntil.After(nowIn(ctx)) {
 			return nil, domain.ErrAccountLocked
 		}
 
@@ -1552,7 +1552,7 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 			return refreshResult{revoked: true}, nil
 		}
 
-		if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
+		if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
 			return refreshResult{}, domain.ErrTokenExpired
 		}
 
@@ -1724,7 +1724,7 @@ func (a *pgCoreAuth) ExchangeCode(ctx context.Context, code, verifier string) (*
 			return exResult{}, domain.ErrTokenUsed
 		}
 
-		if !row.ExpiresAt.IsZero() && nowUTC().After(row.ExpiresAt) {
+		if !row.ExpiresAt.IsZero() && nowIn(ctx).After(row.ExpiresAt) {
 			return exResult{}, domain.ErrTokenExpired
 		}
 
@@ -3241,7 +3241,7 @@ func (a *pgCoreAuth) Introspect(ctx context.Context, projectID, token string) (*
 		sm.Where(models.IamRefreshTokens.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).One(ctx, a.db.Bobx()); err == nil {
 		active := !row.Revoked
-		if v, ok := row.ExpiresAt.Get(); ok && nowUTC().After(v) {
+		if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
 			active = false
 		}
 
@@ -3317,7 +3317,7 @@ func (a *pgCoreAuth) RedeemImpersonation(ctx context.Context, token, clientID st
 			return nil, domain.ErrChallengeInvalid
 		}
 
-		if nowUTC().After(row.ExpiresAt) {
+		if nowIn(ctx).After(row.ExpiresAt) {
 			return nil, domain.ErrChallengeExpired
 		}
 

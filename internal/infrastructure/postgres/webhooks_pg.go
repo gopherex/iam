@@ -765,7 +765,7 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 	timestamp := nowUTC().Unix()
 
 	signatures := []string{"v1," + webhookSignature(webhook.SigningSecret, event.ID, timestamp, body)}
-	if webhook.PreviousSigningSecret != "" && nowUTC().Before(webhook.PreviousSecretValidUntil) {
+	if webhook.PreviousSigningSecret != "" && nowIn(ctx).Before(webhook.PreviousSecretValidUntil) {
 		signatures = append(signatures, "v1,"+webhookSignature(webhook.PreviousSigningSecret, event.ID, timestamp, body))
 	}
 

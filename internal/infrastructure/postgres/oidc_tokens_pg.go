@@ -123,7 +123,7 @@ func (a *pgOIDCGrants) oidcRedeemRefreshToken(
 		return row, data, domain.ErrTokenUsed
 	}
 
-	if exp, ok := row.ExpiresAt.Get(); ok && !exp.IsZero() && exp.Before(nowUTC()) {
+	if exp, ok := row.ExpiresAt.Get(); ok && !exp.IsZero() && exp.Before(nowIn(ctx)) {
 		return nil, data, domain.ErrTokenExpired
 	}
 

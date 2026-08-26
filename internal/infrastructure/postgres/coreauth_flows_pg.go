@@ -156,7 +156,7 @@ func (a *pgCoreAuthFlows) flowLoad(ctx context.Context, projectID, token string)
 		return nil, nil, domain.ErrFlowNotFound
 	}
 	// TTL.
-	if nowUTC().After(row.ExpiresAt) {
+	if nowIn(ctx).After(row.ExpiresAt) {
 		return nil, nil, domain.ErrFlowExpired
 	}
 
@@ -599,7 +599,7 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 		return nil, domain.ErrBadRequest.WithMessage("no active challenge to resend")
 	}
 	// Rate-limit: check resend_at (§5 rule 7).
-	if nowUTC().Before(ac.ResendAt) {
+	if nowIn(ctx).Before(ac.ResendAt) {
 		return nil, domain.ErrFlowResendTooSoon.WithDetails(map[string]any{
 			"resend_at": ac.ResendAt.Unix(),
 		})
@@ -1011,7 +1011,7 @@ func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectI
 		return nil, false, nil
 	}
 
-	if exp, ok := row.ExpiresAt.Get(); ok && nowUTC().After(exp) {
+	if exp, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(exp) {
 		return nil, false, nil
 	}
 	// Email-bound invites must match the signup email.

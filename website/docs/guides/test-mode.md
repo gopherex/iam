@@ -70,11 +70,29 @@ twice is a no-op. Only `email` (required) and `name` are read.
 ```bash
 curl -sX POST https://auth.example.com/v1/test/clock \
   -H "Authorization: Bearer $ADMIN_TOKEN" -H "X-Environment: test" \
-  -H "Content-Type: application/json" -d '{"advance_seconds": 3600}'
+  -H "X-Client-Id: prj_7Fk2" -H "Content-Type: application/json" \
+  -d '{"advance_seconds": 3600}'
+
+# back to real time
+curl -sX POST https://auth.example.com/v1/test/clock \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H "X-Environment: test" \
+  -H "X-Client-Id: prj_7Fk2" -H "Content-Type: application/json" -d '{"reset": true}'
 ```
 
-:::note Records the offset, does not yet move time
-The offset is persisted for the environment, but it is not wired into the
-service's clock — expiry still follows real time. To test expiry today, shorten
-the relevant TTL in `session_policy` instead.
+The environment's clock runs `advance_seconds` ahead of real time. Everything
+that decides whether something has expired reads that clock, so a test can reach
+an expiry instead of waiting for it: OTP and magic-link challenges, resumable
+flows, authorization and device codes, sessions and their idle timeout, refresh
+tokens, access tokens, PAR request URIs, CSRF tokens, invitations.
+
+Timestamps are still written in real time — the clock moves *forward*, which is
+what makes what was issued earlier expire.
+
+:::caution It moves your credentials too
+The offset applies to the whole environment, including the token you are calling
+with. Advance past your admin token's expiry and the next call is a `401`. Reset
+the clock, or mint a longer-lived token for the test run.
 :::
+
+Live is never affected: the offset is refused for `live`, and the request path
+does not even look for one unless the request names a non-live environment.

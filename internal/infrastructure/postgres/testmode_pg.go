@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/aarondl/opt/null"
 
@@ -182,3 +183,42 @@ func messageMatches(payload map[string]any, channel, to string) bool {
 
 	return true
 }
+
+// ClockOffset reads an environment's test-clock offset.
+//
+// It is deliberately refused for live: the offset exists so a test can move
+// time, and live time is not a thing a caller gets to move. Reading it costs one
+// indexed lookup on a request that already named a non-live environment.
+func (a *pgTestMode) ClockOffset(
+	ctx context.Context, projectID, environment string,
+) (time.Duration, error) {
+	if environment == "" || environment == testModeLiveEnvironment {
+		return 0, nil
+	}
+
+	var raw []byte
+
+	err := a.db.Pool.QueryRow(ctx,
+		`SELECT data FROM iam_config WHERE project_id = $1 AND environment = $2 AND key = 'test_clock'`,
+		projectID, environment).Scan(&raw)
+	if err != nil {
+		// No document is the common case: the environment has no offset.
+		return 0, nil //nolint:nilerr // an unset clock is not an error.
+	}
+
+	var doc struct {
+		AdvanceSeconds int `json:"advance_seconds"`
+	}
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		return 0, nil //nolint:nilerr // an unreadable clock is an unset clock.
+	}
+
+	if doc.AdvanceSeconds <= 0 {
+		return 0, nil
+	}
+
+	return time.Duration(doc.AdvanceSeconds) * time.Second, nil
+}
+
+// testModeLiveEnvironment is the environment test mode may never touch.
+const testModeLiveEnvironment = "live"

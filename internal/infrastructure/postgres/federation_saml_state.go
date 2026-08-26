@@ -86,7 +86,7 @@ func (a *pgFederationRuntime) fedConsumeSamlRequest(ctx context.Context, project
 			return nil
 		}
 
-		if row.Consumed || nowUTC().After(row.ExpiresAt) {
+		if row.Consumed || nowIn(ctx).After(row.ExpiresAt) {
 			return nil
 		}
 
@@ -125,7 +125,7 @@ func (a *pgFederationRuntime) fedAssertNotReplayed(ctx context.Context, projectI
 		}
 
 		exp := notOnOrAfter
-		if exp.IsZero() || exp.Before(nowUTC()) {
+		if exp.IsZero() || exp.Before(nowIn(ctx)) {
 			exp = nowUTC().Add(fedSamlRequestTTL)
 		}
 

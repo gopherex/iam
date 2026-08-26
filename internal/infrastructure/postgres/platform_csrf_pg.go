@@ -100,7 +100,7 @@ func (a *pgPlatform) VerifyCsrfToken(ctx context.Context, clientID, token string
 		return domain.ErrInvalidCsrf
 	}
 
-	if nowUTC().After(row.ExpiresAt) {
+	if nowIn(ctx).After(row.ExpiresAt) {
 		return domain.ErrInvalidCsrf
 	}
 

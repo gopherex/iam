@@ -231,9 +231,9 @@ func oidcUserCode() (string, error) {
 // oidcInteractionExpired reports whether a pending interaction has aged out. An
 // expired interaction is treated as gone: the user has to restart the flow
 // rather than resume one whose parameters may no longer reflect the client.
-func oidcInteractionExpired(row *models.IamInteraction) bool {
+func oidcInteractionExpired(ctx context.Context, row *models.IamInteraction) bool {
 	exp, ok := row.ExpiresAt.Get()
-	return ok && !exp.IsZero() && exp.Before(nowUTC())
+	return ok && !exp.IsZero() && exp.Before(nowIn(ctx))
 }
 
 // ResolveInteraction returns the pending interaction by id. No tenant filter is
@@ -249,7 +249,7 @@ func (a *pgOIDCGrants) ResolveInteraction(
 		return nil, translatePgErr("interaction", err)
 	}
 
-	if oidcInteractionExpired(row) {
+	if oidcInteractionExpired(ctx, row) {
 		return nil, domain.ErrFlowExpired
 	}
 
@@ -322,7 +322,7 @@ func (a *pgOIDCGrants) CompleteLogin(ctx context.Context, interactionID, account
 			return translatePgErr("interaction", err)
 		}
 
-		if oidcInteractionExpired(row) {
+		if oidcInteractionExpired(ctx, row) {
 			return domain.ErrFlowExpired
 		}
 
@@ -495,7 +495,7 @@ func (a *pgOIDCGrants) claimedInteraction(
 		return nil, env, translatePgErr("interaction", err)
 	}
 
-	if oidcInteractionExpired(row) {
+	if oidcInteractionExpired(ctx, row) {
 		return nil, env, domain.ErrFlowExpired
 	}
 
@@ -661,7 +661,7 @@ func (a *pgOIDCGrants) Reject(
 			return "", translatePgErr("interaction", err)
 		}
 
-		if oidcInteractionExpired(row) {
+		if oidcInteractionExpired(ctx, row) {
 			return "", domain.ErrFlowExpired
 		}
 		// Canceling is public, because the user may want to back out before they
@@ -1126,7 +1126,7 @@ func (a *pgOIDCGrants) oidcSessionAuthTime(ctx context.Context, projectID, sessi
 		return time.Time{}, false
 	}
 
-	if exp, ok := row.ExpiresAt.Get(); ok && !exp.IsZero() && exp.Before(nowUTC()) {
+	if exp, ok := row.ExpiresAt.Get(); ok && !exp.IsZero() && exp.Before(nowIn(ctx)) {
 		return time.Time{}, false
 	}
 
@@ -1781,7 +1781,7 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 				return nil, domain.ErrTokenUsed
 			}
 
-			if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
+			if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
 				return nil, domain.ErrTokenExpired
 			}
 
@@ -1911,7 +1911,7 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 			case "denied":
 				return nil, domain.ErrForbidden
 			default:
-				if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
+				if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
 					return nil, domain.ErrTokenExpired
 				}
 				// RFC 8628: still pending.
@@ -2620,7 +2620,7 @@ func (a *pgOIDCGrants) consumePushedRequest(
 			return out, err
 		}
 
-		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
+		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
 			return out, domain.ErrInvalidRequestURI
 		}
 
@@ -2904,7 +2904,7 @@ func (a *pgOIDCGrants) deviceDecision(ctx context.Context, cmd domain.OIDCDevice
 		}
 
 		row := rows[0]
-		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowUTC()) {
+		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
 			return domain.ErrTokenExpired
 		}
 
