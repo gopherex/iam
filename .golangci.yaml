@@ -414,6 +414,32 @@ linters:
       - linters:
           - nilerr
         path: ^internal/infrastructure/postgres/config_reader\.go$
+      # ServiceName/Version/Commit/BuildTime are set by -ldflags -X at release
+      # build time, which only works on package-level string vars — there is
+      # no const equivalent. InstanceID derives from them at package init.
+      - linters:
+          - gochecknoglobals
+        path: ^internal/build/build\.go$
+      # Read-only reference tables: enum sets (Has()-style lookups) and
+      # dispatch/registry maps populated once (by a package var initializer or
+      # an init() the file's own comment documents as "kinds register
+      # themselves"), never mutated afterward. Go has no const map/slice, so a
+      # var is the only way to express an immutable composite value.
+      - linters:
+          - gochecknoglobals
+        path: ^internal/domain/(configspec|email_templates|webhook)\.go$
+      - linters:
+          - gochecknoglobals
+        path: ^internal/infrastructure/postgres/(coreauth_flows_pg|coreauth_password|federation_pg|gc|provider_secrets|testmode_pg)\.go$
+      # authLimiter/sensitiveLimiter/guestLimiter are process-wide rate
+      # limiters — the bucket state they hold IS the thing being shared across
+      # every request, so a package global is the design, not a shortcut.
+      # trustedProxyNets is startup-configured once (SetTrustedProxies, called
+      # from main before serving) and read-only for the life of the process;
+      # threading it through every request handler would be pure ceremony.
+      - linters:
+          - gochecknoglobals
+        path: ^pkg/api/(ratelimit|requestmeta)\.go$
       # AdminConnections and FederationConnections are two independent ports
       # (mgmt API vs federation API) that both happen to implement the same
       # find -> tenant-check -> act -> emit shape for SSO connections/domains
