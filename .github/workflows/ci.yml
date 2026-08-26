@@ -31,6 +31,17 @@ jobs:
       - name: Validate OpenAPI
         run: make validate
 
+      # gofmt is not part of golangci-lint's --new-from-rev gate, so unformatted
+      # code lands silently. Cheap to check, and the fix is one command.
+      - name: Gofmt
+        run: |
+          unformatted=$(gofmt -l . | grep -v '^internal/oas/' || true)
+          if [ -n "$unformatted" ]; then
+            echo "gofmt needed for:"; echo "$unformatted"
+            echo "run: gofmt -w ."
+            exit 1
+          fi
+
       - name: Vet
         run: go vet ./...
 
@@ -74,8 +85,38 @@ jobs:
           yarn build
         working-directory: ts
 
+      # The generated client is checked in, so a spec change that was not
+      # regenerated is a drift the build alone would not catch.
+      - name: SDK is up to date with the spec
+        run: git diff --exit-code -- packages/sdk/src/gen
+        working-directory: ts
+
+      - name: Typecheck admin SPA
+        run: |
+          yarn install --frozen-lockfile
+          yarn lint
+        working-directory: web
+
       - name: Build admin SPA
+        run: yarn build
+        working-directory: web
+
+  docs:
+    name: Docs site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: website/yarn.lock
+
+      # Docusaurus fails the build on a broken internal link, which is the only
+      # automated check the documentation has.
+      - name: Build
         run: |
           yarn install --frozen-lockfile
           yarn build
-        working-directory: web
+        working-directory: website
