@@ -86,6 +86,27 @@ func inviteToDomain(row *models.IamInvite) domain.Invite {
 	return inv
 }
 
+// emitInviteCreated notifies the notification layer to send the invitation
+// email; invite_url is built downstream from the app base URL (or the
+// per-invite redirect_to) + raw token.
+func (a *pgInvites) emitInviteCreated(ctx context.Context, cmd domain.InviteCreateCmd, env, id, token string) error {
+	payload := map[string]any{
+		"to":           cmd.Email,
+		"invite_token": token,
+	}
+	if cmd.RedirectTo != "" {
+		payload["redirect_to"] = cmd.RedirectTo
+	}
+
+	return a.emitter.Emit(ctx, domain.Event{
+		Type:        "invite.created",
+		ProjectID:   cmd.ProjectID,
+		Environment: env,
+		AggregateID: id,
+		Payload:     payload,
+	})
+}
+
 // Create mints a token, inserts the invite, and (when email-bound) emits an
 // invite.created event so the notification layer sends the invitation email.
 // The raw token is returned exactly once.
@@ -131,7 +152,14 @@ func (a *pgInvites) Create(ctx context.Context, cmd domain.InviteCreateCmd) (*do
 			return nil, ierr
 		}
 
-		out := &domain.InviteCreated{
+		// Only email-bound invites trigger a send.
+		if cmd.Email != "" {
+			if eerr := a.emitInviteCreated(ctx, cmd, env, id, token); eerr != nil {
+				return nil, eerr
+			}
+		}
+
+		return &domain.InviteCreated{
 			Invite: domain.Invite{
 				ID:        id,
 				ProjectID: cmd.ProjectID,
@@ -141,29 +169,7 @@ func (a *pgInvites) Create(ctx context.Context, cmd domain.InviteCreateCmd) (*do
 				CreatedAt: now,
 			},
 			Token: token,
-		}
-		// Only email-bound invites trigger a send.
-		if cmd.Email != "" {
-			payload := map[string]any{
-				"to":           cmd.Email,
-				"invite_token": token,
-			}
-			if cmd.RedirectTo != "" {
-				payload["redirect_to"] = cmd.RedirectTo
-			}
-
-			if eerr := a.emitter.Emit(ctx, domain.Event{
-				Type:        "invite.created",
-				ProjectID:   cmd.ProjectID,
-				Environment: env,
-				AggregateID: id,
-				Payload:     payload,
-			}); eerr != nil {
-				return nil, eerr
-			}
-		}
-
-		return out, nil
+		}, nil
 	})
 	if err != nil {
 		return nil, err

@@ -454,6 +454,56 @@ func (a *PgOperator) DeleteEnvironment(ctx context.Context, projectID, env strin
 
 // ===== Admin tokens =====
 
+// signAndPersistAdminToken signs tok's JWT, stores only its sha256 hash (so
+// the token stays revocable without persisting the bearer secret), and
+// returns the plaintext token exactly once.
+func (a *PgOperator) signAndPersistAdminToken(ctx context.Context, tok domain.OperatorAdminToken, now time.Time) (string, error) {
+	signEnv, err := resolveSignEnv(ctx, a.db, tok.ProjectID, "live")
+	if err != nil {
+		return "", err
+	}
+
+	signed, err := a.db.Signer().Sign(ctx, tok.ProjectID, signEnv, map[string]any{
+		"iss":   tok.ProjectID,
+		"sub":   tok.ProjectID,
+		"pid":   tok.ProjectID,
+		"jti":   tok.ID,
+		"typ":   "admin",
+		"env":   signEnv,
+		"scope": strings.Join(tok.Scopes, " "),
+	}, tok.ExpiresAt.Sub(now))
+	if err != nil {
+		return "", err
+	}
+
+	hash := sha256Hex(signed)
+
+	raw, err := marshal(&tok)
+	if err != nil {
+		return "", err
+	}
+
+	rm := json.RawMessage(raw)
+
+	setter := &models.IamAdminTokenSetter{
+		ID:        &tok.ID,
+		ProjectID: &tok.ProjectID,
+		Hash:      &hash,
+		ExpiresAt: ptr(null.From(tok.ExpiresAt)),
+		CreatedAt: ptr(tok.CreatedAt),
+		Data:      &rm,
+	}
+	if _, err := models.IamAdminTokens.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+		if isUniqueViolation(err) {
+			return "", domain.ErrConflict
+		}
+
+		return "", err
+	}
+
+	return signed, nil
+}
+
 func (a *PgOperator) MintAdminToken(ctx context.Context, cmd domain.OperatorAdminTokenCmd) (string, time.Time, error) {
 	type mintResult struct {
 		token     string
@@ -492,46 +542,8 @@ func (a *PgOperator) MintAdminToken(ctx context.Context, cmd domain.OperatorAdmi
 			Revoked:   false,
 		}
 
-		signEnv, err := resolveSignEnv(ctx, a.db, cmd.ProjectID, "live")
+		signed, err := a.signAndPersistAdminToken(ctx, tok, now)
 		if err != nil {
-			return mintResult{}, err
-		}
-
-		signed, err := a.db.Signer().Sign(ctx, cmd.ProjectID, signEnv, map[string]any{
-			"iss":   cmd.ProjectID,
-			"sub":   cmd.ProjectID,
-			"pid":   cmd.ProjectID,
-			"jti":   tok.ID,
-			"typ":   "admin",
-			"env":   signEnv,
-			"scope": strings.Join(tok.Scopes, " "),
-		}, expiresAt.Sub(now))
-		if err != nil {
-			return mintResult{}, err
-		}
-
-		hash := sha256Hex(signed)
-
-		raw, err := marshal(&tok)
-		if err != nil {
-			return mintResult{}, err
-		}
-
-		rm := json.RawMessage(raw)
-
-		setter := &models.IamAdminTokenSetter{
-			ID:        &tok.ID,
-			ProjectID: &tok.ProjectID,
-			Hash:      &hash,
-			ExpiresAt: ptr(null.From(expiresAt)),
-			CreatedAt: ptr(tok.CreatedAt),
-			Data:      &rm,
-		}
-		if _, err := models.IamAdminTokens.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-			if isUniqueViolation(err) {
-				return mintResult{}, domain.ErrConflict
-			}
-
 			return mintResult{}, err
 		}
 

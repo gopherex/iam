@@ -172,78 +172,16 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 	}
 
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
-		now := nowUTC()
 		env := adminEnv(cmd.Environment)
-		acc := &domain.Account{
-			ID:           newUUID(),
-			ProjectID:    cmd.ProjectID,
-			Kind:         "human",
-			Status:       "active",
-			PrimaryEmail: cmd.Email,
-			PrimaryPhone: cmd.Phone,
-			Name:         cmd.Name,
-			CreatedAt:    now,
-			UpdatedAt:    now,
-		}
 
-		raw, err := marshal(acc)
+		acc, err := insertAdminUserRow(ctx, a.db, cmd, env)
 		if err != nil {
-			return nil, err
-		}
-
-		rm := json.RawMessage(raw)
-
-		setter := &models.IamUserSetter{
-			ID:          &acc.ID,
-			ProjectID:   &acc.ProjectID,
-			Environment: &env,
-			Kind:        ptr(acc.Kind),
-			Status:      ptr(acc.Status),
-			Data:        &rm,
-		}
-		if acc.PrimaryEmail != "" {
-			v := null.From(acc.PrimaryEmail)
-			setter.PrimaryEmail = &v
-		}
-
-		if acc.PrimaryPhone != "" {
-			v := null.From(acc.PrimaryPhone)
-			setter.PrimaryPhone = &v
-		}
-
-		if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-			if isUniqueViolation(err) {
-				return nil, domain.ErrEmailExists
-			}
-
 			return nil, err
 		}
 
 		// Password credential (bcrypt) is stored on iam_credentials when supplied.
 		if cmd.Password != "" {
-			hash, err := bcrypt.GenerateFromPassword([]byte(cmd.Password), bcrypt.DefaultCost)
-			if err != nil {
-				return nil, err
-			}
-
-			cred := map[string]any{"user_id": acc.ID, "type": "password"}
-
-			craw, err := marshal(cred)
-			if err != nil {
-				return nil, err
-			}
-
-			crm := json.RawMessage(craw)
-
-			cs := &models.IamCredentialSetter{
-				ID:        ptr(newUUID()),
-				ProjectID: &acc.ProjectID,
-				UserID:    &acc.ID,
-				Type:      ptr("password"),
-				Secret:    ptr(string(hash)),
-				Data:      &crm,
-			}
-			if _, err := models.IamCredentials.Insert(cs).One(ctx, a.db.Bobx()); err != nil {
+			if err := insertAdminUserPassword(ctx, a.db, acc.ProjectID, acc.ID, cmd.Password); err != nil {
 				return nil, err
 			}
 		}
@@ -260,6 +198,88 @@ func (a *pgAdminUsers) Create(ctx context.Context, cmd domain.RegisterCmd) (*dom
 
 		return acc, nil
 	})
+}
+
+// insertAdminUserRow builds and persists the iam_users row for an
+// admin-created account.
+func insertAdminUserRow(ctx context.Context, db *DB, cmd domain.RegisterCmd, env string) (*domain.Account, error) {
+	now := nowUTC()
+	acc := &domain.Account{
+		ID:           newUUID(),
+		ProjectID:    cmd.ProjectID,
+		Kind:         "human",
+		Status:       "active",
+		PrimaryEmail: cmd.Email,
+		PrimaryPhone: cmd.Phone,
+		Name:         cmd.Name,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+
+	raw, err := marshal(acc)
+	if err != nil {
+		return nil, err
+	}
+
+	rm := json.RawMessage(raw)
+
+	setter := &models.IamUserSetter{
+		ID:          &acc.ID,
+		ProjectID:   &acc.ProjectID,
+		Environment: &env,
+		Kind:        ptr(acc.Kind),
+		Status:      ptr(acc.Status),
+		Data:        &rm,
+	}
+	if acc.PrimaryEmail != "" {
+		v := null.From(acc.PrimaryEmail)
+		setter.PrimaryEmail = &v
+	}
+
+	if acc.PrimaryPhone != "" {
+		v := null.From(acc.PrimaryPhone)
+		setter.PrimaryPhone = &v
+	}
+
+	if _, err := models.IamUsers.Insert(setter).One(ctx, db.Bobx()); err != nil {
+		if isUniqueViolation(err) {
+			return nil, domain.ErrEmailExists
+		}
+
+		return nil, err
+	}
+
+	return acc, nil
+}
+
+// insertAdminUserPassword hashes and stores an admin-supplied initial password
+// as an iam_credentials row.
+func insertAdminUserPassword(ctx context.Context, db *DB, projectID, userID, password string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	cred := map[string]any{"user_id": userID, "type": "password"}
+
+	craw, err := marshal(cred)
+	if err != nil {
+		return err
+	}
+
+	crm := json.RawMessage(craw)
+
+	cs := &models.IamCredentialSetter{
+		ID:        ptr(newUUID()),
+		ProjectID: &projectID,
+		UserID:    &userID,
+		Type:      ptr("password"),
+		Secret:    ptr(string(hash)),
+		Data:      &crm,
+	}
+	_, err = models.IamCredentials.Insert(cs).One(ctx, db.Bobx())
+
+	return err
 }
 
 func (a *pgAdminUsers) Update(ctx context.Context, cmd domain.AdminUserUpdateCmd) (*domain.Account, error) {

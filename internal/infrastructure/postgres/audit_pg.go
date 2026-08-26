@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-faster/jx"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/gopherex/iam/internal/domain"
 )
@@ -57,6 +58,21 @@ func nullIfEmpty(s string) any {
 
 // List returns a page of audit entries (newest first) plus the next cursor.
 func (a *pgAudit) List(ctx context.Context, cmd domain.AuditLogListCmd) ([]domain.AuditLogEntry, string, bool, error) {
+	query, args, limit := buildAuditListQuery(cmd)
+
+	rows, err := a.db.Pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, "", false, err
+	}
+	defer rows.Close()
+
+	return scanAuditListPage(rows, limit)
+}
+
+// buildAuditListQuery turns the list filters (project, type/actor/target,
+// keyset cursor) into a bounded SQL query, clamping the page size and asking
+// for one extra row so the caller can tell whether a next page exists.
+func buildAuditListQuery(cmd domain.AuditLogListCmd) (string, []any, int) {
 	limit := cmd.Limit
 	if limit <= 0 {
 		limit = auditDefaultLimit
@@ -97,12 +113,12 @@ func (a *pgAudit) List(ctx context.Context, cmd domain.AuditLogListCmd) ([]domai
 		strings.Join(conds, " AND ") +
 		fmt.Sprintf(" ORDER BY at DESC, id DESC LIMIT $%d", len(args))
 
-	rows, err := a.db.Pool.Query(ctx, query, args...)
-	if err != nil {
-		return nil, "", false, err
-	}
-	defer rows.Close()
+	return query, args, limit
+}
 
+// scanAuditListPage reads up to limit+1 rows, trims the lookahead row, and
+// derives the next-page cursor from the last row kept.
+func scanAuditListPage(rows pgx.Rows, limit int) ([]domain.AuditLogEntry, string, bool, error) {
 	out := make([]domain.AuditLogEntry, 0, limit)
 
 	for rows.Next() {

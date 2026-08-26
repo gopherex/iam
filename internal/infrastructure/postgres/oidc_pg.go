@@ -2651,6 +2651,39 @@ func (a *pgOIDCGrants) consumePushedRequest(
 	})
 }
 
+// insertDeviceCodeRow persists the pending device-code row: device_code is
+// stored as a hash (only the caller ever sees the plaintext), the
+// OIDCDevicePending view goes into the data envelope for the verification UI.
+func insertDeviceCodeRow(ctx context.Context, db *DB, clientRow *models.IamAppClient, deviceCode, userCode string, expiresAt time.Time, pending domain.OIDCDevicePending) (*models.IamDeviceCode, error) {
+	raw, err := marshal(&pending)
+	if err != nil {
+		return nil, err
+	}
+
+	rm := json.RawMessage(raw)
+	setter := &models.IamDeviceCodeSetter{
+		ID:          ptr(newUUID()),
+		ProjectID:   ptr(clientRow.ProjectID),
+		Environment: ptr(clientRow.Environment),
+		DeviceCode:  ptr(oidcHashToken(deviceCode)),
+		UserCode:    &userCode,
+		Status:      ptr("pending"),
+		ExpiresAt:   &expiresAt,
+		Data:        &rm,
+	}
+
+	row, err := models.IamDeviceCodes.Insert(setter).One(ctx, db.Bobx())
+	if err != nil {
+		if isUniqueViolation(err) {
+			return nil, domain.ErrConflict
+		}
+
+		return nil, err
+	}
+
+	return row, nil
+}
+
 // DeviceAuthorization starts a device authorization grant (RFC 8628). The
 // device_code is stored as a hash; the plaintext device_code and user_code are
 // returned to the client exactly once.
@@ -2707,29 +2740,8 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 			ExpiresAt: expiresAt,
 		}
 
-		raw, err := marshal(&pending)
+		deviceRow, err := insertDeviceCodeRow(ctx, a.db, clientRow, deviceCode, userCode, expiresAt, pending)
 		if err != nil {
-			return nil, err
-		}
-
-		rm := json.RawMessage(raw)
-		setter := &models.IamDeviceCodeSetter{
-			ID:          ptr(newUUID()),
-			ProjectID:   ptr(clientRow.ProjectID),
-			Environment: ptr(clientRow.Environment),
-			DeviceCode:  ptr(oidcHashToken(deviceCode)),
-			UserCode:    &userCode,
-			Status:      ptr("pending"),
-			ExpiresAt:   &expiresAt,
-			Data:        &rm,
-		}
-
-		deviceRow, err := models.IamDeviceCodes.Insert(setter).One(ctx, a.db.Bobx())
-		if err != nil {
-			if isUniqueViolation(err) {
-				return nil, domain.ErrConflict
-			}
-
 			return nil, err
 		}
 

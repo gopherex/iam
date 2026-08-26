@@ -387,6 +387,91 @@ func mintSessionVia(ctx context.Context, db *DB, emitter Emitter, cfg *configRea
 	return NewPgCoreAuth(db, emitter, cfg).coreAuthMintSession(ctx, acc, clientID, amr, aal)
 }
 
+// coreAuthSignAccessToken builds and signs the access-token JWT shared by a
+// freshly minted session and a rotated one: audience falls back to the
+// project when there is no client, and client_id is only claimed when set.
+func (a *pgCoreAuth) coreAuthSignAccessToken(ctx context.Context, acc *domain.Account, sessionID, clientID, signEnv string, amr []string, aal int, ttl time.Duration) (string, error) {
+	aud := clientID
+	if aud == "" {
+		aud = acc.ProjectID
+	}
+
+	claims := map[string]any{
+		claimIssuer:      oidcIssuer(a.db.PublicURL, acc.ProjectID, signEnv),
+		claimSubject:     acc.ID,
+		claimSessionID:   sessionID,
+		claimTokenID:     newUUID(),
+		claimProjectID:   acc.ProjectID,
+		claimAudience:    aud,
+		claimAAL:         aal,
+		claimAMR:         amr,
+		claimTokenType:   tokenTypeAccess,
+		claimEnvironment: signEnv,
+	}
+	if clientID != "" {
+		claims[claimClientID] = clientID
+	}
+
+	return a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, claims, ttl)
+}
+
+// coreAuthInsertSessionRow persists sess as an iam_sessions row. AAL and
+// trusted are set from the mint-time inputs; expires_at is the refresh
+// horizon (session_policy's RefreshTTL, capped by AbsoluteTimeout).
+func (a *pgCoreAuth) coreAuthInsertSessionRow(ctx context.Context, sess *domain.Session, signEnv string, aal int, clientID string, now time.Time, sp EffectiveSessionPolicy) error {
+	rawSess, err := marshal(sess)
+	if err != nil {
+		return err
+	}
+
+	rmSess := json.RawMessage(rawSess)
+
+	sessSetter := &models.IamSessionSetter{
+		ID:           &sess.ID,
+		ProjectID:    &sess.ProjectID,
+		Environment:  &signEnv,
+		UserID:       &sess.AccountID,
+		Aal:          ptr(int32(aal)), //nolint:gosec // aal is an assurance level (1-3), never large enough to overflow int32
+		Trusted:      ptr(false),
+		ExpiresAt:    ptr(null.From(now.Add(coreAuthSessionLifetime(sp)))),
+		CreatedAt:    &now,
+		LastActiveAt: &now,
+		Data:         &rmSess,
+	}
+	if clientID != "" {
+		sessSetter.ClientID = ptr(null.From(clientID))
+	}
+
+	_, err = models.IamSessions.Insert(sessSetter).One(ctx, a.db.Bobx())
+
+	return err
+}
+
+// newCoreAuthSession assembles the domain.Session for a freshly minted
+// session, pulling device/IP/user-agent from the request in ctx.
+func newCoreAuthSession(ctx context.Context, sessionID string, acc *domain.Account, clientID string, amr []string, aal int, accessToken, refreshPlain string, sp EffectiveSessionPolicy, now time.Time) *domain.Session {
+	meta := domain.RequestMetaFromContext(ctx)
+
+	return &domain.Session{
+		ID:               sessionID,
+		AccountID:        acc.ID,
+		ProjectID:        acc.ProjectID,
+		ClientID:         clientID,
+		AMR:              amr,
+		AAL:              aal,
+		AccessToken:      accessToken,
+		RefreshToken:     refreshPlain,
+		ExpiresIn:        int(sp.AccessTTL / time.Second),
+		RefreshExpiresIn: int(sp.RefreshTTL / time.Second),
+		CreatedAt:        now,
+		DeviceName:       meta.DeviceName,
+		IP:               meta.IP,
+		UserAgent:        meta.UserAgent,
+		Fingerprint:      meta.Fingerprint,
+		LastActiveAt:     now,
+	}
+}
+
 // coreAuthMintSession persists a fresh session + its refresh token inside an
 // open transaction and returns the populated domain Session. The access token
 // is a signed JWT and the refresh token is an opaque, hashed-at-rest secret.
@@ -412,28 +497,7 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		return nil, err
 	}
 
-	aud := clientID
-	if aud == "" {
-		aud = acc.ProjectID
-	}
-
-	claims := map[string]any{
-		claimIssuer:      oidcIssuer(a.db.PublicURL, acc.ProjectID, signEnv),
-		claimSubject:     acc.ID,
-		claimSessionID:   sessionID,
-		claimTokenID:     newUUID(),
-		claimProjectID:   acc.ProjectID,
-		claimAudience:    aud,
-		claimAAL:         aal,
-		claimAMR:         amr,
-		claimTokenType:   tokenTypeAccess,
-		claimEnvironment: signEnv,
-	}
-	if clientID != "" {
-		claims[claimClientID] = clientID
-	}
-
-	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, claims, sp.AccessTTL)
+	accessToken, err := a.coreAuthSignAccessToken(ctx, acc, sessionID, clientID, signEnv, amr, aal, sp.AccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -444,50 +508,9 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	}
 
 	refreshHash := coreAuthSHA256(refreshPlain)
-	meta := domain.RequestMetaFromContext(ctx)
-	sess := &domain.Session{
-		ID:               sessionID,
-		AccountID:        acc.ID,
-		ProjectID:        acc.ProjectID,
-		ClientID:         clientID,
-		AMR:              amr,
-		AAL:              aal,
-		AccessToken:      accessToken,
-		RefreshToken:     refreshPlain,
-		ExpiresIn:        int(sp.AccessTTL / time.Second),
-		RefreshExpiresIn: int(sp.RefreshTTL / time.Second),
-		CreatedAt:        now,
-		DeviceName:       meta.DeviceName,
-		IP:               meta.IP,
-		UserAgent:        meta.UserAgent,
-		Fingerprint:      meta.Fingerprint,
-		LastActiveAt:     now,
-	}
+	sess := newCoreAuthSession(ctx, sessionID, acc, clientID, amr, aal, accessToken, refreshPlain, sp, now)
 
-	rawSess, err := marshal(sess)
-	if err != nil {
-		return nil, err
-	}
-
-	rmSess := json.RawMessage(rawSess)
-
-	sessSetter := &models.IamSessionSetter{
-		ID:           &sess.ID,
-		ProjectID:    &sess.ProjectID,
-		Environment:  &signEnv,
-		UserID:       &sess.AccountID,
-		Aal:          ptr(int32(aal)),
-		Trusted:      ptr(false),
-		ExpiresAt:    ptr(null.From(now.Add(coreAuthSessionLifetime(sp)))),
-		CreatedAt:    &now,
-		LastActiveAt: &now,
-		Data:         &rmSess,
-	}
-	if clientID != "" {
-		sessSetter.ClientID = ptr(null.From(clientID))
-	}
-
-	if _, err := models.IamSessions.Insert(sessSetter).One(ctx, a.db.Bobx()); err != nil {
+	if err := a.coreAuthInsertSessionRow(ctx, sess, signEnv, aal, clientID, now, sp); err != nil {
 		return nil, err
 	}
 
@@ -519,6 +542,50 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 	return sess, nil
 }
 
+// coreAuthRotateAAL resolves the AAL/AMR/client a rotated session keeps: the
+// row's own AAL column when set (it is the source of truth after an AAL2
+// step-up), falling back to the data-blob snapshot, then to AAL1.
+func coreAuthRotateAAL(row *models.IamSession, prev *domain.Session) (int, []string, string) {
+	aal := int(row.Aal)
+	if aal <= 0 {
+		aal = prev.AAL
+	}
+
+	if aal <= 0 {
+		aal = 1
+	}
+
+	return aal, prev.AMR, prev.ClientID
+}
+
+// coreAuthUpdateRotatedSession stores the rotated token snapshot on the
+// existing session row and returns the new refresh horizon: now + refresh
+// TTL, capped so it never extends the session past its absolute deadline.
+// The deadline is anchored on the immutable iam_sessions.created_at COLUMN
+// (not the data-blob snapshot, which is rewritten each rotation) so it
+// matches the absolute-timeout check in Refresh; expires_at is slid forward
+// to the same horizon so coreAuthVerifyAccess liveness stays in sync. AAL,
+// trusted, client_id columns are intentionally left untouched.
+func (a *pgCoreAuth) coreAuthUpdateRotatedSession(ctx context.Context, row *models.IamSession, sess *domain.Session, sp EffectiveSessionPolicy, now time.Time) (time.Time, error) {
+	rawSess, err := marshal(sess)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	rmSess := json.RawMessage(rawSess)
+	refreshHorizon := coreAuthRefreshHorizon(now, row.CreatedAt, sp)
+
+	if err := row.Update(ctx, a.db.Bobx(), &models.IamSessionSetter{
+		LastActiveAt: &now,
+		ExpiresAt:    ptr(null.From(refreshHorizon)),
+		Data:         &rmSess,
+	}); err != nil {
+		return time.Time{}, err
+	}
+
+	return refreshHorizon, nil
+}
+
 // coreAuthRotateSession rotates the access + refresh tokens for an EXISTING
 // session, preserving its identity and security context — session id, AAL, AMR,
 // client, created-at. Used on token refresh so a long-lived session keeps its
@@ -537,45 +604,14 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		return nil, err
 	}
 
-	aal := int(row.Aal)
-	if aal <= 0 {
-		aal = prev.AAL
-	}
-
-	if aal <= 0 {
-		aal = 1
-	}
-
-	amr := prev.AMR
-	clientID := prev.ClientID
+	aal, amr, clientID := coreAuthRotateAAL(row, prev)
 
 	signEnv, err := resolveSignEnv(ctx, a.db, acc.ProjectID, coreAuthDefaultEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	aud := clientID
-	if aud == "" {
-		aud = acc.ProjectID
-	}
-
-	claims := map[string]any{
-		claimIssuer:      oidcIssuer(a.db.PublicURL, acc.ProjectID, signEnv),
-		claimSubject:     acc.ID,
-		claimSessionID:   row.ID,
-		claimTokenID:     newUUID(),
-		claimProjectID:   acc.ProjectID,
-		claimAudience:    aud,
-		claimAAL:         aal,
-		claimAMR:         amr,
-		claimTokenType:   tokenTypeAccess,
-		claimEnvironment: signEnv,
-	}
-	if clientID != "" {
-		claims[claimClientID] = clientID
-	}
-
-	accessToken, err := a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, claims, sp.AccessTTL)
+	accessToken, err := a.coreAuthSignAccessToken(ctx, acc, row.ID, clientID, signEnv, amr, aal, sp.AccessTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -610,27 +646,8 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 		sess.IP = m.IP
 	}
 
-	rawSess, err := marshal(sess)
+	refreshHorizon, err := a.coreAuthUpdateRotatedSession(ctx, row, sess, sp, now)
 	if err != nil {
-		return nil, err
-	}
-
-	rmSess := json.RawMessage(rawSess)
-	// New refresh horizon: now + refresh TTL, capped so it never extends the
-	// session past its absolute deadline. The absolute deadline is anchored on the
-	// immutable iam_sessions.created_at COLUMN (not the data-blob snapshot, which
-	// is rewritten each rotation) so it matches the absolute-timeout check in
-	// Refresh. The session row's expires_at is slid forward to the same horizon so
-	// coreAuthVerifyAccess liveness stays in sync.
-	refreshHorizon := coreAuthRefreshHorizon(now, row.CreatedAt, sp)
-	// Keep the session row; refresh last-active, slide expires_at to the new
-	// refresh horizon, and store the token snapshot. AAL, trusted, client_id
-	// columns are intentionally left untouched.
-	if err := row.Update(ctx, a.db.Bobx(), &models.IamSessionSetter{
-		LastActiveAt: &now,
-		ExpiresAt:    ptr(null.From(refreshHorizon)),
-		Data:         &rmSess,
-	}); err != nil {
 		return nil, err
 	}
 
@@ -778,37 +795,38 @@ func (a *pgCoreAuth) coreAuthInsertChallenge(ctx context.Context, ch coreAuthCha
 	return &domain.Challenge{ID: ch.ID, Type: ch.Type, ExpiresAt: ch.ExpiresAt}, nil
 }
 
-// coreAuthStartChallenge mints a verification/change challenge (single-use code
-// + opaque link token), persists it, and returns the public Challenge. The
-// numeric code and link token are dispatched out-of-band (TODO outbox); only
-// their hashes are stored.
-func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd, chType, purpose string) (*domain.Challenge, error) {
+// newCoreAuthChallenge validates the contact, mints the code/link-token pair,
+// and assembles the (unpersisted) challenge envelope coreAuthStartChallenge
+// stores. Returns the plaintext code/token alongside it since only their
+// hashes end up in ch.
+func newCoreAuthChallenge(ctx context.Context, db *DB, cmd domain.CoreAuthVerifyStartCmd, chType, purpose string) (coreAuthChallengeData, string, string, error) {
 	if cmd.ProjectID == "" {
-		return nil, domain.ErrValidation.WithMessage("project is required")
+		return coreAuthChallengeData{}, "", "", domain.ErrValidation.WithMessage("project is required")
 	}
 
 	contact := strings.TrimSpace(cmd.Contact)
 	if contact == "" {
-		return nil, domain.ErrValidation.WithMessage("contact is required")
+		return coreAuthChallengeData{}, "", "", domain.ErrValidation.WithMessage("contact is required")
 	}
 
 	code, err := coreAuthRandomCode()
 	if err != nil {
-		return nil, err
+		return coreAuthChallengeData{}, "", "", err
 	}
 
 	token, err := coreAuthRandomToken()
 	if err != nil {
-		return nil, err
+		return coreAuthChallengeData{}, "", "", err
 	}
 
-	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID)
+	env, err := effectiveEnv(ctx, db, cmd.ProjectID)
 	if err != nil {
-		return nil, err
+		return coreAuthChallengeData{}, "", "", err
 	}
 
 	now := nowUTC()
-	ch := coreAuthChallengeData{
+
+	return coreAuthChallengeData{
 		ID:          newUUID(),
 		ProjectID:   cmd.ProjectID,
 		Environment: env,
@@ -823,6 +841,17 @@ func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.Core
 		Channel:     cmd.Channel,
 		ExpiresAt:   now.Add(coreAuthChallengeTTL),
 		CreatedAt:   now,
+	}, code, token, nil
+}
+
+// coreAuthStartChallenge mints a verification/change challenge (single-use code
+// + opaque link token), persists it, and returns the public Challenge. The
+// numeric code and link token are dispatched out-of-band (TODO outbox); only
+// their hashes are stored.
+func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd, chType, purpose string) (*domain.Challenge, error) {
+	ch, code, token, err := newCoreAuthChallenge(ctx, a.db, cmd, chType, purpose)
+	if err != nil {
+		return nil, err
 	}
 
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Challenge, error) {

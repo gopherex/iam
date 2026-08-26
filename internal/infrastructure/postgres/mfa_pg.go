@@ -1096,6 +1096,35 @@ func (a *pgMFAAccounts) mfaConsumeChallenge(ctx context.Context, row *models.Iam
 	return row.Update(ctx, a.db.Bobx(), &models.IamChallengeSetter{Consumed: ptr(true)})
 }
 
+// emitMFAEnrollEvents announces the new pending factor and dispatches the
+// challenge's one-time code out-of-band via the delivery channel (email/sms).
+func (a *pgMFAAccounts) emitMFAEnrollEvents(ctx context.Context, projectID string, f *domain.Factor, ch *domain.Challenge, code, factorType, hint string) error {
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "mfa.factor.enrolled",
+		ProjectID:   projectID,
+		Environment: "",
+		AggregateID: f.ID,
+		Payload:     f,
+	}); err != nil {
+		return err
+	}
+
+	return a.emitter.Emit(ctx, domain.Event{
+		Type:        "mfa.challenge.created",
+		ProjectID:   projectID,
+		Environment: "",
+		AggregateID: ch.ID,
+		Payload: map[string]any{
+			"code":         code,
+			"channel":      factorType,
+			"factor_id":    f.ID,
+			"challenge_id": ch.ID,
+			"to":           hint,
+			"contact":      hint,
+		},
+	})
+}
+
 // mfaEnrollDelivery is the shared enroll path for email/sms factors: it creates a
 // pending factor and an accompanying delivery challenge whose one-time code is
 // stored only as a sha256 hash (the plaintext code would be delivered out-of-band).
@@ -1151,30 +1180,7 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 			return result{}, err
 		}
 
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "mfa.factor.enrolled",
-			ProjectID:   projectID,
-			Environment: "",
-			AggregateID: f.ID,
-			Payload:     f,
-		}); err != nil {
-			return result{}, err
-		}
-
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "mfa.challenge.created",
-			ProjectID:   projectID,
-			Environment: "",
-			AggregateID: ch.ID,
-			Payload: map[string]any{
-				"code":         code,
-				"channel":      factorType,
-				"factor_id":    f.ID,
-				"challenge_id": ch.ID,
-				"to":           hint,
-				"contact":      hint,
-			},
-		}); err != nil {
+		if err := a.emitMFAEnrollEvents(ctx, projectID, &f, &ch, code, factorType, hint); err != nil {
 			return result{}, err
 		}
 

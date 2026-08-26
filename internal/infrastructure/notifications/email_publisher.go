@@ -242,7 +242,14 @@ func emailJobFromEvent(ev eventEnvelope) (emailJob, bool) {
 		return emailJob{}, false
 	}
 
-	if link := linkWithToken(stringValue(ev.Payload, "redirect_to"), stringValue(ev.Payload, "token")); link != "" {
+	return withDerivedTemplateFields(job, ev.Payload), true
+}
+
+// withDerivedTemplateFields fills in the template-data fields every job shares
+// (the recipient/template mirrored into Data for the template engine, and, for
+// link-carrying events, the token URL under every alias a template might use).
+func withDerivedTemplateFields(job emailJob, payload map[string]any) emailJob {
+	if link := linkWithToken(stringValue(payload, "redirect_to"), stringValue(payload, "token")); link != "" {
 		job.Data["link"] = link
 		job.Data["magic_link"] = link
 		job.Data["reset_url"] = link
@@ -253,7 +260,7 @@ func emailJobFromEvent(ev eventEnvelope) (emailJob, bool) {
 	job.Data["email"] = job.To
 	job.Data["template_id"] = job.TemplateID
 
-	return job, true
+	return job
 }
 
 func payloadData(payload map[string]any) map[string]any {

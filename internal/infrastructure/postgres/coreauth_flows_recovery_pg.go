@@ -33,6 +33,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gopherex/iam/internal/domain"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
@@ -71,94 +72,107 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 	f.Method = "email"
 	f.Step = domain.FlowStepVerifyEmail
 
-	// Try to locate the account. We handle the two paths identically on the
-	// wire (anti-enumeration). The error branch still emits the same shape.
-	var ac *domain.FlowActiveChallenge
+	ac, err := recoveryEmailChallenge(ctx, a, pgCA, f, cmd, now)
+	if err != nil {
+		return nil, err
+	}
 
+	return finalizeRecoveryFlow(ctx, a, f, ac, flowData{
+		Contact:   f.Contact,
+		Collected: f.Collected,
+	}, "recovery create")
+}
+
+// recoveryEmailChallenge resolves the challenge descriptor for an email
+// recovery: a real account gets a persisted "password_reset" challenge and
+// the email is queued; an unknown one gets a dangling fake descriptor so the
+// two paths are indistinguishable on the wire (anti-enumeration, §5.4). Sets
+// f.UserID as a side effect when the account is real.
+func recoveryEmailChallenge(ctx context.Context, a *pgCoreAuthFlows, pgCA *pgCoreAuth, f *domain.Flow, cmd domain.FlowCreateCmd, now time.Time) (*domain.FlowActiveChallenge, error) {
 	userRow, err := pgCA.coreAuthFindUserByEmail(ctx, cmd.ProjectID, cmd.Email)
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
 		return nil, fmt.Errorf("recovery create: lookup: %w", err)
 	}
 
-	if err == nil {
-		// Real user: issue a password_reset challenge.
-		acc, loadErr := coreAuthLoadAccount(userRow, cmd.ProjectID)
-		if loadErr != nil {
-			return nil, fmt.Errorf("recovery create: load account: %w", loadErr)
-		}
-
-		f.UserID = acc.ID
-
-		code, codeErr := coreAuthRandomCode()
-		if codeErr != nil {
-			return nil, fmt.Errorf("recovery create: random code: %w", codeErr)
-		}
-
-		token, tokenErr := coreAuthRandomToken()
-		if tokenErr != nil {
-			return nil, fmt.Errorf("recovery create: random token: %w", tokenErr)
-		}
-
-		ch := coreAuthChallengeData{
-			ID:          newUUID(),
-			ProjectID:   cmd.ProjectID,
-			Environment: f.Environment,
-			Type:        "password_reset",
-			Purpose:     "reset",
-			AccountID:   acc.ID,
-			Subject:     cmd.Email,
-			CodeHash:    coreAuthSHA256(code),
-			TokenHash:   coreAuthSHA256(token),
-			RedirectTo:  cmd.RedirectTo,
-			Locale:      cmd.Locale,
-			ExpiresAt:   now.Add(coreAuthChallengeTTL),
-			CreatedAt:   now,
-		}
-
-		if err := a.db.withTx(ctx, func(ctx context.Context) error {
-			if _, insErr := pgCA.coreAuthInsertChallenge(ctx, ch); insErr != nil {
-				return insErr
-			}
-
-			return nil
-		}); err != nil {
-			return nil, fmt.Errorf("recovery create: issue challenge: %w", err)
-		}
-
-		ac = &domain.FlowActiveChallenge{
-			ChallengeID:  ch.ID,
-			Channel:      "email",
-			ExpiresAt:    ch.ExpiresAt,
-			ResendAt:     now.Add(flowResendCooloff),
-			AttemptsLeft: flowMaxAttempts,
-			Code:         code,
-			Token:        token,
-		}
-	} else {
+	if err != nil {
 		// Unknown email: synthesize a fake descriptor (random ID, no DB row).
 		// The client gets identical shape; any code submitted will fail.
-		ac = &domain.FlowActiveChallenge{
+		return &domain.FlowActiveChallenge{
 			ChallengeID:  newUUID(), // dangling — no DB row
 			Channel:      "email",
 			ExpiresAt:    now.Add(coreAuthChallengeTTL),
 			ResendAt:     now.Add(flowResendCooloff),
 			AttemptsLeft: flowMaxAttempts,
-		}
+		}, nil
 	}
 
+	// Real user: issue a password_reset challenge.
+	acc, loadErr := coreAuthLoadAccount(userRow, cmd.ProjectID)
+	if loadErr != nil {
+		return nil, fmt.Errorf("recovery create: load account: %w", loadErr)
+	}
+
+	f.UserID = acc.ID
+
+	code, codeErr := coreAuthRandomCode()
+	if codeErr != nil {
+		return nil, fmt.Errorf("recovery create: random code: %w", codeErr)
+	}
+
+	token, tokenErr := coreAuthRandomToken()
+	if tokenErr != nil {
+		return nil, fmt.Errorf("recovery create: random token: %w", tokenErr)
+	}
+
+	ch := coreAuthChallengeData{
+		ID:          newUUID(),
+		ProjectID:   cmd.ProjectID,
+		Environment: f.Environment,
+		Type:        "password_reset",
+		Purpose:     "reset",
+		AccountID:   acc.ID,
+		Subject:     cmd.Email,
+		CodeHash:    coreAuthSHA256(code),
+		TokenHash:   coreAuthSHA256(token),
+		RedirectTo:  cmd.RedirectTo,
+		Locale:      cmd.Locale,
+		ExpiresAt:   now.Add(coreAuthChallengeTTL),
+		CreatedAt:   now,
+	}
+
+	if err := a.db.withTx(ctx, func(ctx context.Context) error {
+		_, insErr := pgCA.coreAuthInsertChallenge(ctx, ch)
+
+		return insErr
+	}); err != nil {
+		return nil, fmt.Errorf("recovery create: issue challenge: %w", err)
+	}
+
+	return &domain.FlowActiveChallenge{
+		ChallengeID:  ch.ID,
+		Channel:      "email",
+		ExpiresAt:    ch.ExpiresAt,
+		ResendAt:     now.Add(flowResendCooloff),
+		AttemptsLeft: flowMaxAttempts,
+		Code:         code,
+		Token:        token,
+	}, nil
+}
+
+// finalizeRecoveryFlow stores the resolved active challenge, mints the flow
+// token, and persists the flow row — the shared tail of both recovery
+// channels (email, phone_otp).
+func finalizeRecoveryFlow(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, ac *domain.FlowActiveChallenge, fd flowData, errPrefix string) (*domain.FlowState, error) {
 	f.ActiveChallenge = ac
+	fd.ActiveChallenge = ac
 
 	token, hash, err := flowMintToken()
 	if err != nil {
-		return nil, fmt.Errorf("recovery create: mint token: %w", err)
+		return nil, fmt.Errorf("%s: mint token: %w", errPrefix, err)
 	}
 
-	if err := a.flowInsert(ctx, f, hash, flowData{
-		Contact:         f.Contact,
-		Collected:       f.Collected,
-		ActiveChallenge: f.ActiveChallenge,
-	}); err != nil {
-		return nil, fmt.Errorf("recovery create: insert flow: %w", err)
+	if err := a.flowInsert(ctx, f, hash, fd); err != nil {
+		return nil, fmt.Errorf("%s: insert flow: %w", errPrefix, err)
 	}
 
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
@@ -189,105 +203,108 @@ func (a *pgCoreAuthFlows) createRecoveryPhone(ctx context.Context, pgCA *pgCoreA
 		return nil, domain.ErrValidation.WithMessage("an enabled sms provider is required for phone recovery")
 	}
 
-	var ac *domain.FlowActiveChallenge
+	ac, err := recoveryPhoneChallenge(ctx, pgCA, f, cmd, phone, now)
+	if err != nil {
+		return nil, err
+	}
 
+	return finalizeRecoveryFlow(ctx, a, f, ac, flowData{
+		Contact:   f.Contact,
+		Collected: f.Collected,
+		Method:    f.Method,
+	}, "recovery create phone")
+}
+
+// issuePhoneResetChallenge persists ch and queues the SMS carrying its code,
+// atomically so a delivery failure leaves no dangling challenge row.
+func issuePhoneResetChallenge(ctx context.Context, pgCA *pgCoreAuth, ch coreAuthChallengeData, environment, accountID, phone, locale, code string) error {
+	return pgCA.db.withTx(ctx, func(ctx context.Context) error {
+		if _, insErr := pgCA.coreAuthInsertChallenge(ctx, ch); insErr != nil {
+			return insErr
+		}
+
+		return pgCA.emitter.Emit(ctx, domain.Event{
+			Type:        "phone.verification.requested",
+			ProjectID:   ch.ProjectID,
+			Environment: environment,
+			AggregateID: accountID,
+			Payload: map[string]any{
+				"code":         code,
+				"channel":      "sms",
+				"purpose":      "reset",
+				"account_id":   accountID,
+				"challenge_id": ch.ID,
+				"contact":      phone,
+				"to":           phone,
+				"locale":       locale,
+			},
+		})
+	})
+}
+
+// recoveryPhoneChallenge is recoveryEmailChallenge's SMS counterpart: a real
+// phone gets a persisted "phone" reset challenge and an SMS queued, an
+// unknown one gets a dangling fake descriptor. Sets f.UserID as a side effect
+// when the account is real.
+func recoveryPhoneChallenge(ctx context.Context, pgCA *pgCoreAuth, f *domain.Flow, cmd domain.FlowCreateCmd, phone string, now time.Time) (*domain.FlowActiveChallenge, error) {
 	userRow, err := pgCA.coreAuthFindUserByPhone(ctx, cmd.ProjectID, phone)
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
 		return nil, fmt.Errorf("recovery create phone: lookup: %w", err)
 	}
 
-	if err == nil {
-		acc, loadErr := coreAuthLoadAccount(userRow, cmd.ProjectID)
-		if loadErr != nil {
-			return nil, fmt.Errorf("recovery create phone: load account: %w", loadErr)
-		}
-
-		f.UserID = acc.ID
-
-		code, codeErr := coreAuthRandomCode()
-		if codeErr != nil {
-			return nil, fmt.Errorf("recovery create phone: random code: %w", codeErr)
-		}
-
-		token, tokenErr := coreAuthRandomToken()
-		if tokenErr != nil {
-			return nil, fmt.Errorf("recovery create phone: random token: %w", tokenErr)
-		}
-
-		ch := coreAuthChallengeData{
-			ID:          newUUID(),
-			ProjectID:   cmd.ProjectID,
-			Environment: f.Environment,
-			Type:        "phone",
-			Purpose:     "reset",
-			AccountID:   acc.ID,
-			Subject:     phone,
-			CodeHash:    coreAuthSHA256(code),
-			TokenHash:   coreAuthSHA256(token),
-			Locale:      cmd.Locale,
-			ExpiresAt:   now.Add(coreAuthChallengeTTL),
-			CreatedAt:   now,
-		}
-
-		if err := a.db.withTx(ctx, func(ctx context.Context) error {
-			if _, insErr := pgCA.coreAuthInsertChallenge(ctx, ch); insErr != nil {
-				return insErr
-			}
-
-			return pgCA.emitter.Emit(ctx, domain.Event{
-				Type:        "phone.verification.requested",
-				ProjectID:   cmd.ProjectID,
-				Environment: f.Environment,
-				AggregateID: acc.ID,
-				Payload: map[string]any{
-					"code":         code,
-					"channel":      "sms",
-					"purpose":      "reset",
-					"account_id":   acc.ID,
-					"challenge_id": ch.ID,
-					"contact":      phone,
-					"to":           phone,
-					"locale":       cmd.Locale,
-				},
-			})
-		}); err != nil {
-			return nil, fmt.Errorf("recovery create phone: issue challenge: %w", err)
-		}
-
-		ac = &domain.FlowActiveChallenge{
-			ChallengeID:  ch.ID,
-			Channel:      "sms",
-			ExpiresAt:    ch.ExpiresAt,
-			ResendAt:     now.Add(flowResendCooloff),
-			AttemptsLeft: flowMaxAttempts,
-		}
-	} else {
-		ac = &domain.FlowActiveChallenge{
+	if err != nil {
+		return &domain.FlowActiveChallenge{
 			ChallengeID:  newUUID(), // dangling — no DB row
 			Channel:      "sms",
 			ExpiresAt:    now.Add(coreAuthChallengeTTL),
 			ResendAt:     now.Add(flowResendCooloff),
 			AttemptsLeft: flowMaxAttempts,
-		}
+		}, nil
 	}
 
-	f.ActiveChallenge = ac
-
-	token, hash, err := flowMintToken()
-	if err != nil {
-		return nil, fmt.Errorf("recovery create phone: mint token: %w", err)
+	acc, loadErr := coreAuthLoadAccount(userRow, cmd.ProjectID)
+	if loadErr != nil {
+		return nil, fmt.Errorf("recovery create phone: load account: %w", loadErr)
 	}
 
-	if err := a.flowInsert(ctx, f, hash, flowData{
-		Contact:         f.Contact,
-		Collected:       f.Collected,
-		ActiveChallenge: f.ActiveChallenge,
-		Method:          f.Method,
-	}); err != nil {
-		return nil, fmt.Errorf("recovery create phone: insert flow: %w", err)
+	f.UserID = acc.ID
+
+	code, codeErr := coreAuthRandomCode()
+	if codeErr != nil {
+		return nil, fmt.Errorf("recovery create phone: random code: %w", codeErr)
 	}
 
-	return &domain.FlowState{FlowToken: token, Flow: f}, nil
+	token, tokenErr := coreAuthRandomToken()
+	if tokenErr != nil {
+		return nil, fmt.Errorf("recovery create phone: random token: %w", tokenErr)
+	}
+
+	ch := coreAuthChallengeData{
+		ID:          newUUID(),
+		ProjectID:   cmd.ProjectID,
+		Environment: f.Environment,
+		Type:        "phone",
+		Purpose:     "reset",
+		AccountID:   acc.ID,
+		Subject:     phone,
+		CodeHash:    coreAuthSHA256(code),
+		TokenHash:   coreAuthSHA256(token),
+		Locale:      cmd.Locale,
+		ExpiresAt:   now.Add(coreAuthChallengeTTL),
+		CreatedAt:   now,
+	}
+
+	if err := issuePhoneResetChallenge(ctx, pgCA, ch, f.Environment, acc.ID, phone, cmd.Locale, code); err != nil {
+		return nil, fmt.Errorf("recovery create phone: issue challenge: %w", err)
+	}
+
+	return &domain.FlowActiveChallenge{
+		ChallengeID:  ch.ID,
+		Channel:      "sms",
+		ExpiresAt:    ch.ExpiresAt,
+		ResendAt:     now.Add(flowResendCooloff),
+		AttemptsLeft: flowMaxAttempts,
+	}, nil
 }
 
 // ─── advance ─────────────────────────────────────────────────────────────────
@@ -479,60 +496,7 @@ func (a *pgCoreAuthFlows) recoverySetPassword(ctx context.Context, row *models.I
 		return nil, errors.New("recovery set_password: accounts is not *pgCoreAuth")
 	}
 
-	type setResult struct {
-		acc  *domain.Account
-		sess *domain.Session
-	}
-
-	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (setResult, error) {
-		// Load the account so we can mint a session.
-		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), f.UserID)
-		if err != nil {
-			return setResult{}, fmt.Errorf("recovery set_password: load user: %w", err)
-		}
-
-		acc, err := coreAuthLoadAccount(userRow, f.ProjectID)
-		if err != nil {
-			return setResult{}, fmt.Errorf("recovery set_password: parse account: %w", err)
-		}
-
-		if err := pgCA.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, password); err != nil {
-			return setResult{}, err
-		}
-
-		// Hash and write the new password credential (§5 rule 5: never stored in data).
-		hash, err := coreAuthHashPassword(password)
-		if err != nil {
-			return setResult{}, fmt.Errorf("recovery set_password: hash password: %w", err)
-		}
-
-		if err := pgCA.coreAuthUpsertPasswordCredential(ctx, acc.ProjectID, acc.ID, hash); err != nil {
-			return setResult{}, fmt.Errorf("recovery set_password: upsert credential: %w", err)
-		}
-
-		// Revoke all existing sessions for safety (mirrors ResetPassword behavior).
-		if _, err := pgCA.coreAuthSignOutAll(ctx, acc.ProjectID, acc.ID, ""); err != nil {
-			return setResult{}, fmt.Errorf("recovery set_password: sign out all: %w", err)
-		}
-
-		// Mint a fresh session.
-		sess, err := pgCA.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
-		if err != nil {
-			return setResult{}, fmt.Errorf("recovery set_password: mint session: %w", err)
-		}
-
-		if err := pgCA.emitter.Emit(ctx, domain.Event{
-			Type:        "password.reset",
-			ProjectID:   acc.ProjectID,
-			Environment: f.Environment,
-			AggregateID: acc.ID,
-			Payload:     acc,
-		}); err != nil {
-			return setResult{}, err
-		}
-
-		return setResult{acc: acc, sess: sess}, nil
-	})
+	sess, err := recoveryResetPassword(ctx, a, pgCA, f, password)
 	if err != nil {
 		return nil, err
 	}
@@ -553,5 +517,60 @@ func (a *pgCoreAuthFlows) recoverySetPassword(ctx context.Context, row *models.I
 	// Annotate collected (password was set).
 	f.Collected.HasPassword = true
 
-	return &domain.FlowState{FlowToken: newToken, Flow: f, Session: res.sess}, nil
+	return &domain.FlowState{FlowToken: newToken, Flow: f, Session: sess}, nil
+}
+
+// recoveryResetPassword loads the verified user, enforces the password
+// policy, writes the new credential, revokes existing sessions, and mints a
+// fresh one — all inside one transaction so a mid-way failure leaves the old
+// credential and sessions intact.
+func recoveryResetPassword(ctx context.Context, a *pgCoreAuthFlows, pgCA *pgCoreAuth, f *domain.Flow, password string) (*domain.Session, error) {
+	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Session, error) {
+		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), f.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("recovery set_password: load user: %w", err)
+		}
+
+		acc, err := coreAuthLoadAccount(userRow, f.ProjectID)
+		if err != nil {
+			return nil, fmt.Errorf("recovery set_password: parse account: %w", err)
+		}
+
+		if err := pgCA.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, password); err != nil {
+			return nil, err
+		}
+
+		// Hash and write the new password credential (§5 rule 5: never stored in data).
+		hash, err := coreAuthHashPassword(password)
+		if err != nil {
+			return nil, fmt.Errorf("recovery set_password: hash password: %w", err)
+		}
+
+		if err := pgCA.coreAuthUpsertPasswordCredential(ctx, acc.ProjectID, acc.ID, hash); err != nil {
+			return nil, fmt.Errorf("recovery set_password: upsert credential: %w", err)
+		}
+
+		// Revoke all existing sessions for safety (mirrors ResetPassword behavior).
+		if _, err := pgCA.coreAuthSignOutAll(ctx, acc.ProjectID, acc.ID, ""); err != nil {
+			return nil, fmt.Errorf("recovery set_password: sign out all: %w", err)
+		}
+
+		// Mint a fresh session.
+		sess, err := pgCA.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
+		if err != nil {
+			return nil, fmt.Errorf("recovery set_password: mint session: %w", err)
+		}
+
+		if err := pgCA.emitter.Emit(ctx, domain.Event{
+			Type:        "password.reset",
+			ProjectID:   acc.ProjectID,
+			Environment: f.Environment,
+			AggregateID: acc.ID,
+			Payload:     acc,
+		}); err != nil {
+			return nil, err
+		}
+
+		return sess, nil
+	})
 }
