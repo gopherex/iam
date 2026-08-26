@@ -879,76 +879,86 @@ func ParseConsentConfig(raw []byte) (ConsentConfigSpec, error) {
 	return c, nil
 }
 
+// consentDocKey identifies a consent document for the uniqueness check: two
+// documents with the same (key, locale, version) are the same consent.
+type consentDocKey struct{ key, locale, version string }
+
 // Validate enforces presentability and uniqueness rules fail-closed.
 func (c ConsentConfigSpec) Validate() error {
-	const (
-		maxDocs = 200
-		maxBody = 64 * 1024
-	)
+	const maxDocs = 200
 	if len(c.Documents) > maxDocs {
 		return ErrValidation.WithMessage("too many consent documents")
 	}
 
-	type tuple struct{ key, locale, version string }
-
-	seen := make(map[tuple]struct{}, len(c.Documents))
+	seen := make(map[consentDocKey]struct{}, len(c.Documents))
 	for i, d := range c.Documents {
 		at := func(s string) string { return fmt.Sprintf("documents[%d].%s", i, s) }
 
-		key := strings.TrimSpace(d.Key)
-		if key == "" {
-			return ErrValidation.WithMessage(at("key") + " is required")
+		key, err := d.validate(at)
+		if err != nil {
+			return err
 		}
 
-		version := strings.TrimSpace(d.Version)
-		if version == "" {
-			return ErrValidation.WithMessage(at("version") + " is required")
-		}
-
-		required := d.Required != nil && *d.Required
-		if required {
-			if d.Title == nil || strings.TrimSpace(*d.Title) == "" {
-				return ErrValidation.WithMessage(at("title") + " is required for a required consent")
-			}
-
-			hasBody := d.Body != nil && strings.TrimSpace(*d.Body) != ""
-
-			hasURL := d.URL != nil && strings.TrimSpace(*d.URL) != ""
-			if !hasBody && !hasURL {
-				return ErrValidation.WithMessage(at("body") + " or " + at("url") + " is required for a required consent")
-			}
-		}
-
-		if d.Body != nil && len(*d.Body) > maxBody {
-			return ErrValidation.WithMessage(at("body") + " exceeds maximum size")
-		}
-
-		if d.Locale != nil && strings.TrimSpace(*d.Locale) == "" && *d.Locale != "" {
-			return ErrValidation.WithMessage(at("locale") + " must not be blank")
-		}
-
-		if d.URL != nil && strings.TrimSpace(*d.URL) != "" {
-			if err := ValidateAbsoluteHTTPURL(at("url"), *d.URL); err != nil {
-				return err
-			}
-		}
-
-		locale := ""
-		if d.Locale != nil {
-			locale = *d.Locale
-		}
-
-		t := tuple{key, locale, version}
-		if _, dup := seen[t]; dup {
+		if _, dup := seen[key]; dup {
 			return ErrValidation.WithDetails(map[string]any{
-				"key": key, "locale": locale, "version": version,
+				"key": key.key, "locale": key.locale, "version": key.version,
 			}).WithMessage("duplicate consent document (key, locale, version)")
 		}
 
-		seen[t] = struct{}{}
+		seen[key] = struct{}{}
 	}
 
 	return nil
+}
+
+// validate checks one consent document's own fields (not cross-document
+// uniqueness, which the caller tracks) and returns its dedup key.
+func (d ConsentDocumentSpec) validate(at func(string) string) (consentDocKey, error) {
+	const maxBody = 64 * 1024
+
+	key := strings.TrimSpace(d.Key)
+	if key == "" {
+		return consentDocKey{}, ErrValidation.WithMessage(at("key") + " is required")
+	}
+
+	version := strings.TrimSpace(d.Version)
+	if version == "" {
+		return consentDocKey{}, ErrValidation.WithMessage(at("version") + " is required")
+	}
+
+	if required := d.Required != nil && *d.Required; required {
+		if d.Title == nil || strings.TrimSpace(*d.Title) == "" {
+			return consentDocKey{}, ErrValidation.WithMessage(at("title") + " is required for a required consent")
+		}
+
+		hasBody := d.Body != nil && strings.TrimSpace(*d.Body) != ""
+		hasURL := d.URL != nil && strings.TrimSpace(*d.URL) != ""
+
+		if !hasBody && !hasURL {
+			return consentDocKey{}, ErrValidation.WithMessage(at("body") + " or " + at("url") + " is required for a required consent")
+		}
+	}
+
+	if d.Body != nil && len(*d.Body) > maxBody {
+		return consentDocKey{}, ErrValidation.WithMessage(at("body") + " exceeds maximum size")
+	}
+
+	if d.Locale != nil && strings.TrimSpace(*d.Locale) == "" && *d.Locale != "" {
+		return consentDocKey{}, ErrValidation.WithMessage(at("locale") + " must not be blank")
+	}
+
+	if d.URL != nil && strings.TrimSpace(*d.URL) != "" {
+		if err := ValidateAbsoluteHTTPURL(at("url"), *d.URL); err != nil {
+			return consentDocKey{}, err
+		}
+	}
+
+	locale := ""
+	if d.Locale != nil {
+		locale = *d.Locale
+	}
+
+	return consentDocKey{key: key, locale: locale, version: version}, nil
 }
 
 // ---------------------------------------------------------------------------

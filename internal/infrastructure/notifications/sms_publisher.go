@@ -225,12 +225,38 @@ func decodeSMSConfig(cipher postgres.Cipher, typ string, raw map[string]json.Raw
 		Username:   strings.TrimSpace(rawString(raw, "username")),
 		HTTPClient: &http.Client{Timeout: smsHTTPTimeout},
 	}
-	// Decrypt secret keys. The key set MUST cover every spelling the write path
-	// encrypts (postgres.providerSecretKeys) so a secret stored under any of them
-	// is decrypted rather than sent verbatim. Every token-like secret populates
-	// both the bearer slot (AuthToken, generic) and the basic-auth password slot
-	// (Password, twilio) so it works regardless of provider type; "password"
-	// fills the password slot only.
+
+	if err := decryptSMSSecrets(cipher, raw, cfg); err != nil {
+		return nil, err
+	}
+
+	var err error
+
+	switch typ {
+	case "twilio":
+		err = finishTwilioSMSConfig(raw, cfg)
+	case "generic":
+		err = finishGenericSMSConfig(cfg)
+	case "aws_sns":
+		err = finishAWSSNSConfig(cipher, raw, cfg)
+	default:
+		err = fmt.Errorf("notifications: unsupported sms provider type %q", typ)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+// decryptSMSSecrets decrypts every secret key the write path may have stored
+// (the set MUST cover every spelling postgres.providerSecretKeys encrypts, so
+// a secret stored under any of them is decrypted rather than sent verbatim).
+// Every token-like secret populates both the bearer slot (AuthToken, generic)
+// and the basic-auth password slot (Password, twilio) so it works regardless
+// of provider type; "password" fills the password slot only.
+func decryptSMSSecrets(cipher postgres.Cipher, raw map[string]json.RawMessage, cfg *smsConfig) error {
 	for _, key := range []string{"password", "auth_token", "token", "api_key", "apikey", "secret", "secret_key", "client_secret", "access_token"} {
 		v := rawString(raw, key)
 		if v == "" {
@@ -239,7 +265,7 @@ func decodeSMSConfig(cipher postgres.Cipher, typ string, raw map[string]json.Raw
 
 		dec, err := cipher.Decrypt(v)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		switch key {
@@ -258,84 +284,97 @@ func decodeSMSConfig(cipher postgres.Cipher, typ string, raw map[string]json.Raw
 		}
 	}
 
-	switch typ {
-	case "twilio":
-		sid := strings.TrimSpace(rawString(raw, "account_sid"))
-		if sid == "" {
-			sid = cfg.Username
-		}
+	return nil
+}
 
-		cfg.Username = sid
-		if cfg.URL == "" {
-			cfg.URL = "https://api.twilio.com/2010-04-01/Accounts/" + url.PathEscape(sid) + "/Messages.json"
-		}
-		// Never send the basic-auth credential over cleartext http, even if the
-		// operator overrode the endpoint (downgrade protection, same as generic).
-		if u, err := url.Parse(cfg.URL); err != nil || u.Scheme != "https" || u.Host == "" {
-			return nil, errors.New("notifications: twilio url must be a valid https URL")
-		}
-
-		if sid == "" || cfg.Password == "" || cfg.From == "" {
-			return nil, errors.New("notifications: twilio requires account_sid, auth_token and from")
-		}
-	case "generic":
-		if cfg.URL == "" {
-			return nil, errors.New("notifications: generic sms provider requires url")
-		}
-		// Never send credentials over cleartext http (downgrade protection).
-		u, err := url.Parse(cfg.URL)
-		if err != nil || u.Scheme != "https" || u.Host == "" {
-			return nil, errors.New("notifications: generic sms url must be a valid https URL")
-		}
-	case "aws_sns":
-		cfg.Region = strings.TrimSpace(rawString(raw, "region"))
-		cfg.Endpoint = strings.TrimSpace(rawString(raw, "endpoint"))
-		// access_key_id and secret_access_key are encrypted at rest; decrypt them.
-		if v := rawString(raw, "access_key_id"); v != "" {
-			dec, err := cipher.Decrypt(v)
-			if err != nil {
-				return nil, err
-			}
-
-			cfg.AccessKeyID = dec
-		}
-
-		if v := rawString(raw, "secret_access_key"); v != "" {
-			dec, err := cipher.Decrypt(v)
-			if err != nil {
-				return nil, err
-			}
-
-			cfg.SecretAccessKey = dec
-		} else if cfg.SecretAccessKey == "" {
-			// Fall back to the generic secret slot decrypted above (secret_key etc).
-			cfg.SecretAccessKey = cfg.Password
-		}
-
-		if cfg.Endpoint == "" {
-			if cfg.Region == "" {
-				return nil, errors.New("notifications: aws_sns requires region (or an explicit endpoint)")
-			}
-
-			cfg.Endpoint = "https://sns." + cfg.Region + ".amazonaws.com"
-		}
-
-		if u, err := url.Parse(cfg.Endpoint); err != nil || u.Scheme != "https" || u.Host == "" {
-			return nil, errors.New("notifications: aws_sns endpoint must be a valid https URL")
-		}
-
-		if cfg.AccessKeyID == "" || cfg.SecretAccessKey == "" {
-			return nil, errors.New("notifications: aws_sns requires access_key_id and secret_access_key")
-		}
-
-		if cfg.Region == "" {
-			cfg.Region = "ru-central1"
-		}
-	default:
-		return nil, fmt.Errorf("notifications: unsupported sms provider type %q", typ)
+// finishTwilioSMSConfig fills in the Twilio Messages API endpoint from
+// account_sid when no explicit url was set, and validates the result.
+func finishTwilioSMSConfig(raw map[string]json.RawMessage, cfg *smsConfig) error {
+	sid := strings.TrimSpace(rawString(raw, "account_sid"))
+	if sid == "" {
+		sid = cfg.Username
 	}
 
-	return cfg, nil
+	cfg.Username = sid
+	if cfg.URL == "" {
+		cfg.URL = "https://api.twilio.com/2010-04-01/Accounts/" + url.PathEscape(sid) + "/Messages.json"
+	}
+	// Never send the basic-auth credential over cleartext http, even if the
+	// operator overrode the endpoint (downgrade protection, same as generic).
+	if u, err := url.Parse(cfg.URL); err != nil || u.Scheme != "https" || u.Host == "" {
+		return errors.New("notifications: twilio url must be a valid https URL")
+	}
+
+	if sid == "" || cfg.Password == "" || cfg.From == "" {
+		return errors.New("notifications: twilio requires account_sid, auth_token and from")
+	}
+
+	return nil
+}
+
+// finishGenericSMSConfig validates the operator-supplied generic endpoint.
+func finishGenericSMSConfig(cfg *smsConfig) error {
+	if cfg.URL == "" {
+		return errors.New("notifications: generic sms provider requires url")
+	}
+	// Never send credentials over cleartext http (downgrade protection).
+	u, err := url.Parse(cfg.URL)
+	if err != nil || u.Scheme != "https" || u.Host == "" {
+		return errors.New("notifications: generic sms url must be a valid https URL")
+	}
+
+	return nil
+}
+
+// finishAWSSNSConfig decrypts the AWS credential pair (falling back to the
+// generic secret slot decryptSMSSecrets already populated when
+// secret_access_key isn't set separately), derives the regional endpoint
+// when none is configured, and validates the result.
+func finishAWSSNSConfig(cipher postgres.Cipher, raw map[string]json.RawMessage, cfg *smsConfig) error {
+	cfg.Region = strings.TrimSpace(rawString(raw, "region"))
+	cfg.Endpoint = strings.TrimSpace(rawString(raw, "endpoint"))
+
+	if v := rawString(raw, "access_key_id"); v != "" {
+		dec, err := cipher.Decrypt(v)
+		if err != nil {
+			return err
+		}
+
+		cfg.AccessKeyID = dec
+	}
+
+	if v := rawString(raw, "secret_access_key"); v != "" {
+		dec, err := cipher.Decrypt(v)
+		if err != nil {
+			return err
+		}
+
+		cfg.SecretAccessKey = dec
+	} else if cfg.SecretAccessKey == "" {
+		cfg.SecretAccessKey = cfg.Password
+	}
+
+	if cfg.Endpoint == "" {
+		if cfg.Region == "" {
+			return errors.New("notifications: aws_sns requires region (or an explicit endpoint)")
+		}
+
+		cfg.Endpoint = "https://sns." + cfg.Region + ".amazonaws.com"
+	}
+
+	if u, err := url.Parse(cfg.Endpoint); err != nil || u.Scheme != "https" || u.Host == "" {
+		return errors.New("notifications: aws_sns endpoint must be a valid https URL")
+	}
+
+	if cfg.AccessKeyID == "" || cfg.SecretAccessKey == "" {
+		return errors.New("notifications: aws_sns requires access_key_id and secret_access_key")
+	}
+
+	if cfg.Region == "" {
+		cfg.Region = "ru-central1"
+	}
+
+	return nil
 }
 
 func (c *smsConfig) client() *http.Client {
