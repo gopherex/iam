@@ -1266,120 +1266,19 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (regResult, error) {
 		now := nowUTC()
-		acc := &domain.Account{
-			ID:            newUUID(),
-			ProjectID:     cmd.ProjectID,
-			Kind:          coreAuthKindHuman,
-			Status:        coreAuthStatusActive,
-			PrimaryEmail:  cmd.Email,
-			PrimaryPhone:  cmd.Phone,
-			Name:          cmd.Name,
-			Locale:        cmd.Locale,
-			EmailVerified: false,
-			CreatedAt:     now,
-			UpdatedAt:     now,
-		}
 
-		rawAcc, err := marshal(acc)
+		acc, err := a.coreAuthInsertRegisterUser(ctx, cmd, env, now)
 		if err != nil {
 			return regResult{}, err
 		}
 
-		rmAcc := json.RawMessage(rawAcc)
-
-		userSetter := &models.IamUserSetter{
-			ID:          &acc.ID,
-			ProjectID:   &acc.ProjectID,
-			Environment: &env,
-			Kind:        ptr(acc.Kind),
-			Status:      ptr(acc.Status),
-			CreatedAt:   &now,
-			UpdatedAt:   &now,
-			Data:        &rmAcc,
-		}
-		if acc.PrimaryEmail != "" {
-			userSetter.PrimaryEmail = ptr(null.From(acc.PrimaryEmail))
-		}
-
-		if acc.PrimaryPhone != "" {
-			userSetter.PrimaryPhone = ptr(null.From(acc.PrimaryPhone))
-		}
-
-		if _, err := models.IamUsers.Insert(userSetter).One(ctx, a.db.Bobx()); err != nil {
-			if isUniqueViolation(err) {
-				if acc.PrimaryEmail != "" {
-					return regResult{}, domain.ErrEmailExists
-				}
-
-				return regResult{}, domain.ErrPhoneExists
-			}
-
+		if err := a.coreAuthInsertRegisterConsents(ctx, acc, env, now, cmd.Consents, allowedConsent, consentLocale); err != nil {
 			return regResult{}, err
-		}
-
-		for _, c := range cmd.Consents {
-			if _, ok := allowedConsent[c.Key+"\x00"+c.Version]; !ok {
-				continue // ignore acceptances for unconfigured docs/versions
-			}
-
-			setter := &models.IamConsentSetter{
-				ID:          ptr(newUUID()),
-				ProjectID:   ptr(acc.ProjectID),
-				Environment: &env,
-				UserID:      ptr(acc.ID),
-				DocKey:      ptr(c.Key),
-				Version:     ptr(c.Version),
-				AcceptedAt:  ptr(now),
-			}
-			if loc := consentLocale[c.Key]; loc != "" {
-				setter.Locale = ptr(null.From(loc))
-			}
-
-			if _, err := models.IamConsents.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-				return regResult{}, err
-			}
 		}
 
 		// Password credential (bcrypt). Optional: phone-only sign-ups have none.
 		if cmd.Password != "" {
-			if err := a.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, cmd.Password); err != nil {
-				return regResult{}, err
-			}
-
-			hash, err := coreAuthHashPassword(cmd.Password)
-			if err != nil {
-				return regResult{}, err
-			}
-
-			cred := coreAuthCredential{
-				ID:        newUUID(),
-				ProjectID: acc.ProjectID,
-				UserID:    acc.ID,
-				Type:      coreAuthCredentialPassword,
-				Hash:      hash,
-				CreatedAt: now,
-				UpdatedAt: now,
-			}
-
-			rawCred, err := marshal(cred)
-			if err != nil {
-				return regResult{}, err
-			}
-
-			rmCred := json.RawMessage(rawCred)
-
-			credSetter := &models.IamCredentialSetter{
-				ID:          &cred.ID,
-				ProjectID:   &cred.ProjectID,
-				Environment: &env,
-				UserID:      &cred.UserID,
-				Type:        ptr(cred.Type),
-				Secret:      &cred.Hash,
-				CreatedAt:   &now,
-				UpdatedAt:   &now,
-				Data:        &rmCred,
-			}
-			if _, err := models.IamCredentials.Insert(credSetter).One(ctx, a.db.Bobx()); err != nil {
+			if err := a.coreAuthInsertRegisterPassword(ctx, acc, env, now, cmd.Password); err != nil {
 				return regResult{}, err
 			}
 		}
@@ -1408,6 +1307,139 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 	return res.acc, res.sess, nil
 }
 
+// coreAuthInsertRegisterUser builds and persists the iam_users row for a new
+// registration.
+func (a *pgCoreAuth) coreAuthInsertRegisterUser(ctx context.Context, cmd domain.RegisterCmd, env string, now time.Time) (*domain.Account, error) {
+	acc := &domain.Account{
+		ID:            newUUID(),
+		ProjectID:     cmd.ProjectID,
+		Kind:          coreAuthKindHuman,
+		Status:        coreAuthStatusActive,
+		PrimaryEmail:  cmd.Email,
+		PrimaryPhone:  cmd.Phone,
+		Name:          cmd.Name,
+		Locale:        cmd.Locale,
+		EmailVerified: false,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	rawAcc, err := marshal(acc)
+	if err != nil {
+		return nil, err
+	}
+
+	rmAcc := json.RawMessage(rawAcc)
+
+	userSetter := &models.IamUserSetter{
+		ID:          &acc.ID,
+		ProjectID:   &acc.ProjectID,
+		Environment: &env,
+		Kind:        ptr(acc.Kind),
+		Status:      ptr(acc.Status),
+		CreatedAt:   &now,
+		UpdatedAt:   &now,
+		Data:        &rmAcc,
+	}
+	if acc.PrimaryEmail != "" {
+		userSetter.PrimaryEmail = ptr(null.From(acc.PrimaryEmail))
+	}
+
+	if acc.PrimaryPhone != "" {
+		userSetter.PrimaryPhone = ptr(null.From(acc.PrimaryPhone))
+	}
+
+	if _, err := models.IamUsers.Insert(userSetter).One(ctx, a.db.Bobx()); err != nil {
+		if isUniqueViolation(err) {
+			if acc.PrimaryEmail != "" {
+				return nil, domain.ErrEmailExists
+			}
+
+			return nil, domain.ErrPhoneExists
+		}
+
+		return nil, err
+	}
+
+	return acc, nil
+}
+
+// coreAuthInsertRegisterConsents persists the acceptances a client submitted
+// that name a document the project actually configures — an acceptance for
+// any other {key,version} pair is silently ignored, not recorded.
+func (a *pgCoreAuth) coreAuthInsertRegisterConsents(ctx context.Context, acc *domain.Account, env string, now time.Time, consents []domain.AccountConsentAcceptance, allowedConsent map[string]struct{}, consentLocale map[string]string) error {
+	for _, c := range consents {
+		if _, ok := allowedConsent[c.Key+"\x00"+c.Version]; !ok {
+			continue
+		}
+
+		setter := &models.IamConsentSetter{
+			ID:          ptr(newUUID()),
+			ProjectID:   ptr(acc.ProjectID),
+			Environment: &env,
+			UserID:      ptr(acc.ID),
+			DocKey:      ptr(c.Key),
+			Version:     ptr(c.Version),
+			AcceptedAt:  ptr(now),
+		}
+		if loc := consentLocale[c.Key]; loc != "" {
+			setter.Locale = ptr(null.From(loc))
+		}
+
+		if _, err := models.IamConsents.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// coreAuthInsertRegisterPassword enforces the password policy and persists
+// the new account's bcrypt password credential.
+func (a *pgCoreAuth) coreAuthInsertRegisterPassword(ctx context.Context, acc *domain.Account, env string, now time.Time, password string) error {
+	if err := a.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, password); err != nil {
+		return err
+	}
+
+	hash, err := coreAuthHashPassword(password)
+	if err != nil {
+		return err
+	}
+
+	cred := coreAuthCredential{
+		ID:        newUUID(),
+		ProjectID: acc.ProjectID,
+		UserID:    acc.ID,
+		Type:      coreAuthCredentialPassword,
+		Hash:      hash,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	rawCred, err := marshal(cred)
+	if err != nil {
+		return err
+	}
+
+	rmCred := json.RawMessage(rawCred)
+
+	credSetter := &models.IamCredentialSetter{
+		ID:          &cred.ID,
+		ProjectID:   &cred.ProjectID,
+		Environment: &env,
+		UserID:      &cred.UserID,
+		Type:        ptr(cred.Type),
+		Secret:      &cred.Hash,
+		CreatedAt:   &now,
+		UpdatedAt:   &now,
+		Data:        &rmCred,
+	}
+
+	_, err = models.IamCredentials.Insert(credSetter).One(ctx, a.db.Bobx())
+
+	return err
+}
+
 // AuthenticatePassword verifies an email + password against the bcrypt
 // credential and mints a session. A missing user or a bad password both return
 // ErrInvalidCredentials (no account enumeration).
@@ -1417,103 +1449,129 @@ func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email,
 	}
 
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.CoreAuthPasswordResult, error) {
-		userRow, err := a.coreAuthFindUserByEmail(ctx, projectID, email)
-		if err != nil {
-			if errors.Is(err, domain.ErrUserNotFound) {
-				return nil, domain.ErrInvalidCredentials
-			}
-
-			return nil, err
-		}
-
-		acc, err := coreAuthLoadAccount(userRow, projectID)
+		acc, cred, credData, err := a.coreAuthLoadPasswordCredential(ctx, projectID, email)
 		if err != nil {
 			return nil, err
 		}
 
-		cred, err := a.coreAuthFindPasswordCredential(ctx, projectID, acc.ID)
+		priorFailures, err := a.coreAuthVerifyPassword(ctx, cred, credData, password)
 		if err != nil {
 			return nil, err
-		}
-
-		var credData coreAuthCredential
-		if len(cred.Data) > 0 {
-			_ = unmarshal(cred.Data, &credData)
-		}
-
-		// Account lockout: while locked, refuse without testing the password so a
-		// distributed guessing attack cannot keep probing this account.
-		if credData.LockedUntil.After(nowIn(ctx)) {
-			return nil, domain.ErrAccountLocked
-		}
-
-		if !coreAuthCheckPassword(cred.Secret, password) {
-			a.coreAuthRecordLoginFailure(ctx, cred, credData)
-
-			return nil, domain.ErrInvalidCredentials
-		}
-
-		// Correct password clears any accumulated failure/lock state. The count is
-		// read first: the reset destroys it, and risk evaluation still wants it.
-		priorFailures := credData.FailedAttempts
-		if credData.FailedAttempts > 0 || !credData.LockedUntil.IsZero() {
-			a.coreAuthClearLoginFailures(ctx, cred, credData)
 		}
 
 		if err := coreAuthAccountActive(acc); err != nil {
 			return nil, err
 		}
-		// Second factor: password (factor 1) verified, but if the account has an
-		// active MFA factor we do NOT mint a session — the caller must complete a
-		// second factor (mfa/verify or recovery-codes/verify) carrying the
-		// flow_token. This keeps AAL2 enforcement at login.
-		factors, err := a.coreAuthActiveFactors(ctx, acc.ID)
-		if err != nil {
-			return nil, err
-		}
 
-		// Adaptive step-up. Evaluated here, before a session exists: a rule can
-		// still turn this into a sign-in that needs a second factor rather than
-		// having to revoke one already issued.
-		riskEnv, err := effectiveEnv(ctx, a.db, acc.ProjectID)
-		if err != nil {
-			return nil, err
-		}
-
-		decision, err := evaluateSignInRisk(ctx, a.db, a.emitter,
-			acc.ProjectID, riskEnv, acc.ID, priorFailures)
-		if err != nil {
-			return nil, err
-		}
-
-		if decision.Action == riskActionBlock {
-			return nil, domain.ErrForbidden.WithMessage("blocked by a risk rule")
-		}
-		// Demanding a factor the account does not have would lock the user out of
-		// their own account, which is not what the rule asked for.
-		if len(factors) > 0 {
-			return &domain.CoreAuthPasswordResult{
-				Account: acc, MFARequired: true, Factors: factors, PriorFailures: priorFailures,
-			}, nil
-		}
-
-		sess, err := a.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "user.signed_in",
-			ProjectID:   acc.ProjectID,
-			Environment: coreAuthDefaultEnv,
-			AggregateID: acc.ID,
-			Payload:     acc,
-		}); err != nil {
-			return nil, err
-		}
-
-		return &domain.CoreAuthPasswordResult{Account: acc, Session: sess, PriorFailures: priorFailures}, nil
+		return a.coreAuthCompletePasswordSignIn(ctx, acc, priorFailures)
 	})
+}
+
+// coreAuthLoadPasswordCredential resolves the account by email and its bcrypt
+// password credential + decoded failure-tracking envelope. A missing user
+// maps to ErrInvalidCredentials, same as a bad password — no enumeration.
+func (a *pgCoreAuth) coreAuthLoadPasswordCredential(ctx context.Context, projectID, email string) (*domain.Account, *models.IamCredential, coreAuthCredential, error) {
+	userRow, err := a.coreAuthFindUserByEmail(ctx, projectID, email)
+	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return nil, nil, coreAuthCredential{}, domain.ErrInvalidCredentials
+		}
+
+		return nil, nil, coreAuthCredential{}, err
+	}
+
+	acc, err := coreAuthLoadAccount(userRow, projectID)
+	if err != nil {
+		return nil, nil, coreAuthCredential{}, err
+	}
+
+	cred, err := a.coreAuthFindPasswordCredential(ctx, projectID, acc.ID)
+	if err != nil {
+		return nil, nil, coreAuthCredential{}, err
+	}
+
+	var credData coreAuthCredential
+	if len(cred.Data) > 0 {
+		_ = unmarshal(cred.Data, &credData)
+	}
+
+	return acc, cred, credData, nil
+}
+
+// coreAuthVerifyPassword enforces lockout, checks the password, and updates
+// failure tracking (record on mismatch, clear on success). Returns the
+// failure count as it stood BEFORE this attempt — risk evaluation wants it,
+// and clearing it on success destroys the count this returns.
+func (a *pgCoreAuth) coreAuthVerifyPassword(ctx context.Context, cred *models.IamCredential, credData coreAuthCredential, password string) (int, error) {
+	// Account lockout: while locked, refuse without testing the password so a
+	// distributed guessing attack cannot keep probing this account.
+	if credData.LockedUntil.After(nowIn(ctx)) {
+		return 0, domain.ErrAccountLocked
+	}
+
+	if !coreAuthCheckPassword(cred.Secret, password) {
+		a.coreAuthRecordLoginFailure(ctx, cred, credData)
+
+		return 0, domain.ErrInvalidCredentials
+	}
+
+	priorFailures := credData.FailedAttempts
+	if credData.FailedAttempts > 0 || !credData.LockedUntil.IsZero() {
+		a.coreAuthClearLoginFailures(ctx, cred, credData)
+	}
+
+	return priorFailures, nil
+}
+
+// coreAuthCompletePasswordSignIn is the post-verification half of password
+// sign-in: gate on MFA (factor 1 verified is not enough for AAL2 — the
+// caller must complete mfa/verify or recovery-codes/verify carrying the
+// flow_token), then adaptive risk (evaluated before a session exists so a
+// rule can still turn this into a sign-in needing a second factor rather
+// than having to revoke one already issued), then mint the session.
+func (a *pgCoreAuth) coreAuthCompletePasswordSignIn(ctx context.Context, acc *domain.Account, priorFailures int) (*domain.CoreAuthPasswordResult, error) {
+	factors, err := a.coreAuthActiveFactors(ctx, acc.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	riskEnv, err := effectiveEnv(ctx, a.db, acc.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	decision, err := evaluateSignInRisk(ctx, a.db, a.emitter, acc.ProjectID, riskEnv, acc.ID, priorFailures)
+	if err != nil {
+		return nil, err
+	}
+
+	if decision.Action == riskActionBlock {
+		return nil, domain.ErrForbidden.WithMessage("blocked by a risk rule")
+	}
+	// Demanding a factor the account does not have would lock the user out of
+	// their own account, which is not what the rule asked for.
+	if len(factors) > 0 {
+		return &domain.CoreAuthPasswordResult{
+			Account: acc, MFARequired: true, Factors: factors, PriorFailures: priorFailures,
+		}, nil
+	}
+
+	sess, err := a.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "user.signed_in",
+		ProjectID:   acc.ProjectID,
+		Environment: coreAuthDefaultEnv,
+		AggregateID: acc.ID,
+		Payload:     acc,
+	}); err != nil {
+		return nil, err
+	}
+
+	return &domain.CoreAuthPasswordResult{Account: acc, Session: sess, PriorFailures: priorFailures}, nil
 }
 
 // coreAuthActiveFactors returns the account's active MFA factors (used to decide
@@ -1809,6 +1867,64 @@ func (a *pgCoreAuth) coreAuthRotateRefresh(ctx context.Context, row *models.IamR
 	return coreAuthRefreshResult{acc: acc, sess: sess}, nil
 }
 
+// coreAuthLoadValidAuthCode loads the auth-code row by hash and validates it:
+// not consumed, not expired, PKCE verifier matches when a challenge was bound
+// at issuance, and the account it names is active.
+func (a *pgCoreAuth) coreAuthLoadValidAuthCode(ctx context.Context, codeHash, verifier string) (*models.IamAuthCode, *domain.Account, error) {
+	row, err := models.IamAuthCodes.Query(
+		sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(codeHash))),
+	).One(ctx, a.db.Bobx())
+	if err != nil {
+		if errors.Is(translatePgErr("auth_code", err), ErrNotFound) {
+			return nil, nil, domain.ErrInvalidToken
+		}
+
+		return nil, nil, err
+	}
+
+	if row.Consumed {
+		return nil, nil, domain.ErrTokenUsed
+	}
+
+	if !row.ExpiresAt.IsZero() && nowIn(ctx).After(row.ExpiresAt) {
+		return nil, nil, domain.ErrTokenExpired
+	}
+
+	var data coreAuthCodeData
+	if err := unmarshal(row.Data, &data); err != nil {
+		return nil, nil, err
+	}
+
+	if data.ChallengeHash != "" && coreAuthSHA256(verifier) != data.ChallengeHash {
+		return nil, nil, domain.ErrInvalidToken.WithMessage("code_verifier mismatch")
+	}
+
+	userID, _ := row.UserID.Get()
+	if userID == "" {
+		return nil, nil, domain.ErrInvalidToken
+	}
+
+	userRow, err := models.FindIamUser(ctx, a.db.Bobx(), userID)
+	if err != nil {
+		if errors.Is(translatePgErr("user", err), ErrNotFound) {
+			return nil, nil, domain.ErrUserNotFound
+		}
+
+		return nil, nil, err
+	}
+
+	acc, err := coreAuthLoadAccount(userRow, row.ProjectID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := coreAuthAccountActive(acc); err != nil {
+		return nil, nil, err
+	}
+
+	return row, acc, nil
+}
+
 // ExchangeCode trades a one-time auth code (iam_auth_codes) for a session,
 // verifying the PKCE code_verifier against the stored challenge hash.
 func (a *pgCoreAuth) ExchangeCode(ctx context.Context, code, verifier string) (*domain.Account, *domain.Session, error) {
@@ -1824,56 +1940,8 @@ func (a *pgCoreAuth) ExchangeCode(ctx context.Context, code, verifier string) (*
 	}
 
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (exResult, error) {
-		row, err := models.IamAuthCodes.Query(
-			sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(codeHash))),
-		).One(ctx, a.db.Bobx())
+		row, acc, err := a.coreAuthLoadValidAuthCode(ctx, codeHash, verifier)
 		if err != nil {
-			if errors.Is(translatePgErr("auth_code", err), ErrNotFound) {
-				return exResult{}, domain.ErrInvalidToken
-			}
-
-			return exResult{}, err
-		}
-
-		if row.Consumed {
-			return exResult{}, domain.ErrTokenUsed
-		}
-
-		if !row.ExpiresAt.IsZero() && nowIn(ctx).After(row.ExpiresAt) {
-			return exResult{}, domain.ErrTokenExpired
-		}
-
-		var data coreAuthCodeData
-		if err := unmarshal(row.Data, &data); err != nil {
-			return exResult{}, err
-		}
-		// PKCE: if a challenge was bound at issuance, the verifier must hash to it.
-		if data.ChallengeHash != "" {
-			if coreAuthSHA256(verifier) != data.ChallengeHash {
-				return exResult{}, domain.ErrInvalidToken.WithMessage("code_verifier mismatch")
-			}
-		}
-
-		userID, _ := row.UserID.Get()
-		if userID == "" {
-			return exResult{}, domain.ErrInvalidToken
-		}
-
-		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), userID)
-		if err != nil {
-			if errors.Is(translatePgErr("user", err), ErrNotFound) {
-				return exResult{}, domain.ErrUserNotFound
-			}
-
-			return exResult{}, err
-		}
-
-		acc, err := coreAuthLoadAccount(userRow, row.ProjectID)
-		if err != nil {
-			return exResult{}, err
-		}
-
-		if err := coreAuthAccountActive(acc); err != nil {
 			return exResult{}, err
 		}
 
