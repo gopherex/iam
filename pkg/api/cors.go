@@ -28,6 +28,15 @@ type originCache struct {
 	exp time.Time
 }
 
+// allowed refreshes the shared cache on a miss using its own bounded context,
+// never the calling request's. Several concurrent requests can hit a miss at
+// once and block on the same refresh; tying that refresh to whichever one
+// happened to trigger it would abort it — and every request still waiting on
+// it — the moment that one client disconnects. Excluded from contextcheck in
+// .golangci.yaml rather than by //nolint: the analyzer's finding here is
+// itself nondeterministic run to run (a large repo's call-graph
+// reconstruction, not this function), and an inline directive that is only
+// sometimes "used" is a linter that sometimes fails the build for no reason.
 func (c *originCache) allowed(origin string) bool {
 	if c == nil || c.src == nil {
 		return false

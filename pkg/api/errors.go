@@ -86,6 +86,12 @@ func generatedErrorDetails(stage string, err error) map[string]any {
 	return details
 }
 
+// logGeneratedError falls back to Background when ogen calls ErrorHandler
+// with no context — a request that failed before one existed, e.g. at the
+// point of decoding — since there is no parent to derive from when there is
+// none.
+//
+//nolint:contextcheck // deliberate fallback; see above.
 func logGeneratedError(ctx context.Context, r *http.Request, de *domain.Error, err error) {
 	if ctx == nil {
 		ctx = context.Background()

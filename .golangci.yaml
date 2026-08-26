@@ -283,6 +283,18 @@ linters:
       - legacy
       - std-error-handling
     rules:
+      # allowed() deliberately refreshes the shared CORS-origin cache on its
+      # own bounded context rather than the calling request's — see the
+      # comment on the function. Excluded here rather than by //nolint
+      # because contextcheck's finding on this exact call is itself
+      # nondeterministic between otherwise-identical clean-cache runs (a
+      # call-graph reconstruction issue, not this code); an inline directive
+      # that is only sometimes "used" would make nolintlint fail the build
+      # for no reason on the runs where it doesn't fire.
+      - linters:
+          - contextcheck
+        path: ^pkg/api/cors\.go$
+        text: 'Function `allowed`'
       # ogen renders a handler method's name straight from the OpenAPI
       # operationId, which spells it Id — implementing the generated
       # interface means matching that spelling exactly, not a style choice
