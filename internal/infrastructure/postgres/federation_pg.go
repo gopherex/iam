@@ -875,12 +875,24 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 		c.Config = &domain.FederationConnectionConfig{}
 	}
 
+	fedApplyConnectionPatchSAMLMetadata(c, patch)
+	fedApplyConnectionPatchOIDCBasics(c, patch)
+	fedApplyConnectionPatchSAML(c, patch)
+	fedApplyConnectionPatchOIDC(c, patch)
+	fedApplyConnectionPatchDomains(c, patch)
+}
+
+// fedApplyConnectionPatchSAMLMetadata applies the IdP metadata half of a
+// connection patch. A url patch clears any stored XML — the two are
+// alternative sources for the same document and the url is what an
+// administrator most often has to hand; the SP's own metadata endpoint is
+// ours and is derived, not patched here.
+func fedApplyConnectionPatchSAMLMetadata(c *domain.Connection, patch map[string]any) {
 	if v, ok := patch["saml_metadata_url"].(string); ok {
 		if c.Config.Saml == nil {
 			c.Config.Saml = &domain.FederationSamlConfig{}
 		}
-		// This key names the IdP's document, which is what an administrator has
-		// to hand. The SP's own metadata endpoint is ours and is derived.
+
 		c.Config.Saml.IDPMetadataURL = v
 		c.Config.Saml.IDPMetadataXML = ""
 	}
@@ -892,7 +904,11 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 
 		c.Config.Saml.IDPMetadataXML = v
 	}
+}
 
+// fedApplyConnectionPatchOIDCBasics applies the issuer/client/scopes half of
+// an OIDC connection patch.
+func fedApplyConnectionPatchOIDCBasics(c *domain.Connection, patch map[string]any) {
 	if v, ok := patch["oidc_issuer"].(string); ok {
 		if c.Config.Oidc == nil {
 			c.Config.Oidc = &domain.FederationOidcConfig{}
@@ -938,10 +954,11 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 
 		c.Config.Oidc.Scopes = v
 	}
+}
 
-	fedApplyConnectionPatchSAML(c, patch)
-	fedApplyConnectionPatchOIDC(c, patch)
-
+// fedApplyConnectionPatchDomains applies the domain-ownership list half of a
+// connection patch.
+func fedApplyConnectionPatchDomains(c *domain.Connection, patch map[string]any) {
 	switch v := patch["domains"].(type) {
 	case []any:
 		doms := make([]string, 0, len(v))

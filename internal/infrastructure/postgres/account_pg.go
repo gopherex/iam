@@ -857,6 +857,53 @@ func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.Acco
 	})
 }
 
+// accountMergeChallengeEnv is the identity-merge challenge's data envelope.
+type accountMergeChallengeEnv struct {
+	AccountID        string `json:"account_id"`
+	TargetIdentifier string `json:"target_identifier"`
+}
+
+// accountLoadValidMergeChallenge loads the merge challenge and validates it:
+// not consumed, not expired, bound to cmd.AccountID, and the code hashes to
+// the stored value.
+func (a *pgAccountStore) accountLoadValidMergeChallenge(ctx context.Context, cmd domain.AccountMergeConfirmCmd) (*models.IamChallenge, accountMergeChallengeEnv, error) {
+	var env accountMergeChallengeEnv
+
+	ch, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
+	if err != nil {
+		if isNoRows(err) {
+			return nil, env, domain.ErrChallengeInvalid
+		}
+
+		return nil, env, err
+	}
+
+	if ch.Consumed {
+		return nil, env, domain.ErrChallengeInvalid
+	}
+
+	if !ch.ExpiresAt.After(nowIn(ctx)) {
+		return nil, env, domain.ErrChallengeExpired
+	}
+
+	if len(ch.Data) > 0 {
+		if err := unmarshal(ch.Data, &env); err != nil {
+			return nil, env, err
+		}
+	}
+
+	if env.AccountID != cmd.AccountID {
+		return nil, env, domain.ErrChallengeInvalid
+	}
+
+	stored, ok := ch.CodeHash.Get()
+	if !ok || stored != accountHashToken(cmd.Code) {
+		return nil, env, domain.ErrChallengeInvalid
+	}
+
+	return ch, env, nil
+}
+
 // ConfirmIdentityMerge completes a pending identity merge: verifies the code
 // against the stored hash, consumes the challenge, links the target identity to
 // the account and returns the refreshed account + identity set.
@@ -867,40 +914,9 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 	}
 
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
-		ch, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
+		ch, env, err := a.accountLoadValidMergeChallenge(ctx, cmd)
 		if err != nil {
-			if isNoRows(err) {
-				return result{}, domain.ErrChallengeInvalid
-			}
-
 			return result{}, err
-		}
-
-		if ch.Consumed {
-			return result{}, domain.ErrChallengeInvalid
-		}
-
-		if !ch.ExpiresAt.After(nowIn(ctx)) {
-			return result{}, domain.ErrChallengeExpired
-		}
-
-		var env struct {
-			AccountID        string `json:"account_id"`
-			TargetIdentifier string `json:"target_identifier"`
-		}
-		if len(ch.Data) > 0 {
-			if err := unmarshal(ch.Data, &env); err != nil {
-				return result{}, err
-			}
-		}
-
-		if env.AccountID != cmd.AccountID {
-			return result{}, domain.ErrChallengeInvalid
-		}
-
-		stored, ok := ch.CodeHash.Get()
-		if !ok || stored != accountHashToken(cmd.Code) {
-			return result{}, domain.ErrChallengeInvalid
 		}
 
 		user, err := a.accountLoadUser(ctx, ch.ProjectID, cmd.AccountID)
