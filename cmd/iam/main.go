@@ -54,6 +54,196 @@ func main() {
 	}
 }
 
+// setupTelemetry starts the tracing SDK and, when metrics scraping is
+// enabled, the standalone metrics endpoint. With scraping on the SDK is asked
+// not to build its own metrics provider — two providers would mean two sets
+// of the same instruments.
+func setupTelemetry(ctx context.Context, cfg *config.Config) (http.Handler, func(context.Context) error, func(context.Context) error, error) {
+	telemetryOpts := []xtracesdk.Option{
+		xtracesdk.WithService(build.ServiceName),
+		xtracesdk.WithVersion(build.Version),
+		xtracesdk.WithInstanceID(build.InstanceID),
+	}
+	if cfg.Service.HTTP.MetricsEnabled {
+		telemetryOpts = append(telemetryOpts, xtracesdk.WithoutMetrics())
+	}
+
+	telemetryShutdown, err := xtracesdk.Setup(ctx, telemetryOpts...)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	if !cfg.Service.HTTP.MetricsEnabled {
+		return nil, telemetryShutdown, nil, nil
+	}
+
+	metricsHandler, metricsShutdown, err := setupMetrics(ctx, build.ServiceName, build.Version, build.InstanceID)
+	if err != nil {
+		return nil, telemetryShutdown, nil, err
+	}
+
+	return metricsHandler, telemetryShutdown, metricsShutdown, nil
+}
+
+// buildRootHandler assembles the top-level request router: API namespaces go
+// through the full middleware pipeline (outermost first: request meta,
+// X-Environment, CSRF for cookie-mode requests evaluated before cookie auth
+// while there is no Authorization header, cookie auth promoting the session
+// cookie to a Bearer header, CORS, security headers, then per-project rate
+// limiting) to the generated server; everything else falls through to the
+// embedded admin SPA. Probes/metrics are mounted here too, unless
+// ProbeAddr wants them on a separate listener (a k8s sidecar port not
+// exposed publicly) — the returned bool tells the caller which.
+func buildRootHandler(cfg *config.Config, db *postgres.DB, emitter postgres.Emitter, auth api.Authenticator, srv http.Handler, probeMux *http.ServeMux, metricsHandler http.Handler) (http.Handler, bool) {
+	// Trust forwarding headers (X-Forwarded-For/X-Real-IP) only from configured
+	// proxy networks; otherwise the real TCP peer is used so clients cannot spoof
+	// their IP to bypass IP-keyed rate limits.
+	api.SetTrustedProxies(cfg.Service.HTTP.TrustedProxies)
+
+	apiPipeline := api.RequestMetaMiddleware(
+		api.EnvironmentMiddleware(
+			api.TestClockMiddleware(postgres.NewPgTestMode(db, emitter),
+				api.CSRFMiddleware(postgres.NewPgPlatform(db))(
+					api.CookieAuthMiddleware(
+						api.SoftAuthMiddleware(auth)(srv))))))
+	// CORS allows the statically configured origins plus the dynamic per-client
+	// union (app clients' allowed_origins), cached for 60s.
+	apiPipeline = api.CORSMiddleware(cfg.Service.CORS.AllowedOrigins, postgres.NewPgAdminApps(db, emitter), 60*time.Second)(apiPipeline)
+	apiPipeline = api.SecurityHeaders(apiPipeline)
+	// Rate limiting honors per-project overrides (iam_config key=rate_limits),
+	// falling back to the hardcoded defaults when a project has no doc.
+	apiPipeline = api.NewRateLimitMiddleware(postgres.NewPgRateLimits(db))(apiPipeline)
+
+	root := http.NewServeMux()
+	// API namespaces go to the generated server; everything else is the embedded
+	// admin SPA (a stub until the binary is built with `make build` / -tags embed).
+	for _, prefix := range apiPathPrefixes() {
+		root.Handle(prefix, apiPipeline)
+	}
+
+	root.Handle("/", api.SecurityHeaders(web.Handler()))
+
+	// Metrics ride with the probes: the same listener a cluster already scrapes,
+	// and the same one it does not expose.
+	if metricsHandler != nil {
+		probeMux.Handle(metricsPath, metricsHandler)
+	}
+
+	separateProbes := cfg.Service.HTTP.ProbeAddr != "" && cfg.Service.HTTP.ProbeAddr != cfg.Service.HTTP.Addr
+	if !separateProbes {
+		root.Handle("/healthz/", probeMux)
+
+		if metricsHandler != nil {
+			root.Handle(metricsPath, metricsHandler)
+		}
+	}
+
+	return root, separateProbes
+}
+
+// registerShutdownHooks registers the cleanup steps sd runs, in order: stop
+// serving (API, then probes), flip liveness, flush telemetry. telemetryShutdown
+// is a pointer since it is nilled out after running (RegisterFnErr's cleanups
+// can run more than once — e.g. a signal during an already-running shutdown).
+func registerShutdownHooks(sd *xshutdown.Manager, httpSrv, probeSrv *http.Server, live *xprobe.Bool, telemetryShutdown *func(context.Context) error) {
+	sd.RegisterFnErr(
+		func(ctx context.Context) error { return httpSrv.Shutdown(ctx) },
+		func(ctx context.Context) error {
+			if probeSrv != nil {
+				return probeSrv.Shutdown(ctx)
+			}
+
+			return nil
+		},
+		func(ctx context.Context) error { live.Set(false); return nil },
+		func(ctx context.Context) error {
+			if *telemetryShutdown == nil {
+				return nil
+			}
+
+			err := (*telemetryShutdown)(ctx)
+			*telemetryShutdown = nil
+
+			return err
+		},
+	)
+}
+
+// startBackgroundWorkers launches the service's long-running loops; they
+// cancel with the shutdown context sd provides.
+func startBackgroundWorkers(sd *xshutdown.Manager, ob *outbox.Outbox, db *postgres.DB, webhooks *postgres.PgWebhooks, log *xlog.Logger) {
+	sd.Go(func(ctx context.Context) {
+		if err := ob.Run(ctx); err != nil && ctx.Err() == nil {
+			log.Error("outbox relay stopped", xlog.Error("err", err))
+		}
+	})
+	// Garbage collector: prune expired runtime rows (challenges, flows, auth /
+	// device / PAR codes, timed-out sessions and refresh tokens) that are only
+	// filtered read-side and would otherwise grow without bound.
+	sd.Go(func(ctx context.Context) {
+		db.RunGarbageCollector(ctx, 0, log.AppendName("gc"))
+	})
+	// Webhook retry: drain deliveries whose exponential backoff has elapsed
+	// (deliver() writes next_attempt_at; nothing consumed it before).
+	sd.Go(func(ctx context.Context) {
+		webhooks.RunRetryWorker(ctx, 0, log.AppendName("webhook-retry"))
+	})
+	// Jobs: drain pending async jobs (bulk user import, audit/data exports).
+	sd.Go(func(ctx context.Context) {
+		db.RunJobsWorker(ctx, 0, log.AppendName("jobs"))
+	})
+}
+
+// setupDatabase connects to Postgres and wires the at-rest cipher and public
+// URL the rest of the service depends on. It does not check whether
+// EncryptionKey is set — an empty key yields the identity (passthrough)
+// cipher, and it is the caller's job to decide whether that is acceptable.
+func setupDatabase(ctx context.Context, cfg *config.Config, log *xlog.Logger) (*postgres.DB, error) {
+	db, err := postgres.Connect(ctx, cfg.Infra.Postgres.DSN(),
+		postgres.WithLogger(log.AppendName("postgres")),
+		postgres.WithQueryLogLevel(cfg.Infra.Postgres.LogLevel),
+		postgres.WithMetrics(true),
+	)
+	if err != nil {
+		log.Error("postgres connect failed", xlog.Error("err", err))
+		return nil, err
+	}
+
+	cph, err := postgres.NewCipher(cfg.Service.Auth.EncryptionKey)
+	if err != nil {
+		log.Error("encryption key invalid", xlog.Error("err", err))
+		return nil, err
+	}
+
+	db.UseCipher(cph)
+	// The public base URL is the OIDC issuer prefix and the origin of every
+	// absolute URL the service advertises. Normalize() already proved it is an
+	// absolute http(s) URL without a trailing slash.
+	db.UsePublicURL(cfg.Service.HTTP.PublicURL)
+
+	return db, nil
+}
+
+// runMigrations applies the service's own migrations plus the outbox
+// library's (it owns its own table, outbox_messages, so it migrates itself).
+func runMigrations(ctx context.Context, db *postgres.DB, log *xlog.Logger) error {
+	if err := db.Migrate(ctx); err != nil {
+		log.Error("migrate failed", xlog.Error("err", err))
+		return err
+	}
+
+	for _, stmt := range outbox.Migrations() {
+		if _, err := db.Pool.Exec(ctx, stmt); err != nil {
+			log.Error("outbox migrate failed", xlog.Error("err", err))
+			return err
+		}
+	}
+
+	log.Info("migrations applied")
+
+	return nil
+}
+
 func run() error {
 	configPath := flag.String("config", "", "path to config file (yaml/json/toml); overrides CONFIG_PATH discovery")
 
@@ -82,48 +272,22 @@ func run() error {
 
 	ctx := context.Background()
 
-	// ----- telemetry -----
-	// With scraping on we own the metric pipeline, so the SDK is asked not to
-	// build one: two providers would mean two sets of the same instruments.
-	telemetryOpts := []xtracesdk.Option{
-		xtracesdk.WithService(build.ServiceName),
-		xtracesdk.WithVersion(build.Version),
-		xtracesdk.WithInstanceID(build.InstanceID),
-	}
-	if cfg.Service.HTTP.MetricsEnabled {
-		telemetryOpts = append(telemetryOpts, xtracesdk.WithoutMetrics())
-	}
-
-	telemetryShutdown, err := xtracesdk.Setup(ctx, telemetryOpts...)
+	metricsHandler, telemetryShutdown, metricsShutdown, err := setupTelemetry(ctx, cfg)
 	if err != nil {
 		slog.Error("telemetry setup failed", "err", err)
 		return err
 	}
+
 	defer func() {
 		if telemetryShutdown != nil {
 			_ = telemetryShutdown(context.Background())
 		}
 	}()
-
-	var metricsHandler http.Handler
-
-	var metricsShutdown func(context.Context) error
-
-	if cfg.Service.HTTP.MetricsEnabled {
-		metricsHandler, metricsShutdown, err = setupMetrics(
-			ctx, build.ServiceName, build.Version, build.InstanceID)
-		if err != nil {
-			slog.Error("metrics setup failed", "err", err)
-
-			return err
+	defer func() {
+		if metricsShutdown != nil {
+			_ = metricsShutdown(context.Background())
 		}
-
-		defer func() {
-			if metricsShutdown != nil {
-				_ = metricsShutdown(context.Background())
-			}
-		}()
-	}
+	}()
 
 	// ----- logger -----
 	log := newLogger(cfg.Service.Logger).AppendName(build.ServiceName).With(buildFields()...)
@@ -135,48 +299,21 @@ func run() error {
 	log.Info("starting", xlog.String("addr", cfg.Service.HTTP.Addr))
 
 	// ----- postgres -----
-	db, err := postgres.Connect(ctx, cfg.Infra.Postgres.DSN(),
-		postgres.WithLogger(log.AppendName("postgres")),
-		postgres.WithQueryLogLevel(cfg.Infra.Postgres.LogLevel),
-		postgres.WithMetrics(true),
-	)
+	db, err := setupDatabase(ctx, cfg, log)
 	if err != nil {
-		log.Error("postgres connect failed", xlog.Error("err", err))
 		return err
 	}
+
 	defer db.Close()
-
-	// At-rest secret encryption (signing-key PEMs, TOTP secrets).
-	cph, err := postgres.NewCipher(cfg.Service.Auth.EncryptionKey)
-	if err != nil {
-		log.Error("encryption key invalid", xlog.Error("err", err))
-		return err
-	}
-
-	db.UseCipher(cph)
-	// The public base URL is the OIDC issuer prefix and the origin of every
-	// absolute URL the service advertises. Normalize() already proved it is an
-	// absolute http(s) URL without a trailing slash.
-	db.UsePublicURL(cfg.Service.HTTP.PublicURL)
 
 	if cfg.Service.Auth.EncryptionKey == "" {
 		log.Error("secrets-at-rest encryption is DISABLED — set service.auth.encryption_key (base64 32-byte AES-256 key) before running in production")
 		return errors.New("service.auth.encryption_key is required")
 	}
 
-	if err := db.Migrate(ctx); err != nil {
-		log.Error("migrate failed", xlog.Error("err", err))
+	if err := runMigrations(ctx, db, log); err != nil {
 		return err
 	}
-	// Outbox owns its own table (outbox_messages); apply its migrations too.
-	for _, stmt := range outbox.Migrations() {
-		if _, err := db.Pool.Exec(ctx, stmt); err != nil {
-			log.Error("outbox migrate failed", xlog.Error("err", err))
-			return err
-		}
-	}
-
-	log.Info("migrations applied")
 
 	// ----- outbox (email publisher; enqueue joins the caller tx via db.TxDB) -----
 	// BatchSize=1: the relay marks the WHOLE claimed batch for retry when Publish
@@ -228,57 +365,8 @@ func run() error {
 		xprobe.Readiness(xprobe.FromError(db.Ping)),
 	)
 
-	// API request pipeline (outermost first): X-Environment -> ctx; CSRF for
-	// cookie-mode requests (evaluated before cookie auth, while there is no
-	// Authorization header); cookie auth promotes the session cookie to a Bearer
-	// header; then the generated API server.
-	// Trust forwarding headers (X-Forwarded-For/X-Real-IP) only from configured
-	// proxy networks; otherwise the real TCP peer is used so clients cannot spoof
-	// their IP to bypass IP-keyed rate limits.
-	api.SetTrustedProxies(cfg.Service.HTTP.TrustedProxies)
-
-	apiPipeline := api.RequestMetaMiddleware(
-		api.EnvironmentMiddleware(
-			api.TestClockMiddleware(postgres.NewPgTestMode(db, emitter),
-				api.CSRFMiddleware(postgres.NewPgPlatform(db))(
-					api.CookieAuthMiddleware(
-						api.SoftAuthMiddleware(auth)(srv))))))
-	// CORS allows the statically configured origins plus the dynamic per-client
-	// union (app clients' allowed_origins), cached for 60s.
-	apiPipeline = api.CORSMiddleware(cfg.Service.CORS.AllowedOrigins, postgres.NewPgAdminApps(db, emitter), 60*time.Second)(apiPipeline)
-	apiPipeline = api.SecurityHeaders(apiPipeline)
-	// Rate limiting honors per-project overrides (iam_config key=rate_limits),
-	// falling back to the hardcoded defaults when a project has no doc.
-	apiPipeline = api.NewRateLimitMiddleware(postgres.NewPgRateLimits(db))(apiPipeline)
-
-	root := http.NewServeMux()
-	// API namespaces go to the generated server; everything else is the embedded
-	// admin SPA (a stub until the binary is built with `make build` / -tags embed).
-	for _, prefix := range apiPathPrefixes() {
-		root.Handle(prefix, apiPipeline)
-	}
-
-	root.Handle("/", api.SecurityHeaders(web.Handler()))
-
-	// Probes get their own listener when ProbeAddr differs from the API port (a
-	// k8s sidecar port not exposed publicly); otherwise they mount on the API
-	// server under /healthz/.
 	probeAddr := cfg.Service.HTTP.ProbeAddr
-
-	// Metrics ride with the probes: the same listener a cluster already scrapes,
-	// and the same one it does not expose.
-	if metricsHandler != nil {
-		probeMux.Handle(metricsPath, metricsHandler)
-	}
-
-	separateProbes := probeAddr != "" && probeAddr != cfg.Service.HTTP.Addr
-	if !separateProbes {
-		root.Handle("/healthz/", probeMux)
-
-		if metricsHandler != nil {
-			root.Handle(metricsPath, metricsHandler)
-		}
-	}
+	root, separateProbes := buildRootHandler(cfg, db, emitter, auth, srv, probeMux, metricsHandler)
 
 	httpSrv := &http.Server{
 		Addr:           cfg.Service.HTTP.Addr,
@@ -300,49 +388,8 @@ func run() error {
 		xshutdown.WithTimeout(time.Duration(cfg.Service.HTTP.ShutdownSec)*time.Second),
 		xshutdown.WithErrorHandler(func(err error) { log.Error("shutdown error", xlog.Error("err", err)) }),
 	)
-	// Cleanup runs in registration order: stop serving, flip liveness, flush telemetry.
-	sd.RegisterFnErr(
-		func(ctx context.Context) error { return httpSrv.Shutdown(ctx) },
-		func(ctx context.Context) error {
-			if probeSrv != nil {
-				return probeSrv.Shutdown(ctx)
-			}
-
-			return nil
-		},
-		func(ctx context.Context) error { live.Set(false); return nil },
-		func(ctx context.Context) error {
-			if telemetryShutdown == nil {
-				return nil
-			}
-
-			err := telemetryShutdown(ctx)
-			telemetryShutdown = nil
-
-			return err
-		},
-	)
-	// Background workers cancel with the shutdown context.
-	sd.Go(func(ctx context.Context) {
-		if err := ob.Run(ctx); err != nil && ctx.Err() == nil {
-			log.Error("outbox relay stopped", xlog.Error("err", err))
-		}
-	})
-	// Garbage collector: prune expired runtime rows (challenges, flows, auth /
-	// device / PAR codes, timed-out sessions and refresh tokens) that are only
-	// filtered read-side and would otherwise grow without bound.
-	sd.Go(func(ctx context.Context) {
-		db.RunGarbageCollector(ctx, 0, log.AppendName("gc"))
-	})
-	// Webhook retry: drain deliveries whose exponential backoff has elapsed
-	// (deliver() writes next_attempt_at; nothing consumed it before).
-	sd.Go(func(ctx context.Context) {
-		webhooks.RunRetryWorker(ctx, 0, log.AppendName("webhook-retry"))
-	})
-	// Jobs: drain pending async jobs (bulk user import, audit/data exports).
-	sd.Go(func(ctx context.Context) {
-		db.RunJobsWorker(ctx, 0, log.AppendName("jobs"))
-	})
+	registerShutdownHooks(sd, httpSrv, probeSrv, live, &telemetryShutdown)
+	startBackgroundWorkers(sd, ob, db, webhooks, log)
 
 	if probeSrv != nil {
 		sd.Go(func(context.Context) {
