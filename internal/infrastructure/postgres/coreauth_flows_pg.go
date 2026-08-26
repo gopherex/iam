@@ -1373,35 +1373,36 @@ func (a *pgCoreAuthFlows) signupCompleteWithFreshSession(ctx context.Context, ro
 // token (§5 rule 2), and surfaces a session.
 func (a *pgCoreAuthFlows) flowCompleteOrGateConsents(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd, sess *domain.Session) (*domain.FlowState, error) {
 	required := flowRequiredConsentDocs(f)
-	if len(required) > 0 {
-		if missing := missingRequiredConsents(required, f.ConsentsAccepted); len(missing) == 0 {
-			if err := a.signupRevokeProvisionalSession(ctx, f, sess); err != nil {
-				return nil, err
-			}
+	if len(required) == 0 {
+		return a.signupCompleteWithExistingSession(ctx, row, f, f.ConsentsAccepted, sess)
+	}
 
-			return a.signupCompleteWithFreshSession(ctx, row, f, f.ConsentsAccepted)
-		}
-		// The identity step (verify_email / set_password) already minted a session,
-		// but the user is NOT fully registered until required consents are accepted.
-		// Revoke that session now so no valid (even if unsurfaced) session/refresh
-		// token lingers for an unregistered user; accept_consents mints the real one.
+	if missing := missingRequiredConsents(required, f.ConsentsAccepted); len(missing) == 0 {
 		if err := a.signupRevokeProvisionalSession(ctx, f, sess); err != nil {
 			return nil, err
 		}
 
-		f.Step = domain.FlowStepAcceptConsents
-		f.Error = nil
-
-		if err := a.db.withTx(ctx, func(ctx context.Context) error {
-			return a.flowSave(ctx, row, f)
-		}); err != nil {
-			return nil, err
-		}
-
-		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
+		return a.signupCompleteWithFreshSession(ctx, row, f, f.ConsentsAccepted)
 	}
 
-	return a.signupCompleteWithExistingSession(ctx, row, f, f.ConsentsAccepted, sess)
+	// The identity step (verify_email / set_password) already minted a session,
+	// but the user is NOT fully registered until required consents are accepted.
+	// Revoke that session now so no valid (even if unsurfaced) session/refresh
+	// token lingers for an unregistered user; accept_consents mints the real one.
+	if err := a.signupRevokeProvisionalSession(ctx, f, sess); err != nil {
+		return nil, err
+	}
+
+	f.Step = domain.FlowStepAcceptConsents
+	f.Error = nil
+
+	if err := a.db.withTx(ctx, func(ctx context.Context) error {
+		return a.flowSave(ctx, row, f)
+	}); err != nil {
+		return nil, err
+	}
+
+	return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
 }
 
 // signupAcceptConsents handles the accept_consents step: it validates that every

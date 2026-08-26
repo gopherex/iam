@@ -88,41 +88,43 @@ type oauthProviderData struct {
 // callers see a single flat view of the provider's OAuth settings.
 func (d oauthProviderData) resolved() oauthProviderData {
 	out := d
-
 	out.Config = nil
-	if d.Config != nil {
-		c := *d.Config
-		if out.Name == "" {
-			out.Name = c.Name
-		}
 
-		if len(out.Scopes) == 0 {
-			out.Scopes = c.Scopes
-		}
+	if d.Config == nil {
+		return out
+	}
 
-		if out.ClientID == "" {
-			out.ClientID = c.ClientID
-		}
+	c := *d.Config
+	if out.Name == "" {
+		out.Name = c.Name
+	}
 
-		if out.ClientSecret == "" {
-			out.ClientSecret = c.ClientSecret
-		}
+	if len(out.Scopes) == 0 {
+		out.Scopes = c.Scopes
+	}
 
-		if out.AuthURL == "" {
-			out.AuthURL = c.AuthURL
-		}
+	if out.ClientID == "" {
+		out.ClientID = c.ClientID
+	}
 
-		if out.TokenURL == "" {
-			out.TokenURL = c.TokenURL
-		}
+	if out.ClientSecret == "" {
+		out.ClientSecret = c.ClientSecret
+	}
 
-		if out.UserInfoURL == "" {
-			out.UserInfoURL = c.UserInfoURL
-		}
+	if out.AuthURL == "" {
+		out.AuthURL = c.AuthURL
+	}
 
-		if out.RedirectURL == "" {
-			out.RedirectURL = c.RedirectURL
-		}
+	if out.TokenURL == "" {
+		out.TokenURL = c.TokenURL
+	}
+
+	if out.UserInfoURL == "" {
+		out.UserInfoURL = c.UserInfoURL
+	}
+
+	if out.RedirectURL == "" {
+		out.RedirectURL = c.RedirectURL
 	}
 
 	return out
@@ -206,6 +208,37 @@ func (a *pgOAuthSocial) EnabledProviders(ctx context.Context, projectID string) 
 	return out, nil
 }
 
+// createAndLinkSocialAccount provisions a fresh iam_users account and links a
+// new iam_identities row to it — the first-login half shared by CompleteLogin
+// and resolveLoginAndMint.
+func (a *pgOAuthSocial) createAndLinkSocialAccount(ctx context.Context, projectID, provider, providerAccountID, email string) (*domain.Account, error) {
+	acct, err := a.createSocialAccount(ctx, projectID, email)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.insertIdentity(ctx, &domain.Identity{
+		ID:                newUUID(),
+		Type:              "oauth",
+		Provider:          provider,
+		ProviderAccountID: providerAccountID,
+		Email:             email,
+	}, projectID, acct.ID); err != nil {
+		return nil, err
+	}
+
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "identity.linked",
+		ProjectID:   projectID,
+		AggregateID: acct.ID,
+		Payload:     acct,
+	}); err != nil {
+		return nil, err
+	}
+
+	return acct, nil
+}
+
 // CompleteLogin resolves the OAuth callback `code` into an account + session.
 //
 // It swaps `code` at the provider token endpoint (golang.org/x/oauth2 Exchange)
@@ -245,34 +278,13 @@ func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, 
 		var acct *domain.Account
 		if errors.Is(err, domain.ErrNotFound) {
 			// No link yet: provision a new account and link the identity.
-			acct, err = a.createSocialAccount(ctx, projectID, email)
-			if err != nil {
-				return result{}, err
-			}
-
-			if err := a.insertIdentity(ctx, &domain.Identity{
-				ID:                newUUID(),
-				Type:              "oauth",
-				Provider:          provider,
-				ProviderAccountID: providerAccountID,
-				Email:             email,
-			}, projectID, acct.ID); err != nil {
-				return result{}, err
-			}
-
-			if err := a.emitter.Emit(ctx, domain.Event{
-				Type:        "identity.linked",
-				ProjectID:   projectID,
-				AggregateID: acct.ID,
-				Payload:     acct,
-			}); err != nil {
-				return result{}, err
-			}
+			acct, err = a.createAndLinkSocialAccount(ctx, projectID, provider, providerAccountID, email)
 		} else {
 			acct, err = a.loadAccount(ctx, projectID, ident.UserID)
-			if err != nil {
-				return result{}, err
-			}
+		}
+
+		if err != nil {
+			return result{}, err
 		}
 
 		sess, err := a.mintSession(ctx, acct)
@@ -683,34 +695,13 @@ func (a *pgOAuthSocial) resolveLoginAndMint(ctx context.Context, projectID, prov
 
 		var acct *domain.Account
 		if errors.Is(err, domain.ErrNotFound) {
-			acct, err = a.createSocialAccount(ctx, projectID, email)
-			if err != nil {
-				return nil, err
-			}
-
-			if err := a.insertIdentity(ctx, &domain.Identity{
-				ID:                newUUID(),
-				Type:              "oauth",
-				Provider:          provider,
-				ProviderAccountID: providerAccountID,
-				Email:             email,
-			}, projectID, acct.ID); err != nil {
-				return nil, err
-			}
-
-			if err := a.emitter.Emit(ctx, domain.Event{
-				Type:        "identity.linked",
-				ProjectID:   projectID,
-				AggregateID: acct.ID,
-				Payload:     acct,
-			}); err != nil {
-				return nil, err
-			}
+			acct, err = a.createAndLinkSocialAccount(ctx, projectID, provider, providerAccountID, email)
 		} else {
 			acct, err = a.loadAccount(ctx, projectID, ident.UserID)
-			if err != nil {
-				return nil, err
-			}
+		}
+
+		if err != nil {
+			return nil, err
 		}
 
 		sess, err := a.mintSession(ctx, acct)

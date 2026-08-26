@@ -1521,6 +1521,28 @@ func (a *pgCoreAuth) coreAuthActiveFactors(ctx context.Context, accountID string
 	return out, nil
 }
 
+// coreAuthHandleReusedRefresh is the theft-response side of presenting an
+// already-revoked refresh token: when reuse_detection is on, it revokes every
+// one of the user's sessions and emits token.reuse_detected. A no-op when
+// reuse_detection is off (the caller still rejects the token either way).
+func (a *pgCoreAuth) coreAuthHandleReusedRefresh(ctx context.Context, row *models.IamRefreshToken, sp EffectiveSessionPolicy) error {
+	if !sp.ReuseDetection {
+		return nil
+	}
+
+	if err := a.coreAuthRevokeAllForUser(ctx, row.ProjectID, row.UserID); err != nil {
+		return err
+	}
+
+	return a.emitter.Emit(ctx, domain.Event{
+		Type:        "token.reuse_detected",
+		ProjectID:   row.ProjectID,
+		Environment: coreAuthDefaultEnv,
+		AggregateID: row.UserID,
+		Payload:     map[string]any{"session_id": row.SessionID},
+	})
+}
+
 // Refresh rotates a refresh token: it looks the token up by sha256 hash,
 // validates it (not revoked / not expired), revokes the old one, and mints a
 // fresh session for the same account.
@@ -1561,28 +1583,14 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 			return refreshResult{}, err
 		}
 
+		// Presenting an already-rotated (revoked) refresh token is always rejected
+		// — disabling reuse_detection must never re-enable replay. The reuse-theft
+		// cascade (below) must PERSIST, so we commit this tx (returning a nil error
+		// with revoked=true) and surface ErrTokenRevoked to the caller outside the
+		// tx — returning the error here would roll the cascade back.
 		if row.Revoked {
-			// Presenting an already-rotated (revoked) refresh token is always
-			// rejected — disabling reuse_detection must never re-enable replay. When
-			// reuse_detection is on, additionally treat it as theft: revoke every one
-			// of the user's sessions and emit token.reuse_detected. The cascade must
-			// PERSIST, so we commit this tx (returning a nil error with revoked=true)
-			// and surface ErrTokenRevoked to the caller outside the tx — returning the
-			// error here would roll the cascade back.
-			if sp.ReuseDetection {
-				if err := a.coreAuthRevokeAllForUser(ctx, row.ProjectID, row.UserID); err != nil {
-					return refreshResult{}, err
-				}
-
-				if err := a.emitter.Emit(ctx, domain.Event{
-					Type:        "token.reuse_detected",
-					ProjectID:   row.ProjectID,
-					Environment: coreAuthDefaultEnv,
-					AggregateID: row.UserID,
-					Payload:     map[string]any{"session_id": row.SessionID},
-				}); err != nil {
-					return refreshResult{}, err
-				}
+			if err := a.coreAuthHandleReusedRefresh(ctx, row, sp); err != nil {
+				return refreshResult{}, err
 			}
 
 			return refreshResult{revoked: true}, nil
@@ -3458,31 +3466,30 @@ func (a *pgCoreAuth) Revoke(ctx context.Context, cmd domain.CoreAuthRevokeCmd) e
 		} else if !errors.Is(translatePgErr("refresh_token", err), ErrNotFound) {
 			return err
 		}
-		// Access token (JWT): route by its sid claim. Revocation is idempotent,
-		// so the claims are read unverified purely to find the session.
-		if claims := a.db.Signer().UnverifiedClaims(cmd.Token); claims != nil {
-			sid, _ := claims["sid"].(string)
+		// Access token (JWT): route by its sid claim. Revocation is idempotent, so
+		// the claims are read unverified purely to find the session. Reading from a
+		// nil claims map is safe and yields "", so a malformed/unknown token falls
+		// through to the idempotent-success return below.
+		claims := a.db.Signer().UnverifiedClaims(cmd.Token)
 
-			pid, _ := claims["pid"].(string)
-			if sid != "" {
-				if err := a.coreAuthRevokeSession(ctx, pid, sid); err != nil &&
-					!errors.Is(err, domain.ErrSessionNotFound) {
-					return err
-				}
-
-				if err := a.emitter.Emit(ctx, domain.Event{
-					Type:        "token.revoked",
-					ProjectID:   pid,
-					Environment: coreAuthDefaultEnv,
-					AggregateID: sid,
-					Payload:     map[string]any{"session_id": sid, "project_id": pid},
-				}); err != nil {
-					return err
-				}
-			}
+		sid, _ := claims["sid"].(string)
+		if sid == "" {
+			return nil
 		}
-		// Unknown token: revocation is idempotent, treat as success.
-		return nil
+
+		pid, _ := claims["pid"].(string)
+		if err := a.coreAuthRevokeSession(ctx, pid, sid); err != nil &&
+			!errors.Is(err, domain.ErrSessionNotFound) {
+			return err
+		}
+
+		return a.emitter.Emit(ctx, domain.Event{
+			Type:        "token.revoked",
+			ProjectID:   pid,
+			Environment: coreAuthDefaultEnv,
+			AggregateID: sid,
+			Payload:     map[string]any{"session_id": sid, "project_id": pid},
+		})
 	})
 }
 

@@ -2142,21 +2142,26 @@ func (a *pgAdminConfig) listProviders(ctx context.Context, projectID, kind strin
 
 func adminProviderToDomain(cipher Cipher, row *models.IamProvider) (domain.AdminProvider, error) {
 	p := domain.AdminProvider{ID: row.ID, Type: row.Provider, Enabled: row.Enabled}
-	if len(row.Data) > 0 {
-		var d adminProviderData
-		if err := json.Unmarshal(row.Data, &d); err == nil {
-			if d.Type != "" {
-				p.Type = d.Type
-			}
 
-			cfg, err := decryptProviderConfig(cipher, jsonToRaw(d.Config))
-			if err != nil {
-				return domain.AdminProvider{}, err
-			}
-
-			p.Config = cfg
-		}
+	if len(row.Data) == 0 {
+		return p, nil
 	}
+
+	var d adminProviderData
+	if err := json.Unmarshal(row.Data, &d); err != nil {
+		return p, nil // malformed envelope: fall back to the row's own columns
+	}
+
+	if d.Type != "" {
+		p.Type = d.Type
+	}
+
+	cfg, err := decryptProviderConfig(cipher, jsonToRaw(d.Config))
+	if err != nil {
+		return domain.AdminProvider{}, err
+	}
+
+	p.Config = cfg
 
 	return p, nil
 }
@@ -2946,33 +2951,38 @@ func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminCo
 
 func adminTokenProfileToDomain(row *models.IamTokenProfile) domain.AdminTokenProfile {
 	p := domain.AdminTokenProfile{ID: row.ID, Name: row.Name}
-	if len(row.Data) > 0 {
-		// json.RawMessage, not jx.Raw: both are []byte, but only RawMessage keeps
-		// the bytes as they are. Decoding into jx.Raw makes encoding/json try to
-		// base64-decode real JSON, which is how a stored template came back as
-		// noise.
-		var d struct {
-			Name           string                     `json:"name"`
-			Audience       string                     `json:"audience"`
-			AccessTTL      int                        `json:"access_ttl"`
-			RefreshTTL     int                        `json:"refresh_ttl"`
-			ClaimsTemplate map[string]json.RawMessage `json:"claims_template"`
-		}
-		if err := json.Unmarshal(row.Data, &d); err == nil {
-			if d.Name != "" {
-				p.Name = d.Name
-			}
 
-			p.Audience = d.Audience
-			p.AccessTTL = d.AccessTTL
+	if len(row.Data) == 0 {
+		return p
+	}
 
-			p.RefreshTTL = d.RefreshTTL
-			if len(d.ClaimsTemplate) > 0 {
-				p.ClaimsTemplate = make(map[string]jx.Raw, len(d.ClaimsTemplate))
-				for name, raw := range d.ClaimsTemplate {
-					p.ClaimsTemplate[name] = jx.Raw(raw)
-				}
-			}
+	// json.RawMessage, not jx.Raw: both are []byte, but only RawMessage keeps
+	// the bytes as they are. Decoding into jx.Raw makes encoding/json try to
+	// base64-decode real JSON, which is how a stored template came back as
+	// noise.
+	var d struct {
+		Name           string                     `json:"name"`
+		Audience       string                     `json:"audience"`
+		AccessTTL      int                        `json:"access_ttl"`
+		RefreshTTL     int                        `json:"refresh_ttl"`
+		ClaimsTemplate map[string]json.RawMessage `json:"claims_template"`
+	}
+	if err := json.Unmarshal(row.Data, &d); err != nil {
+		return p // malformed envelope: fall back to the row's own columns
+	}
+
+	if d.Name != "" {
+		p.Name = d.Name
+	}
+
+	p.Audience = d.Audience
+	p.AccessTTL = d.AccessTTL
+	p.RefreshTTL = d.RefreshTTL
+
+	if len(d.ClaimsTemplate) > 0 {
+		p.ClaimsTemplate = make(map[string]jx.Raw, len(d.ClaimsTemplate))
+		for name, raw := range d.ClaimsTemplate {
+			p.ClaimsTemplate[name] = jx.Raw(raw)
 		}
 	}
 

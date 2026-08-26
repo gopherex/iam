@@ -46,30 +46,43 @@ func providerConfigCrypt(cfg map[string]jx.Raw, transform func(string) (string, 
 	}
 
 	out := make(map[string]jx.Raw, len(cfg))
+
 	for k, v := range cfg {
-		if _, ok := providerSecretKeys[strings.ToLower(k)]; ok {
-			var s string
-			if err := json.Unmarshal(v, &s); err == nil { // only transform JSON strings
-				t, err := transform(s)
-				if err != nil {
-					return nil, err
-				}
-
-				b, err := json.Marshal(t)
-				if err != nil {
-					return nil, err
-				}
-
-				out[k] = jx.Raw(b)
-
-				continue
-			}
+		tv, err := transformProviderValue(k, v, transform)
+		if err != nil {
+			return nil, err
 		}
 
-		out[k] = v
+		out[k] = tv
 	}
 
 	return out, nil
+}
+
+// transformProviderValue applies transform to v when k is a recognized secret
+// key holding a JSON string; every other key, and a secret key holding a
+// non-string value, passes through unchanged.
+func transformProviderValue(k string, v jx.Raw, transform func(string) (string, error)) (jx.Raw, error) {
+	if _, ok := providerSecretKeys[strings.ToLower(k)]; !ok {
+		return v, nil
+	}
+
+	var s string
+	if err := json.Unmarshal(v, &s); err != nil {
+		return v, nil // not a JSON string; leave untouched
+	}
+
+	t, err := transform(s)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := json.Marshal(t)
+	if err != nil {
+		return nil, err
+	}
+
+	return jx.Raw(b), nil
 }
 
 func encryptProviderConfig(c Cipher, cfg map[string]jx.Raw) (map[string]jx.Raw, error) {

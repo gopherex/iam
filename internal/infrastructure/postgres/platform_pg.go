@@ -43,6 +43,43 @@ type platformConsentConfig struct {
 	Documents []domain.ConsentDocument `json:"documents"`
 }
 
+// applyPublicAuthConfig overlays the project's iam_config(key=auth) envelope
+// onto cfg: advertised methods are filtered to those actually implemented
+// end-to-end (honest public config — unsupported/legacy values persisted in
+// the envelope are dropped rather than promised to clients, preserving the
+// stored doc's order), and locale/registration overrides are applied when set.
+func applyPublicAuthConfig(cfg *domain.PublicConfig, rawData []byte) error {
+	var ac platformAuthConfig
+	if err := unmarshal(rawData, &ac); err != nil {
+		return err
+	}
+
+	methods := make([]string, 0, len(ac.Methods))
+	for _, m := range ac.Methods {
+		if domain.SupportedAuthMethods.Has(m) {
+			methods = append(methods, m)
+		}
+	}
+
+	cfg.Methods = methods
+	if len(ac.Locales) > 0 {
+		cfg.Locales = ac.Locales
+	}
+
+	if ac.DefaultLocale != "" {
+		cfg.DefaultLocale = ac.DefaultLocale
+	}
+
+	if ac.Registration != nil {
+		cfg.Registration = &domain.RegistrationInfo{
+			Mode:             ac.Registration.Mode,
+			PasswordStrategy: ac.Registration.PasswordStrategy,
+		}
+	}
+
+	return nil
+}
+
 // PublicConfig assembles domain.PublicConfig for the (projectID) tenant. The
 // clientID is accepted for interface parity / future per-client overrides; the
 // current bootstrap is project-wide. A missing project is a not-found.
@@ -92,35 +129,8 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 		}
 		// No explicit auth policy yet: leave defaults derived from the project.
 	} else if len(authRow.Data) > 0 {
-		var ac platformAuthConfig
-		if err := unmarshal(authRow.Data, &ac); err != nil {
+		if err := applyPublicAuthConfig(cfg, authRow.Data); err != nil {
 			return nil, err
-		}
-		// Honest public config: advertise only auth methods that are actually
-		// implemented end-to-end. Unsupported/legacy values persisted in the
-		// envelope are filtered out rather than promised to clients. Order from
-		// the stored doc is preserved.
-		methods := make([]string, 0, len(ac.Methods))
-		for _, m := range ac.Methods {
-			if domain.SupportedAuthMethods.Has(m) {
-				methods = append(methods, m)
-			}
-		}
-
-		cfg.Methods = methods
-		if len(ac.Locales) > 0 {
-			cfg.Locales = ac.Locales
-		}
-
-		if ac.DefaultLocale != "" {
-			cfg.DefaultLocale = ac.DefaultLocale
-		}
-
-		if ac.Registration != nil {
-			cfg.Registration = &domain.RegistrationInfo{
-				Mode:             ac.Registration.Mode,
-				PasswordStrategy: ac.Registration.PasswordStrategy,
-			}
 		}
 	}
 

@@ -1949,12 +1949,44 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(
 	return code, minted, nil
 }
 
+// fedCreateAndLinkAccount provisions a fresh iam_users account (status
+// active, kind human, primary_email=email) and links an iam_identities row
+// (Type "saml" | "oidc") to it — the first-login half of fedProvisionSubject.
+func (a *pgFederationRuntime) fedCreateAndLinkAccount(ctx context.Context, projectID, provider, idType, providerAccountID, email string) (*domain.Account, error) {
+	acct, err := a.fedCreateAccount(ctx, projectID, email)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.fedInsertIdentity(ctx, &domain.Identity{
+		ID:                newUUID(),
+		Type:              idType,
+		Provider:          provider,
+		ProviderAccountID: providerAccountID,
+		Email:             email,
+	}, projectID, acct.ID); err != nil {
+		return nil, err
+	}
+
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "identity.linked",
+		ProjectID:   projectID,
+		Environment: "",
+		AggregateID: acct.ID,
+		Payload:     map[string]any{"user_id": acct.ID, "project_id": projectID, "provider": provider, "provider_account_id": providerAccountID, "id_type": idType},
+	}); err != nil {
+		return nil, err
+	}
+
+	return acct, nil
+}
+
 // fedProvisionSubject mirrors oauthsocial.resolveLoginAndMint for SSO: it finds an
 // iam_identities row by (projectID, provider, providerAccountID); when absent it
-// provisions a fresh iam_users account (status active, kind human,
-// primary_email=email) and links an iam_identities row (Type "saml" | "oidc");
-// otherwise it loads the existing account. It then mints an iam_sessions row +
-// signed access-token JWT (fedMintSession). Runs inside the caller's tx.
+// provisions a fresh iam_users account and links an identity to it (see
+// fedCreateAndLinkAccount); otherwise it loads the existing account. It then
+// mints an iam_sessions row + signed access-token JWT (fedMintSession). Runs
+// inside the caller's tx.
 func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID, connectionID, provider, idType, providerAccountID, email string) (*domain.Account, *domain.Session, error) {
 	ident, err := a.fedFindIdentity(ctx, projectID, provider, providerAccountID)
 	if err != nil && !errors.Is(err, domain.ErrNotFound) {
@@ -1963,35 +1995,13 @@ func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID
 
 	var acct *domain.Account
 	if errors.Is(err, domain.ErrNotFound) {
-		acct, err = a.fedCreateAccount(ctx, projectID, email)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		if err := a.fedInsertIdentity(ctx, &domain.Identity{
-			ID:                newUUID(),
-			Type:              idType,
-			Provider:          provider,
-			ProviderAccountID: providerAccountID,
-			Email:             email,
-		}, projectID, acct.ID); err != nil {
-			return nil, nil, err
-		}
-
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "identity.linked",
-			ProjectID:   projectID,
-			Environment: "",
-			AggregateID: acct.ID,
-			Payload:     map[string]any{"user_id": acct.ID, "project_id": projectID, "provider": provider, "provider_account_id": providerAccountID, "id_type": idType},
-		}); err != nil {
-			return nil, nil, err
-		}
+		acct, err = a.fedCreateAndLinkAccount(ctx, projectID, provider, idType, providerAccountID, email)
 	} else {
 		acct, err = a.fedLoadAccount(ctx, projectID, ident.UserID)
-		if err != nil {
-			return nil, nil, err
-		}
+	}
+
+	if err != nil {
+		return nil, nil, err
 	}
 
 	sess, err := a.fedMintSession(ctx, acct, idType)

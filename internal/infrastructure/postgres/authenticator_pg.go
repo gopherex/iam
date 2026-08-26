@@ -100,6 +100,43 @@ func (a *pgAuthenticator) verifyJWT(ctx context.Context, token string) (map[stri
 	return verified, nil
 }
 
+// checkSessionLive enforces what a still-unexpired JWT cannot: the session it
+// names must not be revoked/deleted, expired, or past its session_policy
+// idle/absolute timeout (checked in the session's own env, so the request's
+// X-Environment can't pick a weaker policy — this covers the access-token
+// path too, not only refresh, so rotating the token can't outlive the idle
+// window). On success it best-effort bumps last_active_at, throttled so
+// authenticated requests don't write on every call; a failed bump must never
+// fail authentication.
+func (a *pgAuthenticator) checkSessionLive(ctx context.Context, sid string) error {
+	row, err := models.FindIamSession(ctx, a.db.Bobx(), sid)
+	if err != nil {
+		return domain.ErrUnauthorized
+	}
+
+	if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
+		return domain.ErrUnauthorized
+	}
+
+	if sp, err := a.cfg.SessionPolicyForEnv(ctx, row.ProjectID, row.Environment); err == nil {
+		now := nowUTC()
+		if sp.IdleTimeout > 0 && now.Sub(row.LastActiveAt) > sp.IdleTimeout {
+			return domain.ErrUnauthorized
+		}
+
+		if sp.AbsoluteTimeout > 0 && now.Sub(row.CreatedAt) > sp.AbsoluteTimeout {
+			return domain.ErrUnauthorized
+		}
+	}
+
+	if now := nowUTC(); now.Sub(row.LastActiveAt) > activityThrottle {
+		la := now
+		_ = row.Update(ctx, a.db.Bobx(), &models.IamSessionSetter{LastActiveAt: &la})
+	}
+
+	return nil
+}
+
 // User validates a bearerAuth end-user access token: a verified typ=access JWT
 // naming a still-live session.
 func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Principal, error) {
@@ -114,35 +151,8 @@ func (a *pgAuthenticator) User(ctx context.Context, token string) (*domain.Princ
 
 	sid := claimStr(claims, "sid")
 	if sid != "" {
-		// A revoked/expired session must fail even while the JWT is unexpired.
-		row, err := models.FindIamSession(ctx, a.db.Bobx(), sid)
-		if err != nil {
-			return nil, domain.ErrUnauthorized
-		}
-
-		if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
-			return nil, domain.ErrUnauthorized
-		}
-		// Idle / absolute timeout from session_policy (in the session's own env, so
-		// the request's X-Environment can't pick a weaker policy). Enforced here so
-		// the access-token path honors them too, not only refresh — otherwise a
-		// session whose access token is rotated stays usable past its idle window.
-		if sp, err := a.cfg.SessionPolicyForEnv(ctx, row.ProjectID, row.Environment); err == nil {
-			now := nowUTC()
-			if sp.IdleTimeout > 0 && now.Sub(row.LastActiveAt) > sp.IdleTimeout {
-				return nil, domain.ErrUnauthorized
-			}
-
-			if sp.AbsoluteTimeout > 0 && now.Sub(row.CreatedAt) > sp.AbsoluteTimeout {
-				return nil, domain.ErrUnauthorized
-			}
-		}
-		// Activity tracking: bump last_active_at, throttled so authenticated
-		// requests don't write on every call. Best-effort — a failed bump must
-		// never fail authentication.
-		if now := nowUTC(); now.Sub(row.LastActiveAt) > activityThrottle {
-			la := now
-			_ = row.Update(ctx, a.db.Bobx(), &models.IamSessionSetter{LastActiveAt: &la})
+		if err := a.checkSessionLive(ctx, sid); err != nil {
+			return nil, err
 		}
 	}
 
