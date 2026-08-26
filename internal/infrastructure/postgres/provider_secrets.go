@@ -9,6 +9,7 @@ package postgres
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/go-faster/jx"
@@ -79,7 +80,7 @@ func transformProviderValue(k string, v jx.Raw, transform func(string) (string, 
 
 	b, err := json.Marshal(t)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal provider value: %w", err)
 	}
 
 	return jx.Raw(b), nil

@@ -19,6 +19,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -68,9 +69,13 @@ func (a *pgPlatform) IssueCsrfToken(ctx context.Context, clientID string) (*doma
 			ExpiresAt: &exp,
 			Data:      &data,
 		}
-		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
 
-		return err
+		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
+		if err != nil {
+			return fmt.Errorf("insert csrf token: %w", err)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -112,7 +117,7 @@ func (a *pgPlatform) VerifyCsrfToken(ctx context.Context, clientID, token string
 func csrfRandomToken() (string, error) {
 	b := make([]byte, randomTokenBytes)
 	if _, err := rand.Read(b); err != nil {
-		return "", err
+		return "", fmt.Errorf("random csrf token: %w", err)
 	}
 
 	return hex.EncodeToString(b), nil

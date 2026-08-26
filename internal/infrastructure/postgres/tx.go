@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gopherex/pgtx/pkg/tx"
 )
@@ -14,10 +15,19 @@ import (
 // are retried by tx.DefaultRetryPolicy); never issue a multi-statement mutation
 // outside withTx / withTxRet.
 func (db *DB) withTx(ctx context.Context, fn func(ctx context.Context) error) error {
-	return tx.DoSerializable(ctx, db.TxManager, fn, tx.WithRetry(tx.DefaultRetryPolicy))
+	if err := tx.DoSerializable(ctx, db.TxManager, fn, tx.WithRetry(tx.DefaultRetryPolicy)); err != nil {
+		return fmt.Errorf("tx: %w", err)
+	}
+
+	return nil
 }
 
 // withTxRet is withTx for operations that return a value.
 func withTxRet[T any](ctx context.Context, db *DB, fn func(ctx context.Context) (T, error)) (T, error) {
-	return tx.DoSerializableRet(ctx, db.TxManager, fn, tx.WithRetry(tx.DefaultRetryPolicy))
+	ret, err := tx.DoSerializableRet(ctx, db.TxManager, fn, tx.WithRetry(tx.DefaultRetryPolicy))
+	if err != nil {
+		return ret, fmt.Errorf("tx retry: %w", err)
+	}
+
+	return ret, nil
 }

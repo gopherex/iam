@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
@@ -137,7 +138,7 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 	).One(ctx, a.db.Bobx())
 	if err != nil {
 		if !errors.Is(translatePgErr("config", err), ErrNotFound) {
-			return nil, err
+			return nil, fmt.Errorf("load auth config: %w", err)
 		}
 		// No explicit auth policy yet: leave defaults derived from the project.
 	} else if len(authRow.Data) > 0 {
@@ -152,7 +153,7 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 		sm.Where(models.IamProviders.Columns.Enabled.EQ(psql.Arg(true))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list providers: %w", err)
 	}
 
 	for _, p := range provRows {
@@ -166,7 +167,7 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 	).One(ctx, a.db.Bobx())
 	if err != nil {
 		if !errors.Is(translatePgErr("config", err), ErrNotFound) {
-			return nil, err
+			return nil, fmt.Errorf("load consent config: %w", err)
 		}
 	} else if len(consentRow.Data) > 0 {
 		var cc platformConsentConfig

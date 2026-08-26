@@ -44,7 +44,7 @@ func (a *pgRisk) ListRules(ctx context.Context, projectID string) ([]domain.Admi
 	rows, err := a.db.Pool.Query(ctx,
 		`SELECT id, enabled, data FROM iam_risk_rules WHERE project_id = $1 ORDER BY created_at`, projectID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("risk: query rules: %w", err)
 	}
 	defer rows.Close()
 
@@ -58,7 +58,7 @@ func (a *pgRisk) ListRules(ctx context.Context, projectID string) ([]domain.Admi
 		)
 
 		if err := rows.Scan(&id, &enabled, &raw); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("risk: scan rule: %w", err)
 		}
 
 		var ruleData riskRuleData
@@ -71,7 +71,11 @@ func (a *pgRisk) ListRules(ctx context.Context, projectID string) ([]domain.Admi
 		})
 	}
 
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return out, fmt.Errorf("risk: read rules: %w", err)
+	}
+
+	return out, nil
 }
 
 func (a *pgRisk) CreateRule(ctx context.Context, projectID string, r domain.AdminRiskRule) (domain.AdminRiskRule, error) {
@@ -83,13 +87,13 @@ func (a *pgRisk) CreateRule(ctx context.Context, projectID string, r domain.Admi
 
 	raw, err := json.Marshal(riskRuleDataOf(r))
 	if err != nil {
-		return domain.AdminRiskRule{}, err
+		return domain.AdminRiskRule{}, fmt.Errorf("risk: marshal rule: %w", err)
 	}
 
 	if _, err := a.db.Pool.Exec(ctx,
 		`INSERT INTO iam_risk_rules (id, project_id, enabled, data) VALUES ($1, $2, $3, $4)`,
 		id, projectID, r.Enabled, raw); err != nil {
-		return domain.AdminRiskRule{}, err
+		return domain.AdminRiskRule{}, fmt.Errorf("risk: insert rule: %w", err)
 	}
 
 	r.ID = id
@@ -104,14 +108,14 @@ func (a *pgRisk) UpdateRule(ctx context.Context, projectID, id string, r domain.
 
 	raw, err := json.Marshal(riskRuleDataOf(r))
 	if err != nil {
-		return domain.AdminRiskRule{}, err
+		return domain.AdminRiskRule{}, fmt.Errorf("risk: marshal rule: %w", err)
 	}
 
 	n, err := a.db.Pool.Exec(ctx,
 		`UPDATE iam_risk_rules SET enabled = $1, data = $2, updated_at = now() WHERE id = $3 AND project_id = $4`,
 		r.Enabled, raw, id, projectID)
 	if err != nil {
-		return domain.AdminRiskRule{}, err
+		return domain.AdminRiskRule{}, fmt.Errorf("risk: update rule: %w", err)
 	}
 
 	if n.RowsAffected() == 0 {
@@ -126,7 +130,7 @@ func (a *pgRisk) UpdateRule(ctx context.Context, projectID, id string, r domain.
 func (a *pgRisk) DeleteRule(ctx context.Context, projectID, id string) error {
 	n, err := a.db.Pool.Exec(ctx, `DELETE FROM iam_risk_rules WHERE id = $1 AND project_id = $2`, id, projectID)
 	if err != nil {
-		return err
+		return fmt.Errorf("risk: delete rule: %w", err)
 	}
 
 	if n.RowsAffected() == 0 {
@@ -146,7 +150,7 @@ func (a *pgRisk) CreateBlock(ctx context.Context, projectID, env string, b domai
 
 	raw, err := json.Marshal(blockData{Type: b.Type, Reason: b.Reason})
 	if err != nil {
-		return domain.AdminBlock{}, err
+		return domain.AdminBlock{}, fmt.Errorf("risk: marshal block: %w", err)
 	}
 
 	var expires any
@@ -157,7 +161,7 @@ func (a *pgRisk) CreateBlock(ctx context.Context, projectID, env string, b domai
 	if _, err := a.db.Pool.Exec(ctx,
 		`INSERT INTO iam_blocks (id, project_id, environment, subject, expires_at, data) VALUES ($1, $2, $3, $4, $5, $6)`,
 		id, projectID, adminEnv(env), b.Value, expires, raw); err != nil {
-		return domain.AdminBlock{}, err
+		return domain.AdminBlock{}, fmt.Errorf("risk: insert block: %w", err)
 	}
 
 	b.ID = id
@@ -168,7 +172,7 @@ func (a *pgRisk) CreateBlock(ctx context.Context, projectID, env string, b domai
 func (a *pgRisk) DeleteBlock(ctx context.Context, projectID, id string) error {
 	n, err := a.db.Pool.Exec(ctx, `DELETE FROM iam_blocks WHERE id = $1 AND project_id = $2`, id, projectID)
 	if err != nil {
-		return err
+		return fmt.Errorf("risk: delete block: %w", err)
 	}
 
 	if n.RowsAffected() == 0 {
@@ -199,7 +203,7 @@ func (a *pgRisk) IsBlocked(ctx context.Context, projectID string, subjects ...st
 		 WHERE project_id = $1 AND subject = ANY($2) AND (expires_at IS NULL OR expires_at > now())`,
 		projectID, nonEmpty).Scan(&n)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("risk: count blocks: %w", err)
 	}
 
 	return n > 0, nil

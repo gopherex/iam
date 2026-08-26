@@ -57,10 +57,23 @@ const flowActionVerifyEmail = "verify_email"
 func ptr[T any](v T) *T { return &v }
 
 // marshal serializes a record to a JSONB blob.
-func marshal(v any) ([]byte, error) { return json.Marshal(v) }
+func marshal(v any) ([]byte, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, fmt.Errorf("marshal: %w", err)
+	}
+
+	return b, nil
+}
 
 // unmarshal decodes a JSONB blob into v.
-func unmarshal(b []byte, v any) error { return json.Unmarshal(b, v) }
+func unmarshal(b []byte, v any) error {
+	if err := json.Unmarshal(b, v); err != nil {
+		return fmt.Errorf("unmarshal: %w", err)
+	}
+
+	return nil
+}
 
 // translatePgErr maps a no-rows error onto ErrNotFound; everything else passes
 // through wrapped with the resource name. Both sentinels matter: generated PK

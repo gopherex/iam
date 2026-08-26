@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dm"
@@ -28,7 +29,7 @@ func (a *pgAdminConfig) ListOAuthProviders(ctx context.Context, projectID string
 		sm.Where(models.IamProviders.Columns.Kind.EQ(psql.Arg(adminOAuthProviderKind))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list oauth providers: %w", err)
 	}
 
 	out := make([]domain.AdminOAuthProvider, 0, len(rows))
@@ -72,7 +73,7 @@ func (a *pgAdminConfig) CreateOAuthProvider(ctx context.Context, projectID strin
 			Name: p.Provider, ClientID: p.ClientID, ClientSecret: enc, Scopes: p.Scopes,
 		})
 		if err != nil {
-			return domain.AdminOAuthProvider{}, err
+			return domain.AdminOAuthProvider{}, fmt.Errorf("marshal provider config: %w", err)
 		}
 
 		rm := json.RawMessage(raw)
@@ -86,7 +87,7 @@ func (a *pgAdminConfig) CreateOAuthProvider(ctx context.Context, projectID strin
 				return domain.AdminOAuthProvider{}, domain.ErrConflict
 			}
 
-			return domain.AdminOAuthProvider{}, err
+			return domain.AdminOAuthProvider{}, fmt.Errorf("insert provider: %w", err)
 		}
 
 		p.ID = id
@@ -140,7 +141,7 @@ func (a *pgAdminConfig) UpdateOAuthProvider(ctx context.Context, projectID, id s
 			Name: provider, ClientID: p.ClientID, ClientSecret: secret, Scopes: p.Scopes,
 		})
 		if err != nil {
-			return domain.AdminOAuthProvider{}, err
+			return domain.AdminOAuthProvider{}, fmt.Errorf("marshal provider config: %w", err)
 		}
 
 		rm := json.RawMessage(raw)
@@ -173,7 +174,7 @@ func (a *pgAdminConfig) DeleteOAuthProvider(ctx context.Context, projectID, id s
 		dm.Where(models.IamProviders.Columns.Kind.EQ(psql.Arg(adminOAuthProviderKind))),
 	).Exec(ctx, a.db.Bobx())
 	if err != nil {
-		return err
+		return fmt.Errorf("delete provider: %w", err)
 	}
 
 	if n == 0 {

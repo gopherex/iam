@@ -44,8 +44,11 @@ func (a *pgAudit) record(ctx context.Context, projectID, typ, actorID, targetID 
 		`INSERT INTO iam_audit_logs (id, project_id, type, actor_id, target_id, at, data)
 		 VALUES ($1, $2, $3, $4, $5, now(), $6)`,
 		newUUID(), projectID, typ, nullIfEmpty(actorID), nullIfEmpty(targetID), data)
+	if err != nil {
+		return fmt.Errorf("record audit log: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func nullIfEmpty(s string) any {
@@ -62,7 +65,7 @@ func (a *pgAudit) List(ctx context.Context, cmd domain.AuditLogListCmd) ([]domai
 
 	rows, err := a.db.Pool.Query(ctx, query, args...)
 	if err != nil {
-		return nil, "", false, err
+		return nil, "", false, fmt.Errorf("list audit logs: %w", err)
 	}
 	defer rows.Close()
 
@@ -129,7 +132,7 @@ func scanAuditListPage(rows pgx.Rows, limit int) ([]domain.AuditLogEntry, string
 		)
 
 		if err := rows.Scan(&e.ID, &e.Type, &actor, &target, &e.At, &raw); err != nil {
-			return nil, "", false, err
+			return nil, "", false, fmt.Errorf("scan audit log: %w", err)
 		}
 
 		if actor != nil {
@@ -145,7 +148,7 @@ func scanAuditListPage(rows pgx.Rows, limit int) ([]domain.AuditLogEntry, string
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, "", false, err
+		return nil, "", false, fmt.Errorf("list audit logs: rows: %w", err)
 	}
 
 	hasMore := len(out) > limit

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
@@ -22,7 +23,7 @@ func revokeSessionRecord(ctx context.Context, db *DB, emitter Emitter, row *mode
 		sm.Where(models.IamRefreshTokens.Columns.Revoked.EQ(psql.Arg(false))),
 	).All(ctx, db.Bobx())
 	if err != nil {
-		return err
+		return fmt.Errorf("list refresh tokens: %w", err)
 	}
 
 	for _, refresh := range refreshTokens {

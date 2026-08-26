@@ -86,7 +86,7 @@ func adminIsNotFound(err error) bool {
 func adminRandomToken(n int) (token, hash string, err error) {
 	buf := make([]byte, n)
 	if _, err = rand.Read(buf); err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("random token: %w", err)
 	}
 
 	token = base64.RawURLEncoding.EncodeToString(buf)
@@ -145,7 +145,7 @@ func (a *pgAdminUsers) List(ctx context.Context, projectID, environment string) 
 		sm.Where(models.IamUsers.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list users: %w", err)
 	}
 
 	out := make([]domain.Account, 0, len(rows))
@@ -246,7 +246,7 @@ func insertAdminUserRow(ctx context.Context, db *DB, cmd domain.RegisterCmd, env
 			return nil, domain.ErrEmailExists
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("insert user: %w", err)
 	}
 
 	return acc, nil
@@ -257,7 +257,7 @@ func insertAdminUserRow(ctx context.Context, db *DB, cmd domain.RegisterCmd, env
 func insertAdminUserPassword(ctx context.Context, db *DB, projectID, userID, password string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return fmt.Errorf("hash password: %w", err)
 	}
 
 	cred := map[string]any{"user_id": userID, "type": "password"}
@@ -277,9 +277,13 @@ func insertAdminUserPassword(ctx context.Context, db *DB, projectID, userID, pas
 		Secret:    ptr(string(hash)),
 		Data:      &crm,
 	}
-	_, err = models.IamCredentials.Insert(credSetter).One(ctx, db.Bobx())
 
-	return err
+	_, err = models.IamCredentials.Insert(credSetter).One(ctx, db.Bobx())
+	if err != nil {
+		return fmt.Errorf("insert password credential: %w", err)
+	}
+
+	return nil
 }
 
 func (a *pgAdminUsers) Update(ctx context.Context, cmd domain.AdminUserUpdateCmd) (*domain.Account, error) {
@@ -488,7 +492,7 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 
 		hash, err := bcrypt.GenerateFromPassword([]byte(cmd.Password), bcrypt.DefaultCost)
 		if err != nil {
-			return err
+			return fmt.Errorf("hash password: %w", err)
 		}
 
 		existing, err := models.IamCredentials.Query(
@@ -497,7 +501,7 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 			sm.Where(models.IamCredentials.Columns.Type.EQ(psql.Arg("password"))),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
-			return err
+			return fmt.Errorf("list password credentials: %w", err)
 		}
 
 		if len(existing) > 0 {
@@ -525,7 +529,7 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 				Secret:    ptr(string(hash)),
 				Data:      &crm,
 			}).One(ctx, a.db.Bobx()); err != nil {
-				return err
+				return fmt.Errorf("insert password credential: %w", err)
 			}
 		}
 
@@ -625,7 +629,7 @@ func (a *pgAdminUsers) Export(ctx context.Context, projectID, environment, accou
 			Status: ptr(inviteStatusPend),
 			Data:   &jrm,
 		}).One(ctx, a.db.Bobx()); err != nil {
-			return "", err
+			return "", fmt.Errorf("insert export job: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -696,7 +700,7 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 			ExpiresAt: &expiresAt,
 			Data:      &chrm,
 		}).One(ctx, a.db.Bobx()); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("insert impersonation challenge: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -728,7 +732,7 @@ func (a *pgAdminUsers) ResetMFA(ctx context.Context, projectID, environment, acc
 			sm.Where(models.IamFactors.Columns.UserID.EQ(psql.Arg(accountID))),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
-			return 0, err
+			return 0, fmt.Errorf("list factors: %w", err)
 		}
 
 		want := make(map[string]struct{}, len(factorIDs))
@@ -777,7 +781,7 @@ func (a *pgAdminUsers) ListIdentities(ctx context.Context, projectID, environmen
 		sm.Where(models.IamIdentities.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list identities: %w", err)
 	}
 
 	out := make([]domain.Identity, 0, len(rows))
@@ -837,7 +841,7 @@ func (a *pgAdminUsers) ListSessions(ctx context.Context, projectID, environment,
 		sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list sessions: %w", err)
 	}
 
 	out := make([]domain.Session, 0, len(rows))
@@ -893,7 +897,7 @@ func (a *pgAdminUsers) revokeSessions(ctx context.Context, projectID, environmen
 		sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("list sessions: %w", err)
 	}
 
 	revoked := 0
@@ -939,13 +943,13 @@ func (a *pgAdminUsers) persistWithExtra(ctx context.Context, row *models.IamUser
 	if extra != nil {
 		var m map[string]any
 		if err := json.Unmarshal(raw, &m); err != nil {
-			return err
+			return fmt.Errorf("unmarshal account: %w", err)
 		}
 
 		extra(m)
 
 		if raw, err = json.Marshal(m); err != nil {
-			return err
+			return fmt.Errorf("marshal account: %w", err)
 		}
 	}
 
@@ -1021,7 +1025,7 @@ func (a *pgAdminApps) List(ctx context.Context, projectID, environment string) (
 		sm.Where(models.IamAppClients.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list app clients: %w", err)
 	}
 
 	out := make([]domain.AppClient, 0, len(rows))
@@ -1050,7 +1054,7 @@ func (a *pgAdminApps) Get(ctx context.Context, projectID, environment, appID str
 func (a *pgAdminApps) AllowedOrigins(ctx context.Context) ([]string, error) {
 	rows, err := models.IamAppClients.Query().All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list app clients: %w", err)
 	}
 
 	seen := make(map[string]struct{})
@@ -1119,7 +1123,7 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("insert app client: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -1383,7 +1387,7 @@ func (a *pgAdminApps) upsertApp(ctx context.Context, app *domain.AppClient, crea
 				return domain.ErrConflict
 			}
 
-			return err
+			return fmt.Errorf("insert app client: %w", err)
 		}
 
 		return a.emitter.Emit(ctx, domain.Event{
@@ -1579,7 +1583,7 @@ func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, environment, app
 			Hash:      &hash,
 			Data:      &mrm,
 		}).One(ctx, a.db.Bobx()); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("insert app secret: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -1664,7 +1668,7 @@ func (a *pgAdminConfig) getConfigDoc(ctx context.Context, projectID, env, key st
 			return domain.AdminConfigDoc{}, nil // unset config is an empty doc
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("get config doc: %w", err)
 	}
 
 	doc := domain.AdminConfigDoc{}
@@ -1677,14 +1681,14 @@ func (a *pgAdminConfig) getConfigDoc(ctx context.Context, projectID, env, key st
 		if err := d.Obj(func(d *jx.Decoder, key string) error {
 			raw, err := d.Raw()
 			if err != nil {
-				return err
+				return fmt.Errorf("read raw value: %w", err)
 			}
 
 			doc[key] = raw
 
 			return nil
 		}); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("decode config doc: %w", err)
 		}
 	}
 
@@ -1700,7 +1704,12 @@ func configDocToRawJSON(doc domain.AdminConfigDoc) ([]byte, error) {
 		rawDoc[k] = json.RawMessage(v)
 	}
 
-	return json.Marshal(rawDoc)
+	b, err := json.Marshal(rawDoc)
+	if err != nil {
+		return nil, fmt.Errorf("marshal config doc: %w", err)
+	}
+
+	return b, nil
 }
 
 // putConfigDoc upserts one iam_config(project, env, key) envelope from a doc,
@@ -2017,13 +2026,13 @@ func (a *pgAdminConfig) GetFeatures(ctx context.Context, cmd domain.AdminConfigG
 			return map[string]bool{}, nil
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("get features config: %w", err)
 	}
 
 	out := map[string]bool{}
 	if len(row.Data) > 0 {
 		if err := json.Unmarshal(row.Data, &out); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unmarshal features: %w", err)
 		}
 	}
 
@@ -2038,7 +2047,7 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]bool, error) {
 		raw, err := json.Marshal(cmd.Features)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshal features: %w", err)
 		}
 
 		rawFeatures := json.RawMessage(raw)
@@ -2050,7 +2059,7 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 			sm.Where(models.IamConfigs.Columns.Key.EQ(psql.Arg("features"))),
 		).One(ctx, a.db.Bobx())
 		if err != nil && !adminIsNotFound(err) {
-			return nil, err
+			return nil, fmt.Errorf("get features config: %w", err)
 		}
 
 		if err == nil {
@@ -2064,7 +2073,7 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 				Key:         ptr("features"),
 				Data:        &rawFeatures,
 			}).One(ctx, a.db.Bobx()); ierr != nil {
-				return nil, ierr
+				return nil, fmt.Errorf("insert features config: %w", ierr)
 			}
 		}
 
@@ -2093,13 +2102,13 @@ func (a *pgAdminConfig) GetI18n(ctx context.Context, cmd domain.AdminConfigGetCm
 			return map[string]jx.Raw{}, nil
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("get i18n config: %w", err)
 	}
 
 	out := map[string]jx.Raw{}
 	if len(row.Data) > 0 {
 		if err := json.Unmarshal(row.Data, &out); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unmarshal i18n: %w", err)
 		}
 	}
 
@@ -2145,7 +2154,7 @@ func (a *pgAdminConfig) listProviders(ctx context.Context, projectID, kind strin
 		sm.Where(models.IamProviders.Columns.Kind.EQ(psql.Arg(kind))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list providers: %w", err)
 	}
 
 	out := make([]domain.AdminProvider, 0, len(rows))
@@ -2207,7 +2216,7 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 
 		raw, err := json.Marshal(d)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshal provider config: %w", err)
 		}
 
 		rawProviderData := json.RawMessage(raw)
@@ -2223,7 +2232,7 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("insert provider: %w", err)
 		}
 
 		p := &domain.AdminProvider{ID: id, Type: cmd.Type, Config: cmd.Config, Enabled: cmd.Enabled}
@@ -2269,7 +2278,7 @@ func (a *pgAdminConfig) updateProvider(ctx context.Context, kind string, cmd dom
 
 		raw, err := json.Marshal(d)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshal provider config: %w", err)
 		}
 
 		rm := json.RawMessage(raw)
@@ -2373,7 +2382,7 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 		sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list email templates: %w", err)
 	}
 
 	out := make(map[string]jx.Raw, len(rows)+len(domain.BuiltinEmailTemplates))
@@ -2394,7 +2403,7 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 			"customized": false,
 		})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshal builtin template: %w", err)
 		}
 
 		out[t.Key] = jx.Raw(raw)
@@ -2409,7 +2418,7 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 		body := map[string]any{}
 		if len(row.Data) > 0 {
 			if err := json.Unmarshal(row.Data, &body); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unmarshal template: %w", err)
 			}
 		}
 
@@ -2425,7 +2434,7 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 
 		raw, err := json.Marshal(body)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshal template: %w", err)
 		}
 
 		out[key] = jx.Raw(raw)
@@ -2442,7 +2451,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 			sm.Where(models.IamEmailTemplates.Columns.Locale.EQ(psql.Arg(adminTemplateLocaleFromPatch(cmd.Patch)))),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("list email templates: %w", err)
 		}
 		// Merge the patch onto the current template body.
 		body := map[string]jx.Raw{}
@@ -2452,7 +2461,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 			cur = existing[0]
 			if len(cur.Data) > 0 {
 				if err := json.Unmarshal(cur.Data, &body); err != nil {
-					return nil, err
+					return nil, fmt.Errorf("unmarshal template body: %w", err)
 				}
 			}
 		}
@@ -2467,7 +2476,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 
 		raw, err := json.Marshal(body)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshal template body: %w", err)
 		}
 
 		rawTemplate := json.RawMessage(raw)
@@ -2486,7 +2495,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 				Locale:    ptr(locale),
 				Data:      &rawTemplate,
 			}).One(ctx, a.db.Bobx()); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("insert email template: %w", err)
 			}
 		}
 
@@ -2623,7 +2632,7 @@ func (a *pgAdminConfig) hasEnabledProvider(ctx context.Context, projectID, kind 
 		sm.Where(models.IamProviders.Columns.Enabled.EQ(psql.Arg(true))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("list providers: %w", err)
 	}
 
 	return len(rows) > 0, nil
@@ -2640,7 +2649,7 @@ func (a *pgAdminConfig) findEmailTemplate(ctx context.Context, projectID, key, l
 	}
 
 	if !adminIsNotFound(err) {
-		return nil, err
+		return nil, fmt.Errorf("get email template: %w", err)
 	}
 	// No project override for the requested locale; try the default locale.
 	if locale != adminTemplateLocale {
@@ -2654,7 +2663,7 @@ func (a *pgAdminConfig) findEmailTemplate(ctx context.Context, projectID, key, l
 		}
 
 		if !adminIsNotFound(err) {
-			return nil, err
+			return nil, fmt.Errorf("get default email template: %w", err)
 		}
 	}
 	// No override at all: fall back to the built-in catalog so previews and
@@ -2748,12 +2757,12 @@ func renderAdminTemplate(src string, data map[string]any) (string, error) {
 
 	tpl, err := template.New("email").Option("missingkey=zero").Parse(src)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parse template: %w", err)
 	}
 
 	var buf bytes.Buffer
 	if err := tpl.Execute(&buf, data); err != nil {
-		return "", err
+		return "", fmt.Errorf("execute template: %w", err)
 	}
 
 	return buf.String(), nil
@@ -2791,7 +2800,7 @@ func (a *pgAdminKeys) ListSigningKeys(ctx context.Context, cmd domain.AdminConfi
 		sm.Where(models.IamSigningKeys.Columns.Environment.EQ(psql.Arg(adminEnv(cmd.Environment)))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list signing keys: %w", err)
 	}
 
 	out := make([]domain.AdminSigningKey, 0, len(rows))
@@ -2849,7 +2858,7 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 				sm.Where(models.IamSigningKeys.Columns.Status.EQ(psql.Arg(coreAuthStatusActive))),
 			).All(ctx, a.db.Bobx())
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("list active signing keys: %w", err)
 			}
 
 			for _, k := range active {
@@ -2897,7 +2906,7 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 			PrivatePem:  &privatePem,
 			Data:        &rawKey,
 		}).One(ctx, a.db.Bobx()); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("insert signing key: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -2937,7 +2946,7 @@ func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminCo
 			sm.Where(models.IamSigningKeys.Columns.Status.EQ(psql.Arg(coreAuthStatusActive))),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("list active signing keys: %w", err)
 		}
 
 		for _, k := range active {
@@ -3016,7 +3025,7 @@ func (a *pgAdminKeys) ListTokenProfiles(ctx context.Context, cmd domain.AdminCon
 		sm.Where(models.IamTokenProfiles.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list token profiles: %w", err)
 	}
 
 	out := make([]domain.AdminTokenProfile, 0, len(rows))
@@ -3068,7 +3077,7 @@ func (a *pgAdminKeys) CreateTokenProfile(ctx context.Context, cmd domain.AdminTo
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("insert token profile: %w", err)
 		}
 
 		row, err := models.FindIamTokenProfile(ctx, a.db.Bobx(), id)
@@ -3202,7 +3211,7 @@ func (a *pgAdminKeys) PreviewTokenProfile(ctx context.Context, cmd domain.AdminT
 	for k, v := range claims {
 		var dv any
 		if err := json.Unmarshal([]byte(v), &dv); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unmarshal claim: %w", err)
 		}
 
 		sampleClaims[k] = dv
@@ -3227,7 +3236,7 @@ func (a *pgAdminKeys) PreviewTokenProfile(ctx context.Context, cmd domain.AdminT
 
 	tokraw, err := json.Marshal(token)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal sample token: %w", err)
 	}
 
 	out["_sample_token"] = jx.Raw(tokraw)
@@ -3307,7 +3316,7 @@ func (a *pgAdminAccessRequests) List(ctx context.Context, cmd domain.AdminAccess
 
 	rows, err := models.IamAccessRequests.Query(mods...).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list access requests: %w", err)
 	}
 
 	page := &domain.AdminAccessRequestPage{}
@@ -3401,7 +3410,7 @@ func (a *pgAdminAccessRequests) persistDecision(ctx context.Context, row *models
 
 	var m map[string]any
 	if err := json.Unmarshal(raw, &m); err != nil {
-		return err
+		return fmt.Errorf("unmarshal access request: %w", err)
 	}
 
 	m["decided_by"] = actorID
@@ -3413,7 +3422,7 @@ func (a *pgAdminAccessRequests) persistDecision(ctx context.Context, row *models
 
 	merged, err := json.Marshal(m)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal access request: %w", err)
 	}
 
 	rm := json.RawMessage(merged)

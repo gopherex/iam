@@ -22,6 +22,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/stephenafamo/bob"
@@ -76,7 +77,7 @@ type saSecret struct {
 func machineIDRandomToken(nbytes int) (string, error) {
 	buf := make([]byte, nbytes)
 	if _, err := rand.Read(buf); err != nil {
-		return "", err
+		return "", fmt.Errorf("random token: %w", err)
 	}
 
 	return base64.RawURLEncoding.EncodeToString(buf), nil
@@ -154,7 +155,7 @@ func (a *PgMachineIdentities) CreateServiceAccount(ctx context.Context, cmd doma
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("create service account: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -193,7 +194,7 @@ func (a *PgMachineIdentities) ListServiceAccounts(ctx context.Context, cmd domai
 
 	rows, err := models.IamServiceAccounts.Query(mods...).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list service accounts: %w", err)
 	}
 
 	page := &domain.MachineIDServiceAccountPage{Items: make([]*domain.ServiceAccount, 0, len(rows))}
@@ -541,7 +542,7 @@ func (a *PgMachineIdentities) CreateAPIKey(ctx context.Context, cmd domain.APIKe
 				return result{}, domain.ErrConflict
 			}
 
-			return result{}, err
+			return result{}, fmt.Errorf("create api key: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -569,7 +570,7 @@ func (a *PgMachineIdentities) ListAPIKeys(ctx context.Context, projectID string)
 		sm.OrderBy(models.IamAPIKeys.Columns.CreatedAt).Asc(),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list api keys: %w", err)
 	}
 
 	out := make([]*domain.APIKey, 0, len(rows))

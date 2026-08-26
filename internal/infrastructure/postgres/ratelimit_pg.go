@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -54,7 +55,7 @@ func (a *pgRateLimits) RateLimitRules(ctx context.Context, clientID, env string)
 			return nil, nil // no doc -> defaults
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("load rate limits config: %w", err)
 	}
 
 	if len(row.Data) == 0 {

@@ -15,6 +15,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -58,7 +59,7 @@ func (a *pgOAuthSocial) storeState(ctx context.Context, projectID, provider, sta
 
 	data, err := json.Marshal(oauthStateData{Redirect: redirect, AccountID: accountID})
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal oauth state: %w", err)
 	}
 
 	rawData := json.RawMessage(data)
@@ -73,9 +74,13 @@ func (a *pgOAuthSocial) storeState(ctx context.Context, projectID, provider, sta
 			ID: &id, ProjectID: &projectID, Type: &typ,
 			Subject: &sub, CodeHash: &ch, ExpiresAt: &exp, Data: &rawData,
 		}
-		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
 
-		return err
+		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
+		if err != nil {
+			return fmt.Errorf("insert oauth state: %w", err)
+		}
+
+		return nil
 	})
 }
 
@@ -98,7 +103,7 @@ func (a *pgOAuthSocial) consumeState(ctx context.Context, projectID, provider, s
 				return domain.ErrBadRequest.WithMessage("invalid state")
 			}
 
-			return qerr
+			return fmt.Errorf("query oauth state: %w", qerr)
 		}
 
 		if row.Consumed {

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 )
 
 // Async job status values (iam_jobs.status).
@@ -35,13 +36,13 @@ func createJob(ctx context.Context, db *DB, projectID, typ string, spec map[stri
 
 	raw, err := json.Marshal(jobData{Spec: spec})
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("marshal job spec: %w", err)
 	}
 
 	if _, err := db.Pool.Exec(ctx,
 		`INSERT INTO iam_jobs (id, project_id, type, status, data) VALUES ($1, $2, $3, $4, $5)`,
 		id, projectID, typ, jobStatusPending, raw); err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("insert job: %w", err)
 	}
 
 	return id, jobStatusPending, nil

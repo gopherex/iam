@@ -23,6 +23,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -186,7 +187,7 @@ func (a *pgOAuthSocial) EnabledProviders(ctx context.Context, projectID string) 
 		sm.Where(models.IamProviders.Columns.Enabled.EQ(psql.Arg(true))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list oauth providers: %w", err)
 	}
 
 	out := make([]domain.OAuthProvider, 0, len(rows))
@@ -436,7 +437,7 @@ func (a *pgOAuthSocial) oauthLookupAuthCode(ctx context.Context, cmd domain.OAut
 		sm.Limit(1),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, data, err
+		return nil, data, fmt.Errorf("list auth codes: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -679,7 +680,7 @@ func (a *pgOAuthSocial) storeExchangeCode(ctx context.Context, projectID string,
 				return domain.ErrConflict
 			}
 
-			return err
+			return fmt.Errorf("insert auth code: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -876,7 +877,7 @@ func (a *pgOAuthSocial) loadOAuthConfig(ctx context.Context, projectID, provider
 		sm.Where(models.IamProviders.Columns.Enabled.EQ(psql.Arg(true))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("list oauth providers: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -999,7 +1000,7 @@ func (a *pgOAuthSocial) findIdentity(ctx context.Context, projectID, provider, p
 		sm.Where(models.IamIdentities.Columns.ProviderAccountID.EQ(psql.Arg(providerAccountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list identities: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -1052,7 +1053,7 @@ func (a *pgOAuthSocial) insertIdentity(ctx context.Context, ident *domain.Identi
 			return domain.ErrIdentityExists
 		}
 
-		return err
+		return fmt.Errorf("insert identity: %w", err)
 	}
 
 	return nil
@@ -1101,7 +1102,7 @@ func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, emai
 			return nil, domain.ErrEmailExists
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("insert user: %w", err)
 	}
 
 	if err := a.emitter.Emit(ctx, domain.Event{

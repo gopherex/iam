@@ -204,14 +204,14 @@ func (p *Publisher) smsProvider(ctx context.Context, projectID string) (*smsConf
 		sm.Where(models.IamProviders.Columns.Enabled.EQ(psql.Arg(true))),
 	).All(ctx, p.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list sms providers: %w", err)
 	}
 
 	for _, row := range rows {
 		var provData providerData
 		if len(row.Data) > 0 {
 			if err := json.Unmarshal(row.Data, &provData); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unmarshal provider config: %w", err)
 			}
 		}
 
@@ -427,12 +427,12 @@ func (c *smsConfig) send(ctx context.Context, to, text string) error {
 func (c *smsConfig) sendGeneric(ctx context.Context, to, text string) error {
 	body, err := json.Marshal(map[string]string{"to": to, "text": text, "from": c.From})
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal sms payload: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL, bytes.NewReader(body))
 	if err != nil {
-		return err
+		return fmt.Errorf("build sms request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -456,7 +456,7 @@ func (c *smsConfig) sendTwilio(ctx context.Context, to, text string) error {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL, strings.NewReader(form.Encode()))
 	if err != nil {
-		return err
+		return fmt.Errorf("build sms request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -468,7 +468,7 @@ func (c *smsConfig) sendTwilio(ctx context.Context, to, text string) error {
 func (c *smsConfig) do(req *http.Request) error {
 	resp, err := c.client().Do(req) //nolint:gosec // c.URL is an operator-configured, https-validated provider endpoint (decodeSMSConfig*), not end-user input
 	if err != nil {
-		return err
+		return fmt.Errorf("send sms request: %w", err)
 	}
 	defer resp.Body.Close()
 

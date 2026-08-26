@@ -39,13 +39,13 @@ const (
 func inviteMintToken() (token, hash string, err error) {
 	b := make([]byte, randomTokenBytes)
 	if _, err = rand.Read(b); err != nil {
-		return token, hash, err
+		return token, hash, fmt.Errorf("mint invite token: %w", err)
 	}
 
 	token = inviteTokenPrefix + hex.EncodeToString(b)
 	hash = inviteHashToken(token)
 
-	return token, hash, err
+	return token, hash, nil
 }
 
 // inviteHashToken returns sha256(token) in hex. Shared with the flow redeem path.
@@ -149,7 +149,7 @@ func (a *pgInvites) Create(ctx context.Context, cmd domain.InviteCreateCmd) (*do
 		}
 
 		if _, ierr := models.IamInvites.Insert(setter).One(ctx, a.db.Bobx()); ierr != nil {
-			return nil, ierr
+			return nil, fmt.Errorf("invite create: insert: %w", ierr)
 		}
 
 		// Only email-bound invites trigger a send.
@@ -186,7 +186,7 @@ func (a *pgInvites) List(ctx context.Context, cmd domain.InviteListCmd) ([]domai
 		sm.OrderBy(models.IamInvites.Columns.CreatedAt).Desc(),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invite list: %w", err)
 	}
 
 	out := make([]domain.Invite, 0, len(rows))

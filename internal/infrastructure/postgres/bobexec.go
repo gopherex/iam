@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	pgtxlib "github.com/gopherex/pgtx/pkg/tx"
 	"github.com/jackc/pgx/v5"
@@ -26,13 +27,17 @@ var _ bob.Executor = bobExec{}
 
 func (e bobExec) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	tag, err := e.db.Exec(ctx, query, args...)
-	return bobResult{tag.RowsAffected()}, err
+	if err != nil {
+		return nil, fmt.Errorf("exec: %w", err)
+	}
+
+	return bobResult{tag.RowsAffected()}, nil
 }
 
 func (e bobExec) QueryContext(ctx context.Context, query string, args ...any) (scan.Rows, error) {
 	rs, err := e.db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query: %w", err)
 	}
 
 	return bobRows{rs}, nil

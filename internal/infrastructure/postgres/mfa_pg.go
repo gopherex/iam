@@ -29,6 +29,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -119,7 +120,7 @@ func mfaSha256Hex(s string) string {
 func mfaRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	if _, err := rand.Read(b); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("random bytes: %w", err)
 	}
 
 	return b, nil
@@ -135,10 +136,15 @@ func mfaGenerateTOTPKey(accountName string) (*otp.Key, error) {
 		accountName = "user"
 	}
 
-	return totp.Generate(totp.GenerateOpts{
+	key, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      mfaTOTPIssuer,
 		AccountName: accountName,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("generate totp key: %w", err)
+	}
+
+	return key, nil
 }
 
 // mfaNewOpaqueToken mints a hex opaque token (e.g. a flow / delivery code).
@@ -211,7 +217,7 @@ func (a *pgMFAAccounts) mfaCountFactors(ctx context.Context, accountID string) (
 		sm.Where(models.IamFactors.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("count factors: %w", err)
 	}
 
 	return len(rows), nil
@@ -279,7 +285,7 @@ func (a *pgMFAAccounts) ListFactors(ctx context.Context, accountID string) ([]do
 		sm.Where(models.IamFactors.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list factors: %w", err)
 	}
 
 	out := make([]domain.Factor, 0, len(rows))
@@ -655,7 +661,7 @@ func (a *pgMFAAccounts) GenerateRecoveryCodes(ctx context.Context, accountID str
 			dm.Where(models.IamRecoveryCodes.Columns.UserID.EQ(psql.Arg(accountID))),
 			dm.Where(models.IamRecoveryCodes.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		).Exec(ctx, a.db.Bobx()); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("delete recovery codes: %w", err)
 		}
 
 		codes := make([]string, 0, mfaRecoveryCodeCount)
@@ -676,7 +682,7 @@ func (a *pgMFAAccounts) GenerateRecoveryCodes(ctx context.Context, accountID str
 				CreatedAt: ptr(nowUTC()),
 			}
 			if _, err := models.IamRecoveryCodes.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("insert recovery code: %w", err)
 			}
 		}
 
@@ -895,7 +901,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 
 		sessionRaw, err := json.Marshal(session)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshal webauthn session: %w", err)
 		}
 
 		ch := domain.Challenge{
@@ -984,7 +990,7 @@ func (a *pgMFAAccounts) mfaVerifyWebAuthnCreation(ctx context.Context, row *mode
 	// attestation via go-webauthn.
 	credRaw, err := json.Marshal(cmd.Credential)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal credential: %w", err)
 	}
 
 	parsed, err := protocol.ParseCredentialCreationResponseBody(bytes.NewReader(credRaw))
@@ -1027,7 +1033,7 @@ func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFA
 		// subsequent assertions; the credential id is the base64url raw id.
 		libJSON, err := json.Marshal(libCred)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshal factor credential: %w", err)
 		}
 		// Label the factor with the supplied name, falling back to the base64url
 		// credential id, then a generic hint.
@@ -1129,7 +1135,7 @@ func (a *pgMFAAccounts) mfaInsertChallenge(ctx context.Context, projectID, accou
 	}
 
 	if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-		return err
+		return fmt.Errorf("insert challenge: %w", err)
 	}
 
 	return nil
@@ -1272,7 +1278,7 @@ func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accou
 			return domain.ErrConflict
 		}
 
-		return err
+		return fmt.Errorf("insert factor: %w", err)
 	}
 
 	return nil

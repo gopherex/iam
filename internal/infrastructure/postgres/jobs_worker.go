@@ -141,7 +141,7 @@ func (db *DB) processAuditExport(ctx context.Context, projectID string, spec map
 
 	rows, err := db.Pool.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("audit export query: %w", err)
 	}
 	defer rows.Close()
 
@@ -159,19 +159,19 @@ func (db *DB) processAuditExport(ctx context.Context, projectID string, spec map
 	for rows.Next() {
 		var e entry
 		if err := rows.Scan(&e.ID, &e.Type, &e.ActorID, &e.TargetID, &e.At, &e.Data); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("audit export scan: %w", err)
 		}
 
 		out = append(out, e)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("audit export rows: %w", err)
 	}
 
 	blob, err := json.Marshal(out)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("audit export marshal: %w", err)
 	}
 
 	return map[string]any{
@@ -275,7 +275,7 @@ func (db *DB) importOneUser(ctx context.Context, projectID, email, name, hash, f
 				return domain.ErrConflict
 			}
 
-			return err
+			return fmt.Errorf("import user insert: %w", err)
 		}
 
 		if hash == "" {
@@ -298,7 +298,7 @@ func (db *DB) importOneUser(ctx context.Context, projectID, email, name, hash, f
 			ID: &credID, ProjectID: &projectID, Environment: &env, UserID: &acc.ID,
 			Type: &credType, Secret: &hash, CreatedAt: &now, UpdatedAt: &now, Data: &rmCred,
 		}).One(ctx, db.Bobx()); err != nil {
-			return err
+			return fmt.Errorf("import credential insert: %w", err)
 		}
 
 		return nil

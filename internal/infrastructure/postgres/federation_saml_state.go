@@ -14,6 +14,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -39,7 +40,7 @@ func (a *pgFederationRuntime) fedStoreSamlRequest(ctx context.Context, projectID
 
 	data, err := json.Marshal(map[string]string{"redirect": redirect, "connection_id": connectionID})
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal saml request: %w", err)
 	}
 
 	rawData := json.RawMessage(data)
@@ -54,9 +55,13 @@ func (a *pgFederationRuntime) fedStoreSamlRequest(ctx context.Context, projectID
 			ID: &id, ProjectID: &projectID, Type: &typ,
 			Subject: &sub, CodeHash: &ch, ExpiresAt: &exp, Data: &rawData,
 		}
-		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
 
-		return err
+		_, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
+		if err != nil {
+			return fmt.Errorf("store saml request: %w", err)
+		}
+
+		return nil
 	})
 }
 
@@ -79,7 +84,7 @@ func (a *pgFederationRuntime) fedConsumeSamlRequest(ctx context.Context, project
 				return nil // ok stays false
 			}
 
-			return qerr
+			return fmt.Errorf("consume saml request: %w", qerr)
 		}
 
 		if sub, _ := row.Subject.Get(); sub != connectionID {
@@ -121,7 +126,7 @@ func (a *pgFederationRuntime) fedAssertNotReplayed(ctx context.Context, projectI
 		}
 
 		if !errors.Is(translatePgErr("assertion", qerr), ErrNotFound) {
-			return qerr
+			return fmt.Errorf("check assertion replay: %w", qerr)
 		}
 
 		exp := notOnOrAfter
@@ -138,8 +143,12 @@ func (a *pgFederationRuntime) fedAssertNotReplayed(ctx context.Context, projectI
 			ID: &id, ProjectID: &projectID, Type: &typ,
 			Subject: &sub, CodeHash: &ch, ExpiresAt: &exp, Data: &raw,
 		}
-		_, ierr := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
 
-		return ierr
+		_, ierr := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx())
+		if ierr != nil {
+			return fmt.Errorf("record assertion: %w", ierr)
+		}
+
+		return nil
 	})
 }

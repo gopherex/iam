@@ -196,7 +196,7 @@ func oidcHashToken(token string) string {
 func oidcRandToken(nbytes int) (string, error) {
 	buf := make([]byte, nbytes)
 	if _, err := rand.Read(buf); err != nil {
-		return "", err
+		return "", fmt.Errorf("rand token: %w", err)
 	}
 
 	return hex.EncodeToString(buf), nil
@@ -212,7 +212,7 @@ func oidcUserCode() (string, error) {
 
 	buf := make([]byte, oidcUserCodeLength)
 	if _, err := rand.Read(buf); err != nil {
-		return "", err
+		return "", fmt.Errorf("rand user code: %w", err)
 	}
 
 	out := make([]byte, 0, oidcUserCodeLength+1) // +1 for the dash
@@ -744,7 +744,7 @@ func (a *pgOIDCGrants) persistGrant(ctx context.Context, projectID string, grant
 			return domain.ErrConflict
 		}
 
-		return err
+		return fmt.Errorf("persist grant: %w", err)
 	}
 
 	return nil
@@ -756,7 +756,7 @@ func (a *pgOIDCGrants) ListGrants(ctx context.Context, accountID string) ([]doma
 		sm.Where(models.IamOauthGrants.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list grants: %w", err)
 	}
 
 	out := make([]domain.Grant, 0, len(rows))
@@ -1477,7 +1477,7 @@ func (a *pgOIDCGrants) startInteraction(
 			Data:        &rawData,
 		}
 		if _, err := models.IamInteractions.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-			return "", err
+			return "", fmt.Errorf("insert interaction: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -1776,7 +1776,7 @@ func (a *pgOIDCGrants) oidcLoadValidAuthCodeRow(ctx context.Context, hash string
 		sm.Limit(1),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read auth code: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -1906,7 +1906,7 @@ func (a *pgOIDCGrants) tokenDeviceCodeGrant(ctx context.Context, cmd domain.OIDC
 		sm.Limit(1),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read device code: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -2377,12 +2377,12 @@ func (a *pgOIDCGrants) mintIDToken(
 func oidcClaimsMap(v any) (map[string]any, error) {
 	buf, err := json.Marshal(v)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal claims: %w", err)
 	}
 
 	var m map[string]any
 	if err := json.Unmarshal(buf, &m); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshal claims: %w", err)
 	}
 
 	return m, nil
@@ -2503,7 +2503,7 @@ func (a *pgOIDCGrants) Revoke(ctx context.Context, cmd domain.OIDCRevokeCmd) err
 			sm.Limit(1),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
-			return err
+			return fmt.Errorf("revoke: read auth code: %w", err)
 		}
 
 		if len(rows) > 0 {
@@ -2637,7 +2637,7 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("insert pushed request: %w", err)
 		}
 
 		result := &domain.OIDCParResult{RequestURI: requestURI, ExpiresIn: int(oidcParTTL / time.Second)}
@@ -2743,7 +2743,7 @@ func insertDeviceCodeRow(ctx context.Context, db *DB, clientRow *models.IamAppCl
 			return nil, domain.ErrConflict
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("insert device code: %w", err)
 	}
 
 	return row, nil
@@ -2933,7 +2933,7 @@ func (a *pgOIDCGrants) ResolveDevice(ctx context.Context, code domain.OIDCDevice
 		sm.Limit(1),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("resolve device: read device code: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -2976,7 +2976,7 @@ func (a *pgOIDCGrants) deviceDecision(ctx context.Context, cmd domain.OIDCDevice
 			sm.Limit(1),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
-			return err
+			return fmt.Errorf("device decision: read device code: %w", err)
 		}
 
 		if len(rows) == 0 {
@@ -3271,7 +3271,7 @@ func (a *pgOIDCGrants) oidcVerifyConsent(ctx context.Context, projectID, userID,
 		sm.Limit(1),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return err
+		return fmt.Errorf("verify consent: read grant: %w", err)
 	}
 
 	if len(rows) == 0 {

@@ -24,6 +24,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/aarondl/opt/null"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -61,7 +62,7 @@ func (a *pgAdminConnections) List(ctx context.Context, projectID string) ([]doma
 		sm.Where(models.IamSsoConnections.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list connections: %w", err)
 	}
 
 	out := make([]domain.Connection, 0, len(rows))
@@ -116,7 +117,7 @@ func (a *pgAdminConnections) Create(ctx context.Context, cmd domain.AdminConnect
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("create connection: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -235,7 +236,7 @@ func (a *pgAdminConnections) ListDomains(ctx context.Context, projectID string) 
 		sm.Where(models.IamDomains.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list domains: %w", err)
 	}
 
 	out := make([]domain.Domain, 0, len(rows))
@@ -285,14 +286,14 @@ func (a *pgAdminConnections) CreateDomain(ctx context.Context, cmd domain.AdminD
 
 		var envelope map[string]any
 		if err := json.Unmarshal(rawDom, &envelope); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unmarshal domain envelope: %w", err)
 		}
 
 		envelope["verify_token"] = verifyToken
 
 		rawEnv, err := json.Marshal(envelope)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshal domain envelope: %w", err)
 		}
 
 		rawData := json.RawMessage(rawEnv)
@@ -315,7 +316,7 @@ func (a *pgAdminConnections) CreateDomain(ctx context.Context, cmd domain.AdminD
 				return nil, domain.ErrDomainTaken
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("create domain: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{

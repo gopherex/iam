@@ -116,6 +116,12 @@ linters:
         # A cancelled context is the caller's own doing. "store: context
         # canceled" tells them something they already know.
         - ctx.Err(
+        # A fresh gRPC status is this call's own verdict (unauthenticated,
+        # permission denied, ...), not someone else's error passing through —
+        # wrapping it would risk breaking status.FromError's type assertion on
+        # the client side for no benefit.
+        - status.Error(
+        - status.Errorf(
       ignore-package-globs:
         # This module's own errors already carry this module's vocabulary.
         # An error from our own port has a name we chose and a package that
@@ -458,6 +464,12 @@ linters:
       - linters:
           - dupl
         path: ^internal/infrastructure/postgres/passwordless_pg\.go$
+      # coreAuthFindUserByEmail/ByPhone: the same by-column lookup shape as
+      # above, one bounded context over. Same call: two small straight-line
+      # functions beat one closure parameterized over a bob column.
+      - linters:
+          - dupl
+        path: ^internal/infrastructure/postgres/coreauth_pg\.go$
       # Each port in pkg/api is one domain aggregate's full set of atomic
       # operations (e.g. CoreAuthAccounts: register/auth/refresh/verify -
       # one account lifecycle), not a grab-bag; splitting at 10 methods would

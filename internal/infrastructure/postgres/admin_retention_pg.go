@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-faster/jx"
 
@@ -51,7 +52,7 @@ func rawJSONToConfigDoc(raw []byte) (domain.AdminConfigDoc, error) {
 	err := d.Obj(func(d *jx.Decoder, key string) error {
 		v, err := d.Raw()
 		if err != nil {
-			return err
+			return fmt.Errorf("decode retention policy field %q: %w", key, err)
 		}
 
 		doc[key] = v
@@ -59,7 +60,7 @@ func rawJSONToConfigDoc(raw []byte) (domain.AdminConfigDoc, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decode retention policy: %w", err)
 	}
 
 	return doc, nil

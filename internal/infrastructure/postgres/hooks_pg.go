@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -53,7 +54,7 @@ func (a *pgHooks) List(ctx context.Context, projectID string) ([]domain.AdminHoo
 		sm.Where(models.IamHooks.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list hooks: %w", err)
 	}
 
 	out := make([]domain.AdminHook, 0, len(rows))
@@ -94,7 +95,7 @@ func (a *pgHooks) Create(ctx context.Context, projectID string, hook domain.Admi
 
 	raw, err := json.Marshal(hookData{URL: hook.URL, TimeoutMs: clampHookTimeout(hook.TimeoutMs), SigningSecret: encSecret, FailOpen: hook.FailOpen})
 	if err != nil {
-		return domain.AdminHook{}, err
+		return domain.AdminHook{}, fmt.Errorf("hook create: marshal data: %w", err)
 	}
 
 	rm := json.RawMessage(raw)
@@ -102,7 +103,7 @@ func (a *pgHooks) Create(ctx context.Context, projectID string, hook domain.Admi
 	if _, err := models.IamHooks.Insert(&models.IamHookSetter{
 		ID: &id, ProjectID: &projectID, Type: &hook.Type, Enabled: &hook.Enabled, Data: &rm,
 	}).One(ctx, a.db.Bobx()); err != nil {
-		return domain.AdminHook{}, err
+		return domain.AdminHook{}, fmt.Errorf("hook create: insert: %w", err)
 	}
 
 	hook.ID = id
@@ -139,7 +140,7 @@ func (a *pgHooks) Update(ctx context.Context, projectID, id string, hook domain.
 
 	raw, err := json.Marshal(cur)
 	if err != nil {
-		return domain.AdminHook{}, err
+		return domain.AdminHook{}, fmt.Errorf("hook update: marshal data: %w", err)
 	}
 
 	rawData := json.RawMessage(raw)
@@ -165,7 +166,7 @@ func (a *pgHooks) Delete(ctx context.Context, projectID, id string) error {
 		dm.Where(models.IamHooks.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).Exec(ctx, a.db.Bobx())
 	if err != nil {
-		return err
+		return fmt.Errorf("hook delete: %w", err)
 	}
 
 	if n == 0 {
@@ -209,7 +210,7 @@ func (a *pgHooks) InvokeHooks(ctx context.Context, projectID, hookType string, p
 		sm.Where(models.IamHooks.Columns.Enabled.EQ(psql.Arg(true))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("invoke hooks: list: %w", err)
 	}
 
 	for _, row := range rows {
@@ -238,7 +239,7 @@ func (a *pgHooks) call(ctx context.Context, cfg hookData, payload []byte) (int, 
 
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodPost, cfg.URL, bytes.NewReader(payload))
 	if err != nil {
-		return 0, "", err
+		return 0, "", fmt.Errorf("hook call: build request: %w", err)
 	}
 
 	secret := cfg.SigningSecret
@@ -255,7 +256,7 @@ func (a *pgHooks) call(ctx context.Context, cfg hookData, payload []byte) (int, 
 
 	resp, err := a.httpClient.Do(req)
 	if err != nil {
-		return 0, "", err
+		return 0, "", fmt.Errorf("hook call: send request: %w", err)
 	}
 	defer resp.Body.Close()
 

@@ -19,6 +19,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"regexp"
 	"time"
@@ -490,7 +491,7 @@ func (a *pgPasswordlessAccounts) findUnconsumedByHash(ctx context.Context, typ, 
 			return nil, domain.ErrInvalidToken
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("find challenge: %w", err)
 	}
 
 	return row, nil
@@ -612,7 +613,7 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByEmail(ctx context.Context, env
 	}
 
 	if !isNoRows(err) {
-		return nil, err
+		return nil, fmt.Errorf("resolve user by email: %w", err)
 	}
 
 	if !allowsSignup(env.Purpose) {
@@ -680,7 +681,7 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByPhone(ctx context.Context, env
 	}
 
 	if !isNoRows(err) {
-		return nil, err
+		return nil, fmt.Errorf("resolve user by phone: %w", err)
 	}
 
 	if !allowsSignup(env.Purpose) {
@@ -740,7 +741,7 @@ func (a *pgPasswordlessAccounts) insertUser(ctx context.Context, acc *domain.Acc
 
 	setter.Data = &rawData
 	if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-		return err
+		return fmt.Errorf("insert user: %w", err)
 	}
 
 	return a.emitter.Emit(ctx, domain.Event{
@@ -841,7 +842,7 @@ func randomNumericCode(n int) (string, error) {
 	for i := range buf {
 		idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("generate otp code: %w", err)
 		}
 
 		buf[i] = digits[idx.Int64()]
@@ -854,7 +855,7 @@ func randomNumericCode(n int) (string, error) {
 func randomOpaqueToken(nbytes int) (string, error) {
 	buf := make([]byte, nbytes)
 	if _, err := rand.Read(buf); err != nil {
-		return "", err
+		return "", fmt.Errorf("random opaque token: %w", err)
 	}
 
 	return hex.EncodeToString(buf), nil
@@ -879,7 +880,7 @@ func providerEnabled(ctx context.Context, db *DB, projectID, kind string) (bool,
 		sm.Where(models.IamProviders.Columns.Enabled.EQ(psql.Arg(true))),
 	).All(ctx, db.Bobx())
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("list enabled providers: %w", err)
 	}
 
 	return len(rows) > 0, nil

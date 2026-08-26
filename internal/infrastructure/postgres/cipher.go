@@ -17,6 +17,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -81,12 +82,12 @@ func NewCipher(keyB64 string) (Cipher, error) {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new cipher: %w", err)
 	}
 
 	aead, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new gcm: %w", err)
 	}
 
 	return &aesCipher{aead: aead}, nil
@@ -95,7 +96,7 @@ func NewCipher(keyB64 string) (Cipher, error) {
 func (c *aesCipher) Encrypt(plaintext string) (string, error) {
 	nonce := make([]byte, c.aead.NonceSize())
 	if _, err := rand.Read(nonce); err != nil {
-		return "", err
+		return "", fmt.Errorf("random nonce: %w", err)
 	}
 
 	ct := c.aead.Seal(nonce, nonce, []byte(plaintext), nil)
@@ -110,7 +111,7 @@ func (c *aesCipher) Decrypt(value string) (string, error) {
 
 	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(value, cipherPrefix))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("decode ciphertext: %w", err)
 	}
 
 	ns := c.aead.NonceSize()
@@ -122,7 +123,7 @@ func (c *aesCipher) Decrypt(value string) (string, error) {
 
 	pt, err := c.aead.Open(nil, nonce, ct, nil)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("decrypt: %w", err)
 	}
 
 	return string(pt), nil

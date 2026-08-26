@@ -12,6 +12,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -33,10 +34,15 @@ type Signer struct{ db *DB }
 func (db *DB) Signer() *Signer { return &Signer{db: db} }
 
 func (s *Signer) keysFor(ctx context.Context, projectID, env string) ([]*models.IamSigningKey, error) {
-	return models.IamSigningKeys.Query(
+	rows, err := models.IamSigningKeys.Query(
 		sm.Where(models.IamSigningKeys.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamSigningKeys.Columns.Environment.EQ(psql.Arg(env))),
 	).All(ctx, s.db.Bobx())
+	if err != nil {
+		return nil, fmt.Errorf("list signing keys: %w", err)
+	}
+
+	return rows, nil
 }
 
 // activeKey returns the active signing key (kid + private key) for project/env,
@@ -80,7 +86,7 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 
 		priv, genErr = rsa.GenerateKey(rand.Reader, rsaKeyBits)
 		if genErr != nil {
-			return genErr
+			return fmt.Errorf("generate signing key: %w", genErr)
 		}
 
 		kid = newUUID()
@@ -105,7 +111,7 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 			Data:        &raw,
 		}
 		if _, err := models.IamSigningKeys.Insert(setter).One(ctx, s.db.Bobx()); err != nil {
-			return err
+			return fmt.Errorf("insert signing key: %w", err)
 		}
 
 		return nil
@@ -134,25 +140,25 @@ func (s *Signer) Sign(ctx context.Context, projectID, env string, claims map[str
 
 	tok, err := b.Build()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("build token: %w", err)
 	}
 
 	key, err := jwk.Import(priv)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("import signing key: %w", err)
 	}
 
 	if err := key.Set(jwk.KeyIDKey, kid); err != nil {
-		return "", err
+		return "", fmt.Errorf("set key id: %w", err)
 	}
 
 	if err := key.Set(jwk.AlgorithmKey, jwa.RS256()); err != nil {
-		return "", err
+		return "", fmt.Errorf("set key algorithm: %w", err)
 	}
 
 	signed, err := jwt.Sign(tok, jwt.WithKey(jwa.RS256(), key))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("sign token: %w", err)
 	}
 
 	return string(signed), nil
@@ -201,12 +207,12 @@ func (s *Signer) JWKS(ctx context.Context, projectID, env string) (map[string]an
 
 	buf, err := json.Marshal(set)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal jwks: %w", err)
 	}
 
 	var out map[string]any
 	if err := json.Unmarshal(buf, &out); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshal jwks: %w", err)
 	}
 
 	return out, nil
@@ -275,12 +281,12 @@ func (s *Signer) publicSet(ctx context.Context, projectID, env string) (jwk.Set,
 func tokenClaims(tok jwt.Token) (map[string]any, error) {
 	buf, err := json.Marshal(tok)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal token claims: %w", err)
 	}
 
 	var m map[string]any
 	if err := json.Unmarshal(buf, &m); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshal token claims: %w", err)
 	}
 
 	return m, nil
@@ -292,7 +298,12 @@ func parsePrivatePEM(s string) (*rsa.PrivateKey, error) {
 		return nil, domain.ErrInternal
 	}
 
-	return x509.ParsePKCS1PrivateKey(block.Bytes)
+	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse private key: %w", err)
+	}
+
+	return priv, nil
 }
 
 func encodePrivatePEM(k *rsa.PrivateKey) string {
@@ -305,7 +316,7 @@ func encodePrivatePEM(k *rsa.PrivateKey) string {
 func newRSAKeyPEM() (string, error) {
 	k, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("generate signing key: %w", err)
 	}
 
 	return encodePrivatePEM(k), nil

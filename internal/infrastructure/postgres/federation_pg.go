@@ -40,6 +40,7 @@ import (
 	"encoding/pem"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -69,7 +70,7 @@ import (
 func fedRandomToken() (string, error) {
 	b := make([]byte, randomTokenBytes)
 	if _, err := rand.Read(b); err != nil {
-		return "", err
+		return "", fmt.Errorf("random token: %w", err)
 	}
 
 	return hex.EncodeToString(b), nil
@@ -604,12 +605,12 @@ const (
 func fedGenerateSPCertificate(commonName string) (certPEM, keyPEM, fingerprint string, err error) {
 	priv, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", fmt.Errorf("generate sp key: %w", err)
 	}
 
 	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), fedSPCertSerialBits))
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", fmt.Errorf("generate sp cert serial: %w", err)
 	}
 
 	now := nowUTC()
@@ -624,7 +625,7 @@ func fedGenerateSPCertificate(commonName string) (certPEM, keyPEM, fingerprint s
 
 	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &priv.PublicKey, priv)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", fmt.Errorf("create sp certificate: %w", err)
 	}
 
 	certPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
@@ -640,7 +641,7 @@ func fedGenerateSPCertificate(commonName string) (certPEM, keyPEM, fingerprint s
 func xmlMarshalIndent(v any) ([]byte, error) {
 	body, err := xml.MarshalIndent(v, "", "  ")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal metadata xml: %w", err)
 	}
 
 	out := append([]byte(xml.Header), body...)
@@ -697,7 +698,7 @@ func (a *pgFederationConnections) CreateConnection(ctx context.Context, cmd doma
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("insert connection: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -736,7 +737,7 @@ func (a *pgFederationConnections) ListConnections(ctx context.Context, projectID
 		sm.Where(models.IamSsoConnections.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list connections: %w", err)
 	}
 
 	out := make([]domain.Connection, 0, len(rows))
@@ -1213,7 +1214,7 @@ func (a *pgFederationConnections) AddDomain(ctx context.Context, projectID, conn
 				return nil, domain.ErrDomainTaken
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("insert domain: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -1289,7 +1290,7 @@ func (a *pgFederationConnections) ListDomains(ctx context.Context, projectID str
 		sm.Where(models.IamDomains.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list domains: %w", err)
 	}
 
 	out := make([]domain.Domain, 0, len(rows))
@@ -1392,7 +1393,7 @@ func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domai
 				return result{}, domain.ErrConflict
 			}
 
-			return result{}, err
+			return result{}, fmt.Errorf("insert scim token: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -1420,7 +1421,7 @@ func (a *pgFederationConnections) ListScimTokens(ctx context.Context, projectID,
 		sm.Where(models.IamScimTokens.Columns.ConnectionID.EQ(psql.Arg(connectionID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list scim tokens: %w", err)
 	}
 
 	out := make([]domain.ScimToken, 0, len(rows))
@@ -1486,7 +1487,7 @@ func (a *pgFederationConnections) ResolveConnection(ctx context.Context, project
 			return nil, domain.ErrConnectionNotFound
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("find domain by host: %w", err)
 	}
 
 	connID, ok := domRow.ConnectionID.Get()
@@ -1884,7 +1885,7 @@ func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code stri
 			sm.Limit(1),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
-			return result{}, err
+			return result{}, fmt.Errorf("query auth codes: %w", err)
 		}
 
 		if len(rows) == 0 {
@@ -1983,7 +1984,7 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(
 				return domain.ErrConflict
 			}
 
-			return err
+			return fmt.Errorf("insert auth code: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -2087,7 +2088,7 @@ func (a *pgFederationRuntime) fedFindIdentity(ctx context.Context, projectID, pr
 		sm.Where(models.IamIdentities.Columns.ProviderAccountID.EQ(psql.Arg(providerAccountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query identities: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -2135,7 +2136,7 @@ func (a *pgFederationRuntime) fedInsertIdentity(ctx context.Context, ident *doma
 			return domain.ErrIdentityExists
 		}
 
-		return err
+		return fmt.Errorf("insert identity: %w", err)
 	}
 
 	return nil
@@ -2178,7 +2179,7 @@ func (a *pgFederationRuntime) fedCreateAccount(ctx context.Context, projectID, e
 			return nil, domain.ErrEmailExists
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("insert account: %w", err)
 	}
 
 	if err := a.emitter.Emit(ctx, domain.Event{
@@ -2331,7 +2332,7 @@ func (a *pgFederationScim) fedScimList(ctx context.Context, q domain.FederationS
 		sm.Where(models.IamScimResources.Columns.ResourceType.EQ(psql.Arg(resourceType))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list scim resources: %w", err)
 	}
 
 	resources := make([]map[string]any, 0, len(rows))
@@ -2406,7 +2407,7 @@ func (a *pgFederationScim) fedScimCreate(ctx context.Context, cmd domain.Federat
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("insert scim resource: %w", err)
 		}
 
 		row, err := models.FindIamScimResource(ctx, a.db.Bobx(), id)

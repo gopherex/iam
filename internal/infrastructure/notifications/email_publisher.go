@@ -185,12 +185,12 @@ func (p *Publisher) applyTemplateLink(ctx context.Context, event eventEnvelope, 
 func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	var event eventEnvelope
 	if err := json.Unmarshal(msg.Payload, &event); err != nil {
-		return err
+		return fmt.Errorf("unmarshal event envelope: %w", err)
 	}
 
 	var domainEvent domain.Event
 	if err := json.Unmarshal(msg.Payload, &domainEvent); err != nil {
-		return err
+		return fmt.Errorf("unmarshal domain event: %w", err)
 	}
 	// SMS-channel delivery events route to the SMS sender. The dispatch is
 	// disjoint from email: emailJobFromEvent returns false for channel=="sms"
@@ -575,14 +575,14 @@ func (p *Publisher) smtpProvider(ctx context.Context, projectID string) (*smtpCo
 		sm.Where(models.IamProviders.Columns.Enabled.EQ(psql.Arg(true))),
 	).All(ctx, p.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list email providers: %w", err)
 	}
 
 	for _, row := range rows {
 		var provData providerData
 		if len(row.Data) > 0 {
 			if err := json.Unmarshal(row.Data, &provData); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unmarshal provider config: %w", err)
 			}
 		}
 
@@ -739,12 +739,12 @@ func renderHTML(src string, data map[string]any) (string, error) {
 
 	tpl, err := htmltemplate.New("email").Option("missingkey=zero").Parse(src)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parse html template: %w", err)
 	}
 
 	var buf bytes.Buffer
 	if err := tpl.Execute(&buf, data); err != nil {
-		return "", err
+		return "", fmt.Errorf("execute html template: %w", err)
 	}
 
 	return buf.String(), nil
@@ -757,12 +757,12 @@ func renderText(src string, data map[string]any) (string, error) {
 
 	tpl, err := template.New("email").Option("missingkey=zero").Parse(src)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parse text template: %w", err)
 	}
 
 	var buf bytes.Buffer
 	if err := tpl.Execute(&buf, data); err != nil {
-		return "", err
+		return "", fmt.Errorf("execute text template: %w", err)
 	}
 
 	return buf.String(), nil
@@ -826,33 +826,37 @@ func (c *smtpConfig) send(ctx context.Context, to string, msg renderedEmail) err
 
 	if c.Username != "" || c.Password != "" {
 		if err := client.Auth(smtp.PlainAuth("", c.Username, c.Password, c.Host)); err != nil {
-			return err
+			return fmt.Errorf("smtp auth: %w", err)
 		}
 	}
 
 	if err := client.Mail(c.From); err != nil {
-		return err
+		return fmt.Errorf("smtp mail from: %w", err)
 	}
 
 	if err := client.Rcpt(to); err != nil {
-		return err
+		return fmt.Errorf("smtp rcpt to: %w", err)
 	}
 
 	w, err := client.Data()
 	if err != nil {
-		return err
+		return fmt.Errorf("smtp data: %w", err)
 	}
 
 	if _, err := w.Write(raw.Bytes()); err != nil {
 		_ = w.Close()
-		return err
+		return fmt.Errorf("smtp write body: %w", err)
 	}
 
 	if err := w.Close(); err != nil {
-		return err
+		return fmt.Errorf("smtp close: %w", err)
 	}
 
-	return client.Quit()
+	if err := client.Quit(); err != nil {
+		return fmt.Errorf("smtp quit: %w", err)
+	}
+
+	return nil
 }
 
 func (c *smtpConfig) connect(ctx context.Context, addr string) (*smtp.Client, error) {
@@ -861,15 +865,20 @@ func (c *smtpConfig) connect(ctx context.Context, addr string) (*smtp.Client, er
 
 		conn, err := dialer.DialContext(ctx, "tcp", addr)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("smtp dial: %w", err)
 		}
 
-		return smtp.NewClient(conn, c.Host)
+		client, err := smtp.NewClient(conn, c.Host)
+		if err != nil {
+			return nil, fmt.Errorf("smtp new client: %w", err)
+		}
+
+		return client, nil
 	}
 
 	client, err := smtp.Dial(addr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("smtp dial: %w", err)
 	}
 	// When STARTTLS is requested it is REQUIRED: if the server does not advertise
 	// it (or a MITM stripped the extension from EHLO), fail instead of silently
@@ -884,7 +893,7 @@ func (c *smtpConfig) connect(ctx context.Context, addr string) (*smtp.Client, er
 
 		if err := client.StartTLS(&tls.Config{ServerName: c.Host, MinVersion: tls.VersionTLS12}); err != nil {
 			_ = client.Close()
-			return nil, err
+			return nil, fmt.Errorf("smtp starttls: %w", err)
 		}
 	}
 

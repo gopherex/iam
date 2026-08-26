@@ -17,6 +17,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -50,7 +51,7 @@ var _ api.AccountStore = (*pgAccountStore)(nil)
 func accountRandomToken(nbytes int) (string, error) {
 	b := make([]byte, nbytes)
 	if _, err := rand.Read(b); err != nil {
-		return "", err
+		return "", fmt.Errorf("random token: %w", err)
 	}
 
 	return hex.EncodeToString(b), nil
@@ -274,7 +275,7 @@ func (a *pgAccountStore) Delete(ctx context.Context, projectID, accountID string
 			sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(accountID))),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
-			return err
+			return fmt.Errorf("delete account: list sessions: %w", err)
 		}
 
 		for _, session := range sessions {
@@ -308,7 +309,7 @@ func (a *pgAccountStore) ListSessions(ctx context.Context, accountID string) ([]
 		sm.OrderBy(models.IamSessions.Columns.CreatedAt).Desc(),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list sessions: %w", err)
 	}
 
 	out := make([]domain.Session, 0, len(rows))
@@ -441,7 +442,7 @@ func (a *pgAccountStore) RevokeSessions(ctx context.Context, cmd domain.AccountR
 			sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(cmd.AccountID))),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
-			return 0, err
+			return 0, fmt.Errorf("revoke sessions: list: %w", err)
 		}
 
 		victims := make(models.IamSessionSlice, 0, len(rows))
@@ -484,7 +485,7 @@ func (a *pgAccountStore) ListIdentities(ctx context.Context, accountID string) (
 		sm.OrderBy(models.IamIdentities.Columns.CreatedAt).Desc(),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list identities: %w", err)
 	}
 
 	out := make([]domain.Identity, 0, len(rows))
@@ -585,7 +586,7 @@ func (a *pgAccountStore) Activity(ctx context.Context, cmd domain.AccountActivit
 
 	rows, err := models.IamActivities.Query(qmods...).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list activity: %w", err)
 	}
 
 	page := &domain.AccountActivityPage{}
@@ -630,7 +631,7 @@ func (a *pgAccountStore) Consents(ctx context.Context, accountID string) ([]doma
 		sm.OrderBy(models.IamConsents.Columns.AcceptedAt).Desc(),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list consents: %w", err)
 	}
 
 	out := make([]domain.AccountConsent, 0, len(rows))
@@ -675,7 +676,7 @@ func (a *pgAccountStore) AcceptConsents(ctx context.Context, cmd domain.AccountA
 				AcceptedAt: ptr(now),
 			}
 			if _, err := models.IamConsents.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-				return struct{}{}, err
+				return struct{}{}, fmt.Errorf("accept consent: insert: %w", err)
 			}
 		}
 
@@ -740,7 +741,7 @@ func (a *pgAccountStore) StartExport(ctx context.Context, accountID string) (*do
 			Data:      &rawData,
 		}
 		if _, err := models.IamJobs.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("start export: insert job: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -842,7 +843,7 @@ func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.Acco
 			Data:      &rawData,
 		}
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("start identity merge: insert challenge: %w", err)
 		}
 
 		ch := &domain.Challenge{
@@ -953,7 +954,7 @@ func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.Ac
 				return result{}, domain.ErrAlreadyLinked
 			}
 
-			return result{}, err
+			return result{}, fmt.Errorf("confirm identity merge: insert identity: %w", err)
 		}
 
 		var acc domain.Account

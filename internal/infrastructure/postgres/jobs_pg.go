@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/go-faster/jx"
 	"golang.org/x/crypto/bcrypt"
@@ -32,7 +33,7 @@ func (a *pgJobs) List(ctx context.Context, projectID string, limit int) ([]domai
 		`SELECT id, type, status, data FROM iam_jobs WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2`,
 		projectID, limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query jobs: %w", err)
 	}
 	defer rows.Close()
 
@@ -47,7 +48,11 @@ func (a *pgJobs) List(ctx context.Context, projectID string, limit int) ([]domai
 		out = append(out, job)
 	}
 
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("scan jobs: %w", err)
+	}
+
+	return out, nil
 }
 
 // Get returns a single job by id, project-scoped.
@@ -71,7 +76,7 @@ func (a *pgJobs) Cancel(ctx context.Context, projectID, id string) error {
 		 WHERE id = $2 AND project_id = $3 AND status IN ($4, $5)`,
 		jobStatusCancelled, id, projectID, jobStatusPending, jobStatusRunning)
 	if err != nil {
-		return err
+		return fmt.Errorf("cancel job: %w", err)
 	}
 
 	if n.RowsAffected() == 0 {

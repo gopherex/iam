@@ -199,7 +199,7 @@ func strictUnmarshal(raw []byte, v any) error {
 	dec.DisallowUnknownFields()
 
 	if err := dec.Decode(v); err != nil {
-		return err
+		return fmt.Errorf("strict unmarshal: %w", err)
 	}
 
 	return nil

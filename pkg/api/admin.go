@@ -11,6 +11,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -3353,7 +3354,7 @@ func oasEncodeConfig(v jxEncoder) domain.AdminConfigDoc {
 	if err := d.Obj(func(d *jx.Decoder, key string) error {
 		raw, err := d.Raw()
 		if err != nil {
-			return err
+			return fmt.Errorf("encode config field: %w", err)
 		}
 
 		out[key] = raw

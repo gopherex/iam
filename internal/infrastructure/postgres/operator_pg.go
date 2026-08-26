@@ -17,6 +17,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -119,7 +120,7 @@ func (a *PgOperator) insertProject(ctx context.Context, proj *domain.Project) er
 			return domain.ErrConflict
 		}
 
-		return err
+		return fmt.Errorf("create project: %w", err)
 	}
 
 	return nil
@@ -128,7 +129,7 @@ func (a *PgOperator) insertProject(ctx context.Context, proj *domain.Project) er
 func (a *PgOperator) ListProjects(ctx context.Context) ([]domain.Project, error) {
 	rows, err := models.IamProjects.Query().All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list projects: %w", err)
 	}
 
 	out := make([]domain.Project, 0, len(rows))
@@ -344,7 +345,7 @@ func (a *PgOperator) insertEnvironment(ctx context.Context, env *domain.Environm
 			return domain.ErrConflict
 		}
 
-		return err
+		return fmt.Errorf("create environment: %w", err)
 	}
 
 	return nil
@@ -363,7 +364,7 @@ func (a *PgOperator) ListEnvironments(ctx context.Context, projectID string) ([]
 		sm.Where(models.IamEnvironments.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list environments: %w", err)
 	}
 
 	out := make([]domain.Environment, 0, len(rows))
@@ -498,7 +499,7 @@ func (a *PgOperator) signAndPersistAdminToken(ctx context.Context, tok domain.Op
 			return "", domain.ErrConflict
 		}
 
-		return "", err
+		return "", fmt.Errorf("create admin token: %w", err)
 	}
 
 	return signed, nil
@@ -568,7 +569,7 @@ func (a *PgOperator) ListAdminTokens(ctx context.Context, projectID string) ([]d
 		sm.Where(models.IamAdminTokens.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list admin tokens: %w", err)
 	}
 
 	out := make([]domain.OperatorAdminToken, 0, len(rows))
@@ -823,7 +824,7 @@ func (a *PgOperator) writeConfig(ctx context.Context, projectID, key string, doc
 				Data:        &rawData,
 			}
 			if _, ierr := models.IamConfigs.Insert(setter).One(ctx, a.db.Bobx()); ierr != nil {
-				return ierr
+				return fmt.Errorf("create config: %w", ierr)
 			}
 
 			return nil

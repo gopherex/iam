@@ -21,6 +21,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -69,7 +70,7 @@ func (a *pgAdminAPIKeys) List(ctx context.Context, projectID string) ([]domain.A
 		sm.OrderBy(models.IamAPIKeys.Columns.CreatedAt).Asc(),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list api keys: %w", err)
 	}
 
 	out := make([]domain.APIKey, 0, len(rows))
@@ -133,7 +134,7 @@ func (a *pgAdminAPIKeys) Create(ctx context.Context, cmd domain.AdminAPIKeyCmd) 
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("insert api key: %w", err)
 		}
 
 		result := &domain.AdminAPIKeySecret{Key: &key, Secret: plaintext}

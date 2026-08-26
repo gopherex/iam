@@ -14,6 +14,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	outbox "github.com/gopherex/pg-outbox"
@@ -52,10 +53,10 @@ func (e *outboxEmitter) Emit(ctx context.Context, event domain.Event) error {
 
 	payload, err := json.Marshal(event)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal event: %w", err)
 	}
 
-	return e.ob.Enqueue(ctx, outbox.Message{
+	if err := e.ob.Enqueue(ctx, outbox.Message{
 		ID:           event.ID,
 		Topic:        "iam." + aggregateOf(event.Type),
 		MessageType:  event.Type,
@@ -67,7 +68,11 @@ func (e *outboxEmitter) Emit(ctx context.Context, event domain.Event) error {
 			"environment": event.Environment,
 			"event_id":    event.ID,
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("enqueue event: %w", err)
+	}
+
+	return nil
 }
 
 // aggregateOf returns the aggregate prefix of an event type ("api_key.created"

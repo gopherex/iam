@@ -77,13 +77,13 @@ var _ api.CoreAuthFlows = (*pgCoreAuthFlows)(nil)
 func flowMintToken() (token, hash string, err error) {
 	b := make([]byte, randomTokenBytes)
 	if _, err = rand.Read(b); err != nil {
-		return token, hash, err
+		return token, hash, fmt.Errorf("mint token: %w", err)
 	}
 
 	token = flowTokenPrefix + hex.EncodeToString(b)
 	hash = flowHashToken(token)
 
-	return token, hash, err
+	return token, hash, nil
 }
 
 // flowHashToken returns sha256(token) in hex.
@@ -115,7 +115,7 @@ type flowData struct {
 func flowDataRM(d flowData) (json.RawMessage, error) {
 	b, err := json.Marshal(d)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal flow data: %w", err)
 	}
 
 	return json.RawMessage(b), nil
@@ -342,8 +342,11 @@ func (a *pgCoreAuthFlows) flowInsert(ctx context.Context, f *domain.Flow, hash s
 	}
 
 	_, err = models.IamFlows.Insert(setter).One(ctx, a.db.Bobx())
+	if err != nil {
+		return fmt.Errorf("flow insert: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 // ─── Create ──────────────────────────────────────────────────────────────────
@@ -987,7 +990,7 @@ func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectI
 		sm.Where(models.IamInvites.Columns.TokenHash.EQ(psql.Arg(hash))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, false, err
+		return nil, false, fmt.Errorf("find invite: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -1030,7 +1033,7 @@ func (a *pgCoreAuthFlows) flowMarkInviteAccepted(ctx context.Context, row *model
 		`UPDATE iam_invites SET status = $1, accepted_at = $2, updated_at = $2 WHERE id = $3 AND status = $4`,
 		inviteStatusAccept, now, row.ID, inviteStatusPend)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("accept invite: %w", err)
 	}
 
 	return res.RowsAffected() > 0, nil

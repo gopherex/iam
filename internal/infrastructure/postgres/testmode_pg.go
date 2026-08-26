@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -58,7 +59,7 @@ func (a *pgTestMode) Reset(ctx context.Context, projectID, env string) (int64, e
 
 		tag, err := a.db.Pool.Exec(ctx, query, args...)
 		if err != nil {
-			return total, err
+			return total, fmt.Errorf("test reset: %w", err)
 		}
 
 		total += tag.RowsAffected()
@@ -100,7 +101,11 @@ func (a *pgTestMode) Seed(ctx context.Context, projectID, env string, spec map[s
 			return nil // idempotent seed
 		}
 
-		return err
+		if err != nil {
+			return fmt.Errorf("test seed insert: %w", err)
+		}
+
+		return nil
 	})
 }
 
@@ -116,15 +121,18 @@ func (a *pgTestMode) Clock(ctx context.Context, projectID, env string, advanceSe
 
 	raw, err := json.Marshal(doc)
 	if err != nil {
-		return err
+		return fmt.Errorf("clock marshal: %w", err)
 	}
 
 	_, err = a.db.Pool.Exec(ctx,
 		`INSERT INTO iam_config (project_id, environment, key, data) VALUES ($1, $2, 'test_clock', $3)
 		 ON CONFLICT (project_id, environment, key) DO UPDATE SET data = $3, updated_at = now()`,
 		projectID, env, raw)
+	if err != nil {
+		return fmt.Errorf("clock upsert: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 // Messages returns captured out-of-band deliveries (OTP codes, magic links) for
@@ -136,7 +144,7 @@ func (a *pgTestMode) Messages(ctx context.Context, projectID, env, channel, to s
 		 WHERE project_id = $1 AND environment = $2 AND type LIKE 'auth.%'
 		 ORDER BY created_at DESC LIMIT 200`, projectID, env)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("messages query: %w", err)
 	}
 	defer rows.Close()
 
@@ -150,7 +158,7 @@ func (a *pgTestMode) Messages(ctx context.Context, projectID, env, channel, to s
 		)
 
 		if err := rows.Scan(&typ, &raw, &ts); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("messages scan: %w", err)
 		}
 
 		var payload map[string]any
@@ -165,7 +173,11 @@ func (a *pgTestMode) Messages(ctx context.Context, projectID, env, channel, to s
 		out = append(out, msg)
 	}
 
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("messages rows: %w", err)
+	}
+
+	return out, nil
 }
 
 func messageMatches(payload map[string]any, channel, to string) bool {

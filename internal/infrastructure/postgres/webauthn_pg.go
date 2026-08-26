@@ -19,6 +19,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -222,7 +223,7 @@ func (a *pgWebAuthnAccounts) loadLibraryCredentials(ctx context.Context, account
 		sm.Where(models.IamWebauthnCredentials.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("load credentials: %w", err)
 	}
 
 	out := make([]gowebauthn.Credential, 0, len(rows))
@@ -238,7 +239,7 @@ func (a *pgWebAuthnAccounts) loadLibraryCredentials(ctx context.Context, account
 
 		var lib gowebauthn.Credential
 		if err := json.Unmarshal(stored.Library, &lib); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unmarshal library credential: %w", err)
 		}
 
 		out = append(out, lib)
@@ -274,7 +275,7 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Challenge, error) {
 		sessionRaw, err := json.Marshal(session)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshal session: %w", err)
 		}
 
 		cer := domain.WebAuthnCeremonyData{
@@ -308,7 +309,7 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 			Data:        &rawData,
 		}
 		if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("insert challenge: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -363,12 +364,12 @@ func (a *pgWebAuthnAccounts) loadCeremony(ctx context.Context, projectID, challe
 func webauthnOptionsMap(v any) (map[string]any, error) {
 	raw, err := json.Marshal(v)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal options: %w", err)
 	}
 
 	var out map[string]any
 	if err := json.Unmarshal(raw, &out); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshal options: %w", err)
 	}
 
 	return out, nil
@@ -379,7 +380,7 @@ func webauthnOptionsMap(v any) (map[string]any, error) {
 func webauthnCredentialReader(credential map[string]any) (*bytes.Reader, error) {
 	raw, err := json.Marshal(credential)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal credential: %w", err)
 	}
 
 	return bytes.NewReader(raw), nil
@@ -441,7 +442,7 @@ func (a *pgWebAuthnAccounts) BeginLogin(ctx context.Context, projectID, email st
 		sm.Where(models.IamUsers.Columns.PrimaryEmail.EQ(psql.Arg(email))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list users: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -576,7 +577,7 @@ func (a *pgWebAuthnAccounts) webauthnBumpSignCount(ctx context.Context, projectI
 
 	libRaw, err := json.Marshal(validated)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal credential: %w", err)
 	}
 
 	stored.Library = libRaw
@@ -809,7 +810,7 @@ func (a *pgWebAuthnAccounts) webauthnInsertCredentialRow(ctx context.Context, pr
 
 	libRaw, err := json.Marshal(libCred)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal credential: %w", err)
 	}
 
 	stored := domain.WebAuthnStoredCredential{Credential: cred, Library: libRaw}
@@ -838,7 +839,7 @@ func (a *pgWebAuthnAccounts) webauthnInsertCredentialRow(ctx context.Context, pr
 			return nil, domain.ErrConflict
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("insert credential: %w", err)
 	}
 
 	return &cred, nil
@@ -850,7 +851,7 @@ func (a *pgWebAuthnAccounts) ListCredentials(ctx context.Context, accountID stri
 		sm.Where(models.IamWebauthnCredentials.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list credentials: %w", err)
 	}
 
 	out := make([]domain.WebAuthnCredential, 0, len(rows))

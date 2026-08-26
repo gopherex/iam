@@ -43,7 +43,7 @@ func (c *smsConfig) sendAwsSNS(ctx context.Context, to, text string) error {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Endpoint, strings.NewReader(body))
 	if err != nil {
-		return err
+		return fmt.Errorf("build sns request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")

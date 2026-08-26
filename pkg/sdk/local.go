@@ -215,7 +215,12 @@ func (v *LocalVerifier) parse(ctx context.Context, token string, forceRefresh bo
 		return nil, err
 	}
 
-	return jwt.Parse([]byte(token), jwt.WithKeySet(set), jwt.WithValidate(true))
+	tok, err := jwt.Parse([]byte(token), jwt.WithKeySet(set), jwt.WithValidate(true))
+	if err != nil {
+		return nil, fmt.Errorf("parse token: %w", err)
+	}
+
+	return tok, nil
 }
 
 func (v *LocalVerifier) keySetFor(ctx context.Context, forceRefresh bool) (jwk.Set, error) {
@@ -247,7 +252,7 @@ func (v *LocalVerifier) keySetFor(ctx context.Context, forceRefresh bool) (jwk.S
 
 	set, err := jwk.Fetch(ctx, v.jwksURL, opts...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetch jwks: %w", err)
 	}
 
 	v.keySet = set
@@ -297,12 +302,12 @@ func (v *LocalVerifier) validateClaims(claims Claims) error {
 func tokenClaims(tok jwt.Token) (Claims, error) {
 	buf, err := json.Marshal(tok)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal token: %w", err)
 	}
 
 	var claims Claims
 	if err := json.Unmarshal(buf, &claims); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshal claims: %w", err)
 	}
 
 	return claims, nil
@@ -314,7 +319,12 @@ func buildJWKSURL(baseURL, projectID, environment string) (string, error) {
 		return "", ErrLocalBaseURLRequired
 	}
 
-	return url.JoinPath(baseURL, "p", projectID, "e", environment, ".well-known", "jwks.json")
+	jwksURL, err := url.JoinPath(baseURL, "p", projectID, "e", environment, ".well-known", "jwks.json")
+	if err != nil {
+		return "", fmt.Errorf("build jwks url: %w", err)
+	}
+
+	return jwksURL, nil
 }
 
 // issuerFor builds the canonical absolute issuer for a tenant:

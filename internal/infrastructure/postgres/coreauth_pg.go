@@ -28,6 +28,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -154,7 +155,7 @@ const coreAuthPasswordHashCost = 12
 func coreAuthHashPassword(plaintext string) (string, error) {
 	h, err := bcrypt.GenerateFromPassword([]byte(plaintext), coreAuthPasswordHashCost)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("hash password: %w", err)
 	}
 
 	return string(h), nil
@@ -170,7 +171,7 @@ func coreAuthCheckPassword(hash, plaintext string) bool {
 func coreAuthRandomToken() (string, error) {
 	b := make([]byte, randomTokenBytes)
 	if _, err := rand.Read(b); err != nil {
-		return "", err
+		return "", fmt.Errorf("random token: %w", err)
 	}
 
 	return hex.EncodeToString(b), nil
@@ -192,7 +193,7 @@ const otpRandSourceBytes = 4
 func coreAuthRandomCode() (string, error) {
 	b := make([]byte, otpRandSourceBytes)
 	if _, err := rand.Read(b); err != nil {
-		return "", err
+		return "", fmt.Errorf("random code: %w", err)
 	}
 
 	n := (uint32(b[0])<<24 | uint32(b[1])<<16 | uint32(b[2])<<8 | uint32(b[3])) % otpCodeModulus
@@ -359,7 +360,7 @@ func (a *pgCoreAuth) coreAuthFindUserByEmail(ctx context.Context, projectID, ema
 			return nil, domain.ErrUserNotFound
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("find user by email: %w", err)
 	}
 
 	return row, nil
@@ -384,7 +385,7 @@ func (a *pgCoreAuth) coreAuthFindPasswordCredential(ctx context.Context, project
 			return nil, domain.ErrInvalidCredentials
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("find password credential: %w", err)
 	}
 
 	return row, nil
@@ -467,8 +468,11 @@ func (a *pgCoreAuth) coreAuthInsertSessionRow(ctx context.Context, sess *domain.
 	}
 
 	_, err = models.IamSessions.Insert(sessSetter).One(ctx, a.db.Bobx())
+	if err != nil {
+		return fmt.Errorf("insert session: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 // newCoreAuthSession assembles the domain.Session for a freshly minted
@@ -756,7 +760,7 @@ func (a *pgCoreAuth) coreAuthInsertRefreshToken(ctx context.Context, refreshToke
 		Data:        &rawRefreshToken,
 	}
 	if _, err := models.IamRefreshTokens.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-		return err
+		return fmt.Errorf("insert refresh token: %w", err)
 	}
 
 	return nil
@@ -803,7 +807,7 @@ func (a *pgCoreAuth) coreAuthInsertChallenge(ctx context.Context, ch coreAuthCha
 	}
 
 	if _, err := models.IamChallenges.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("insert challenge: %w", err)
 	}
 
 	if err := a.emitter.Emit(ctx, domain.Event{
@@ -1030,7 +1034,7 @@ func (a *pgCoreAuth) coreAuthFindChallengeByToken(ctx context.Context, projectID
 		sm.Where(models.IamChallenges.Columns.Type.EQ(psql.Arg(wantType))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("find challenge by token: %w", err)
 	}
 
 	wantHash := coreAuthSHA256(token)
@@ -1132,7 +1136,7 @@ func (a *pgCoreAuth) coreAuthRevokeAllForUser(ctx context.Context, projectID, us
 		sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(userID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return err
+		return fmt.Errorf("list sessions for user: %w", err)
 	}
 
 	for _, s := range sessions {
@@ -1182,8 +1186,11 @@ func (a *pgCoreAuth) coreAuthPersistCredentialLock(ctx context.Context, cred *mo
 
 	_, err = a.db.Pool.Exec(ctx,
 		`UPDATE iam_credentials SET data = $1, updated_at = now() WHERE id = $2`, raw, cred.ID)
+	if err != nil {
+		return fmt.Errorf("persist credential lock: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 // coreAuthInvokeUserCreateHooks runs the project's before_user_create blocking
@@ -1198,7 +1205,7 @@ func (a *pgCoreAuth) coreAuthInvokeUserCreateHooks(ctx context.Context, cmd doma
 		"name":       cmd.Name,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal user create hook payload: %w", err)
 	}
 
 	allowed, err := NewPgHooks(a.db, a.emitter).InvokeHooks(ctx, cmd.ProjectID, "before_user_create", payload)
@@ -1382,7 +1389,7 @@ func (a *pgCoreAuth) coreAuthInsertRegisterUser(ctx context.Context, cmd domain.
 			return nil, domain.ErrPhoneExists
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("insert user: %w", err)
 	}
 
 	return acc, nil
@@ -1411,7 +1418,7 @@ func (a *pgCoreAuth) coreAuthInsertRegisterConsents(ctx context.Context, acc *do
 		}
 
 		if _, err := models.IamConsents.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-			return err
+			return fmt.Errorf("insert consent: %w", err)
 		}
 	}
 
@@ -1460,8 +1467,11 @@ func (a *pgCoreAuth) coreAuthInsertRegisterPassword(ctx context.Context, acc *do
 	}
 
 	_, err = models.IamCredentials.Insert(credSetter).One(ctx, a.db.Bobx())
+	if err != nil {
+		return fmt.Errorf("insert password credential: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 // AuthenticatePassword verifies an email + password against the bcrypt
@@ -1605,7 +1615,7 @@ func (a *pgCoreAuth) coreAuthActiveFactors(ctx context.Context, accountID string
 		sm.Where(models.IamFactors.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list active factors: %w", err)
 	}
 
 	out := make([]domain.Factor, 0, len(rows))
@@ -1755,7 +1765,7 @@ func (a *pgCoreAuth) coreAuthLoadRefreshRow(ctx context.Context, hash string) (*
 			return nil, EffectiveSessionPolicy{}, domain.ErrInvalidToken
 		}
 
-		return nil, EffectiveSessionPolicy{}, err
+		return nil, EffectiveSessionPolicy{}, fmt.Errorf("load refresh row: %w", err)
 	}
 
 	sp, err := a.cfg.SessionPolicyForEnv(ctx, row.ProjectID, row.Environment)
@@ -1903,7 +1913,7 @@ func (a *pgCoreAuth) coreAuthLoadValidAuthCode(ctx context.Context, codeHash, ve
 			return nil, nil, domain.ErrInvalidToken
 		}
 
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("load auth code: %w", err)
 	}
 
 	if row.Consumed {
@@ -2044,7 +2054,7 @@ func (a *pgCoreAuth) CreateGuest(ctx context.Context, projectID string) (*domain
 			Data:        &rawAccount,
 		}
 		if _, err := models.IamUsers.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-			return guestResult{}, err
+			return guestResult{}, fmt.Errorf("insert guest user: %w", err)
 		}
 
 		sess, err := a.coreAuthMintSession(ctx, acc, "", []string{"anonymous"}, 1)
@@ -2207,7 +2217,7 @@ func (a *pgCoreAuth) coreAuthSignOutAll(ctx context.Context, projectID, userID, 
 		sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(userID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("list sessions to sign out: %w", err)
 	}
 
 	count := 0
@@ -2392,7 +2402,7 @@ func (a *pgCoreAuth) coreAuthFindChallengeByTokenAnyProject(ctx context.Context,
 		sm.Where(models.IamChallenges.Columns.Consumed.EQ(psql.Arg(false))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("find challenge by token any project: %w", err)
 	}
 
 	wantHash := coreAuthSHA256(token)
@@ -2782,7 +2792,7 @@ func (a *pgCoreAuth) coreAuthFindUserByPhone(ctx context.Context, projectID, pho
 			return nil, domain.ErrUserNotFound
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("find user by phone: %w", err)
 	}
 
 	return row, nil
@@ -3019,7 +3029,7 @@ func (a *pgCoreAuth) coreAuthUpsertPasswordCredential(ctx context.Context, proje
 	).One(ctx, a.db.Bobx())
 	if err != nil {
 		if !errors.Is(translatePgErr("credential", err), ErrNotFound) {
-			return err
+			return fmt.Errorf("find password credential: %w", err)
 		}
 		// Insert a fresh credential.
 		cred := coreAuthCredential{
@@ -3051,7 +3061,7 @@ func (a *pgCoreAuth) coreAuthUpsertPasswordCredential(ctx context.Context, proje
 			Data:        &rawCred,
 		}
 		if _, err := models.IamCredentials.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-			return err
+			return fmt.Errorf("insert password credential: %w", err)
 		}
 
 		return nil
@@ -3439,7 +3449,7 @@ func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAut
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("insert access request: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -3486,7 +3496,7 @@ func (a *pgCoreAuth) Introspect(ctx context.Context, projectID, token string) (*
 			},
 		}, nil
 	} else if !errors.Is(translatePgErr("refresh_token", err), ErrNotFound) {
-		return nil, err
+		return nil, fmt.Errorf("introspect refresh token: %w", err)
 	}
 
 	// Access token: verify the JWT signature/claims (jwx) and confirm the named
@@ -3669,7 +3679,7 @@ func (a *pgCoreAuth) Revoke(ctx context.Context, cmd domain.CoreAuthRevokeCmd) e
 
 			return nil
 		} else if !errors.Is(translatePgErr("refresh_token", err), ErrNotFound) {
-			return err
+			return fmt.Errorf("revoke refresh token: %w", err)
 		}
 		// Access token (JWT): route by its sid claim. Revocation is idempotent, so
 		// the claims are read unverified purely to find the session. Reading from a

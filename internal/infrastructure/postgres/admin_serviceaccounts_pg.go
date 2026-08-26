@@ -18,6 +18,7 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
@@ -72,7 +73,7 @@ func (a *pgAdminServiceAccounts) List(ctx context.Context, projectID string) ([]
 		sm.Where(models.IamServiceAccounts.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list service accounts: %w", err)
 	}
 
 	out := make([]domain.ServiceAccount, 0, len(rows))
@@ -122,7 +123,7 @@ func (a *pgAdminServiceAccounts) Create(ctx context.Context, cmd domain.ServiceA
 				return nil, domain.ErrConflict
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("create service account: %w", err)
 		}
 
 		if err := a.emitter.Emit(ctx, domain.Event{
@@ -194,7 +195,7 @@ func (a *pgAdminServiceAccounts) Delete(ctx context.Context, projectID, saID str
 			sm.Where(models.IamAppSecrets.Columns.AppID.EQ(psql.Arg(saID))),
 		).All(ctx, a.db.Bobx())
 		if err != nil {
-			return err
+			return fmt.Errorf("list app secrets: %w", err)
 		}
 
 		for _, s := range secrets {
@@ -255,7 +256,7 @@ func (a *pgAdminServiceAccounts) AddSecret(ctx context.Context, cmd domain.Admin
 			Hash:      &hash,
 			Data:      &mrm,
 		}).One(ctx, a.db.Bobx()); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("create app secret: %w", err)
 		}
 
 		result := &domain.AdminSecret{

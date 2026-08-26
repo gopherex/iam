@@ -12,6 +12,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gopherex/pgtx"
 	pgtxotel "github.com/gopherex/pgtx/contrib/otel"
@@ -83,7 +84,7 @@ func Connect(ctx context.Context, dsn string, opts ...ConnectOption) (*DB, error
 
 	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse pool config: %w", err)
 	}
 
 	if options.logger != nil {
@@ -92,7 +93,7 @@ func Connect(ctx context.Context, dsn string, opts ...ConnectOption) (*DB, error
 		if options.queryLogLevel != "" {
 			level, err := tracelog.LogLevelFromString(options.queryLogLevel)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("parse query log level: %w", err)
 			}
 
 			tracerOpts = append(tracerOpts, pgxlog.WithLogLevel(level))
@@ -100,7 +101,7 @@ func Connect(ctx context.Context, dsn string, opts ...ConnectOption) (*DB, error
 
 		tracer, err := pgxlog.NewTracer(options.logger, tracerOpts...)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("create query tracer: %w", err)
 		}
 
 		cfg.ConnConfig.Tracer = tracer
@@ -108,20 +109,20 @@ func Connect(ctx context.Context, dsn string, opts ...ConnectOption) (*DB, error
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("connect db: %w", err)
 	}
 
 	if options.metrics {
 		if err := pgtxotel.RegisterMetrics(pool); err != nil {
 			pool.Close()
-			return nil, err
+			return nil, fmt.Errorf("register pool metrics: %w", err)
 		}
 	}
 
 	txManager, err := pgtx.NewTxManager(pool, pgtxlib.ReadCommitted())
 	if err != nil {
 		pool.Close()
-		return nil, err
+		return nil, fmt.Errorf("create tx manager: %w", err)
 	}
 
 	return &DB{
@@ -164,5 +165,9 @@ func (db *DB) Close() {
 
 // Ping verifies connectivity.
 func (db *DB) Ping(ctx context.Context) error {
-	return db.Pool.Ping(ctx)
+	if err := db.Pool.Ping(ctx); err != nil {
+		return fmt.Errorf("ping db: %w", err)
+	}
+
+	return nil
 }

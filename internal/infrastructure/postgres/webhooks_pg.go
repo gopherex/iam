@@ -86,7 +86,7 @@ func newWebhookHTTPClient(timeout time.Duration) *http.Client {
 		Control: func(_, address string, _ syscall.RawConn) error {
 			host, _, err := net.SplitHostPort(address)
 			if err != nil {
-				return err
+				return fmt.Errorf("split host port: %w", err)
 			}
 
 			if ip := net.ParseIP(host); ip != nil && isBlockedWebhookIP(ip) {
@@ -205,7 +205,7 @@ func validateWebhookEvents(events []string) error {
 func (a *PgWebhooks) decodeWebhookData(raw []byte) (webhookData, error) {
 	var data webhookData
 	if err := json.Unmarshal(raw, &data); err != nil {
-		return data, err
+		return data, fmt.Errorf("decode webhook data: %w", err)
 	}
 
 	var err error
@@ -240,7 +240,12 @@ func (a *PgWebhooks) encodeWebhookData(data webhookData) ([]byte, error) {
 		}
 	}
 
-	return json.Marshal(data)
+	raw, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("encode webhook data: %w", err)
+	}
+
+	return raw, nil
 }
 
 func (a *PgWebhooks) scanWebhook(row pgx.Row) (*domain.Webhook, error) {
@@ -253,7 +258,7 @@ func (a *PgWebhooks) scanWebhook(row pgx.Row) (*domain.Webhook, error) {
 			return nil, domain.ErrNotFound.WithMessage("webhook not found")
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("scan webhook: %w", err)
 	}
 
 	data, err := a.decodeWebhookData(raw)
@@ -293,7 +298,7 @@ func (a *PgWebhooks) List(ctx context.Context, cmd domain.WebhookListCmd) ([]dom
 
 	rows, err := a.db.TxDB.Query(ctx, query, args...)
 	if err != nil {
-		return nil, "", false, err
+		return nil, "", false, fmt.Errorf("list webhooks: %w", err)
 	}
 	defer rows.Close()
 
@@ -309,7 +314,7 @@ func (a *PgWebhooks) List(ctx context.Context, cmd domain.WebhookListCmd) ([]dom
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, "", false, err
+		return nil, "", false, fmt.Errorf("list webhooks: rows: %w", err)
 	}
 
 	hasMore := len(out) > limit
@@ -438,12 +443,12 @@ func (a *PgWebhooks) Update(ctx context.Context, cmd domain.WebhookUpdateCmd) (*
 func (a *PgWebhooks) Delete(ctx context.Context, projectID, environment, id string) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		if _, err := a.db.TxDB.Exec(ctx, `DELETE FROM iam_webhook_deliveries WHERE webhook_id = $1 AND project_id = $2 AND environment = $3`, id, projectID, adminEnv(environment)); err != nil {
-			return err
+			return fmt.Errorf("delete webhook deliveries: %w", err)
 		}
 
 		result, err := a.db.TxDB.Exec(ctx, `DELETE FROM iam_webhooks WHERE id = $1 AND project_id = $2 AND environment = $3`, id, projectID, adminEnv(environment))
 		if err != nil {
-			return err
+			return fmt.Errorf("delete webhook: %w", err)
 		}
 
 		if result.RowsAffected() == 0 {
@@ -479,7 +484,7 @@ func (a *PgWebhooks) RotateSecret(ctx context.Context, projectID, environment, i
 
 		result, err := a.db.TxDB.Exec(ctx, `UPDATE iam_webhooks SET data = $1, updated_at = $2 WHERE id = $3 AND project_id = $4 AND environment = $5`, raw, now, id, projectID, adminEnv(environment))
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("rotate webhook secret: %w", err)
 		}
 
 		if result.RowsAffected() == 0 {
@@ -630,7 +635,7 @@ func firstString(values map[string]any, keys ...string) string {
 func (a *PgWebhooks) archiveEvent(ctx context.Context, event domain.PublicEvent, userID string) error {
 	raw, err := json.Marshal(event)
 	if err != nil {
-		return err
+		return fmt.Errorf("archive event: marshal: %w", err)
 	}
 
 	_, err = a.db.Pool.Exec(ctx, `
@@ -638,8 +643,11 @@ func (a *PgWebhooks) archiveEvent(ctx context.Context, event domain.PublicEvent,
 		VALUES ($1, $2, $3, $4, $5, $6, false, $7, $8)
 		ON CONFLICT (id) DO NOTHING`, event.ID, event.ProjectID, event.Environment,
 		firstString(event.Data, "session_id", "user_id"), userID, event.Type, event.OccurredAt, raw)
+	if err != nil {
+		return fmt.Errorf("archive event: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func webhookMatches(events []string, eventType string) bool {
@@ -649,7 +657,7 @@ func webhookMatches(events []string, eventType string) bool {
 func (a *PgWebhooks) enabledForEvent(ctx context.Context, event domain.PublicEvent) ([]domain.Webhook, error) {
 	rows, err := a.db.Pool.Query(ctx, webhookSelect+` WHERE project_id = $1 AND environment = $2 AND enabled = true`, event.ProjectID, event.Environment)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list enabled webhooks: %w", err)
 	}
 	defer rows.Close()
 
@@ -666,7 +674,11 @@ func (a *PgWebhooks) enabledForEvent(ctx context.Context, event domain.PublicEve
 		}
 	}
 
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("list enabled webhooks: rows: %w", err)
+	}
+
+	return out, nil
 }
 
 func (a *PgWebhooks) ensureDelivery(ctx context.Context, webhook domain.Webhook, event domain.PublicEvent) (*domain.WebhookDelivery, error) {
@@ -676,7 +688,7 @@ func (a *PgWebhooks) ensureDelivery(ctx context.Context, webhook domain.Webhook,
 		ON CONFLICT (webhook_id, event_id) DO NOTHING`,
 		newUUID(), event.ProjectID, event.Environment, webhook.ID, event.ID, nowUTC())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ensure webhook delivery: %w", err)
 	}
 
 	return a.getDeliveryByPair(ctx, webhook.ID, event.ID)
@@ -741,11 +753,11 @@ func (a *PgWebhooks) loadDeliveryParts(ctx context.Context, deliveryID string) (
 	)
 
 	if err := a.db.Pool.QueryRow(ctx, `SELECT data FROM iam_events WHERE id = $1`, delivery.EventID).Scan(&raw); err != nil {
-		return nil, nil, domain.PublicEvent{}, err
+		return nil, nil, domain.PublicEvent{}, fmt.Errorf("load delivery: scan event: %w", err)
 	}
 
 	if err := json.Unmarshal(raw, &event); err != nil {
-		return nil, nil, domain.PublicEvent{}, err
+		return nil, nil, domain.PublicEvent{}, fmt.Errorf("load delivery: decode event: %w", err)
 	}
 
 	return delivery, webhook, event, nil
@@ -791,7 +803,7 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 func buildWebhookRequest(ctx context.Context, webhook *domain.Webhook, event domain.PublicEvent) (*http.Request, error) {
 	body, err := json.Marshal(event)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("build webhook request: marshal: %w", err)
 	}
 
 	timestamp := nowUTC().Unix()
@@ -803,7 +815,7 @@ func buildWebhookRequest(ctx context.Context, webhook *domain.Webhook, event dom
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhook.URL, bytes.NewReader(body))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("build webhook request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -822,7 +834,7 @@ func buildWebhookRequest(ctx context.Context, webhook *domain.Webhook, event dom
 func (a *PgWebhooks) sendWebhookRequest(req *http.Request) (*int, string, error) {
 	response, requestErr := a.httpClient.Do(req) //nolint:gosec // a.httpClient is newWebhookHTTPClient: SSRF is guarded at dial time (isBlockedWebhookIP), not visible to this taint check
 	if response == nil {
-		return nil, "", requestErr
+		return nil, "", fmt.Errorf("send webhook request: %w", requestErr)
 	}
 
 	status := response.StatusCode
@@ -853,7 +865,7 @@ func (a *PgWebhooks) recordWebhookSuccess(ctx context.Context, deliveryID string
 		SET status = 'succeeded', attempt_count = $1, next_attempt_at = NULL, last_attempt_at = $2,
 			delivered_at = $2, response_status = $3, response_body = $4, last_error = NULL, updated_at = $2
 		WHERE id = $5`, attempts, attemptedAt, status, responseBody, deliveryID); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("record webhook success: %w", err)
 	}
 
 	return scanDelivery(a.db.Pool.QueryRow(ctx, deliverySelect+` WHERE d.id = $1`, deliveryID))
@@ -921,8 +933,11 @@ func (a *PgWebhooks) PublishEvent(ctx context.Context, ev domain.Event) error {
 	}
 
 	_, err = a.db.Pool.Exec(ctx, `UPDATE iam_events SET published = true WHERE id = $1`, event.ID)
+	if err != nil {
+		return fmt.Errorf("publish event: mark published: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (a *PgWebhooks) ListDeliveries(ctx context.Context, cmd domain.WebhookDeliveryListCmd) ([]domain.WebhookDelivery, error) {
@@ -949,7 +964,7 @@ func (a *PgWebhooks) ListDeliveries(ctx context.Context, cmd domain.WebhookDeliv
 
 	rows, err := a.db.TxDB.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list webhook deliveries: %w", err)
 	}
 	defer rows.Close()
 
@@ -964,7 +979,11 @@ func (a *PgWebhooks) ListDeliveries(ctx context.Context, cmd domain.WebhookDeliv
 		out = append(out, *delivery)
 	}
 
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("list webhook deliveries: rows: %w", err)
+	}
+
+	return out, nil
 }
 
 func (a *PgWebhooks) RetryDelivery(ctx context.Context, projectID, environment, deliveryID string) (*domain.WebhookDelivery, error) {
@@ -975,7 +994,7 @@ func (a *PgWebhooks) RetryDelivery(ctx context.Context, projectID, environment, 
 
 	_, err = a.db.TxDB.Exec(ctx, `UPDATE iam_webhook_deliveries SET status = 'pending', next_attempt_at = NULL, updated_at = $1 WHERE id = $2`, nowUTC(), delivery.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("retry webhook delivery: %w", err)
 	}
 
 	updated, err := a.deliver(ctx, delivery.ID, true)
@@ -1049,7 +1068,7 @@ func (a *PgWebhooks) ListEvents(ctx context.Context, cmd domain.WebhookEventList
 
 	rows, err := a.db.TxDB.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list webhook events: %w", err)
 	}
 	defer rows.Close()
 
@@ -1058,19 +1077,19 @@ func (a *PgWebhooks) ListEvents(ctx context.Context, cmd domain.WebhookEventList
 	for rows.Next() {
 		var raw []byte
 		if err := rows.Scan(&raw); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("list webhook events: scan: %w", err)
 		}
 
 		var event domain.PublicEvent
 		if err := json.Unmarshal(raw, &event); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("list webhook events: decode: %w", err)
 		}
 
 		page.Data = append(page.Data, event)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list webhook events: rows: %w", err)
 	}
 
 	page.HasMore = len(page.Data) > limit
@@ -1089,12 +1108,12 @@ func (a *PgWebhooks) ReplayEvent(ctx context.Context, projectID, environment, ev
 			return nil, domain.ErrNotFound.WithMessage("event not found")
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("replay event: scan: %w", err)
 	}
 
 	var event domain.PublicEvent
 	if err := json.Unmarshal(raw, &event); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("replay event: decode: %w", err)
 	}
 
 	var webhooks []domain.Webhook
