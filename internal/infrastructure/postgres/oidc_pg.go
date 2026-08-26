@@ -1756,169 +1756,177 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]any, error) {
 		switch cmd.GrantType {
 		case "authorization_code":
-			if cmd.Code == "" {
-				return nil, domain.ErrBadRequest
-			}
-
-			hash := oidcHashToken(cmd.Code)
-
-			rows, err := models.IamAuthCodes.Query(
-				sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
-				sm.Limit(1),
-			).All(ctx, a.db.Bobx())
-			if err != nil {
-				return nil, err
-			}
-
-			if len(rows) == 0 {
-				return nil, domain.ErrInvalidToken
-			}
-
-			row := rows[0]
-			if row.Consumed {
-				return nil, domain.ErrTokenUsed
-			}
-
-			if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
-				return nil, domain.ErrTokenExpired
-			}
-
-			// H-01: Verify client_secret for confidential clients — unless the
-			// transport already authenticated this very client
-			// (client_secret_basic), in which case there is nothing left to prove
-			// and no secret in the body to prove it with.
-			effectiveClientID := firstNonEmpty(row.ClientID.GetOrZero(), cmd.ClientID, cmd.AuthenticatedClientID)
-			if cmd.AuthenticatedClientID != effectiveClientID {
-				if err := a.oidcVerifyClientSecret(ctx, effectiveClientID, cmd.ClientSecret); err != nil {
-					return nil, err
-				}
-			}
-
-			// Parse the code data envelope for redirect_uri, nonce, and scopes.
-			codeData, err := parseAuthCodeData(row.Data)
-			if err != nil {
-				return nil, err
-			}
-
-			// H-03: Verify redirect_uri matches the one stored at authorize time.
-			if cmd.RedirectURI != "" || codeData.RedirectURI != "" {
-				if subtle.ConstantTimeCompare([]byte(cmd.RedirectURI), []byte(codeData.RedirectURI)) != 1 {
-					return nil, domain.ErrUnauthorized
-				}
-			}
-
-			// PKCE (RFC 7636): the verifier must reproduce the challenge that was
-			// bound to this code at authorize time. Checked before the code is
-			// consumed so a failed exchange does not burn a valid code.
-			if err := oidcVerifyPKCE(codeData.CodeChallenge, codeData.CodeChallengeMethod, cmd.CodeVerifier); err != nil {
-				return nil, err
-			}
-
-			// M-02: Verify consent was granted for this (project, user, client).
-			if row.ProjectID != "" && row.UserID.GetOrZero() != "" && effectiveClientID != "" {
-				if err := a.oidcVerifyConsent(ctx, row.ProjectID, row.UserID.GetOrZero(), effectiveClientID); err != nil {
-					return nil, err
-				}
-			}
-
-			consumed := true
-			if err := row.Update(ctx, a.db.Bobx(), &models.IamAuthCodeSetter{Consumed: &consumed}); err != nil {
-				return nil, err
-			}
-
-			codeEnv := row.Environment
-			if codeEnv == "" {
-				codeEnv = oidcDefaultEnv
-			}
-
-			tokenSubj := oidcTokenSubject{
-				projectID: row.ProjectID,
-				env:       codeEnv,
-				subject:   row.UserID.GetOrZero(),
-				clientID:  effectiveClientID,
-				nonce:     codeData.Nonce,
-				scopes:    splitScopesFromData(row.Data),
-				sessionID: codeData.SessionID,
-				authTime:  codeData.AuthTime,
-			}
-			if err := a.emitter.Emit(ctx, domain.Event{
-				Type:        "oidc.token.issued",
-				ProjectID:   row.ProjectID,
-				Environment: codeEnv,
-				AggregateID: row.UserID.GetOrZero(),
-				Payload: map[string]any{
-					"grant_type": "authorization_code",
-					"client_id":  tokenSubj.clientID,
-					"subject":    tokenSubj.subject,
-					"scopes":     tokenSubj.scopes,
-				},
-			}); err != nil {
-				return nil, err
-			}
-
-			return a.mintTokenResponse(ctx, tokenSubj)
+			return a.tokenAuthorizationCodeGrant(ctx, cmd)
 		case "device_code":
-			if cmd.DeviceCode == "" {
-				return nil, domain.ErrBadRequest
-			}
-
-			hash := oidcHashToken(cmd.DeviceCode)
-
-			rows, err := models.IamDeviceCodes.Query(
-				sm.Where(models.IamDeviceCodes.Columns.DeviceCode.EQ(psql.Arg(hash))),
-				sm.Limit(1),
-			).All(ctx, a.db.Bobx())
-			if err != nil {
-				return nil, err
-			}
-
-			if len(rows) == 0 {
-				return nil, domain.ErrInvalidToken
-			}
-
-			row := rows[0]
-			switch row.Status {
-			case "approved":
-				var pending domain.OIDCDevicePending
-
-				_ = unmarshal(row.Data, &pending)
-
-				tokenSubj := oidcTokenSubject{
-					projectID: row.ProjectID,
-					env:       oidcDefaultEnv,
-					subject:   row.UserID.GetOrZero(),
-					clientID:  firstNonEmpty(pending.ClientID, cmd.ClientID),
-					scopes:    pending.Scopes,
-				}
-				if err := a.emitter.Emit(ctx, domain.Event{
-					Type:        "oidc.token.issued",
-					ProjectID:   row.ProjectID,
-					Environment: oidcDefaultEnv,
-					AggregateID: row.UserID.GetOrZero(),
-					Payload: map[string]any{
-						"grant_type": "device_code",
-						"client_id":  tokenSubj.clientID,
-						"subject":    tokenSubj.subject,
-						"scopes":     tokenSubj.scopes,
-					},
-				}); err != nil {
-					return nil, err
-				}
-
-				return a.mintTokenResponse(ctx, tokenSubj)
-			case "denied":
-				return nil, domain.ErrForbidden
-			default:
-				if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
-					return nil, domain.ErrTokenExpired
-				}
-				// RFC 8628: still pending.
-				return nil, domain.ErrBadRequest
-			}
+			return a.tokenDeviceCodeGrant(ctx, cmd)
 		default:
 			return nil, domain.ErrUnsupportedGrant
 		}
 	})
+}
+
+// tokenAuthorizationCodeGrant exchanges an authorization_code for tokens (RFC
+// 6749 §4.1.3), enforcing: client_secret for a confidential client not
+// already authenticated at the transport (H-01), the redirect_uri matching
+// what was stored at authorize time (H-03), PKCE before the code is consumed
+// so a failed exchange doesn't burn a valid code, and prior consent (M-02).
+func (a *pgOIDCGrants) tokenAuthorizationCodeGrant(ctx context.Context, cmd domain.OIDCTokenCmd) (map[string]any, error) {
+	if cmd.Code == "" {
+		return nil, domain.ErrBadRequest
+	}
+
+	hash := oidcHashToken(cmd.Code)
+
+	rows, err := models.IamAuthCodes.Query(
+		sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
+		sm.Limit(1),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return nil, err
+	}
+
+	if len(rows) == 0 {
+		return nil, domain.ErrInvalidToken
+	}
+
+	row := rows[0]
+	if row.Consumed {
+		return nil, domain.ErrTokenUsed
+	}
+
+	if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
+		return nil, domain.ErrTokenExpired
+	}
+
+	effectiveClientID := firstNonEmpty(row.ClientID.GetOrZero(), cmd.ClientID, cmd.AuthenticatedClientID)
+	if cmd.AuthenticatedClientID != effectiveClientID {
+		if err := a.oidcVerifyClientSecret(ctx, effectiveClientID, cmd.ClientSecret); err != nil {
+			return nil, err
+		}
+	}
+
+	// Parse the code data envelope for redirect_uri, nonce, and scopes.
+	codeData, err := parseAuthCodeData(row.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	if cmd.RedirectURI != "" || codeData.RedirectURI != "" {
+		if subtle.ConstantTimeCompare([]byte(cmd.RedirectURI), []byte(codeData.RedirectURI)) != 1 {
+			return nil, domain.ErrUnauthorized
+		}
+	}
+
+	if err := oidcVerifyPKCE(codeData.CodeChallenge, codeData.CodeChallengeMethod, cmd.CodeVerifier); err != nil {
+		return nil, err
+	}
+
+	if row.ProjectID != "" && row.UserID.GetOrZero() != "" && effectiveClientID != "" {
+		if err := a.oidcVerifyConsent(ctx, row.ProjectID, row.UserID.GetOrZero(), effectiveClientID); err != nil {
+			return nil, err
+		}
+	}
+
+	consumed := true
+	if err := row.Update(ctx, a.db.Bobx(), &models.IamAuthCodeSetter{Consumed: &consumed}); err != nil {
+		return nil, err
+	}
+
+	codeEnv := row.Environment
+	if codeEnv == "" {
+		codeEnv = oidcDefaultEnv
+	}
+
+	tokenSubj := oidcTokenSubject{
+		projectID: row.ProjectID,
+		env:       codeEnv,
+		subject:   row.UserID.GetOrZero(),
+		clientID:  effectiveClientID,
+		nonce:     codeData.Nonce,
+		scopes:    splitScopesFromData(row.Data),
+		sessionID: codeData.SessionID,
+		authTime:  codeData.AuthTime,
+	}
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "oidc.token.issued",
+		ProjectID:   row.ProjectID,
+		Environment: codeEnv,
+		AggregateID: row.UserID.GetOrZero(),
+		Payload: map[string]any{
+			"grant_type": "authorization_code",
+			"client_id":  tokenSubj.clientID,
+			"subject":    tokenSubj.subject,
+			"scopes":     tokenSubj.scopes,
+		},
+	}); err != nil {
+		return nil, err
+	}
+
+	return a.mintTokenResponse(ctx, tokenSubj)
+}
+
+// tokenDeviceCodeGrant exchanges a device_code for tokens once the user has
+// approved it on the verification page (RFC 8628 §3.5): approved mints
+// tokens, denied is terminal, and anything else (still pending, or expired)
+// tells the device to keep polling or give up per the RFC's error codes.
+func (a *pgOIDCGrants) tokenDeviceCodeGrant(ctx context.Context, cmd domain.OIDCTokenCmd) (map[string]any, error) {
+	if cmd.DeviceCode == "" {
+		return nil, domain.ErrBadRequest
+	}
+
+	hash := oidcHashToken(cmd.DeviceCode)
+
+	rows, err := models.IamDeviceCodes.Query(
+		sm.Where(models.IamDeviceCodes.Columns.DeviceCode.EQ(psql.Arg(hash))),
+		sm.Limit(1),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return nil, err
+	}
+
+	if len(rows) == 0 {
+		return nil, domain.ErrInvalidToken
+	}
+
+	row := rows[0]
+	switch row.Status {
+	case "approved":
+		var pending domain.OIDCDevicePending
+
+		_ = unmarshal(row.Data, &pending)
+
+		tokenSubj := oidcTokenSubject{
+			projectID: row.ProjectID,
+			env:       oidcDefaultEnv,
+			subject:   row.UserID.GetOrZero(),
+			clientID:  firstNonEmpty(pending.ClientID, cmd.ClientID),
+			scopes:    pending.Scopes,
+		}
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "oidc.token.issued",
+			ProjectID:   row.ProjectID,
+			Environment: oidcDefaultEnv,
+			AggregateID: row.UserID.GetOrZero(),
+			Payload: map[string]any{
+				"grant_type": "device_code",
+				"client_id":  tokenSubj.clientID,
+				"subject":    tokenSubj.subject,
+				"scopes":     tokenSubj.scopes,
+			},
+		}); err != nil {
+			return nil, err
+		}
+
+		return a.mintTokenResponse(ctx, tokenSubj)
+	case "denied":
+		return nil, domain.ErrForbidden
+	default:
+		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
+			return nil, domain.ErrTokenExpired
+		}
+		// RFC 8628: still pending.
+		return nil, domain.ErrBadRequest
+	}
 }
 
 // tokenRefreshGrant exchanges a refresh token, rotating it. It manages its own

@@ -1563,6 +1563,18 @@ func (a *pgCoreAuth) coreAuthHandleReusedRefresh(ctx context.Context, row *model
 	})
 }
 
+// coreAuthRefreshResult is Refresh's outcome: exactly one of acc/sess or one
+// of the three flags is meaningful. The flags exist because their revoke
+// cascades must COMMIT even though the refresh itself is then rejected —
+// mapping to the corresponding error happens outside the transaction.
+type coreAuthRefreshResult struct {
+	acc      *domain.Account
+	sess     *domain.Session
+	mismatch bool
+	revoked  bool // presented token was already revoked (reuse) — map to ErrTokenRevoked
+	expired  bool // idle/absolute timeout tripped — map to ErrSessionExpired
+}
+
 // Refresh rotates a refresh token: it looks the token up by sha256 hash,
 // validates it (not revoked / not expired), revokes the old one, and mints a
 // fresh session for the same account.
@@ -1573,189 +1585,228 @@ func (a *pgCoreAuth) Refresh(ctx context.Context, refreshToken string) (*domain.
 
 	hash := coreAuthSHA256(refreshToken)
 
-	type refreshResult struct {
-		acc      *domain.Account
-		sess     *domain.Session
-		mismatch bool
-		revoked  bool // presented token was already revoked (reuse) — map to ErrTokenRevoked
-		expired  bool // idle/absolute timeout tripped — map to ErrSessionExpired
-	}
-
-	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (refreshResult, error) {
-		row, err := models.IamRefreshTokens.Query(
-			sm.Where(models.IamRefreshTokens.Columns.Hash.EQ(psql.Arg(hash))),
-		).One(ctx, a.db.Bobx())
-		if err != nil {
-			if errors.Is(translatePgErr("refresh_token", err), ErrNotFound) {
-				return refreshResult{}, domain.ErrInvalidToken
-			}
-
-			return refreshResult{}, err
-		}
-		// Session policy gates the reuse-detection cascade and the idle/absolute
-		// timeouts below; an absent doc yields the legacy defaults (reuse detection
-		// off, no idle/absolute timeout). Resolve it in the TOKEN's environment,
-		// not the request's — otherwise a client could present a token with
-		// X-Environment set to a weaker-policy environment to dodge reuse detection
-		// and the idle/absolute timeouts.
-		sp, err := a.cfg.SessionPolicyForEnv(ctx, row.ProjectID, row.Environment)
-		if err != nil {
-			return refreshResult{}, err
-		}
-
-		// Presenting an already-rotated (revoked) refresh token is always rejected
-		// — disabling reuse_detection must never re-enable replay. The reuse-theft
-		// cascade (below) must PERSIST, so we commit this tx (returning a nil error
-		// with revoked=true) and surface ErrTokenRevoked to the caller outside the
-		// tx — returning the error here would roll the cascade back.
-		if row.Revoked {
-			if err := a.coreAuthHandleReusedRefresh(ctx, row, sp); err != nil {
-				return refreshResult{}, err
-			}
-
-			return refreshResult{revoked: true}, nil
-		}
-
-		if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
-			return refreshResult{}, domain.ErrTokenExpired
-		}
-
-		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), row.UserID)
-		if err != nil {
-			if errors.Is(translatePgErr("user", err), ErrNotFound) {
-				return refreshResult{}, domain.ErrUserNotFound
-			}
-
-			return refreshResult{}, err
-		}
-
-		acc, err := coreAuthLoadAccount(userRow, row.ProjectID)
-		if err != nil {
-			return refreshResult{}, err
-		}
-
-		if err := coreAuthAccountActive(acc); err != nil {
-			return refreshResult{}, err
-		}
-
-		sessRow, err := models.FindIamSession(ctx, a.db.Bobx(), row.SessionID)
-		if err != nil {
-			if errors.Is(translatePgErr("session", err), ErrNotFound) {
-				return refreshResult{}, domain.ErrSessionNotFound
-			}
-
-			return refreshResult{}, err
-		}
-
-		// Device-change defense: a request that presents a device fingerprint
-		// which differs from the one bound to the session at sign-in is a strong
-		// token-theft signal. Revoke the session (committing this tx so the
-		// revocation persists) and refuse the refresh. UA changes are NOT treated
-		// as theft (browsers update their UA legitimately); only a fingerprint
-		// mismatch denies.
-		prev, err := coreAuthLoadSession(sessRow, sessRow.ProjectID)
-		if err != nil {
-			return refreshResult{}, err
-		}
-
-		meta := domain.RequestMetaFromContext(ctx)
-		if prev.Fingerprint != "" && meta.Fingerprint != "" && meta.Fingerprint != prev.Fingerprint {
-			if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
-				return refreshResult{}, err
-			}
-
-			if err := a.coreAuthRevokeSession(ctx, sessRow.ProjectID, sessRow.ID); err != nil &&
-				!errors.Is(err, domain.ErrSessionNotFound) {
-				return refreshResult{}, err
-			}
-
-			if err := a.emitter.Emit(ctx, domain.Event{
-				Type:        "session.device_mismatch",
-				ProjectID:   sessRow.ProjectID,
-				Environment: coreAuthDefaultEnv,
-				AggregateID: sessRow.ID,
-				Payload:     map[string]any{"session_id": sessRow.ID, "user_id": sessRow.UserID},
-			}); err != nil {
-				return refreshResult{}, err
-			}
-			// Commit the revocation (nil error); the caller maps mismatch to an error.
-			return refreshResult{mismatch: true}, nil
-		}
-
-		// Idle / absolute timeout enforcement (sliding-refresh model). The access
-		// token already self-expires after sp.AccessTTL; the session itself lives
-		// only while it keeps being refreshed within the idle window and under the
-		// absolute lifetime anchored at session creation. Both checks are gated on
-		// a configured (>0) timeout, so an absent/legacy doc enforces neither and
-		// behavior is unchanged. When either fires we revoke the refresh token and
-		// the session (committing this tx) and refuse with ErrSessionExpired.
-		now := nowUTC()
-
-		var expired bool
-		if sp.AbsoluteTimeout > 0 && now.After(sessRow.CreatedAt.Add(sp.AbsoluteTimeout)) {
-			expired = true
-		}
-
-		if sp.IdleTimeout > 0 && now.After(sessRow.LastActiveAt.Add(sp.IdleTimeout)) {
-			expired = true
-		}
-
-		if expired {
-			if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
-				return refreshResult{}, err
-			}
-
-			if err := a.coreAuthRevokeSession(ctx, sessRow.ProjectID, sessRow.ID); err != nil &&
-				!errors.Is(err, domain.ErrSessionNotFound) {
-				return refreshResult{}, err
-			}
-			// Commit the revocation; surface ErrSessionExpired outside the tx so the
-			// revoke is not rolled back.
-			return refreshResult{expired: true}, nil
-		}
-
-		// Rotate the tokens in place: revoke the presented refresh token, then
-		// mint a new access + refresh pair bound to the SAME session, preserving
-		// its id, AAL (MFA elevation), AMR, and client. The session is not torn
-		// down on refresh.
-		if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
-			return refreshResult{}, err
-		}
-
-		sess, err := a.coreAuthRotateSession(ctx, acc, sessRow)
-		if err != nil {
-			return refreshResult{}, err
-		}
-
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "token.refreshed",
-			ProjectID:   acc.ProjectID,
-			Environment: coreAuthDefaultEnv,
-			AggregateID: sess.ID,
-			Payload:     sess,
-		}); err != nil {
-			return refreshResult{}, err
-		}
-
-		return refreshResult{acc: acc, sess: sess}, nil
+	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (coreAuthRefreshResult, error) {
+		return a.coreAuthRefreshInTx(ctx, hash)
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if res.revoked {
+	switch {
+	case res.revoked:
 		return nil, nil, domain.ErrTokenRevoked
-	}
-
-	if res.expired {
+	case res.expired:
 		return nil, nil, domain.ErrSessionExpired
-	}
-
-	if res.mismatch {
+	case res.mismatch:
 		return nil, nil, domain.ErrSessionDeviceMismatch
+	default:
+		return res.acc, res.sess, nil
+	}
+}
+
+// coreAuthRefreshInTx is Refresh's whole transactional body: load, reject
+// reuse/expiry, load the account+session, defend against device change and
+// timeout, then rotate. MUST run inside db.withTx / withTxRet.
+func (a *pgCoreAuth) coreAuthRefreshInTx(ctx context.Context, hash string) (coreAuthRefreshResult, error) {
+	row, sp, err := a.coreAuthLoadRefreshRow(ctx, hash)
+	if err != nil {
+		return coreAuthRefreshResult{}, err
 	}
 
-	return res.acc, res.sess, nil
+	// Presenting an already-rotated (revoked) refresh token is always rejected
+	// — disabling reuse_detection must never re-enable replay.
+	if row.Revoked {
+		if err := a.coreAuthHandleReusedRefresh(ctx, row, sp); err != nil {
+			return coreAuthRefreshResult{}, err
+		}
+
+		return coreAuthRefreshResult{revoked: true}, nil
+	}
+
+	if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
+		return coreAuthRefreshResult{}, domain.ErrTokenExpired
+	}
+
+	acc, sessRow, err := a.coreAuthLoadRefreshAccountSession(ctx, row)
+	if err != nil {
+		return coreAuthRefreshResult{}, err
+	}
+
+	prev, err := coreAuthLoadSession(sessRow, sessRow.ProjectID)
+	if err != nil {
+		return coreAuthRefreshResult{}, err
+	}
+
+	mismatch, err := a.coreAuthCheckDeviceMismatch(ctx, row, sessRow, prev)
+	if err != nil {
+		return coreAuthRefreshResult{}, err
+	}
+
+	if mismatch {
+		return coreAuthRefreshResult{mismatch: true}, nil
+	}
+
+	expired, err := a.coreAuthCheckSessionTimeout(ctx, row, sessRow, sp)
+	if err != nil {
+		return coreAuthRefreshResult{}, err
+	}
+
+	if expired {
+		return coreAuthRefreshResult{expired: true}, nil
+	}
+
+	return a.coreAuthRotateRefresh(ctx, row, acc, sessRow)
+}
+
+// coreAuthLoadRefreshRow loads the refresh-token row by hash and its
+// project's session policy. Session policy is resolved in the TOKEN's
+// environment, not the request's — otherwise a client could present a token
+// with X-Environment set to a weaker-policy environment to dodge reuse
+// detection and the idle/absolute timeouts. An absent policy doc yields the
+// legacy defaults (reuse detection off, no idle/absolute timeout).
+func (a *pgCoreAuth) coreAuthLoadRefreshRow(ctx context.Context, hash string) (*models.IamRefreshToken, EffectiveSessionPolicy, error) {
+	row, err := models.IamRefreshTokens.Query(
+		sm.Where(models.IamRefreshTokens.Columns.Hash.EQ(psql.Arg(hash))),
+	).One(ctx, a.db.Bobx())
+	if err != nil {
+		if errors.Is(translatePgErr("refresh_token", err), ErrNotFound) {
+			return nil, EffectiveSessionPolicy{}, domain.ErrInvalidToken
+		}
+
+		return nil, EffectiveSessionPolicy{}, err
+	}
+
+	sp, err := a.cfg.SessionPolicyForEnv(ctx, row.ProjectID, row.Environment)
+	if err != nil {
+		return nil, EffectiveSessionPolicy{}, err
+	}
+
+	return row, sp, nil
+}
+
+// coreAuthLoadRefreshAccountSession loads and validates the account and
+// session a refresh-token row belongs to.
+func (a *pgCoreAuth) coreAuthLoadRefreshAccountSession(ctx context.Context, row *models.IamRefreshToken) (*domain.Account, *models.IamSession, error) {
+	userRow, err := models.FindIamUser(ctx, a.db.Bobx(), row.UserID)
+	if err != nil {
+		if errors.Is(translatePgErr("user", err), ErrNotFound) {
+			return nil, nil, domain.ErrUserNotFound
+		}
+
+		return nil, nil, err
+	}
+
+	acc, err := coreAuthLoadAccount(userRow, row.ProjectID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := coreAuthAccountActive(acc); err != nil {
+		return nil, nil, err
+	}
+
+	sessRow, err := models.FindIamSession(ctx, a.db.Bobx(), row.SessionID)
+	if err != nil {
+		if errors.Is(translatePgErr("session", err), ErrNotFound) {
+			return nil, nil, domain.ErrSessionNotFound
+		}
+
+		return nil, nil, err
+	}
+
+	return acc, sessRow, nil
+}
+
+// coreAuthCheckDeviceMismatch is the device-change defense: a request that
+// presents a device fingerprint which differs from the one bound to the
+// session at sign-in is a strong token-theft signal. UA changes are NOT
+// treated as theft (browsers update their UA legitimately); only a
+// fingerprint mismatch denies. On mismatch it revokes the token and session
+// (the caller's transaction commits the revocation regardless of the
+// refresh's own outcome).
+func (a *pgCoreAuth) coreAuthCheckDeviceMismatch(ctx context.Context, row *models.IamRefreshToken, sessRow *models.IamSession, prev *domain.Session) (bool, error) {
+	meta := domain.RequestMetaFromContext(ctx)
+	if prev.Fingerprint == "" || meta.Fingerprint == "" || meta.Fingerprint == prev.Fingerprint {
+		return false, nil
+	}
+
+	if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
+		return false, err
+	}
+
+	if err := a.coreAuthRevokeSession(ctx, sessRow.ProjectID, sessRow.ID); err != nil &&
+		!errors.Is(err, domain.ErrSessionNotFound) {
+		return false, err
+	}
+
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "session.device_mismatch",
+		ProjectID:   sessRow.ProjectID,
+		Environment: coreAuthDefaultEnv,
+		AggregateID: sessRow.ID,
+		Payload:     map[string]any{"session_id": sessRow.ID, "user_id": sessRow.UserID},
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// coreAuthCheckSessionTimeout enforces the idle/absolute timeout
+// (sliding-refresh model): the access token already self-expires after
+// sp.AccessTTL, so the session itself lives only while it keeps being
+// refreshed within the idle window and under the absolute lifetime anchored
+// at session creation. Both checks are gated on a configured (>0) timeout,
+// so an absent/legacy policy doc enforces neither. On expiry it revokes the
+// token and session.
+func (a *pgCoreAuth) coreAuthCheckSessionTimeout(ctx context.Context, row *models.IamRefreshToken, sessRow *models.IamSession, sp EffectiveSessionPolicy) (bool, error) {
+	now := nowUTC()
+
+	expired := sp.AbsoluteTimeout > 0 && now.After(sessRow.CreatedAt.Add(sp.AbsoluteTimeout))
+	if sp.IdleTimeout > 0 && now.After(sessRow.LastActiveAt.Add(sp.IdleTimeout)) {
+		expired = true
+	}
+
+	if !expired {
+		return false, nil
+	}
+
+	if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
+		return false, err
+	}
+
+	if err := a.coreAuthRevokeSession(ctx, sessRow.ProjectID, sessRow.ID); err != nil &&
+		!errors.Is(err, domain.ErrSessionNotFound) {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// coreAuthRotateRefresh revokes the presented refresh token, then mints a new
+// access + refresh pair bound to the SAME session, preserving its id, AAL
+// (MFA elevation), AMR, and client. The session is not torn down on refresh.
+func (a *pgCoreAuth) coreAuthRotateRefresh(ctx context.Context, row *models.IamRefreshToken, acc *domain.Account, sessRow *models.IamSession) (coreAuthRefreshResult, error) {
+	if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
+		return coreAuthRefreshResult{}, err
+	}
+
+	sess, err := a.coreAuthRotateSession(ctx, acc, sessRow)
+	if err != nil {
+		return coreAuthRefreshResult{}, err
+	}
+
+	if err := a.emitter.Emit(ctx, domain.Event{
+		Type:        "token.refreshed",
+		ProjectID:   acc.ProjectID,
+		Environment: coreAuthDefaultEnv,
+		AggregateID: sess.ID,
+		Payload:     sess,
+	}); err != nil {
+		return coreAuthRefreshResult{}, err
+	}
+
+	return coreAuthRefreshResult{acc: acc, sess: sess}, nil
 }
 
 // ExchangeCode trades a one-time auth code (iam_auth_codes) for a session,
