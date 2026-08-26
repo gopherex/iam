@@ -28,6 +28,8 @@ else (orchestration, TLS, secrets) is layered on top.
   clients call the API cross-origin.
 - [ ] **TLS terminated** at your ingress; forward to `:8080`.
 - [ ] **Probes** wired to `:8081` `/healthz/liveness` + `/healthz/readiness`.
+- [ ] **`/metrics`** on the same probe port scraped by your monitoring, and not
+      exposed publicly by your ingress.
 
 ## Image & tags
 

@@ -83,11 +83,18 @@ func run() error {
 	ctx := context.Background()
 
 	// ----- telemetry -----
-	telemetryShutdown, err := xtracesdk.Setup(ctx,
+	// With scraping on we own the metric pipeline, so the SDK is asked not to
+	// build one: two providers would mean two sets of the same instruments.
+	telemetryOpts := []xtracesdk.Option{
 		xtracesdk.WithService(build.ServiceName),
 		xtracesdk.WithVersion(build.Version),
 		xtracesdk.WithInstanceID(build.InstanceID),
-	)
+	}
+	if cfg.Service.HTTP.MetricsEnabled {
+		telemetryOpts = append(telemetryOpts, xtracesdk.WithoutMetrics())
+	}
+
+	telemetryShutdown, err := xtracesdk.Setup(ctx, telemetryOpts...)
 	if err != nil {
 		slog.Error("telemetry setup failed", "err", err)
 		return err
@@ -97,6 +104,26 @@ func run() error {
 			_ = telemetryShutdown(context.Background())
 		}
 	}()
+
+	var metricsHandler http.Handler
+
+	var metricsShutdown func(context.Context) error
+
+	if cfg.Service.HTTP.MetricsEnabled {
+		metricsHandler, metricsShutdown, err = setupMetrics(
+			ctx, build.ServiceName, build.Version, build.InstanceID)
+		if err != nil {
+			slog.Error("metrics setup failed", "err", err)
+
+			return err
+		}
+
+		defer func() {
+			if metricsShutdown != nil {
+				_ = metricsShutdown(context.Background())
+			}
+		}()
+	}
 
 	// ----- logger -----
 	log := newLogger(cfg.Service.Logger).AppendName(build.ServiceName).With(buildFields()...)
@@ -238,9 +265,19 @@ func run() error {
 	// server under /healthz/.
 	probeAddr := cfg.Service.HTTP.ProbeAddr
 
+	// Metrics ride with the probes: the same listener a cluster already scrapes,
+	// and the same one it does not expose.
+	if metricsHandler != nil {
+		probeMux.Handle(metricsPath, metricsHandler)
+	}
+
 	separateProbes := probeAddr != "" && probeAddr != cfg.Service.HTTP.Addr
 	if !separateProbes {
 		root.Handle("/healthz/", probeMux)
+
+		if metricsHandler != nil {
+			root.Handle(metricsPath, metricsHandler)
+		}
 	}
 
 	httpSrv := &http.Server{

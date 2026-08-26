@@ -56,6 +56,7 @@ openssl rand -base64 32
 | `IAM_SERVICE_HTTP_READ_TIMEOUT_SEC` | `15` | |
 | `IAM_SERVICE_HTTP_WRITE_TIMEOUT_SEC` | `30` | |
 | `IAM_SERVICE_HTTP_SHUTDOWN_SEC` | `15` | graceful drain |
+| `IAM_SERVICE_HTTP_METRICS_ENABLED` | `true` | serves a Prometheus scrape endpoint at `/metrics` on the probe listener — see [Observability](/self-hosting/observability) |
 | `IAM_SERVICE_HTTP_TRUSTED_PROXIES` | `[]` | CIDRs/IPs of your LB/ingress to trust for `X-Forwarded-For`. **Empty = use the real TCP peer**, so clients can't spoof IPs to dodge IP-keyed rate limits. Set this when behind a proxy. |
 
 ## Logging & CORS

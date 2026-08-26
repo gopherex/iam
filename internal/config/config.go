@@ -59,6 +59,11 @@ type HTTP struct {
 	// bypass IP-keyed rate limiting. Set to the LB subnet in proxied deploys
 	// (e.g. "10.0.0.0/8"). Env: SERVICE_HTTP_TRUSTED_PROXIES (comma-separated).
 	TrustedProxies []string `mapstructure:"trusted_proxies"`
+	// MetricsEnabled serves a Prometheus scrape endpoint at /metrics on the probe
+	// listener. It is on by default: pulling is what most deployments do, and the
+	// endpoint sits on the probe port, which is already not exposed publicly.
+	// Turning it off leaves the telemetry SDK's OTLP push exactly as it was.
+	MetricsEnabled bool `default:"true" mapstructure:"metrics_enabled"`
 	// PublicURL is the absolute base URL this deployment is reachable at
 	// (scheme://host[:port][/prefix], no trailing slash). It is the sole source
 	// of the OIDC issuer and of every absolute URL the service advertises, so it

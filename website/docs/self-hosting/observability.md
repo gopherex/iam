@@ -33,6 +33,30 @@ When an endpoint is set, the server exports:
 extra resource attributes with `OTEL_RESOURCE_ATTRIBUTES`. Leave the endpoint
 unset to disable export (the SDK treats empty values as unset).
 
+## Prometheus
+
+A scrape endpoint is served at **`/metrics`** on the probe listener — the same
+port a cluster already scrapes and does not expose publicly:
+
+```
+http://iam:8081/metrics
+```
+
+It carries the same instruments as the OTLP export: HTTP server metrics from the
+generated API, Postgres pool metrics, and Go runtime metrics, each labelled with
+`service.name`, `service.version` and `service.instance.id`.
+
+Both readers run off one meter provider, so scraping and pushing are not a
+choice: leave `OTEL_EXPORTER_OTLP_ENDPOINT` unset and Prometheus is the whole
+pipeline; set it and the same measurements go both ways.
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `IAM_SERVICE_HTTP_METRICS_ENABLED` | `true` | serves `/metrics`; turning it off leaves the OTLP push exactly as it was |
+
+When `IAM_SERVICE_HTTP_PROBE_ADDR` equals the API address the endpoint mounts on
+the API port instead — check that your ingress does not expose it.
+
 ## Logs
 
 Without an OTLP endpoint, logs go to stdout. Control them with:
