@@ -328,26 +328,12 @@ func fedParseCertificatePEM(pemStr string) (*x509.Certificate, error) {
 	return cert, nil
 }
 
-// fedSamlServiceProvider builds a crewjam saml.ServiceProvider from a connection's
-// stored config. IdP metadata XML is the authoritative source for the IdP entity
-// (SSO endpoint + signing certificate); when only a raw IdP certificate is stored
-// it is wrapped into a minimal IDPMetadata so signature verification still works.
-// The SP keypair (Key/Certificate) is optional — when present, AuthnRequests are
-// signed.
-func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error) {
-	if c.Config == nil || c.Config.Saml == nil {
-		return nil, domain.ErrProviderError
-	}
-
-	cfg := c.Config.Saml
-
-	sp := &saml.ServiceProvider{
-		EntityID: cfg.EntityID,
-	}
+// fedApplySamlURLs sets sp's Acs/Metadata URLs from cfg when configured.
+func fedApplySamlURLs(sp *saml.ServiceProvider, cfg *domain.FederationSamlConfig) error {
 	if cfg.AcsURL != "" {
 		u, err := url.Parse(cfg.AcsURL)
 		if err != nil {
-			return nil, domain.ErrProviderError
+			return domain.ErrProviderError
 		}
 
 		sp.AcsURL = *u
@@ -356,12 +342,22 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 	if cfg.MetadataURL != "" {
 		u, err := url.Parse(cfg.MetadataURL)
 		if err != nil {
-			return nil, domain.ErrProviderError
+			return domain.ErrProviderError
 		}
 
 		sp.MetadataURL = *u
 	}
 
+	return nil
+}
+
+// fedResolveIDPMetadata builds the IdP metadata document from whichever of
+// IDPMetadataXML/IDPCertificatePEM cfg carries: full metadata XML is the
+// authoritative source (SSO endpoint + signing certificate); a raw IdP
+// signing cert is wrapped into a minimal IDPMetadata so the library's
+// signature verification (getIDPSigningCerts) can still find it, its DER
+// bytes base64-encoded into an X509Certificate descriptor.
+func fedResolveIDPMetadata(cfg *domain.FederationSamlConfig) (*saml.EntityDescriptor, error) {
 	switch {
 	case cfg.IDPMetadataXML != "":
 		md, err := samlsp.ParseMetadata([]byte(cfg.IDPMetadataXML))
@@ -369,17 +365,14 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 			return nil, domain.ErrProviderError
 		}
 
-		sp.IDPMetadata = md
+		return md, nil
 	case cfg.IDPCertificatePEM != "":
-		// Wrap the raw IdP signing cert into a minimal IDPMetadata so the library's
-		// signature verification (getIDPSigningCerts) can find it. The DER bytes are
-		// base64-encoded into an X509Certificate descriptor.
 		cert, err := fedParseCertificatePEM(cfg.IDPCertificatePEM)
 		if err != nil {
 			return nil, err
 		}
 
-		sp.IDPMetadata = &saml.EntityDescriptor{
+		return &saml.EntityDescriptor{
 			IDPSSODescriptors: []saml.IDPSSODescriptor{{
 				SSODescriptor: saml.SSODescriptor{
 					RoleDescriptor: saml.RoleDescriptor{
@@ -396,17 +389,19 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 					},
 				},
 			}},
-		}
+		}, nil
 	default:
 		return nil, domain.ErrProviderError
 	}
+}
 
-	// Optional SP signing keypair (enables signed AuthnRequests + signing cert in
-	// the SP metadata document).
+// fedApplySamlSPKeypair sets sp's optional signing keypair from cfg (enables
+// signed AuthnRequests + a signing cert in the SP metadata document).
+func fedApplySamlSPKeypair(sp *saml.ServiceProvider, cfg *domain.FederationSamlConfig) error {
 	if cfg.SPPrivateKeyPEM != "" {
 		key, err := fedParsePrivateKeyPEM(cfg.SPPrivateKeyPEM)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		sp.Key = key
@@ -415,10 +410,45 @@ func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error)
 	if cfg.SPCertificatePEM != "" {
 		cert, err := fedParseCertificatePEM(cfg.SPCertificatePEM)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		sp.Certificate = cert
+	}
+
+	return nil
+}
+
+// fedSamlServiceProvider builds a crewjam saml.ServiceProvider from a connection's
+// stored config. IdP metadata XML is the authoritative source for the IdP entity
+// (SSO endpoint + signing certificate); when only a raw IdP certificate is stored
+// it is wrapped into a minimal IDPMetadata so signature verification still works.
+// The SP keypair (Key/Certificate) is optional — when present, AuthnRequests are
+// signed.
+func fedSamlServiceProvider(c *domain.Connection) (*saml.ServiceProvider, error) {
+	if c.Config == nil || c.Config.Saml == nil {
+		return nil, domain.ErrProviderError
+	}
+
+	cfg := c.Config.Saml
+
+	sp := &saml.ServiceProvider{
+		EntityID: cfg.EntityID,
+	}
+
+	if err := fedApplySamlURLs(sp, cfg); err != nil {
+		return nil, err
+	}
+
+	idpMetadata, err := fedResolveIDPMetadata(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	sp.IDPMetadata = idpMetadata
+
+	if err := fedApplySamlSPKeypair(sp, cfg); err != nil {
+		return nil, err
 	}
 
 	return sp, nil

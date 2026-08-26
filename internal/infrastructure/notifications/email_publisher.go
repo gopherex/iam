@@ -79,6 +79,93 @@ type emailJob struct {
 	Data       map[string]any
 }
 
+// applyFlowContinueLink builds the cross-device deep-link and stores it on
+// job.Data, returning ok=false when the send should be skipped (no app base
+// URL configured, or the link could not be built).
+func (p *Publisher) applyFlowContinueLink(ctx context.Context, ev eventEnvelope, job emailJob) (emailJob, bool) {
+	base := p.resolveContinueBase(ctx, ev)
+	if base == "" {
+		p.log.Info("flow continue email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
+
+		return job, false
+	}
+
+	link := flowContinueURL(base, stringValue(ev.Payload, "flow_token"), stringValue(ev.Payload, "token"))
+	if link == "" {
+		return job, false
+	}
+
+	job.Data["continue_url"] = link
+	job.Data["link"] = link
+
+	return job, true
+}
+
+// applyInviteLink builds the accept deep-link and stores it on job.Data,
+// returning ok=false when the send should be skipped (no app base URL
+// configured, or the link could not be built).
+func (p *Publisher) applyInviteLink(ctx context.Context, ev eventEnvelope, job emailJob) (emailJob, bool) {
+	base := p.resolveContinueBase(ctx, ev)
+	if base == "" {
+		p.log.Info("invite email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
+
+		return job, false
+	}
+
+	token := stringValue(ev.Payload, "invite_token")
+
+	link := inviteURL(base, token)
+	if link == "" {
+		return job, false
+	}
+
+	job.Data["invite_url"] = link
+	job.Data["invite_token"] = token
+	job.Data["link"] = link
+
+	return job, true
+}
+
+// resolveSMTPProviderOrSkip resolves ev's project's enabled SMTP provider.
+// skip=true means fail soft: a project with no SMTP provider configured must
+// not wedge the outbox, so the message is acked and dropped instead of
+// retried forever.
+func (p *Publisher) resolveSMTPProviderOrSkip(ctx context.Context, ev eventEnvelope) (*smtpConfig, bool, error) {
+	provider, err := p.smtpProvider(ctx, ev.ProjectID)
+	if err != nil {
+		if errors.Is(err, errNoSMTPProvider) {
+			p.log.Warn("email skipped: no enabled smtp provider for project",
+				xlog.String("event", ev.Type), xlog.String("project_id", ev.ProjectID))
+
+			return nil, true, nil
+		}
+
+		return nil, false, err
+	}
+
+	return provider, false, nil
+}
+
+// applyTemplateLink builds the template's deep-link when job.TemplateID needs
+// one, returning ok=false when the send should be skipped instead (see
+// applyFlowContinueLink/applyInviteLink). A template with no link step is a
+// no-op pass-through.
+func (p *Publisher) applyTemplateLink(ctx context.Context, ev eventEnvelope, job emailJob) (emailJob, bool) {
+	switch job.TemplateID {
+	case "flow_continue":
+		// Cross-device deep-link from a per-tenant base — the per-flow
+		// redirect_to when its origin is allowed, else the project's
+		// configured app_base_url. With neither, the feature is disabled.
+		return p.applyFlowContinueLink(ctx, ev, job)
+	case "invite":
+		// Accept deep-link from the per-tenant base (per-invite redirect_to
+		// when allowed, else app_base_url) + raw invite_token.
+		return p.applyInviteLink(ctx, ev, job)
+	default:
+		return job, true
+	}
+}
+
 func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	var ev eventEnvelope
 	if err := json.Unmarshal(msg.Payload, &ev); err != nil {
@@ -120,57 +207,19 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	// Resolve the effective locale: the request locale carried on the event, else
 	// the recipient account's locale, else the project default, else "en".
 	job.Locale = p.resolveLocale(ctx, ev, job.Locale)
-	// Flow continue email: build the cross-device deep-link from a per-tenant
-	// base — the per-flow redirect_to when its origin is allowed, else the
-	// project's configured app_base_url. With neither, the feature is disabled.
-	if job.TemplateID == "flow_continue" {
-		base := p.resolveContinueBase(ctx, ev)
-		if base == "" {
-			p.log.Info("flow continue email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
-			return nil
-		}
 
-		link := flowContinueURL(base, stringValue(ev.Payload, "flow_token"), stringValue(ev.Payload, "token"))
-		if link == "" {
-			return nil
-		}
-
-		job.Data["continue_url"] = link
-		job.Data["link"] = link
-	}
-	// Invitation email: build the accept deep-link from the per-tenant base
-	// (per-invite redirect_to when allowed, else app_base_url) + raw invite_token.
-	if job.TemplateID == "invite" {
-		base := p.resolveContinueBase(ctx, ev)
-		if base == "" {
-			p.log.Info("invite email skipped: no app base URL for project", xlog.String("project_id", ev.ProjectID))
-			return nil
-		}
-
-		token := stringValue(ev.Payload, "invite_token")
-
-		link := inviteURL(base, token)
-		if link == "" {
-			return nil
-		}
-
-		job.Data["invite_url"] = link
-		job.Data["invite_token"] = token
-		job.Data["link"] = link
+	job, ok = p.applyTemplateLink(ctx, ev, job)
+	if !ok {
+		return nil
 	}
 
-	provider, err := p.smtpProvider(ctx, ev.ProjectID)
+	provider, skip, err := p.resolveSMTPProviderOrSkip(ctx, ev)
 	if err != nil {
-		if errors.Is(err, errNoSMTPProvider) {
-			// Fail soft: ack and drop rather than retrying forever. A project with
-			// no SMTP provider configured must not wedge the outbox.
-			p.log.Warn("email skipped: no enabled smtp provider for project",
-				xlog.String("event", ev.Type), xlog.String("project_id", ev.ProjectID))
-
-			return nil
-		}
-
 		return err
+	}
+
+	if skip {
+		return nil
 	}
 
 	rendered, err := p.renderTemplate(ctx, ev.ProjectID, job)

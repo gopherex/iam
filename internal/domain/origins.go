@@ -33,16 +33,28 @@ func NormalizeOrigin(raw string) string {
 		return ""
 	}
 
-	if (u.Path != "" && u.Path != "/") || u.RawQuery != "" || u.Fragment != "" || u.User != nil {
+	if hasOriginOnlyDisallowedParts(u) {
 		return ""
 	}
 
-	host := strings.ToLower(u.Hostname())
-	if scheme == "http" && host != "localhost" && host != "127.0.0.1" && host != "::1" {
+	if scheme == "http" && !isLoopbackHost(strings.ToLower(u.Hostname())) {
 		return ""
 	}
 
 	return scheme + "://" + strings.ToLower(u.Host)
+}
+
+// hasOriginOnlyDisallowedParts reports whether u carries anything beyond
+// scheme://host[:port] — a path, query, fragment, or userinfo — none of which
+// belong in a CORS origin.
+func hasOriginOnlyDisallowedParts(u *url.URL) bool {
+	return (u.Path != "" && u.Path != "/") || u.RawQuery != "" || u.Fragment != "" || u.User != nil
+}
+
+// isLoopbackHost reports whether host (already lowercased) is one of the
+// loopback names plain http is allowed on.
+func isLoopbackHost(host string) bool {
+	return host == "localhost" || host == "127.0.0.1" || host == "::1"
 }
 
 // NormalizeOrigins validates, canonicalises, and de-duplicates a list of origins,

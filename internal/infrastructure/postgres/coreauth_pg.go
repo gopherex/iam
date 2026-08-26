@@ -892,70 +892,90 @@ func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.Core
 	})
 }
 
+// coreAuthLookupChallengeRow resolves the challenge row named by cmd: either
+// (ChallengeID) directly, or an opaque Token scanned against the project's
+// unconsumed challenges of wantType (Token is not a lookup column, so this
+// path compares hashes in memory).
+func (a *pgCoreAuth) coreAuthLookupChallengeRow(ctx context.Context, projectID string, cmd domain.CoreAuthVerifyConsumeCmd, wantType string) (*models.IamChallenge, error) {
+	if cmd.ChallengeID != "" {
+		row, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
+		if err != nil {
+			if errors.Is(translatePgErr("challenge", err), ErrNotFound) {
+				return nil, domain.ErrChallengeInvalid
+			}
+
+			return nil, err
+		}
+
+		return row, nil
+	}
+
+	if cmd.Token != "" {
+		return a.coreAuthFindChallengeByToken(ctx, projectID, wantType, cmd.Token)
+	}
+
+	return nil, domain.ErrChallengeInvalid
+}
+
+// validateChallenge enforces the tenant boundary, type, single-use, expiry,
+// and the supplied factor (a numeric code or the opaque token, hashed and
+// compared against the stored hash) on an already-looked-up challenge row.
+// projectID is the caller's own resolved tenant, not cmd.ProjectID — the
+// latter is client-supplied on some paths and must never be the value the
+// boundary check trusts.
+func validateChallenge(ctx context.Context, row *models.IamChallenge, projectID string, cmd domain.CoreAuthVerifyConsumeCmd, wantType string) (coreAuthChallengeData, error) {
+	var data coreAuthChallengeData
+
+	if row.ProjectID != projectID {
+		return data, domain.ErrChallengeInvalid
+	}
+
+	if err := unmarshal(row.Data, &data); err != nil {
+		return data, err
+	}
+
+	if wantType != "" && data.Type != wantType {
+		return data, domain.ErrChallengeInvalid
+	}
+
+	if row.Consumed {
+		return data, domain.ErrTokenUsed
+	}
+
+	if !row.ExpiresAt.IsZero() && nowIn(ctx).After(row.ExpiresAt) {
+		return data, domain.ErrChallengeExpired
+	}
+
+	switch {
+	case cmd.Code != "":
+		if coreAuthSHA256(cmd.Code) != data.CodeHash {
+			return data, domain.ErrInvalidOTP
+		}
+	case cmd.Token != "":
+		if coreAuthSHA256(cmd.Token) != data.TokenHash {
+			return data, domain.ErrChallengeInvalid
+		}
+	default:
+		return data, domain.ErrChallengeInvalid
+	}
+
+	return data, nil
+}
+
 // coreAuthConsumeChallenge loads and validates a challenge identified by either
 // (ChallengeID + Code) or an opaque Token, enforcing the tenant boundary,
 // expiry and single-use, then marks it consumed. Returns the challenge data.
 //
 // MUST run inside an open transaction (it mutates the consumed flag).
 func (a *pgCoreAuth) coreAuthConsumeChallenge(ctx context.Context, projectID string, cmd domain.CoreAuthVerifyConsumeCmd, wantType string) (*models.IamChallenge, *coreAuthChallengeData, error) {
-	var row *models.IamChallenge
-
-	if cmd.ChallengeID != "" {
-		r, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
-		if err != nil {
-			if errors.Is(translatePgErr("challenge", err), ErrNotFound) {
-				return nil, nil, domain.ErrChallengeInvalid
-			}
-
-			return nil, nil, err
-		}
-
-		row = r
-	} else if cmd.Token != "" {
-		// Token path: match on the data envelope's token hash via the subject
-		// index is not possible (token is not a column), so scan the project's
-		// unconsumed challenges of the wanted type and compare hashes.
-		r, err := a.coreAuthFindChallengeByToken(ctx, projectID, wantType, cmd.Token)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		row = r
-	} else {
-		return nil, nil, domain.ErrChallengeInvalid
-	}
-
-	if row.ProjectID != projectID {
-		return nil, nil, domain.ErrChallengeInvalid
-	}
-
-	var data coreAuthChallengeData
-	if err := unmarshal(row.Data, &data); err != nil {
+	row, err := a.coreAuthLookupChallengeRow(ctx, projectID, cmd, wantType)
+	if err != nil {
 		return nil, nil, err
 	}
 
-	if wantType != "" && data.Type != wantType {
-		return nil, nil, domain.ErrChallengeInvalid
-	}
-
-	if row.Consumed {
-		return nil, nil, domain.ErrTokenUsed
-	}
-
-	if !row.ExpiresAt.IsZero() && nowIn(ctx).After(row.ExpiresAt) {
-		return nil, nil, domain.ErrChallengeExpired
-	}
-	// Verify the supplied factor: a numeric code (hashed) or the opaque token.
-	if cmd.Code != "" {
-		if coreAuthSHA256(cmd.Code) != data.CodeHash {
-			return nil, nil, domain.ErrInvalidOTP
-		}
-	} else if cmd.Token != "" {
-		if coreAuthSHA256(cmd.Token) != data.TokenHash {
-			return nil, nil, domain.ErrChallengeInvalid
-		}
-	} else {
-		return nil, nil, domain.ErrChallengeInvalid
+	data, err := validateChallenge(ctx, row, projectID, cmd, wantType)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	if err := row.Update(ctx, a.db.Bobx(), &models.IamChallengeSetter{Consumed: ptr(true)}); err != nil {
@@ -2360,25 +2380,41 @@ func (a *pgCoreAuth) VerifyCaptcha(ctx context.Context, projectID, provider, tok
 		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
 	}
 
-	env, err := effectiveEnv(ctx, a.db, projectID)
+	cfg, ok, err := a.coreAuthLoadCaptchaConfig(ctx, projectID, provider)
 	if err != nil {
 		return nil, err
 	}
 
+	if !ok {
+		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
+	}
+
+	return coreAuthCaptchaSiteverify(ctx, cfg, token)
+}
+
+// coreAuthLoadCaptchaConfig resolves the project's captcha provider config.
+// ok is false when there is nothing usable (no config doc, or no secret) —
+// the caller treats that as "captcha not configured", not an error.
+func (a *pgCoreAuth) coreAuthLoadCaptchaConfig(ctx context.Context, projectID, provider string) (coreAuthCaptchaConfig, bool, error) {
 	var cfg coreAuthCaptchaConfig
+
+	env, err := effectiveEnv(ctx, a.db, projectID)
+	if err != nil {
+		return cfg, false, err
+	}
 
 	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, env, "captcha")
 	if err != nil {
 		if errors.Is(translatePgErr("config", err), ErrNotFound) {
-			return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
+			return cfg, false, nil
 		}
 
-		return nil, err
+		return cfg, false, err
 	}
 
 	if len(row.Data) > 0 {
 		if err := unmarshal(row.Data, &cfg); err != nil {
-			return nil, err
+			return cfg, false, err
 		}
 	}
 
@@ -2386,10 +2422,14 @@ func (a *pgCoreAuth) VerifyCaptcha(ctx context.Context, projectID, provider, tok
 		cfg.Provider = provider
 	}
 
-	if cfg.Secret == "" {
-		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
-	}
+	return cfg, cfg.Secret != "", nil
+}
 
+// coreAuthCaptchaSiteverify posts token to the provider's siteverify endpoint
+// and scores the response. Every failure mode short of a successful, parsed
+// response — bad URL, network error, bad body — degrades to Valid:false
+// rather than propagating an error, matching the caller's fail-closed policy.
+func coreAuthCaptchaSiteverify(ctx context.Context, cfg coreAuthCaptchaConfig, token string) (*domain.CoreAuthCaptchaVerifyResult, error) {
 	verifyURL := coreAuthCaptchaVerifyURL(cfg.Provider, cfg.VerifyURL)
 	if verifyURL == "" {
 		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
@@ -3313,59 +3353,76 @@ func (a *pgCoreAuth) Introspect(ctx context.Context, projectID, token string) (*
 	return &domain.CoreAuthTokenIntrospection{Active: true, Claims: claims}, nil
 }
 
+// parseImpersonationToken verifies token's signature and claims, returning
+// the target project/user, the impersonating actor, and the token's env.
+func (a *pgCoreAuth) parseImpersonationToken(ctx context.Context, token string) (projectID, sub, actor, env string, err error) {
+	claims := a.db.Signer().UnverifiedClaims(token)
+	if claims == nil {
+		return "", "", "", "", domain.ErrInvalidToken
+	}
+
+	projectID, _ = claims["pid"].(string)
+
+	env = coreAuthDefaultEnv
+	if e, ok := claims["env"].(string); ok && e != "" {
+		env = e
+	}
+
+	verified, verifyErr := a.db.Signer().Verify(ctx, projectID, env, token)
+	if verifyErr != nil {
+		return "", "", "", "", domain.ErrInvalidToken
+	}
+
+	if typ, _ := verified["typ"].(string); typ != "impersonation" {
+		return "", "", "", "", domain.ErrInvalidToken
+	}
+
+	sub, _ = verified["sub"].(string)
+	actor, _ = verified["act"].(string)
+
+	if projectID == "" || sub == "" {
+		return "", "", "", "", domain.ErrInvalidToken
+	}
+
+	return projectID, sub, actor, env, nil
+}
+
+// coreAuthConsumeImpersonationChallenge deletes the single-use iam_challenges
+// row gating token's redemption (so it cannot be replayed), rejecting the
+// token if the row is missing, wrong-tenant, or expired.
+func (a *pgCoreAuth) coreAuthConsumeImpersonationChallenge(ctx context.Context, projectID, token string) error {
+	row, err := models.IamChallenges.Query(
+		sm.Where(models.IamChallenges.Columns.Type.EQ(psql.Arg("impersonation"))),
+		sm.Where(models.IamChallenges.Columns.CodeHash.EQ(psql.Arg(adminSHA256(token)))),
+	).One(ctx, a.db.Bobx())
+	if err != nil {
+		return domain.ErrChallengeInvalid
+	}
+
+	if row.ProjectID != projectID {
+		return domain.ErrChallengeInvalid
+	}
+
+	if nowIn(ctx).After(row.ExpiresAt) {
+		return domain.ErrChallengeExpired
+	}
+
+	return row.Delete(ctx, a.db.Bobx()) // single-use redemption
+}
+
 // RedeemImpersonation exchanges a single-use impersonation token (minted by the
 // admin impersonate endpoint) for a session acting as the target user. The token
 // is a typ=impersonation JWT (sub=target, act=admin); the matching
 // iam_challenges row gates single use and is consumed here so the token cannot be
 // replayed.
 func (a *pgCoreAuth) RedeemImpersonation(ctx context.Context, token, clientID string) (*domain.Account, *domain.Session, error) {
-	claims := a.db.Signer().UnverifiedClaims(token)
-	if claims == nil {
-		return nil, nil, domain.ErrInvalidToken
-	}
-
-	projectID, _ := claims["pid"].(string)
-
-	env := coreAuthDefaultEnv
-	if e, ok := claims["env"].(string); ok && e != "" {
-		env = e
-	}
-
-	verified, err := a.db.Signer().Verify(ctx, projectID, env, token)
+	projectID, sub, actor, env, err := a.parseImpersonationToken(ctx, token)
 	if err != nil {
-		return nil, nil, domain.ErrInvalidToken
-	}
-
-	if typ, _ := verified["typ"].(string); typ != "impersonation" {
-		return nil, nil, domain.ErrInvalidToken
-	}
-
-	sub, _ := verified["sub"].(string)
-	actor, _ := verified["act"].(string)
-
-	if projectID == "" || sub == "" {
-		return nil, nil, domain.ErrInvalidToken
+		return nil, nil, err
 	}
 
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (*verifyResult, error) {
-		// Consume the single-use challenge (gates replay).
-		row, err := models.IamChallenges.Query(
-			sm.Where(models.IamChallenges.Columns.Type.EQ(psql.Arg("impersonation"))),
-			sm.Where(models.IamChallenges.Columns.CodeHash.EQ(psql.Arg(adminSHA256(token)))),
-		).One(ctx, a.db.Bobx())
-		if err != nil {
-			return nil, domain.ErrChallengeInvalid
-		}
-
-		if row.ProjectID != projectID {
-			return nil, domain.ErrChallengeInvalid
-		}
-
-		if nowIn(ctx).After(row.ExpiresAt) {
-			return nil, domain.ErrChallengeExpired
-		}
-
-		if err := row.Delete(ctx, a.db.Bobx()); err != nil { // single-use redemption
+		if err := a.coreAuthConsumeImpersonationChallenge(ctx, projectID, token); err != nil {
 			return nil, err
 		}
 		// Load the target user and mint a session acting as them.

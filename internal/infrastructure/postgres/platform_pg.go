@@ -80,6 +80,38 @@ func applyPublicAuthConfig(cfg *domain.PublicConfig, rawData []byte) error {
 	return nil
 }
 
+// loadPublicProjectInfo resolves the project envelope (tenant boundary) into
+// the name + supported locales half of PublicConfig.
+func loadPublicProjectInfo(ctx context.Context, db *DB, projectID string) (*domain.PublicConfig, error) {
+	// FindIamProject returns pgx.ErrNoRows when absent; translatePgErr maps
+	// that onto the package ErrNotFound sentinel.
+	projRow, err := models.FindIamProject(ctx, db.Bobx(), projectID)
+	if err != nil {
+		if errors.Is(translatePgErr("project", err), ErrNotFound) {
+			return nil, domain.ErrProjectNotFound
+		}
+
+		return nil, err
+	}
+
+	cfg := &domain.PublicConfig{ProjectName: projRow.Name}
+
+	if len(projRow.Data) == 0 {
+		return cfg, nil
+	}
+
+	var proj domain.Project
+	if err := unmarshal(projRow.Data, &proj); err != nil {
+		return nil, err
+	}
+
+	cfg.ProjectName = proj.Name
+	cfg.Locales = proj.SupportedLocales
+	cfg.DefaultLocale = proj.DefaultLocale
+
+	return cfg, nil
+}
+
 // PublicConfig assembles domain.PublicConfig for the (projectID) tenant. The
 // clientID is accepted for interface parity / future per-client overrides; the
 // current bootstrap is project-wide. A missing project is a not-found.
@@ -92,29 +124,9 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 		return nil, err
 	}
 
-	// Project envelope: name + supported locales (tenant boundary).
-	projRow, err := models.FindIamProject(ctx, a.db.Bobx(), projectID)
+	cfg, err := loadPublicProjectInfo(ctx, a.db, projectID)
 	if err != nil {
-		// FindIamProject returns pgx.ErrNoRows when absent; translatePgErr maps
-		// that onto the package ErrNotFound sentinel.
-		if errors.Is(translatePgErr("project", err), ErrNotFound) {
-			return nil, domain.ErrProjectNotFound
-		}
-
 		return nil, err
-	}
-
-	cfg := &domain.PublicConfig{ProjectName: projRow.Name}
-
-	var proj domain.Project
-	if len(projRow.Data) > 0 {
-		if err := unmarshal(projRow.Data, &proj); err != nil {
-			return nil, err
-		}
-
-		cfg.ProjectName = proj.Name
-		cfg.Locales = proj.SupportedLocales
-		cfg.DefaultLocale = proj.DefaultLocale
 	}
 
 	// Auth config envelope: iam_config(project_id, environment, key=auth).

@@ -2152,8 +2152,59 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		}
 	}
 
-	// Access token: signed RS256 JWT carrying the standard access claims. The
-	// profile's template goes in first so a standard claim always wins over it.
+	access, accessTTL, refreshTTL, err := a.mintOIDCAccessToken(ctx, sub, env, issuer, profile, groups, accessTTL, refreshTTL)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := oidc.AccessTokenResponse{
+		AccessToken: access,
+		TokenType:   "Bearer",
+		// accessTTL cannot be non-positive here: it starts at the compiled-in
+		// default, session_policy's own validation rejects <= 0, and a token
+		// profile only ever overrides it with a value > 0. Sign loss on the
+		// int64->uint64 conversion gosec is warning about needs a negative
+		// input, which none of those paths can produce.
+		ExpiresIn: uint64(accessTTL / time.Second), //nolint:gosec // accessTTL is always > 0, see comment above
+		Scope:     oidc.SpaceDelimitedArray(sub.scopes),
+	}
+
+	// id_token: only for openid requests. Built from the zitadel IDTokenClaims
+	// struct (correct field names), then signed by OUR key via the Signer.
+	// Profile / email claims for the scopes the client was granted.
+	scopeClaims, err := a.oidcScopeClaims(ctx, sub.subject, sub.scopes)
+	if err != nil {
+		return nil, err
+	}
+
+	if oidcHasScope(sub.scopes, "openid") {
+		idToken, err := a.mintIDToken(ctx, sub, env, issuer, access, now, groups, scopeClaims, accessTTL)
+		if err != nil {
+			return nil, err
+		}
+
+		resp.IDToken = idToken
+	}
+
+	// refresh_token: signed, rotatable JWT for offline_access requests.
+	if oidcHasScope(sub.scopes, "offline_access") {
+		refresh, err := a.mintOIDCRefreshToken(ctx, sub, env, issuer, refreshTTL)
+		if err != nil {
+			return nil, err
+		}
+
+		resp.RefreshToken = refresh
+	}
+
+	return oidcClaimsMap(resp)
+}
+
+// mintOIDCAccessToken builds and signs the access-token JWT: the token
+// profile's claim template goes in first so a standard claim always wins
+// over it, then applyTokenProfile may override the TTLs, then groups/session
+// are layered on. Returns the (possibly profile-adjusted) TTLs alongside the
+// token since the refresh token minted afterward must use the same values.
+func (a *pgOIDCGrants) mintOIDCAccessToken(ctx context.Context, sub oidcTokenSubject, env, issuer string, profile *oidcTokenProfile, groups []string, accessTTL, refreshTTL time.Duration) (string, time.Duration, time.Duration, error) {
 	accessClaims := tokenProfileClaims(profile)
 	if accessClaims == nil {
 		accessClaims = map[string]any{}
@@ -2192,69 +2243,42 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 
 	access, err := a.db.Signer().Sign(ctx, sub.projectID, env, accessClaims, accessTTL)
 	if err != nil {
-		return nil, err
+		return "", 0, 0, err
 	}
 
-	resp := oidc.AccessTokenResponse{
-		AccessToken: access,
-		TokenType:   "Bearer",
-		// accessTTL cannot be non-positive here: it starts at the compiled-in
-		// default, session_policy's own validation rejects <= 0, and a token
-		// profile only ever overrides it with a value > 0. Sign loss on the
-		// int64->uint64 conversion gosec is warning about needs a negative
-		// input, which none of those paths can produce.
-		ExpiresIn: uint64(accessTTL / time.Second), //nolint:gosec // accessTTL is always > 0, see comment above
-		Scope:     oidc.SpaceDelimitedArray(sub.scopes),
+	return access, accessTTL, refreshTTL, nil
+}
+
+// mintOIDCRefreshToken builds, signs, and records a rotatable refresh-token
+// JWT for an offline_access grant. Recording it is what makes rotation,
+// revocation, and replay detection possible — a refresh token that exists
+// only as a signature supports none of those.
+func (a *pgOIDCGrants) mintOIDCRefreshToken(ctx context.Context, sub oidcTokenSubject, env, issuer string, refreshTTL time.Duration) (string, error) {
+	refreshClaims := map[string]any{
+		claimIssuer:      issuer,
+		claimSubject:     sub.subject,
+		claimAudience:    sub.clientID,
+		claimClientID:    sub.clientID,
+		claimScope:       joinScopes(sub.scopes),
+		claimTokenType:   tokenTypeRefresh,
+		claimTokenID:     newUUID(),
+		claimProjectID:   sub.projectID,
+		claimEnvironment: env,
+	}
+	if sub.sessionID != "" {
+		refreshClaims[claimSessionID] = sub.sessionID
 	}
 
-	// id_token: only for openid requests. Built from the zitadel IDTokenClaims
-	// struct (correct field names), then signed by OUR key via the Signer.
-	// Profile / email claims for the scopes the client was granted.
-	scopeClaims, err := a.oidcScopeClaims(ctx, sub.subject, sub.scopes)
+	refresh, err := a.db.Signer().Sign(ctx, sub.projectID, env, refreshClaims, refreshTTL)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	if oidcHasScope(sub.scopes, "openid") {
-		idToken, err := a.mintIDToken(ctx, sub, env, issuer, access, now, groups, scopeClaims, accessTTL)
-		if err != nil {
-			return nil, err
-		}
-
-		resp.IDToken = idToken
+	if err := a.storeOIDCRefreshToken(ctx, sub, env, refresh, refreshTTL); err != nil {
+		return "", err
 	}
 
-	// refresh_token: signed, rotatable JWT for offline_access requests.
-	if oidcHasScope(sub.scopes, "offline_access") {
-		refreshClaims := map[string]any{
-			claimIssuer:      issuer,
-			claimSubject:     sub.subject,
-			claimAudience:    sub.clientID,
-			claimClientID:    sub.clientID,
-			claimScope:       joinScopes(sub.scopes),
-			claimTokenType:   tokenTypeRefresh,
-			claimTokenID:     newUUID(),
-			claimProjectID:   sub.projectID,
-			claimEnvironment: env,
-		}
-		if sub.sessionID != "" {
-			refreshClaims[claimSessionID] = sub.sessionID
-		}
-
-		refresh, err := a.db.Signer().Sign(ctx, sub.projectID, env, refreshClaims, refreshTTL)
-		if err != nil {
-			return nil, err
-		}
-		// Record it. A refresh token that exists only as a signature cannot be
-		// rotated, cannot be revoked, and cannot be detected when it is replayed.
-		if err := a.storeOIDCRefreshToken(ctx, sub, env, refresh, refreshTTL); err != nil {
-			return nil, err
-		}
-
-		resp.RefreshToken = refresh
-	}
-
-	return oidcClaimsMap(resp)
+	return refresh, nil
 }
 
 // mintIDToken builds an OIDC id_token for sub using the zitadel IDTokenClaims
@@ -2386,7 +2410,16 @@ func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospect
 		return inactive, nil // issuer does not match the request tenant
 	}
 
-	resp := oidc.IntrospectionResponse{Active: true}
+	return oidcClaimsMap(oidcIntrospectionFromClaims(claims))
+}
+
+// oidcIntrospectionFromClaims maps a verified token's claims onto the RFC
+// 7662 introspection response. Every field but Active/TokenType is optional
+// on the claim set (a refresh token, for instance, carries no scope), so each
+// is copied only when present.
+func oidcIntrospectionFromClaims(claims map[string]any) oidc.IntrospectionResponse {
+	resp := oidc.IntrospectionResponse{Active: true, TokenType: "Bearer"}
+
 	if v, ok := claims["sub"].(string); ok {
 		resp.Subject = v
 	}
@@ -2407,7 +2440,6 @@ func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospect
 		resp.Scope = oidc.SpaceDelimitedArray(splitScopes(v))
 	}
 
-	resp.TokenType = "Bearer"
 	if v, ok := claims["exp"].(float64); ok {
 		resp.Expiration = oidc.FromTime(time.Unix(int64(v), 0))
 	}
@@ -2420,7 +2452,7 @@ func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospect
 		resp.NotBefore = oidc.FromTime(time.Unix(int64(v), 0))
 	}
 
-	return oidcClaimsMap(resp)
+	return resp
 }
 
 // Revoke revokes a token. Authorization-code / device-code material is matched

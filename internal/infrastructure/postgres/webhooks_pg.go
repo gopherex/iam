@@ -761,6 +761,26 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 		return delivery, nil
 	}
 
+	req, err := buildWebhookRequest(ctx, webhook, event)
+	if err != nil {
+		return nil, err
+	}
+
+	attemptedAt := nowUTC()
+	status, responseBody, requestErr := a.sendWebhookRequest(req)
+	attempts := delivery.AttemptCount + 1
+
+	if requestErr == nil {
+		return a.recordWebhookSuccess(ctx, delivery.ID, attempts, attemptedAt, status, responseBody)
+	}
+
+	return a.recordWebhookFailure(ctx, delivery.ID, attempts, attemptedAt, status, responseBody, requestErr)
+}
+
+// buildWebhookRequest signs event's JSON body (current secret, plus the
+// previous one while it is still within its grace window — so a secret
+// rotation doesn't 401 in-flight deliveries) and assembles the signed POST.
+func buildWebhookRequest(ctx context.Context, webhook *domain.Webhook, event domain.PublicEvent) (*http.Request, error) {
 	body, err := json.Marshal(event)
 	if err != nil {
 		return nil, err
@@ -784,48 +804,57 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 	req.Header.Set("Webhook-Timestamp", strconv.FormatInt(timestamp, 10))
 	req.Header.Set("Webhook-Signature", strings.Join(signatures, " "))
 
-	attemptedAt := nowUTC()
+	return req, nil
+}
+
+// sendWebhookRequest performs req and reports the outcome: status/responseBody
+// are populated whenever a response came back at all (even a non-2xx one, so
+// the caller can persist it for debugging), and requestErr is set for a
+// transport failure, a body-read failure, or a non-2xx status.
+func (a *PgWebhooks) sendWebhookRequest(req *http.Request) (*int, string, error) {
 	response, requestErr := a.httpClient.Do(req)
-
-	var (
-		status       *int
-		responseBody string
-	)
-
-	if response != nil {
-		value := response.StatusCode
-		status = &value
-		limited, readErr := io.ReadAll(io.LimitReader(response.Body, webhookResponseBodyLimit+1))
-		_ = response.Body.Close()
-
-		if len(limited) > webhookResponseBodyLimit {
-			limited = limited[:webhookResponseBodyLimit]
-		}
-
-		responseBody = string(limited)
-
-		if requestErr == nil && readErr != nil {
-			requestErr = readErr
-		}
-
-		if requestErr == nil && (response.StatusCode < 200 || response.StatusCode >= 300) {
-			requestErr = fmt.Errorf("webhook returned HTTP %d", response.StatusCode)
-		}
+	if response == nil {
+		return nil, "", requestErr
 	}
 
-	attempts := delivery.AttemptCount + 1
-	if requestErr == nil {
-		_, err = a.db.Pool.Exec(ctx, `UPDATE iam_webhook_deliveries
-			SET status = 'succeeded', attempt_count = $1, next_attempt_at = NULL, last_attempt_at = $2,
-				delivered_at = $2, response_status = $3, response_body = $4, last_error = NULL, updated_at = $2
-			WHERE id = $5`, attempts, attemptedAt, status, responseBody, delivery.ID)
-		if err != nil {
-			return nil, err
-		}
+	status := response.StatusCode
 
-		return scanDelivery(a.db.Pool.QueryRow(ctx, deliverySelect+` WHERE d.id = $1`, delivery.ID))
+	limited, readErr := io.ReadAll(io.LimitReader(response.Body, webhookResponseBodyLimit+1))
+	_ = response.Body.Close()
+
+	if len(limited) > webhookResponseBodyLimit {
+		limited = limited[:webhookResponseBodyLimit]
 	}
 
+	responseBody := string(limited)
+
+	if requestErr == nil && readErr != nil {
+		requestErr = readErr
+	}
+
+	if requestErr == nil && (response.StatusCode < 200 || response.StatusCode >= 300) {
+		requestErr = fmt.Errorf("webhook returned HTTP %d", response.StatusCode)
+	}
+
+	return &status, responseBody, requestErr
+}
+
+// recordWebhookSuccess marks a delivery succeeded and returns its fresh row.
+func (a *PgWebhooks) recordWebhookSuccess(ctx context.Context, deliveryID string, attempts int, attemptedAt time.Time, status *int, responseBody string) (*domain.WebhookDelivery, error) {
+	if _, err := a.db.Pool.Exec(ctx, `UPDATE iam_webhook_deliveries
+		SET status = 'succeeded', attempt_count = $1, next_attempt_at = NULL, last_attempt_at = $2,
+			delivered_at = $2, response_status = $3, response_body = $4, last_error = NULL, updated_at = $2
+		WHERE id = $5`, attempts, attemptedAt, status, responseBody, deliveryID); err != nil {
+		return nil, err
+	}
+
+	return scanDelivery(a.db.Pool.QueryRow(ctx, deliverySelect+` WHERE d.id = $1`, deliveryID))
+}
+
+// recordWebhookFailure schedules the next retry with capped exponential
+// backoff (1s, 2s, 4s, ... capped at 5m) and returns the fresh row alongside
+// requestErr (the caller reports it so pg-outbox retries the delivery job).
+func (a *PgWebhooks) recordWebhookFailure(ctx context.Context, deliveryID string, attempts int, attemptedAt time.Time, status *int, responseBody string, requestErr error) (*domain.WebhookDelivery, error) {
 	delay := time.Second << min(attempts-1, 8)
 	if delay > 5*time.Minute {
 		delay = 5 * time.Minute
@@ -833,17 +862,16 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 
 	message := requestErr.Error()
 
-	_, updateErr := a.db.Pool.Exec(ctx, `UPDATE iam_webhook_deliveries
+	if _, err := a.db.Pool.Exec(ctx, `UPDATE iam_webhook_deliveries
 		SET status = 'failed', attempt_count = $1, next_attempt_at = $2, last_attempt_at = $3,
 			response_status = $4, response_body = $5, last_error = $6, updated_at = $3
-		WHERE id = $7`, attempts, attemptedAt.Add(delay), attemptedAt, status, responseBody, message, delivery.ID)
-	if updateErr != nil {
-		return nil, errors.Join(requestErr, updateErr)
+		WHERE id = $7`, attempts, attemptedAt.Add(delay), attemptedAt, status, responseBody, message, deliveryID); err != nil {
+		return nil, errors.Join(requestErr, err)
 	}
 
-	updated, getErr := scanDelivery(a.db.Pool.QueryRow(ctx, deliverySelect+` WHERE d.id = $1`, delivery.ID))
-	if getErr != nil {
-		return nil, errors.Join(requestErr, getErr)
+	updated, err := scanDelivery(a.db.Pool.QueryRow(ctx, deliverySelect+` WHERE d.id = $1`, deliveryID))
+	if err != nil {
+		return nil, errors.Join(requestErr, err)
 	}
 
 	return updated, requestErr

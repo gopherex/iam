@@ -416,6 +416,52 @@ type oauthExchangeCodeData struct {
 	CodeChallenge string          `json:"code_challenge,omitempty"`
 }
 
+// oauthLookupAuthCode resolves cmd.Code to its iam_auth_codes row and decoded
+// payload: missing/consumed/expired codes, a row with no stored session, and
+// (when the flow carried a PKCE challenge) a verifier that doesn't hash to
+// it all map to domain.ErrInvalidToken.
+func (a *pgOAuthSocial) oauthLookupAuthCode(ctx context.Context, cmd domain.OAuthSocialExchangeCmd) (*models.IamAuthCode, oauthExchangeCodeData, error) {
+	var data oauthExchangeCodeData
+
+	hash := fedHashToken(cmd.Code)
+
+	rows, err := models.IamAuthCodes.Query(
+		sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
+		sm.Where(models.IamAuthCodes.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
+		sm.Limit(1),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return nil, data, err
+	}
+
+	if len(rows) == 0 {
+		return nil, data, domain.ErrInvalidToken
+	}
+
+	row := rows[0]
+	if row.Consumed {
+		return nil, data, domain.ErrInvalidToken
+	}
+
+	if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
+		return nil, data, domain.ErrInvalidToken
+	}
+
+	if err := unmarshal(row.Data, &data); err != nil {
+		return nil, data, err
+	}
+
+	if data.Session == nil {
+		return nil, data, domain.ErrInvalidToken
+	}
+
+	if data.CodeChallenge != "" && oauthPKCEChallengeS256(cmd.CodeVerifier) != data.CodeChallenge {
+		return nil, data, domain.ErrInvalidToken
+	}
+
+	return row, data, nil
+}
+
 // Exchange resolves a one-time exchange code (issued by CompleteLoginRedirect)
 // into the account + session it authenticated, scoped to the command's project.
 // The code is looked up by sha256 hash in iam_auth_codes; missing / consumed /
@@ -434,43 +480,9 @@ func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExch
 	}
 
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
-		hash := fedHashToken(cmd.Code)
-
-		rows, err := models.IamAuthCodes.Query(
-			sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
-			sm.Where(models.IamAuthCodes.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
-			sm.Limit(1),
-		).All(ctx, a.db.Bobx())
+		row, data, err := a.oauthLookupAuthCode(ctx, cmd)
 		if err != nil {
 			return result{}, err
-		}
-
-		if len(rows) == 0 {
-			return result{}, domain.ErrInvalidToken
-		}
-
-		row := rows[0]
-		if row.Consumed {
-			return result{}, domain.ErrInvalidToken
-		}
-
-		if !row.ExpiresAt.IsZero() && row.ExpiresAt.Before(nowIn(ctx)) {
-			return result{}, domain.ErrInvalidToken
-		}
-
-		var data oauthExchangeCodeData
-		if err := unmarshal(row.Data, &data); err != nil {
-			return result{}, err
-		}
-
-		if data.Session == nil {
-			return result{}, domain.ErrInvalidToken
-		}
-
-		if data.CodeChallenge != "" {
-			if oauthPKCEChallengeS256(cmd.CodeVerifier) != data.CodeChallenge {
-				return result{}, domain.ErrInvalidToken
-			}
 		}
 		// Mark consumed (single-use) before handing back the session.
 		consumed := true
@@ -753,6 +765,40 @@ func (a *pgOAuthSocial) StartLink(ctx context.Context, cmd domain.OAuthSocialLin
 	return cfg.AuthCodeURL(cmd.State), nil
 }
 
+// linkOAuthIdentity attaches (provider, providerAccountID) to accountID,
+// rejecting a provider account already linked to this account (ErrAlreadyLinked)
+// or to a different one (ErrIdentityExists).
+func (a *pgOAuthSocial) linkOAuthIdentity(ctx context.Context, projectID, accountID, provider, providerAccountID, email string) error {
+	return a.db.withTx(ctx, func(ctx context.Context) error {
+		if existing, err := a.findIdentity(ctx, projectID, provider, providerAccountID); err == nil {
+			if existing.UserID == accountID {
+				return domain.ErrAlreadyLinked
+			}
+
+			return domain.ErrIdentityExists
+		} else if !errors.Is(err, domain.ErrNotFound) {
+			return err
+		}
+
+		if err := a.insertIdentity(ctx, &domain.Identity{
+			ID:                newUUID(),
+			Type:              "oauth",
+			Provider:          provider,
+			ProviderAccountID: providerAccountID,
+			Email:             email,
+		}, projectID, accountID); err != nil {
+			return err
+		}
+
+		return a.emitter.Emit(ctx, domain.Event{
+			Type:        "identity.linked",
+			ProjectID:   projectID,
+			AggregateID: accountID,
+			Payload:     map[string]any{"account_id": accountID, "provider": provider, "project_id": projectID},
+		})
+	})
+}
+
 // CompleteLink handles the link callback: it exchanges the code for the provider
 // account and attaches the identity to the authenticated AccountID, then returns
 // the product redirect URL. The signed `state` carrying the AccountID is
@@ -797,39 +843,7 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 		return "", err
 	}
 
-	err = a.db.withTx(ctx, func(ctx context.Context) error {
-		if existing, err := a.findIdentity(ctx, projectID, cmd.Provider, providerAccountID); err == nil {
-			if existing.UserID == cmd.AccountID {
-				return domain.ErrAlreadyLinked
-			}
-
-			return domain.ErrIdentityExists
-		} else if !errors.Is(err, domain.ErrNotFound) {
-			return err
-		}
-
-		if err := a.insertIdentity(ctx, &domain.Identity{
-			ID:                newUUID(),
-			Type:              "oauth",
-			Provider:          cmd.Provider,
-			ProviderAccountID: providerAccountID,
-			Email:             email,
-		}, projectID, cmd.AccountID); err != nil {
-			return err
-		}
-
-		if err := a.emitter.Emit(ctx, domain.Event{
-			Type:        "identity.linked",
-			ProjectID:   projectID,
-			AggregateID: cmd.AccountID,
-			Payload:     map[string]any{"account_id": cmd.AccountID, "provider": cmd.Provider, "project_id": projectID},
-		}); err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
+	if err := a.linkOAuthIdentity(ctx, projectID, cmd.AccountID, cmd.Provider, providerAccountID, email); err != nil {
 		return "", err
 	}
 

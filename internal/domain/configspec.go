@@ -394,6 +394,24 @@ func ParseAuthConfig(raw []byte) (AuthConfigSpec, error) {
 
 // Validate enforces the auth-doc rules fail-closed.
 func (c AuthConfigSpec) Validate() error {
+	if err := c.validateMethods(); err != nil {
+		return err
+	}
+
+	if err := c.validateRegistration(); err != nil {
+		return err
+	}
+
+	if c.AppBaseURL != nil && strings.TrimSpace(*c.AppBaseURL) != "" {
+		if err := ValidateAbsoluteHTTPURL("app_base_url", *c.AppBaseURL); err != nil {
+			return err
+		}
+	}
+
+	return c.validateDefaultLocale()
+}
+
+func (c AuthConfigSpec) validateMethods() error {
 	seen := make(map[string]struct{}, len(c.Methods))
 	for _, m := range c.Methods {
 		if !SupportedAuthMethods.Has(m) {
@@ -411,57 +429,57 @@ func (c AuthConfigSpec) Validate() error {
 		seen[m] = struct{}{}
 	}
 
-	if r := c.Registration; r != nil {
-		if r.Mode != nil && *r.Mode != "" && !RegistrationModes.Has(*r.Mode) {
-			return ErrValidation.WithDetails(map[string]any{
-				"field":   "registration.mode",
-				"value":   *r.Mode,
-				"allowed": RegistrationModes.List(),
-			}).WithMessage("unsupported registration mode: " + *r.Mode)
-		}
+	return nil
+}
 
-		if r.PasswordStrategy != nil && *r.PasswordStrategy != "" && !PasswordStrategies.Has(*r.PasswordStrategy) {
-			return ErrValidation.WithDetails(map[string]any{
-				"field":   "registration.password_strategy",
-				"value":   *r.PasswordStrategy,
-				"allowed": PasswordStrategies.List(),
-			}).WithMessage("unsupported password strategy: " + *r.PasswordStrategy)
-		}
+func (c AuthConfigSpec) validateRegistration() error {
+	r := c.Registration
+	if r == nil {
+		return nil
 	}
 
-	if c.AppBaseURL != nil && strings.TrimSpace(*c.AppBaseURL) != "" {
-		if err := ValidateAbsoluteHTTPURL("app_base_url", *c.AppBaseURL); err != nil {
-			return err
-		}
+	if r.Mode != nil && *r.Mode != "" && !RegistrationModes.Has(*r.Mode) {
+		return ErrValidation.WithDetails(map[string]any{
+			"field":   "registration.mode",
+			"value":   *r.Mode,
+			"allowed": RegistrationModes.List(),
+		}).WithMessage("unsupported registration mode: " + *r.Mode)
 	}
 
-	// default_locale, if set, must belong to the supported-locale list when that
-	// list is non-empty. Honor either jsonb key.
+	if r.PasswordStrategy != nil && *r.PasswordStrategy != "" && !PasswordStrategies.Has(*r.PasswordStrategy) {
+		return ErrValidation.WithDetails(map[string]any{
+			"field":   "registration.password_strategy",
+			"value":   *r.PasswordStrategy,
+			"allowed": PasswordStrategies.List(),
+		}).WithMessage("unsupported password strategy: " + *r.PasswordStrategy)
+	}
+
+	return nil
+}
+
+// validateDefaultLocale checks that default_locale, if set, belongs to the
+// supported-locale list when that list is non-empty. Honors either jsonb key.
+func (c AuthConfigSpec) validateDefaultLocale() error {
 	locales := c.SupportedLocales
 	if len(locales) == 0 {
 		locales = c.Locales
 	}
 
-	if c.DefaultLocale != nil && strings.TrimSpace(*c.DefaultLocale) != "" && len(locales) > 0 {
-		ok := false
+	if c.DefaultLocale == nil || strings.TrimSpace(*c.DefaultLocale) == "" || len(locales) == 0 {
+		return nil
+	}
 
-		for _, l := range locales {
-			if l == *c.DefaultLocale {
-				ok = true
-				break
-			}
-		}
-
-		if !ok {
-			return ErrValidation.WithDetails(map[string]any{
-				"field":             "default_locale",
-				"value":             *c.DefaultLocale,
-				"supported_locales": locales,
-			}).WithMessage("default_locale must be one of the supported locales")
+	for _, l := range locales {
+		if l == *c.DefaultLocale {
+			return nil
 		}
 	}
 
-	return nil
+	return ErrValidation.WithDetails(map[string]any{
+		"field":             "default_locale",
+		"value":             *c.DefaultLocale,
+		"supported_locales": locales,
+	}).WithMessage("default_locale must be one of the supported locales")
 }
 
 // ---------------------------------------------------------------------------
@@ -584,6 +602,13 @@ func (c SessionPolicySpec) Validate() error {
 		return err
 	}
 
+	return c.validateOrdering()
+}
+
+// validateOrdering enforces the relative ordering the TTLs must respect:
+// access < refresh, access <= idle <= absolute <= refresh (fields left unset
+// are simply not compared).
+func (c SessionPolicySpec) validateOrdering() error {
 	if c.AccessTTL != nil && c.RefreshTTL != nil && *c.AccessTTL >= *c.RefreshTTL {
 		return ErrValidation.WithDetails(map[string]any{"access_ttl": *c.AccessTTL, "refresh_ttl": *c.RefreshTTL}).
 			WithMessage("access_ttl must be less than refresh_ttl")
@@ -737,50 +762,8 @@ func (c RateLimitsSpec) Validate() error {
 	for i, r := range c.Rules {
 		at := func(s string) string { return fmt.Sprintf("rules[%d].%s", i, s) }
 
-		if r.By == nil || strings.TrimSpace(*r.By) == "" {
-			return ErrValidation.WithMessage(at("by") + " is required")
-		}
-
-		if !RateLimitBy.Has(*r.By) {
-			return ErrValidation.WithDetails(map[string]any{
-				"field":   at("by"),
-				"value":   *r.By,
-				"allowed": RateLimitBy.List(),
-			}).WithMessage(at("by") + ": unsupported subject")
-		}
-
-		if r.Endpoint == nil || strings.TrimSpace(*r.Endpoint) == "" {
-			return ErrValidation.WithMessage(at("endpoint") + " is required")
-		}
-
-		if !RateLimitEndpoints.Has(*r.Endpoint) {
-			return ErrValidation.WithDetails(map[string]any{
-				"field": at("endpoint"),
-				"value": *r.Endpoint,
-			}).WithMessage(at("endpoint") + ": unsupported endpoint")
-		}
-
-		if r.Action != nil && strings.TrimSpace(*r.Action) != "" {
-			// RateLimitActions is empty: actions are unsupported.
-			if !RateLimitActions.Has(*r.Action) {
-				return ErrValidation.WithMessage(at("action") + " not supported yet")
-			}
-		}
-
-		if r.Limit == nil || *r.Limit < 1 {
-			return ErrValidation.WithMessage(at("limit") + " must be >= 1")
-		}
-
-		if *r.Limit > maxLimit {
-			return ErrValidation.WithMessage(at("limit") + " exceeds maximum")
-		}
-
-		if r.WindowSeconds == nil || *r.WindowSeconds < 1 {
-			return ErrValidation.WithMessage(at("window_seconds") + " must be >= 1")
-		}
-
-		if *r.WindowSeconds > maxWindow {
-			return ErrValidation.WithMessage(at("window_seconds") + " exceeds maximum")
+		if err := r.validate(at, maxLimit, maxWindow); err != nil {
+			return err
 		}
 
 		t := tuple{*r.Endpoint, *r.By}
@@ -792,6 +775,74 @@ func (c RateLimitsSpec) Validate() error {
 		}
 
 		seen[t] = struct{}{}
+	}
+
+	return nil
+}
+
+// validate checks one rate_limits rule's own fields (not cross-rule
+// uniqueness, which the caller tracks): by/endpoint are required and
+// enum-checked, action (if set) must be a supported action — RateLimitActions
+// is empty, so any non-empty action currently fails — and limit/window must
+// be positive and within the maximum.
+func (r RateLimitRuleSpec) validate(at func(string) string, maxLimit, maxWindow int) error {
+	if err := r.validateBy(at); err != nil {
+		return err
+	}
+
+	if err := r.validateEndpoint(at); err != nil {
+		return err
+	}
+
+	if r.Action != nil && strings.TrimSpace(*r.Action) != "" && !RateLimitActions.Has(*r.Action) {
+		return ErrValidation.WithMessage(at("action") + " not supported yet")
+	}
+
+	if r.Limit == nil || *r.Limit < 1 {
+		return ErrValidation.WithMessage(at("limit") + " must be >= 1")
+	}
+
+	if *r.Limit > maxLimit {
+		return ErrValidation.WithMessage(at("limit") + " exceeds maximum")
+	}
+
+	if r.WindowSeconds == nil || *r.WindowSeconds < 1 {
+		return ErrValidation.WithMessage(at("window_seconds") + " must be >= 1")
+	}
+
+	if *r.WindowSeconds > maxWindow {
+		return ErrValidation.WithMessage(at("window_seconds") + " exceeds maximum")
+	}
+
+	return nil
+}
+
+func (r RateLimitRuleSpec) validateBy(at func(string) string) error {
+	if r.By == nil || strings.TrimSpace(*r.By) == "" {
+		return ErrValidation.WithMessage(at("by") + " is required")
+	}
+
+	if !RateLimitBy.Has(*r.By) {
+		return ErrValidation.WithDetails(map[string]any{
+			"field":   at("by"),
+			"value":   *r.By,
+			"allowed": RateLimitBy.List(),
+		}).WithMessage(at("by") + ": unsupported subject")
+	}
+
+	return nil
+}
+
+func (r RateLimitRuleSpec) validateEndpoint(at func(string) string) error {
+	if r.Endpoint == nil || strings.TrimSpace(*r.Endpoint) == "" {
+		return ErrValidation.WithMessage(at("endpoint") + " is required")
+	}
+
+	if !RateLimitEndpoints.Has(*r.Endpoint) {
+		return ErrValidation.WithDetails(map[string]any{
+			"field": at("endpoint"),
+			"value": *r.Endpoint,
+		}).WithMessage(at("endpoint") + ": unsupported endpoint")
 	}
 
 	return nil
