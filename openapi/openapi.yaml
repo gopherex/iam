@@ -2190,6 +2190,11 @@ components:
       - provider
     RiskRule:
       type: object
+      description: >-
+        A rule pairs a named signal with what to do when it fires. Signals are a
+        closed set rather than an expression language: a rule either evaluates or
+        is refused when it is written, so an enabled rule is never a control that
+        silently never fires. Rules are evaluated on a successful first factor.
       properties:
         id:
           type: string
@@ -2197,8 +2202,24 @@ components:
         name:
           type: string
           maxLength: 256
+        signal:
+          type: string
+          description: >-
+            What the rule fires on. `new_device` — no earlier session of this
+            user carried this device fingerprint (never fires when the client
+            sends none). `new_ip` — no earlier session came from this address.
+            `recent_failures` — the password was wrong at least once since the
+            last successful sign-in.
+          enum:
+          - new_device
+          - new_ip
+          - recent_failures
         condition:
           type: string
+          deprecated: true
+          description: >-
+            The 1.4 spelling of `signal`, still accepted and still evaluated.
+            Prefer `signal`.
           maxLength: 1024
         action:
           type: string

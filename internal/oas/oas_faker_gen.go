@@ -4288,6 +4288,15 @@ func (s *OptRiskRuleAction) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptRiskRuleSignal) SetFake() {
+	var elem RiskRuleSignal
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
 func (s *OptSSOConnection) SetFake() {
 	var elem SSOConnection
 	{
@@ -8295,6 +8304,11 @@ func (s *RiskRule) SetFake() {
 	}
 	{
 		{
+			s.Signal.SetFake()
+		}
+	}
+	{
+		{
 			s.Condition.SetFake()
 		}
 	}
@@ -8313,6 +8327,11 @@ func (s *RiskRule) SetFake() {
 // SetFake set fake values.
 func (s *RiskRuleAction) SetFake() {
 	*s = RiskRuleActionRequireStepUp
+}
+
+// SetFake set fake values.
+func (s *RiskRuleSignal) SetFake() {
+	*s = RiskRuleSignalNewDevice
 }
 
 // SetFake set fake values.

@@ -45,18 +45,50 @@ actually take effect.
 
 ## Risk rules
 
+A rule pairs a **signal** with what to do when it fires, and is evaluated the
+moment a password verifies — before a session exists, which is the only point
+where "step up" is still a decision rather than the retraction of a session
+already handed out.
+
 ```bash
 curl -sX POST .../admin/risk/rules -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"impossible travel","condition":"…","action":"require_step_up","enabled":true}'
+  -d '{"name":"unfamiliar device","signal":"new_device","action":"require_step_up","enabled":true}'
 ```
 
-:::caution Stored, not evaluated
-Risk rules are a declarative store today — there is no evaluation engine, so a
-rule never fires, and `GET admin/risk/events` returns an empty page. Use
-**blocks** and **rate limits** for controls that actually take effect, and treat
-rules as forward configuration only.
-:::
+| Signal | Fires when |
+| --- | --- |
+| `new_device` | no earlier session of this user carried this device fingerprint |
+| `new_ip` | no earlier session of this user came from this address |
+| `recent_failures` | the password was wrong at least once since the last successful sign-in |
+
+| Action | Effect |
+| --- | --- |
+| `require_step_up` | the sign-in returns `mfa_required` instead of a session |
+| `block` | the sign-in is refused |
+| `notify` | recorded only |
+| `allow` | an explicit exception — it beats every other rule that fired |
+
+Signals are a **closed set**, not an expression language. A rule naming anything
+else is refused when it is written, so an enabled rule is never a control that
+silently never fires. `new_device` needs the client to send a device
+fingerprint; without one it never fires rather than firing on everybody.
+
+`require_step_up` only takes effect when the account actually has a second
+factor — demanding one it does not have would lock the user out of their own
+account, which is not what the rule asked for.
+
+Rules are evaluated together and the **strongest** action wins, except that
+`allow` overrides everything: that is how you carve an exception without
+deleting the rule it is an exception to.
+
+`GET admin/risk/events` returns what fired, newest first — the rule, the signal,
+the action and the account. The record is written outside the sign-in's
+transaction, so a `block` still leaves a trace even though it aborted everything
+else.
+
+`condition` is the field's released spelling. It is still accepted and still
+evaluated, but it must now name a signal; prefer `signal`.
 
 ## Audit log
 

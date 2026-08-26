@@ -20282,6 +20282,39 @@ func (s *OptRiskRuleAction) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes RiskRuleSignal as json.
+func (o OptRiskRuleSignal) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes RiskRuleSignal from json.
+func (o *OptRiskRuleSignal) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptRiskRuleSignal to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptRiskRuleSignal) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptRiskRuleSignal) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes SSOConnection as json.
 func (o OptSSOConnection) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -43532,6 +43565,12 @@ func (s *RiskRule) encodeFields(e *jx.Encoder) {
 		e.Str(s.Name)
 	}
 	{
+		if s.Signal.Set {
+			e.FieldStart("signal")
+			s.Signal.Encode(e)
+		}
+	}
+	{
 		if s.Condition.Set {
 			e.FieldStart("condition")
 			s.Condition.Encode(e)
@@ -43551,12 +43590,13 @@ func (s *RiskRule) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfRiskRule = [5]string{
+var jsonFieldsNameOfRiskRule = [6]string{
 	0: "id",
 	1: "name",
-	2: "condition",
-	3: "action",
-	4: "enabled",
+	2: "signal",
+	3: "condition",
+	4: "action",
+	5: "enabled",
 }
 
 // Decode decodes RiskRule from json.
@@ -43589,6 +43629,16 @@ func (s *RiskRule) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "signal":
+			if err := func() error {
+				s.Signal.Reset()
+				if err := s.Signal.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"signal\"")
 			}
 		case "condition":
 			if err := func() error {
@@ -43716,6 +43766,48 @@ func (s RiskRuleAction) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *RiskRuleAction) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes RiskRuleSignal as json.
+func (s RiskRuleSignal) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes RiskRuleSignal from json.
+func (s *RiskRuleSignal) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RiskRuleSignal to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch RiskRuleSignal(v) {
+	case RiskRuleSignalNewDevice:
+		*s = RiskRuleSignalNewDevice
+	case RiskRuleSignalNewIP:
+		*s = RiskRuleSignalNewIP
+	case RiskRuleSignalRecentFailures:
+		*s = RiskRuleSignalRecentFailures
+	default:
+		*s = RiskRuleSignal(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s RiskRuleSignal) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RiskRuleSignal) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

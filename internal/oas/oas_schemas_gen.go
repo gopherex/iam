@@ -12764,6 +12764,52 @@ func (o OptRiskRuleAction) Or(d RiskRuleAction) RiskRuleAction {
 	return d
 }
 
+// NewOptRiskRuleSignal returns new OptRiskRuleSignal with value set to v.
+func NewOptRiskRuleSignal(v RiskRuleSignal) OptRiskRuleSignal {
+	return OptRiskRuleSignal{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRiskRuleSignal is optional RiskRuleSignal.
+type OptRiskRuleSignal struct {
+	Value RiskRuleSignal
+	Set   bool
+}
+
+// IsSet returns true if OptRiskRuleSignal was set.
+func (o OptRiskRuleSignal) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRiskRuleSignal) Reset() {
+	var v RiskRuleSignal
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRiskRuleSignal) SetTo(v RiskRuleSignal) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRiskRuleSignal) Get() (v RiskRuleSignal, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRiskRuleSignal) Or(d RiskRuleSignal) RiskRuleSignal {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptSSOConnection returns new OptSSOConnection with value set to v.
 func NewOptSSOConnection(v SSOConnection) OptSSOConnection {
 	return OptSSOConnection{
@@ -20773,10 +20819,21 @@ func (s *RetentionPolicyInactiveUserAction) UnmarshalText(data []byte) error {
 	}
 }
 
+// A rule pairs a named signal with what to do when it fires. Signals are a closed set rather than an
+// expression language: a rule either evaluates or is refused when it is written, so an enabled rule
+// is never a control that silently never fires. Rules are evaluated on a successful first factor.
 // Ref: #/components/schemas/RiskRule
 type RiskRule struct {
-	ID        OptString         `json:"id"`
-	Name      string            `json:"name"`
+	ID   OptString `json:"id"`
+	Name string    `json:"name"`
+	// What the rule fires on. `new_device` — no earlier session of this user carried this device
+	// fingerprint (never fires when the client sends none). `new_ip` — no earlier session came from
+	// this address. `recent_failures` — the password was wrong at least once since the last successful
+	// sign-in.
+	Signal OptRiskRuleSignal `json:"signal"`
+	// The 1.4 spelling of `signal`, still accepted and still evaluated. Prefer `signal`.
+	//
+	// Deprecated: schema marks this property as deprecated.
 	Condition OptString         `json:"condition"`
 	Action    OptRiskRuleAction `json:"action"`
 	Enabled   OptBool           `json:"enabled"`
@@ -20790,6 +20847,11 @@ func (s *RiskRule) GetID() OptString {
 // GetName returns the value of Name.
 func (s *RiskRule) GetName() string {
 	return s.Name
+}
+
+// GetSignal returns the value of Signal.
+func (s *RiskRule) GetSignal() OptRiskRuleSignal {
+	return s.Signal
 }
 
 // GetCondition returns the value of Condition.
@@ -20815,6 +20877,11 @@ func (s *RiskRule) SetID(val OptString) {
 // SetName sets the value of Name.
 func (s *RiskRule) SetName(val string) {
 	s.Name = val
+}
+
+// SetSignal sets the value of Signal.
+func (s *RiskRule) SetSignal(val OptRiskRuleSignal) {
+	s.Signal = val
 }
 
 // SetCondition sets the value of Condition.
@@ -20881,6 +20948,58 @@ func (s *RiskRuleAction) UnmarshalText(data []byte) error {
 		return nil
 	case RiskRuleActionAllow:
 		*s = RiskRuleActionAllow
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// What the rule fires on. `new_device` — no earlier session of this user carried this device
+// fingerprint (never fires when the client sends none). `new_ip` — no earlier session came from
+// this address. `recent_failures` — the password was wrong at least once since the last successful
+// sign-in.
+type RiskRuleSignal string
+
+const (
+	RiskRuleSignalNewDevice      RiskRuleSignal = "new_device"
+	RiskRuleSignalNewIP          RiskRuleSignal = "new_ip"
+	RiskRuleSignalRecentFailures RiskRuleSignal = "recent_failures"
+)
+
+// AllValues returns all RiskRuleSignal values.
+func (RiskRuleSignal) AllValues() []RiskRuleSignal {
+	return []RiskRuleSignal{
+		RiskRuleSignalNewDevice,
+		RiskRuleSignalNewIP,
+		RiskRuleSignalRecentFailures,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s RiskRuleSignal) MarshalText() ([]byte, error) {
+	switch s {
+	case RiskRuleSignalNewDevice:
+		return []byte(s), nil
+	case RiskRuleSignalNewIP:
+		return []byte(s), nil
+	case RiskRuleSignalRecentFailures:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *RiskRuleSignal) UnmarshalText(data []byte) error {
+	switch RiskRuleSignal(data) {
+	case RiskRuleSignalNewDevice:
+		*s = RiskRuleSignalNewDevice
+		return nil
+	case RiskRuleSignalNewIP:
+		*s = RiskRuleSignalNewIP
+		return nil
+	case RiskRuleSignalRecentFailures:
+		*s = RiskRuleSignalRecentFailures
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

@@ -133,6 +133,30 @@ var RateLimitEndpoints = newStringSet(
 	"/v1/auth/access-requests",
 )
 
+// RiskSignals is the canonical set of conditions a risk rule may fire on.
+//
+// It is a closed set rather than an expression language on purpose. A free-form
+// condition needs a parser, an evaluator and a way to tell an administrator why
+// their expression did nothing — and until all three exist, every rule written
+// is a control that silently never fires. A named signal either evaluates or is
+// rejected at write time.
+//
+// To add one: implement its detection in the evaluator, then add it here.
+//   - new_device      — no earlier session of this user carried this device
+//     fingerprint. Requires the client to send a device fingerprint; without one
+//     the signal never fires rather than firing on everyone.
+//   - new_ip          — no earlier session of this user came from this address.
+//   - recent_failures — the password was wrong at least once since the last
+//     successful sign-in.
+//
+//nolint:gochecknoglobals // a registry, like every other set in this file.
+var RiskSignals = newStringSet("new_device", "new_ip", "recent_failures")
+
+// RiskActions is the canonical set of outcomes a rule may ask for.
+//
+//nolint:gochecknoglobals // a registry, like every other set in this file.
+var RiskActions = newStringSet("require_step_up", "block", "notify", "allow")
+
 // EmailProviderTypes is the canonical set for iam_providers (kind=email) `type`.
 // Only "smtp" is realized: the runtime sender skips every other type silently.
 // To add a sender (ses/sendgrid/...): implement the sender, then add it here.

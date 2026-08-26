@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/gopherex/iam/internal/domain"
 )
@@ -22,9 +24,20 @@ func NewPgRisk(db *DB, emitter Emitter) *pgRisk {
 }
 
 type riskRuleData struct {
-	Name      string `json:"name"`
-	Condition string `json:"condition"`
+	Name string `json:"name"`
+	// Signal is the current field; Condition is the spelling released in 1.4 and
+	// is still read so a rule written then keeps evaluating.
+	Signal    string `json:"signal,omitempty"`
+	Condition string `json:"condition,omitempty"`
 	Action    string `json:"action"`
+}
+
+// riskRuleDataOf renders a rule for storage, writing the signal under the
+// current name and keeping the released one in step.
+func riskRuleDataOf(r domain.AdminRiskRule) riskRuleData {
+	signal := r.EffectiveSignal()
+
+	return riskRuleData{Name: r.Name, Signal: signal, Condition: signal, Action: r.Action}
 }
 
 func (a *pgRisk) ListRules(ctx context.Context, projectID string) ([]domain.AdminRiskRule, error) {
@@ -52,16 +65,23 @@ func (a *pgRisk) ListRules(ctx context.Context, projectID string) ([]domain.Admi
 
 		_ = json.Unmarshal(raw, &d)
 
-		out = append(out, domain.AdminRiskRule{ID: id, Name: d.Name, Condition: d.Condition, Action: d.Action, Enabled: enabled})
+		out = append(out, domain.AdminRiskRule{
+			ID: id, Name: d.Name, Signal: d.Signal, Condition: d.Condition,
+			Action: d.Action, Enabled: enabled,
+		})
 	}
 
 	return out, rows.Err()
 }
 
 func (a *pgRisk) CreateRule(ctx context.Context, projectID string, r domain.AdminRiskRule) (domain.AdminRiskRule, error) {
+	if err := r.Validate(); err != nil {
+		return domain.AdminRiskRule{}, err
+	}
+
 	id := newUUID()
 
-	raw, err := json.Marshal(riskRuleData{Name: r.Name, Condition: r.Condition, Action: r.Action})
+	raw, err := json.Marshal(riskRuleDataOf(r))
 	if err != nil {
 		return domain.AdminRiskRule{}, err
 	}
@@ -78,7 +98,11 @@ func (a *pgRisk) CreateRule(ctx context.Context, projectID string, r domain.Admi
 }
 
 func (a *pgRisk) UpdateRule(ctx context.Context, projectID, id string, r domain.AdminRiskRule) (domain.AdminRiskRule, error) {
-	raw, err := json.Marshal(riskRuleData{Name: r.Name, Condition: r.Condition, Action: r.Action})
+	if err := r.Validate(); err != nil {
+		return domain.AdminRiskRule{}, err
+	}
+
+	raw, err := json.Marshal(riskRuleDataOf(r))
 	if err != nil {
 		return domain.AdminRiskRule{}, err
 	}
@@ -181,9 +205,47 @@ func (a *pgRisk) IsBlocked(ctx context.Context, projectID string, subjects ...st
 	return n > 0, nil
 }
 
-// ListEvents returns recorded risk events. There is no dedicated risk-events
-// store yet (the evaluation engine that would populate it is future work), so
-// this returns an empty page rather than 501.
-func (a *pgRisk) ListEvents(_ context.Context, _ string) ([]map[string]any, error) {
-	return []map[string]any{}, nil
+// ListEvents returns the risk events recorded for a project: one row per rule
+// that fired, newest first. They are ordinary emitted events, so a webhook
+// consumer and this endpoint see the same thing.
+func (a *pgRisk) ListEvents(ctx context.Context, projectID string) ([]map[string]any, error) {
+	rows, err := a.db.Pool.Query(ctx,
+		`SELECT id, data, created_at FROM iam_events
+		  WHERE project_id = $1 AND type = $2
+		  ORDER BY created_at DESC LIMIT $3`,
+		projectID, riskEventRuleFired, riskEventPageSize)
+	if err != nil {
+		return nil, fmt.Errorf("risk: query events: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]map[string]any, 0)
+
+	for rows.Next() {
+		var (
+			id        string
+			raw       []byte
+			createdAt time.Time
+		)
+
+		if err := rows.Scan(&id, &raw, &createdAt); err != nil {
+			return nil, fmt.Errorf("risk: scan event: %w", err)
+		}
+
+		var payload map[string]any
+
+		_ = json.Unmarshal(raw, &payload)
+
+		out = append(out, map[string]any{"id": id, "at": createdAt, "payload": payload})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("risk: read events: %w", err)
+	}
+
+	return out, nil
 }
+
+// riskEventPageSize bounds the events endpoint. It is a review surface, not an
+// export; audit/export is where a full history comes from.
+const riskEventPageSize = 200

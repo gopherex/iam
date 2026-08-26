@@ -1397,7 +1397,9 @@ func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email,
 			return nil, domain.ErrInvalidCredentials
 		}
 
-		// Correct password clears any accumulated failure/lock state.
+		// Correct password clears any accumulated failure/lock state. The count is
+		// read first: the reset destroys it, and risk evaluation still wants it.
+		priorFailures := credData.FailedAttempts
 		if credData.FailedAttempts > 0 || !credData.LockedUntil.IsZero() {
 			a.coreAuthClearLoginFailures(ctx, cred, credData)
 		}
@@ -1414,8 +1416,29 @@ func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email,
 			return nil, err
 		}
 
+		// Adaptive step-up. Evaluated here, before a session exists: a rule can
+		// still turn this into a sign-in that needs a second factor rather than
+		// having to revoke one already issued.
+		riskEnv, err := effectiveEnv(ctx, a.db, acc.ProjectID, coreAuthDefaultEnv)
+		if err != nil {
+			return nil, err
+		}
+
+		decision, err := evaluateSignInRisk(ctx, a.db, a.emitter,
+			acc.ProjectID, riskEnv, acc.ID, priorFailures)
+		if err != nil {
+			return nil, err
+		}
+
+		if decision.Action == riskActionBlock {
+			return nil, domain.ErrForbidden.WithMessage("blocked by a risk rule")
+		}
+		// Demanding a factor the account does not have would lock the user out of
+		// their own account, which is not what the rule asked for.
 		if len(factors) > 0 {
-			return &domain.CoreAuthPasswordResult{Account: acc, MFARequired: true, Factors: factors}, nil
+			return &domain.CoreAuthPasswordResult{
+				Account: acc, MFARequired: true, Factors: factors, PriorFailures: priorFailures,
+			}, nil
 		}
 
 		sess, err := a.coreAuthMintSession(ctx, acc, "", []string{"pwd"}, 1)
@@ -1433,7 +1456,7 @@ func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email,
 			return nil, err
 		}
 
-		return &domain.CoreAuthPasswordResult{Account: acc, Session: sess}, nil
+		return &domain.CoreAuthPasswordResult{Account: acc, Session: sess, PriorFailures: priorFailures}, nil
 	})
 }
 

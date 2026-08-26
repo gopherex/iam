@@ -966,11 +966,17 @@ func (s *AdminService) GetV1TestMessages(ctx context.Context, params oas.GetV1Te
 }
 
 func oasRiskRule(r domain.AdminRiskRule) oas.RiskRule {
+	signal := r.EffectiveSignal()
 	out := oas.RiskRule{
 		ID:        oas.NewOptString(r.ID),
 		Name:      r.Name,
-		Condition: oas.NewOptString(r.Condition),
+		Condition: oas.NewOptString(signal),
 		Enabled:   oas.NewOptBool(r.Enabled),
+	}
+
+	var sig oas.RiskRuleSignal
+	if err := sig.UnmarshalText([]byte(signal)); err == nil {
+		out.Signal = oas.NewOptRiskRuleSignal(sig)
 	}
 
 	var act oas.RiskRuleAction
@@ -983,8 +989,12 @@ func oasRiskRule(r domain.AdminRiskRule) oas.RiskRule {
 
 func riskRuleFromReq(req *oas.RiskRule) domain.AdminRiskRule {
 	return domain.AdminRiskRule{
-		ID: req.ID.Or(""), Name: req.Name, Condition: req.Condition.Or(""),
-		Action: string(req.Action.Or("")), Enabled: req.Enabled.Or(true),
+		ID:        req.ID.Or(""),
+		Name:      req.Name,
+		Signal:    string(req.Signal.Or("")),
+		Condition: req.Condition.Or(""), //nolint:staticcheck // the released alias, still accepted.
+		Action:    string(req.Action.Or("")),
+		Enabled:   req.Enabled.Or(true),
 	}
 }
 

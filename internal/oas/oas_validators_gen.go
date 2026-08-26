@@ -21095,6 +21095,24 @@ func (s *RiskRule) Validate() error {
 		})
 	}
 	if err := func() error {
+		if value, ok := s.Signal.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "signal",
+			Error: err,
+		})
+	}
+	if err := func() error {
 		if value, ok := s.Condition.Get(); ok {
 			if err := func() error {
 				if err := (validate.String{
@@ -21157,6 +21175,19 @@ func (s RiskRuleAction) Validate() error {
 	case "notify":
 		return nil
 	case "allow":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s RiskRuleSignal) Validate() error {
+	switch s {
+	case "new_device":
+		return nil
+	case "new_ip":
+		return nil
+	case "recent_failures":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

@@ -17,7 +17,7 @@ func TestE2EAdminRiskRules(t *testing.T) {
 	base := ts.URL + "/v1/projects/" + projectID + "/admin/risk/rules"
 
 	rc := e2eReq(t, ctx, http.MethodPost, base,
-		map[string]any{"name": "block-tor", "condition": "ip.tor == true", "action": "block", "enabled": true},
+		map[string]any{"name": "unfamiliar device", "signal": "new_device", "action": "block", "enabled": true},
 		e2eBearer(token))
 	e2eWantStatus(t, rc, http.StatusCreated)
 
@@ -36,7 +36,7 @@ func TestE2EAdminRiskRules(t *testing.T) {
 	rd := e2eReq(t, ctx, http.MethodDelete, base+"/"+rule.ID, nil, e2eBearer(token))
 	e2eWantStatus(t, rd, http.StatusOK)
 
-	// Risk events read (empty until an engine populates it).
+	// Risk events read: empty here, because no rule fired in this test.
 	re := e2eReq(t, ctx, http.MethodGet, ts.URL+"/v1/projects/"+projectID+"/admin/risk/events", nil, e2eBearer(token))
 	e2eWantStatus(t, re, http.StatusOK)
 }

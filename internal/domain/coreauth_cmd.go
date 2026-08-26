@@ -81,6 +81,10 @@ type CoreAuthPasswordResult struct {
 	Session     *Session
 	MFARequired bool
 	Factors     []Factor
+	// PriorFailures is how many consecutive wrong passwords preceded this
+	// success. The counter is reset by the success itself, so it is carried out
+	// here for risk evaluation, which is the only thing that still cares.
+	PriorFailures int
 }
 
 // CoreAuthStepUpCmd requests elevation of the current session to a higher AAL.
