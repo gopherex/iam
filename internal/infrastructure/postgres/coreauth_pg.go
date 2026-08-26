@@ -107,7 +107,7 @@ func (a *pgCoreAuth) coreAuthVerifyAccess(ctx context.Context, projectID, token 
 
 	row, err := models.FindIamSession(ctx, a.db.Bobx(), sid)
 	if err != nil {
-		return claims, nil, nil // session gone == revoked
+		return claims, nil, nil //nolint:nilerr // session gone == revoked, see func doc
 	}
 
 	if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
@@ -116,7 +116,7 @@ func (a *pgCoreAuth) coreAuthVerifyAccess(ctx context.Context, projectID, token 
 
 	sess, err := coreAuthLoadSession(row, row.ProjectID)
 	if err != nil {
-		return claims, nil, nil
+		return claims, nil, nil //nolint:nilerr // malformed session data == treat as revoked
 	}
 
 	return claims, sess, nil
@@ -3464,7 +3464,7 @@ func (a *pgCoreAuth) Introspect(ctx context.Context, projectID, token string) (*
 	// session is still live.
 	claims, sess, err := a.coreAuthVerifyAccess(ctx, projectID, token)
 	if err != nil || sess == nil {
-		return &domain.CoreAuthTokenIntrospection{Active: false}, nil
+		return &domain.CoreAuthTokenIntrospection{Active: false}, nil //nolint:nilerr // an invalid token introspects as inactive, not an error
 	}
 
 	claims["token_type"] = "access_token"
@@ -3593,7 +3593,7 @@ func (a *pgCoreAuth) Verify(ctx context.Context, projectID, token, audience stri
 	// Verify the JWT signature + claims (jwx), then confirm the session is live.
 	claims, sess, err := a.coreAuthVerifyAccess(ctx, projectID, token)
 	if err != nil || sess == nil {
-		return &domain.CoreAuthTokenVerification{Valid: false, Error: "invalid_token"}, nil
+		return &domain.CoreAuthTokenVerification{Valid: false, Error: "invalid_token"}, nil //nolint:nilerr // an invalid token verifies as invalid, not an error
 	}
 
 	if audience != "" && sess.ClientID != "" && sess.ClientID != audience {

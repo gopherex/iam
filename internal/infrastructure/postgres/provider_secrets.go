@@ -69,7 +69,7 @@ func transformProviderValue(k string, v jx.Raw, transform func(string) (string, 
 
 	var s string
 	if err := json.Unmarshal(v, &s); err != nil {
-		return v, nil // not a JSON string; leave untouched
+		return v, nil //nolint:nilerr // not a JSON string; leave untouched
 	}
 
 	t, err := transform(s)

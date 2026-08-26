@@ -406,6 +406,14 @@ linters:
       - linters:
           - errchkjson
         path: ^pkg/api/
+      # config_reader.go's own header documents its design contract: fail-OPEN
+      # to defaults on any read/parse error, because it is the runtime path
+      # every enforcement stage consults and must never brick auth on a
+      # malformed doc. Every "return eff/nil, nil" on an unmarshal error here
+      # is that contract, not a dropped error.
+      - linters:
+          - nilerr
+        path: ^internal/infrastructure/postgres/config_reader\.go$
       # AdminConnections and FederationConnections are two independent ports
       # (mgmt API vs federation API) that both happen to implement the same
       # find -> tenant-check -> act -> emit shape for SSO connections/domains

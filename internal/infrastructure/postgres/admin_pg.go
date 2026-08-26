@@ -2170,7 +2170,7 @@ func adminProviderToDomain(cipher Cipher, row *models.IamProvider) (domain.Admin
 
 	var d adminProviderData
 	if err := json.Unmarshal(row.Data, &d); err != nil {
-		return p, nil // malformed envelope: fall back to the row's own columns
+		return p, nil //nolint:nilerr // malformed envelope: fall back to the row's own columns
 	}
 
 	if d.Type != "" {

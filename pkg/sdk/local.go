@@ -121,7 +121,7 @@ func (v *LocalVerifier) Verify(ctx context.Context, token string) (*VerifyResult
 	}
 
 	if err != nil {
-		return &VerifyResult{
+		return &VerifyResult{ //nolint:nilerr // an invalid token verifies as invalid, not an error
 			Valid: false,
 			Error: "invalid_token",
 		}, nil
@@ -133,7 +133,7 @@ func (v *LocalVerifier) Verify(ctx context.Context, token string) (*VerifyResult
 	}
 
 	if err := v.validateClaims(claims); err != nil {
-		return &VerifyResult{
+		return &VerifyResult{ //nolint:nilerr // a claim-validation failure verifies as invalid, not an error
 			Valid:  false,
 			Error:  err.Error(),
 			Claims: claims,

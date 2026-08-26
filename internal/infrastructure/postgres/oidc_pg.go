@@ -2433,7 +2433,7 @@ func (a *pgOIDCGrants) Introspect(ctx context.Context, cmd domain.OIDCIntrospect
 	}
 
 	if err != nil {
-		return inactive, nil
+		return inactive, nil //nolint:nilerr // RFC 7662: an invalid token introspects as inactive, not an error
 	}
 
 	if iss, _ := claims[claimIssuer].(string); iss != oidcIssuer(a.db.PublicURL, cmd.ProjectID, env) {

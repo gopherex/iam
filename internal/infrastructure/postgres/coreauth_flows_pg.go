@@ -761,8 +761,7 @@ func (a *pgCoreAuthFlows) flowIssueRecoveryEmailChallenge(ctx context.Context, f
 func (a *pgCoreAuthFlows) Abandon(ctx context.Context, cmd domain.FlowAbandonCmd) error {
 	row, f, err := a.flowLoad(ctx, cmd.ProjectID, cmd.FlowToken)
 	if err != nil {
-		// Already gone — idempotent.
-		return nil
+		return nil //nolint:nilerr // already gone — idempotent
 	}
 
 	f.Status = domain.FlowStatusAborted
@@ -1094,7 +1093,7 @@ func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.Iam
 			return a.flowSave(ctx, row, f)
 		})
 
-		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
+		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil //nolint:nilerr // wrong code stays pending, see above
 	}
 
 	// Email verified.

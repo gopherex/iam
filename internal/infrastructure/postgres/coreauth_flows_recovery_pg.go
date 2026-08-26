@@ -97,7 +97,7 @@ func recoveryEmailChallenge(ctx context.Context, a *pgCoreAuthFlows, pgCA *pgCor
 	if err != nil {
 		// Unknown email: synthesize a fake descriptor (random ID, no DB row).
 		// The client gets identical shape; any code submitted will fail.
-		return &domain.FlowActiveChallenge{
+		return &domain.FlowActiveChallenge{ //nolint:nilerr // anti-enumeration, see func doc
 			ChallengeID:  newUUID(), // dangling — no DB row
 			Channel:      "email",
 			ExpiresAt:    now.Add(coreAuthChallengeTTL),
@@ -253,7 +253,7 @@ func recoveryPhoneChallenge(ctx context.Context, pgCA *pgCoreAuth, f *domain.Flo
 	}
 
 	if err != nil {
-		return &domain.FlowActiveChallenge{
+		return &domain.FlowActiveChallenge{ //nolint:nilerr // anti-enumeration, see func doc
 			ChallengeID:  newUUID(), // dangling — no DB row
 			Channel:      "sms",
 			ExpiresAt:    now.Add(coreAuthChallengeTTL),
@@ -390,7 +390,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.I
 			return a.flowSave(ctx, row, f)
 		})
 
-		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
+		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil //nolint:nilerr // wrong code stays pending, see above
 	}
 
 	// Code verified — advance to set_password. Do NOT rotate yet (token rotates
@@ -453,7 +453,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.I
 			return a.flowSave(ctx, row, f)
 		})
 
-		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
+		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil //nolint:nilerr // wrong code stays pending, see above
 	}
 
 	f.UserID = res
