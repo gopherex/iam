@@ -185,5 +185,5 @@ func newVerifyServer(t *testing.T) *httptest.Server {
 
 func writeJSON(w http.ResponseWriter, value any) {
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(value)
+	_ = json.NewEncoder(w).Encode(value) //nolint:errchkjson // test fixtures only; a bad value fails the test downstream
 }

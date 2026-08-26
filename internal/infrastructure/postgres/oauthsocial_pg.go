@@ -166,9 +166,11 @@ func (u oauthUserInfo) externalID() string {
 	return u.UserID
 }
 
-// jsonNumberString renders a numeric id without scientific notation.
+// jsonNumberString renders a numeric id without scientific notation. f always
+// came from json.Unmarshal into `any` (this package's only caller), and JSON
+// cannot encode NaN/Inf, so f is always finite and Marshal cannot fail.
 func jsonNumberString(f float64) string {
-	b, _ := json.Marshal(f)
+	b, _ := json.Marshal(f) //nolint:errchkjson // f is always finite, see above
 	return string(b)
 }
 

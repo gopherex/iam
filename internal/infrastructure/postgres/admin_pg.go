@@ -2660,6 +2660,7 @@ func builtinTemplateRow(projectID, key, locale string) *models.IamEmailTemplate 
 	}
 
 	c := t.Copy(locale)
+	//nolint:errchkjson // map[string]string of builtin catalog strings cannot fail to marshal
 	body, _ := json.Marshal(map[string]string{"subject": c.Subject, "text": c.Text, "html": c.HTML})
 
 	return &models.IamEmailTemplate{
@@ -2690,7 +2691,7 @@ func adminTemplateLocaleFromPatch(patch map[string]jx.Raw) string {
 }
 
 func adminRawString(s string) jx.Raw {
-	raw, _ := json.Marshal(s)
+	raw, _ := json.Marshal(s) //nolint:errchkjson // marshaling a plain string cannot fail
 	return jx.Raw(raw)
 }
 
@@ -3407,6 +3408,6 @@ func (a *pgAdminAccessRequests) persistDecision(ctx context.Context, row *models
 
 // adminJSONString encodes s as a JSON string literal for embedding in a jx.Raw.
 func adminJSONString(s string) []byte {
-	b, _ := json.Marshal(s)
+	b, _ := json.Marshal(s) //nolint:errchkjson // marshaling a plain string cannot fail
 	return b
 }

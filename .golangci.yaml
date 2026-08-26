@@ -397,6 +397,15 @@ linters:
       - linters:
           - wrapcheck
         path: ^cmd/
+      # pkg/api repeatedly reshapes a domain value (or an already-decoded
+      # ogen struct) into an ogen response via marshal-then-Unmarshal/Encode.
+      # The inputs are our own plain data (structs of strings/ints/times) or
+      # already-valid JSON that ogen itself decoded, so Marshal cannot fail;
+      # where it's the last-mile HTTP error writer (errors.go), the response
+      # is already committed and there is no remedy for a failure anyway.
+      - linters:
+          - errchkjson
+        path: ^pkg/api/
       # AdminConnections and FederationConnections are two independent ports
       # (mgmt API vs federation API) that both happen to implement the same
       # find -> tenant-check -> act -> emit shape for SSO connections/domains

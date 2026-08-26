@@ -111,18 +111,29 @@ func TestPhoneRecipient(t *testing.T) {
 	}
 }
 
-func TestDecodeSMSConfigGeneric(t *testing.T) {
-	cipher := postgres.NewIdentityCipher()
-	raw := func(m map[string]any) map[string]json.RawMessage {
-		out := map[string]json.RawMessage{}
+// rawJSONMap encodes a test literal map into the map[string]json.RawMessage
+// shape decodeSMSConfig consumes. m's values are always plain test literals,
+// so a Marshal failure here means the test itself is broken.
+func rawJSONMap(t *testing.T, m map[string]any) map[string]json.RawMessage {
+	t.Helper()
 
-		for k, v := range m {
-			b, _ := json.Marshal(v)
-			out[k] = b
+	out := map[string]json.RawMessage{}
+
+	for k, v := range m {
+		b, err := json.Marshal(v)
+		if err != nil {
+			t.Fatalf("marshal %q: %v", k, err)
 		}
 
-		return out
+		out[k] = b
 	}
+
+	return out
+}
+
+func TestDecodeSMSConfigGeneric(t *testing.T) {
+	cipher := postgres.NewIdentityCipher()
+	raw := func(m map[string]any) map[string]json.RawMessage { return rawJSONMap(t, m) }
 
 	cfg, err := decodeSMSConfig(cipher, "generic", raw(map[string]any{
 		"url":        "https://gw.example.com/send",
@@ -148,16 +159,7 @@ func TestDecodeSMSConfigGeneric(t *testing.T) {
 
 func TestDecodeSMSConfigTwilio(t *testing.T) {
 	cipher := postgres.NewIdentityCipher()
-	raw := func(m map[string]any) map[string]json.RawMessage {
-		out := map[string]json.RawMessage{}
-
-		for k, v := range m {
-			b, _ := json.Marshal(v)
-			out[k] = b
-		}
-
-		return out
-	}
+	raw := func(m map[string]any) map[string]json.RawMessage { return rawJSONMap(t, m) }
 
 	cfg, err := decodeSMSConfig(cipher, "twilio", raw(map[string]any{
 		"account_sid": "ACxxx",
