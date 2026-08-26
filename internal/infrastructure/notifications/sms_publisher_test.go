@@ -217,7 +217,7 @@ func TestSMSSendGeneric(t *testing.T) {
 	}
 
 	// non-2xx → error
-	bad := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	bad := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer bad.Close()

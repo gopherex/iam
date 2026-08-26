@@ -125,7 +125,7 @@ func CORSMiddleware(allowedOrigins []string, source OriginSource, ttl time.Durat
 			}
 
 			if allowAny {
-				setCORSHeadersPublic(w, origin)
+				setCORSHeadersPublic(w)
 			} else if _, ok := allowed[origin]; ok || cache.allowed(origin) {
 				setCORSHeaders(w, origin)
 			} else {
@@ -154,7 +154,7 @@ func setCORSHeaders(w http.ResponseWriter, origin string) {
 	h.Set("Access-Control-Max-Age", "600")
 }
 
-func setCORSHeadersPublic(w http.ResponseWriter, origin string) {
+func setCORSHeadersPublic(w http.ResponseWriter) {
 	h := w.Header()
 	h.Add("Vary", "Origin")
 	h.Set("Access-Control-Allow-Origin", "*")

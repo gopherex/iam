@@ -85,7 +85,7 @@ func (s *OperatorService) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx c
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *OperatorService) GetMgmtV1Projects(ctx context.Context, params oas.GetMgmtV1ProjectsParams) (r *oas.GetMgmtV1ProjectsOK, _ error) {
+func (s *OperatorService) GetMgmtV1Projects(ctx context.Context, _ oas.GetMgmtV1ProjectsParams) (r *oas.GetMgmtV1ProjectsOK, _ error) {
 	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
@@ -238,7 +238,7 @@ func (s *OperatorService) PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Con
 	return oas.PatchMgmtV1ProjectsByProjectIdFeaturesOK(features), nil
 }
 
-func (s *OperatorService) PostMgmtV1Projects(ctx context.Context, req *oas.PostMgmtV1ProjectsReq, params oas.PostMgmtV1ProjectsParams) (r *oas.PostMgmtV1ProjectsCreated, _ error) {
+func (s *OperatorService) PostMgmtV1Projects(ctx context.Context, req *oas.PostMgmtV1ProjectsReq, _ oas.PostMgmtV1ProjectsParams) (r *oas.PostMgmtV1ProjectsCreated, _ error) {
 	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}

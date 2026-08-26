@@ -133,8 +133,8 @@ func (a *pgTestMode) Clock(ctx context.Context, projectID, env string, advanceSe
 func (a *pgTestMode) Messages(ctx context.Context, projectID, env, channel, to string) ([]map[string]any, error) {
 	rows, err := a.db.Pool.Query(ctx,
 		`SELECT type, data, created_at FROM iam_events
-		 WHERE project_id = $1 AND type LIKE 'auth.%'
-		 ORDER BY created_at DESC LIMIT 200`, projectID)
+		 WHERE project_id = $1 AND environment = $2 AND type LIKE 'auth.%'
+		 ORDER BY created_at DESC LIMIT 200`, projectID, env)
 	if err != nil {
 		return nil, err
 	}

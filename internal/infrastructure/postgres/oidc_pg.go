@@ -1141,7 +1141,6 @@ func (a *pgOIDCGrants) oidcSessionAuthTime(ctx context.Context, projectID, sessi
 func (a *pgOIDCGrants) authorizeSilently(
 	ctx context.Context,
 	cmd domain.OIDCAuthorizeCmd,
-	app *domain.AppClient,
 	clientRow *models.IamAppClient,
 	redirectURI string,
 	scopes []string,
@@ -1410,7 +1409,7 @@ func (a *pgOIDCGrants) authorize(ctx context.Context, cmd domain.OIDCAuthorizeCm
 	// login screen. It is also the only way prompt=none can succeed, since that
 	// forbids showing any UI at all.
 	if !intent.forceLogin && !intent.forceConsent {
-		redirect, decided, err := a.authorizeSilently(ctx, cmd, app, clientRow, redirectURI, scopes)
+		redirect, decided, err := a.authorizeSilently(ctx, cmd, clientRow, redirectURI, scopes)
 		if err != nil {
 			return "", err
 		}
@@ -1986,7 +1985,7 @@ func (a *pgOIDCGrants) tokenRefreshGrant(ctx context.Context, cmd domain.OIDCTok
 	var stored oidcRefreshData
 
 	row, err := withTxRet(ctx, a.db, func(ctx context.Context) (*models.IamRefreshToken, error) {
-		redeemed, data, rerr := a.oidcRedeemRefreshToken(ctx, projectID, env, cmd.RefreshToken)
+		redeemed, data, rerr := a.oidcRedeemRefreshToken(ctx, projectID, cmd.RefreshToken)
 		stored = data
 
 		return redeemed, rerr
@@ -2826,7 +2825,7 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 // Userinfo returns the OIDC userinfo claims for the bearer-authenticated
 // account. Resolving the claims set requires the account aggregate (a separate
 // port); the signing of a signed userinfo response is the token subsystem's job.
-func (a *pgOIDCGrants) Userinfo(ctx context.Context, accountID, sessionID string) (map[string]any, error) {
+func (a *pgOIDCGrants) Userinfo(ctx context.Context, accountID, _ string) (map[string]any, error) {
 	// The bearer principal is already authenticated upstream (the access-token
 	// JWT was verified by the auth middleware), so the subject is settled. A
 	// relying party that falls back to userinfo because the id_token was thin
@@ -3026,7 +3025,7 @@ func (a *pgOIDCGrants) JWKS(ctx context.Context, projectID, env string) (map[str
 // built from the zitadel DiscoveryConfiguration struct (spec-correct field
 // names) and marshaled to the generic map the oas layer emits. The signing
 // algorithm advertised matches the Signer (RS256).
-func (a *pgOIDCGrants) OpenIDConfiguration(ctx context.Context, projectID, env string) (map[string]any, error) {
+func (a *pgOIDCGrants) OpenIDConfiguration(_ context.Context, projectID, env string) (map[string]any, error) {
 	root := a.db.PublicURL
 	// issuer is the deployment base + tenant path, which is exactly the prefix of
 	// the URL this document is served from

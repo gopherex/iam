@@ -110,7 +110,7 @@ func (s *AccountService) DeleteV1SessionsBySessionId(ctx context.Context, params
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AccountService) DeleteV1UsersMe(ctx context.Context, req oas.OptDeleteV1UsersMeReq) (*oas.Ok, error) {
+func (s *AccountService) DeleteV1UsersMe(ctx context.Context, _ oas.OptDeleteV1UsersMeReq) (*oas.Ok, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err

@@ -58,7 +58,7 @@ func (s *WebAuthnService) PostV1AuthWebauthnLoginOptions(ctx context.Context, re
 	}, nil
 }
 
-func (s *WebAuthnService) PostV1AuthWebauthnLoginVerify(ctx context.Context, req *oas.PostV1AuthWebauthnLoginVerifyReq, params oas.PostV1AuthWebauthnLoginVerifyParams) (*oas.AuthResult, error) {
+func (s *WebAuthnService) PostV1AuthWebauthnLoginVerify(ctx context.Context, req *oas.PostV1AuthWebauthnLoginVerifyReq, _ oas.PostV1AuthWebauthnLoginVerifyParams) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.FinishLogin(ctx, req.ChallengeID, anyMap(req.Credential))
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (s *WebAuthnService) PostV1AuthWebauthnLoginVerify(ctx context.Context, req
 	return authResult(acct, sess), nil
 }
 
-func (s *WebAuthnService) PostV1AuthWebauthnRegisterOptions(ctx context.Context, req oas.OptPostV1AuthWebauthnRegisterOptionsReq) (*oas.PostV1AuthWebauthnRegisterOptionsOK, error) {
+func (s *WebAuthnService) PostV1AuthWebauthnRegisterOptions(ctx context.Context, _ oas.OptPostV1AuthWebauthnRegisterOptionsReq) (*oas.PostV1AuthWebauthnRegisterOptionsOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err

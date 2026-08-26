@@ -2036,7 +2036,7 @@ func (a *pgFederationRuntime) fedCreateAndLinkAccount(ctx context.Context, proje
 // fedCreateAndLinkAccount); otherwise it loads the existing account. It then
 // mints an iam_sessions row + signed access-token JWT (fedMintSession). Runs
 // inside the caller's tx.
-func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID, connectionID, provider, idType, providerAccountID, email string) (*domain.Account, *domain.Session, error) {
+func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID, _, provider, idType, providerAccountID, email string) (*domain.Account, *domain.Session, error) {
 	ident, err := a.fedFindIdentity(ctx, projectID, provider, providerAccountID)
 	if err != nil && !errors.Is(err, domain.ErrNotFound) {
 		return nil, nil, err
@@ -2302,7 +2302,7 @@ func fedScimExternalID(attrs map[string]any) string {
 }
 
 // fedScimListEnvelope wraps resources in the SCIM v2 ListResponse envelope.
-func fedScimListEnvelope(resources []map[string]any, startIndex, count int) map[string]any {
+func fedScimListEnvelope(resources []map[string]any, startIndex int) map[string]any {
 	if startIndex <= 0 {
 		startIndex = 1
 	}
@@ -2337,7 +2337,7 @@ func (a *pgFederationScim) fedScimList(ctx context.Context, q domain.FederationS
 		resources = append(resources, m)
 	}
 
-	return fedScimListEnvelope(resources, q.StartIndex, q.Count), nil
+	return fedScimListEnvelope(resources, q.StartIndex), nil
 }
 
 // fedScimGet loads a single resource scoped to its connection + type.

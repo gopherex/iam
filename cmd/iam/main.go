@@ -191,7 +191,7 @@ func registerShutdownHooks(sd *xshutdown.Manager, httpSrv, probeSrv *http.Server
 
 			return nil
 		},
-		func(ctx context.Context) error { live.Set(false); return nil },
+		func(_ context.Context) error { live.Set(false); return nil },
 		func(ctx context.Context) error {
 			if *telemetryShutdown == nil {
 				return nil

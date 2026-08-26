@@ -50,7 +50,7 @@ func (s *PasswordlessService) PostV1AuthOtpStart(ctx context.Context, req *oas.O
 	return oasChallenge(ch), nil
 }
 
-func (s *PasswordlessService) PostV1AuthOtpVerify(ctx context.Context, req *oas.OtpVerifyRequest, params oas.PostV1AuthOtpVerifyParams) (*oas.AuthResult, error) {
+func (s *PasswordlessService) PostV1AuthOtpVerify(ctx context.Context, req *oas.OtpVerifyRequest, _ oas.PostV1AuthOtpVerifyParams) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.VerifyOTP(ctx, req.ChallengeID, req.Code)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (s *PasswordlessService) PostV1AuthMagicLinkStart(ctx context.Context, req 
 	return oasChallenge(ch), nil
 }
 
-func (s *PasswordlessService) PostV1AuthMagicLinkVerify(ctx context.Context, req *oas.MagicLinkVerifyRequest, params oas.PostV1AuthMagicLinkVerifyParams) (*oas.AuthResult, error) {
+func (s *PasswordlessService) PostV1AuthMagicLinkVerify(ctx context.Context, req *oas.MagicLinkVerifyRequest, _ oas.PostV1AuthMagicLinkVerifyParams) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.VerifyMagicLink(ctx, req.Token)
 	if err != nil {
 		return nil, err

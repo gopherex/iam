@@ -1600,7 +1600,7 @@ func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, environment, app
 	})
 }
 
-func (a *pgAdminApps) DeleteSecret(ctx context.Context, projectID, environment, appID, secretID string) error {
+func (a *pgAdminApps) DeleteSecret(ctx context.Context, projectID, _, appID, secretID string) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		row, err := models.FindIamAppSecret(ctx, a.db.Bobx(), secretID)
 		if err != nil {

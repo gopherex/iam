@@ -137,7 +137,7 @@ func (s *OAuthSocialService) GetV1AuthOauthProviders(ctx context.Context, params
 	return &oas.GetV1AuthOauthProvidersOK{Providers: items}, nil
 }
 
-func (s *OAuthSocialService) PostV1AuthOauthByProviderUnlink(ctx context.Context, req *oas.PostV1AuthOauthByProviderUnlinkReq, params oas.PostV1AuthOauthByProviderUnlinkParams) (*oas.Ok, error) {
+func (s *OAuthSocialService) PostV1AuthOauthByProviderUnlink(ctx context.Context, req *oas.PostV1AuthOauthByProviderUnlinkReq, _ oas.PostV1AuthOauthByProviderUnlinkParams) (*oas.Ok, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err

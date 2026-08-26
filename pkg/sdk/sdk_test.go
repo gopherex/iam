@@ -122,7 +122,7 @@ func TestHTTPMiddlewareRejectsMissingToken(t *testing.T) {
 		t.Fatalf("NewVerifier() error = %v", err)
 	}
 
-	handler := verifier.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := verifier.Middleware(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
 		t.Fatal("handler should not run")
 	}))
 

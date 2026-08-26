@@ -214,7 +214,7 @@ func (s *OIDCProviderService) GetV1Device(ctx context.Context, params oas.GetV1D
 	return oasOIDCDevicePending(pending), nil
 }
 
-func (s *OIDCProviderService) GetV1OauthGrants(ctx context.Context, params oas.GetV1OauthGrantsParams) (*oas.GetV1OauthGrantsOK, error) {
+func (s *OIDCProviderService) GetV1OauthGrants(ctx context.Context, _ oas.GetV1OauthGrantsParams) (*oas.GetV1OauthGrantsOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -491,7 +491,7 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdConsent(ctx c
 	return out, nil
 }
 
-func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, req oas.OptPostV1OauthInteractionByInteractionIdLoginReq, params oas.PostV1OauthInteractionByInteractionIdLoginParams) (*oas.PostV1OauthInteractionByInteractionIdLoginOK, error) {
+func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, _ oas.OptPostV1OauthInteractionByInteractionIdLoginReq, params oas.PostV1OauthInteractionByInteractionIdLoginParams) (*oas.PostV1OauthInteractionByInteractionIdLoginOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err

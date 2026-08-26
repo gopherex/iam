@@ -246,7 +246,7 @@ func (s *CoreAuthService) PostV1AuthEmailVerificationVerify(ctx context.Context,
 	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthGuest(ctx context.Context, req *oas.PostV1AuthGuestReq, params oas.PostV1AuthGuestParams) (*oas.AuthResult, error) {
+func (s *CoreAuthService) PostV1AuthGuest(ctx context.Context, _ *oas.PostV1AuthGuestReq, params oas.PostV1AuthGuestParams) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.CreateGuest(ctx, params.XClientID)
 	if err != nil {
 		return nil, err
@@ -596,7 +596,7 @@ func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpR
 	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthTokenExchange(ctx context.Context, req *oas.CodeExchangeRequest, params oas.PostV1AuthTokenExchangeParams) (*oas.AuthResult, error) {
+func (s *CoreAuthService) PostV1AuthTokenExchange(ctx context.Context, req *oas.CodeExchangeRequest, _ oas.PostV1AuthTokenExchangeParams) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.ExchangeCode(ctx, req.Code, req.CodeVerifier.Or(""))
 	if err != nil {
 		return nil, err

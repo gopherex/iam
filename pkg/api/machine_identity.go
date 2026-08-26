@@ -67,7 +67,7 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccounts(c
 }
 
 // PostV1ServiceAccountsTokens mints an access token for the calling service account.
-func (s *MachineIdentityService) PostV1ServiceAccountsTokens(ctx context.Context, req *oas.PostV1ServiceAccountsTokensReq) (*oas.PostV1ServiceAccountsTokensOK, error) {
+func (s *MachineIdentityService) PostV1ServiceAccountsTokens(ctx context.Context, _ *oas.PostV1ServiceAccountsTokensReq) (*oas.PostV1ServiceAccountsTokensOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err

@@ -226,7 +226,7 @@ func (a *PgOperator) UpdateProject(ctx context.Context, cmd domain.OperatorProje
 	})
 }
 
-func (a *PgOperator) DeleteProject(ctx context.Context, projectID string, hard bool) error {
+func (a *PgOperator) DeleteProject(ctx context.Context, projectID string, _ bool) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		row, err := models.FindIamProject(ctx, a.db.Bobx(), projectID)
 		if err != nil {

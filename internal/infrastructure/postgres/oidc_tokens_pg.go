@@ -86,7 +86,7 @@ func (a *pgOIDCGrants) storeOIDCRefreshToken(
 // — so the whole session's tokens are revoked rather than merely refusing this
 // one (RFC 9700 §4.14.2).
 func (a *pgOIDCGrants) oidcRedeemRefreshToken(
-	ctx context.Context, projectID, env, token string,
+	ctx context.Context, projectID, token string,
 ) (*models.IamRefreshToken, oidcRefreshData, error) {
 	var data oidcRefreshData
 

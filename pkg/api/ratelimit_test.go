@@ -107,7 +107,7 @@ func TestRateLimitMiddlewareRejects(t *testing.T) {
 	t.Cleanup(func() { sensitiveLimiter = old })
 
 	called := 0
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { called++ })
+	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called++ })
 	handler := RateLimitMiddleware(next)
 
 	for i := range 2 {
@@ -137,7 +137,7 @@ func TestRateLimitMiddlewareRejects(t *testing.T) {
 
 func TestRateLimitMiddlewareSkipsNonAuthPaths(t *testing.T) {
 	called := 0
-	handler := RateLimitMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { called++ }))
+	handler := RateLimitMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called++ }))
 
 	for i := range 20 {
 		req := httptest.NewRequest(http.MethodGet, "/v1/projects/proj/admin/users", nil)
@@ -218,7 +218,7 @@ func TestRateLimitMiddlewarePerProjectOverride(t *testing.T) {
 		"P|live": {{Endpoint: "/v1/auth/sign-in/password", Limit: 2, Window: time.Minute, By: "ip"}},
 	}}
 	called := 0
-	h := NewRateLimitMiddleware(reader)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { called++ }))
+	h := NewRateLimitMiddleware(reader)(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called++ }))
 
 	// Project P: override limit 2 -> 3rd request blocked.
 	for i := range 2 {
@@ -239,7 +239,7 @@ func TestRateLimitMiddlewareFallsBackToDefaultWhenNoProjectRule(t *testing.T) {
 	t.Cleanup(func() { sensitiveLimiter = old })
 
 	reader := &fakeRateLimitReader{byKey: map[string][]RateLimitRule{}} // no rules
-	h := NewRateLimitMiddleware(reader)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	h := NewRateLimitMiddleware(reader)(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 
 	for i := range 2 {
 		if code := doReq(t, h, map[string]string{"X-Client-ID": "P"}); code != http.StatusOK {
@@ -257,7 +257,7 @@ func TestRateLimitMiddlewarePerProjectIsolation(t *testing.T) {
 		"P1|live": {{Endpoint: "/v1/auth/sign-in/password", Limit: 1, Window: time.Minute, By: "ip"}},
 		"P2|live": {{Endpoint: "/v1/auth/sign-in/password", Limit: 5, Window: time.Minute, By: "ip"}},
 	}}
-	h := NewRateLimitMiddleware(reader)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	h := NewRateLimitMiddleware(reader)(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 
 	if code := doReq(t, h, map[string]string{"X-Client-ID": "P1"}); code != http.StatusOK {
 		t.Fatalf("P1 first: got %d", code)
@@ -277,7 +277,7 @@ func TestRateLimitMiddlewareEnvironmentIsolation(t *testing.T) {
 		"P|live": {{Endpoint: "/v1/auth/sign-in/password", Limit: 1, Window: time.Minute, By: "ip"}},
 		"P|test": {{Endpoint: "/v1/auth/sign-in/password", Limit: 5, Window: time.Minute, By: "ip"}},
 	}}
-	h := NewRateLimitMiddleware(reader)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	h := NewRateLimitMiddleware(reader)(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 
 	if code := doReq(t, h, map[string]string{"X-Client-ID": "P"}); code != http.StatusOK {
 		t.Fatalf("live first: got %d", code)
@@ -302,7 +302,7 @@ func TestRateLimitMiddlewareReaderErrorFailsOpen(t *testing.T) {
 		byKey:  map[string][]RateLimitRule{},
 		errFor: map[string]error{"P|live": errors.New("db down")},
 	}
-	h := NewRateLimitMiddleware(reader)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	h := NewRateLimitMiddleware(reader)(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 
 	// Reader errors -> fall open to hardcoded default (limit 2).
 	for i := range 2 {

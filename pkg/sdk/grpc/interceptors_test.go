@@ -19,7 +19,7 @@ func TestUnaryServerInterceptorStoresPrincipal(t *testing.T) {
 	interceptor := sdkgrpc.UnaryServerInterceptor(auth)
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("authorization", "Bearer valid-token"))
 
-	resp, err := interceptor(ctx, nil, &googlegrpc.UnaryServerInfo{FullMethod: "/test.Service/Method"}, func(ctx context.Context, req any) (any, error) {
+	resp, err := interceptor(ctx, nil, &googlegrpc.UnaryServerInfo{FullMethod: "/test.Service/Method"}, func(ctx context.Context, _ any) (any, error) {
 		principal, ok := sdk.PrincipalFrom(ctx)
 		if !ok {
 			t.Fatal("principal missing from context")
@@ -43,7 +43,7 @@ func TestUnaryServerInterceptorStoresPrincipal(t *testing.T) {
 func TestUnaryServerInterceptorRejectsMissingToken(t *testing.T) {
 	interceptor := sdkgrpc.UnaryServerInterceptor(&fakeAuth{})
 
-	_, err := interceptor(context.Background(), nil, &googlegrpc.UnaryServerInfo{}, func(ctx context.Context, req any) (any, error) {
+	_, err := interceptor(context.Background(), nil, &googlegrpc.UnaryServerInfo{}, func(_ context.Context, _ any) (any, error) {
 		t.Fatal("handler should not run")
 		return nil, nil
 	})
@@ -57,7 +57,7 @@ func TestStreamServerInterceptorStoresPrincipal(t *testing.T) {
 	interceptor := sdkgrpc.StreamServerInterceptor(auth)
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("authorization", "Bearer valid-token"))
 
-	err := interceptor(nil, fakeServerStream{ctx: ctx}, &googlegrpc.StreamServerInfo{FullMethod: "/test.Service/Stream"}, func(srv any, stream googlegrpc.ServerStream) error {
+	err := interceptor(nil, fakeServerStream{ctx: ctx}, &googlegrpc.StreamServerInfo{FullMethod: "/test.Service/Stream"}, func(_ any, stream googlegrpc.ServerStream) error {
 		principal, ok := sdk.PrincipalFrom(stream.Context())
 		if !ok {
 			t.Fatal("principal missing from context")

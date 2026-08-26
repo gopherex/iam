@@ -121,7 +121,7 @@ func (s *MFAService) PostV1AuthMfaEmailEnroll(ctx context.Context, req *oas.Post
 	return out, nil
 }
 
-func (s *MFAService) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, req oas.OptPostV1AuthMfaRecoveryCodesGenerateReq) (*oas.PostV1AuthMfaRecoveryCodesGenerateOK, error) {
+func (s *MFAService) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, _ oas.OptPostV1AuthMfaRecoveryCodesGenerateReq) (*oas.PostV1AuthMfaRecoveryCodesGenerateOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func (s *MFAService) PostV1AuthMfaSmsEnroll(ctx context.Context, req *oas.PostV1
 	return out, nil
 }
 
-func (s *MFAService) PostV1AuthMfaTotpEnroll(ctx context.Context, req oas.OptPostV1AuthMfaTotpEnrollReq) (*oas.PostV1AuthMfaTotpEnrollOK, error) {
+func (s *MFAService) PostV1AuthMfaTotpEnroll(ctx context.Context, _ oas.OptPostV1AuthMfaTotpEnrollReq) (*oas.PostV1AuthMfaTotpEnrollOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -214,7 +214,7 @@ func (s *MFAService) PostV1AuthMfaTotpVerify(ctx context.Context, req *oas.PostV
 	}, nil
 }
 
-func (s *MFAService) PostV1AuthMfaVerify(ctx context.Context, req *oas.PostV1AuthMfaVerifyReq, params oas.PostV1AuthMfaVerifyParams) (*oas.AuthResult, error) {
+func (s *MFAService) PostV1AuthMfaVerify(ctx context.Context, req *oas.PostV1AuthMfaVerifyReq, _ oas.PostV1AuthMfaVerifyParams) (*oas.AuthResult, error) {
 	challengeID := req.ChallengeID.Or("")
 	if challengeID == "" {
 		return nil, domain.ErrValidation.WithMessage("challenge_id is required")

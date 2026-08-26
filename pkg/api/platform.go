@@ -64,15 +64,15 @@ func (s *PlatformService) GetV1Csrf(ctx context.Context, params oas.GetV1CsrfPar
 	return &oas.GetV1CsrfOK{CsrfToken: oas.NewOptString(tok.Token)}, nil
 }
 
-func (s *PlatformService) GetV1Health(ctx context.Context) (*oas.GetV1HealthOK, error) {
+func (s *PlatformService) GetV1Health(_ context.Context) (*oas.GetV1HealthOK, error) {
 	return &oas.GetV1HealthOK{Status: oas.NewOptString("ok")}, nil
 }
 
-func (s *PlatformService) GetV1HealthLive(ctx context.Context) (*oas.GetV1HealthLiveOK, error) {
+func (s *PlatformService) GetV1HealthLive(_ context.Context) (*oas.GetV1HealthLiveOK, error) {
 	return &oas.GetV1HealthLiveOK{Status: oas.NewOptString("ok")}, nil
 }
 
-func (s *PlatformService) GetV1HealthReady(ctx context.Context) (*oas.GetV1HealthReadyOK, error) {
+func (s *PlatformService) GetV1HealthReady(_ context.Context) (*oas.GetV1HealthReadyOK, error) {
 	return &oas.GetV1HealthReadyOK{Status: oas.NewOptString("ok")}, nil
 }
 

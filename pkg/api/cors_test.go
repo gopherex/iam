@@ -46,7 +46,7 @@ func TestCORSDynamicOriginAllowed(t *testing.T) {
 }
 
 func TestCORSWildcardNoCredentials(t *testing.T) {
-	handler := CORSMiddleware([]string{"*"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSMiddleware([]string{"*"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -74,7 +74,7 @@ func TestCORSWildcardNoCredentials(t *testing.T) {
 }
 
 func TestCORSExplicitOriginWithCredentials(t *testing.T) {
-	handler := CORSMiddleware([]string{"https://app.example.com"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSMiddleware([]string{"https://app.example.com"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -98,7 +98,7 @@ func TestCORSExplicitOriginWithCredentials(t *testing.T) {
 }
 
 func TestCORSRejectsUnknownOrigin(t *testing.T) {
-	handler := CORSMiddleware([]string{"https://app.example.com"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSMiddleware([]string{"https://app.example.com"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -117,7 +117,7 @@ func TestCORSRejectsUnknownOrigin(t *testing.T) {
 }
 
 func TestSecurityHeadersPresent(t *testing.T) {
-	handler := SecurityHeaders(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := SecurityHeaders(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
