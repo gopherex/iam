@@ -72,13 +72,14 @@ func RequireAnyScopeStream(scopes ...string) googlegrpc.StreamServerInterceptor 
 	return streamGuard(func(p *sdk.Principal) bool { return p.HasAnyScope(scopes...) })
 }
 
-// RequireAALUnary admits a unary call only when the principal's assurance level
-// is at least min (e.g. RequireAALUnary(2) demands a step-up/MFA session).
-func RequireAALUnary(min int) googlegrpc.UnaryServerInterceptor {
-	return unaryGuard(func(p *sdk.Principal) bool { return p.MeetsAAL(min) })
+// RequireAALUnary admits a unary call only when the principal's assurance
+// level is at least minAAL (e.g. RequireAALUnary(2) demands a step-up/MFA
+// session).
+func RequireAALUnary(minAAL int) googlegrpc.UnaryServerInterceptor {
+	return unaryGuard(func(p *sdk.Principal) bool { return p.MeetsAAL(minAAL) })
 }
 
 // RequireAALStream is the streaming counterpart of RequireAALUnary.
-func RequireAALStream(min int) googlegrpc.StreamServerInterceptor {
-	return streamGuard(func(p *sdk.Principal) bool { return p.MeetsAAL(min) })
+func RequireAALStream(minAAL int) googlegrpc.StreamServerInterceptor {
+	return streamGuard(func(p *sdk.Principal) bool { return p.MeetsAAL(minAAL) })
 }

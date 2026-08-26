@@ -133,7 +133,12 @@ linters:
       # extensions); only switches must be exhaustive.
       check:
         - switch
-      default-signifies-exhaustive: true
+      # A `default:` case is not a substitute for listing every value: it is
+      # how a switch says "and everything else", which is a different claim
+      # from "I considered each of these". Left at the tool's default (false)
+      # so adding an enum value still forces every switch over it to look at
+      # the new case, not silently fall into whatever default was already
+      # there.
     cyclop:
       max-complexity: 15
     funlen:
@@ -195,13 +200,6 @@ linters:
         - cobra.RangeArgs
     lll:
       line-length: 120
-    revive:
-      rules:
-        # This codebase writes Id, not ID — a convention held everywhere is
-        # worth more than the one Go started with and never applied to its
-        # own url.URL. Everything else revive checks stays on.
-        - name: var-naming
-          disabled: true
     misspell:
       locale: US
       ignore-rules:
@@ -285,6 +283,25 @@ linters:
       - legacy
       - std-error-handling
     rules:
+      # ogen renders a handler method's name straight from the OpenAPI
+      # operationId, which spells it Id — implementing the generated
+      # interface means matching that spelling exactly, not a style choice
+      # we get to make. Everywhere else var-naming stays on: it is what
+      # would have caught ExternalId/rpId/accountId as they were introduced.
+      - linters:
+          - revive
+        path: ^pkg/api/
+        text: var-naming
+      # Adapters (`func NewPgXxx(...) *pgXxx`) return the unexported concrete
+      # type on purpose: the exported surface is the port they implement, in
+      # internal/domain or pkg/api, and constructing one somewhere that only
+      # knows the concrete type is exactly the coupling ireturn's allow-list
+      # above exists to keep out. revive's opinion here is the mirror image of
+      # a choice this config already made once; a repo-wide exclusion, not a
+      # per-file one, because every future NewPgXxx follows the same pattern.
+      - linters:
+          - revive
+        text: unexported-return
       - linters:
           - lll
         source: ^//\s*go:generate\s

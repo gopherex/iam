@@ -872,6 +872,9 @@ func (s *AdminService) adminTestGate(ctx context.Context, env string) (string, s
 	// Test mode (seed / reset-wipe / clock / messages) is a privileged
 	// administrative capability, NEVER an end-user one: an ordinary user or
 	// OAuth-client token must not be able to wipe or reseed an environment.
+	//nolint:exhaustive // an allowlist, not an oversight: a future
+	// PrincipalKind is meant to fall into the default and be rejected until
+	// someone deliberately adds it here.
 	switch p.Kind {
 	case domain.PrincipalAdmin, domain.PrincipalOperator, domain.PrincipalService:
 	default:

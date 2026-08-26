@@ -52,7 +52,7 @@ var _ api.AdminAPIKeys = (*pgAdminAPIKeys)(nil)
 // It reuses the package-level loadAPIKey from machineid_pg.go which already
 // handles FindIamAPIKey + project_id check + envelope unmarshal.
 func (a *pgAdminAPIKeys) findAdminAPIKey(ctx context.Context, projectID, keyID string) (*models.IamAPIKey, *domain.APIKey, error) {
-	row, key, err := loadAPIKey(a.db, ctx, projectID, keyID)
+	row, key, err := loadAPIKey(ctx, a.db, projectID, keyID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -285,7 +285,7 @@ func (a *pgAdminAPIKeys) Rotate(ctx context.Context, projectID, keyID string) (*
 // rather than a free function, replace the body of findAdminAPIKey with the
 // inline equivalent (FindIamAPIKey + project_id guard + unmarshal) from
 // machineid_pg.go:352-364.
-func loadAPIKey(db *DB, ctx context.Context, projectID, keyID string) (*models.IamAPIKey, *domain.APIKey, error) {
+func loadAPIKey(ctx context.Context, db *DB, projectID, keyID string) (*models.IamAPIKey, *domain.APIKey, error) {
 	row, err := models.FindIamAPIKey(ctx, db.Bobx(), keyID)
 	if err != nil {
 		return nil, nil, translatePgErr("api_key", err)

@@ -1042,6 +1042,9 @@ func (a *pgCoreAuthFlows) flowMarkInviteAccepted(ctx context.Context, row *model
 
 // advanceSignup handles Submit for signup flows.
 func advanceSignup(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+	//nolint:exhaustive // only the three steps a signup flow can be submitted
+	// from advance here; every other step is a caller error, which the
+	// default case reports as such.
 	switch f.Step {
 	case domain.FlowStepVerifyEmail:
 		if cmd.Action != "verify_email" {

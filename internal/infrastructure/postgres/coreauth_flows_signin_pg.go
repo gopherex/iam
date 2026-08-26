@@ -400,6 +400,9 @@ func advanceSignin(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 		return a.signinSwitchMethod(ctx, row, f, cmd)
 	}
 
+	//nolint:exhaustive // only the steps a signin flow can be submitted from
+	// advance here; every other step is a caller error, which the default
+	// case reports as such.
 	switch f.Step {
 	case domain.FlowStepMFARequired:
 		if cmd.Action != "mfa" {

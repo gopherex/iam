@@ -20,7 +20,7 @@ func ctxWith(p *sdk.Principal) context.Context {
 	return ctx
 }
 
-func invokeUnary(interceptor googlegrpc.UnaryServerInterceptor, ctx context.Context) (bool, error) {
+func invokeUnary(ctx context.Context, interceptor googlegrpc.UnaryServerInterceptor) (bool, error) {
 	called := false
 	_, err := interceptor(ctx, nil, &googlegrpc.UnaryServerInfo{}, func(context.Context, any) (any, error) {
 		called = true
@@ -41,19 +41,19 @@ func wantCode(t *testing.T, err error, want codes.Code) {
 func TestRequireScopesUnary(t *testing.T) {
 	p := &sdk.Principal{Scopes: []string{"billing:read"}}
 
-	called, err := invokeUnary(RequireScopesUnary("billing:read"), ctxWith(p))
+	called, err := invokeUnary(ctxWith(p), RequireScopesUnary("billing:read"))
 	if !called || err != nil {
 		t.Fatalf("granted: called=%v err=%v", called, err)
 	}
 
-	called, err = invokeUnary(RequireScopesUnary("billing:write"), ctxWith(p))
+	called, err = invokeUnary(ctxWith(p), RequireScopesUnary("billing:write"))
 	if called {
 		t.Fatal("missing scope must not reach handler")
 	}
 
 	wantCode(t, err, codes.PermissionDenied)
 
-	called, err = invokeUnary(RequireScopesUnary("billing:read"), ctxWith(nil))
+	called, err = invokeUnary(ctxWith(nil), RequireScopesUnary("billing:read"))
 	if called {
 		t.Fatal("no principal must not reach handler")
 	}
@@ -62,12 +62,12 @@ func TestRequireScopesUnary(t *testing.T) {
 }
 
 func TestRequireAALUnary(t *testing.T) {
-	called, err := invokeUnary(RequireAALUnary(2), ctxWith(&sdk.Principal{AAL: 2}))
+	called, err := invokeUnary(ctxWith(&sdk.Principal{AAL: 2}), RequireAALUnary(2))
 	if !called || err != nil {
 		t.Fatalf("aal met: called=%v err=%v", called, err)
 	}
 
-	called, err = invokeUnary(RequireAALUnary(2), ctxWith(&sdk.Principal{AAL: 1}))
+	called, err = invokeUnary(ctxWith(&sdk.Principal{AAL: 1}), RequireAALUnary(2))
 	if called {
 		t.Fatal("aal short must not reach handler")
 	}
@@ -77,11 +77,11 @@ func TestRequireAALUnary(t *testing.T) {
 
 func TestRequireAnyScopeUnary(t *testing.T) {
 	p := &sdk.Principal{Scopes: []string{"billing:read"}}
-	if called, err := invokeUnary(RequireAnyScopeUnary("admin", "billing:read"), ctxWith(p)); !called || err != nil {
+	if called, err := invokeUnary(ctxWith(p), RequireAnyScopeUnary("admin", "billing:read")); !called || err != nil {
 		t.Fatalf("any match: called=%v err=%v", called, err)
 	}
 
-	if called, err := invokeUnary(RequireAnyScopeUnary("admin", "root"), ctxWith(p)); called || status.Code(err) != codes.PermissionDenied {
+	if called, err := invokeUnary(ctxWith(p), RequireAnyScopeUnary("admin", "root")); called || status.Code(err) != codes.PermissionDenied {
 		t.Fatalf("any miss: called=%v err=%v", called, err)
 	}
 }

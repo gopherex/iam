@@ -84,9 +84,9 @@ func (p *Principal) HasAMR(method string) bool {
 }
 
 // MeetsAAL reports whether the principal's authenticator assurance level is at
-// least min (e.g. MeetsAAL(2) requires a step-up/MFA session).
-func (p *Principal) MeetsAAL(min int) bool {
-	return p != nil && p.AAL >= min
+// least minAAL (e.g. MeetsAAL(2) requires a step-up/MFA session).
+func (p *Principal) MeetsAAL(minAAL int) bool {
+	return p != nil && p.AAL >= minAAL
 }
 
 // GuardOption customizes a claim guard's failure handlers.
@@ -168,10 +168,10 @@ func RequireAnyScope(scopes []string, opts ...GuardOption) func(http.Handler) ht
 }
 
 // RequireAAL admits a request only when the principal's assurance level is at
-// least min (e.g. RequireAAL(2) demands a step-up/MFA session). Chain after an
-// authentication middleware.
-func RequireAAL(min int, opts ...GuardOption) func(http.Handler) http.Handler {
-	return guard(func(p *Principal) bool { return p.MeetsAAL(min) }, opts...)
+// least minAAL (e.g. RequireAAL(2) demands a step-up/MFA session). Chain after
+// an authentication middleware.
+func RequireAAL(minAAL int, opts ...GuardOption) func(http.Handler) http.Handler {
+	return guard(func(p *Principal) bool { return p.MeetsAAL(minAAL) }, opts...)
 }
 
 func defaultForbiddenHandler(w http.ResponseWriter, _ *http.Request, _ error) {
