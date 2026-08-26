@@ -70,10 +70,6 @@ func newClientKeyCache() *clientKeyCache {
 // keysFor returns the public keys a client signs with, preferring the inline set
 // — it needs no network and cannot be made unavailable by the client's own
 // infrastructure.
-//
-// re-export the same interface under a different name.
-//
-//nolint:ireturn // jwk.Set is the library's own set type; wrapping it would only
 func (c *clientKeyCache) keysFor(ctx context.Context, app *domain.AppClient) (jwk.Set, error) {
 	if app.JWKS != "" {
 		set, err := jwk.Parse([]byte(app.JWKS))
@@ -91,7 +87,6 @@ func (c *clientKeyCache) keysFor(ctx context.Context, app *domain.AppClient) (jw
 	return c.fetch(ctx, app.JWKSURI)
 }
 
-//nolint:ireturn // see keysFor.
 func (c *clientKeyCache) fetch(ctx context.Context, uri string) (jwk.Set, error) {
 	c.mu.RLock()
 	entry, ok := c.entries[uri]

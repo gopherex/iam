@@ -192,6 +192,20 @@ linters:
         - github.com/gopherex/iam/internal/oas
         # A probe and a reporter are the health library's own ports.
         - github.com/gopherex/xprobe
+        # Cipher/Authenticator are this package's own ports: the constructor
+        # picks the concrete impl (identity vs AES-GCM, remote vs local vs
+        # hybrid) and the caller is meant to see only the interface.
+        - github.com/gopherex/iam/internal/infrastructure/postgres
+        - github.com/gopherex/iam/pkg/sdk
+        # bob.Executor/scan.Rows/pgtxlib.Trm are the SQL toolkit's own
+        # interfaces — our adapter satisfies and hands back exactly their
+        # shape, there is no concrete type of ours to return instead.
+        - github.com/stephenafamo/bob
+        - github.com/stephenafamo/scan
+        - github.com/gopherex/pgtx
+        # jwk.Set/jwt.Token are the JOSE library's interfaces for a key set /
+        # parsed token; there is no concrete type underneath to hand back.
+        - github.com/lestrrat-go/jwx
     mnd:
       ignored-functions:
         - cobra.ExactArgs
@@ -383,6 +397,24 @@ linters:
       - linters:
           - wrapcheck
         path: ^cmd/
+      # AdminConnections and FederationConnections are two independent ports
+      # (mgmt API vs federation API) that both happen to implement the same
+      # find -> tenant-check -> act -> emit shape for SSO connections/domains
+      # — the exact pattern repeated ~40 times across this package's adapters.
+      # Templating it across two unrelated bounded contexts would trade a
+      # dupl count for closures/generics that hide, not clarify, what each
+      # adapter does.
+      - linters:
+          - dupl
+        path: ^internal/infrastructure/postgres/(admin_connections_pg|federation_pg)\.go$
+      # resolveOrCreateByEmail/ByPhone share a shape (lookup by one column,
+      # flip a verified flag, or auto-provision) but differ in the column,
+      # the account field, and the conflict error at every step — spelling
+      # each channel out straight-line is clearer than a closure-driven
+      # "channel descriptor" for two cases.
+      - linters:
+          - dupl
+        path: ^internal/infrastructure/postgres/passwordless_pg\.go$
     paths:
       - third_party$
       - builtin$
