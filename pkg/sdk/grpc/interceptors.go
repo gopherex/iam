@@ -123,6 +123,11 @@ func authenticate(ctx context.Context, auth sdk.Authenticator, extractor TokenEx
 	return principal, nil
 }
 
+// wrappedServerStream replaces a stream's context with one carrying the
+// authenticated principal. gRPC gives no other way to do it: Context() is the
+// only hook, and it has to return a value the stream holds.
+//
+//nolint:containedctx // the interface requires it.
 type wrappedServerStream struct {
 	googlegrpc.ServerStream
 	ctx context.Context

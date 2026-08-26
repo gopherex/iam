@@ -54,8 +54,6 @@ const (
 	oidcDefaultEnv = "live"
 	// oidcAccessTTL is the lifetime of an issued access token.
 	oidcAccessTTL = 10 * time.Minute
-	// oidcIDTokenTTL is the lifetime of an issued id_token.
-	oidcIDTokenTTL = time.Hour
 	// oidcRefreshTTL is the lifetime of an issued refresh token.
 	oidcRefreshTTL = 30 * 24 * time.Hour
 )

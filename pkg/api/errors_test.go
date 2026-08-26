@@ -101,13 +101,13 @@ func TestServiceNewErrorPreservesDetails(t *testing.T) {
 		t.Fatalf("field detail = %q, want email", field)
 	}
 
-	var max int
-	if err := json.Unmarshal(details["max"], &max); err != nil {
-		t.Fatalf("decode max detail: %v", err)
+	var limit int
+	if err := json.Unmarshal(details["max"], &limit); err != nil {
+		t.Fatalf("decode limit detail: %v", err)
 	}
 
-	if max != 254 {
-		t.Fatalf("max detail = %d, want 254", max)
+	if limit != 254 {
+		t.Fatalf("limit detail = %d, want 254", limit)
 	}
 }
 

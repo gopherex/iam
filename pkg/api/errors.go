@@ -129,10 +129,12 @@ func writeEnvelope(w http.ResponseWriter, de *domain.Error) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(de.Status)
 
-	body := map[string]any{"error": map[string]any{"code": de.Code, "message": de.Message}}
+	envelope := map[string]any{"code": de.Code, "message": de.Message}
 	if len(de.Details) > 0 {
-		body["error"].(map[string]any)["details"] = de.Details
+		envelope["details"] = de.Details
 	}
+
+	body := map[string]any{"error": envelope}
 
 	_ = json.NewEncoder(w).Encode(body)
 }

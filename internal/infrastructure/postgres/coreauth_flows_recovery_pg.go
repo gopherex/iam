@@ -38,6 +38,10 @@ import (
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
 )
 
+// The flow kinds register themselves so a kind lives entirely in its own file:
+// adding one means adding a file, not editing a dispatch table somewhere else.
+//
+//nolint:gochecknoinits // a registration table, populated once at load.
 func init() {
 	flowCreators[domain.FlowKindRecovery] = createRecovery
 	flowAdvancers[domain.FlowKindRecovery] = advanceRecovery

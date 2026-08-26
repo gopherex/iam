@@ -312,6 +312,7 @@ func condsJoin(conds []string) string {
 	out := ""
 
 	var outSb309 strings.Builder
+
 	for i, c := range conds {
 		if i > 0 {
 			outSb309.WriteString(" AND ")
@@ -319,6 +320,7 @@ func condsJoin(conds []string) string {
 
 		outSb309.WriteString(c)
 	}
+
 	out += outSb309.String()
 
 	return out

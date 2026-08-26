@@ -274,6 +274,9 @@ func flowNextActions(f *domain.Flow) []string {
 
 	var actions []string
 
+	// A step not listed here offers no actions: the terminal ones (completed,
+	// blocked) are over, and the rest are driven by their own endpoints.
+	//nolint:exhaustive // the default is deliberate.
 	switch f.Step {
 	case domain.FlowStepCollectCredentials:
 		actions = []string{"submit"}

@@ -1639,7 +1639,7 @@ func (a *pgAdminConfig) getConfigDoc(ctx context.Context, projectID, env, key st
 				return err
 			}
 
-			doc[key] = jx.Raw(raw)
+			doc[key] = raw
 
 			return nil
 		}); err != nil {
@@ -2066,7 +2066,7 @@ func (a *pgAdminConfig) GetI18n(ctx context.Context, cmd domain.AdminConfigGetCm
 }
 
 func (a *pgAdminConfig) PutI18n(ctx context.Context, cmd domain.AdminI18nUpdateCmd) (map[string]jx.Raw, error) {
-	doc := domain.AdminConfigDoc(cmd.Messages)
+	doc := cmd.Messages
 	// Persist + emit atomically (nested withTx joins putConfigDoc's tx).
 	if err := a.db.withTx(ctx, func(ctx context.Context) error {
 		if _, err := a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "i18n:"+cmd.Locale, doc); err != nil {
@@ -2945,6 +2945,7 @@ func adminTokenProfileToDomain(row *models.IamTokenProfile) domain.AdminTokenPro
 
 			p.Audience = d.Audience
 			p.AccessTTL = d.AccessTTL
+
 			p.RefreshTTL = d.RefreshTTL
 			if len(d.ClaimsTemplate) > 0 {
 				p.ClaimsTemplate = make(map[string]jx.Raw, len(d.ClaimsTemplate))

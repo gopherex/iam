@@ -3306,6 +3306,7 @@ func oasAppClient(a *domain.AppClient) oas.AppClient {
 	if a.JWKSURI != "" {
 		out.JwksURI = oas.NewOptNilString(a.JWKSURI)
 	}
+
 	if a.BackchannelLogoutURI != "" {
 		out.BackchannelLogoutURI = oas.NewOptNilString(a.BackchannelLogoutURI)
 	}
@@ -3313,6 +3314,7 @@ func oasAppClient(a *domain.AppClient) oas.AppClient {
 	if a.TokenProfileID != "" {
 		out.TokenProfileID = oas.NewOptNilString(a.TokenProfileID)
 	}
+
 	if a.Type != "" {
 		out.Type = oas.NewOptAppClientType(oas.AppClientType(a.Type))
 	}
@@ -3345,7 +3347,7 @@ func oasEncodeConfig(v jxEncoder) domain.AdminConfigDoc {
 			return err
 		}
 
-		out[key] = jx.Raw(raw)
+		out[key] = raw
 
 		return nil
 	}); err != nil {

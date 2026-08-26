@@ -7,17 +7,9 @@ package postgres
 // api.CSRFMiddleware enforces CSRF while it is present.
 
 import (
-	"time"
-
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/pkg/api"
 )
-
-// sessionCookies renders the access + refresh Set-Cookie pair minted on a cookie
-// -mode login (delegates to the shared pkg/api builder).
-func sessionCookies(access, refresh string, accessTTL, refreshTTL time.Duration) []string {
-	return api.SessionCookies(access, refresh, accessTTL, refreshTTL)
-}
 
 // sessionCookiesFor renders the pair for a minted session, taking both lifetimes
 // from the session — i.e. from the project's session_policy — so a browser login

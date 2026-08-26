@@ -54,7 +54,7 @@ func rawJSONToConfigDoc(raw []byte) (domain.AdminConfigDoc, error) {
 			return err
 		}
 
-		doc[key] = jx.Raw(v)
+		doc[key] = v
 
 		return nil
 	})

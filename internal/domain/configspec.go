@@ -552,7 +552,7 @@ func (c SessionPolicySpec) Validate() error {
 		maxAbsolute = 31536000 // 365 days
 	)
 
-	check := func(field string, v *int, max int) error {
+	check := func(field string, v *int, limit int) error {
 		if v == nil {
 			return nil
 		}
@@ -561,8 +561,8 @@ func (c SessionPolicySpec) Validate() error {
 			return ErrValidation.WithMessage(field + " must be > 0")
 		}
 
-		if *v > max {
-			return ErrValidation.WithDetails(map[string]any{"field": field, "value": *v, "max": max}).
+		if *v > limit {
+			return ErrValidation.WithDetails(map[string]any{"field": field, "value": *v, "max": limit}).
 				WithMessage(field + " exceeds maximum")
 		}
 

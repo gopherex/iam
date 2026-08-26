@@ -683,7 +683,11 @@ const deliverySelect = `SELECT d.id, d.project_id, d.environment, d.webhook_id, 
 	d.response_status, d.response_body, d.last_error, d.created_at, d.updated_at
 	FROM iam_webhook_deliveries d JOIN iam_events e ON e.id = d.event_id`
 
-type rowScanner interface{ Scan(...any) error }
+// rowScanner is the read half of a pgx row, so a scan helper can be given
+// either a single row or one pulled off a Rows cursor.
+type rowScanner interface {
+	Scan(dest ...any) error
+}
 
 func scanDelivery(row rowScanner) (*domain.WebhookDelivery, error) {
 	var (

@@ -378,7 +378,11 @@ func newLogger(c config.Logger) *xlog.Logger {
 		level = xlog.InfoLevel
 	}
 
-	opts := []xlog.Option{xlog.WithLevel(level), xlog.WithCaller(true)}
+	// Level, caller, the tee core, and the trace options appended below.
+	const loggerOptionCount = 4
+
+	opts := make([]xlog.Option, 0, loggerOptionCount)
+	opts = append(opts, xlog.WithLevel(level), xlog.WithCaller(true))
 	otelCore := xlog.NewFilterCore(
 		xlogtrace.Core(logglobal.GetLoggerProvider().Logger(build.ServiceName)),
 		xlog.NewAtomicLevel(level),

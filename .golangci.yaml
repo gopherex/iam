@@ -327,6 +327,20 @@ linters:
           # test files live in the package under test, not in an _test package.
           - testpackage
         path: _test\.go
+      # Named results on a multi-value return of the SAME type are what says
+      # which string is which — `(token, hash string, err error)` reads and
+      # `(string, string, error)` does not. The risk the linter guards against
+      # is the naked return, and nakedret already catches that.
+      - linters:
+          - nonamedreturns
+        text: 'named return "(token|hash|mode|passwordStrategy|subject|email|certPEM|keyPEM|fingerprint|plaintext|prefix|rpID|displayName|origins|err|r)"'
+      # Wire formats we do not own: the WebAuthn ceremony (`publicKey`,
+      # `accountId`), a captcha provider's reply (`error-codes`), and the
+      # persisted jsonb envelopes, whose keys are the Go field names — renaming
+      # one of those does not fix a style problem, it orphans stored rows.
+      - linters:
+          - tagliatelle
+        path: (webauthn_cmd|email_publisher|admin_pg|coreauth_pg|oidc_pg|domain)\.go
       - linters:
           - govet
         text: 'shadow: declaration of "(err|ctx)" shadows declaration at'

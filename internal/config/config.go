@@ -8,6 +8,8 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/gopherex/iam/internal/domain"
@@ -35,8 +37,12 @@ type Postgres struct {
 
 // DSN renders the libpq/pgx connection string.
 func (c *Postgres) DSN() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		c.Username, c.Password, c.Host, c.Port, c.Database, c.SSLMode,
+	// net.JoinHostPort, not string concatenation: an IPv6 host has to be
+	// bracketed or the port reads as part of the address.
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s",
+		c.Username, c.Password,
+		net.JoinHostPort(c.Host, strconv.Itoa(c.Port)),
+		c.Database, c.SSLMode,
 	)
 }
 

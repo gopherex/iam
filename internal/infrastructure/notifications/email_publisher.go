@@ -178,7 +178,7 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 		return err
 	}
 
-	if err := provider.send(job.To, rendered); err != nil {
+	if err := provider.send(ctx, job.To, rendered); err != nil {
 		return err
 	}
 
@@ -702,7 +702,7 @@ func defaultTemplate(key, locale string) map[string]string {
 	return out
 }
 
-func (c *smtpConfig) send(to string, msg renderedEmail) error {
+func (c *smtpConfig) send(ctx context.Context, to string, msg renderedEmail) error {
 	addr := net.JoinHostPort(c.Host, strconv.Itoa(c.Port))
 	from := mail.Address{Name: c.FromName, Address: c.From}
 	rcpt := mail.Address{Address: to}
@@ -733,7 +733,7 @@ func (c *smtpConfig) send(to string, msg renderedEmail) error {
 	raw.WriteString("\r\n")
 	raw.WriteString(body)
 
-	client, err := c.connect(addr)
+	client, err := c.connect(ctx, addr)
 	if err != nil {
 		return err
 	}
@@ -770,9 +770,11 @@ func (c *smtpConfig) send(to string, msg renderedEmail) error {
 	return client.Quit()
 }
 
-func (c *smtpConfig) connect(addr string) (*smtp.Client, error) {
+func (c *smtpConfig) connect(ctx context.Context, addr string) (*smtp.Client, error) {
 	if c.Secure {
-		conn, err := tls.Dial("tcp", addr, &tls.Config{ServerName: c.Host, MinVersion: tls.VersionTLS12})
+		dialer := &tls.Dialer{Config: &tls.Config{ServerName: c.Host, MinVersion: tls.VersionTLS12}}
+
+		conn, err := dialer.DialContext(ctx, "tcp", addr)
 		if err != nil {
 			return nil, err
 		}

@@ -1472,10 +1472,6 @@ type pgFederationRuntime struct {
 }
 
 const (
-	// fedDefaultEnv is the environment whose signing key mints the access token for
-	// a federated (SSO) login session.
-	fedDefaultEnv = "live"
-
 	// fedExchangeCodeTTL bounds the single-use exchange code that maps a verified
 	// external subject's minted session to the /v1/sso/exchange leg.
 	fedExchangeCodeTTL = 5 * time.Minute
