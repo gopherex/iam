@@ -14,6 +14,8 @@ type fakeOriginSource struct{ origins []string }
 func (f fakeOriginSource) AllowedOrigins(context.Context) ([]string, error) { return f.origins, nil }
 
 func TestCORSDynamicOriginAllowed(t *testing.T) {
+	t.Parallel()
+
 	// No static origins; the dynamic per-client union allows the origin.
 	handler := CORSMiddleware(nil, fakeOriginSource{origins: []string{"https://landing.example.com"}}, time.Minute)(
 		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }))
@@ -46,6 +48,8 @@ func TestCORSDynamicOriginAllowed(t *testing.T) {
 }
 
 func TestCORSWildcardNoCredentials(t *testing.T) {
+	t.Parallel()
+
 	handler := CORSMiddleware([]string{"*"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -74,6 +78,8 @@ func TestCORSWildcardNoCredentials(t *testing.T) {
 }
 
 func TestCORSExplicitOriginWithCredentials(t *testing.T) {
+	t.Parallel()
+
 	handler := CORSMiddleware([]string{"https://app.example.com"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -98,6 +104,8 @@ func TestCORSExplicitOriginWithCredentials(t *testing.T) {
 }
 
 func TestCORSRejectsUnknownOrigin(t *testing.T) {
+	t.Parallel()
+
 	handler := CORSMiddleware([]string{"https://app.example.com"}, nil, 0)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -117,6 +125,8 @@ func TestCORSRejectsUnknownOrigin(t *testing.T) {
 }
 
 func TestSecurityHeadersPresent(t *testing.T) {
+	t.Parallel()
+
 	handler := SecurityHeaders(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))

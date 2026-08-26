@@ -18,6 +18,8 @@ import (
 )
 
 func TestLocalVerifierAuthenticate(t *testing.T) {
+	t.Parallel()
+
 	key := newTestSigningKey(t, "kid-1")
 
 	server := newJWKSServer(t, key.publicSet)
@@ -68,6 +70,8 @@ func TestLocalVerifierAuthenticate(t *testing.T) {
 }
 
 func TestLocalVerifierRejectsInvalidAudience(t *testing.T) {
+	t.Parallel()
+
 	key := newTestSigningKey(t, "kid-1")
 
 	server := newJWKSServer(t, key.publicSet)
@@ -102,6 +106,8 @@ func TestLocalVerifierRejectsInvalidAudience(t *testing.T) {
 }
 
 func TestLocalVerifierHTTPMiddleware(t *testing.T) {
+	t.Parallel()
+
 	key := newTestSigningKey(t, "kid-1")
 
 	server := newJWKSServer(t, key.publicSet)

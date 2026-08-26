@@ -10,6 +10,8 @@ import (
 )
 
 func TestVerifierAuthenticate(t *testing.T) {
+	t.Parallel()
+
 	server := newVerifyServer(t)
 	defer server.Close()
 
@@ -56,6 +58,8 @@ func TestVerifierAuthenticate(t *testing.T) {
 }
 
 func TestVerifierAuthenticateRejectsInvalidToken(t *testing.T) {
+	t.Parallel()
+
 	server := newVerifyServer(t)
 	defer server.Close()
 
@@ -74,6 +78,8 @@ func TestVerifierAuthenticateRejectsInvalidToken(t *testing.T) {
 }
 
 func TestHTTPMiddlewareStoresPrincipal(t *testing.T) {
+	t.Parallel()
+
 	server := newVerifyServer(t)
 	defer server.Close()
 
@@ -111,6 +117,8 @@ func TestHTTPMiddlewareStoresPrincipal(t *testing.T) {
 }
 
 func TestHTTPMiddlewareRejectsMissingToken(t *testing.T) {
+	t.Parallel()
+
 	server := newVerifyServer(t)
 	defer server.Close()
 

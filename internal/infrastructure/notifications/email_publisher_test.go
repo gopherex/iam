@@ -6,6 +6,8 @@ import (
 )
 
 func TestEmailJobFromEventMagicLink(t *testing.T) {
+	t.Parallel()
+
 	job, ok := emailJobFromEvent(eventEnvelope{
 		Type: "auth.magiclink.started",
 		Payload: map[string]any{
@@ -32,6 +34,8 @@ func TestEmailJobFromEventMagicLink(t *testing.T) {
 }
 
 func TestEmailJobFromEventFlowContinue(t *testing.T) {
+	t.Parallel()
+
 	job, ok := emailJobFromEvent(eventEnvelope{
 		Type:    "auth.flow.continue",
 		Payload: map[string]any{"to": "user@example.com", "flow_token": "ftk_abc", "token": "proof_123", "code": "260129", "kind": "signup"},
@@ -58,6 +62,8 @@ func TestEmailJobFromEventFlowContinue(t *testing.T) {
 }
 
 func TestSameOrigin(t *testing.T) {
+	t.Parallel()
+
 	allow := []struct{ a, b string }{
 		{"https://app.example.com/continue", "https://app.example.com"},
 		{"https://app.example.com/x", "https://app.example.com/y"},
@@ -85,6 +91,8 @@ func TestSameOrigin(t *testing.T) {
 }
 
 func TestDefaultTemplateLocale(t *testing.T) {
+	t.Parallel()
+
 	en := defaultTemplate("otp", "en")
 	if en["subject"] != "Your sign-in code" {
 		t.Fatalf("en subject = %q", en["subject"])
@@ -109,6 +117,8 @@ func TestDefaultTemplateLocale(t *testing.T) {
 }
 
 func TestFlowContinueURL(t *testing.T) {
+	t.Parallel()
+
 	if got := flowContinueURL("https://app.example.com", "ftk_abc", "proof_123"); got != "https://app.example.com/continue?flow=ftk_abc&token=proof_123" {
 		t.Fatalf("url = %q", got)
 	}
@@ -131,6 +141,8 @@ func TestFlowContinueURL(t *testing.T) {
 }
 
 func TestEmailJobFromEventIgnoresSMSOTP(t *testing.T) {
+	t.Parallel()
+
 	_, ok := emailJobFromEvent(eventEnvelope{
 		Type:    "auth.otp.started",
 		Payload: map[string]any{"channel": "sms", "to": "+15555550123", "code": "123456"},
@@ -141,6 +153,8 @@ func TestEmailJobFromEventIgnoresSMSOTP(t *testing.T) {
 }
 
 func TestRenderTemplate(t *testing.T) {
+	t.Parallel()
+
 	got, err := renderText("Code: {{.code}}", map[string]any{"code": "123456"})
 	if err != nil {
 		t.Fatal(err)
@@ -152,6 +166,8 @@ func TestRenderTemplate(t *testing.T) {
 }
 
 func TestCodeLinkDefaultTemplates(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		key          string
 		noLinkText   string
@@ -175,6 +191,8 @@ func TestCodeLinkDefaultTemplates(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.key+"/text_without_link", func(t *testing.T) {
+			t.Parallel()
+
 			tpl := defaultTemplate(tc.key, "ru")
 
 			got, err := renderText(tpl["text"], map[string]any{"code": "260129"})
@@ -191,6 +209,8 @@ func TestCodeLinkDefaultTemplates(t *testing.T) {
 			}
 		})
 		t.Run(tc.key+"/text_with_link", func(t *testing.T) {
+			t.Parallel()
+
 			tpl := defaultTemplate(tc.key, "ru")
 
 			got, err := renderText(tpl["text"], map[string]any{
@@ -206,6 +226,8 @@ func TestCodeLinkDefaultTemplates(t *testing.T) {
 			}
 		})
 		t.Run(tc.key+"/html_without_link", func(t *testing.T) {
+			t.Parallel()
+
 			tpl := defaultTemplate(tc.key, "ru")
 
 			got, err := renderHTML(tpl["html"], map[string]any{"code": "260129"})
@@ -222,6 +244,8 @@ func TestCodeLinkDefaultTemplates(t *testing.T) {
 			}
 		})
 		t.Run(tc.key+"/html_with_link", func(t *testing.T) {
+			t.Parallel()
+
 			tpl := defaultTemplate(tc.key, "ru")
 
 			got, err := renderHTML(tpl["html"], map[string]any{
@@ -240,6 +264,8 @@ func TestCodeLinkDefaultTemplates(t *testing.T) {
 }
 
 func TestFlowContinueDefaultTemplate(t *testing.T) {
+	t.Parallel()
+
 	tpl := defaultTemplate("flow_continue", "ru")
 
 	got, err := renderText(tpl["text"], map[string]any{"code": "260129"})
@@ -282,6 +308,8 @@ func TestFlowContinueDefaultTemplate(t *testing.T) {
 }
 
 func TestMagicLinkDefaultTemplate(t *testing.T) {
+	t.Parallel()
+
 	tpl := defaultTemplate("magic_link", "ru")
 
 	got, err := renderText(tpl["text"], map[string]any{
@@ -309,6 +337,8 @@ func TestMagicLinkDefaultTemplate(t *testing.T) {
 }
 
 func TestInviteDefaultTemplate(t *testing.T) {
+	t.Parallel()
+
 	tpl := defaultTemplate("invite", "ru")
 
 	got, err := renderText(tpl["text"], map[string]any{
@@ -338,6 +368,8 @@ func TestInviteDefaultTemplate(t *testing.T) {
 }
 
 func TestOTPDefaultTemplate(t *testing.T) {
+	t.Parallel()
+
 	tpl := defaultTemplate("otp", "ru")
 
 	html, err := renderHTML(tpl["html"], map[string]any{"code": "260129"})

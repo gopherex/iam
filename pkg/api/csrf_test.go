@@ -27,6 +27,8 @@ func sessionCookie() *http.Cookie {
 }
 
 func TestCSRFMiddleware(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		method     string
@@ -49,6 +51,8 @@ func TestCSRFMiddleware(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			f := &fakeCsrf{}
 			nextCalled := false
 			h := CSRFMiddleware(f)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

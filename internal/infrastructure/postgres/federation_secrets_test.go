@@ -20,6 +20,8 @@ func newTestCipher(t *testing.T) Cipher {
 }
 
 func TestFedConnSecretsRoundTrip(t *testing.T) {
+	t.Parallel()
+
 	c := newTestCipher(t)
 
 	conn := &domain.Connection{
@@ -54,6 +56,8 @@ func TestFedConnSecretsRoundTrip(t *testing.T) {
 }
 
 func TestFedConnSecretsNilSafe(t *testing.T) {
+	t.Parallel()
+
 	c := newTestCipher(t)
 	// nil Config and one-sided configs must not panic.
 	for _, conn := range []*domain.Connection{

@@ -10,6 +10,8 @@ import (
 )
 
 func TestProviderConfigCryptRoundTrip(t *testing.T) {
+	t.Parallel()
+
 	c, err := NewCipher(base64.StdEncoding.EncodeToString(make([]byte, 32)))
 	if err != nil {
 		t.Fatal(err)
@@ -61,6 +63,8 @@ func TestProviderConfigCryptRoundTrip(t *testing.T) {
 // map[string]json.RawMessage, got base64 garbage for host/port/from and could
 // never connect to SMTP. Config must stay clear for every reader.
 func TestProviderConfigStoredAsRealJSON(t *testing.T) {
+	t.Parallel()
+
 	c, err := NewCipher(base64.StdEncoding.EncodeToString(make([]byte, 32)))
 	if err != nil {
 		t.Fatal(err)
@@ -105,6 +109,8 @@ func TestProviderConfigStoredAsRealJSON(t *testing.T) {
 }
 
 func TestProviderConfigCryptNil(t *testing.T) {
+	t.Parallel()
+
 	c, _ := NewCipher("")
 
 	out, err := encryptProviderConfig(c, nil)

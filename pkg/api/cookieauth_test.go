@@ -7,6 +7,8 @@ import (
 )
 
 func TestCookieAuthMiddleware(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		authHeader string
@@ -20,6 +22,8 @@ func TestCookieAuthMiddleware(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			var seenAuth string
 
 			h := CookieAuthMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {

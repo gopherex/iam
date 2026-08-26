@@ -7,6 +7,8 @@ import (
 )
 
 func TestPrincipalClaimChecks(t *testing.T) {
+	t.Parallel()
+
 	p := &Principal{Scopes: []string{"billing:read", "billing:write"}, AAL: 2, AMR: []string{"pwd", "otp"}}
 
 	if !p.HasScope("billing:read") || p.HasScope("admin") {
@@ -67,6 +69,8 @@ func status(t *testing.T, h http.Handler) int {
 }
 
 func TestRequireScopesHTTP(t *testing.T) {
+	t.Parallel()
+
 	p := &Principal{Scopes: []string{"billing:read"}}
 
 	if c := status(t, guardChain(p, RequireScopes([]string{"billing:read"}))); c != http.StatusOK {
@@ -83,6 +87,8 @@ func TestRequireScopesHTTP(t *testing.T) {
 }
 
 func TestRequireAnyScopeHTTP(t *testing.T) {
+	t.Parallel()
+
 	p := &Principal{Scopes: []string{"billing:read"}}
 	if c := status(t, guardChain(p, RequireAnyScope([]string{"admin", "billing:read"}))); c != http.StatusOK {
 		t.Fatalf("any-scope match: want 200, got %d", c)
@@ -94,6 +100,8 @@ func TestRequireAnyScopeHTTP(t *testing.T) {
 }
 
 func TestRequireAALHTTP(t *testing.T) {
+	t.Parallel()
+
 	if c := status(t, guardChain(&Principal{AAL: 2}, RequireAAL(2))); c != http.StatusOK {
 		t.Fatalf("aal met: want 200, got %d", c)
 	}

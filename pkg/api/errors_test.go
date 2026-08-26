@@ -14,6 +14,8 @@ import (
 )
 
 func TestClassifyDecodeErrorIncludesActionableDetails(t *testing.T) {
+	t.Parallel()
+
 	decodeErr := &ogenerrors.DecodeRequestError{
 		OperationContext: ogenerrors.OperationContext{
 			Name: "List admin users",
@@ -46,6 +48,8 @@ func TestClassifyDecodeErrorIncludesActionableDetails(t *testing.T) {
 }
 
 func TestClassifyResponseEncodeErrorIsServerError(t *testing.T) {
+	t.Parallel()
+
 	err := errors.New("validate: invalid: data.0.primary_email (string: no regex match)")
 
 	de := classify(err)
@@ -70,6 +74,8 @@ func TestClassifyResponseEncodeErrorIsServerError(t *testing.T) {
 }
 
 func TestServiceNewErrorPreservesDetails(t *testing.T) {
+	t.Parallel()
+
 	de := domain.ErrValidation.
 		WithMessage("Bad input.").
 		WithDetails(map[string]any{

@@ -13,6 +13,8 @@ import (
 )
 
 func TestWebhookVerifier(t *testing.T) {
+	t.Parallel()
+
 	now := time.Date(2026, 7, 14, 12, 0, 0, 0, time.UTC)
 	secret := "whsec_" + base64.StdEncoding.EncodeToString([]byte("test-secret"))
 
@@ -35,17 +37,23 @@ func TestWebhookVerifier(t *testing.T) {
 	}
 
 	t.Run("changed body", func(t *testing.T) {
+		t.Parallel()
+
 		if _, err := verifier.Verify(headers, append([]byte(nil), append(body, ' ')...)); !errors.Is(err, ErrWebhookInvalidSignature) {
 			t.Fatalf("error = %v", err)
 		}
 	})
 	t.Run("wrong secret", func(t *testing.T) {
+		t.Parallel()
+
 		bad, _ := NewWebhookVerifier(WebhookVerifierConfig{SigningSecret: "wrong", Now: func() time.Time { return now }})
 		if _, err := bad.Verify(headers, body); !errors.Is(err, ErrWebhookInvalidSignature) {
 			t.Fatalf("error = %v", err)
 		}
 	})
 	t.Run("missing header", func(t *testing.T) {
+		t.Parallel()
+
 		h := headers.Clone()
 		h.Del("Webhook-Id")
 
@@ -54,6 +62,8 @@ func TestWebhookVerifier(t *testing.T) {
 		}
 	})
 	t.Run("malformed timestamp", func(t *testing.T) {
+		t.Parallel()
+
 		h := headers.Clone()
 		h.Set("Webhook-Timestamp", "nope")
 
@@ -62,18 +72,24 @@ func TestWebhookVerifier(t *testing.T) {
 		}
 	})
 	t.Run("old timestamp", func(t *testing.T) {
+		t.Parallel()
+
 		h := signedWebhookHeaders("test-secret", "evt_1", now.Add(-6*time.Minute).Unix(), body)
 		if _, err := verifier.Verify(h, body); !errors.Is(err, ErrWebhookStaleTimestamp) {
 			t.Fatalf("error = %v", err)
 		}
 	})
 	t.Run("future timestamp", func(t *testing.T) {
+		t.Parallel()
+
 		h := signedWebhookHeaders("test-secret", "evt_1", now.Add(6*time.Minute).Unix(), body)
 		if _, err := verifier.Verify(h, body); !errors.Is(err, ErrWebhookStaleTimestamp) {
 			t.Fatalf("error = %v", err)
 		}
 	})
 	t.Run("one valid signature", func(t *testing.T) {
+		t.Parallel()
+
 		h := headers.Clone()
 		h.Set("Webhook-Signature", "v1,invalid v1,"+signature("test-secret", "evt_1", now.Unix(), body))
 

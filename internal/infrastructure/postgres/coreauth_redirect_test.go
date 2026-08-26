@@ -5,6 +5,8 @@ import "testing"
 // TestCoreAuthSameOrigin guards the open-redirect check used by the email
 // verification callback: only an exact scheme+host match is same-origin.
 func TestCoreAuthSameOrigin(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		a, b string
 		want bool

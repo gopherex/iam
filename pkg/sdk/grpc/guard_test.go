@@ -39,6 +39,8 @@ func wantCode(t *testing.T, err error, want codes.Code) {
 }
 
 func TestRequireScopesUnary(t *testing.T) {
+	t.Parallel()
+
 	p := &sdk.Principal{Scopes: []string{"billing:read"}}
 
 	called, err := invokeUnary(ctxWith(p), RequireScopesUnary("billing:read"))
@@ -62,6 +64,8 @@ func TestRequireScopesUnary(t *testing.T) {
 }
 
 func TestRequireAALUnary(t *testing.T) {
+	t.Parallel()
+
 	called, err := invokeUnary(ctxWith(&sdk.Principal{AAL: 2}), RequireAALUnary(2))
 	if !called || err != nil {
 		t.Fatalf("aal met: called=%v err=%v", called, err)
@@ -76,6 +80,8 @@ func TestRequireAALUnary(t *testing.T) {
 }
 
 func TestRequireAnyScopeUnary(t *testing.T) {
+	t.Parallel()
+
 	p := &sdk.Principal{Scopes: []string{"billing:read"}}
 	if called, err := invokeUnary(ctxWith(p), RequireAnyScopeUnary("admin", "billing:read")); !called || err != nil {
 		t.Fatalf("any match: called=%v err=%v", called, err)

@@ -15,6 +15,8 @@ import (
 )
 
 func TestUnaryServerInterceptorStoresPrincipal(t *testing.T) {
+	t.Parallel()
+
 	auth := &fakeAuth{principal: &sdk.Principal{ProjectID: "proj_123"}}
 	interceptor := sdkgrpc.UnaryServerInterceptor(auth)
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("authorization", "Bearer valid-token"))
@@ -41,6 +43,8 @@ func TestUnaryServerInterceptorStoresPrincipal(t *testing.T) {
 }
 
 func TestUnaryServerInterceptorRejectsMissingToken(t *testing.T) {
+	t.Parallel()
+
 	interceptor := sdkgrpc.UnaryServerInterceptor(&fakeAuth{})
 
 	_, err := interceptor(context.Background(), nil, &googlegrpc.UnaryServerInfo{}, func(_ context.Context, _ any) (any, error) {
@@ -53,6 +57,8 @@ func TestUnaryServerInterceptorRejectsMissingToken(t *testing.T) {
 }
 
 func TestStreamServerInterceptorStoresPrincipal(t *testing.T) {
+	t.Parallel()
+
 	auth := &fakeAuth{principal: &sdk.Principal{ProjectID: "proj_123"}}
 	interceptor := sdkgrpc.StreamServerInterceptor(auth)
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("authorization", "Bearer valid-token"))

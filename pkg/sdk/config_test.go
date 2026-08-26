@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewAuthenticatorRemote(t *testing.T) {
+	t.Parallel()
+
 	server := newVerifyServer(t)
 	defer server.Close()
 
@@ -34,6 +36,8 @@ func TestNewAuthenticatorRemote(t *testing.T) {
 }
 
 func TestNewAuthenticatorLocalWarm(t *testing.T) {
+	t.Parallel()
+
 	key := newTestSigningKey(t, "kid-1")
 
 	var jwksCalls atomic.Int32
@@ -62,6 +66,8 @@ func TestNewAuthenticatorLocalWarm(t *testing.T) {
 }
 
 func TestNewAuthenticatorHybridPrefersLocal(t *testing.T) {
+	t.Parallel()
+
 	key := newTestSigningKey(t, "kid-1")
 
 	var verifyCalls atomic.Int32
@@ -104,6 +110,8 @@ func TestNewAuthenticatorHybridPrefersLocal(t *testing.T) {
 }
 
 func TestNewAuthenticatorHybridFallsBackToRemote(t *testing.T) {
+	t.Parallel()
+
 	key := newTestSigningKey(t, "kid-1")
 
 	var verifyCalls atomic.Int32

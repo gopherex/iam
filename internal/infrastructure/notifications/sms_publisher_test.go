@@ -14,6 +14,8 @@ import (
 )
 
 func TestSMSJobFromEventOTP(t *testing.T) {
+	t.Parallel()
+
 	job, ok := smsJobFromEvent(eventEnvelope{
 		Type: "auth.otp.started",
 		Payload: map[string]any{
@@ -41,6 +43,8 @@ func TestSMSJobFromEventOTP(t *testing.T) {
 }
 
 func TestSMSJobFromEventMFA(t *testing.T) {
+	t.Parallel()
+
 	job, ok := smsJobFromEvent(eventEnvelope{
 		Type:    "mfa.challenge.created",
 		Payload: map[string]any{"channel": "sms", "code": "999", "to": "+1999"},
@@ -59,6 +63,8 @@ func TestSMSJobFromEventMFA(t *testing.T) {
 }
 
 func TestSMSJobFromEventPhoneVerification(t *testing.T) {
+	t.Parallel()
+
 	verify, ok := smsJobFromEvent(eventEnvelope{
 		Type:    "phone.verification.requested",
 		Payload: map[string]any{"channel": "sms", "code": "1", "contact": "+1", "purpose": "verify"},
@@ -77,6 +83,8 @@ func TestSMSJobFromEventPhoneVerification(t *testing.T) {
 }
 
 func TestSMSJobFromEventIgnoresEmailChannel(t *testing.T) {
+	t.Parallel()
+
 	if _, ok := smsJobFromEvent(eventEnvelope{
 		Type:    "auth.otp.started",
 		Payload: map[string]any{"channel": "email", "to": "user@example.com"},
@@ -93,6 +101,8 @@ func TestSMSJobFromEventIgnoresEmailChannel(t *testing.T) {
 }
 
 func TestPhoneRecipient(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		payload map[string]any
 		want    string
@@ -132,6 +142,8 @@ func rawJSONMap(t *testing.T, m map[string]any) map[string]json.RawMessage {
 }
 
 func TestDecodeSMSConfigGeneric(t *testing.T) {
+	t.Parallel()
+
 	cipher := postgres.NewIdentityCipher()
 	raw := func(m map[string]any) map[string]json.RawMessage { return rawJSONMap(t, m) }
 
@@ -158,6 +170,8 @@ func TestDecodeSMSConfigGeneric(t *testing.T) {
 }
 
 func TestDecodeSMSConfigTwilio(t *testing.T) {
+	t.Parallel()
+
 	cipher := postgres.NewIdentityCipher()
 	raw := func(m map[string]any) map[string]json.RawMessage { return rawJSONMap(t, m) }
 
@@ -184,6 +198,8 @@ func TestDecodeSMSConfigTwilio(t *testing.T) {
 }
 
 func TestSMSSendGeneric(t *testing.T) {
+	t.Parallel()
+
 	var (
 		gotAuth, gotCT string
 		body           map[string]string
@@ -229,6 +245,8 @@ func TestSMSSendGeneric(t *testing.T) {
 }
 
 func TestSMSSendTwilio(t *testing.T) {
+	t.Parallel()
+
 	var (
 		gotUser, gotPass, gotCT string
 		ok                      bool
@@ -264,6 +282,8 @@ func TestSMSSendTwilio(t *testing.T) {
 }
 
 func TestDefaultSMSText(t *testing.T) {
+	t.Parallel()
+
 	en, err := renderText(defaultSMSText("otp", "en"), map[string]any{"code": "424242"})
 	if err != nil {
 		t.Fatalf("render en: %v", err)

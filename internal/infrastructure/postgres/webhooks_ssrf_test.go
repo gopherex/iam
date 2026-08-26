@@ -9,6 +9,8 @@ import (
 // RFC1918, link-local, ULA, CGNAT and unspecified addresses are refused, while
 // public addresses and the loopback dev escape hatch are allowed.
 func TestIsBlockedWebhookIP(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		ip      string
 		blocked bool

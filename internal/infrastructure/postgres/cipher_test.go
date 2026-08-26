@@ -11,6 +11,8 @@ func testKey() string {
 }
 
 func TestAESCipherRoundTrip(t *testing.T) {
+	t.Parallel()
+
 	c, err := NewCipher(testKey())
 	if err != nil {
 		t.Fatal(err)
@@ -42,6 +44,8 @@ func TestAESCipherRoundTrip(t *testing.T) {
 }
 
 func TestAESCipherNonceVaries(t *testing.T) {
+	t.Parallel()
+
 	c, _ := NewCipher(testKey())
 	a, _ := c.Encrypt("x")
 
@@ -52,6 +56,8 @@ func TestAESCipherNonceVaries(t *testing.T) {
 }
 
 func TestCipherLegacyPlaintextPassthrough(t *testing.T) {
+	t.Parallel()
+
 	c, _ := NewCipher(testKey())
 	// A value without the enc: prefix is treated as legacy plaintext.
 	got, err := c.Decrypt("legacy-plaintext")
@@ -61,6 +67,8 @@ func TestCipherLegacyPlaintextPassthrough(t *testing.T) {
 }
 
 func TestIdentityCipher(t *testing.T) {
+	t.Parallel()
+
 	c, err := NewCipher("") // empty key -> identity
 	if err != nil {
 		t.Fatal(err)
@@ -77,6 +85,8 @@ func TestIdentityCipher(t *testing.T) {
 }
 
 func TestNewCipherBadKey(t *testing.T) {
+	t.Parallel()
+
 	if _, err := NewCipher("not-base64!!!"); err == nil {
 		t.Fatal("expected error for non-base64 key")
 	}

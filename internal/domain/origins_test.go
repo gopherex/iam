@@ -3,6 +3,8 @@ package domain
 import "testing"
 
 func TestNormalizeOrigin(t *testing.T) {
+	t.Parallel()
+
 	ok := map[string]string{
 		"https://app.example.com":      "https://app.example.com",
 		"https://App.Example.com":      "https://app.example.com",
@@ -36,6 +38,8 @@ func TestNormalizeOrigin(t *testing.T) {
 }
 
 func TestNormalizeOriginsDedup(t *testing.T) {
+	t.Parallel()
+
 	got := NormalizeOrigins([]string{
 		"https://a.com", "https://A.com/", "*", "bad", "https://b.com",
 	})

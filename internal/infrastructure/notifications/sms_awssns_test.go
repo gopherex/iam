@@ -8,6 +8,8 @@ import (
 )
 
 func TestAwsSNSSignV4(t *testing.T) {
+	t.Parallel()
+
 	c := &smsConfig{
 		Type:            "aws_sns",
 		Region:          "ru-central1",

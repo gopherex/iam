@@ -10,6 +10,8 @@ import (
 )
 
 func TestWebhookSignature(t *testing.T) {
+	t.Parallel()
+
 	body := []byte(`{"id":"evt-1"}`)
 
 	got := webhookSignature("secret", "evt-1", 123, body)
@@ -27,6 +29,8 @@ func TestWebhookSignature(t *testing.T) {
 }
 
 func TestPublicSessionRevokedPayloadIsExact(t *testing.T) {
+	t.Parallel()
+
 	event, userID, ok := publicEventFromDomain(domain.Event{
 		ID: "evt-1", Type: domain.WebhookEventSessionRevoked, ProjectID: "p1",
 		Payload: domain.SessionRevokedPayload{SessionID: "s1", UserID: "u1", ProjectID: "p1"},
@@ -49,6 +53,8 @@ func TestPublicSessionRevokedPayloadIsExact(t *testing.T) {
 }
 
 func TestValidateWebhookURL(t *testing.T) {
+	t.Parallel()
+
 	for _, valid := range []string{"https://hooks.example.com/iam", "http://127.0.0.1:8080/hook", "http://localhost/hook"} {
 		if err := validateWebhookURL(valid); err != nil {
 			t.Fatalf("%s: %v", valid, err)
@@ -63,6 +69,8 @@ func TestValidateWebhookURL(t *testing.T) {
 }
 
 func TestPublicEventSanitizesPayload(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now().UTC()
 
 	event, userID, ok := publicEventFromDomain(domain.Event{

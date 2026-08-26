@@ -3,6 +3,8 @@ package domain
 import "testing"
 
 func TestRegisterCmdValidateRejectsInvalidContactFormats(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name string
 		cmd  RegisterCmd
@@ -19,6 +21,8 @@ func TestRegisterCmdValidateRejectsInvalidContactFormats(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if err := tt.cmd.Validate(); err == nil {
 				t.Fatal("expected validation error")
 			}

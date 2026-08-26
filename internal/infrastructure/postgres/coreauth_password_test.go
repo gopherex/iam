@@ -3,6 +3,8 @@ package postgres
 import "testing"
 
 func TestPasswordStrengthScore(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		pw      string
 		wantMax int // score must be <= this

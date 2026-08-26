@@ -10,6 +10,8 @@ import (
 )
 
 func TestResolveRequiredConsents_LocalePreference(t *testing.T) {
+	t.Parallel()
+
 	docs := []domain.ConsentDocumentSpec{
 		{Key: "tos", Version: "v-en", Locale: ptr("en"), Required: ptr(true)},
 		{Key: "tos", Version: "v-ru", Locale: ptr("ru"), Required: ptr(true)},
@@ -30,6 +32,8 @@ func TestResolveRequiredConsents_LocalePreference(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := resolveRequiredConsents(docs, tc.requested, tc.def)
 			if len(got) != tc.wantNumReq {
 				t.Fatalf("required count = %d, want %d (%+v)", len(got), tc.wantNumReq, got)
@@ -43,6 +47,8 @@ func TestResolveRequiredConsents_LocalePreference(t *testing.T) {
 }
 
 func TestResolveRequiredConsents_NoneRequired(t *testing.T) {
+	t.Parallel()
+
 	docs := []domain.ConsentDocumentSpec{
 		{Key: "marketing", Version: "m1", Required: ptr(false)},
 		{Key: "analytics", Version: "a1"}, // required nil
@@ -53,12 +59,16 @@ func TestResolveRequiredConsents_NoneRequired(t *testing.T) {
 }
 
 func TestMissingRequiredConsents(t *testing.T) {
+	t.Parallel()
+
 	required := []consentRequiredDoc{
 		{Key: "tos", Version: "v1"},
 		{Key: "privacy", Version: "p1"},
 	}
 
 	t.Run("all accepted exactly", func(t *testing.T) {
+		t.Parallel()
+
 		accepted := []domain.AccountConsentAcceptance{
 			{Key: "tos", Version: "v1"},
 			{Key: "privacy", Version: "p1"},
@@ -70,6 +80,8 @@ func TestMissingRequiredConsents(t *testing.T) {
 	})
 
 	t.Run("version mismatch counts as missing", func(t *testing.T) {
+		t.Parallel()
+
 		accepted := []domain.AccountConsentAcceptance{
 			{Key: "tos", Version: "v0"}, // wrong version
 			{Key: "privacy", Version: "p1"},
@@ -82,12 +94,16 @@ func TestMissingRequiredConsents(t *testing.T) {
 	})
 
 	t.Run("empty acceptances → all missing", func(t *testing.T) {
+		t.Parallel()
+
 		if m := missingRequiredConsents(required, nil); len(m) != 2 {
 			t.Fatalf("missing = %+v, want 2", m)
 		}
 	})
 
 	t.Run("nothing required → nothing missing", func(t *testing.T) {
+		t.Parallel()
+
 		if m := missingRequiredConsents(nil, nil); m != nil {
 			t.Fatalf("missing = %+v, want nil", m)
 		}

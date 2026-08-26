@@ -7,6 +7,8 @@ import (
 )
 
 func TestSessionCookies(t *testing.T) {
+	t.Parallel()
+
 	cookies := SessionCookies("acc-tok", "ref-tok", time.Hour, 24*time.Hour)
 	if len(cookies) != 2 {
 		t.Fatalf("want 2 cookies, got %d", len(cookies))

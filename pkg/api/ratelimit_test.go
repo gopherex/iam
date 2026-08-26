@@ -53,6 +53,8 @@ func doReq(t *testing.T, h http.Handler, headers map[string]string) int {
 }
 
 func TestRateLimiterAllowsUpToLimit(t *testing.T) {
+	t.Parallel()
+
 	rl := newRateLimiter(3, time.Second)
 
 	for i := range 3 {
@@ -67,6 +69,8 @@ func TestRateLimiterAllowsUpToLimit(t *testing.T) {
 }
 
 func TestRateLimiterDifferentKeys(t *testing.T) {
+	t.Parallel()
+
 	rl := newRateLimiter(1, time.Second)
 
 	if !rl.allow("key1") {
@@ -83,6 +87,8 @@ func TestRateLimiterDifferentKeys(t *testing.T) {
 }
 
 func TestRateLimiterWindowReset(t *testing.T) {
+	t.Parallel()
+
 	rl := newRateLimiter(1, 50*time.Millisecond)
 
 	if !rl.allow("key1") {
@@ -100,6 +106,7 @@ func TestRateLimiterWindowReset(t *testing.T) {
 	}
 }
 
+//nolint:paralleltest // mutates the package-level sensitiveLimiter global; must run serially against the other tests that override it
 func TestRateLimitMiddlewareRejects(t *testing.T) {
 	old := sensitiveLimiter
 	sensitiveLimiter = newRateLimiter(2, time.Minute)
@@ -136,6 +143,8 @@ func TestRateLimitMiddlewareRejects(t *testing.T) {
 }
 
 func TestRateLimitMiddlewareSkipsNonAuthPaths(t *testing.T) {
+	t.Parallel()
+
 	called := 0
 	handler := RateLimitMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called++ }))
 
@@ -156,6 +165,8 @@ func TestRateLimitMiddlewareSkipsNonAuthPaths(t *testing.T) {
 }
 
 func TestRateLimitKeyIgnoresRemotePort(t *testing.T) {
+	t.Parallel()
+
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	req.RemoteAddr = "1.2.3.4:5678"
@@ -169,6 +180,7 @@ func TestRateLimitKeyIgnoresRemotePort(t *testing.T) {
 	}
 }
 
+//nolint:paralleltest // mutates the package-level trustedProxyNets global read by every other clientIP-based test in this file
 func TestRateLimitKeyIgnoresXForwardedForWithoutTrustedProxy(t *testing.T) {
 	SetTrustedProxies(nil)
 	t.Cleanup(func() { SetTrustedProxies(nil) })
@@ -183,6 +195,7 @@ func TestRateLimitKeyIgnoresXForwardedForWithoutTrustedProxy(t *testing.T) {
 	}
 }
 
+//nolint:paralleltest // mutates the package-level trustedProxyNets global read by every other clientIP-based test in this file
 func TestRateLimitKeyHonorsXForwardedForBehindTrustedProxy(t *testing.T) {
 	SetTrustedProxies([]string{"10.0.0.0/8"})
 	t.Cleanup(func() { SetTrustedProxies(nil) })
@@ -214,6 +227,8 @@ func TestRateLimitKeyHonorsXForwardedForBehindTrustedProxy(t *testing.T) {
 }
 
 func TestRateLimitMiddlewarePerProjectOverride(t *testing.T) {
+	t.Parallel()
+
 	reader := &fakeRateLimitReader{byKey: map[string][]RateLimitRule{
 		"P|live": {{Endpoint: "/v1/auth/sign-in/password", Limit: 2, Window: time.Minute, By: "ip"}},
 	}}
@@ -232,6 +247,7 @@ func TestRateLimitMiddlewarePerProjectOverride(t *testing.T) {
 	}
 }
 
+//nolint:paralleltest // mutates the package-level sensitiveLimiter global; must run serially against the other tests that override it
 func TestRateLimitMiddlewareFallsBackToDefaultWhenNoProjectRule(t *testing.T) {
 	old := sensitiveLimiter
 	sensitiveLimiter = newRateLimiter(2, time.Minute)
@@ -253,6 +269,8 @@ func TestRateLimitMiddlewareFallsBackToDefaultWhenNoProjectRule(t *testing.T) {
 }
 
 func TestRateLimitMiddlewarePerProjectIsolation(t *testing.T) {
+	t.Parallel()
+
 	reader := &fakeRateLimitReader{byKey: map[string][]RateLimitRule{
 		"P1|live": {{Endpoint: "/v1/auth/sign-in/password", Limit: 1, Window: time.Minute, By: "ip"}},
 		"P2|live": {{Endpoint: "/v1/auth/sign-in/password", Limit: 5, Window: time.Minute, By: "ip"}},
@@ -273,6 +291,8 @@ func TestRateLimitMiddlewarePerProjectIsolation(t *testing.T) {
 }
 
 func TestRateLimitMiddlewareEnvironmentIsolation(t *testing.T) {
+	t.Parallel()
+
 	reader := &fakeRateLimitReader{byKey: map[string][]RateLimitRule{
 		"P|live": {{Endpoint: "/v1/auth/sign-in/password", Limit: 1, Window: time.Minute, By: "ip"}},
 		"P|test": {{Endpoint: "/v1/auth/sign-in/password", Limit: 5, Window: time.Minute, By: "ip"}},
@@ -292,6 +312,7 @@ func TestRateLimitMiddlewareEnvironmentIsolation(t *testing.T) {
 	}
 }
 
+//nolint:paralleltest // mutates the package-level sensitiveLimiter global; must run serially against the other tests that override it
 func TestRateLimitMiddlewareReaderErrorFailsOpen(t *testing.T) {
 	old := sensitiveLimiter
 	sensitiveLimiter = newRateLimiter(2, time.Minute)
@@ -317,6 +338,8 @@ func TestRateLimitMiddlewareReaderErrorFailsOpen(t *testing.T) {
 }
 
 func TestRateLimitClassifiesFlowAndSensitivePaths(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		path    string
 		limited bool
@@ -348,6 +371,8 @@ func TestRateLimitClassifiesFlowAndSensitivePaths(t *testing.T) {
 }
 
 func TestRateLimitRuleCacheTTL(t *testing.T) {
+	t.Parallel()
+
 	reader := &fakeRateLimitReader{byKey: map[string][]RateLimitRule{
 		"P|live": {{Endpoint: "/v1/auth/sign-in/password", Limit: 1000, Window: time.Minute, By: "ip"}},
 	}}
