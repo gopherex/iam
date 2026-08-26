@@ -39,8 +39,8 @@ func BearerToken(ctx context.Context) (string, bool) {
 	}
 
 	for _, value := range md.Get("authorization") {
-		scheme, token, ok := strings.Cut(value, " ")
-		if !ok || !strings.EqualFold(scheme, "Bearer") {
+		scheme, token, cut := strings.Cut(value, " ")
+		if !cut || !strings.EqualFold(scheme, "Bearer") {
 			continue
 		}
 

@@ -613,10 +613,14 @@ func (p *Publisher) decodeSMTPConfig(raw map[string]json.RawMessage) (*smtpConfi
 	// time — see connect). An operator can disable it explicitly (start_tls=false)
 	// ONLY for a trusted local relay without TLS (e.g. Mailpit).
 	cfg.StartTLS = !cfg.Secure
-	if v, ok := rawBoolOpt(raw, "start_tls"); ok {
-		cfg.StartTLS = v
-	} else if v, ok := rawBoolOpt(raw, "tls"); ok {
-		cfg.StartTLS = v
+
+	startTLS, ok := rawBoolOpt(raw, "start_tls")
+	if !ok {
+		startTLS, ok = rawBoolOpt(raw, "tls")
+	}
+
+	if ok {
+		cfg.StartTLS = startTLS
 	}
 
 	if cfg.From == "" {

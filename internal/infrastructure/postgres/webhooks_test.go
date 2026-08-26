@@ -40,10 +40,10 @@ func TestPublicSessionRevokedPayloadIsExact(t *testing.T) {
 		t.Fatalf("data = %#v, want %#v", event.Data, want)
 	}
 
-	if _, _, ok := publicEventFromDomain(domain.Event{
+	if _, _, published := publicEventFromDomain(domain.Event{
 		Type: domain.WebhookEventSessionRevoked, ProjectID: "p1",
 		Payload: domain.SessionRevokedPayload{SessionID: "s1", ProjectID: "p1"},
-	}); ok {
+	}); published {
 		t.Fatal("session.revoked without user_id became public")
 	}
 }
@@ -82,7 +82,7 @@ func TestPublicEventSanitizesPayload(t *testing.T) {
 		t.Fatal("internal account fields leaked")
 	}
 
-	if _, _, ok := publicEventFromDomain(domain.Event{Type: "auth.otp.started", Payload: map[string]any{"code": "123456"}}); ok {
+	if _, _, published := publicEventFromDomain(domain.Event{Type: "auth.otp.started", Payload: map[string]any{"code": "123456"}}); published {
 		t.Fatal("credential-bearing internal event became public")
 	}
 }

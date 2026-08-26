@@ -1253,7 +1253,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.C
 	var payload []byte
 
 	if v, ok := req.Get(); ok {
-		if p, ok := v.Payload.Get(); ok {
+		if p, hasPayload := v.Payload.Get(); hasPayload {
 			m := make(map[string]json.RawMessage, len(p))
 			for k, raw := range p {
 				m[k] = json.RawMessage(raw)
@@ -2361,7 +2361,7 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx c
 	var factorIDs []string
 
 	if v, ok := req.Get(); ok {
-		if ids, ok := v.FactorIds.Get(); ok {
+		if ids, hasIDs := v.FactorIds.Get(); hasIDs {
 			factorIDs = ids
 		}
 	}

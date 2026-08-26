@@ -206,8 +206,8 @@ func (r *configReader) loadDoc(ctx context.Context, projectID, env, key string, 
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if ent, ok := r.entries[ck]; ok && time.Now().Before(ent.exp) { // another goroutine refreshed
-		return ent.raw, nil
+	if refreshed, hit := r.entries[ck]; hit && time.Now().Before(refreshed.exp) { // another goroutine refreshed
+		return refreshed.raw, nil
 	}
 
 	raw, err := r.fetch(ctx, projectID, env, key)

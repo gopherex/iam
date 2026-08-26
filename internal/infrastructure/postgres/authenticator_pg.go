@@ -433,7 +433,7 @@ func claimScopes(claims map[string]any) []string {
 	case []any:
 		out := make([]string, 0, len(s))
 		for _, e := range s {
-			if str, ok := e.(string); ok {
+			if str, isStr := e.(string); isStr {
 				out = append(out, str)
 			}
 		}

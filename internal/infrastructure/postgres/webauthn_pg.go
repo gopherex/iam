@@ -149,7 +149,7 @@ func webauthnMetaStrings(meta map[string]any, keys ...string) []string {
 
 		out := make([]string, 0, len(raw))
 		for _, item := range raw {
-			if s, ok := item.(string); ok && s != "" {
+			if s, isStr := item.(string); isStr && s != "" {
 				out = append(out, s)
 			}
 		}

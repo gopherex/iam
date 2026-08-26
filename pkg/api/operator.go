@@ -400,7 +400,7 @@ func oasOperatorAdminToken(t *domain.OperatorAdminToken) map[string]any {
 // patch map; it returns "" when the key is absent or not a string ("no change").
 func rawMapString(m map[string]any, key string) string {
 	if v, ok := m[key]; ok {
-		if s, ok := v.(string); ok {
+		if s, isStr := v.(string); isStr {
 			return s
 		}
 	}

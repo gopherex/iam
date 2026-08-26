@@ -1254,7 +1254,7 @@ func (a *pgCoreAuthFlows) signupRecordAcceptedConsents(ctx context.Context, f *d
 	recorded := false
 
 	for _, acc := range accepted {
-		if _, ok := allowedConsent[acc.Key+"\x00"+acc.Version]; !ok {
+		if _, allowed := allowedConsent[acc.Key+"\x00"+acc.Version]; !allowed {
 			continue
 		}
 

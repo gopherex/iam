@@ -211,20 +211,20 @@ func (a *pgPasswordlessAccounts) VerifyOTP(ctx context.Context, challengeID, cod
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (*verifyResult, error) {
 		// Re-load inside the tx: another concurrent verify may have consumed it,
 		// and we must consume atomically with provisioning + session mint.
-		env, row, err := a.loadChallengeForVerify(ctx, challengeID, "otp")
+		txEnv, txRow, err := a.loadChallengeForVerify(ctx, challengeID, "otp")
 		if err != nil {
 			return nil, err
 		}
 
-		if !constantTimeMatch(env.CodeHash, hashToken(code)) {
+		if !constantTimeMatch(txEnv.CodeHash, hashToken(code)) {
 			return nil, domain.ErrInvalidOTP
 		}
 
-		if err := a.consume(ctx, row); err != nil {
+		if err := a.consume(ctx, txRow); err != nil {
 			return nil, err
 		}
 
-		acct, sess, err := a.resolveAndSession(ctx, env)
+		acct, sess, err := a.resolveAndSession(ctx, txEnv)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +232,7 @@ func (a *pgPasswordlessAccounts) VerifyOTP(ctx context.Context, challengeID, cod
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "auth.otp.verified",
 			ProjectID:   acct.ProjectID,
-			Environment: env.envScope(),
+			Environment: txEnv.envScope(),
 			AggregateID: acct.ID,
 			Payload:     map[string]any{"account_id": acct.ID, "session_id": sess.ID},
 		}); err != nil {
