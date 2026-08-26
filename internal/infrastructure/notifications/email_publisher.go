@@ -594,10 +594,7 @@ type renderedEmail struct {
 }
 
 func (p *Publisher) renderTemplate(ctx context.Context, projectID string, job emailJob) (renderedEmail, error) {
-	body, err := p.templateBody(ctx, projectID, job.TemplateID, job.Locale)
-	if err != nil {
-		return renderedEmail{}, err
-	}
+	body := p.templateBody(ctx, projectID, job.TemplateID, job.Locale)
 
 	subject, err := renderText(body["subject"], job.Data)
 	if err != nil {
@@ -617,7 +614,11 @@ func (p *Publisher) renderTemplate(ctx context.Context, projectID string, job em
 	return renderedEmail{Subject: subject, HTML: html, Text: text}, nil
 }
 
-func (p *Publisher) templateBody(ctx context.Context, projectID, key, locale string) (map[string]string, error) {
+// templateBody always resolves to something renderable: a missing or
+// unreadable row falls back to the built-in template rather than
+// propagating an error, so a project that has not customized a template (or
+// whose customization is somehow malformed) still sends the email.
+func (p *Publisher) templateBody(ctx context.Context, projectID, key, locale string) map[string]string {
 	row, err := models.IamEmailTemplates.Query(
 		sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamEmailTemplates.Columns.Key.EQ(psql.Arg(key))),
@@ -632,7 +633,7 @@ func (p *Publisher) templateBody(ctx context.Context, projectID, key, locale str
 	}
 
 	if err != nil {
-		return defaultTemplate(key, locale), nil
+		return defaultTemplate(key, locale)
 	}
 
 	out := map[string]string{}
@@ -641,10 +642,10 @@ func (p *Publisher) templateBody(ctx context.Context, projectID, key, locale str
 	}
 
 	if out["subject"] == "" && out["html"] == "" && out["text"] == "" {
-		return defaultTemplate(key, locale), nil
+		return defaultTemplate(key, locale)
 	}
 
-	return out, nil
+	return out
 }
 
 func renderHTML(src string, data map[string]any) (string, error) {

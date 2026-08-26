@@ -44,7 +44,7 @@ import (
 func (a *pgMFAAccounts) mfaLoadPolicy(ctx context.Context, projectID string) (domain.MFAPolicySpec, error) {
 	var pol domain.MFAPolicySpec
 
-	env, err := effectiveEnv(ctx, a.db, projectID, mfaDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return pol, err
 	}

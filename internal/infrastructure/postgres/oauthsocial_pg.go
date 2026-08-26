@@ -72,7 +72,9 @@ type oauthProviderData struct {
 	Name   string   `json:"name"`
 	Scopes []string `json:"scopes"`
 
-	ClientID     string `json:"client_id"`
+	ClientID string `json:"client_id"`
+	// ClientSecret holds the DB-cipher ciphertext, never plaintext — every
+	// writer encrypts before setting this field, every reader decrypts after.
 	ClientSecret string `json:"client_secret"`
 	AuthURL      string `json:"auth_url"`
 	TokenURL     string `json:"token_url"`
@@ -975,7 +977,7 @@ func (a *pgOAuthSocial) fetchUserInfo(ctx context.Context, cfg *oauth2.Config, t
 // findIdentity loads the OAuth identity for a (project, provider, providerAccountID)
 // triple, mapping no-rows to domain.ErrNotFound. Tenant-scoped by project_id.
 func (a *pgOAuthSocial) findIdentity(ctx context.Context, projectID, provider, providerAccountID string) (*models.IamIdentity, error) {
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -1000,7 +1002,7 @@ func (a *pgOAuthSocial) findIdentity(ctx context.Context, projectID, provider, p
 // insertIdentity writes a provider link row for an account. Lookup columns carry
 // the provider correlation; the domain Identity is stored in the data envelope.
 func (a *pgOAuthSocial) insertIdentity(ctx context.Context, ident *domain.Identity, projectID, userID string) error {
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return err
 	}
@@ -1048,7 +1050,7 @@ func (a *pgOAuthSocial) insertIdentity(ctx context.Context, ident *domain.Identi
 
 // createSocialAccount provisions a new account for a first-time social login.
 func (a *pgOAuthSocial) createSocialAccount(ctx context.Context, projectID, email string) (*domain.Account, error) {
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}

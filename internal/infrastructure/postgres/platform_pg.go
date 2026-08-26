@@ -24,10 +24,6 @@ func NewPgPlatform(db *DB) *pgPlatform { return &pgPlatform{db: db} }
 
 var _ api.PlatformConfig = (*pgPlatform)(nil)
 
-// platformDefaultEnvironment is the environment whose auth config bootstraps a
-// public client. iam_config is keyed (project_id, environment, key).
-const platformDefaultEnvironment = "live"
-
 // platformAuthConfig mirrors the auth-policy fields persisted in the
 // iam_config(key=auth) data envelope. Columns on iam_config are lookup-only;
 // the policy itself lives in the jsonb blob.
@@ -54,7 +50,7 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 	_ = clientID // reserved for per-client config overrides
 
 	// Resolve the request environment so test/live carry distinct public config.
-	env, err := effectiveEnv(ctx, a.db, projectID, platformDefaultEnvironment)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}

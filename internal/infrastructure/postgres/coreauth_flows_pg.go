@@ -143,7 +143,7 @@ func (a *pgCoreAuthFlows) flowLoad(ctx context.Context, projectID, token string)
 	}
 	// Environment boundary: a flow created in one environment is invisible from
 	// another (test/live isolation). The request env is resolved from ctx.
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -372,7 +372,7 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 			"email_change is not a resumable-flow kind; use the /v1/auth/email/change endpoints")
 	}
 
-	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -980,7 +980,7 @@ func (a *pgCoreAuthFlows) flowRequiredConsents(ctx context.Context, projectID, l
 // email-bound invites). Returns (row, true, nil) when redeemable; (nil, false,
 // nil) for any validation miss; (nil, false, err) only on an unexpected DB error.
 func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectID, rawToken, email string) (*models.IamInvite, bool, error) {
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, false, err
 	}

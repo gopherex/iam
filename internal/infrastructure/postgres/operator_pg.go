@@ -745,7 +745,12 @@ func (a *PgOperator) UpdateFeatures(ctx context.Context, cmd domain.OperatorFeat
 // ===== config-table helpers (operator-prefixed) =====
 
 // readConfig loads the JSON document stored under (projectID, defaultEnv, key);
-// a missing row yields a nil map (no config yet), never an error.
+// a missing row yields a nil map (no config yet), never an error. A nil map is
+// an ordinary empty value in Go — ranges over it, merges into it — unlike a
+// nil pointer, so this isn't the ambiguous (nil, nil) a sentinel error would
+// need to resolve.
+//
+//nolint:nilnil // see above.
 func (a *PgOperator) readConfig(ctx context.Context, projectID, key string) (map[string]any, error) {
 	row, err := models.FindIamConfig(ctx, a.db.Bobx(), projectID, operatorDefaultEnv, key)
 	if err != nil {

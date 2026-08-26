@@ -129,7 +129,7 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 	}
 	// Scope the challenge (and the user it later resolves/creates) to the request
 	// environment, so a phone/email is distinct across live/test/staging.
-	reqEnv, err := effectiveEnv(ctx, a.db, projectID, runtimeDefaultEnv)
+	reqEnv, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +279,7 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 		return nil, domain.ErrBadRequest
 	}
 
-	reqEnv, err := effectiveEnv(ctx, a.db, projectID, runtimeDefaultEnv)
+	reqEnv, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}

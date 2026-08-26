@@ -1055,7 +1055,7 @@ func (a *pgMFAAccounts) mfaResolveAccount(ctx context.Context, accountID string)
 // mfaInsertChallenge persists a challenge envelope. subject carries the owning
 // account; data carries the flow material (factor id, code hash, webauthn opts).
 func (a *pgMFAAccounts) mfaInsertChallenge(ctx context.Context, projectID, accountID string, ch *domain.Challenge, data mfaChallengeData) error {
-	env, err := effectiveEnv(ctx, a.db, projectID, mfaDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return err
 	}
@@ -1189,7 +1189,7 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 
 // mfaInsertFactorFor persists a factor envelope for an explicit account id.
 func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accountID string, f *domain.Factor, secret string) error {
-	env, err := effectiveEnv(ctx, a.db, projectID, mfaDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return err
 	}

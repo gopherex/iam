@@ -41,8 +41,8 @@ type AccountConsent struct {
 
 // AccountConsentAcceptance records acceptance of one consent document.
 type AccountConsentAcceptance struct {
-	Key     string
-	Version string
+	Key     string `json:"key"`
+	Version string `json:"version"`
 }
 
 // AccountAcceptConsentsCmd accepts one or more consent documents.

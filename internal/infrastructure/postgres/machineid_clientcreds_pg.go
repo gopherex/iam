@@ -72,7 +72,7 @@ func resolvedFrom(
 ) (*resolvedServiceAccount, error) {
 	// Service accounts are not environment-scoped rows; they act in the project's
 	// effective default environment.
-	environment, err := effectiveEnv(ctx, db, row.ProjectID, authDefaultEnv)
+	environment, err := effectiveEnv(ctx, db, row.ProjectID)
 	if err != nil {
 		return nil, err
 	}

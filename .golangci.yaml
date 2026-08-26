@@ -351,6 +351,10 @@ linters:
           - contextcheck
           - varnamelen
           - dupword
+          # A mock handler returning (nil, nil) records that it ran; the
+          # ambiguity nilnil warns about — can the caller tell "nothing" from
+          # "not yet" — does not apply to a stub whose only job is being called.
+          - nilnil
           # White-box tests: the package's own unexported helpers (issuer
           # building, claim parsing, password scoring) are tested directly, so
           # test files live in the package under test, not in an _test package.

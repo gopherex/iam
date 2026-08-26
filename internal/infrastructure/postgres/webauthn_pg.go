@@ -266,7 +266,7 @@ func (a *pgWebAuthnAccounts) consumeChallenge(ctx context.Context, row *models.I
 // code_hash column keys on the library challenge value for lookup; the Challenge
 // aggregate returned to the caller mirrors the publicKey options.
 func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctype string, publicKey map[string]any, session *gowebauthn.SessionData, accountID string) (*domain.Challenge, error) {
-	env, err := effectiveEnv(ctx, a.db, projectID, webauthnSignerEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +430,7 @@ func (a *pgWebAuthnAccounts) BeginLogin(ctx context.Context, projectID, email st
 	// enrolled in one environment could drive a login resolved against a
 	// same-email row in another (cross-environment resolution). The partial
 	// unique on (project, env, email) then leaves at most one row.
-	env, err := effectiveEnv(ctx, a.db, projectID, webauthnSignerEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}

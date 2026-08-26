@@ -66,6 +66,8 @@ func (a *pgAdminConfig) CreateOAuthProvider(ctx context.Context, projectID strin
 			return domain.AdminOAuthProvider{}, err
 		}
 
+		//nolint:gosec // ClientSecret here is enc, the ciphertext, not the
+		// plaintext gosec's field-name pattern match assumes.
 		raw, err := json.Marshal(oauthProviderData{
 			Name: p.Provider, ClientID: p.ClientID, ClientSecret: enc, Scopes: p.Scopes,
 		})
@@ -131,6 +133,9 @@ func (a *pgAdminConfig) UpdateOAuthProvider(ctx context.Context, projectID, id s
 			provider = row.Provider
 		}
 
+		//nolint:gosec // ClientSecret here is already the ciphertext (either
+		// re-encrypted above or carried over from the stored row), not the
+		// plaintext gosec's field-name pattern match assumes.
 		raw, err := json.Marshal(oauthProviderData{
 			Name: provider, ClientID: p.ClientID, ClientSecret: secret, Scopes: p.Scopes,
 		})

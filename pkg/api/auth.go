@@ -75,17 +75,17 @@ func requireProjectAdmin(ctx context.Context, projectID string) (*domain.Princip
 }
 
 // requireOperator enforces operator (master-key) authority for /mgmt/... ops.
-func requireOperator(ctx context.Context) (*domain.Principal, error) {
+func requireOperator(ctx context.Context) error {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if p.Kind != domain.PrincipalOperator {
-		return nil, domain.ErrForbidden
+		return domain.ErrForbidden
 	}
 
-	return p, nil
+	return nil
 }
 
 // ----- ogen SecurityHandler -----

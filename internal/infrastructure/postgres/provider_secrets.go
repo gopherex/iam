@@ -35,7 +35,11 @@ var providerSecretKeys = map[string]struct{}{
 
 // providerConfigCrypt applies transform (Encrypt or Decrypt) to the string value
 // of every recognized secret key, leaving other keys and non-string values
-// untouched. The input map is not mutated; a new map is returned.
+// untouched. The input map is not mutated; a new map is returned. A nil map in
+// is an ordinary empty config, not an error, so nil out is the identity result
+// rather than the ambiguous (nil, nil) a sentinel error would need to resolve.
+//
+//nolint:nilnil // see above.
 func providerConfigCrypt(cfg map[string]jx.Raw, transform func(string) (string, error)) (map[string]jx.Raw, error) {
 	if cfg == nil {
 		return nil, nil

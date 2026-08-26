@@ -31,7 +31,6 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -561,8 +560,10 @@ func fedAudienceContains(aud any, clientID string) bool {
 
 // fedGenerateSPCertificate mints a fresh self-signed RSA-2048 SP signing
 // certificate (PEM) and its private key (PKCS#1 PEM), returning both plus the
-// SHA-1 fingerprint of the certificate (a stable external reference). Used by
-// RotateConnectionCertificate to roll the SP's SAML signing material.
+// SHA-256 fingerprint of the certificate (a stable external reference, not a
+// security boundary — nothing here trusts the fingerprint to authenticate
+// anything). Used by RotateConnectionCertificate to roll the SP's SAML signing
+// material.
 func fedGenerateSPCertificate(commonName string) (certPEM, keyPEM, fingerprint string, err error) {
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -591,7 +592,7 @@ func fedGenerateSPCertificate(commonName string) (certPEM, keyPEM, fingerprint s
 
 	certPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
 	keyPEM = string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}))
-	sum := sha1.Sum(der)
+	sum := sha256.Sum256(der)
 	fingerprint = hex.EncodeToString(sum[:])
 
 	return certPEM, keyPEM, fingerprint, nil

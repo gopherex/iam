@@ -290,7 +290,9 @@ func run() error {
 
 	var probeSrv *http.Server
 	if separateProbes {
-		probeSrv = &http.Server{Addr: probeAddr, Handler: probeMux}
+		// A probe request is a tiny GET with no body, so a short bound is safe
+		// and is what closes off Slowloris against this listener too.
+		probeSrv = &http.Server{Addr: probeAddr, Handler: probeMux, ReadHeaderTimeout: 5 * time.Second}
 	}
 
 	// ----- shutdown orchestration -----

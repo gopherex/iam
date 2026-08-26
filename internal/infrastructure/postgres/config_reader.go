@@ -150,7 +150,7 @@ func (r *configReader) invalidate(projectID, env, key string) {
 func (r *configReader) rawDoc(ctx context.Context, projectID, key string) ([]byte, error) {
 	// Env resolution is per-request and not cached: it is a cheap lookup and the
 	// client error it surfaces must always propagate.
-	env, err := effectiveEnv(ctx, r.db, projectID, runtimeDefaultEnv)
+	env, err := effectiveEnv(ctx, r.db, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func (r *configReader) rawDocForEnv(ctx context.Context, projectID, env, key str
 // value. Used by security gates (e.g. consent.required) where a transient read
 // failure must never silently skip the control.
 func (r *configReader) rawDocStrict(ctx context.Context, projectID, key string) ([]byte, error) {
-	env, err := effectiveEnv(ctx, r.db, projectID, runtimeDefaultEnv)
+	env, err := effectiveEnv(ctx, r.db, projectID)
 	if err != nil {
 		return nil, err
 	}

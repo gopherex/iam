@@ -504,8 +504,8 @@ func publicEventFromDomain(ev domain.Event) (domain.PublicEvent, string, bool) {
 
 	switch ev.Type {
 	case domain.WebhookEventSessionRevoked:
-		payload, ok := sessionRevokedPayload(ev.Payload)
-		if !ok || payload.SessionID == "" || payload.UserID == "" || payload.ProjectID != ev.ProjectID {
+		payload := sessionRevokedPayload(ev.Payload)
+		if payload.SessionID == "" || payload.UserID == "" || payload.ProjectID != ev.ProjectID {
 			return domain.PublicEvent{}, "", false
 		}
 
@@ -554,13 +554,13 @@ func publicEventFromDomain(ev domain.Event) (domain.PublicEvent, string, bool) {
 	}, userID, true
 }
 
-func sessionRevokedPayload(value any) (domain.SessionRevokedPayload, bool) {
+func sessionRevokedPayload(value any) domain.SessionRevokedPayload {
 	switch payload := value.(type) {
 	case domain.SessionRevokedPayload:
-		return payload, true
+		return payload
 	case *domain.SessionRevokedPayload:
 		if payload != nil {
-			return *payload, true
+			return *payload
 		}
 	}
 
@@ -570,7 +570,7 @@ func sessionRevokedPayload(value any) (domain.SessionRevokedPayload, bool) {
 		SessionID: firstString(data, "session_id"),
 		UserID:    firstString(data, "user_id"),
 		ProjectID: firstString(data, "project_id"),
-	}, true
+	}
 }
 
 func accountFromPayload(payload any) domain.Account {

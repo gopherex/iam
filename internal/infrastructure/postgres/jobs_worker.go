@@ -177,7 +177,11 @@ func (db *DB) processAuditExport(ctx context.Context, projectID string, spec map
 // processImportUsers creates an account per entry in the spec's "users" list.
 // A pre-hashed bcrypt password ("$2...") is stored as-is; any other format is
 // rejected for that row. Duplicate emails and invalid rows are counted, not
-// fatal — the job completes with per-row tallies.
+// fatal — the job completes with per-row tallies, which is why this never
+// actually returns an error: the signature matches its siblings in the
+// drainOneJob dispatch (processAuditExport, processDataExport), which do.
+//
+//nolint:unparam // see above.
 func (db *DB) processImportUsers(ctx context.Context, projectID string, spec map[string]any) (map[string]any, error) {
 	usersAny, _ := spec["users"].([]any)
 	format, _ := spec["password_hash_format"].(string)
@@ -235,7 +239,7 @@ func (db *DB) importOneUser(ctx context.Context, projectID, email, name, hash, f
 	}
 
 	return db.withTx(ctx, func(ctx context.Context) error {
-		env, err := effectiveEnv(ctx, db, projectID, coreAuthDefaultEnv)
+		env, err := effectiveEnv(ctx, db, projectID)
 		if err != nil {
 			return err
 		}

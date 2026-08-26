@@ -27,12 +27,12 @@ import (
 const runtimeDefaultEnv = "live"
 
 // effectiveEnv resolves the environment a public request operates in for
-// projectID: the requested X-Environment when it names a real environment of the
-// project, or fallback when none was requested (or the request asked for the
-// fallback itself, which needs no lookup). An unknown requested environment is
-// rejected with domain.ErrBadRequest so a client cannot create rows under an
-// arbitrary environment name.
-func effectiveEnv(ctx context.Context, db *DB, projectID, fallback string) (string, error) {
+// projectID: the requested X-Environment when it names a real environment of
+// the project, or runtimeDefaultEnv when none was requested (or the request
+// asked for it directly, which needs no lookup). An unknown requested
+// environment is rejected with domain.ErrBadRequest so a client cannot
+// conjure rows under an arbitrary environment name.
+func effectiveEnv(ctx context.Context, db *DB, projectID string) (string, error) {
 	// An authenticated principal is bound to the environment its credential was
 	// minted in (the token's env claim). The X-Environment header must not
 	// override it, or a token minted for one environment could operate on
@@ -48,8 +48,8 @@ func effectiveEnv(ctx context.Context, db *DB, projectID, fallback string) (stri
 	}
 
 	env := api.EnvironmentFromContext(ctx)
-	if env == "" || env == fallback {
-		return fallback, nil
+	if env == "" || env == runtimeDefaultEnv {
+		return runtimeDefaultEnv, nil
 	}
 
 	if _, err := models.FindIamEnvironment(ctx, db.Bobx(), projectID, env); err != nil {

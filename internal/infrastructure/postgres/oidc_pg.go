@@ -589,7 +589,7 @@ func (a *pgOIDCGrants) issueAuthorizationCode(
 
 	env := req.environment
 	if env == "" {
-		if env, err = effectiveEnv(ctx, a.db, req.projectID, oidcDefaultEnv); err != nil {
+		if env, err = effectiveEnv(ctx, a.db, req.projectID); err != nil {
 			return "", nil, err
 		}
 	}
@@ -714,7 +714,7 @@ func (a *pgOIDCGrants) Reject(
 // persistGrant upserts a remembered grant for (project, user, client). Helper
 // shared by Consent; assumes an ambient transaction.
 func (a *pgOIDCGrants) persistGrant(ctx context.Context, projectID string, g *domain.Grant) error {
-	env, err := effectiveEnv(ctx, a.db, projectID, oidcDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return err
 	}
@@ -2198,8 +2198,13 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 	resp := oidc.AccessTokenResponse{
 		AccessToken: access,
 		TokenType:   "Bearer",
-		ExpiresIn:   uint64(accessTTL / time.Second),
-		Scope:       oidc.SpaceDelimitedArray(sub.scopes),
+		// accessTTL cannot be non-positive here: it starts at the compiled-in
+		// default, session_policy's own validation rejects <= 0, and a token
+		// profile only ever overrides it with a value > 0. Sign loss on the
+		// int64->uint64 conversion gosec is warning about needs a negative
+		// input, which none of those paths can produce.
+		ExpiresIn: uint64(accessTTL / time.Second), //nolint:gosec // accessTTL is always > 0, see comment above
+		Scope:     oidc.SpaceDelimitedArray(sub.scopes),
 	}
 
 	// id_token: only for openid requests. Built from the zitadel IDTokenClaims

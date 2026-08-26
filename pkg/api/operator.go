@@ -50,7 +50,7 @@ func NewOperatorService(deps OperatorDeps) *OperatorService { return &OperatorSe
 var _ oas.Handler = (*OperatorService)(nil)
 
 func (s *OperatorService) DeleteMgmtV1ProjectsByProjectId(ctx context.Context, params oas.DeleteMgmtV1ProjectsByProjectIdParams) (r *oas.Ok, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +62,7 @@ func (s *OperatorService) DeleteMgmtV1ProjectsByProjectId(ctx context.Context, p
 }
 
 func (s *OperatorService) DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ctx context.Context, params oas.DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdParams) (r *oas.Ok, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -74,7 +74,7 @@ func (s *OperatorService) DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenId(ct
 }
 
 func (s *OperatorService) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params oas.DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams) (r *oas.Ok, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +86,7 @@ func (s *OperatorService) DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx c
 }
 
 func (s *OperatorService) GetMgmtV1Projects(ctx context.Context, params oas.GetMgmtV1ProjectsParams) (r *oas.GetMgmtV1ProjectsOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -104,7 +104,7 @@ func (s *OperatorService) GetMgmtV1Projects(ctx context.Context, params oas.GetM
 }
 
 func (s *OperatorService) GetMgmtV1ProjectsByProjectId(ctx context.Context, params oas.GetMgmtV1ProjectsByProjectIdParams) (r *oas.GetMgmtV1ProjectsByProjectIdOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -119,7 +119,7 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectId(ctx context.Context, para
 }
 
 func (s *OperatorService) GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, params oas.GetMgmtV1ProjectsByProjectIdAdminTokensParams) (r oas.GetMgmtV1ProjectsByProjectIdAdminTokensOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -137,7 +137,7 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Co
 }
 
 func (s *OperatorService) GetMgmtV1ProjectsByProjectIdConfigExport(ctx context.Context, params oas.GetMgmtV1ProjectsByProjectIdConfigExportParams) (r oas.GetMgmtV1ProjectsByProjectIdConfigExportRes, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -152,7 +152,7 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectIdConfigExport(ctx context.C
 }
 
 func (s *OperatorService) GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, params oas.GetMgmtV1ProjectsByProjectIdEnvironmentsParams) (r *oas.GetMgmtV1ProjectsByProjectIdEnvironmentsOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -170,7 +170,7 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectIdEnvironments(ctx context.C
 }
 
 func (s *OperatorService) GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx context.Context, params oas.GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvParams) (r *oas.GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -185,7 +185,7 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectIdEnvironmentsByEnv(ctx cont
 }
 
 func (s *OperatorService) GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, params oas.GetMgmtV1ProjectsByProjectIdFeaturesParams) (r oas.GetMgmtV1ProjectsByProjectIdFeaturesOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -198,7 +198,7 @@ func (s *OperatorService) GetMgmtV1ProjectsByProjectIdFeatures(ctx context.Conte
 }
 
 func (s *OperatorService) PatchMgmtV1ProjectsByProjectId(ctx context.Context, req oas.PatchMgmtV1ProjectsByProjectIdReq, params oas.PatchMgmtV1ProjectsByProjectIdParams) (r *oas.PatchMgmtV1ProjectsByProjectIdOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -221,7 +221,7 @@ func (s *OperatorService) PatchMgmtV1ProjectsByProjectId(ctx context.Context, re
 }
 
 func (s *OperatorService) PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Context, req oas.PatchMgmtV1ProjectsByProjectIdFeaturesReq, params oas.PatchMgmtV1ProjectsByProjectIdFeaturesParams) (r oas.PatchMgmtV1ProjectsByProjectIdFeaturesOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -239,7 +239,7 @@ func (s *OperatorService) PatchMgmtV1ProjectsByProjectIdFeatures(ctx context.Con
 }
 
 func (s *OperatorService) PostMgmtV1Projects(ctx context.Context, req *oas.PostMgmtV1ProjectsReq, params oas.PostMgmtV1ProjectsParams) (r *oas.PostMgmtV1ProjectsCreated, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -260,7 +260,7 @@ func (s *OperatorService) PostMgmtV1Projects(ctx context.Context, req *oas.PostM
 }
 
 func (s *OperatorService) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.Context, req *oas.PostMgmtV1ProjectsByProjectIdAdminTokensReq, params oas.PostMgmtV1ProjectsByProjectIdAdminTokensParams) (r *oas.PostMgmtV1ProjectsByProjectIdAdminTokensOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -285,7 +285,7 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdAdminTokens(ctx context.C
 }
 
 func (s *OperatorService) PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.Context, req oas.PostMgmtV1ProjectsByProjectIdConfigApplyReq, params oas.PostMgmtV1ProjectsByProjectIdConfigApplyParams) (r oas.PostMgmtV1ProjectsByProjectIdConfigApplyOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -303,7 +303,7 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdConfigApply(ctx context.C
 }
 
 func (s *OperatorService) PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Context, req oas.PostMgmtV1ProjectsByProjectIdConfigPlanReq, params oas.PostMgmtV1ProjectsByProjectIdConfigPlanParams) (r oas.PostMgmtV1ProjectsByProjectIdConfigPlanOK, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 
@@ -321,7 +321,7 @@ func (s *OperatorService) PostMgmtV1ProjectsByProjectIdConfigPlan(ctx context.Co
 }
 
 func (s *OperatorService) PostMgmtV1ProjectsByProjectIdEnvironments(ctx context.Context, req *oas.PostMgmtV1ProjectsByProjectIdEnvironmentsReq, params oas.PostMgmtV1ProjectsByProjectIdEnvironmentsParams) (r *oas.PostMgmtV1ProjectsByProjectIdEnvironmentsCreated, _ error) {
-	if _, err := requireOperator(ctx); err != nil {
+	if err := requireOperator(ctx); err != nil {
 		return nil, err
 	}
 

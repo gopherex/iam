@@ -328,7 +328,7 @@ func coreAuthAccountActive(acc *domain.Account) error {
 // not-found domain error. The unique index on (project_id, primary_email) makes
 // this a single-row lookup.
 func (a *pgCoreAuth) coreAuthFindUserByEmail(ctx context.Context, projectID, email string) (*models.IamUser, error) {
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +352,7 @@ func (a *pgCoreAuth) coreAuthFindUserByEmail(ctx context.Context, projectID, ema
 // coreAuthFindPasswordCredential returns the password iam_credentials row for a
 // user (tenant-scoped) or a not-found domain error.
 func (a *pgCoreAuth) coreAuthFindPasswordCredential(ctx context.Context, projectID, userID string) (*models.IamCredential, error) {
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -722,7 +722,14 @@ func (a *pgCoreAuth) coreAuthInsertRefreshToken(ctx context.Context, rt coreAuth
 }
 
 // coreAuthInsertChallenge persists a challenge envelope row, dispatching code /
-// token hashes to the lookup columns. MUST run inside an open transaction.
+// token hashes to the lookup columns, and hands back a Challenge{ID, Type,
+// ExpiresAt} built from the input so callers that want one do not each
+// reconstruct it. MUST run inside an open transaction. Three of the six
+// callers do use the returned Challenge (coreAuthStartChallenge,
+// RequestStepUp); unparam misses that usage when it crosses the withTx
+// closure boundary.
+//
+//nolint:unparam // see above.
 func (a *pgCoreAuth) coreAuthInsertChallenge(ctx context.Context, ch coreAuthChallengeData) (*domain.Challenge, error) {
 	raw, err := marshal(ch)
 	if err != nil {
@@ -795,7 +802,7 @@ func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.Core
 		return nil, err
 	}
 
-	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -1192,7 +1199,7 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 		sess *domain.Session
 	}
 
-	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1419,7 +1426,7 @@ func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email,
 		// Adaptive step-up. Evaluated here, before a session exists: a rule can
 		// still turn this into a sign-in that needs a second factor rather than
 		// having to revoke one already issued.
-		riskEnv, err := effectiveEnv(ctx, a.db, acc.ProjectID, coreAuthDefaultEnv)
+		riskEnv, err := effectiveEnv(ctx, a.db, acc.ProjectID)
 		if err != nil {
 			return nil, err
 		}
@@ -1803,7 +1810,7 @@ func (a *pgCoreAuth) CreateGuest(ctx context.Context, projectID string) (*domain
 		sess *domain.Session
 	}
 
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -2253,7 +2260,7 @@ func coreAuthCaptchaVerifyURL(provider, override string) string {
 // secret configured. It is the "is captcha required" predicate: configuring a
 // secret opts the project into enforcement; absence leaves captcha opt-in.
 func (a *pgCoreAuth) coreAuthCaptchaConfigured(ctx context.Context, projectID string) (bool, error) {
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return false, err
 	}
@@ -2316,7 +2323,7 @@ func (a *pgCoreAuth) VerifyCaptcha(ctx context.Context, projectID, provider, tok
 		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
 	}
 
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -2535,7 +2542,7 @@ func (a *pgCoreAuth) VerifyPhone(ctx context.Context, cmd domain.CoreAuthVerifyC
 
 // coreAuthFindUserByPhone returns the iam_users row for (projectID, phone).
 func (a *pgCoreAuth) coreAuthFindUserByPhone(ctx context.Context, projectID, phone string) (*models.IamUser, error) {
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -2774,7 +2781,7 @@ func (a *pgCoreAuth) ResetPassword(ctx context.Context, cmd domain.CoreAuthPassw
 func (a *pgCoreAuth) coreAuthUpsertPasswordCredential(ctx context.Context, projectID, userID, hash string) error {
 	now := nowUTC()
 
-	env, err := effectiveEnv(ctx, a.db, projectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return err
 	}
@@ -3170,7 +3177,7 @@ func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAut
 		return nil, domain.ErrValidation.WithMessage("project and email are required")
 	}
 
-	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID, coreAuthDefaultEnv)
+	env, err := effectiveEnv(ctx, a.db, cmd.ProjectID)
 	if err != nil {
 		return nil, err
 	}
