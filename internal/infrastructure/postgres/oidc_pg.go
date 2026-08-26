@@ -1765,18 +1765,9 @@ func (a *pgOIDCGrants) Token(ctx context.Context, cmd domain.OIDCTokenCmd) (map[
 	})
 }
 
-// tokenAuthorizationCodeGrant exchanges an authorization_code for tokens (RFC
-// 6749 §4.1.3), enforcing: client_secret for a confidential client not
-// already authenticated at the transport (H-01), the redirect_uri matching
-// what was stored at authorize time (H-03), PKCE before the code is consumed
-// so a failed exchange doesn't burn a valid code, and prior consent (M-02).
-func (a *pgOIDCGrants) tokenAuthorizationCodeGrant(ctx context.Context, cmd domain.OIDCTokenCmd) (map[string]any, error) {
-	if cmd.Code == "" {
-		return nil, domain.ErrBadRequest
-	}
-
-	hash := oidcHashToken(cmd.Code)
-
+// oidcLoadValidAuthCodeRow looks up an auth-code row by hash and rejects a
+// missing, already-consumed, or expired one.
+func (a *pgOIDCGrants) oidcLoadValidAuthCodeRow(ctx context.Context, hash string) (*models.IamAuthCode, error) {
 	rows, err := models.IamAuthCodes.Query(
 		sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(hash))),
 		sm.Limit(1),
@@ -1798,12 +1789,55 @@ func (a *pgOIDCGrants) tokenAuthorizationCodeGrant(ctx context.Context, cmd doma
 		return nil, domain.ErrTokenExpired
 	}
 
-	effectiveClientID := firstNonEmpty(row.ClientID.GetOrZero(), cmd.ClientID, cmd.AuthenticatedClientID)
+	return row, nil
+}
+
+// oidcVerifyAuthCodeGrant enforces the authorization_code grant's security
+// checks: client_secret for a confidential client not already authenticated
+// at the transport (H-01), the redirect_uri matching what was stored at
+// authorize time (H-03), PKCE, and prior consent (M-02).
+func (a *pgOIDCGrants) oidcVerifyAuthCodeGrant(ctx context.Context, cmd domain.OIDCTokenCmd, row *models.IamAuthCode, codeData authCodeData, effectiveClientID string) error {
 	if cmd.AuthenticatedClientID != effectiveClientID {
 		if err := a.oidcVerifyClientSecret(ctx, effectiveClientID, cmd.ClientSecret); err != nil {
-			return nil, err
+			return err
 		}
 	}
+
+	if cmd.RedirectURI != "" || codeData.RedirectURI != "" {
+		if subtle.ConstantTimeCompare([]byte(cmd.RedirectURI), []byte(codeData.RedirectURI)) != 1 {
+			return domain.ErrUnauthorized
+		}
+	}
+
+	if err := oidcVerifyPKCE(codeData.CodeChallenge, codeData.CodeChallengeMethod, cmd.CodeVerifier); err != nil {
+		return err
+	}
+
+	if row.ProjectID != "" && row.UserID.GetOrZero() != "" && effectiveClientID != "" {
+		if err := a.oidcVerifyConsent(ctx, row.ProjectID, row.UserID.GetOrZero(), effectiveClientID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// tokenAuthorizationCodeGrant exchanges an authorization_code for tokens (RFC
+// 6749 §4.1.3), enforcing: client_secret for a confidential client not
+// already authenticated at the transport (H-01), the redirect_uri matching
+// what was stored at authorize time (H-03), PKCE before the code is consumed
+// so a failed exchange doesn't burn a valid code, and prior consent (M-02).
+func (a *pgOIDCGrants) tokenAuthorizationCodeGrant(ctx context.Context, cmd domain.OIDCTokenCmd) (map[string]any, error) {
+	if cmd.Code == "" {
+		return nil, domain.ErrBadRequest
+	}
+
+	row, err := a.oidcLoadValidAuthCodeRow(ctx, oidcHashToken(cmd.Code))
+	if err != nil {
+		return nil, err
+	}
+
+	effectiveClientID := firstNonEmpty(row.ClientID.GetOrZero(), cmd.ClientID, cmd.AuthenticatedClientID)
 
 	// Parse the code data envelope for redirect_uri, nonce, and scopes.
 	codeData, err := parseAuthCodeData(row.Data)
@@ -1811,20 +1845,8 @@ func (a *pgOIDCGrants) tokenAuthorizationCodeGrant(ctx context.Context, cmd doma
 		return nil, err
 	}
 
-	if cmd.RedirectURI != "" || codeData.RedirectURI != "" {
-		if subtle.ConstantTimeCompare([]byte(cmd.RedirectURI), []byte(codeData.RedirectURI)) != 1 {
-			return nil, domain.ErrUnauthorized
-		}
-	}
-
-	if err := oidcVerifyPKCE(codeData.CodeChallenge, codeData.CodeChallengeMethod, cmd.CodeVerifier); err != nil {
+	if err := a.oidcVerifyAuthCodeGrant(ctx, cmd, row, codeData, effectiveClientID); err != nil {
 		return nil, err
-	}
-
-	if row.ProjectID != "" && row.UserID.GetOrZero() != "" && effectiveClientID != "" {
-		if err := a.oidcVerifyConsent(ctx, row.ProjectID, row.UserID.GetOrZero(), effectiveClientID); err != nil {
-			return nil, err
-		}
 	}
 
 	consumed := true

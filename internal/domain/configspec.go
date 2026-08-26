@@ -911,6 +911,27 @@ func (c ConsentConfigSpec) Validate() error {
 	return nil
 }
 
+// validateRequiredPresentability enforces that a required:true document is
+// actually presentable to a user: a title, plus either a body or a url.
+func (d ConsentDocumentSpec) validateRequiredPresentability(at func(string) string) error {
+	if d.Required == nil || !*d.Required {
+		return nil
+	}
+
+	if d.Title == nil || strings.TrimSpace(*d.Title) == "" {
+		return ErrValidation.WithMessage(at("title") + " is required for a required consent")
+	}
+
+	hasBody := d.Body != nil && strings.TrimSpace(*d.Body) != ""
+	hasURL := d.URL != nil && strings.TrimSpace(*d.URL) != ""
+
+	if !hasBody && !hasURL {
+		return ErrValidation.WithMessage(at("body") + " or " + at("url") + " is required for a required consent")
+	}
+
+	return nil
+}
+
 // validate checks one consent document's own fields (not cross-document
 // uniqueness, which the caller tracks) and returns its dedup key.
 func (d ConsentDocumentSpec) validate(at func(string) string) (consentDocKey, error) {
@@ -926,17 +947,8 @@ func (d ConsentDocumentSpec) validate(at func(string) string) (consentDocKey, er
 		return consentDocKey{}, ErrValidation.WithMessage(at("version") + " is required")
 	}
 
-	if required := d.Required != nil && *d.Required; required {
-		if d.Title == nil || strings.TrimSpace(*d.Title) == "" {
-			return consentDocKey{}, ErrValidation.WithMessage(at("title") + " is required for a required consent")
-		}
-
-		hasBody := d.Body != nil && strings.TrimSpace(*d.Body) != ""
-		hasURL := d.URL != nil && strings.TrimSpace(*d.URL) != ""
-
-		if !hasBody && !hasURL {
-			return consentDocKey{}, ErrValidation.WithMessage(at("body") + " or " + at("url") + " is required for a required consent")
-		}
+	if err := d.validateRequiredPresentability(at); err != nil {
+		return consentDocKey{}, err
 	}
 
 	if d.Body != nil && len(*d.Body) > maxBody {

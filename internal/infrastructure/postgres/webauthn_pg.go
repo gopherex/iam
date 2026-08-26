@@ -480,6 +480,124 @@ func (a *pgWebAuthnAccounts) BeginLogin(ctx context.Context, projectID, email st
 	return a.insertCeremony(ctx, projectID, "webauthn_login", publicKey, session, acct.ID)
 }
 
+// webauthnValidateLoginAssertion loads and validates the login challenge (not
+// consumed, not expired), rebuilds the ceremony's RP + bound user, and
+// validates the browser assertion against the stored SessionData via
+// go-webauthn (challenge, origin, RP id, credential public-key signature).
+func (a *pgWebAuthnAccounts) webauthnValidateLoginAssertion(ctx context.Context, challengeID string, credential map[string]any) (*models.IamChallenge, *webauthnUser, *gowebauthn.Credential, error) {
+	row, err := models.FindIamChallenge(ctx, a.db.Bobx(), challengeID)
+	if err != nil {
+		return nil, nil, nil, translatePgErr("challenge", err)
+	}
+
+	if row.Type != "webauthn_login" || row.Consumed {
+		return nil, nil, nil, domain.ErrChallengeInvalid
+	}
+
+	if nowIn(ctx).After(row.ExpiresAt) {
+		return nil, nil, nil, domain.ErrChallengeExpired
+	}
+
+	projectID := row.ProjectID
+
+	_, cer, session, err := a.loadCeremony(ctx, projectID, challengeID, "webauthn_login")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	w, err := a.rpConfigFor(ctx, projectID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// The ceremony was bound to a specific account at BeginLogin time.
+	user, err := a.loadWebauthnUser(ctx, cer.AccountID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	reader, err := webauthnCredentialReader(credential)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	parsed, err := protocol.ParseCredentialRequestResponseBody(reader)
+	if err != nil {
+		return nil, nil, nil, domain.ErrMFAInvalid
+	}
+
+	validated, err := w.ValidateLogin(user, *session, parsed)
+	if err != nil {
+		return nil, nil, nil, domain.ErrMFAInvalid
+	}
+
+	return row, user, validated, nil
+}
+
+// webauthnBumpSignCount persists the verified credential's bumped sign count
+// + last-used timestamp. The library credential id is the raw byte id; our
+// row keys on the base64url credential id surfaced to the client. Clone
+// detection: if both stored and incoming sign counts are non-zero and the
+// incoming count is not strictly greater, the authenticator may be cloned —
+// emit a security event and reject rather than accept the assertion.
+func (a *pgWebAuthnAccounts) webauthnBumpSignCount(ctx context.Context, projectID, accountID string, validated *gowebauthn.Credential) error {
+	credID := base64.RawURLEncoding.EncodeToString(validated.ID)
+
+	credRow, err := models.FindIamWebauthnCredential(ctx, a.db.Bobx(), credID)
+	if err != nil {
+		return translatePgErr("webauthn_credential", err)
+	}
+
+	if credRow.ProjectID != projectID || credRow.UserID != accountID {
+		return domain.ErrMFAInvalid
+	}
+
+	if credRow.SignCount > 0 && int64(validated.Authenticator.SignCount) <= credRow.SignCount {
+		if err := a.emitter.Emit(ctx, domain.Event{
+			Type:        "webauthn.clone_detected",
+			ProjectID:   projectID,
+			Environment: webauthnSignerEnv,
+			AggregateID: credID,
+			Payload:     map[string]any{"stored": credRow.SignCount, "received": validated.Authenticator.SignCount},
+		}); err != nil {
+			slog.Error("webauthn: failed to emit clone_detected event", "err", err, "credential_id", credID)
+		}
+
+		return domain.ErrMFAInvalid
+	}
+
+	var stored domain.WebAuthnStoredCredential
+	if err := unmarshal(credRow.Data, &stored); err != nil {
+		return err
+	}
+
+	now := nowUTC()
+	stored.Credential.LastUsedAt = now
+
+	libRaw, err := json.Marshal(validated)
+	if err != nil {
+		return err
+	}
+
+	stored.Library = libRaw
+
+	storedRaw, err := marshal(stored)
+	if err != nil {
+		return err
+	}
+
+	rmStored := json.RawMessage(storedRaw)
+	used := null.From(now)
+	pk := null.From(validated.PublicKey)
+
+	return credRow.Update(ctx, a.db.Bobx(), &models.IamWebauthnCredentialSetter{
+		SignCount:  ptr(int64(validated.Authenticator.SignCount)),
+		PublicKey:  &pk,
+		LastUsedAt: &used,
+		Data:       &rmStored,
+	})
+}
+
 // FinishLogin verifies the assertion with go-webauthn and, on success, mints a
 // session. The library replays the persisted SessionData against the browser's
 // PublicKeyCredential response: it checks the challenge, the origin, the RP id,
@@ -501,115 +619,12 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		// credential lookup, session minting) are scoped to that projectID.
 		// This is by-design: the FinishLogin caller does not carry projectID —
 		// it is a public endpoint that authenticates the challenge itself.
-		row, err := models.FindIamChallenge(ctx, a.db.Bobx(), challengeID)
-		if err != nil {
-			return loginResult{}, translatePgErr("challenge", err)
-		}
-
-		if row.Type != "webauthn_login" || row.Consumed {
-			return loginResult{}, domain.ErrChallengeInvalid
-		}
-
-		if nowIn(ctx).After(row.ExpiresAt) {
-			return loginResult{}, domain.ErrChallengeExpired
-		}
-
-		projectID := row.ProjectID
-
-		_, cer, session, err := a.loadCeremony(ctx, projectID, challengeID, "webauthn_login")
+		row, user, validated, err := a.webauthnValidateLoginAssertion(ctx, challengeID, credential)
 		if err != nil {
 			return loginResult{}, err
 		}
 
-		w, err := a.rpConfigFor(ctx, projectID)
-		if err != nil {
-			return loginResult{}, err
-		}
-
-		// The ceremony was bound to a specific account at BeginLogin time.
-		user, err := a.loadWebauthnUser(ctx, cer.AccountID)
-		if err != nil {
-			return loginResult{}, err
-		}
-
-		// verify with WebAuthn signing/attestation — parse the browser
-		// assertion and validate its signature, challenge, origin and signature
-		// counter against the stored credential public key via go-webauthn.
-		reader, err := webauthnCredentialReader(credential)
-		if err != nil {
-			return loginResult{}, err
-		}
-
-		parsed, err := protocol.ParseCredentialRequestResponseBody(reader)
-		if err != nil {
-			return loginResult{}, domain.ErrMFAInvalid
-		}
-
-		validated, err := w.ValidateLogin(user, *session, parsed)
-		if err != nil {
-			return loginResult{}, domain.ErrMFAInvalid
-		}
-
-		// Persist the verified credential's bumped sign count + last-used. The
-		// library credential id is the raw byte id; our row keys on the base64url
-		// credential id surfaced to the client.
-		credID := base64.RawURLEncoding.EncodeToString(validated.ID)
-
-		credRow, err := models.FindIamWebauthnCredential(ctx, a.db.Bobx(), credID)
-		if err != nil {
-			return loginResult{}, translatePgErr("webauthn_credential", err)
-		}
-
-		if credRow.ProjectID != projectID || credRow.UserID != cer.AccountID {
-			return loginResult{}, domain.ErrMFAInvalid
-		}
-		// Clone detection: if both stored and incoming sign counts are
-		// non-zero and the incoming count is not strictly greater, the
-		// authenticator may be cloned. Emit a security event and reject.
-		if credRow.SignCount > 0 && int64(validated.Authenticator.SignCount) <= credRow.SignCount {
-			if err := a.emitter.Emit(ctx, domain.Event{
-				Type:        "webauthn.clone_detected",
-				ProjectID:   projectID,
-				Environment: webauthnSignerEnv,
-				AggregateID: credID,
-				Payload:     map[string]any{"stored": credRow.SignCount, "received": validated.Authenticator.SignCount},
-			}); err != nil {
-				slog.Error("webauthn: failed to emit clone_detected event", "err", err, "credential_id", credID)
-			}
-
-			return loginResult{}, domain.ErrMFAInvalid
-		}
-
-		var stored domain.WebAuthnStoredCredential
-		if err := unmarshal(credRow.Data, &stored); err != nil {
-			return loginResult{}, err
-		}
-
-		now := nowUTC()
-		stored.Credential.LastUsedAt = now
-
-		libRaw, err := json.Marshal(validated)
-		if err != nil {
-			return loginResult{}, err
-		}
-
-		stored.Library = libRaw
-
-		storedRaw, err := marshal(stored)
-		if err != nil {
-			return loginResult{}, err
-		}
-
-		rmStored := json.RawMessage(storedRaw)
-		used := null.From(now)
-
-		pk := null.From(validated.PublicKey)
-		if err := credRow.Update(ctx, a.db.Bobx(), &models.IamWebauthnCredentialSetter{
-			SignCount:  ptr(int64(validated.Authenticator.SignCount)),
-			PublicKey:  &pk,
-			LastUsedAt: &used,
-			Data:       &rmStored,
-		}); err != nil {
+		if err := a.webauthnBumpSignCount(ctx, row.ProjectID, user.account.ID, validated); err != nil {
 			return loginResult{}, err
 		}
 
@@ -630,7 +645,7 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "webauthn.login.succeeded",
-			ProjectID:   projectID,
+			ProjectID:   row.ProjectID,
 			Environment: webauthnSignerEnv,
 			AggregateID: acct.ID,
 			Payload:     acct,
@@ -699,95 +714,18 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 
 		projectID := userRow.ProjectID
 
-		row, cer, session, err := a.loadCeremony(ctx, projectID, challengeID, "webauthn_register")
+		row, name, libCred, err := a.webauthnValidateRegistration(ctx, projectID, accountID, challengeID, credential)
 		if err != nil {
 			return nil, err
 		}
-
-		if cer.AccountID != accountID {
-			return nil, domain.ErrChallengeInvalid
-		}
-
-		w, err := a.rpConfigFor(ctx, projectID)
-		if err != nil {
-			return nil, err
-		}
-
-		user, err := a.loadWebauthnUser(ctx, accountID)
-		if err != nil {
-			return nil, err
-		}
-
-		// The optional display name is a UI-only attribute supplied alongside the
-		// credential; pull it out before the protocol parse (which ignores it).
-		name, _ := credential["name"].(string)
-		if name == "" {
-			name = "Passkey"
-		}
-
-		// verify with WebAuthn signing/attestation — parse the browser
-		// attestation response and validate it (challenge, origin, RP id,
-		// attestation statement) against the stored SessionData via go-webauthn.
-		reader, err := webauthnCredentialReader(credential)
-		if err != nil {
-			return nil, err
-		}
-
-		parsed, err := protocol.ParseCredentialCreationResponseBody(reader)
-		if err != nil {
-			return nil, domain.ErrMFAInvalid
-		}
-
-		libCred, err := w.CreateCredential(user, *session, parsed)
-		if err != nil {
-			return nil, domain.ErrMFAInvalid
-		}
-
-		// The credential id surfaced to the client is the base64url raw id.
-		credID := base64.RawURLEncoding.EncodeToString(libCred.ID)
-		now := nowUTC()
-		cred := domain.WebAuthnCredential{
-			ID:        credID,
-			Name:      name,
-			CreatedAt: now,
-		}
-
-		libRaw, err := json.Marshal(libCred)
-		if err != nil {
-			return nil, err
-		}
-
-		stored := domain.WebAuthnStoredCredential{Credential: cred, Library: libRaw}
-
-		data, err := marshal(stored)
-		if err != nil {
-			return nil, err
-		}
-
-		rm := json.RawMessage(data)
-		pubKey := null.From(libCred.PublicKey)
 
 		credEnv := userRow.Environment
 		if credEnv == "" {
 			credEnv = webauthnSignerEnv
 		}
 
-		setter := &models.IamWebauthnCredentialSetter{
-			ID:           &credID,
-			ProjectID:    &projectID,
-			Environment:  &credEnv,
-			UserID:       &accountID,
-			CredentialID: &credID,
-			PublicKey:    &pubKey,
-			SignCount:    ptr(int64(libCred.Authenticator.SignCount)),
-			CreatedAt:    &now,
-			Data:         &rm,
-		}
-		if _, err := models.IamWebauthnCredentials.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
-			if isUniqueViolation(err) {
-				return nil, domain.ErrConflict
-			}
-
+		cred, err := a.webauthnInsertCredentialRow(ctx, projectID, credEnv, accountID, libCred, name)
+		if err != nil {
 			return nil, err
 		}
 
@@ -800,13 +738,110 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 			ProjectID:   projectID,
 			Environment: "",
 			AggregateID: cred.ID,
-			Payload:     &cred,
+			Payload:     cred,
 		}); err != nil {
 			return nil, err
 		}
 
-		return &cred, nil
+		return cred, nil
 	})
+}
+
+// webauthnValidateRegistration loads the register ceremony (bound to
+// accountID), rebuilds the RP + user, and validates the browser attestation
+// against the stored SessionData via go-webauthn (challenge, origin, RP id,
+// attestation statement). The optional display name is a UI-only attribute
+// supplied alongside the credential, pulled out before the protocol parse
+// (which ignores it), defaulting to "Passkey".
+func (a *pgWebAuthnAccounts) webauthnValidateRegistration(ctx context.Context, projectID, accountID, challengeID string, credential map[string]any) (*models.IamChallenge, string, *gowebauthn.Credential, error) {
+	row, cer, session, err := a.loadCeremony(ctx, projectID, challengeID, "webauthn_register")
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	if cer.AccountID != accountID {
+		return nil, "", nil, domain.ErrChallengeInvalid
+	}
+
+	w, err := a.rpConfigFor(ctx, projectID)
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	user, err := a.loadWebauthnUser(ctx, accountID)
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	name, _ := credential["name"].(string)
+	if name == "" {
+		name = "Passkey"
+	}
+
+	reader, err := webauthnCredentialReader(credential)
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	parsed, err := protocol.ParseCredentialCreationResponseBody(reader)
+	if err != nil {
+		return nil, "", nil, domain.ErrMFAInvalid
+	}
+
+	libCred, err := w.CreateCredential(user, *session, parsed)
+	if err != nil {
+		return nil, "", nil, domain.ErrMFAInvalid
+	}
+
+	return row, name, libCred, nil
+}
+
+// webauthnInsertCredentialRow persists a newly verified credential. The
+// credential id surfaced to the client is the base64url raw id.
+func (a *pgWebAuthnAccounts) webauthnInsertCredentialRow(ctx context.Context, projectID, credEnv, accountID string, libCred *gowebauthn.Credential, name string) (*domain.WebAuthnCredential, error) {
+	credID := base64.RawURLEncoding.EncodeToString(libCred.ID)
+	now := nowUTC()
+	cred := domain.WebAuthnCredential{
+		ID:        credID,
+		Name:      name,
+		CreatedAt: now,
+	}
+
+	libRaw, err := json.Marshal(libCred)
+	if err != nil {
+		return nil, err
+	}
+
+	stored := domain.WebAuthnStoredCredential{Credential: cred, Library: libRaw}
+
+	data, err := marshal(stored)
+	if err != nil {
+		return nil, err
+	}
+
+	rm := json.RawMessage(data)
+	pubKey := null.From(libCred.PublicKey)
+
+	setter := &models.IamWebauthnCredentialSetter{
+		ID:           &credID,
+		ProjectID:    &projectID,
+		Environment:  &credEnv,
+		UserID:       &accountID,
+		CredentialID: &credID,
+		PublicKey:    &pubKey,
+		SignCount:    ptr(int64(libCred.Authenticator.SignCount)),
+		CreatedAt:    &now,
+		Data:         &rm,
+	}
+	if _, err := models.IamWebauthnCredentials.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+		if isUniqueViolation(err) {
+			return nil, domain.ErrConflict
+		}
+
+		return nil, err
+	}
+
+	return &cred, nil
 }
 
 // ListCredentials returns every passkey owned by the account.

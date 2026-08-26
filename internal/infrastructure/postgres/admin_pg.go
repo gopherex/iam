@@ -1140,14 +1140,14 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 // the field only when present and of the expected type, so an absent or
 // wrongly-typed key leaves the existing value untouched.
 func applyAppClientPatch(app *domain.AppClient, patch map[string]any) {
-	if v, ok := patch["name"].(string); ok && v != "" {
-		app.Name = v
-	}
+	applyAppClientURLFields(app, patch)
+	applyAppClientScalarFields(app, patch)
+}
 
-	if v, ok := patch["type"].(string); ok && v != "" {
-		app.Type = v
-	}
-
+// applyAppClientURLFields applies the two fields that accept either a typed
+// string slice or the []any a JSON decode produces: redirect_uris and
+// allowed_origins (the latter additionally normalized).
+func applyAppClientURLFields(app *domain.AppClient, patch map[string]any) {
 	switch v := patch["redirect_uris"].(type) {
 	case []string:
 		app.RedirectURIs = v
@@ -1174,6 +1174,18 @@ func applyAppClientPatch(app *domain.AppClient, patch map[string]any) {
 		}
 
 		app.AllowedOrigins = domain.NormalizeOrigins(origins)
+	}
+}
+
+// applyAppClientScalarFields applies every plain scalar/string-slice field of
+// an app client patch.
+func applyAppClientScalarFields(app *domain.AppClient, patch map[string]any) {
+	if v, ok := patch["name"].(string); ok && v != "" {
+		app.Name = v
+	}
+
+	if v, ok := patch["type"].(string); ok && v != "" {
+		app.Type = v
 	}
 
 	if v, ok := patch["disabled"].(bool); ok {
