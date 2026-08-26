@@ -71,13 +71,31 @@ type consentRequiredDoc struct {
 //
 // Non-required documents never gate. Returns nil when nothing is required.
 func resolveRequiredConsents(docs []domain.ConsentDocumentSpec, requestedLocale, defaultLocale string) []consentRequiredDoc {
-	// Group the required documents by key, preserving first-seen order of keys.
-	type cand struct {
-		version string
-		locale  string
+	byKey, order := groupRequiredConsentDocs(docs)
+	if len(order) == 0 {
+		return nil
 	}
 
-	byKey := make(map[string][]cand)
+	out := make([]consentRequiredDoc, 0, len(order))
+	for _, key := range order {
+		c := pickConsentCandidate(byKey[key], requestedLocale, defaultLocale)
+		out = append(out, consentRequiredDoc{Key: key, Version: c.version, Locale: c.locale})
+	}
+
+	return out
+}
+
+// consentDocCandidate is one required document's version/locale pair, before
+// resolveRequiredConsents picks a single one per key.
+type consentDocCandidate struct {
+	version string
+	locale  string
+}
+
+// groupRequiredConsentDocs groups the required documents by key, preserving
+// first-seen order of keys.
+func groupRequiredConsentDocs(docs []domain.ConsentDocumentSpec) (map[string][]consentDocCandidate, []string) {
+	byKey := make(map[string][]consentDocCandidate)
 
 	var order []string
 
@@ -99,47 +117,40 @@ func resolveRequiredConsents(docs []domain.ConsentDocumentSpec, requestedLocale,
 			order = append(order, d.Key)
 		}
 
-		byKey[d.Key] = append(byKey[d.Key], cand{version: d.Version, locale: loc})
+		byKey[d.Key] = append(byKey[d.Key], consentDocCandidate{version: d.Version, locale: loc})
 	}
 
-	if len(order) == 0 {
-		return nil
-	}
+	return byKey, order
+}
 
-	pick := func(cands []cand) cand {
-		// 1. exact requested locale
-		if requestedLocale != "" {
-			for _, c := range cands {
-				if c.locale == requestedLocale {
-					return c
-				}
-			}
-		}
-		// 2. project default locale
-		if defaultLocale != "" {
-			for _, c := range cands {
-				if c.locale == defaultLocale {
-					return c
-				}
-			}
-		}
-		// 3. locale-less document
+// pickConsentCandidate resolves one key's candidate list to a single entry,
+// mirroring the repo locale chain req->...->en->first: exact match on the
+// requested locale, the project default locale, a locale-less document, then
+// the first required document seen for that key.
+func pickConsentCandidate(cands []consentDocCandidate, requestedLocale, defaultLocale string) consentDocCandidate {
+	if requestedLocale != "" {
 		for _, c := range cands {
-			if c.locale == "" {
+			if c.locale == requestedLocale {
 				return c
 			}
 		}
-		// 4. first one
-		return cands[0]
 	}
 
-	out := make([]consentRequiredDoc, 0, len(order))
-	for _, key := range order {
-		c := pick(byKey[key])
-		out = append(out, consentRequiredDoc{Key: key, Version: c.version, Locale: c.locale})
+	if defaultLocale != "" {
+		for _, c := range cands {
+			if c.locale == defaultLocale {
+				return c
+			}
+		}
 	}
 
-	return out
+	for _, c := range cands {
+		if c.locale == "" {
+			return c
+		}
+	}
+
+	return cands[0]
 }
 
 // missingRequiredConsents returns the required documents that are NOT covered by

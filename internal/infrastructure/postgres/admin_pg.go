@@ -1136,6 +1136,75 @@ func (a *pgAdminApps) Create(ctx context.Context, cmd domain.AppClientCmd) (*dom
 	})
 }
 
+// applyAppClientPatch overlays a free-form PATCH body onto app: each key sets
+// the field only when present and of the expected type, so an absent or
+// wrongly-typed key leaves the existing value untouched.
+func applyAppClientPatch(app *domain.AppClient, patch map[string]any) {
+	if v, ok := patch["name"].(string); ok && v != "" {
+		app.Name = v
+	}
+
+	if v, ok := patch["type"].(string); ok && v != "" {
+		app.Type = v
+	}
+
+	switch v := patch["redirect_uris"].(type) {
+	case []string:
+		app.RedirectURIs = v
+	case []any:
+		uris := make([]string, 0, len(v))
+		for _, u := range v {
+			if s, ok := u.(string); ok {
+				uris = append(uris, s)
+			}
+		}
+
+		app.RedirectURIs = uris
+	}
+
+	switch v := patch["allowed_origins"].(type) {
+	case []string:
+		app.AllowedOrigins = domain.NormalizeOrigins(v)
+	case []any:
+		origins := make([]string, 0, len(v))
+		for _, o := range v {
+			if s, ok := o.(string); ok {
+				origins = append(origins, s)
+			}
+		}
+
+		app.AllowedOrigins = domain.NormalizeOrigins(origins)
+	}
+
+	if v, ok := patch["disabled"].(bool); ok {
+		app.Disabled = v
+	}
+
+	if v, ok := patchStrings(patch, "post_logout_redirect_uris"); ok {
+		app.PostLogoutRedirectURIs = v
+	}
+
+	if v, ok := patch["backchannel_logout_uri"].(string); ok {
+		app.BackchannelLogoutURI = v
+	}
+
+	if v, ok := patch["token_profile_id"].(string); ok {
+		app.TokenProfileID = v
+	}
+
+	if v, ok := patchStrings(patch, "scopes"); ok {
+		app.Scopes = v
+	}
+
+	if v, ok := patch["jwks"].(string); ok {
+		app.JWKS = v
+	}
+
+	if v, ok := patch["jwks_uri"].(string); ok {
+		app.JWKSURI = v
+	}
+}
+
 func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID string, patch map[string]any) (*domain.AppClient, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AppClient, error) {
 		row, app, err := a.findApp(ctx, projectID, environment, appID)
@@ -1143,69 +1212,7 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 			return nil, err
 		}
 
-		if v, ok := patch["name"].(string); ok && v != "" {
-			app.Name = v
-		}
-
-		if v, ok := patch["type"].(string); ok && v != "" {
-			app.Type = v
-		}
-
-		switch v := patch["redirect_uris"].(type) {
-		case []string:
-			app.RedirectURIs = v
-		case []any:
-			uris := make([]string, 0, len(v))
-			for _, u := range v {
-				if s, ok := u.(string); ok {
-					uris = append(uris, s)
-				}
-			}
-
-			app.RedirectURIs = uris
-		}
-
-		switch v := patch["allowed_origins"].(type) {
-		case []string:
-			app.AllowedOrigins = domain.NormalizeOrigins(v)
-		case []any:
-			origins := make([]string, 0, len(v))
-			for _, o := range v {
-				if s, ok := o.(string); ok {
-					origins = append(origins, s)
-				}
-			}
-
-			app.AllowedOrigins = domain.NormalizeOrigins(origins)
-		}
-
-		if v, ok := patch["disabled"].(bool); ok {
-			app.Disabled = v
-		}
-
-		if v, ok := patchStrings(patch, "post_logout_redirect_uris"); ok {
-			app.PostLogoutRedirectURIs = v
-		}
-
-		if v, ok := patch["backchannel_logout_uri"].(string); ok {
-			app.BackchannelLogoutURI = v
-		}
-
-		if v, ok := patch["token_profile_id"].(string); ok {
-			app.TokenProfileID = v
-		}
-
-		if v, ok := patchStrings(patch, "scopes"); ok {
-			app.Scopes = v
-		}
-
-		if v, ok := patch["jwks"].(string); ok {
-			app.JWKS = v
-		}
-
-		if v, ok := patch["jwks_uri"].(string); ok {
-			app.JWKSURI = v
-		}
+		applyAppClientPatch(app, patch)
 
 		raw, err := marshal(app)
 		if err != nil {
