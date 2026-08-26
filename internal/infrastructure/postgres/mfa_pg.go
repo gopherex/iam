@@ -505,6 +505,83 @@ func mfaPrimaryFactorID(factors []domain.Factor) string {
 	return ""
 }
 
+// mfaVerifyChallengeCode loads the challenge, enforces not-consumed / not-expired
+// / under-attempt-cap, and checks the supplied code. On a wrong code it bumps
+// the attempt counter (this tx rolls back on the returned error, so the bump
+// runs in its own committed transaction) and returns ErrMFAInvalid.
+func (a *pgMFAAccounts) mfaVerifyChallengeCode(ctx context.Context, challengeID, code string) (*models.IamChallenge, string, error) {
+	row, err := models.FindIamChallenge(ctx, a.db.Bobx(), challengeID)
+	if err != nil {
+		return nil, "", translatePgErr("challenge", err)
+	}
+
+	if row.Consumed {
+		return nil, "", domain.ErrChallengeInvalid
+	}
+
+	if nowIn(ctx).After(row.ExpiresAt) {
+		return nil, "", domain.ErrChallengeExpired
+	}
+
+	accountID := row.Subject.GetOrZero()
+
+	var data mfaChallengeData
+	if len(row.Data) > 0 {
+		if err := unmarshal(row.Data, &data); err != nil {
+			return nil, "", err
+		}
+	}
+
+	if data.Attempts >= mfaMaxVerifyAttempts {
+		return nil, "", domain.ErrChallengeInvalid
+	}
+
+	codeOK, err := a.mfaCheckChallengeCode(ctx, row, accountID, data, code)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if !codeOK {
+		a.mfaBumpChallengeAttempts(ctx, row.ID, data)
+
+		return nil, "", domain.ErrMFAInvalid
+	}
+
+	return row, accountID, nil
+}
+
+// mfaCheckChallengeCode verifies the supplied code against the challenge: a
+// delivery factor (email/sms) compares the sha256 of the code against the
+// stored code hash; TOTP validates against the factor's shared secret with
+// the RFC 6238 library.
+func (a *pgMFAAccounts) mfaCheckChallengeCode(ctx context.Context, row *models.IamChallenge, accountID string, data mfaChallengeData, code string) (bool, error) {
+	switch row.Type {
+	case "email", "sms":
+		return data.FlowTokenHash != "" &&
+			subtle.ConstantTimeCompare([]byte(mfaSha256Hex(code)), []byte(data.FlowTokenHash)) == 1, nil
+	default:
+		if data.FactorID == "" {
+			return false, domain.ErrMFAInvalid
+		}
+
+		factor, err := a.mfaFindFactor(ctx, accountID, data.FactorID)
+		if err != nil {
+			return false, err
+		}
+
+		if factor.Status != "active" {
+			return false, domain.ErrMFAInvalid
+		}
+
+		secret, err := a.db.Cipher.Decrypt(factor.Secret)
+		if err != nil {
+			return false, domain.ErrMFAInvalid
+		}
+
+		return totp.Validate(code, secret), nil
+	}
+}
+
 // Verify consumes a challenge and, on success, returns the authenticated account
 // plus a fresh session. TOTP codes are checked with the RFC 6238 library.
 func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*domain.Account, *domain.Session, error) {
@@ -514,72 +591,9 @@ func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*
 	}
 
 	out, err := withTxRet(ctx, a.db, func(ctx context.Context) (result, error) {
-		row, err := models.FindIamChallenge(ctx, a.db.Bobx(), challengeID)
+		row, accountID, err := a.mfaVerifyChallengeCode(ctx, challengeID, code)
 		if err != nil {
-			return result{}, translatePgErr("challenge", err)
-		}
-
-		if row.Consumed {
-			return result{}, domain.ErrChallengeInvalid
-		}
-
-		if nowIn(ctx).After(row.ExpiresAt) {
-			return result{}, domain.ErrChallengeExpired
-		}
-
-		accountID := row.Subject.GetOrZero()
-
-		var data mfaChallengeData
-		if len(row.Data) > 0 {
-			if err := unmarshal(row.Data, &data); err != nil {
-				return result{}, err
-			}
-		}
-
-		if data.Attempts >= mfaMaxVerifyAttempts {
-			return result{}, domain.ErrChallengeInvalid
-		}
-		// Code verification:
-		//   - delivery factors (email/sms) compare the sha256 of the supplied code
-		//     against the stored code hash;
-		//   - TOTP validates the supplied code against the factor's shared
-		//     secret with the RFC 6238 library.
-		var codeOK bool
-
-		switch row.Type {
-		case "email", "sms":
-			codeOK = data.FlowTokenHash != "" &&
-				subtle.ConstantTimeCompare([]byte(mfaSha256Hex(code)), []byte(data.FlowTokenHash)) == 1
-		default:
-			// TOTP: load the factor's shared secret and check the supplied code
-			// with the RFC 6238 library.
-			if data.FactorID == "" {
-				return result{}, domain.ErrMFAInvalid
-			}
-
-			factor, err := a.mfaFindFactor(ctx, accountID, data.FactorID)
-			if err != nil {
-				return result{}, err
-			}
-
-			if factor.Status != "active" {
-				return result{}, domain.ErrMFAInvalid
-			}
-
-			secret, err := a.db.Cipher.Decrypt(factor.Secret)
-			if err != nil {
-				return result{}, domain.ErrMFAInvalid
-			}
-
-			codeOK = totp.Validate(code, secret)
-		}
-
-		if !codeOK {
-			// Count the wrong guess on the pool (this tx rolls back on the returned
-			// error); at the limit the challenge is consumed so it can't be retried.
-			a.mfaBumpChallengeAttempts(ctx, row.ID, data)
-
-			return result{}, domain.ErrMFAInvalid
+			return result{}, err
 		}
 
 		if err := a.mfaConsumeChallenge(ctx, row); err != nil {
@@ -903,6 +917,81 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 	})
 }
 
+// mfaLoadEnrollChallenge loads the enroll challenge and validates it (bound
+// to cmd.AccountID, not consumed, not expired), then rehydrates the ceremony
+// SessionData persisted by EnrollWebAuthnOptions.
+func (a *pgMFAAccounts) mfaLoadEnrollChallenge(ctx context.Context, cmd domain.MFAWebAuthnEnrollVerifyCmd) (*models.IamChallenge, gowebauthn.SessionData, error) {
+	var session gowebauthn.SessionData
+
+	row, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
+	if err != nil {
+		return nil, session, translatePgErr("challenge", err)
+	}
+
+	if row.Subject.GetOrZero() != cmd.AccountID {
+		return nil, session, domain.ErrChallengeInvalid
+	}
+
+	if row.Consumed {
+		return nil, session, domain.ErrChallengeInvalid
+	}
+
+	if nowIn(ctx).After(row.ExpiresAt) {
+		return nil, session, domain.ErrChallengeExpired
+	}
+
+	var data mfaChallengeData
+	if len(row.Data) > 0 {
+		if err := unmarshal(row.Data, &data); err != nil {
+			return nil, session, err
+		}
+	}
+
+	if len(data.Session) == 0 {
+		return nil, session, domain.ErrChallengeInvalid
+	}
+
+	if err := json.Unmarshal(data.Session, &session); err != nil {
+		return nil, session, domain.ErrChallengeInvalid
+	}
+
+	return row, session, nil
+}
+
+// mfaVerifyWebAuthnCreation rebuilds the per-project Relying Party + the
+// bound user handle, then validates the attestation (challenge, origin, RP
+// id, attestation statement) against the stored SessionData via go-webauthn.
+func (a *pgMFAAccounts) mfaVerifyWebAuthnCreation(ctx context.Context, row *models.IamChallenge, session gowebauthn.SessionData, cmd domain.MFAWebAuthnEnrollVerifyCmd) (*gowebauthn.Credential, error) {
+	w, err := a.mfaRPConfigFor(ctx, row.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := a.mfaLoadWebauthnUser(ctx, cmd.AccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	// marshal the browser credential map, parse it, then validate the
+	// attestation via go-webauthn.
+	credRaw, err := json.Marshal(cmd.Credential)
+	if err != nil {
+		return nil, err
+	}
+
+	parsed, err := protocol.ParseCredentialCreationResponseBody(bytes.NewReader(credRaw))
+	if err != nil {
+		return nil, domain.ErrMFAInvalid
+	}
+
+	libCred, err := w.CreateCredential(user, session, parsed)
+	if err != nil {
+		return nil, domain.ErrMFAInvalid
+	}
+
+	return libCred, nil
+}
+
 // EnrollWebAuthnVerify validates the attestation and activates the WebAuthn factor.
 // It replays the SessionData persisted by EnrollWebAuthnOptions through go-webauthn's
 // CreateCredential, which verifies the attestation object + clientDataJSON against
@@ -911,67 +1000,14 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 // credential in the factor secret column so subsequent assertions can be checked.
 func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFAWebAuthnEnrollVerifyCmd) (*domain.Factor, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Factor, error) {
-		row, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
-		if err != nil {
-			return nil, translatePgErr("challenge", err)
-		}
-
-		if row.Subject.GetOrZero() != cmd.AccountID {
-			return nil, domain.ErrChallengeInvalid
-		}
-
-		if row.Consumed {
-			return nil, domain.ErrChallengeInvalid
-		}
-
-		if nowIn(ctx).After(row.ExpiresAt) {
-			return nil, domain.ErrChallengeExpired
-		}
-
-		// Rehydrate the ceremony SessionData persisted at options time.
-		var data mfaChallengeData
-		if len(row.Data) > 0 {
-			if err := unmarshal(row.Data, &data); err != nil {
-				return nil, err
-			}
-		}
-
-		if len(data.Session) == 0 {
-			return nil, domain.ErrChallengeInvalid
-		}
-
-		var session gowebauthn.SessionData
-		if err := json.Unmarshal(data.Session, &session); err != nil {
-			return nil, domain.ErrChallengeInvalid
-		}
-
-		// Rebuild the per-project Relying Party + the bound user handle.
-		w, err := a.mfaRPConfigFor(ctx, row.ProjectID)
+		row, session, err := a.mfaLoadEnrollChallenge(ctx, cmd)
 		if err != nil {
 			return nil, err
 		}
 
-		user, err := a.mfaLoadWebauthnUser(ctx, cmd.AccountID)
+		libCred, err := a.mfaVerifyWebAuthnCreation(ctx, row, session, cmd)
 		if err != nil {
 			return nil, err
-		}
-
-		// verify with WebAuthn signing/attestation — marshal the browser credential
-		// map, parse it, then validate the attestation (challenge, origin, RP id,
-		// attestation statement) against the stored SessionData via go-webauthn.
-		credRaw, err := json.Marshal(cmd.Credential)
-		if err != nil {
-			return nil, err
-		}
-
-		parsed, err := protocol.ParseCredentialCreationResponseBody(bytes.NewReader(credRaw))
-		if err != nil {
-			return nil, domain.ErrMFAInvalid
-		}
-
-		libCred, err := w.CreateCredential(user, session, parsed)
-		if err != nil {
-			return nil, domain.ErrMFAInvalid
 		}
 
 		if err := a.mfaConsumeChallenge(ctx, row); err != nil {
