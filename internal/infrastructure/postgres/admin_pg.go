@@ -1151,9 +1151,10 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 			app.Type = v
 		}
 
-		if v, ok := patch["redirect_uris"].([]string); ok {
+		switch v := patch["redirect_uris"].(type) {
+		case []string:
 			app.RedirectURIs = v
-		} else if v, ok := patch["redirect_uris"].([]any); ok {
+		case []any:
 			uris := make([]string, 0, len(v))
 			for _, u := range v {
 				if s, ok := u.(string); ok {
@@ -1164,9 +1165,10 @@ func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID 
 			app.RedirectURIs = uris
 		}
 
-		if v, ok := patch["allowed_origins"].([]string); ok {
+		switch v := patch["allowed_origins"].(type) {
+		case []string:
 			app.AllowedOrigins = domain.NormalizeOrigins(v)
-		} else if v, ok := patch["allowed_origins"].([]any); ok {
+		case []any:
 			origins := make([]string, 0, len(v))
 			for _, o := range v {
 				if s, ok := o.(string); ok {
@@ -3281,8 +3283,7 @@ func (a *pgAdminAccessRequests) List(ctx context.Context, cmd domain.AdminAccess
 		mods = append(mods, sm.Where(models.IamAccessRequests.Columns.ID.GT(psql.Arg(cmd.Cursor))))
 	}
 
-	mods = append(mods, sm.OrderBy(models.IamAccessRequests.Columns.ID))
-	mods = append(mods, sm.Limit(adminAccessRequestPageSize+1))
+	mods = append(mods, sm.OrderBy(models.IamAccessRequests.Columns.ID), sm.Limit(adminAccessRequestPageSize+1))
 
 	rows, err := models.IamAccessRequests.Query(mods...).All(ctx, a.db.Bobx())
 	if err != nil {

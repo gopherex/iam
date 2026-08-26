@@ -917,41 +917,43 @@ func fedApplyConnectionPatch(c *domain.Connection, patch map[string]any) {
 		c.Config.Oidc.ClientSecret = v
 	}
 
-	if raw, ok := patch["oidc_scopes"].([]any); ok {
+	switch v := patch["oidc_scopes"].(type) {
+	case []any:
 		if c.Config.Oidc == nil {
 			c.Config.Oidc = &domain.FederationOidcConfig{}
 		}
 
-		scopes := make([]string, 0, len(raw))
-		for _, item := range raw {
+		scopes := make([]string, 0, len(v))
+		for _, item := range v {
 			if s, ok := item.(string); ok {
 				scopes = append(scopes, s)
 			}
 		}
 
 		c.Config.Oidc.Scopes = scopes
-	} else if scopes, ok := patch["oidc_scopes"].([]string); ok {
+	case []string:
 		if c.Config.Oidc == nil {
 			c.Config.Oidc = &domain.FederationOidcConfig{}
 		}
 
-		c.Config.Oidc.Scopes = scopes
+		c.Config.Oidc.Scopes = v
 	}
 
 	fedApplyConnectionPatchSAML(c, patch)
 	fedApplyConnectionPatchOIDC(c, patch)
 
-	if raw, ok := patch["domains"].([]any); ok {
-		doms := make([]string, 0, len(raw))
-		for _, item := range raw {
+	switch v := patch["domains"].(type) {
+	case []any:
+		doms := make([]string, 0, len(v))
+		for _, item := range v {
 			if s, ok := item.(string); ok {
 				doms = append(doms, s)
 			}
 		}
 
 		c.Domains = doms
-	} else if doms, ok := patch["domains"].([]string); ok {
-		c.Domains = doms
+	case []string:
+		c.Domains = v
 	}
 }
 

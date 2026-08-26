@@ -55,8 +55,8 @@ func NewPublisher(db *postgres.DB, webhooks *postgres.PgWebhooks, log *xlog.Logg
 }
 
 func (p *Publisher) Publish(ctx context.Context, msgs []outbox.Message) error {
-	for _, msg := range msgs {
-		if err := p.publishOne(ctx, msg); err != nil {
+	for i := range msgs {
+		if err := p.publishOne(ctx, msgs[i]); err != nil {
 			return err
 		}
 	}
@@ -884,7 +884,7 @@ func rawBool(raw map[string]json.RawMessage, key string) bool {
 // rawBoolOpt reports whether key is present (and its bool value), so callers can
 // distinguish "explicitly false" from "absent". Accepts JSON bool or "true"/
 // "false" string.
-func rawBoolOpt(raw map[string]json.RawMessage, key string) (val bool, present bool) {
+func rawBoolOpt(raw map[string]json.RawMessage, key string) (bool, bool) {
 	v, ok := raw[key]
 	if !ok {
 		return false, false

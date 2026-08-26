@@ -338,7 +338,7 @@ func parseIssuer(issuer string) (string, string) {
 	return tail[1], tail[3]
 }
 
-func claimContains(claims Claims, key string, want string) bool {
+func claimContains(claims Claims, key, want string) bool {
 	switch v := claims[key].(type) {
 	case string:
 		if v == want {

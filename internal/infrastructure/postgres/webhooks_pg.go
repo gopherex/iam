@@ -897,14 +897,14 @@ func (a *PgWebhooks) PublishEvent(ctx context.Context, ev domain.Event) error {
 
 	var deliveryErrs []error
 
-	for _, webhook := range webhooks {
-		delivery, err := a.ensureDelivery(ctx, webhook, event)
+	for i := range webhooks {
+		delivery, err := a.ensureDelivery(ctx, webhooks[i], event)
 		if err == nil {
 			_, err = a.deliver(ctx, delivery.ID, false)
 		}
 
 		if err != nil {
-			deliveryErrs = append(deliveryErrs, fmt.Errorf("webhook %s: %w", webhook.ID, err))
+			deliveryErrs = append(deliveryErrs, fmt.Errorf("webhook %s: %w", webhooks[i].ID, err))
 		}
 	}
 
@@ -1109,8 +1109,8 @@ func (a *PgWebhooks) ReplayEvent(ctx context.Context, projectID, environment, ev
 
 	var out []domain.WebhookDelivery
 
-	for _, webhook := range webhooks {
-		delivery, err := a.ensureDelivery(ctx, webhook, event)
+	for i := range webhooks {
+		delivery, err := a.ensureDelivery(ctx, webhooks[i], event)
 		if err == nil {
 			delivery, err = a.deliver(ctx, delivery.ID, true)
 		}

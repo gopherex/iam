@@ -326,12 +326,12 @@ func maskEmail(email string) string {
 
 	local := email[:at]
 
-	domain := email[at:]
+	host := email[at:]
 	if len(local) <= 1 {
-		return "*" + domain
+		return "*" + host
 	}
 
-	return string(local[0]) + "***" + domain
+	return string(local[0]) + "***" + host
 }
 
 // maskPhone masks a phone number showing only the last 2 digits.

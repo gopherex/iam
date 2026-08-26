@@ -544,11 +544,8 @@ var flowAdvancers = map[domain.FlowKind]flowAdvanceFn{
 	domain.FlowKindEmailChange: advanceNotImplemented,
 }
 
-func flowVerificationSecret(payload map[string]string) (code string, token string) {
-	code = strings.TrimSpace(payload["code"])
-	token = strings.TrimSpace(payload["token"])
-
-	return code, token
+func flowVerificationSecret(payload map[string]string) (string, string) {
+	return strings.TrimSpace(payload["code"]), strings.TrimSpace(payload["token"])
 }
 
 func flowVerifyConsumeCmd(projectID, accountID, challengeID, code, token string) domain.CoreAuthVerifyConsumeCmd {
