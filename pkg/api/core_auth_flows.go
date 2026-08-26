@@ -75,7 +75,9 @@ func flowHeaders(flowState *domain.FlowState) *oas.FlowStateHeaders {
 }
 
 // PostV1AuthFlows creates a new server-side resumable auth flow.
-func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.FlowCreateRequest, params oas.PostV1AuthFlowsParams) (*oas.FlowStateHeaders, error) {
+func (s *CoreAuthFlowService) PostV1AuthFlows(
+	ctx context.Context, req *oas.FlowCreateRequest, params oas.PostV1AuthFlowsParams,
+) (*oas.FlowStateHeaders, error) {
 	consents := make([]domain.AccountConsentAcceptance, 0, len(req.Consents))
 	for _, c := range req.Consents {
 		consents = append(consents, domain.AccountConsentAcceptance{Key: c.Key, Version: c.Version})
@@ -105,7 +107,9 @@ func (s *CoreAuthFlowService) PostV1AuthFlows(ctx context.Context, req *oas.Flow
 }
 
 // GetV1AuthFlowsByFlowToken retrieves a live flow by its opaque token.
-func (s *CoreAuthFlowService) GetV1AuthFlowsByFlowToken(ctx context.Context, params oas.GetV1AuthFlowsByFlowTokenParams) (*oas.FlowStateHeaders, error) {
+func (s *CoreAuthFlowService) GetV1AuthFlowsByFlowToken(
+	ctx context.Context, params oas.GetV1AuthFlowsByFlowTokenParams,
+) (*oas.FlowStateHeaders, error) {
 	flowState, err := s.deps.Flows.Get(ctx, domain.FlowGetCmd{
 		ProjectID: params.XClientID,
 		FlowToken: params.FlowToken,
@@ -119,7 +123,9 @@ func (s *CoreAuthFlowService) GetV1AuthFlowsByFlowToken(ctx context.Context, par
 
 // GetV1AuthFlowsCurrent resumes the flow bound to the iam_flow cookie (§7
 // durable resume). No cookie / no live flow → 404.
-func (s *CoreAuthFlowService) GetV1AuthFlowsCurrent(ctx context.Context, params oas.GetV1AuthFlowsCurrentParams) (*oas.FlowStateHeaders, error) {
+func (s *CoreAuthFlowService) GetV1AuthFlowsCurrent(
+	ctx context.Context, params oas.GetV1AuthFlowsCurrentParams,
+) (*oas.FlowStateHeaders, error) {
 	token := params.IamFlow.Or("")
 	if token == "" {
 		return nil, domain.ErrFlowNotFound
@@ -137,7 +143,9 @@ func (s *CoreAuthFlowService) GetV1AuthFlowsCurrent(ctx context.Context, params 
 }
 
 // PostV1AuthFlowsByFlowTokenSubmit advances the flow state machine.
-func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, req *oas.FlowSubmitRequest, params oas.PostV1AuthFlowsByFlowTokenSubmitParams) (*oas.FlowStateHeaders, error) {
+func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenSubmit(
+	ctx context.Context, req *oas.FlowSubmitRequest, params oas.PostV1AuthFlowsByFlowTokenSubmitParams,
+) (*oas.FlowStateHeaders, error) {
 	payload := make(map[string]string)
 
 	if p, ok := req.Payload.Get(); ok {
@@ -167,7 +175,9 @@ func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Conte
 }
 
 // PostV1AuthFlowsByFlowTokenResend re-issues the active challenge.
-func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params oas.PostV1AuthFlowsByFlowTokenResendParams) (*oas.FlowStateHeaders, error) {
+func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenResend(
+	ctx context.Context, params oas.PostV1AuthFlowsByFlowTokenResendParams,
+) (*oas.FlowStateHeaders, error) {
 	flowState, err := s.deps.Flows.Resend(ctx, domain.FlowResendCmd{
 		ProjectID: params.XClientID,
 		FlowToken: params.FlowToken,
@@ -180,7 +190,9 @@ func (s *CoreAuthFlowService) PostV1AuthFlowsByFlowTokenResend(ctx context.Conte
 }
 
 // DeleteV1AuthFlowsByFlowToken abandons a live flow.
-func (s *CoreAuthFlowService) DeleteV1AuthFlowsByFlowToken(ctx context.Context, params oas.DeleteV1AuthFlowsByFlowTokenParams) error {
+func (s *CoreAuthFlowService) DeleteV1AuthFlowsByFlowToken(
+	ctx context.Context, params oas.DeleteV1AuthFlowsByFlowTokenParams,
+) error {
 	return s.deps.Flows.Abandon(ctx, domain.FlowAbandonCmd{
 		ProjectID: params.XClientID,
 		FlowToken: params.FlowToken,
@@ -369,27 +381,39 @@ type coreAuthComposite struct {
 // The six flow methods are served by CoreAuthFlowService; every other CoreAuth
 // method is served by the embedded oas.CoreAuthHandler (typically *CoreAuthService).
 
-func (c *coreAuthComposite) PostV1AuthFlows(ctx context.Context, req *oas.FlowCreateRequest, params oas.PostV1AuthFlowsParams) (*oas.FlowStateHeaders, error) {
+func (c *coreAuthComposite) PostV1AuthFlows(
+	ctx context.Context, req *oas.FlowCreateRequest, params oas.PostV1AuthFlowsParams,
+) (*oas.FlowStateHeaders, error) {
 	return c.CoreAuthFlowService.PostV1AuthFlows(ctx, req, params)
 }
 
-func (c *coreAuthComposite) GetV1AuthFlowsByFlowToken(ctx context.Context, params oas.GetV1AuthFlowsByFlowTokenParams) (*oas.FlowStateHeaders, error) {
+func (c *coreAuthComposite) GetV1AuthFlowsByFlowToken(
+	ctx context.Context, params oas.GetV1AuthFlowsByFlowTokenParams,
+) (*oas.FlowStateHeaders, error) {
 	return c.CoreAuthFlowService.GetV1AuthFlowsByFlowToken(ctx, params)
 }
 
-func (c *coreAuthComposite) GetV1AuthFlowsCurrent(ctx context.Context, params oas.GetV1AuthFlowsCurrentParams) (*oas.FlowStateHeaders, error) {
+func (c *coreAuthComposite) GetV1AuthFlowsCurrent(
+	ctx context.Context, params oas.GetV1AuthFlowsCurrentParams,
+) (*oas.FlowStateHeaders, error) {
 	return c.CoreAuthFlowService.GetV1AuthFlowsCurrent(ctx, params)
 }
 
-func (c *coreAuthComposite) PostV1AuthFlowsByFlowTokenSubmit(ctx context.Context, req *oas.FlowSubmitRequest, params oas.PostV1AuthFlowsByFlowTokenSubmitParams) (*oas.FlowStateHeaders, error) {
+func (c *coreAuthComposite) PostV1AuthFlowsByFlowTokenSubmit(
+	ctx context.Context, req *oas.FlowSubmitRequest, params oas.PostV1AuthFlowsByFlowTokenSubmitParams,
+) (*oas.FlowStateHeaders, error) {
 	return c.CoreAuthFlowService.PostV1AuthFlowsByFlowTokenSubmit(ctx, req, params)
 }
 
-func (c *coreAuthComposite) PostV1AuthFlowsByFlowTokenResend(ctx context.Context, params oas.PostV1AuthFlowsByFlowTokenResendParams) (*oas.FlowStateHeaders, error) {
+func (c *coreAuthComposite) PostV1AuthFlowsByFlowTokenResend(
+	ctx context.Context, params oas.PostV1AuthFlowsByFlowTokenResendParams,
+) (*oas.FlowStateHeaders, error) {
 	return c.CoreAuthFlowService.PostV1AuthFlowsByFlowTokenResend(ctx, params)
 }
 
-func (c *coreAuthComposite) DeleteV1AuthFlowsByFlowToken(ctx context.Context, params oas.DeleteV1AuthFlowsByFlowTokenParams) error {
+func (c *coreAuthComposite) DeleteV1AuthFlowsByFlowToken(
+	ctx context.Context, params oas.DeleteV1AuthFlowsByFlowTokenParams,
+) error {
 	return c.CoreAuthFlowService.DeleteV1AuthFlowsByFlowToken(ctx, params)
 }
 

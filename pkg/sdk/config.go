@@ -38,7 +38,7 @@ var ErrUnsupportedValidationMode = errors.New("iam sdk: unsupported validation m
 // It is intentionally tagged like internal/config service structs, so callers
 // can load it with the same structconf/mapstructure pipeline.
 type AuthenticatorConfig struct {
-	Mode            ValidationMode `default:"remote" mapstructure:"mode"               validate:"oneof=remote local hybrid"`
+	Mode            ValidationMode `default:"remote" mapstructure:"mode"               validate:"oneof=remote local hybrid"` //nolint:lll
 	BaseURL         string         `default:""       mapstructure:"base_url"           validate:"omitempty,url"`
 	Credential      string         `default:""       mapstructure:"credential"`
 	ProjectID       string         `default:""       mapstructure:"project_id"`
@@ -47,7 +47,7 @@ type AuthenticatorConfig struct {
 	Audience        string         `default:""       mapstructure:"audience"`
 	JWKSURL         string         `default:""       mapstructure:"jwks_url"`
 	JWKSCacheTTLSec int            `default:"300"    mapstructure:"jwks_cache_ttl_sec" validate:"min=1"`
-	TokenType       string         `default:"access" mapstructure:"token_type"         validate:"omitempty,oneof=access id_token"`
+	TokenType       string         `default:"access" mapstructure:"token_type"         validate:"omitempty,oneof=access id_token"` //nolint:lll
 	HTTPClient      *http.Client   `mapstructure:"-" validate:"-"`
 }
 

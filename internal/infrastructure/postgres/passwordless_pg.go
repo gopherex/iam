@@ -101,7 +101,9 @@ func isPhoneChannel(channel string) bool {
 
 // ===== OTP =====
 
-func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identifier, channel, purpose, locale string) (*domain.Challenge, error) {
+func (a *pgPasswordlessAccounts) StartOTP(
+	ctx context.Context, projectID, identifier, channel, purpose, locale string,
+) (*domain.Challenge, error) {
 	if projectID == "" || identifier == "" {
 		return nil, domain.ErrBadRequest
 	}
@@ -189,7 +191,9 @@ func (a *pgPasswordlessAccounts) StartOTP(ctx context.Context, projectID, identi
 	return challengeFromEnvelope(env), nil
 }
 
-func (a *pgPasswordlessAccounts) VerifyOTP(ctx context.Context, challengeID, code string) (*domain.Account, *domain.Session, error) {
+func (a *pgPasswordlessAccounts) VerifyOTP(
+	ctx context.Context, challengeID, code string,
+) (*domain.Account, *domain.Session, error) {
 	// Per-challenge brute-force cap. The mismatch bump is committed in its OWN
 	// transaction (not the verify tx, which rolls back on the returned error), so
 	// the attempt count actually persists. Once the cap is hit the challenge is
@@ -278,7 +282,9 @@ func (a *pgPasswordlessAccounts) bumpAttempts(ctx context.Context, row *models.I
 
 // ===== Magic link =====
 
-func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, email, redirectTo, locale string) (*domain.Challenge, error) {
+func (a *pgPasswordlessAccounts) StartMagicLink(
+	ctx context.Context, projectID, email, redirectTo, locale string,
+) (*domain.Challenge, error) {
 	if projectID == "" || email == "" {
 		return nil, domain.ErrBadRequest
 	}
@@ -345,7 +351,9 @@ func (a *pgPasswordlessAccounts) StartMagicLink(ctx context.Context, projectID, 
 // VerifyMagicLinkCallback consumes the token and, in addition to the account +
 // session, returns a redirect target sanitized against the project's app_base_url
 // (open-redirect safe) for the browser GET callback leg.
-func (a *pgPasswordlessAccounts) VerifyMagicLinkCallback(ctx context.Context, token, redirectTo string) (*domain.Account, *domain.Session, string, error) {
+func (a *pgPasswordlessAccounts) VerifyMagicLinkCallback(
+	ctx context.Context, token, redirectTo string,
+) (*domain.Account, *domain.Session, string, error) {
 	acct, sess, err := a.VerifyMagicLink(ctx, token)
 	if err != nil {
 		return nil, nil, "", err
@@ -356,7 +364,9 @@ func (a *pgPasswordlessAccounts) VerifyMagicLinkCallback(ctx context.Context, to
 	return acct, sess, safe, nil
 }
 
-func (a *pgPasswordlessAccounts) VerifyMagicLink(ctx context.Context, token string) (*domain.Account, *domain.Session, error) {
+func (a *pgPasswordlessAccounts) VerifyMagicLink(
+	ctx context.Context, token string,
+) (*domain.Account, *domain.Session, error) {
 	if token == "" {
 		return nil, nil, domain.ErrInvalidToken
 	}
@@ -448,7 +458,9 @@ func (a *pgPasswordlessAccounts) insertChallenge(ctx context.Context, env *chall
 
 // loadChallengeForVerify fetches a challenge by id, enforces type + single-use +
 // expiry, and returns the decoded envelope and the row (for consume).
-func (a *pgPasswordlessAccounts) loadChallengeForVerify(ctx context.Context, challengeID, typ string) (*challengeEnvelope, *models.IamChallenge, error) {
+func (a *pgPasswordlessAccounts) loadChallengeForVerify(
+	ctx context.Context, challengeID, typ string,
+) (*challengeEnvelope, *models.IamChallenge, error) {
 	row, err := models.FindIamChallenge(ctx, a.db.Bobx(), challengeID)
 	if err != nil {
 		if isNoRows(err) {
@@ -480,7 +492,9 @@ func (a *pgPasswordlessAccounts) loadChallengeForVerify(ctx context.Context, cha
 
 // findUnconsumedByHash resolves a challenge of the given type by its code_hash
 // lookup column (used by magic-link verify, which has no challenge id).
-func (a *pgPasswordlessAccounts) findUnconsumedByHash(ctx context.Context, typ, codeHash string) (*models.IamChallenge, error) {
+func (a *pgPasswordlessAccounts) findUnconsumedByHash(
+	ctx context.Context, typ, codeHash string,
+) (*models.IamChallenge, error) {
 	row, err := models.IamChallenges.Query(
 		sm.Where(models.IamChallenges.Columns.Type.EQ(psql.Arg(typ))),
 		sm.Where(models.IamChallenges.Columns.CodeHash.EQ(psql.Arg(codeHash))),
@@ -525,7 +539,9 @@ func (a *pgPasswordlessAccounts) consume(ctx context.Context, row *models.IamCha
 // resolveAndSession finds the user behind the challenge subject within the
 // project+environment (creating one if the subject is fresh and the purpose
 // permits signup) and mints a session that records the verification channel.
-func (a *pgPasswordlessAccounts) resolveAndSession(ctx context.Context, env *challengeEnvelope) (*domain.Account, *domain.Session, error) {
+func (a *pgPasswordlessAccounts) resolveAndSession(
+	ctx context.Context, env *challengeEnvelope,
+) (*domain.Account, *domain.Session, error) {
 	acct, err := a.resolveOrCreateUser(ctx, env)
 	if err != nil {
 		return nil, nil, err
@@ -579,7 +595,9 @@ func allowsSignup(purpose string) bool {
 // for the email/magic-link channels, by phone for the sms/whatsapp channels),
 // scoped to the challenge environment. On a miss it provisions a fresh active
 // human user when the purpose permits signup, otherwise returns ErrUserNotFound.
-func (a *pgPasswordlessAccounts) resolveOrCreateUser(ctx context.Context, env *challengeEnvelope) (*domain.Account, error) {
+func (a *pgPasswordlessAccounts) resolveOrCreateUser(
+	ctx context.Context, env *challengeEnvelope,
+) (*domain.Account, error) {
 	if isPhoneChannel(env.Channel) {
 		return a.resolveOrCreateByPhone(ctx, env)
 	}
@@ -588,7 +606,9 @@ func (a *pgPasswordlessAccounts) resolveOrCreateUser(ctx context.Context, env *c
 }
 
 // resolveOrCreateByEmail handles the email / magic-link channels.
-func (a *pgPasswordlessAccounts) resolveOrCreateByEmail(ctx context.Context, env *challengeEnvelope) (*domain.Account, error) {
+func (a *pgPasswordlessAccounts) resolveOrCreateByEmail(
+	ctx context.Context, env *challengeEnvelope,
+) (*domain.Account, error) {
 	scope := env.envScope()
 
 	row, err := models.IamUsers.Query(
@@ -656,7 +676,9 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByEmail(ctx context.Context, env
 
 // resolveOrCreateByPhone handles the sms / whatsapp channels: lookup/create by
 // (project, environment, primary_phone) — the env-scoped unique index.
-func (a *pgPasswordlessAccounts) resolveOrCreateByPhone(ctx context.Context, env *challengeEnvelope) (*domain.Account, error) {
+func (a *pgPasswordlessAccounts) resolveOrCreateByPhone(
+	ctx context.Context, env *challengeEnvelope,
+) (*domain.Account, error) {
 	scope := env.envScope()
 
 	row, err := models.IamUsers.Query(
@@ -726,7 +748,9 @@ func (a *pgPasswordlessAccounts) resolveOrCreateByPhone(ctx context.Context, env
 // supplies the channel-specific lookup column(s) on setter (primary_email or
 // primary_phone); insertUser fills the shared columns + data envelope, scopes
 // the row to environment, writes it and emits user.created.
-func (a *pgPasswordlessAccounts) insertUser(ctx context.Context, acc *domain.Account, environment string, setter *models.IamUserSetter) error {
+func (a *pgPasswordlessAccounts) insertUser(
+	ctx context.Context, acc *domain.Account, environment string, setter *models.IamUserSetter,
+) error {
 	raw, err := marshal(acc)
 	if err != nil {
 		return err
@@ -792,7 +816,9 @@ func (a *pgPasswordlessAccounts) persistAccount(ctx context.Context, acc *domain
 // plus the verification channel (sms) so downstream MFA/AAL policy can tell a
 // phone login from an email one. The session is bound to the challenge's
 // environment by overriding it on the context the core minter reads.
-func (a *pgPasswordlessAccounts) createSession(ctx context.Context, acct *domain.Account, channel, env string) (*domain.Session, error) {
+func (a *pgPasswordlessAccounts) createSession(
+	ctx context.Context, acct *domain.Account, channel, env string,
+) (*domain.Session, error) {
 	amr := []string{"otp"}
 	if isPhoneChannel(channel) {
 		amr = append(amr, channelSMS)

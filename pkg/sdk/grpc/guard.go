@@ -31,7 +31,12 @@ func check(ctx context.Context, ok func(*sdk.Principal) bool) error {
 }
 
 func unaryGuard(ok func(*sdk.Principal) bool) googlegrpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req any, _ *googlegrpc.UnaryServerInfo, handler googlegrpc.UnaryHandler) (any, error) {
+	return func(
+		ctx context.Context,
+		req any,
+		_ *googlegrpc.UnaryServerInfo,
+		handler googlegrpc.UnaryHandler,
+	) (any, error) {
 		if err := check(ctx, ok); err != nil {
 			return nil, err
 		}
@@ -41,7 +46,12 @@ func unaryGuard(ok func(*sdk.Principal) bool) googlegrpc.UnaryServerInterceptor 
 }
 
 func streamGuard(ok func(*sdk.Principal) bool) googlegrpc.StreamServerInterceptor {
-	return func(srv any, stream googlegrpc.ServerStream, _ *googlegrpc.StreamServerInfo, handler googlegrpc.StreamHandler) error {
+	return func(
+		srv any,
+		stream googlegrpc.ServerStream,
+		_ *googlegrpc.StreamServerInfo,
+		handler googlegrpc.StreamHandler,
+	) error {
 		if err := check(stream.Context(), ok); err != nil {
 			return err
 		}

@@ -57,7 +57,12 @@ func BearerToken(ctx context.Context) (string, bool) {
 func UnaryServerInterceptor(auth sdk.Authenticator, opts ...Option) googlegrpc.UnaryServerInterceptor {
 	cfg := applyOptions(opts)
 
-	return func(ctx context.Context, req any, info *googlegrpc.UnaryServerInfo, handler googlegrpc.UnaryHandler) (any, error) {
+	return func(
+		ctx context.Context,
+		req any,
+		info *googlegrpc.UnaryServerInfo,
+		handler googlegrpc.UnaryHandler,
+	) (any, error) {
 		principal, err := authenticate(ctx, auth, cfg.tokenExtractor)
 		if err != nil {
 			return nil, err
@@ -74,7 +79,12 @@ func UnaryServerInterceptor(auth sdk.Authenticator, opts ...Option) googlegrpc.U
 func StreamServerInterceptor(auth sdk.Authenticator, opts ...Option) googlegrpc.StreamServerInterceptor {
 	cfg := applyOptions(opts)
 
-	return func(srv any, stream googlegrpc.ServerStream, info *googlegrpc.StreamServerInfo, handler googlegrpc.StreamHandler) error {
+	return func(
+		srv any,
+		stream googlegrpc.ServerStream,
+		info *googlegrpc.StreamServerInfo,
+		handler googlegrpc.StreamHandler,
+	) error {
 		principal, err := authenticate(stream.Context(), auth, cfg.tokenExtractor)
 		if err != nil {
 			return err

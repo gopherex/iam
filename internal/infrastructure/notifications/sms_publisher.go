@@ -280,7 +280,11 @@ func decodeSMSConfig(cipher postgres.Cipher, typ string, raw map[string]json.Raw
 // and the basic-auth password slot (Password, twilio) so it works regardless
 // of provider type; "password" fills the password slot only.
 func decryptSMSSecrets(cipher postgres.Cipher, raw map[string]json.RawMessage, cfg *smsConfig) error {
-	for _, key := range []string{"password", "auth_token", "token", "api_key", "apikey", "secret", "secret_key", "client_secret", "access_token"} {
+	secretKeys := []string{
+		"password", "auth_token", "token", "api_key", "apikey",
+		"secret", "secret_key", "client_secret", "access_token",
+	}
+	for _, key := range secretKeys {
 		v := rawString(raw, key)
 		if v == "" {
 			continue
@@ -466,7 +470,7 @@ func (c *smsConfig) sendTwilio(ctx context.Context, to, text string) error {
 }
 
 func (c *smsConfig) do(req *http.Request) error {
-	resp, err := c.client().Do(req) //nolint:gosec // c.URL is an operator-configured, https-validated provider endpoint (decodeSMSConfig*), not end-user input
+	resp, err := c.client().Do(req) //nolint:gosec,lll // c.URL is an operator-configured, https-validated provider endpoint (decodeSMSConfig*), not end-user input
 	if err != nil {
 		return fmt.Errorf("send sms request: %w", err)
 	}

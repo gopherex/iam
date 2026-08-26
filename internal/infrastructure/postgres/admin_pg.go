@@ -117,7 +117,9 @@ func NewPgAdminUsers(db *DB, emitter Emitter) *pgAdminUsers {
 var _ api.AdminUsers = (*pgAdminUsers)(nil)
 
 // findUser loads a user row enforcing the (project, environment) tenant boundary.
-func (a *pgAdminUsers) findUser(ctx context.Context, projectID, environment, accountID string) (*models.IamUser, *domain.Account, error) {
+func (a *pgAdminUsers) findUser(
+	ctx context.Context, projectID, environment, accountID string,
+) (*models.IamUser, *domain.Account, error) {
 	row, err := models.FindIamUser(ctx, a.db.Bobx(), accountID)
 	if err != nil {
 		if adminIsNotFound(translatePgErr("user", err)) {
@@ -427,7 +429,9 @@ func (a *pgAdminUsers) Delete(ctx context.Context, projectID, environment, accou
 	})
 }
 
-func (a *pgAdminUsers) VerifyEmail(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error) {
+func (a *pgAdminUsers) VerifyEmail(
+	ctx context.Context, projectID, environment, accountID string,
+) (*domain.Account, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
 		row, acc, err := a.findUser(ctx, projectID, environment, accountID)
 		if err != nil {
@@ -455,7 +459,9 @@ func (a *pgAdminUsers) VerifyEmail(ctx context.Context, projectID, environment, 
 	})
 }
 
-func (a *pgAdminUsers) VerifyPhone(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error) {
+func (a *pgAdminUsers) VerifyPhone(
+	ctx context.Context, projectID, environment, accountID string,
+) (*domain.Account, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
 		row, acc, err := a.findUser(ctx, projectID, environment, accountID)
 		if err != nil {
@@ -534,7 +540,9 @@ func (a *pgAdminUsers) SetPassword(ctx context.Context, cmd domain.AdminUserPass
 		}
 
 		if cmd.RevokeSessions {
-			if _, err := a.revokeSessions(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, "", "password_changed"); err != nil {
+			if _, err := a.revokeSessions(
+				ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID, "", "password_changed",
+			); err != nil {
 				return err
 			}
 		}
@@ -646,7 +654,9 @@ func (a *pgAdminUsers) Export(ctx context.Context, projectID, environment, accou
 	})
 }
 
-func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpersonateCmd) (*domain.AdminImpersonation, error) {
+func (a *pgAdminUsers) Impersonate(
+	ctx context.Context, cmd domain.AdminUserImpersonateCmd,
+) (*domain.AdminImpersonation, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminImpersonation, error) {
 		env := adminEnv(cmd.Environment)
 		if _, _, err := a.findUser(ctx, cmd.ProjectID, cmd.Environment, cmd.AccountID); err != nil {
@@ -708,7 +718,10 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 			ProjectID:   cmd.ProjectID,
 			Environment: env,
 			AggregateID: cmd.AccountID,
-			Payload:     map[string]any{"user_id": cmd.AccountID, "actor_id": cmd.ActorID, "project_id": cmd.ProjectID, "reason": cmd.Reason},
+			Payload: map[string]any{
+				"user_id": cmd.AccountID, "actor_id": cmd.ActorID,
+				"project_id": cmd.ProjectID, "reason": cmd.Reason,
+			},
 		}); err != nil {
 			return nil, err
 		}
@@ -720,7 +733,9 @@ func (a *pgAdminUsers) Impersonate(ctx context.Context, cmd domain.AdminUserImpe
 	})
 }
 
-func (a *pgAdminUsers) ResetMFA(ctx context.Context, projectID, environment, accountID string, factorIDs []string) (int, error) {
+func (a *pgAdminUsers) ResetMFA(
+	ctx context.Context, projectID, environment, accountID string, factorIDs []string,
+) (int, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (int, error) {
 		if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 			return 0, err
@@ -770,7 +785,9 @@ func (a *pgAdminUsers) ResetMFA(ctx context.Context, projectID, environment, acc
 	})
 }
 
-func (a *pgAdminUsers) ListIdentities(ctx context.Context, projectID, environment, accountID string) ([]domain.Identity, error) {
+func (a *pgAdminUsers) ListIdentities(
+	ctx context.Context, projectID, environment, accountID string,
+) ([]domain.Identity, error) {
 	if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 		return nil, err
 	}
@@ -830,7 +847,9 @@ func (a *pgAdminUsers) DeleteIdentity(ctx context.Context, projectID, environmen
 	})
 }
 
-func (a *pgAdminUsers) ListSessions(ctx context.Context, projectID, environment, accountID string) ([]domain.Session, error) {
+func (a *pgAdminUsers) ListSessions(
+	ctx context.Context, projectID, environment, accountID string,
+) ([]domain.Session, error) {
 	if _, _, err := a.findUser(ctx, projectID, environment, accountID); err != nil {
 		return nil, err
 	}
@@ -890,7 +909,9 @@ func (a *pgAdminUsers) RevokeSessions(ctx context.Context, cmd domain.AdminUserS
 
 // revokeSessions deletes all sessions for a user except optionally one. The
 // caller is responsible for the tenant boundary check and the transaction.
-func (a *pgAdminUsers) revokeSessions(ctx context.Context, projectID, environment, accountID, exceptID, reason string) (int, error) {
+func (a *pgAdminUsers) revokeSessions(
+	ctx context.Context, projectID, environment, accountID, exceptID, reason string,
+) (int, error) {
 	rows, err := models.IamSessions.Query(
 		sm.Where(models.IamSessions.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamSessions.Columns.Environment.EQ(psql.Arg(adminEnv(environment)))),
@@ -934,7 +955,9 @@ func (a *pgAdminUsers) persist(ctx context.Context, row *models.IamUser, acc *do
 
 // persistWithExtra writes the account aggregate plus extra envelope fields
 // (merged into the jsonb only) and keeps the status/email/phone columns in sync.
-func (a *pgAdminUsers) persistWithExtra(ctx context.Context, row *models.IamUser, acc *domain.Account, extra func(map[string]any)) error {
+func (a *pgAdminUsers) persistWithExtra(
+	ctx context.Context, row *models.IamUser, acc *domain.Account, extra func(map[string]any),
+) error {
 	raw, err := marshal(acc)
 	if err != nil {
 		return err
@@ -997,7 +1020,9 @@ func NewPgAdminApps(db *DB, emitter Emitter) *pgAdminApps {
 
 var _ api.AdminApps = (*pgAdminApps)(nil)
 
-func (a *pgAdminApps) findApp(ctx context.Context, projectID, environment, appID string) (*models.IamAppClient, *domain.AppClient, error) {
+func (a *pgAdminApps) findApp(
+	ctx context.Context, projectID, environment, appID string,
+) (*models.IamAppClient, *domain.AppClient, error) {
 	row, err := models.FindIamAppClient(ctx, a.db.Bobx(), appID)
 	if err != nil {
 		if adminIsNotFound(translatePgErr("app_client", err)) {
@@ -1221,7 +1246,9 @@ func applyAppClientScalarFields(app *domain.AppClient, patch map[string]any) {
 	}
 }
 
-func (a *pgAdminApps) Update(ctx context.Context, projectID, environment, appID string, patch map[string]any) (*domain.AppClient, error) {
+func (a *pgAdminApps) Update(
+	ctx context.Context, projectID, environment, appID string, patch map[string]any,
+) (*domain.AppClient, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AppClient, error) {
 		row, app, err := a.findApp(ctx, projectID, environment, appID)
 		if err != nil {
@@ -1556,7 +1583,9 @@ func (a *pgAdminApps) Apply(
 	return withTxRet(ctx, a.db, apply)
 }
 
-func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, environment, appID, name string) (*domain.AdminSecret, error) {
+func (a *pgAdminApps) AddSecret(
+	ctx context.Context, projectID, environment, appID, name string,
+) (*domain.AdminSecret, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminSecret, error) {
 		if _, _, err := a.findApp(ctx, projectID, environment, appID); err != nil {
 			return nil, err
@@ -1997,7 +2026,9 @@ func (a *pgAdminConfig) GetConsent(ctx context.Context, cmd domain.AdminConfigGe
 	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "consent")
 }
 
-func (a *pgAdminConfig) PutConsent(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error) {
+func (a *pgAdminConfig) PutConsent(
+	ctx context.Context, cmd domain.AdminConfigUpdateCmd,
+) (domain.AdminConfigDoc, error) {
 	raw, err := configDocToRawJSON(cmd.Doc)
 	if err != nil {
 		return nil, err
@@ -2063,7 +2094,10 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 		}
 
 		if err == nil {
-			if uerr := existing.Update(ctx, a.db.Bobx(), &models.IamConfigSetter{Data: &rawFeatures, UpdatedAt: ptr(nowUTC())}); uerr != nil {
+			uerr := existing.Update(ctx, a.db.Bobx(), &models.IamConfigSetter{
+				Data: &rawFeatures, UpdatedAt: ptr(nowUTC()),
+			})
+			if uerr != nil {
 				return nil, uerr
 			}
 		} else {
@@ -2091,7 +2125,9 @@ func (a *pgAdminConfig) PutFeatures(ctx context.Context, cmd domain.AdminFeature
 	})
 }
 
-func (a *pgAdminConfig) GetI18n(ctx context.Context, cmd domain.AdminConfigGetCmd, locale string) (map[string]jx.Raw, error) {
+func (a *pgAdminConfig) GetI18n(
+	ctx context.Context, cmd domain.AdminConfigGetCmd, locale string,
+) (map[string]jx.Raw, error) {
 	row, err := models.IamConfigs.Query(
 		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(adminEnv(cmd.Environment)))),
@@ -2128,7 +2164,10 @@ func (a *pgAdminConfig) PutI18n(ctx context.Context, cmd domain.AdminI18nUpdateC
 			ProjectID:   cmd.ProjectID,
 			Environment: adminEnv(cmd.Environment),
 			AggregateID: cmd.ProjectID,
-			Payload:     map[string]any{"project_id": cmd.ProjectID, "environment": cmd.Environment, "locale": cmd.Locale, "messages": cmd.Messages},
+			Payload: map[string]any{
+				"project_id": cmd.ProjectID, "environment": cmd.Environment,
+				"locale": cmd.Locale, "messages": cmd.Messages,
+			},
 		})
 	}); err != nil {
 		return nil, err
@@ -2196,7 +2235,9 @@ func adminProviderToDomain(cipher Cipher, row *models.IamProvider) (domain.Admin
 	return p, nil
 }
 
-func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
+func (a *pgAdminConfig) createProvider(
+	ctx context.Context, kind string, cmd domain.AdminProviderCmd,
+) (*domain.AdminProvider, error) {
 	if err := (domain.ProviderConfigSpec{Kind: kind, Type: cmd.Type}).Validate(); err != nil {
 		return nil, err
 	}
@@ -2250,7 +2291,9 @@ func (a *pgAdminConfig) createProvider(ctx context.Context, kind string, cmd dom
 	})
 }
 
-func (a *pgAdminConfig) updateProvider(ctx context.Context, kind string, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
+func (a *pgAdminConfig) updateProvider(
+	ctx context.Context, kind string, cmd domain.AdminProviderCmd,
+) (*domain.AdminProvider, error) {
 	if err := (domain.ProviderConfigSpec{Kind: kind, Type: cmd.Type}).Validate(); err != nil {
 		return nil, err
 	}
@@ -2339,15 +2382,21 @@ func (a *pgAdminConfig) deleteProvider(ctx context.Context, kind string, cmd dom
 	})
 }
 
-func (a *pgAdminConfig) ListEmailProviders(ctx context.Context, cmd domain.AdminConfigGetCmd) ([]domain.AdminProvider, error) {
+func (a *pgAdminConfig) ListEmailProviders(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) ([]domain.AdminProvider, error) {
 	return a.listProviders(ctx, cmd.ProjectID, coreAuthChallengeEmail)
 }
 
-func (a *pgAdminConfig) CreateEmailProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
+func (a *pgAdminConfig) CreateEmailProvider(
+	ctx context.Context, cmd domain.AdminProviderCmd,
+) (*domain.AdminProvider, error) {
 	return a.createProvider(ctx, coreAuthChallengeEmail, cmd)
 }
 
-func (a *pgAdminConfig) UpdateEmailProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
+func (a *pgAdminConfig) UpdateEmailProvider(
+	ctx context.Context, cmd domain.AdminProviderCmd,
+) (*domain.AdminProvider, error) {
 	return a.updateProvider(ctx, coreAuthChallengeEmail, cmd)
 }
 
@@ -2355,15 +2404,21 @@ func (a *pgAdminConfig) DeleteEmailProvider(ctx context.Context, cmd domain.Admi
 	return a.deleteProvider(ctx, coreAuthChallengeEmail, cmd)
 }
 
-func (a *pgAdminConfig) ListSmsProviders(ctx context.Context, cmd domain.AdminConfigGetCmd) ([]domain.AdminProvider, error) {
+func (a *pgAdminConfig) ListSmsProviders(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) ([]domain.AdminProvider, error) {
 	return a.listProviders(ctx, cmd.ProjectID, "sms")
 }
 
-func (a *pgAdminConfig) CreateSmsProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
+func (a *pgAdminConfig) CreateSmsProvider(
+	ctx context.Context, cmd domain.AdminProviderCmd,
+) (*domain.AdminProvider, error) {
 	return a.createProvider(ctx, "sms", cmd)
 }
 
-func (a *pgAdminConfig) UpdateSmsProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error) {
+func (a *pgAdminConfig) UpdateSmsProvider(
+	ctx context.Context, cmd domain.AdminProviderCmd,
+) (*domain.AdminProvider, error) {
 	return a.updateProvider(ctx, "sms", cmd)
 }
 
@@ -2377,7 +2432,9 @@ func (a *pgAdminConfig) DeleteSmsProvider(ctx context.Context, cmd domain.AdminP
 // command does not carry one.
 const adminTemplateLocale = "en"
 
-func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.AdminConfigGetCmd) (map[string]jx.Raw, error) {
+func (a *pgAdminConfig) ListEmailTemplates(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) (map[string]jx.Raw, error) {
 	rows, err := models.IamEmailTemplates.Query(
 		sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 	).All(ctx, a.db.Bobx())
@@ -2443,7 +2500,9 @@ func (a *pgAdminConfig) ListEmailTemplates(ctx context.Context, cmd domain.Admin
 	return out, nil
 }
 
-func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.AdminTemplateUpdateCmd) (map[string]jx.Raw, error) {
+func (a *pgAdminConfig) UpdateEmailTemplate(
+	ctx context.Context, cmd domain.AdminTemplateUpdateCmd,
+) (map[string]jx.Raw, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]jx.Raw, error) {
 		existing, err := models.IamEmailTemplates.Query(
 			sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
@@ -2504,7 +2563,10 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 			ProjectID:   cmd.ProjectID,
 			Environment: "",
 			AggregateID: cmd.TemplateID,
-			Payload:     map[string]any{"project_id": cmd.ProjectID, "template_id": cmd.TemplateID, "locale": locale, "body": body},
+			Payload: map[string]any{
+				"project_id": cmd.ProjectID, "template_id": cmd.TemplateID,
+				"locale": locale, "body": body,
+			},
 		}); err != nil {
 			return nil, err
 		}
@@ -2513,7 +2575,9 @@ func (a *pgAdminConfig) UpdateEmailTemplate(ctx context.Context, cmd domain.Admi
 	})
 }
 
-func (a *pgAdminConfig) PreviewEmailTemplate(ctx context.Context, cmd domain.AdminTemplatePreviewCmd) (*domain.AdminTemplatePreview, error) {
+func (a *pgAdminConfig) PreviewEmailTemplate(
+	ctx context.Context, cmd domain.AdminTemplatePreviewCmd,
+) (*domain.AdminTemplatePreview, error) {
 	row, err := a.findEmailTemplate(ctx, cmd.ProjectID, cmd.TemplateID, adminTemplateLocaleOrDefault(cmd.Locale))
 	if err != nil {
 		return nil, err
@@ -2550,7 +2614,8 @@ func (a *pgAdminConfig) PreviewEmailTemplate(ctx context.Context, cmd domain.Adm
 
 func (a *pgAdminConfig) SendTestEmail(ctx context.Context, cmd domain.AdminTemplateSendTestCmd) error {
 	// Tenant boundary: the template must exist for the project.
-	if _, err := a.findEmailTemplate(ctx, cmd.ProjectID, cmd.TemplateID, adminTemplateLocaleOrDefault(cmd.Locale)); err != nil {
+	_, err := a.findEmailTemplate(ctx, cmd.ProjectID, cmd.TemplateID, adminTemplateLocaleOrDefault(cmd.Locale))
+	if err != nil {
 		return err
 	}
 
@@ -2638,7 +2703,9 @@ func (a *pgAdminConfig) hasEnabledProvider(ctx context.Context, projectID, kind 
 	return len(rows) > 0, nil
 }
 
-func (a *pgAdminConfig) findEmailTemplate(ctx context.Context, projectID, key, locale string) (*models.IamEmailTemplate, error) {
+func (a *pgAdminConfig) findEmailTemplate(
+	ctx context.Context, projectID, key, locale string,
+) (*models.IamEmailTemplate, error) {
 	row, err := models.IamEmailTemplates.Query(
 		sm.Where(models.IamEmailTemplates.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamEmailTemplates.Columns.Key.EQ(psql.Arg(key))),
@@ -2794,7 +2861,9 @@ func adminSigningKeyToDomain(row *models.IamSigningKey) domain.AdminSigningKey {
 	}
 }
 
-func (a *pgAdminKeys) ListSigningKeys(ctx context.Context, cmd domain.AdminConfigGetCmd) ([]domain.AdminSigningKey, error) {
+func (a *pgAdminKeys) ListSigningKeys(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) ([]domain.AdminSigningKey, error) {
 	rows, err := models.IamSigningKeys.Query(
 		sm.Where(models.IamSigningKeys.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 		sm.Where(models.IamSigningKeys.Columns.Environment.EQ(psql.Arg(adminEnv(cmd.Environment)))),
@@ -2844,27 +2913,40 @@ func (a *pgAdminKeys) DeleteSigningKey(ctx context.Context, cmd domain.AdminConf
 	})
 }
 
-func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWKSRotateCmd) (*domain.AdminSigningKey, error) {
+// demoteActiveSigningKeys retires every currently-active signing key for
+// (projectID, env) so a freshly minted key can become the sole active one.
+func demoteActiveSigningKeys(ctx context.Context, db *DB, projectID, env string) error {
+	active, err := models.IamSigningKeys.Query(
+		sm.Where(models.IamSigningKeys.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamSigningKeys.Columns.Environment.EQ(psql.Arg(env))),
+		sm.Where(models.IamSigningKeys.Columns.Status.EQ(psql.Arg(coreAuthStatusActive))),
+	).All(ctx, db.Bobx())
+	if err != nil {
+		return fmt.Errorf("list active signing keys: %w", err)
+	}
+
+	for _, k := range active {
+		setter := &models.IamSigningKeySetter{Status: ptr("retired")}
+		if uerr := k.Update(ctx, db.Bobx(), setter); uerr != nil {
+			return uerr
+		}
+	}
+
+	return nil
+}
+
+func (a *pgAdminKeys) RotateSigningKeys(
+	ctx context.Context, cmd domain.AdminJWKSRotateCmd,
+) (*domain.AdminSigningKey, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminSigningKey, error) {
 		env := adminEnv(cmd.Environment)
 
 		status := "inactive"
 		if cmd.Activate {
 			status = coreAuthStatusActive
-			// Demote the currently-active key(s) when activating the new one.
-			active, err := models.IamSigningKeys.Query(
-				sm.Where(models.IamSigningKeys.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
-				sm.Where(models.IamSigningKeys.Columns.Environment.EQ(psql.Arg(env))),
-				sm.Where(models.IamSigningKeys.Columns.Status.EQ(psql.Arg(coreAuthStatusActive))),
-			).All(ctx, a.db.Bobx())
-			if err != nil {
-				return nil, fmt.Errorf("list active signing keys: %w", err)
-			}
 
-			for _, k := range active {
-				if uerr := k.Update(ctx, a.db.Bobx(), &models.IamSigningKeySetter{Status: ptr("retired")}); uerr != nil {
-					return nil, uerr
-				}
+			if err := demoteActiveSigningKeys(ctx, a.db, cmd.ProjectID, env); err != nil {
+				return nil, err
 			}
 		}
 
@@ -2923,7 +3005,9 @@ func (a *pgAdminKeys) RotateSigningKeys(ctx context.Context, cmd domain.AdminJWK
 	})
 }
 
-func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminConfigGetCmd, kid string) (*domain.AdminSigningKey, error) {
+func (a *pgAdminKeys) ActivateSigningKey(
+	ctx context.Context, cmd domain.AdminConfigGetCmd, kid string,
+) (*domain.AdminSigningKey, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminSigningKey, error) {
 		env := adminEnv(cmd.Environment)
 
@@ -2954,12 +3038,14 @@ func (a *pgAdminKeys) ActivateSigningKey(ctx context.Context, cmd domain.AdminCo
 				continue
 			}
 
-			if uerr := k.Update(ctx, a.db.Bobx(), &models.IamSigningKeySetter{Status: ptr("retired")}); uerr != nil {
+			setter := &models.IamSigningKeySetter{Status: ptr("retired")}
+			if uerr := k.Update(ctx, a.db.Bobx(), setter); uerr != nil {
 				return nil, uerr
 			}
 		}
 
-		if err := row.Update(ctx, a.db.Bobx(), &models.IamSigningKeySetter{Status: ptr(coreAuthStatusActive)}); err != nil {
+		activeSetter := &models.IamSigningKeySetter{Status: ptr(coreAuthStatusActive)}
+		if err := row.Update(ctx, a.db.Bobx(), activeSetter); err != nil {
 			return nil, err
 		}
 
@@ -3020,7 +3106,9 @@ func adminTokenProfileToDomain(row *models.IamTokenProfile) domain.AdminTokenPro
 	return p
 }
 
-func (a *pgAdminKeys) ListTokenProfiles(ctx context.Context, cmd domain.AdminConfigGetCmd) ([]domain.AdminTokenProfile, error) {
+func (a *pgAdminKeys) ListTokenProfiles(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) ([]domain.AdminTokenProfile, error) {
 	rows, err := models.IamTokenProfiles.Query(
 		sm.Where(models.IamTokenProfiles.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 	).All(ctx, a.db.Bobx())
@@ -3048,7 +3136,9 @@ func adminProfileName(doc domain.AdminConfigDoc) string {
 	return ""
 }
 
-func (a *pgAdminKeys) CreateTokenProfile(ctx context.Context, cmd domain.AdminTokenProfileCmd) (*domain.AdminTokenProfile, error) {
+func (a *pgAdminKeys) CreateTokenProfile(
+	ctx context.Context, cmd domain.AdminTokenProfileCmd,
+) (*domain.AdminTokenProfile, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminTokenProfile, error) {
 		id := cmd.ID
 		if id == "" {
@@ -3100,7 +3190,9 @@ func (a *pgAdminKeys) CreateTokenProfile(ctx context.Context, cmd domain.AdminTo
 	})
 }
 
-func (a *pgAdminKeys) UpdateTokenProfile(ctx context.Context, cmd domain.AdminTokenProfileCmd) (*domain.AdminTokenProfile, error) {
+func (a *pgAdminKeys) UpdateTokenProfile(
+	ctx context.Context, cmd domain.AdminTokenProfileCmd,
+) (*domain.AdminTokenProfile, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminTokenProfile, error) {
 		row, err := models.FindIamTokenProfile(ctx, a.db.Bobx(), cmd.ID)
 		if err != nil {
@@ -3182,7 +3274,9 @@ func (a *pgAdminKeys) DeleteTokenProfile(ctx context.Context, cmd domain.AdminCo
 	})
 }
 
-func (a *pgAdminKeys) PreviewTokenProfile(ctx context.Context, cmd domain.AdminTokenProfilePreviewCmd) (map[string]jx.Raw, error) {
+func (a *pgAdminKeys) PreviewTokenProfile(
+	ctx context.Context, cmd domain.AdminTokenProfilePreviewCmd,
+) (map[string]jx.Raw, error) {
 	row, err := models.FindIamTokenProfile(ctx, a.db.Bobx(), cmd.ProfileID)
 	if err != nil {
 		if adminIsNotFound(translatePgErr("token_profile", err)) {
@@ -3224,7 +3318,9 @@ func (a *pgAdminKeys) PreviewTokenProfile(ctx context.Context, cmd domain.AdminT
 	sampleClaims["typ"] = "access"
 	sampleClaims["env"] = adminEnv(cmd.Environment)
 
-	token, err := a.db.Signer().Sign(ctx, cmd.ProjectID, adminEnv(cmd.Environment), sampleClaims, adminTokenProfilePreviewTTL)
+	token, err := a.db.Signer().Sign(
+		ctx, cmd.ProjectID, adminEnv(cmd.Environment), sampleClaims, adminTokenProfilePreviewTTL,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -3282,7 +3378,9 @@ func accessRequestToDomain(row *models.IamAccessRequest) domain.CoreAuthAccessRe
 	return request
 }
 
-func (a *pgAdminAccessRequests) findRequest(ctx context.Context, projectID, requestID string) (*models.IamAccessRequest, error) {
+func (a *pgAdminAccessRequests) findRequest(
+	ctx context.Context, projectID, requestID string,
+) (*models.IamAccessRequest, error) {
 	row, err := models.FindIamAccessRequest(ctx, a.db.Bobx(), requestID)
 	if err != nil {
 		if adminIsNotFound(translatePgErr("access_request", err)) {
@@ -3299,7 +3397,9 @@ func (a *pgAdminAccessRequests) findRequest(ctx context.Context, projectID, requ
 	return row, nil
 }
 
-func (a *pgAdminAccessRequests) List(ctx context.Context, cmd domain.AdminAccessRequestListCmd) (*domain.AdminAccessRequestPage, error) {
+func (a *pgAdminAccessRequests) List(
+	ctx context.Context, cmd domain.AdminAccessRequestListCmd,
+) (*domain.AdminAccessRequestPage, error) {
 	mods := []bob.Mod[*dialect.SelectQuery]{
 		sm.Where(models.IamAccessRequests.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
 		sm.Where(models.IamAccessRequests.Columns.Environment.EQ(psql.Arg(adminEnv(cmd.Environment)))),
@@ -3337,7 +3437,9 @@ func (a *pgAdminAccessRequests) List(ctx context.Context, cmd domain.AdminAccess
 	return page, nil
 }
 
-func (a *pgAdminAccessRequests) Approve(ctx context.Context, cmd domain.AdminAccessRequestDecisionCmd) (map[string]jx.Raw, error) {
+func (a *pgAdminAccessRequests) Approve(
+	ctx context.Context, cmd domain.AdminAccessRequestDecisionCmd,
+) (map[string]jx.Raw, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]jx.Raw, error) {
 		row, err := a.findRequest(ctx, cmd.ProjectID, cmd.RequestID)
 		if err != nil {
@@ -3371,7 +3473,9 @@ func (a *pgAdminAccessRequests) Approve(ctx context.Context, cmd domain.AdminAcc
 	})
 }
 
-func (a *pgAdminAccessRequests) Deny(ctx context.Context, cmd domain.AdminAccessRequestDecisionCmd) (*domain.CoreAuthAccessRequest, error) {
+func (a *pgAdminAccessRequests) Deny(
+	ctx context.Context, cmd domain.AdminAccessRequestDecisionCmd,
+) (*domain.CoreAuthAccessRequest, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.CoreAuthAccessRequest, error) {
 		row, err := a.findRequest(ctx, cmd.ProjectID, cmd.RequestID)
 		if err != nil {
@@ -3402,8 +3506,10 @@ func (a *pgAdminAccessRequests) Deny(ctx context.Context, cmd domain.AdminAccess
 
 // persistDecision writes the decided access request back, keeping the status
 // column in sync and recording the deciding actor/reason in the envelope.
-func (a *pgAdminAccessRequests) persistDecision(ctx context.Context, row *models.IamAccessRequest, ar domain.CoreAuthAccessRequest, actorID, reason string) error {
-	raw, err := marshal(ar)
+func (a *pgAdminAccessRequests) persistDecision(
+	ctx context.Context, row *models.IamAccessRequest, accessReq domain.CoreAuthAccessRequest, actorID, reason string,
+) error {
+	raw, err := marshal(accessReq)
 	if err != nil {
 		return err
 	}
@@ -3428,7 +3534,7 @@ func (a *pgAdminAccessRequests) persistDecision(ctx context.Context, row *models
 	rm := json.RawMessage(merged)
 
 	return row.Update(ctx, a.db.Bobx(), &models.IamAccessRequestSetter{
-		Status:    ptr(ar.Status),
+		Status:    ptr(accessReq.Status),
 		Data:      &rm,
 		UpdatedAt: ptr(nowUTC()),
 	})

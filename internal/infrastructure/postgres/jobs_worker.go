@@ -94,18 +94,25 @@ func (db *DB) drainOneJob(ctx context.Context, log *xlog.Logger) bool {
 	return true
 }
 
-func (db *DB) finishJob(ctx context.Context, id string, d jobData, result map[string]any, perr error, log *xlog.Logger) {
+func (db *DB) finishJob(
+	ctx context.Context,
+	id string,
+	job jobData,
+	result map[string]any,
+	perr error,
+	log *xlog.Logger,
+) {
 	status := jobStatusCompleted
 	if perr != nil {
 		status = jobStatusFailed
-		d.Error = perr.Error()
+		job.Error = perr.Error()
 
 		log.Warn("job failed", xlog.String("job_id", id), xlog.Error("err", perr))
 	}
 
-	d.Result = result
+	job.Result = result
 
-	raw, err := json.Marshal(d)
+	raw, err := json.Marshal(job)
 	if err != nil {
 		return
 	}

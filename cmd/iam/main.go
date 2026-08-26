@@ -50,6 +50,7 @@ const (
 	outboxMaxAttempts      = 10
 	outboxMaxBackoff       = 5 * time.Minute
 	configReaderCacheTTL   = 30 * time.Second
+	corsOriginCacheTTL     = 60 * time.Second
 )
 
 // apiPathPrefixes returns the URL namespaces served by the generated API.
@@ -112,7 +113,15 @@ func setupTelemetry(ctx context.Context, cfg *config.Config) (http.Handler, func
 // embedded admin SPA. Probes/metrics are mounted here too, unless
 // ProbeAddr wants them on a separate listener (a k8s sidecar port not
 // exposed publicly) — the returned bool tells the caller which.
-func buildRootHandler(cfg *config.Config, db *postgres.DB, emitter postgres.Emitter, auth api.Authenticator, srv http.Handler, probeMux *http.ServeMux, metricsHandler http.Handler) (http.Handler, bool) {
+func buildRootHandler(
+	cfg *config.Config,
+	db *postgres.DB,
+	emitter postgres.Emitter,
+	auth api.Authenticator,
+	srv http.Handler,
+	probeMux *http.ServeMux,
+	metricsHandler http.Handler,
+) (http.Handler, bool) {
 	// Trust forwarding headers (X-Forwarded-For/X-Real-IP) only from configured
 	// proxy networks; otherwise the real TCP peer is used so clients cannot spoof
 	// their IP to bypass IP-keyed rate limits.
@@ -126,7 +135,11 @@ func buildRootHandler(cfg *config.Config, db *postgres.DB, emitter postgres.Emit
 						api.SoftAuthMiddleware(auth)(srv))))))
 	// CORS allows the statically configured origins plus the dynamic per-client
 	// union (app clients' allowed_origins), cached for 60s.
-	apiPipeline = api.CORSMiddleware(cfg.Service.CORS.AllowedOrigins, postgres.NewPgAdminApps(db, emitter), 60*time.Second)(apiPipeline)
+	apiPipeline = api.CORSMiddleware(
+		cfg.Service.CORS.AllowedOrigins,
+		postgres.NewPgAdminApps(db, emitter),
+		corsOriginCacheTTL,
+	)(apiPipeline)
 	apiPipeline = api.SecurityHeaders(apiPipeline)
 	// Rate limiting honors per-project overrides (iam_config key=rate_limits),
 	// falling back to the hardcoded defaults when a project has no doc.
@@ -162,7 +175,13 @@ func buildRootHandler(cfg *config.Config, db *postgres.DB, emitter postgres.Emit
 // buildServers assembles the liveness/readiness probe mux, the root HTTP
 // handler, and the two net/http servers: the API server always, and a
 // separate probe server only when ProbeAddr wants its own listener.
-func buildServers(cfg *config.Config, db *postgres.DB, emitter postgres.Emitter, auth api.Authenticator, srv, metricsHandler http.Handler) (*http.Server, *http.Server, *xprobe.Bool) {
+func buildServers(
+	cfg *config.Config,
+	db *postgres.DB,
+	emitter postgres.Emitter,
+	auth api.Authenticator,
+	srv, metricsHandler http.Handler,
+) (*http.Server, *http.Server, *xprobe.Bool) {
 	live := xprobe.NewBool()
 	live.Set(true)
 	probeMux := xprobe.Mux(
@@ -184,7 +203,11 @@ func buildServers(cfg *config.Config, db *postgres.DB, emitter postgres.Emitter,
 	if separateProbes {
 		// A probe request is a tiny GET with no body, so a short bound is safe
 		// and is what closes off Slowloris against this listener too.
-		probeSrv = &http.Server{Addr: cfg.Service.HTTP.ProbeAddr, Handler: probeMux, ReadHeaderTimeout: probeReadHeaderTimeout}
+		probeSrv = &http.Server{
+			Addr:              cfg.Service.HTTP.ProbeAddr,
+			Handler:           probeMux,
+			ReadHeaderTimeout: probeReadHeaderTimeout,
+		}
 	}
 
 	return httpSrv, probeSrv, live
@@ -194,7 +217,12 @@ func buildServers(cfg *config.Config, db *postgres.DB, emitter postgres.Emitter,
 // serving (API, then probes), flip liveness, flush telemetry. telemetryShutdown
 // is a pointer since it is nilled out after running (RegisterFnErr's cleanups
 // can run more than once — e.g. a signal during an already-running shutdown).
-func registerShutdownHooks(sd *xshutdown.Manager, httpSrv, probeSrv *http.Server, live *xprobe.Bool, telemetryShutdown *func(context.Context) error) {
+func registerShutdownHooks(
+	sd *xshutdown.Manager,
+	httpSrv, probeSrv *http.Server,
+	live *xprobe.Bool,
+	telemetryShutdown *func(context.Context) error,
+) {
 	sd.RegisterFnErr(
 		func(ctx context.Context) error { return httpSrv.Shutdown(ctx) },
 		func(ctx context.Context) error {
@@ -219,33 +247,44 @@ func registerShutdownHooks(sd *xshutdown.Manager, httpSrv, probeSrv *http.Server
 }
 
 // startBackgroundWorkers launches the service's long-running loops; they
-// cancel with the shutdown context sd provides.
-func startBackgroundWorkers(sd *xshutdown.Manager, ob *outbox.Outbox, db *postgres.DB, webhooks *postgres.PgWebhooks, log *xlog.Logger) {
-	sd.Go(func(ctx context.Context) {
-		if err := ob.Run(ctx); err != nil && ctx.Err() == nil {
+// cancel with the shutdown context shutdown provides.
+func startBackgroundWorkers(
+	shutdown *xshutdown.Manager,
+	outboxRelay *outbox.Outbox,
+	db *postgres.DB,
+	webhooks *postgres.PgWebhooks,
+	log *xlog.Logger,
+) {
+	shutdown.Go(func(ctx context.Context) {
+		if err := outboxRelay.Run(ctx); err != nil && ctx.Err() == nil {
 			log.Error("outbox relay stopped", xlog.Error("err", err))
 		}
 	})
 	// Garbage collector: prune expired runtime rows (challenges, flows, auth /
 	// device / PAR codes, timed-out sessions and refresh tokens) that are only
 	// filtered read-side and would otherwise grow without bound.
-	sd.Go(func(ctx context.Context) {
+	shutdown.Go(func(ctx context.Context) {
 		db.RunGarbageCollector(ctx, 0, log.AppendName("gc"))
 	})
 	// Webhook retry: drain deliveries whose exponential backoff has elapsed
 	// (deliver() writes next_attempt_at; nothing consumed it before).
-	sd.Go(func(ctx context.Context) {
+	shutdown.Go(func(ctx context.Context) {
 		webhooks.RunRetryWorker(ctx, 0, log.AppendName("webhook-retry"))
 	})
 	// Jobs: drain pending async jobs (bulk user import, audit/data exports).
-	sd.Go(func(ctx context.Context) {
+	shutdown.Go(func(ctx context.Context) {
 		db.RunJobsWorker(ctx, 0, log.AppendName("jobs"))
 	})
 }
 
 // startServing launches the listener goroutines: the probe server (when it
 // has its own listener) and the API server.
-func startServing(shutdown *xshutdown.Manager, httpSrv, probeSrv *http.Server, probeAddr, apiAddr string, log *xlog.Logger) {
+func startServing(
+	shutdown *xshutdown.Manager,
+	httpSrv, probeSrv *http.Server,
+	probeAddr, apiAddr string,
+	log *xlog.Logger,
+) {
 	if probeSrv != nil {
 		shutdown.Go(func(context.Context) {
 			log.Info("probes listening", xlog.String("addr", probeAddr))
@@ -271,7 +310,9 @@ func startServing(shutdown *xshutdown.Manager, httpSrv, probeSrv *http.Server, p
 // would otherwise silently yield the identity/passthrough cipher).
 func setupDatabase(ctx context.Context, cfg *config.Config, log *xlog.Logger) (*postgres.DB, error) {
 	if cfg.Service.Auth.EncryptionKey == "" {
-		log.Error("secrets-at-rest encryption is DISABLED — set service.auth.encryption_key (base64 32-byte AES-256 key) before running in production")
+		log.Error("secrets-at-rest encryption is DISABLED — set service.auth.encryption_key " +
+			"(base64 32-byte AES-256 key) before running in production")
+
 		return nil, errEncryptionKeyRequired
 	}
 
@@ -326,7 +367,12 @@ func runMigrations(ctx context.Context, db *postgres.DB, log *xlog.Logger) error
 
 // buildAPIServer wires the ogen-generated server (12 feature groups over
 // Postgres adapters) over the master-key/session authenticator.
-func buildAPIServer(cfg *config.Config, db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.PgWebhooks) (api.Authenticator, *oas.Server, error) {
+func buildAPIServer(
+	cfg *config.Config,
+	db *postgres.DB,
+	emitter postgres.Emitter,
+	webhooks *postgres.PgWebhooks,
+) (api.Authenticator, *oas.Server, error) {
 	handler := buildHandler(db, emitter, webhooks)
 	auth := postgres.NewAuthenticator(db, cfg.Service.Auth.MasterKey)
 
@@ -373,7 +419,13 @@ func loadConfig(configPath string) (*config.Config, error) {
 // operator/service) mutations record an audit-log row in the same
 // transaction as the mutation. When configured, it also seeds the root
 // operator/project so there is something to manage on first boot.
-func setupOutboxAndEmitter(ctx context.Context, cfg *config.Config, db *postgres.DB, webhooks *postgres.PgWebhooks, log *xlog.Logger) (*outbox.Outbox, postgres.Emitter, error) {
+func setupOutboxAndEmitter(
+	ctx context.Context,
+	cfg *config.Config,
+	db *postgres.DB,
+	webhooks *postgres.PgWebhooks,
+	log *xlog.Logger,
+) (*outbox.Outbox, postgres.Emitter, error) {
 	outboxRelay, err := outbox.New(db.Pool, db.TxDB, notifications.NewPublisher(db, webhooks, log.AppendName("outbox")),
 		outbox.WithInstanceID(build.InstanceID),
 		outbox.WithLogger(buildSlogLogger()),

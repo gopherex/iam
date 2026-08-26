@@ -407,7 +407,9 @@ func (s staticSecuritySource) BearerAuth(context.Context, oas.OperationName, *oa
 	return oas.BearerAuth{Token: s.token}, nil
 }
 
-func (s staticSecuritySource) ClientSecretBasic(context.Context, oas.OperationName, *oas.Client) (oas.ClientSecretBasic, error) {
+func (s staticSecuritySource) ClientSecretBasic(
+	context.Context, oas.OperationName, *oas.Client,
+) (oas.ClientSecretBasic, error) {
 	return oas.ClientSecretBasic{Username: s.token}, nil
 }
 

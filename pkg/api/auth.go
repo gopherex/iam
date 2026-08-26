@@ -106,37 +106,51 @@ func (h securityHandler) auth(ctx context.Context, p *domain.Principal, err erro
 	return withPrincipal(ctx, p), nil
 }
 
-func (h securityHandler) HandleBearerAuth(ctx context.Context, _ oas.OperationName, t oas.BearerAuth) (context.Context, error) {
+func (h securityHandler) HandleBearerAuth(
+	ctx context.Context, _ oas.OperationName, t oas.BearerAuth,
+) (context.Context, error) {
 	p, err := h.a.User(ctx, t.Token)
 	return h.auth(ctx, p, err)
 }
 
-func (h securityHandler) HandleAdminToken(ctx context.Context, _ oas.OperationName, t oas.AdminToken) (context.Context, error) {
+func (h securityHandler) HandleAdminToken(
+	ctx context.Context, _ oas.OperationName, t oas.AdminToken,
+) (context.Context, error) {
 	p, err := h.a.Admin(ctx, t.Token)
 	return h.auth(ctx, p, err)
 }
 
-func (h securityHandler) HandleMasterKey(ctx context.Context, _ oas.OperationName, t oas.MasterKey) (context.Context, error) {
+func (h securityHandler) HandleMasterKey(
+	ctx context.Context, _ oas.OperationName, t oas.MasterKey,
+) (context.Context, error) {
 	p, err := h.a.Master(ctx, t.Token)
 	return h.auth(ctx, p, err)
 }
 
-func (h securityHandler) HandleServiceToken(ctx context.Context, _ oas.OperationName, t oas.ServiceToken) (context.Context, error) {
+func (h securityHandler) HandleServiceToken(
+	ctx context.Context, _ oas.OperationName, t oas.ServiceToken,
+) (context.Context, error) {
 	p, err := h.a.Service(ctx, t.Token)
 	return h.auth(ctx, p, err)
 }
 
-func (h securityHandler) HandleScimToken(ctx context.Context, _ oas.OperationName, t oas.ScimToken) (context.Context, error) {
+func (h securityHandler) HandleScimToken(
+	ctx context.Context, _ oas.OperationName, t oas.ScimToken,
+) (context.Context, error) {
 	p, err := h.a.SCIM(ctx, t.Token)
 	return h.auth(ctx, p, err)
 }
 
-func (h securityHandler) HandleClientSecretBasic(ctx context.Context, _ oas.OperationName, t oas.ClientSecretBasic) (context.Context, error) {
+func (h securityHandler) HandleClientSecretBasic(
+	ctx context.Context, _ oas.OperationName, t oas.ClientSecretBasic,
+) (context.Context, error) {
 	p, err := h.a.Client(ctx, t.Username, t.Password)
 	return h.auth(ctx, p, err)
 }
 
-func (h securityHandler) HandleOAuth2(ctx context.Context, _ oas.OperationName, t oas.OAuth2) (context.Context, error) {
+func (h securityHandler) HandleOAuth2(
+	ctx context.Context, _ oas.OperationName, t oas.OAuth2,
+) (context.Context, error) {
 	p, err := h.a.OAuth2(ctx, t.Token)
 	return h.auth(ctx, p, err)
 }

@@ -52,7 +52,9 @@ var _ api.AdminAPIKeys = (*pgAdminAPIKeys)(nil)
 // findAdminAPIKey loads a row and enforces the tenant boundary.
 // It reuses the package-level loadAPIKey from machineid_pg.go which already
 // handles FindIamAPIKey + project_id check + envelope unmarshal.
-func (a *pgAdminAPIKeys) findAdminAPIKey(ctx context.Context, projectID, keyID string) (*models.IamAPIKey, *domain.APIKey, error) {
+func (a *pgAdminAPIKeys) findAdminAPIKey(
+	ctx context.Context, projectID, keyID string,
+) (*models.IamAPIKey, *domain.APIKey, error) {
 	row, key, err := loadAPIKey(ctx, a.db, projectID, keyID)
 	if err != nil {
 		return nil, nil, err

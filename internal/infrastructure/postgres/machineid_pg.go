@@ -90,7 +90,9 @@ func machineIDHash(token string) string {
 }
 
 // loadServiceAccount fetches and tenant-checks a service-account envelope.
-func (a *PgMachineIdentities) loadServiceAccount(ctx context.Context, projectID, id string) (*models.IamServiceAccount, *saEnvelope, error) {
+func (a *PgMachineIdentities) loadServiceAccount(
+	ctx context.Context, projectID, id string,
+) (*models.IamServiceAccount, *saEnvelope, error) {
 	row, err := models.FindIamServiceAccount(ctx, a.db.Bobx(), id)
 	if err != nil {
 		if adminIsNotFound(err) { // a missing row is a domain not-found, not a 500
@@ -127,7 +129,9 @@ func saSetterData(env *saEnvelope) (*json.RawMessage, error) {
 // ===== service accounts ============================================
 
 // CreateServiceAccount creates a service account in the command's project.
-func (a *PgMachineIdentities) CreateServiceAccount(ctx context.Context, cmd domain.ServiceAccountCmd) (*domain.ServiceAccount, error) {
+func (a *PgMachineIdentities) CreateServiceAccount(
+	ctx context.Context, cmd domain.ServiceAccountCmd,
+) (*domain.ServiceAccount, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.ServiceAccount, error) {
 		svcAcct := domain.ServiceAccount{
 			ID:        newUUID(),
@@ -174,7 +178,9 @@ func (a *PgMachineIdentities) CreateServiceAccount(ctx context.Context, cmd doma
 // ListServiceAccounts returns a cursor page of service accounts in a project.
 // The cursor is the id of the last item; rows are ordered by id ascending and
 // one extra row is fetched to compute HasMore.
-func (a *PgMachineIdentities) ListServiceAccounts(ctx context.Context, cmd domain.MachineIDServiceAccountListCmd) (*domain.MachineIDServiceAccountPage, error) {
+func (a *PgMachineIdentities) ListServiceAccounts(
+	ctx context.Context, cmd domain.MachineIDServiceAccountListCmd,
+) (*domain.MachineIDServiceAccountPage, error) {
 	limit := cmd.Limit
 	if limit <= 0 || limit > 100 {
 		limit = 50
@@ -221,7 +227,9 @@ func (a *PgMachineIdentities) ListServiceAccounts(ctx context.Context, cmd domai
 }
 
 // GetServiceAccount fetches one service account, enforcing the tenant boundary.
-func (a *PgMachineIdentities) GetServiceAccount(ctx context.Context, projectID, serviceAccountID string) (*domain.ServiceAccount, error) {
+func (a *PgMachineIdentities) GetServiceAccount(
+	ctx context.Context, projectID, serviceAccountID string,
+) (*domain.ServiceAccount, error) {
 	_, env, err := a.loadServiceAccount(ctx, projectID, serviceAccountID)
 	if err != nil {
 		return nil, err
@@ -233,7 +241,9 @@ func (a *PgMachineIdentities) GetServiceAccount(ctx context.Context, projectID, 
 }
 
 // UpdateServiceAccount patches scopes / disabled state of a service account.
-func (a *PgMachineIdentities) UpdateServiceAccount(ctx context.Context, cmd domain.MachineIDServiceAccountPatchCmd) (*domain.ServiceAccount, error) {
+func (a *PgMachineIdentities) UpdateServiceAccount(
+	ctx context.Context, cmd domain.MachineIDServiceAccountPatchCmd,
+) (*domain.ServiceAccount, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.ServiceAccount, error) {
 		row, env, err := a.loadServiceAccount(ctx, cmd.ProjectID, cmd.ServiceAccountID)
 		if err != nil {
@@ -303,7 +313,9 @@ func (a *PgMachineIdentities) DeleteServiceAccount(ctx context.Context, projectI
 
 // CreateServiceAccountSecret mints a new client secret for a service account.
 // The plaintext secret is returned once; only its sha256 hash is persisted.
-func (a *PgMachineIdentities) CreateServiceAccountSecret(ctx context.Context, cmd domain.MachineIDSecretCmd) (*domain.MachineIDSecret, error) {
+func (a *PgMachineIdentities) CreateServiceAccountSecret(
+	ctx context.Context, cmd domain.MachineIDSecretCmd,
+) (*domain.MachineIDSecret, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.MachineIDSecret, error) {
 		row, env, err := a.loadServiceAccount(ctx, cmd.ProjectID, cmd.ServiceAccountID)
 		if err != nil {
@@ -357,7 +369,9 @@ func (a *PgMachineIdentities) CreateServiceAccountSecret(ctx context.Context, cm
 }
 
 // RevokeServiceAccountSecret marks a service-account client secret revoked.
-func (a *PgMachineIdentities) RevokeServiceAccountSecret(ctx context.Context, projectID, serviceAccountID, secretID string) error {
+func (a *PgMachineIdentities) RevokeServiceAccountSecret(
+	ctx context.Context, projectID, serviceAccountID, secretID string,
+) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		row, env, err := a.loadServiceAccount(ctx, projectID, serviceAccountID)
 		if err != nil {
@@ -454,7 +468,9 @@ type keyEnvelope struct {
 }
 
 // loadAPIKey fetches and tenant-checks an API key.
-func (a *PgMachineIdentities) loadAPIKey(ctx context.Context, projectID, keyID string) (*models.IamAPIKey, *domain.APIKey, error) {
+func (a *PgMachineIdentities) loadAPIKey(
+	ctx context.Context, projectID, keyID string,
+) (*models.IamAPIKey, *domain.APIKey, error) {
 	row, err := models.FindIamAPIKey(ctx, a.db.Bobx(), keyID)
 	if err != nil {
 		if adminIsNotFound(err) { // a missing row is a domain not-found, not a 500
@@ -588,7 +604,9 @@ func (a *PgMachineIdentities) ListAPIKeys(ctx context.Context, projectID string)
 }
 
 // UpdateAPIKey patches API-key metadata / scopes / disabled state.
-func (a *PgMachineIdentities) UpdateAPIKey(ctx context.Context, cmd domain.MachineIDAPIKeyPatchCmd) (*domain.APIKey, error) {
+func (a *PgMachineIdentities) UpdateAPIKey(
+	ctx context.Context, cmd domain.MachineIDAPIKeyPatchCmd,
+) (*domain.APIKey, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.APIKey, error) {
 		row, key, err := a.loadAPIKey(ctx, cmd.ProjectID, cmd.KeyID)
 		if err != nil {
@@ -634,7 +652,9 @@ func (a *PgMachineIdentities) UpdateAPIKey(ctx context.Context, cmd domain.Machi
 
 // RotateAPIKey mints a fresh secret for an existing key and returns the new
 // plaintext exactly once; the prefix and hash columns are replaced.
-func (a *PgMachineIdentities) RotateAPIKey(ctx context.Context, projectID, keyID string) (*domain.APIKey, string, error) {
+func (a *PgMachineIdentities) RotateAPIKey(
+	ctx context.Context, projectID, keyID string,
+) (*domain.APIKey, string, error) {
 	type result struct {
 		key    *domain.APIKey
 		secret string

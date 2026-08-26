@@ -93,7 +93,9 @@ func (a *pgHooks) Create(ctx context.Context, projectID string, hook domain.Admi
 
 	id := newUUID()
 
-	raw, err := json.Marshal(hookData{URL: hook.URL, TimeoutMs: clampHookTimeout(hook.TimeoutMs), SigningSecret: encSecret, FailOpen: hook.FailOpen})
+	raw, err := json.Marshal(hookData{
+		URL: hook.URL, TimeoutMs: clampHookTimeout(hook.TimeoutMs), SigningSecret: encSecret, FailOpen: hook.FailOpen,
+	})
 	if err != nil {
 		return domain.AdminHook{}, fmt.Errorf("hook create: marshal data: %w", err)
 	}

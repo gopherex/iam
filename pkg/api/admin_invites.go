@@ -29,7 +29,11 @@ func oasInvite(inv *domain.Invite) oas.Invite {
 	return out
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminInvites(ctx context.Context, req *oas.InviteCreateRequest, params oas.PostV1ProjectsByProjectIdAdminInvitesParams) (*oas.InviteCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminInvites(
+	ctx context.Context,
+	req *oas.InviteCreateRequest,
+	params oas.PostV1ProjectsByProjectIdAdminInvitesParams,
+) (*oas.InviteCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -69,7 +73,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminInvites(ctx context.Context
 	return out, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminInvites(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminInvitesParams) (*oas.GetV1ProjectsByProjectIdAdminInvitesOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminInvites(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminInvitesParams,
+) (*oas.GetV1ProjectsByProjectIdAdminInvitesOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -90,7 +97,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminInvites(ctx context.Context,
 	return &oas.GetV1ProjectsByProjectIdAdminInvitesOK{Invites: data}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeParams) (*oas.Ok, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevokeParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}

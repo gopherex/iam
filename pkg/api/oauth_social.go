@@ -50,7 +50,10 @@ var _ oas.Handler = (*OAuthSocialService)(nil)
 // GetV1AuthOauthByProviderCallback handles the provider callback (public,
 // security: []) and redirects the browser back to the product, optionally
 // setting session cookies in cookie mode.
-func (s *OAuthSocialService) GetV1AuthOauthByProviderCallback(ctx context.Context, params oas.GetV1AuthOauthByProviderCallbackParams) (r *oas.GetV1AuthOauthByProviderCallbackFound, _ error) {
+func (s *OAuthSocialService) GetV1AuthOauthByProviderCallback(
+	ctx context.Context,
+	params oas.GetV1AuthOauthByProviderCallbackParams,
+) (r *oas.GetV1AuthOauthByProviderCallbackFound, _ error) {
 	res, err := s.deps.Accounts.CompleteLoginRedirect(ctx, domain.OAuthSocialCallbackCmd{
 		Provider: params.Provider,
 		Code:     params.Code.Or(""),
@@ -71,7 +74,10 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderCallback(ctx context.Contex
 
 // GetV1AuthOauthByProviderLinkCallback handles the account-link callback
 // (public, security: []) and redirects the browser back to the product.
-func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkCallback(ctx context.Context, params oas.GetV1AuthOauthByProviderLinkCallbackParams) (r *oas.GetV1AuthOauthByProviderLinkCallbackFound, _ error) {
+func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkCallback(
+	ctx context.Context,
+	params oas.GetV1AuthOauthByProviderLinkCallbackParams,
+) (r *oas.GetV1AuthOauthByProviderLinkCallbackFound, _ error) {
 	url, err := s.deps.Accounts.CompleteLink(ctx, domain.OAuthSocialLinkCallbackCmd{
 		Provider: params.Provider,
 	})
@@ -84,7 +90,10 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkCallback(ctx context.Co
 
 // GetV1AuthOauthByProviderLinkStart begins linking a provider to the current
 // user; the account comes from the authenticated principal, never the request.
-func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkStart(ctx context.Context, params oas.GetV1AuthOauthByProviderLinkStartParams) (r *oas.GetV1AuthOauthByProviderLinkStartFound, _ error) {
+func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkStart(
+	ctx context.Context,
+	params oas.GetV1AuthOauthByProviderLinkStartParams,
+) (r *oas.GetV1AuthOauthByProviderLinkStartFound, _ error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -106,7 +115,10 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderLinkStart(ctx context.Conte
 
 // GetV1AuthOauthByProviderStart begins a browser-driven social login (public,
 // security: []) and redirects to the provider's authorize endpoint.
-func (s *OAuthSocialService) GetV1AuthOauthByProviderStart(ctx context.Context, params oas.GetV1AuthOauthByProviderStartParams) (r *oas.GetV1AuthOauthByProviderStartFound, _ error) {
+func (s *OAuthSocialService) GetV1AuthOauthByProviderStart(
+	ctx context.Context,
+	params oas.GetV1AuthOauthByProviderStartParams,
+) (r *oas.GetV1AuthOauthByProviderStartFound, _ error) {
 	url, err := s.deps.Accounts.StartLogin(ctx, domain.OAuthSocialStartCmd{
 		ProjectID:     params.ClientID,
 		Provider:      params.Provider,
@@ -123,7 +135,9 @@ func (s *OAuthSocialService) GetV1AuthOauthByProviderStart(ctx context.Context, 
 	return &oas.GetV1AuthOauthByProviderStartFound{Location: optURI(url)}, nil
 }
 
-func (s *OAuthSocialService) GetV1AuthOauthProviders(ctx context.Context, params oas.GetV1AuthOauthProvidersParams) (*oas.GetV1AuthOauthProvidersOK, error) {
+func (s *OAuthSocialService) GetV1AuthOauthProviders(
+	ctx context.Context, params oas.GetV1AuthOauthProvidersParams,
+) (*oas.GetV1AuthOauthProvidersOK, error) {
 	providers, err := s.deps.Accounts.EnabledProviders(ctx, params.XClientID)
 	if err != nil {
 		return nil, err
@@ -137,7 +151,11 @@ func (s *OAuthSocialService) GetV1AuthOauthProviders(ctx context.Context, params
 	return &oas.GetV1AuthOauthProvidersOK{Providers: items}, nil
 }
 
-func (s *OAuthSocialService) PostV1AuthOauthByProviderUnlink(ctx context.Context, req *oas.PostV1AuthOauthByProviderUnlinkReq, _ oas.PostV1AuthOauthByProviderUnlinkParams) (*oas.Ok, error) {
+func (s *OAuthSocialService) PostV1AuthOauthByProviderUnlink(
+	ctx context.Context,
+	req *oas.PostV1AuthOauthByProviderUnlinkReq,
+	_ oas.PostV1AuthOauthByProviderUnlinkParams,
+) (*oas.Ok, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -150,7 +168,11 @@ func (s *OAuthSocialService) PostV1AuthOauthByProviderUnlink(ctx context.Context
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *OAuthSocialService) PostV1AuthOauthExchange(ctx context.Context, req *oas.PostV1AuthOauthExchangeReq, params oas.PostV1AuthOauthExchangeParams) (*oas.AuthResult, error) {
+func (s *OAuthSocialService) PostV1AuthOauthExchange(
+	ctx context.Context,
+	req *oas.PostV1AuthOauthExchangeReq,
+	params oas.PostV1AuthOauthExchangeParams,
+) (*oas.AuthResult, error) {
 	cmd := domain.OAuthSocialExchangeCmd{
 		ProjectID:    params.XClientID,
 		Code:         req.Code,

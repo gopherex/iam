@@ -79,7 +79,12 @@ func (a *pgCoreAuthFlows) signinPasswordless() (*pgPasswordlessAccounts, error) 
 // ─── create ──────────────────────────────────────────────────────────────────
 
 // createSignin is the flowCreateFn for SIGNIN. It dispatches on cmd.Method.
-func createSignin(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+func createSignin(
+	ctx context.Context,
+	a *pgCoreAuthFlows,
+	f *domain.Flow,
+	cmd domain.FlowCreateCmd,
+) (*domain.FlowState, error) {
 	method := cmd.Method
 	if method == "" {
 		method = domain.FlowMethodPassword
@@ -105,7 +110,11 @@ func createSignin(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd d
 // createSigninPasskey begins a WebAuthn assertion and halts at collect_credentials
 // with the PublicKeyCredentialRequestOptions surfaced in the challenge; the
 // client runs navigator.credentials.get() and submits the assertion back.
-func (a *pgCoreAuthFlows) createSigninPasskey(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) createSigninPasskey(
+	ctx context.Context,
+	f *domain.Flow,
+	cmd domain.FlowCreateCmd,
+) (*domain.FlowState, error) {
 	if cmd.Email == "" {
 		return nil, domain.ErrBadRequest.WithMessage("email is required for passkey signin")
 	}
@@ -151,7 +160,11 @@ func (a *pgCoreAuthFlows) createSigninPasskey(ctx context.Context, f *domain.Flo
 // the user, then resumes the flow with action=oauth_callback{code}. The CSRF
 // state is bound server-side by StartLogin; the flow_token itself authenticates
 // the resume.
-func (a *pgCoreAuthFlows) createSigninOAuth(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) createSigninOAuth(
+	ctx context.Context,
+	f *domain.Flow,
+	cmd domain.FlowCreateCmd,
+) (*domain.FlowState, error) {
 	if cmd.Provider == "" {
 		return nil, domain.ErrBadRequest.WithMessage("provider is required for oauth signin")
 	}
@@ -206,7 +219,11 @@ func (a *pgCoreAuthFlows) createSigninOAuth(ctx context.Context, f *domain.Flow,
 // createSigninPassword authenticates the password credential; if MFA is required
 // it issues a challenge and persists at mfa_required, otherwise it completes the
 // flow in a single round-trip.
-func (a *pgCoreAuthFlows) createSigninPassword(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) createSigninPassword(
+	ctx context.Context,
+	f *domain.Flow,
+	cmd domain.FlowCreateCmd,
+) (*domain.FlowState, error) {
 	// 1. Verify password. Returns ErrInvalidCredentials for both unknown-user
 	//    and wrong-password — propagate as-is (§5.4 anti-enumeration).
 	result, err := a.accounts.AuthenticatePassword(ctx, f.ProjectID, cmd.Email, cmd.Password)
@@ -291,7 +308,11 @@ func (a *pgCoreAuthFlows) createSigninPassword(ctx context.Context, f *domain.Fl
 // createSigninPhoneOTP issues an SMS OTP challenge (purpose=signin) and persists
 // the flow at verify_phone. The SMS provider is preflighted inside StartOTP, so
 // a missing provider fails fast with ErrValidation before any flow row is written.
-func (a *pgCoreAuthFlows) createSigninPhoneOTP(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) createSigninPhoneOTP(
+	ctx context.Context,
+	f *domain.Flow,
+	cmd domain.FlowCreateCmd,
+) (*domain.FlowState, error) {
 	if cmd.Phone == "" {
 		return nil, domain.ErrBadRequest.WithMessage("phone is required for phone_otp signin")
 	}
@@ -312,7 +333,11 @@ func (a *pgCoreAuthFlows) createSigninPhoneOTP(ctx context.Context, f *domain.Fl
 // createSigninMagicLink issues a magic-link challenge (purpose=login). The link
 // is delivered out-of-band; the flow halts at verify_email until the client
 // submits the token carried by the link.
-func (a *pgCoreAuthFlows) createSigninMagicLink(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) createSigninMagicLink(
+	ctx context.Context,
+	f *domain.Flow,
+	cmd domain.FlowCreateCmd,
+) (*domain.FlowState, error) {
 	if cmd.Email == "" {
 		return nil, domain.ErrBadRequest.WithMessage("email is required for magic_link signin")
 	}
@@ -332,7 +357,13 @@ func (a *pgCoreAuthFlows) createSigninMagicLink(ctx context.Context, f *domain.F
 
 // signinPersistChallenge embeds a passwordless challenge into the flow's
 // ActiveChallenge and persists a fresh pending row at the given step.
-func (a *pgCoreAuthFlows) signinPersistChallenge(ctx context.Context, f *domain.Flow, step domain.FlowStep, channel string, ch *domain.Challenge) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signinPersistChallenge(
+	ctx context.Context,
+	f *domain.Flow,
+	step domain.FlowStep,
+	channel string,
+	ch *domain.Challenge,
+) (*domain.FlowState, error) {
 	now := nowUTC()
 	f.Step = step
 	f.ActiveChallenge = &domain.FlowActiveChallenge{
@@ -386,7 +417,13 @@ func (a *pgCoreAuthFlows) signinAvailableMethods(_ context.Context, acc *domain.
 // ─── advance ─────────────────────────────────────────────────────────────────
 
 // advanceSignin is the flowAdvanceFn for SIGNIN.
-func advanceSignin(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func advanceSignin(
+	ctx context.Context,
+	a *pgCoreAuthFlows,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	// switch_method re-issues an alternate FIRST-FACTOR method's challenge in
 	// place (no rotation). It is never valid at mfa_required: the required
 	// second factor must not be swappable for a first-factor method, or MFA is
@@ -429,7 +466,9 @@ func advanceSignin(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 		case "oauth_callback":
 			return a.signinOAuthCallback(ctx, row, f, cmd)
 		default:
-			return nil, domain.ErrBadRequest.WithMessage(`expected action "verify_passkey" or "oauth_callback" at step collect_credentials`)
+			return nil, domain.ErrBadRequest.WithMessage(
+				`expected action "verify_passkey" or "oauth_callback" at step collect_credentials`,
+			)
 		}
 	default:
 		return nil, domain.ErrBadRequest.WithMessage(fmt.Sprintf("unexpected step %q for signin", f.Step))
@@ -439,7 +478,12 @@ func advanceSignin(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 // signinVerifyPasskey finishes the WebAuthn assertion: it parses the credential
 // JSON the client submitted and, on success, completes the flow with the minted
 // session.
-func (a *pgCoreAuthFlows) signinVerifyPasskey(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signinVerifyPasskey(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	challenge := f.ActiveChallenge
 	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active passkey challenge")
@@ -467,7 +511,12 @@ func (a *pgCoreAuthFlows) signinVerifyPasskey(ctx context.Context, row *models.I
 
 // signinOAuthCallback exchanges the provider authorization code (returned to the
 // client and submitted back) for a session, completing the flow.
-func (a *pgCoreAuthFlows) signinOAuthCallback(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signinOAuthCallback(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	challenge := f.ActiveChallenge
 	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active oauth challenge")
@@ -492,7 +541,12 @@ func (a *pgCoreAuthFlows) signinOAuthCallback(ctx context.Context, row *models.I
 // the flow token (§5 rule 2) and completes the flow, returning the session.
 // On a wrong code it decrements AttemptsLeft, embeds error{invalid_code}, and
 // returns the pending FlowState without a session (mirrors signupVerifyEmail).
-func (a *pgCoreAuthFlows) signinVerifyMFA(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signinVerifyMFA(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	challenge := f.ActiveChallenge
 	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active MFA challenge")
@@ -519,7 +573,12 @@ func (a *pgCoreAuthFlows) signinVerifyMFA(ctx context.Context, row *models.IamFl
 
 // signinVerifyOTP verifies the SMS OTP via the passwordless adapter. On success
 // it completes the flow with the minted session and rotates the token.
-func (a *pgCoreAuthFlows) signinVerifyOTP(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signinVerifyOTP(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	challenge := f.ActiveChallenge
 	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active otp challenge")
@@ -554,7 +613,12 @@ func (a *pgCoreAuthFlows) signinVerifyOTP(ctx context.Context, row *models.IamFl
 
 // signinVerifyMagicLink consumes the opaque magic-link token submitted by the
 // client and, on success, completes the flow with the minted session.
-func (a *pgCoreAuthFlows) signinVerifyMagicLink(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signinVerifyMagicLink(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	token := cmd.Payload["token"]
 	if token == "" {
 		return nil, domain.ErrBadRequest.WithMessage("token is required")
@@ -579,7 +643,12 @@ func (a *pgCoreAuthFlows) signinVerifyMagicLink(ctx context.Context, row *models
 // passwordless first-factor methods (phone_otp, magic_link) can be switched to;
 // the caller (advanceSignin) has already rejected switch_method at mfa_required,
 // so this never swaps a required second factor.
-func (a *pgCoreAuthFlows) signinSwitchMethod(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signinSwitchMethod(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	method := cmd.Payload["method"]
 	if method == "" {
 		return nil, domain.ErrBadRequest.WithMessage("method is required for switch_method")
@@ -628,7 +697,9 @@ func (a *pgCoreAuthFlows) signinSwitchMethod(ctx context.Context, row *models.Ia
 			return nil, err
 		}
 
-		return a.signinSwitchPersist(ctx, row, f, cmd.FlowToken, method, domain.FlowStepVerifyEmail, coreAuthChallengeEmail, ch)
+		return a.signinSwitchPersist(
+			ctx, row, f, cmd.FlowToken, method, domain.FlowStepVerifyEmail, coreAuthChallengeEmail, ch,
+		)
 	default:
 		return nil, domain.ErrBadRequest.WithMessage(fmt.Sprintf("cannot switch to method %q", method))
 	}
@@ -637,7 +708,15 @@ func (a *pgCoreAuthFlows) signinSwitchMethod(ctx context.Context, row *models.Ia
 // signinSwitchPersist updates the flow's method, step and ActiveChallenge in
 // place (no token rotation, §5 rule 2 — switching grants no privilege) and
 // returns the still-valid flow token unchanged.
-func (a *pgCoreAuthFlows) signinSwitchPersist(ctx context.Context, row *models.IamFlow, f *domain.Flow, flowToken, method string, step domain.FlowStep, channel string, ch *domain.Challenge) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signinSwitchPersist(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	flowToken, method string,
+	step domain.FlowStep,
+	channel string,
+	ch *domain.Challenge,
+) (*domain.FlowState, error) {
 	now := nowUTC()
 	f.Method = method
 	f.Step = step
@@ -661,7 +740,13 @@ func (a *pgCoreAuthFlows) signinSwitchPersist(ctx context.Context, row *models.I
 
 // signinWrongCode decrements AttemptsLeft, embeds error{invalid_code}, and
 // returns the pending FlowState without a session (mirrors signupVerifyEmail).
-func (a *pgCoreAuthFlows) signinWrongCode(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd, msg string) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signinWrongCode(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+	msg string,
+) (*domain.FlowState, error) {
 	if f.ActiveChallenge != nil {
 		f.ActiveChallenge.AttemptsLeft--
 	}
@@ -676,7 +761,12 @@ func (a *pgCoreAuthFlows) signinWrongCode(ctx context.Context, row *models.IamFl
 
 // signinCompleteWithSession completes the flow, rotates the token (§5 rule 2 —
 // session-minting step) and surfaces the session.
-func (a *pgCoreAuthFlows) signinCompleteWithSession(ctx context.Context, row *models.IamFlow, f *domain.Flow, sess *domain.Session) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signinCompleteWithSession(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	sess *domain.Session,
+) (*domain.FlowState, error) {
 	f.Status = domain.FlowStatusCompleted
 	f.Step = domain.FlowStepCompleted
 	f.ActiveChallenge = nil

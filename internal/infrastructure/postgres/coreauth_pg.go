@@ -85,7 +85,9 @@ const (
 // coreAuthVerifyAccess validates a signed access-token JWT (jwx) against the
 // project's signing keys and resolves the still-live session it names. A
 // missing/revoked session yields (claims, nil, nil) so callers report inactive.
-func (a *pgCoreAuth) coreAuthVerifyAccess(ctx context.Context, projectID, token string) (map[string]any, *domain.Session, error) {
+func (a *pgCoreAuth) coreAuthVerifyAccess(
+	ctx context.Context, projectID, token string,
+) (map[string]any, *domain.Session, error) {
 	// Verify against the environment the token was minted in (its "env" claim),
 	// falling back to the default for legacy untagged tokens.
 	env := coreAuthDefaultEnv
@@ -368,7 +370,9 @@ func (a *pgCoreAuth) coreAuthFindUserByEmail(ctx context.Context, projectID, ema
 
 // coreAuthFindPasswordCredential returns the password iam_credentials row for a
 // user (tenant-scoped) or a not-found domain error.
-func (a *pgCoreAuth) coreAuthFindPasswordCredential(ctx context.Context, projectID, userID string) (*models.IamCredential, error) {
+func (a *pgCoreAuth) coreAuthFindPasswordCredential(
+	ctx context.Context, projectID, userID string,
+) (*models.IamCredential, error) {
 	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
@@ -408,14 +412,20 @@ const (
 )
 
 // MUST be called inside db.withTx / withTxRet (it issues multiple mutations).
-func mintSessionVia(ctx context.Context, db *DB, emitter Emitter, cfg *configReader, acc *domain.Account, clientID string, amr []string, aal int) (*domain.Session, error) {
+func mintSessionVia(
+	ctx context.Context, db *DB, emitter Emitter, cfg *configReader,
+	acc *domain.Account, clientID string, amr []string, aal int,
+) (*domain.Session, error) {
 	return NewPgCoreAuth(db, emitter, cfg).coreAuthMintSession(ctx, acc, clientID, amr, aal)
 }
 
 // coreAuthSignAccessToken builds and signs the access-token JWT shared by a
 // freshly minted session and a rotated one: audience falls back to the
 // project when there is no client, and client_id is only claimed when set.
-func (a *pgCoreAuth) coreAuthSignAccessToken(ctx context.Context, acc *domain.Account, sessionID, clientID, signEnv string, amr []string, aal int, ttl time.Duration) (string, error) {
+func (a *pgCoreAuth) coreAuthSignAccessToken(
+	ctx context.Context, acc *domain.Account, sessionID, clientID, signEnv string,
+	amr []string, aal int, ttl time.Duration,
+) (string, error) {
 	aud := clientID
 	if aud == "" {
 		aud = acc.ProjectID
@@ -443,7 +453,10 @@ func (a *pgCoreAuth) coreAuthSignAccessToken(ctx context.Context, acc *domain.Ac
 // coreAuthInsertSessionRow persists sess as an iam_sessions row. AAL and
 // trusted are set from the mint-time inputs; expires_at is the refresh
 // horizon (session_policy's RefreshTTL, capped by AbsoluteTimeout).
-func (a *pgCoreAuth) coreAuthInsertSessionRow(ctx context.Context, sess *domain.Session, signEnv string, aal int, clientID string, now time.Time, sp EffectiveSessionPolicy) error {
+func (a *pgCoreAuth) coreAuthInsertSessionRow(
+	ctx context.Context, sess *domain.Session, signEnv string, aal int,
+	clientID string, now time.Time, sessionPolicy EffectiveSessionPolicy,
+) error {
 	rawSess, err := marshal(sess)
 	if err != nil {
 		return err
@@ -458,7 +471,7 @@ func (a *pgCoreAuth) coreAuthInsertSessionRow(ctx context.Context, sess *domain.
 		UserID:       &sess.AccountID,
 		Aal:          ptr(int32(aal)), //nolint:gosec // aal is an assurance level (1-3), never large enough to overflow int32
 		Trusted:      ptr(false),
-		ExpiresAt:    ptr(null.From(now.Add(coreAuthSessionLifetime(sp)))),
+		ExpiresAt:    ptr(null.From(now.Add(coreAuthSessionLifetime(sessionPolicy)))),
 		CreatedAt:    &now,
 		LastActiveAt: &now,
 		Data:         &rmSess,
@@ -477,7 +490,11 @@ func (a *pgCoreAuth) coreAuthInsertSessionRow(ctx context.Context, sess *domain.
 
 // newCoreAuthSession assembles the domain.Session for a freshly minted
 // session, pulling device/IP/user-agent from the request in ctx.
-func newCoreAuthSession(ctx context.Context, sessionID string, acc *domain.Account, clientID string, amr []string, aal int, accessToken, refreshPlain string, sp EffectiveSessionPolicy, now time.Time) *domain.Session {
+func newCoreAuthSession(
+	ctx context.Context, sessionID string, acc *domain.Account, clientID string,
+	amr []string, aal int, accessToken, refreshPlain string,
+	sessionPolicy EffectiveSessionPolicy, now time.Time,
+) *domain.Session {
 	meta := domain.RequestMetaFromContext(ctx)
 
 	return &domain.Session{
@@ -489,8 +506,8 @@ func newCoreAuthSession(ctx context.Context, sessionID string, acc *domain.Accou
 		AAL:              aal,
 		AccessToken:      accessToken,
 		RefreshToken:     refreshPlain,
-		ExpiresIn:        int(sp.AccessTTL / time.Second),
-		RefreshExpiresIn: int(sp.RefreshTTL / time.Second),
+		ExpiresIn:        int(sessionPolicy.AccessTTL / time.Second),
+		RefreshExpiresIn: int(sessionPolicy.RefreshTTL / time.Second),
 		CreatedAt:        now,
 		DeviceName:       meta.DeviceName,
 		IP:               meta.IP,
@@ -505,7 +522,9 @@ func newCoreAuthSession(ctx context.Context, sessionID string, acc *domain.Accou
 // is a signed JWT and the refresh token is an opaque, hashed-at-rest secret.
 //
 // MUST be called inside db.withTx / withTxRet (it issues multiple mutations).
-func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Account, clientID string, amr []string, aal int) (*domain.Session, error) {
+func (a *pgCoreAuth) coreAuthMintSession(
+	ctx context.Context, acc *domain.Account, clientID string, amr []string, aal int,
+) (*domain.Session, error) {
 	now := nowUTC()
 	sessionID := newUUID()
 
@@ -525,7 +544,9 @@ func (a *pgCoreAuth) coreAuthMintSession(ctx context.Context, acc *domain.Accoun
 		return nil, err
 	}
 
-	accessToken, err := a.coreAuthSignAccessToken(ctx, acc, sessionID, clientID, signEnv, amr, aal, sessionPolicy.AccessTTL)
+	accessToken, err := a.coreAuthSignAccessToken(
+		ctx, acc, sessionID, clientID, signEnv, amr, aal, sessionPolicy.AccessTTL,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -594,14 +615,17 @@ func coreAuthRotateAAL(row *models.IamSession, prev *domain.Session) (int, []str
 // matches the absolute-timeout check in Refresh; expires_at is slid forward
 // to the same horizon so coreAuthVerifyAccess liveness stays in sync. AAL,
 // trusted, client_id columns are intentionally left untouched.
-func (a *pgCoreAuth) coreAuthUpdateRotatedSession(ctx context.Context, row *models.IamSession, sess *domain.Session, sp EffectiveSessionPolicy, now time.Time) (time.Time, error) {
+func (a *pgCoreAuth) coreAuthUpdateRotatedSession(
+	ctx context.Context, row *models.IamSession, sess *domain.Session,
+	sessionPolicy EffectiveSessionPolicy, now time.Time,
+) (time.Time, error) {
 	rawSess, err := marshal(sess)
 	if err != nil {
 		return time.Time{}, err
 	}
 
 	rmSess := json.RawMessage(rawSess)
-	refreshHorizon := coreAuthRefreshHorizon(now, row.CreatedAt, sp)
+	refreshHorizon := coreAuthRefreshHorizon(now, row.CreatedAt, sessionPolicy)
 
 	if err := row.Update(ctx, a.db.Bobx(), &models.IamSessionSetter{
 		LastActiveAt: &now,
@@ -619,38 +643,17 @@ func (a *pgCoreAuth) coreAuthUpdateRotatedSession(ctx context.Context, row *mode
 // client, created-at. Used on token refresh so a long-lived session keeps its
 // AAL2 (MFA) elevation, client binding, and stable id instead of being rebuilt
 // as a fresh AAL1 session on every refresh.
-func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Account, row *models.IamSession) (*domain.Session, error) {
-	now := nowUTC()
-
-	prev, err := coreAuthLoadSession(row, row.ProjectID)
-	if err != nil {
-		return nil, err
-	}
-
-	sessionPolicy, err := a.cfg.SessionPolicy(ctx, acc.ProjectID)
-	if err != nil {
-		return nil, err
-	}
-
-	aal, amr, clientID := coreAuthRotateAAL(row, prev)
-
-	signEnv, err := resolveSignEnv(ctx, a.db, acc.ProjectID, coreAuthDefaultEnv)
-	if err != nil {
-		return nil, err
-	}
-
-	accessToken, err := a.coreAuthSignAccessToken(ctx, acc, row.ID, clientID, signEnv, amr, aal, sessionPolicy.AccessTTL)
-	if err != nil {
-		return nil, err
-	}
-
-	refreshPlain, err := coreAuthRandomToken()
-	if err != nil {
-		return nil, err
-	}
-
+// coreAuthBuildRotatedSession assembles the session record for a refresh
+// rotation: identity/token fields from the freshly minted access+refresh pair,
+// device/network fields carried over from the session being rotated (IP
+// refreshed from the current request when available).
+func coreAuthBuildRotatedSession(
+	ctx context.Context, acc *domain.Account, prev *domain.Session, sessionID string,
+	clientID string, amr []string, aal int, accessToken, refreshPlain string,
+	sessionPolicy EffectiveSessionPolicy, now time.Time,
+) *domain.Session {
 	sess := &domain.Session{
-		ID:               row.ID,
+		ID:               sessionID,
 		AccountID:        acc.ID,
 		ProjectID:        acc.ProjectID,
 		ClientID:         clientID,
@@ -673,6 +676,47 @@ func (a *pgCoreAuth) coreAuthRotateSession(ctx context.Context, acc *domain.Acco
 	if m := domain.RequestMetaFromContext(ctx); m.IP != "" {
 		sess.IP = m.IP
 	}
+
+	return sess
+}
+
+func (a *pgCoreAuth) coreAuthRotateSession(
+	ctx context.Context, acc *domain.Account, row *models.IamSession,
+) (*domain.Session, error) {
+	now := nowUTC()
+
+	prev, err := coreAuthLoadSession(row, row.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	sessionPolicy, err := a.cfg.SessionPolicy(ctx, acc.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	aal, amr, clientID := coreAuthRotateAAL(row, prev)
+
+	signEnv, err := resolveSignEnv(ctx, a.db, acc.ProjectID, coreAuthDefaultEnv)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := a.coreAuthSignAccessToken(
+		ctx, acc, row.ID, clientID, signEnv, amr, aal, sessionPolicy.AccessTTL,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshPlain, err := coreAuthRandomToken()
+	if err != nil {
+		return nil, err
+	}
+
+	sess := coreAuthBuildRotatedSession(
+		ctx, acc, prev, row.ID, clientID, amr, aal, accessToken, refreshPlain, sessionPolicy, now,
+	)
 
 	refreshHorizon, err := a.coreAuthUpdateRotatedSession(ctx, row, sess, sessionPolicy, now)
 	if err != nil {
@@ -827,7 +871,9 @@ func (a *pgCoreAuth) coreAuthInsertChallenge(ctx context.Context, ch coreAuthCha
 // and assembles the (unpersisted) challenge envelope coreAuthStartChallenge
 // stores. Returns the plaintext code/token alongside it since only their
 // hashes end up in ch.
-func newCoreAuthChallenge(ctx context.Context, db *DB, cmd domain.CoreAuthVerifyStartCmd, chType, purpose string) (coreAuthChallengeData, string, string, error) {
+func newCoreAuthChallenge(
+	ctx context.Context, db *DB, cmd domain.CoreAuthVerifyStartCmd, chType, purpose string,
+) (coreAuthChallengeData, string, string, error) {
 	if cmd.ProjectID == "" {
 		return coreAuthChallengeData{}, "", "", domain.ErrValidation.WithMessage("project is required")
 	}
@@ -876,7 +922,9 @@ func newCoreAuthChallenge(ctx context.Context, db *DB, cmd domain.CoreAuthVerify
 // + opaque link token), persists it, and returns the public Challenge. The
 // numeric code and link token are dispatched out-of-band (TODO outbox); only
 // their hashes are stored.
-func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd, chType, purpose string) (*domain.Challenge, error) {
+func (a *pgCoreAuth) coreAuthStartChallenge(
+	ctx context.Context, cmd domain.CoreAuthVerifyStartCmd, chType, purpose string,
+) (*domain.Challenge, error) {
 	ch, code, token, err := newCoreAuthChallenge(ctx, a.db, cmd, chType, purpose)
 	if err != nil {
 		return nil, err
@@ -924,7 +972,9 @@ func (a *pgCoreAuth) coreAuthStartChallenge(ctx context.Context, cmd domain.Core
 // (ChallengeID) directly, or an opaque Token scanned against the project's
 // unconsumed challenges of wantType (Token is not a lookup column, so this
 // path compares hashes in memory).
-func (a *pgCoreAuth) coreAuthLookupChallengeRow(ctx context.Context, projectID string, cmd domain.CoreAuthVerifyConsumeCmd, wantType string) (*models.IamChallenge, error) {
+func (a *pgCoreAuth) coreAuthLookupChallengeRow(
+	ctx context.Context, projectID string, cmd domain.CoreAuthVerifyConsumeCmd, wantType string,
+) (*models.IamChallenge, error) {
 	if cmd.ChallengeID != "" {
 		row, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
 		if err != nil {
@@ -951,7 +1001,10 @@ func (a *pgCoreAuth) coreAuthLookupChallengeRow(ctx context.Context, projectID s
 // projectID is the caller's own resolved tenant, not cmd.ProjectID — the
 // latter is client-supplied on some paths and must never be the value the
 // boundary check trusts.
-func validateChallenge(ctx context.Context, row *models.IamChallenge, projectID string, cmd domain.CoreAuthVerifyConsumeCmd, wantType string) (coreAuthChallengeData, error) {
+func validateChallenge(
+	ctx context.Context, row *models.IamChallenge, projectID string,
+	cmd domain.CoreAuthVerifyConsumeCmd, wantType string,
+) (coreAuthChallengeData, error) {
 	var data coreAuthChallengeData
 
 	if row.ProjectID != projectID {
@@ -995,19 +1048,21 @@ func validateChallenge(ctx context.Context, row *models.IamChallenge, projectID 
 // expiry and single-use, then marks it consumed. Returns the challenge data.
 //
 // MUST run inside an open transaction (it mutates the consumed flag).
-func (a *pgCoreAuth) coreAuthConsumeChallenge(ctx context.Context, projectID string, cmd domain.CoreAuthVerifyConsumeCmd, wantType string) (*models.IamChallenge, *coreAuthChallengeData, error) {
+func (a *pgCoreAuth) coreAuthConsumeChallenge(
+	ctx context.Context, projectID string, cmd domain.CoreAuthVerifyConsumeCmd, wantType string,
+) (*coreAuthChallengeData, error) {
 	row, err := a.coreAuthLookupChallengeRow(ctx, projectID, cmd, wantType)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	data, err := validateChallenge(ctx, row, projectID, cmd, wantType)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if err := row.Update(ctx, a.db.Bobx(), &models.IamChallengeSetter{Consumed: ptr(true)}); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if err := a.emitter.Emit(ctx, domain.Event{
@@ -1017,17 +1072,19 @@ func (a *pgCoreAuth) coreAuthConsumeChallenge(ctx context.Context, projectID str
 		AggregateID: row.ID,
 		Payload:     data,
 	}); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return row, &data, nil
+	return &data, nil
 }
 
 // coreAuthFindChallengeByToken scans a project's challenges of a type and
 // returns the one whose stored token hash matches the opaque token. The token
 // is not a lookup column, so this filters by (project_id, type) then compares
 // hashes in memory.
-func (a *pgCoreAuth) coreAuthFindChallengeByToken(ctx context.Context, projectID, wantType, token string) (*models.IamChallenge, error) {
+func (a *pgCoreAuth) coreAuthFindChallengeByToken(
+	ctx context.Context, projectID, wantType, token string,
+) (*models.IamChallenge, error) {
 	rows, err := models.IamChallenges.Query(
 		sm.Where(models.IamChallenges.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamChallenges.Columns.Consumed.EQ(psql.Arg(false))),
@@ -1141,7 +1198,8 @@ func (a *pgCoreAuth) coreAuthRevokeAllForUser(ctx context.Context, projectID, us
 
 	for _, s := range sessions {
 		if err := a.coreAuthRevokeSession(ctx, projectID, s.ID); err != nil {
-			slog.Error("coreauth: failed to revoke session during revoke-all", "err", err, "session_id", s.ID, "project_id", projectID, "user_id", userID)
+			slog.Error("coreauth: failed to revoke session during revoke-all",
+				"err", err, "session_id", s.ID, "project_id", projectID, "user_id", userID)
 		}
 	}
 
@@ -1153,7 +1211,9 @@ func (a *pgCoreAuth) coreAuthRevokeAllForUser(ctx context.Context, projectID, us
 // persistence error must not turn a wrong password into a 500, so it is
 // swallowed (the worst case is one un-counted attempt). MUST run in the caller's
 // transaction.
-func (a *pgCoreAuth) coreAuthRecordLoginFailure(ctx context.Context, cred *models.IamCredential, data coreAuthCredential) {
+func (a *pgCoreAuth) coreAuthRecordLoginFailure(
+	ctx context.Context, cred *models.IamCredential, data coreAuthCredential,
+) {
 	data.FailedAttempts++
 	if data.FailedAttempts >= coreAuthMaxLoginFailures {
 		data.LockedUntil = nowUTC().Add(coreAuthLockoutDuration)
@@ -1165,7 +1225,9 @@ func (a *pgCoreAuth) coreAuthRecordLoginFailure(ctx context.Context, cred *model
 
 // coreAuthClearLoginFailures resets the failure counter and lock after a
 // successful password verification. Best-effort.
-func (a *pgCoreAuth) coreAuthClearLoginFailures(ctx context.Context, cred *models.IamCredential, data coreAuthCredential) {
+func (a *pgCoreAuth) coreAuthClearLoginFailures(
+	ctx context.Context, cred *models.IamCredential, data coreAuthCredential,
+) {
 	data.FailedAttempts = 0
 	data.LockedUntil = time.Time{}
 	_ = a.coreAuthPersistCredentialLock(ctx, cred, data)
@@ -1178,7 +1240,9 @@ func (a *pgCoreAuth) coreAuthClearLoginFailures(ctx context.Context, cred *model
 // counter could never advance. An independent auto-commit statement survives the
 // rollback. The read-modify-write can lose a concurrent increment, which only
 // means marginally more attempts before the lock, never a missed lock.
-func (a *pgCoreAuth) coreAuthPersistCredentialLock(ctx context.Context, cred *models.IamCredential, data coreAuthCredential) error {
+func (a *pgCoreAuth) coreAuthPersistCredentialLock(
+	ctx context.Context, cred *models.IamCredential, data coreAuthCredential,
+) error {
 	raw, err := marshal(data)
 	if err != nil {
 		return err
@@ -1303,7 +1367,9 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 			return regResult{}, err
 		}
 
-		if err := a.coreAuthInsertRegisterConsents(ctx, acc, env, now, cmd.Consents, allowedConsent, consentLocale); err != nil {
+		if err := a.coreAuthInsertRegisterConsents(
+			ctx, acc, env, now, cmd.Consents, allowedConsent, consentLocale,
+		); err != nil {
 			return regResult{}, err
 		}
 
@@ -1340,7 +1406,9 @@ func (a *pgCoreAuth) Register(ctx context.Context, cmd domain.RegisterCmd) (*dom
 
 // coreAuthInsertRegisterUser builds and persists the iam_users row for a new
 // registration.
-func (a *pgCoreAuth) coreAuthInsertRegisterUser(ctx context.Context, cmd domain.RegisterCmd, env string, now time.Time) (*domain.Account, error) {
+func (a *pgCoreAuth) coreAuthInsertRegisterUser(
+	ctx context.Context, cmd domain.RegisterCmd, env string, now time.Time,
+) (*domain.Account, error) {
 	acc := &domain.Account{
 		ID:            newUUID(),
 		ProjectID:     cmd.ProjectID,
@@ -1398,7 +1466,11 @@ func (a *pgCoreAuth) coreAuthInsertRegisterUser(ctx context.Context, cmd domain.
 // coreAuthInsertRegisterConsents persists the acceptances a client submitted
 // that name a document the project actually configures — an acceptance for
 // any other {key,version} pair is silently ignored, not recorded.
-func (a *pgCoreAuth) coreAuthInsertRegisterConsents(ctx context.Context, acc *domain.Account, env string, now time.Time, consents []domain.AccountConsentAcceptance, allowedConsent map[string]struct{}, consentLocale map[string]string) error {
+func (a *pgCoreAuth) coreAuthInsertRegisterConsents(
+	ctx context.Context, acc *domain.Account, env string, now time.Time,
+	consents []domain.AccountConsentAcceptance,
+	allowedConsent map[string]struct{}, consentLocale map[string]string,
+) error {
 	for _, c := range consents {
 		if _, ok := allowedConsent[c.Key+"\x00"+c.Version]; !ok {
 			continue
@@ -1427,7 +1499,9 @@ func (a *pgCoreAuth) coreAuthInsertRegisterConsents(ctx context.Context, acc *do
 
 // coreAuthInsertRegisterPassword enforces the password policy and persists
 // the new account's bcrypt password credential.
-func (a *pgCoreAuth) coreAuthInsertRegisterPassword(ctx context.Context, acc *domain.Account, env string, now time.Time, password string) error {
+func (a *pgCoreAuth) coreAuthInsertRegisterPassword(
+	ctx context.Context, acc *domain.Account, env string, now time.Time, password string,
+) error {
 	if err := a.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, password); err != nil {
 		return err
 	}
@@ -1477,7 +1551,9 @@ func (a *pgCoreAuth) coreAuthInsertRegisterPassword(ctx context.Context, acc *do
 // AuthenticatePassword verifies an email + password against the bcrypt
 // credential and mints a session. A missing user or a bad password both return
 // ErrInvalidCredentials (no account enumeration).
-func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email, password string) (*domain.CoreAuthPasswordResult, error) {
+func (a *pgCoreAuth) AuthenticatePassword(
+	ctx context.Context, projectID, email, password string,
+) (*domain.CoreAuthPasswordResult, error) {
 	if projectID == "" || email == "" {
 		return nil, domain.ErrInvalidCredentials
 	}
@@ -1504,7 +1580,9 @@ func (a *pgCoreAuth) AuthenticatePassword(ctx context.Context, projectID, email,
 // coreAuthLoadPasswordCredential resolves the account by email and its bcrypt
 // password credential + decoded failure-tracking envelope. A missing user
 // maps to ErrInvalidCredentials, same as a bad password — no enumeration.
-func (a *pgCoreAuth) coreAuthLoadPasswordCredential(ctx context.Context, projectID, email string) (*domain.Account, *models.IamCredential, coreAuthCredential, error) {
+func (a *pgCoreAuth) coreAuthLoadPasswordCredential(
+	ctx context.Context, projectID, email string,
+) (*domain.Account, *models.IamCredential, coreAuthCredential, error) {
 	userRow, err := a.coreAuthFindUserByEmail(ctx, projectID, email)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
@@ -1536,7 +1614,9 @@ func (a *pgCoreAuth) coreAuthLoadPasswordCredential(ctx context.Context, project
 // failure tracking (record on mismatch, clear on success). Returns the
 // failure count as it stood BEFORE this attempt — risk evaluation wants it,
 // and clearing it on success destroys the count this returns.
-func (a *pgCoreAuth) coreAuthVerifyPassword(ctx context.Context, cred *models.IamCredential, credData coreAuthCredential, password string) (int, error) {
+func (a *pgCoreAuth) coreAuthVerifyPassword(
+	ctx context.Context, cred *models.IamCredential, credData coreAuthCredential, password string,
+) (int, error) {
 	// Account lockout: while locked, refuse without testing the password so a
 	// distributed guessing attack cannot keep probing this account.
 	if credData.LockedUntil.After(nowIn(ctx)) {
@@ -1563,7 +1643,9 @@ func (a *pgCoreAuth) coreAuthVerifyPassword(ctx context.Context, cred *models.Ia
 // flow_token), then adaptive risk (evaluated before a session exists so a
 // rule can still turn this into a sign-in needing a second factor rather
 // than having to revoke one already issued), then mint the session.
-func (a *pgCoreAuth) coreAuthCompletePasswordSignIn(ctx context.Context, acc *domain.Account, priorFailures int) (*domain.CoreAuthPasswordResult, error) {
+func (a *pgCoreAuth) coreAuthCompletePasswordSignIn(
+	ctx context.Context, acc *domain.Account, priorFailures int,
+) (*domain.CoreAuthPasswordResult, error) {
 	factors, err := a.coreAuthActiveFactors(ctx, acc.ID)
 	if err != nil {
 		return nil, err
@@ -1637,7 +1719,9 @@ func (a *pgCoreAuth) coreAuthActiveFactors(ctx context.Context, accountID string
 // already-revoked refresh token: when reuse_detection is on, it revokes every
 // one of the user's sessions and emits token.reuse_detected. A no-op when
 // reuse_detection is off (the caller still rejects the token either way).
-func (a *pgCoreAuth) coreAuthHandleReusedRefresh(ctx context.Context, row *models.IamRefreshToken, sp EffectiveSessionPolicy) error {
+func (a *pgCoreAuth) coreAuthHandleReusedRefresh(
+	ctx context.Context, row *models.IamRefreshToken, sp EffectiveSessionPolicy,
+) error {
 	if !sp.ReuseDetection {
 		return nil
 	}
@@ -1756,7 +1840,9 @@ func (a *pgCoreAuth) coreAuthRefreshInTx(ctx context.Context, hash string) (core
 // with X-Environment set to a weaker-policy environment to dodge reuse
 // detection and the idle/absolute timeouts. An absent policy doc yields the
 // legacy defaults (reuse detection off, no idle/absolute timeout).
-func (a *pgCoreAuth) coreAuthLoadRefreshRow(ctx context.Context, hash string) (*models.IamRefreshToken, EffectiveSessionPolicy, error) {
+func (a *pgCoreAuth) coreAuthLoadRefreshRow(
+	ctx context.Context, hash string,
+) (*models.IamRefreshToken, EffectiveSessionPolicy, error) {
 	row, err := models.IamRefreshTokens.Query(
 		sm.Where(models.IamRefreshTokens.Columns.Hash.EQ(psql.Arg(hash))),
 	).One(ctx, a.db.Bobx())
@@ -1778,7 +1864,9 @@ func (a *pgCoreAuth) coreAuthLoadRefreshRow(ctx context.Context, hash string) (*
 
 // coreAuthLoadRefreshAccountSession loads and validates the account and
 // session a refresh-token row belongs to.
-func (a *pgCoreAuth) coreAuthLoadRefreshAccountSession(ctx context.Context, row *models.IamRefreshToken) (*domain.Account, *models.IamSession, error) {
+func (a *pgCoreAuth) coreAuthLoadRefreshAccountSession(
+	ctx context.Context, row *models.IamRefreshToken,
+) (*domain.Account, *models.IamSession, error) {
 	userRow, err := models.FindIamUser(ctx, a.db.Bobx(), row.UserID)
 	if err != nil {
 		if errors.Is(translatePgErr("user", err), ErrNotFound) {
@@ -1816,7 +1904,9 @@ func (a *pgCoreAuth) coreAuthLoadRefreshAccountSession(ctx context.Context, row 
 // fingerprint mismatch denies. On mismatch it revokes the token and session
 // (the caller's transaction commits the revocation regardless of the
 // refresh's own outcome).
-func (a *pgCoreAuth) coreAuthCheckDeviceMismatch(ctx context.Context, row *models.IamRefreshToken, sessRow *models.IamSession, prev *domain.Session) (bool, error) {
+func (a *pgCoreAuth) coreAuthCheckDeviceMismatch(
+	ctx context.Context, row *models.IamRefreshToken, sessRow *models.IamSession, prev *domain.Session,
+) (bool, error) {
 	meta := domain.RequestMetaFromContext(ctx)
 	if prev.Fingerprint == "" || meta.Fingerprint == "" || meta.Fingerprint == prev.Fingerprint {
 		return false, nil
@@ -1851,7 +1941,9 @@ func (a *pgCoreAuth) coreAuthCheckDeviceMismatch(ctx context.Context, row *model
 // at session creation. Both checks are gated on a configured (>0) timeout,
 // so an absent/legacy policy doc enforces neither. On expiry it revokes the
 // token and session.
-func (a *pgCoreAuth) coreAuthCheckSessionTimeout(ctx context.Context, row *models.IamRefreshToken, sessRow *models.IamSession, sp EffectiveSessionPolicy) (bool, error) {
+func (a *pgCoreAuth) coreAuthCheckSessionTimeout(
+	ctx context.Context, row *models.IamRefreshToken, sessRow *models.IamSession, sp EffectiveSessionPolicy,
+) (bool, error) {
 	now := nowUTC()
 
 	expired := sp.AbsoluteTimeout > 0 && now.After(sessRow.CreatedAt.Add(sp.AbsoluteTimeout))
@@ -1878,7 +1970,9 @@ func (a *pgCoreAuth) coreAuthCheckSessionTimeout(ctx context.Context, row *model
 // coreAuthRotateRefresh revokes the presented refresh token, then mints a new
 // access + refresh pair bound to the SAME session, preserving its id, AAL
 // (MFA elevation), AMR, and client. The session is not torn down on refresh.
-func (a *pgCoreAuth) coreAuthRotateRefresh(ctx context.Context, row *models.IamRefreshToken, acc *domain.Account, sessRow *models.IamSession) (coreAuthRefreshResult, error) {
+func (a *pgCoreAuth) coreAuthRotateRefresh(
+	ctx context.Context, row *models.IamRefreshToken, acc *domain.Account, sessRow *models.IamSession,
+) (coreAuthRefreshResult, error) {
 	if err := a.coreAuthMarkRefreshRevoked(ctx, row); err != nil {
 		return coreAuthRefreshResult{}, err
 	}
@@ -1904,7 +1998,9 @@ func (a *pgCoreAuth) coreAuthRotateRefresh(ctx context.Context, row *models.IamR
 // coreAuthLoadValidAuthCode loads the auth-code row by hash and validates it:
 // not consumed, not expired, PKCE verifier matches when a challenge was bound
 // at issuance, and the account it names is active.
-func (a *pgCoreAuth) coreAuthLoadValidAuthCode(ctx context.Context, codeHash, verifier string) (*models.IamAuthCode, *domain.Account, error) {
+func (a *pgCoreAuth) coreAuthLoadValidAuthCode(
+	ctx context.Context, codeHash, verifier string,
+) (*models.IamAuthCode, *domain.Account, error) {
 	row, err := models.IamAuthCodes.Query(
 		sm.Where(models.IamAuthCodes.Columns.CodeHash.EQ(psql.Arg(codeHash))),
 	).One(ctx, a.db.Bobx())
@@ -1961,7 +2057,9 @@ func (a *pgCoreAuth) coreAuthLoadValidAuthCode(ctx context.Context, codeHash, ve
 
 // ExchangeCode trades a one-time auth code (iam_auth_codes) for a session,
 // verifying the PKCE code_verifier against the stored challenge hash.
-func (a *pgCoreAuth) ExchangeCode(ctx context.Context, code, verifier string) (*domain.Account, *domain.Session, error) {
+func (a *pgCoreAuth) ExchangeCode(
+	ctx context.Context, code, verifier string,
+) (*domain.Account, *domain.Session, error) {
 	if strings.TrimSpace(code) == "" {
 		return nil, nil, domain.ErrBadRequest.WithMessage("code is required")
 	}
@@ -2241,20 +2339,24 @@ func (a *pgCoreAuth) coreAuthSignOutAll(ctx context.Context, projectID, userID, 
 // ----- email verification / change -----
 
 // StartEmailVerification mints an email-verification challenge (code + link).
-func (a *pgCoreAuth) StartEmailVerification(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd) (*domain.Challenge, error) {
+func (a *pgCoreAuth) StartEmailVerification(
+	ctx context.Context, cmd domain.CoreAuthVerifyStartCmd,
+) (*domain.Challenge, error) {
 	return a.coreAuthStartChallenge(ctx, cmd, coreAuthChallengeEmail, "verify")
 }
 
 // VerifyEmail consumes an email-verification challenge, marks the matching
 // account's email verified and mints a session.
-func (a *pgCoreAuth) VerifyEmail(ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd) (*domain.Account, *domain.Session, error) {
+func (a *pgCoreAuth) VerifyEmail(
+	ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd,
+) (*domain.Account, *domain.Session, error) {
 	type verifyResult struct {
 		acc  *domain.Account
 		sess *domain.Session
 	}
 
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (verifyResult, error) {
-		_, data, err := a.coreAuthConsumeChallenge(ctx, cmd.ProjectID, cmd, coreAuthChallengeEmail)
+		data, err := a.coreAuthConsumeChallenge(ctx, cmd.ProjectID, cmd, coreAuthChallengeEmail)
 		if err != nil {
 			return verifyResult{}, err
 		}
@@ -2338,7 +2440,9 @@ func (a *pgCoreAuth) coreAuthSafeRedirect(ctx context.Context, projectID, candid
 // resolves the redirect target. Marking the account verified mirrors
 // VerifyEmail; no session cookie is minted here (the link flow defers to the
 // SPA which then signs in), so SetCookie is left empty.
-func (a *pgCoreAuth) VerifyEmailCallback(ctx context.Context, cmd domain.CoreAuthEmailVerificationCallbackCmd) (*domain.CoreAuthEmailVerificationCallbackResult, error) {
+func (a *pgCoreAuth) VerifyEmailCallback(
+	ctx context.Context, cmd domain.CoreAuthEmailVerificationCallbackCmd,
+) (*domain.CoreAuthEmailVerificationCallbackResult, error) {
 	if strings.TrimSpace(cmd.Token) == "" {
 		return nil, domain.ErrChallengeInvalid
 	}
@@ -2356,7 +2460,7 @@ func (a *pgCoreAuth) VerifyEmailCallback(ctx context.Context, cmd domain.CoreAut
 		}
 
 		consume := domain.CoreAuthVerifyConsumeCmd{ProjectID: data.ProjectID, Token: cmd.Token}
-		if _, _, err := a.coreAuthConsumeChallenge(ctx, data.ProjectID, consume, coreAuthChallengeEmail); err != nil {
+		if _, err := a.coreAuthConsumeChallenge(ctx, data.ProjectID, consume, coreAuthChallengeEmail); err != nil {
 			return nil, err
 		}
 
@@ -2396,7 +2500,9 @@ func (a *pgCoreAuth) VerifyEmailCallback(ctx context.Context, cmd domain.CoreAut
 // coreAuthFindChallengeByTokenAnyProject locates an unconsumed challenge of a
 // type across all projects by matching the stored token hash. Used by the
 // public link callback where the project is not supplied.
-func (a *pgCoreAuth) coreAuthFindChallengeByTokenAnyProject(ctx context.Context, wantType, token string) (*models.IamChallenge, error) {
+func (a *pgCoreAuth) coreAuthFindChallengeByTokenAnyProject(
+	ctx context.Context, wantType, token string,
+) (*models.IamChallenge, error) {
 	rows, err := models.IamChallenges.Query(
 		sm.Where(models.IamChallenges.Columns.Type.EQ(psql.Arg(wantType))),
 		sm.Where(models.IamChallenges.Columns.Consumed.EQ(psql.Arg(false))),
@@ -2526,7 +2632,9 @@ func (a *pgCoreAuth) EnforceCaptcha(ctx context.Context, projectID, token, actio
 	return nil
 }
 
-func (a *pgCoreAuth) VerifyCaptcha(ctx context.Context, projectID, provider, token, action string) (*domain.CoreAuthCaptchaVerifyResult, error) {
+func (a *pgCoreAuth) VerifyCaptcha(
+	ctx context.Context, projectID, provider, token, action string,
+) (*domain.CoreAuthCaptchaVerifyResult, error) {
 	_ = action
 
 	if strings.TrimSpace(token) == "" {
@@ -2548,7 +2656,9 @@ func (a *pgCoreAuth) VerifyCaptcha(ctx context.Context, projectID, provider, tok
 // coreAuthLoadCaptchaConfig resolves the project's captcha provider config.
 // ok is false when there is nothing usable (no config doc, or no secret) —
 // the caller treats that as "captcha not configured", not an error.
-func (a *pgCoreAuth) coreAuthLoadCaptchaConfig(ctx context.Context, projectID, provider string) (coreAuthCaptchaConfig, bool, error) {
+func (a *pgCoreAuth) coreAuthLoadCaptchaConfig(
+	ctx context.Context, projectID, provider string,
+) (coreAuthCaptchaConfig, bool, error) {
 	var cfg coreAuthCaptchaConfig
 
 	env, err := effectiveEnv(ctx, a.db, projectID)
@@ -2587,7 +2697,9 @@ const (
 // and scores the response. Every failure mode short of a successful, parsed
 // response — bad URL, network error, bad body — degrades to Valid:false
 // rather than propagating an error, matching the caller's fail-closed policy.
-func coreAuthCaptchaSiteverify(ctx context.Context, cfg coreAuthCaptchaConfig, token string) (*domain.CoreAuthCaptchaVerifyResult, error) {
+func coreAuthCaptchaSiteverify(
+	ctx context.Context, cfg coreAuthCaptchaConfig, token string,
+) (*domain.CoreAuthCaptchaVerifyResult, error) {
 	verifyURL := coreAuthCaptchaVerifyURL(cfg.Provider, cfg.VerifyURL)
 	if verifyURL == "" {
 		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
@@ -2633,15 +2745,19 @@ func coreAuthCaptchaSiteverify(ctx context.Context, cfg coreAuthCaptchaConfig, t
 
 // StartEmailChange mints an email-change challenge for the current account
 // targeting the new email.
-func (a *pgCoreAuth) StartEmailChange(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd) (*domain.Challenge, error) {
+func (a *pgCoreAuth) StartEmailChange(
+	ctx context.Context, cmd domain.CoreAuthVerifyStartCmd,
+) (*domain.Challenge, error) {
 	return a.coreAuthStartChallenge(ctx, cmd, coreAuthChallengeEmail, "change")
 }
 
 // VerifyEmailChange consumes an email-change challenge and swaps the account's
 // primary email to the challenged contact.
-func (a *pgCoreAuth) VerifyEmailChange(ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd) (*domain.Account, error) {
+func (a *pgCoreAuth) VerifyEmailChange(
+	ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd,
+) (*domain.Account, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
-		_, data, err := a.coreAuthConsumeChallenge(ctx, cmd.ProjectID, cmd, coreAuthChallengeEmail)
+		data, err := a.coreAuthConsumeChallenge(ctx, cmd.ProjectID, cmd, coreAuthChallengeEmail)
 		if err != nil {
 			return nil, err
 		}
@@ -2719,20 +2835,24 @@ func (a *pgCoreAuth) CancelEmailChange(ctx context.Context, token string) error 
 // ----- phone verification / change -----
 
 // StartPhoneVerification mints a phone-verification challenge (SMS/WhatsApp).
-func (a *pgCoreAuth) StartPhoneVerification(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd) (*domain.Challenge, error) {
+func (a *pgCoreAuth) StartPhoneVerification(
+	ctx context.Context, cmd domain.CoreAuthVerifyStartCmd,
+) (*domain.Challenge, error) {
 	return a.coreAuthStartChallenge(ctx, cmd, coreAuthChallengePhone, "verify")
 }
 
 // VerifyPhone consumes a phone-verification challenge, marks the matching
 // account's phone verified and mints a session.
-func (a *pgCoreAuth) VerifyPhone(ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd) (*domain.Account, *domain.Session, error) {
+func (a *pgCoreAuth) VerifyPhone(
+	ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd,
+) (*domain.Account, *domain.Session, error) {
 	type verifyResult struct {
 		acc  *domain.Account
 		sess *domain.Session
 	}
 
 	res, err := withTxRet(ctx, a.db, func(ctx context.Context) (verifyResult, error) {
-		_, data, err := a.coreAuthConsumeChallenge(ctx, cmd.ProjectID, cmd, coreAuthChallengePhone)
+		data, err := a.coreAuthConsumeChallenge(ctx, cmd.ProjectID, cmd, coreAuthChallengePhone)
 		if err != nil {
 			return verifyResult{}, err
 		}
@@ -2800,15 +2920,19 @@ func (a *pgCoreAuth) coreAuthFindUserByPhone(ctx context.Context, projectID, pho
 
 // StartPhoneChange mints a phone-change challenge for the current account
 // targeting the new phone.
-func (a *pgCoreAuth) StartPhoneChange(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd) (*domain.Challenge, error) {
+func (a *pgCoreAuth) StartPhoneChange(
+	ctx context.Context, cmd domain.CoreAuthVerifyStartCmd,
+) (*domain.Challenge, error) {
 	return a.coreAuthStartChallenge(ctx, cmd, coreAuthChallengePhone, "change")
 }
 
 // VerifyPhoneChange consumes a phone-change challenge and swaps the account's
 // primary phone to the challenged contact.
-func (a *pgCoreAuth) VerifyPhoneChange(ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd) (*domain.Account, error) {
+func (a *pgCoreAuth) VerifyPhoneChange(
+	ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd,
+) (*domain.Account, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Account, error) {
-		_, data, err := a.coreAuthConsumeChallenge(ctx, cmd.ProjectID, cmd, coreAuthChallengePhone)
+		data, err := a.coreAuthConsumeChallenge(ctx, cmd.ProjectID, cmd, coreAuthChallengePhone)
 		if err != nil {
 			return nil, err
 		}
@@ -2933,7 +3057,36 @@ func (a *pgCoreAuth) ForgotPassword(ctx context.Context, cmd domain.CoreAuthPass
 
 // ResetPassword consumes a password-reset challenge and writes a fresh bcrypt
 // credential, then mints a session.
-func (a *pgCoreAuth) ResetPassword(ctx context.Context, cmd domain.CoreAuthPasswordResetCmd) (*domain.Account, *domain.Session, error) {
+// coreAuthLoadResetTargetAccount loads the account a consumed password_reset
+// challenge names and enforces the project's password policy against the
+// proposed new password before ResetPassword commits to it.
+func (a *pgCoreAuth) coreAuthLoadResetTargetAccount(
+	ctx context.Context, projectID, accountID, newPassword string,
+) (*domain.Account, error) {
+	userRow, err := models.FindIamUser(ctx, a.db.Bobx(), accountID)
+	if err != nil {
+		if errors.Is(translatePgErr("user", err), ErrNotFound) {
+			return nil, domain.ErrUserNotFound
+		}
+
+		return nil, err
+	}
+
+	acc, err := coreAuthLoadAccount(userRow, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, newPassword); err != nil {
+		return nil, err
+	}
+
+	return acc, nil
+}
+
+func (a *pgCoreAuth) ResetPassword(
+	ctx context.Context, cmd domain.CoreAuthPasswordResetCmd,
+) (*domain.Account, *domain.Session, error) {
 	if strings.TrimSpace(cmd.NewPassword) == "" {
 		return nil, nil, domain.ErrWeakPassword
 	}
@@ -2951,26 +3104,13 @@ func (a *pgCoreAuth) ResetPassword(ctx context.Context, cmd domain.CoreAuthPassw
 			Token:       cmd.Token,
 		}
 
-		_, data, err := a.coreAuthConsumeChallenge(ctx, cmd.ProjectID, consume, "password_reset")
+		data, err := a.coreAuthConsumeChallenge(ctx, cmd.ProjectID, consume, "password_reset")
 		if err != nil {
 			return resetResult{}, err
 		}
 
-		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), data.AccountID)
+		acc, err := a.coreAuthLoadResetTargetAccount(ctx, cmd.ProjectID, data.AccountID, cmd.NewPassword)
 		if err != nil {
-			if errors.Is(translatePgErr("user", err), ErrNotFound) {
-				return resetResult{}, domain.ErrUserNotFound
-			}
-
-			return resetResult{}, err
-		}
-
-		acc, err := coreAuthLoadAccount(userRow, cmd.ProjectID)
-		if err != nil {
-			return resetResult{}, err
-		}
-
-		if err := a.coreAuthEnforcePasswordPolicy(ctx, acc.ProjectID, cmd.NewPassword); err != nil {
 			return resetResult{}, err
 		}
 
@@ -3158,7 +3298,9 @@ func (a *pgCoreAuth) ChangePassword(ctx context.Context, cmd domain.CoreAuthPass
 // hard floor; any present rules (breached_check, zxcvbn_min_score) are applied
 // on top of the mixed-case heuristic. A missing policy row falls back to a sane
 // default (min_length 8). The result is returned without persistence.
-func (a *pgCoreAuth) CheckPassword(ctx context.Context, projectID, password string) (*domain.CoreAuthPasswordCheckResult, error) {
+func (a *pgCoreAuth) CheckPassword(
+	ctx context.Context, projectID, password string,
+) (*domain.CoreAuthPasswordCheckResult, error) {
 	pol, err := a.cfg.PasswordPolicy(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -3217,7 +3359,9 @@ func (a *pgCoreAuth) coreAuthEnforcePasswordPolicy(ctx context.Context, projectI
 
 // VerifyPassword re-asserts the current account's password for a sudo/step-up
 // gate, returning whether it matched plus the session AAL/AMR.
-func (a *pgCoreAuth) VerifyPassword(ctx context.Context, cmd domain.CoreAuthPasswordChangeCmd) (*domain.CoreAuthPasswordVerifyResult, error) {
+func (a *pgCoreAuth) VerifyPassword(
+	ctx context.Context, cmd domain.CoreAuthPasswordChangeCmd,
+) (*domain.CoreAuthPasswordVerifyResult, error) {
 	if cmd.AccountID == "" {
 		return nil, domain.ErrUnauthorized
 	}
@@ -3326,7 +3470,9 @@ func (a *pgCoreAuth) StepUp(ctx context.Context, cmd domain.CoreAuthStepUpCmd) (
 // SwitchGroup re-scopes the current session to a different group and mints a
 // fresh session reflecting the new active group. The group binding lives in the
 // session envelope's client/group claims; the rotation revokes the old session.
-func (a *pgCoreAuth) SwitchGroup(ctx context.Context, accountID, sessionID, groupID string) (*domain.Account, *domain.Session, error) {
+func (a *pgCoreAuth) SwitchGroup(
+	ctx context.Context, accountID, sessionID, groupID string,
+) (*domain.Account, *domain.Session, error) {
 	if accountID == "" || sessionID == "" {
 		return nil, nil, domain.ErrUnauthorized
 	}
@@ -3407,7 +3553,9 @@ func (a *pgCoreAuth) SwitchGroup(ctx context.Context, accountID, sessionID, grou
 
 // CreateAccessRequest records a self-service access request gating sign-up
 // behind approval (iam_access_requests, status=pending).
-func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAuthAccessRequestCmd) (*domain.CoreAuthAccessRequest, error) {
+func (a *pgCoreAuth) CreateAccessRequest(
+	ctx context.Context, cmd domain.CoreAuthAccessRequestCmd,
+) (*domain.CoreAuthAccessRequest, error) {
 	if cmd.ProjectID == "" || strings.TrimSpace(cmd.Email) == "" {
 		return nil, domain.ErrValidation.WithMessage("project and email are required")
 	}
@@ -3473,7 +3621,9 @@ func (a *pgCoreAuth) CreateAccessRequest(ctx context.Context, cmd domain.CoreAut
 // Introspect resolves a token to its active state + claims. It matches an
 // access token against a live session (envelope) or a refresh token by hash,
 // all scoped to the project (tenant boundary).
-func (a *pgCoreAuth) Introspect(ctx context.Context, projectID, token string) (*domain.CoreAuthTokenIntrospection, error) {
+func (a *pgCoreAuth) Introspect(
+	ctx context.Context, projectID, token string,
+) (*domain.CoreAuthTokenIntrospection, error) {
 	if strings.TrimSpace(token) == "" {
 		return &domain.CoreAuthTokenIntrospection{Active: false}, nil
 	}
@@ -3503,7 +3653,9 @@ func (a *pgCoreAuth) Introspect(ctx context.Context, projectID, token string) (*
 	// session is still live.
 	claims, sess, err := a.coreAuthVerifyAccess(ctx, projectID, token)
 	if err != nil || sess == nil {
-		return &domain.CoreAuthTokenIntrospection{Active: false}, nil //nolint:nilerr // an invalid token introspects as inactive, not an error
+		return &domain.CoreAuthTokenIntrospection{ //nolint:nilerr // an invalid token introspects as inactive, not an error
+			Active: false,
+		}, nil
 	}
 
 	claims["token_type"] = "access_token"
@@ -3513,15 +3665,17 @@ func (a *pgCoreAuth) Introspect(ctx context.Context, projectID, token string) (*
 
 // parseImpersonationToken verifies token's signature and claims, returning
 // the target project/user, the impersonating actor, and the token's env.
-func (a *pgCoreAuth) parseImpersonationToken(ctx context.Context, token string) (projectID, sub, actor, env string, err error) {
+func (a *pgCoreAuth) parseImpersonationToken(
+	ctx context.Context, token string,
+) (string, string, string, string, error) {
 	claims := a.db.Signer().UnverifiedClaims(token)
 	if claims == nil {
 		return "", "", "", "", domain.ErrInvalidToken
 	}
 
-	projectID, _ = claims["pid"].(string)
+	projectID, _ := claims["pid"].(string)
 
-	env = coreAuthDefaultEnv
+	env := coreAuthDefaultEnv
 	if e, ok := claims["env"].(string); ok && e != "" {
 		env = e
 	}
@@ -3535,8 +3689,8 @@ func (a *pgCoreAuth) parseImpersonationToken(ctx context.Context, token string) 
 		return "", "", "", "", domain.ErrInvalidToken
 	}
 
-	sub, _ = verified["sub"].(string)
-	actor, _ = verified["act"].(string)
+	sub, _ := verified["sub"].(string)
+	actor, _ := verified["act"].(string)
 
 	if projectID == "" || sub == "" {
 		return "", "", "", "", domain.ErrInvalidToken
@@ -3573,7 +3727,9 @@ func (a *pgCoreAuth) coreAuthConsumeImpersonationChallenge(ctx context.Context, 
 // is a typ=impersonation JWT (sub=target, act=admin); the matching
 // iam_challenges row gates single use and is consumed here so the token cannot be
 // replayed.
-func (a *pgCoreAuth) RedeemImpersonation(ctx context.Context, token, clientID string) (*domain.Account, *domain.Session, error) {
+func (a *pgCoreAuth) RedeemImpersonation(
+	ctx context.Context, token, clientID string,
+) (*domain.Account, *domain.Session, error) {
 	projectID, sub, actor, env, err := a.parseImpersonationToken(ctx, token)
 	if err != nil {
 		return nil, nil, err
@@ -3625,14 +3781,19 @@ func (a *pgCoreAuth) RedeemImpersonation(ctx context.Context, token, clientID st
 // Verify validates a token's signature and claims for an audience. Signature
 // verification is deferred (opaque tokens), so this checks liveness + audience
 // against the session envelope and reports a structured result.
-func (a *pgCoreAuth) Verify(ctx context.Context, projectID, token, audience string) (*domain.CoreAuthTokenVerification, error) {
+func (a *pgCoreAuth) Verify(
+	ctx context.Context, projectID, token, audience string,
+) (*domain.CoreAuthTokenVerification, error) {
 	if strings.TrimSpace(token) == "" {
 		return &domain.CoreAuthTokenVerification{Valid: false, Error: "missing_token"}, nil
 	}
 	// Verify the JWT signature + claims (jwx), then confirm the session is live.
 	claims, sess, err := a.coreAuthVerifyAccess(ctx, projectID, token)
 	if err != nil || sess == nil {
-		return &domain.CoreAuthTokenVerification{Valid: false, Error: "invalid_token"}, nil //nolint:nilerr // an invalid token verifies as invalid, not an error
+		return &domain.CoreAuthTokenVerification{ //nolint:nilerr // an invalid token verifies as invalid, not an error
+			Valid: false,
+			Error: "invalid_token",
+		}, nil
 	}
 
 	if audience != "" && sess.ClientID != "" && sess.ClientID != audience {

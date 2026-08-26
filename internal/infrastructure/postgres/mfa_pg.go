@@ -458,7 +458,9 @@ func (a *pgMFAAccounts) mfaAccountFromFlow(ctx context.Context, projectID, flowT
 // identifying the account from the flow_token rather than a session principal
 // (the endpoint is public — the user is not yet authenticated). When factorID is
 // empty the account's primary factor is chosen.
-func (a *pgMFAAccounts) ChallengeWithFlow(ctx context.Context, projectID, flowToken, factorID string) (*domain.Challenge, error) {
+func (a *pgMFAAccounts) ChallengeWithFlow(
+	ctx context.Context, projectID, flowToken, factorID string,
+) (*domain.Challenge, error) {
 	accountID, err := a.mfaAccountFromFlow(ctx, projectID, flowToken)
 	if err != nil {
 		return nil, err
@@ -523,7 +525,9 @@ func mfaPrimaryFactorID(factors []domain.Factor) string {
 // / under-attempt-cap, and checks the supplied code. On a wrong code it bumps
 // the attempt counter (this tx rolls back on the returned error, so the bump
 // runs in its own committed transaction) and returns ErrMFAInvalid.
-func (a *pgMFAAccounts) mfaVerifyChallengeCode(ctx context.Context, challengeID, code string) (*models.IamChallenge, string, error) {
+func (a *pgMFAAccounts) mfaVerifyChallengeCode(
+	ctx context.Context, challengeID, code string,
+) (*models.IamChallenge, string, error) {
 	row, err := models.FindIamChallenge(ctx, a.db.Bobx(), challengeID)
 	if err != nil {
 		return nil, "", translatePgErr("challenge", err)
@@ -568,7 +572,9 @@ func (a *pgMFAAccounts) mfaVerifyChallengeCode(ctx context.Context, challengeID,
 // delivery factor (email/sms) compares the sha256 of the code against the
 // stored code hash; TOTP validates against the factor's shared secret with
 // the RFC 6238 library.
-func (a *pgMFAAccounts) mfaCheckChallengeCode(ctx context.Context, row *models.IamChallenge, accountID string, data mfaChallengeData, code string) (bool, error) {
+func (a *pgMFAAccounts) mfaCheckChallengeCode(
+	ctx context.Context, row *models.IamChallenge, accountID string, data mfaChallengeData, code string,
+) (bool, error) {
 	switch row.Type {
 	case coreAuthChallengeEmail, channelSMS:
 		return data.FlowTokenHash != "" &&
@@ -598,7 +604,9 @@ func (a *pgMFAAccounts) mfaCheckChallengeCode(ctx context.Context, row *models.I
 
 // Verify consumes a challenge and, on success, returns the authenticated account
 // plus a fresh session. TOTP codes are checked with the RFC 6238 library.
-func (a *pgMFAAccounts) Verify(ctx context.Context, challengeID, code string) (*domain.Account, *domain.Session, error) {
+func (a *pgMFAAccounts) Verify(
+	ctx context.Context, challengeID, code string,
+) (*domain.Account, *domain.Session, error) {
 	type result struct {
 		acc  *domain.Account
 		sess *domain.Session
@@ -728,7 +736,9 @@ func (a *pgMFAAccounts) RemoveFactor(ctx context.Context, accountID, factorID st
 
 // EnrollEmail enrolls an email factor and issues a delivery challenge carrying
 // the sha256 of a freshly minted one-time code.
-func (a *pgMFAAccounts) EnrollEmail(ctx context.Context, cmd domain.MFAEmailEnrollCmd) (*domain.Factor, *domain.Challenge, error) {
+func (a *pgMFAAccounts) EnrollEmail(
+	ctx context.Context, cmd domain.MFAEmailEnrollCmd,
+) (*domain.Factor, *domain.Challenge, error) {
 	if err := domain.ValidateEmail(cmd.Email); err != nil {
 		return nil, nil, err
 	}
@@ -738,7 +748,9 @@ func (a *pgMFAAccounts) EnrollEmail(ctx context.Context, cmd domain.MFAEmailEnro
 
 // EnrollSMS enrolls an SMS factor and issues a delivery challenge carrying the
 // sha256 of a freshly minted one-time code.
-func (a *pgMFAAccounts) EnrollSMS(ctx context.Context, cmd domain.MFASmsEnrollCmd) (*domain.Factor, *domain.Challenge, error) {
+func (a *pgMFAAccounts) EnrollSMS(
+	ctx context.Context, cmd domain.MFASmsEnrollCmd,
+) (*domain.Factor, *domain.Challenge, error) {
 	if err := domain.ValidatePhone(cmd.Phone); err != nil {
 		return nil, nil, err
 	}
@@ -799,7 +811,9 @@ func (a *pgMFAAccounts) VerifyTOTP(ctx context.Context, cmd domain.MFATotpVerify
 
 // VerifyRecoveryCode consumes a single-use recovery code and, on success,
 // returns the authenticated account plus a fresh session.
-func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARecoveryVerifyCmd) (*domain.Account, *domain.Session, error) {
+func (a *pgMFAAccounts) VerifyRecoveryCode(
+	ctx context.Context, cmd domain.MFARecoveryVerifyCmd,
+) (*domain.Account, *domain.Session, error) {
 	type result struct {
 		acc  *domain.Account
 		sess *domain.Session
@@ -864,7 +878,9 @@ func (a *pgMFAAccounts) VerifyRecoveryCode(ctx context.Context, cmd domain.MFARe
 // attestation ceremony: BeginRegistration mints the publicKey options + the
 // SessionData snapshot (challenge, RP id, user verification) we persist in the
 // challenge row so EnrollWebAuthnVerify can verify the matching attestation.
-func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MFAWebAuthnEnrollOptionsCmd) (*domain.Challenge, error) {
+func (a *pgMFAAccounts) EnrollWebAuthnOptions(
+	ctx context.Context, cmd domain.MFAWebAuthnEnrollOptionsCmd,
+) (*domain.Challenge, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Challenge, error) {
 		projectID, err := a.mfaResolveProject(ctx, cmd.AccountID)
 		if err != nil {
@@ -934,7 +950,9 @@ func (a *pgMFAAccounts) EnrollWebAuthnOptions(ctx context.Context, cmd domain.MF
 // mfaLoadEnrollChallenge loads the enroll challenge and validates it (bound
 // to cmd.AccountID, not consumed, not expired), then rehydrates the ceremony
 // SessionData persisted by EnrollWebAuthnOptions.
-func (a *pgMFAAccounts) mfaLoadEnrollChallenge(ctx context.Context, cmd domain.MFAWebAuthnEnrollVerifyCmd) (*models.IamChallenge, gowebauthn.SessionData, error) {
+func (a *pgMFAAccounts) mfaLoadEnrollChallenge(
+	ctx context.Context, cmd domain.MFAWebAuthnEnrollVerifyCmd,
+) (*models.IamChallenge, gowebauthn.SessionData, error) {
 	var session gowebauthn.SessionData
 
 	row, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
@@ -975,7 +993,9 @@ func (a *pgMFAAccounts) mfaLoadEnrollChallenge(ctx context.Context, cmd domain.M
 // mfaVerifyWebAuthnCreation rebuilds the per-project Relying Party + the
 // bound user handle, then validates the attestation (challenge, origin, RP
 // id, attestation statement) against the stored SessionData via go-webauthn.
-func (a *pgMFAAccounts) mfaVerifyWebAuthnCreation(ctx context.Context, row *models.IamChallenge, session gowebauthn.SessionData, cmd domain.MFAWebAuthnEnrollVerifyCmd) (*gowebauthn.Credential, error) {
+func (a *pgMFAAccounts) mfaVerifyWebAuthnCreation(
+	ctx context.Context, row *models.IamChallenge, session gowebauthn.SessionData, cmd domain.MFAWebAuthnEnrollVerifyCmd,
+) (*gowebauthn.Credential, error) {
 	w, err := a.mfaRPConfigFor(ctx, row.ProjectID)
 	if err != nil {
 		return nil, err
@@ -1012,7 +1032,9 @@ func (a *pgMFAAccounts) mfaVerifyWebAuthnCreation(ctx context.Context, row *mode
 // the ceremony (challenge, RP id, origin, attestation statement). On success the
 // challenge is consumed and the factor activated, persisting the verified library
 // credential in the factor secret column so subsequent assertions can be checked.
-func (a *pgMFAAccounts) EnrollWebAuthnVerify(ctx context.Context, cmd domain.MFAWebAuthnEnrollVerifyCmd) (*domain.Factor, error) {
+func (a *pgMFAAccounts) EnrollWebAuthnVerify(
+	ctx context.Context, cmd domain.MFAWebAuthnEnrollVerifyCmd,
+) (*domain.Factor, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Factor, error) {
 		row, session, err := a.mfaLoadEnrollChallenge(ctx, cmd)
 		if err != nil {
@@ -1104,7 +1126,9 @@ func (a *pgMFAAccounts) mfaResolveAccount(ctx context.Context, accountID string)
 
 // mfaInsertChallenge persists a challenge envelope. subject carries the owning
 // account; data carries the flow material (factor id, code hash, webauthn opts).
-func (a *pgMFAAccounts) mfaInsertChallenge(ctx context.Context, projectID, accountID string, ch *domain.Challenge, data mfaChallengeData) error {
+func (a *pgMFAAccounts) mfaInsertChallenge(
+	ctx context.Context, projectID, accountID string, ch *domain.Challenge, data mfaChallengeData,
+) error {
 	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return err
@@ -1148,7 +1172,9 @@ func (a *pgMFAAccounts) mfaConsumeChallenge(ctx context.Context, row *models.Iam
 
 // emitMFAEnrollEvents announces the new pending factor and dispatches the
 // challenge's one-time code out-of-band via the delivery channel (email/sms).
-func (a *pgMFAAccounts) emitMFAEnrollEvents(ctx context.Context, projectID string, f *domain.Factor, ch *domain.Challenge, code, factorType, hint string) error {
+func (a *pgMFAAccounts) emitMFAEnrollEvents(
+	ctx context.Context, projectID string, f *domain.Factor, ch *domain.Challenge, code, factorType, hint string,
+) error {
 	if err := a.emitter.Emit(ctx, domain.Event{
 		Type:        "mfa.factor.enrolled",
 		ProjectID:   projectID,
@@ -1178,7 +1204,9 @@ func (a *pgMFAAccounts) emitMFAEnrollEvents(ctx context.Context, projectID strin
 // mfaEnrollDelivery is the shared enroll path for email/sms factors: it creates a
 // pending factor and an accompanying delivery challenge whose one-time code is
 // stored only as a sha256 hash (the plaintext code would be delivered out-of-band).
-func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factorType, hint string) (*domain.Factor, *domain.Challenge, error) {
+func (a *pgMFAAccounts) mfaEnrollDelivery(
+	ctx context.Context, accountID, factorType, hint string,
+) (*domain.Factor, *domain.Challenge, error) {
 	type result struct {
 		factor *domain.Factor
 		ch     *domain.Challenge
@@ -1244,7 +1272,9 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 }
 
 // mfaInsertFactorFor persists a factor envelope for an explicit account id.
-func (a *pgMFAAccounts) mfaInsertFactorFor(ctx context.Context, projectID, accountID string, f *domain.Factor, secret string) error {
+func (a *pgMFAAccounts) mfaInsertFactorFor(
+	ctx context.Context, projectID, accountID string, f *domain.Factor, secret string,
+) error {
 	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return err

@@ -253,7 +253,10 @@ func (a *PgWebhooks) scanWebhook(row pgx.Row) (*domain.Webhook, error) {
 		out domain.Webhook
 		raw []byte
 	)
-	if err := row.Scan(&out.ID, &out.ProjectID, &out.Environment, &out.Enabled, &out.CreatedAt, &out.UpdatedAt, &raw); err != nil {
+
+	err := row.Scan(&out.ID, &out.ProjectID, &out.Environment, &out.Enabled,
+		&out.CreatedAt, &out.UpdatedAt, &raw)
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound.WithMessage("webhook not found")
 		}
@@ -279,7 +282,9 @@ func (a *PgWebhooks) scanWebhook(row pgx.Row) (*domain.Webhook, error) {
 const webhookSelect = `SELECT id, project_id, environment, enabled, created_at, updated_at, data FROM iam_webhooks`
 
 func (a *PgWebhooks) Get(ctx context.Context, projectID, environment, id string) (*domain.Webhook, error) {
-	return a.scanWebhook(a.db.TxDB.QueryRow(ctx, webhookSelect+` WHERE id = $1 AND project_id = $2 AND environment = $3`, id, projectID, adminEnv(environment)))
+	return a.scanWebhook(a.db.TxDB.QueryRow(ctx,
+		webhookSelect+` WHERE id = $1 AND project_id = $2 AND environment = $3`,
+		id, projectID, adminEnv(environment)))
 }
 
 func (a *PgWebhooks) List(ctx context.Context, cmd domain.WebhookListCmd) ([]domain.Webhook, string, bool, error) {
@@ -289,7 +294,9 @@ func (a *PgWebhooks) List(ctx context.Context, cmd domain.WebhookListCmd) ([]dom
 
 	query := webhookSelect + ` WHERE project_id = $1 AND environment = $2`
 	if cmd.Cursor != "" {
-		query += ` AND (created_at, id) < COALESCE((SELECT created_at, id FROM iam_webhooks WHERE id = $4 AND project_id = $1 AND environment = $2), ('infinity'::timestamptz, '~'::text))`
+		query += ` AND (created_at, id) < COALESCE((
+			SELECT created_at, id FROM iam_webhooks WHERE id = $4 AND project_id = $1 AND environment = $2
+		), ('infinity'::timestamptz, '~'::text))`
 
 		args = append(args, cmd.Cursor)
 	}
@@ -341,7 +348,9 @@ func (a *PgWebhooks) Create(ctx context.Context, cmd domain.WebhookCreateCmd) (*
 
 	env := adminEnv(cmd.Environment)
 	if cmd.IdempotencyKey != "" {
-		existing, err := a.scanWebhook(a.db.TxDB.QueryRow(ctx, webhookSelect+` WHERE project_id = $1 AND environment = $2 AND idempotency_key = $3`, cmd.ProjectID, env, cmd.IdempotencyKey))
+		existing, err := a.scanWebhook(a.db.TxDB.QueryRow(ctx,
+			webhookSelect+` WHERE project_id = $1 AND environment = $2 AND idempotency_key = $3`,
+			cmd.ProjectID, env, cmd.IdempotencyKey))
 		if err == nil {
 			return existing, existing.SigningSecret, nil
 		}
@@ -375,7 +384,9 @@ func (a *PgWebhooks) Create(ctx context.Context, cmd domain.WebhookCreateCmd) (*
 	if errors.Is(err, domain.ErrNotFound) && cmd.IdempotencyKey != "" {
 		// A concurrent request may have won the partial unique index after the
 		// preflight lookup. Return that exact resource and its one-time secret.
-		existing, getErr := a.scanWebhook(a.db.TxDB.QueryRow(ctx, webhookSelect+` WHERE project_id = $1 AND environment = $2 AND idempotency_key = $3`, cmd.ProjectID, env, cmd.IdempotencyKey))
+		existing, getErr := a.scanWebhook(a.db.TxDB.QueryRow(ctx,
+			webhookSelect+` WHERE project_id = $1 AND environment = $2 AND idempotency_key = $3`,
+			cmd.ProjectID, env, cmd.IdempotencyKey))
 		if getErr != nil {
 			return nil, "", getErr
 		}
@@ -442,11 +453,16 @@ func (a *PgWebhooks) Update(ctx context.Context, cmd domain.WebhookUpdateCmd) (*
 
 func (a *PgWebhooks) Delete(ctx context.Context, projectID, environment, id string) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
-		if _, err := a.db.TxDB.Exec(ctx, `DELETE FROM iam_webhook_deliveries WHERE webhook_id = $1 AND project_id = $2 AND environment = $3`, id, projectID, adminEnv(environment)); err != nil {
+		_, err := a.db.TxDB.Exec(ctx,
+			`DELETE FROM iam_webhook_deliveries WHERE webhook_id = $1 AND project_id = $2 AND environment = $3`,
+			id, projectID, adminEnv(environment))
+		if err != nil {
 			return fmt.Errorf("delete webhook deliveries: %w", err)
 		}
 
-		result, err := a.db.TxDB.Exec(ctx, `DELETE FROM iam_webhooks WHERE id = $1 AND project_id = $2 AND environment = $3`, id, projectID, adminEnv(environment))
+		result, err := a.db.TxDB.Exec(ctx,
+			`DELETE FROM iam_webhooks WHERE id = $1 AND project_id = $2 AND environment = $3`,
+			id, projectID, adminEnv(environment))
 		if err != nil {
 			return fmt.Errorf("delete webhook: %w", err)
 		}
@@ -482,7 +498,9 @@ func (a *PgWebhooks) RotateSecret(ctx context.Context, projectID, environment, i
 			return "", err
 		}
 
-		result, err := a.db.TxDB.Exec(ctx, `UPDATE iam_webhooks SET data = $1, updated_at = $2 WHERE id = $3 AND project_id = $4 AND environment = $5`, raw, now, id, projectID, adminEnv(environment))
+		result, err := a.db.TxDB.Exec(ctx,
+			`UPDATE iam_webhooks SET data = $1, updated_at = $2 WHERE id = $3 AND project_id = $4 AND environment = $5`,
+			raw, now, id, projectID, adminEnv(environment))
 		if err != nil {
 			return "", fmt.Errorf("rotate webhook secret: %w", err)
 		}
@@ -655,7 +673,9 @@ func webhookMatches(events []string, eventType string) bool {
 }
 
 func (a *PgWebhooks) enabledForEvent(ctx context.Context, event domain.PublicEvent) ([]domain.Webhook, error) {
-	rows, err := a.db.Pool.Query(ctx, webhookSelect+` WHERE project_id = $1 AND environment = $2 AND enabled = true`, event.ProjectID, event.Environment)
+	rows, err := a.db.Pool.Query(ctx,
+		webhookSelect+` WHERE project_id = $1 AND environment = $2 AND enabled = true`,
+		event.ProjectID, event.Environment)
 	if err != nil {
 		return nil, fmt.Errorf("list enabled webhooks: %w", err)
 	}
@@ -681,7 +701,9 @@ func (a *PgWebhooks) enabledForEvent(ctx context.Context, event domain.PublicEve
 	return out, nil
 }
 
-func (a *PgWebhooks) ensureDelivery(ctx context.Context, webhook domain.Webhook, event domain.PublicEvent) (*domain.WebhookDelivery, error) {
+func (a *PgWebhooks) ensureDelivery(
+	ctx context.Context, webhook domain.Webhook, event domain.PublicEvent,
+) (*domain.WebhookDelivery, error) {
 	_, err := a.db.Pool.Exec(ctx, `
 		INSERT INTO iam_webhook_deliveries (id, project_id, environment, webhook_id, event_id, status, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, 'pending', $6, $6)
@@ -694,8 +716,11 @@ func (a *PgWebhooks) ensureDelivery(ctx context.Context, webhook domain.Webhook,
 	return a.getDeliveryByPair(ctx, webhook.ID, event.ID)
 }
 
-func (a *PgWebhooks) getDeliveryByPair(ctx context.Context, webhookID, eventID string) (*domain.WebhookDelivery, error) {
-	return scanDelivery(a.db.Pool.QueryRow(ctx, deliverySelect+` WHERE d.webhook_id = $1 AND d.event_id = $2`, webhookID, eventID))
+func (a *PgWebhooks) getDeliveryByPair(
+	ctx context.Context, webhookID, eventID string,
+) (*domain.WebhookDelivery, error) {
+	return scanDelivery(a.db.Pool.QueryRow(ctx,
+		deliverySelect+` WHERE d.webhook_id = $1 AND d.event_id = $2`, webhookID, eventID))
 }
 
 const deliverySelect = `SELECT d.id, d.project_id, d.environment, d.webhook_id, d.event_id, e.type,
@@ -736,7 +761,9 @@ func scanDelivery(row rowScanner) (*domain.WebhookDelivery, error) {
 	return &out, nil
 }
 
-func (a *PgWebhooks) loadDeliveryParts(ctx context.Context, deliveryID string) (*domain.WebhookDelivery, *domain.Webhook, domain.PublicEvent, error) {
+func (a *PgWebhooks) loadDeliveryParts(
+	ctx context.Context, deliveryID string,
+) (*domain.WebhookDelivery, *domain.Webhook, domain.PublicEvent, error) {
 	delivery, err := scanDelivery(a.db.Pool.QueryRow(ctx, deliverySelect+` WHERE d.id = $1`, deliveryID))
 	if err != nil {
 		return nil, nil, domain.PublicEvent{}, err
@@ -752,7 +779,8 @@ func (a *PgWebhooks) loadDeliveryParts(ctx context.Context, deliveryID string) (
 		event domain.PublicEvent
 	)
 
-	if err := a.db.Pool.QueryRow(ctx, `SELECT data FROM iam_events WHERE id = $1`, delivery.EventID).Scan(&raw); err != nil {
+	err = a.db.Pool.QueryRow(ctx, `SELECT data FROM iam_events WHERE id = $1`, delivery.EventID).Scan(&raw)
+	if err != nil {
 		return nil, nil, domain.PublicEvent{}, fmt.Errorf("load delivery: scan event: %w", err)
 	}
 
@@ -800,7 +828,9 @@ func (a *PgWebhooks) deliver(ctx context.Context, deliveryID string, force bool)
 // buildWebhookRequest signs event's JSON body (current secret, plus the
 // previous one while it is still within its grace window — so a secret
 // rotation doesn't 401 in-flight deliveries) and assembles the signed POST.
-func buildWebhookRequest(ctx context.Context, webhook *domain.Webhook, event domain.PublicEvent) (*http.Request, error) {
+func buildWebhookRequest(
+	ctx context.Context, webhook *domain.Webhook, event domain.PublicEvent,
+) (*http.Request, error) {
 	body, err := json.Marshal(event)
 	if err != nil {
 		return nil, fmt.Errorf("build webhook request: marshal: %w", err)
@@ -832,7 +862,7 @@ func buildWebhookRequest(ctx context.Context, webhook *domain.Webhook, event dom
 // the caller can persist it for debugging), and requestErr is set for a
 // transport failure, a body-read failure, or a non-2xx status.
 func (a *PgWebhooks) sendWebhookRequest(req *http.Request) (*int, string, error) {
-	response, requestErr := a.httpClient.Do(req) //nolint:gosec // a.httpClient is newWebhookHTTPClient: SSRF is guarded at dial time (isBlockedWebhookIP), not visible to this taint check
+	response, requestErr := a.httpClient.Do(req) //nolint:gosec,lll // a.httpClient is newWebhookHTTPClient: SSRF is guarded at dial time (isBlockedWebhookIP), not visible to this taint check
 	if response == nil {
 		return nil, "", fmt.Errorf("send webhook request: %w", requestErr)
 	}
@@ -860,7 +890,9 @@ func (a *PgWebhooks) sendWebhookRequest(req *http.Request) (*int, string, error)
 }
 
 // recordWebhookSuccess marks a delivery succeeded and returns its fresh row.
-func (a *PgWebhooks) recordWebhookSuccess(ctx context.Context, deliveryID string, attempts int, attemptedAt time.Time, status *int, responseBody string) (*domain.WebhookDelivery, error) {
+func (a *PgWebhooks) recordWebhookSuccess(
+	ctx context.Context, deliveryID string, attempts int, attemptedAt time.Time, status *int, responseBody string,
+) (*domain.WebhookDelivery, error) {
 	if _, err := a.db.Pool.Exec(ctx, `UPDATE iam_webhook_deliveries
 		SET status = 'succeeded', attempt_count = $1, next_attempt_at = NULL, last_attempt_at = $2,
 			delivered_at = $2, response_status = $3, response_body = $4, last_error = NULL, updated_at = $2
@@ -874,7 +906,10 @@ func (a *PgWebhooks) recordWebhookSuccess(ctx context.Context, deliveryID string
 // recordWebhookFailure schedules the next retry with capped exponential
 // backoff (1s, 2s, 4s, ... capped at 5m) and returns the fresh row alongside
 // requestErr (the caller reports it so pg-outbox retries the delivery job).
-func (a *PgWebhooks) recordWebhookFailure(ctx context.Context, deliveryID string, attempts int, attemptedAt time.Time, status *int, responseBody string, requestErr error) (*domain.WebhookDelivery, error) {
+func (a *PgWebhooks) recordWebhookFailure(
+	ctx context.Context, deliveryID string, attempts int, attemptedAt time.Time,
+	status *int, responseBody string, requestErr error,
+) (*domain.WebhookDelivery, error) {
 	delay := time.Second << min(attempts-1, webhookBackoffMaxShift)
 	if delay > webhookBackoffCap {
 		delay = webhookBackoffCap
@@ -882,10 +917,12 @@ func (a *PgWebhooks) recordWebhookFailure(ctx context.Context, deliveryID string
 
 	message := requestErr.Error()
 
-	if _, err := a.db.Pool.Exec(ctx, `UPDATE iam_webhook_deliveries
+	_, err := a.db.Pool.Exec(ctx, `UPDATE iam_webhook_deliveries
 		SET status = 'failed', attempt_count = $1, next_attempt_at = $2, last_attempt_at = $3,
 			response_status = $4, response_body = $5, last_error = $6, updated_at = $3
-		WHERE id = $7`, attempts, attemptedAt.Add(delay), attemptedAt, status, responseBody, message, deliveryID); err != nil {
+		WHERE id = $7`,
+		attempts, attemptedAt.Add(delay), attemptedAt, status, responseBody, message, deliveryID)
+	if err != nil {
 		return nil, errors.Join(requestErr, err)
 	}
 
@@ -940,7 +977,9 @@ func (a *PgWebhooks) PublishEvent(ctx context.Context, ev domain.Event) error {
 	return nil
 }
 
-func (a *PgWebhooks) ListDeliveries(ctx context.Context, cmd domain.WebhookDeliveryListCmd) ([]domain.WebhookDelivery, error) {
+func (a *PgWebhooks) ListDeliveries(
+	ctx context.Context, cmd domain.WebhookDeliveryListCmd,
+) ([]domain.WebhookDelivery, error) {
 	limit := normalizeWebhookLimit(cmd.Limit)
 	args := []any{cmd.ProjectID, adminEnv(cmd.Environment)}
 	query := deliverySelect + ` WHERE d.project_id = $1 AND d.environment = $2`
@@ -986,13 +1025,19 @@ func (a *PgWebhooks) ListDeliveries(ctx context.Context, cmd domain.WebhookDeliv
 	return out, nil
 }
 
-func (a *PgWebhooks) RetryDelivery(ctx context.Context, projectID, environment, deliveryID string) (*domain.WebhookDelivery, error) {
-	delivery, err := scanDelivery(a.db.TxDB.QueryRow(ctx, deliverySelect+` WHERE d.id = $1 AND d.project_id = $2 AND d.environment = $3`, deliveryID, projectID, adminEnv(environment)))
+func (a *PgWebhooks) RetryDelivery(
+	ctx context.Context, projectID, environment, deliveryID string,
+) (*domain.WebhookDelivery, error) {
+	delivery, err := scanDelivery(a.db.TxDB.QueryRow(ctx,
+		deliverySelect+` WHERE d.id = $1 AND d.project_id = $2 AND d.environment = $3`,
+		deliveryID, projectID, adminEnv(environment)))
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = a.db.TxDB.Exec(ctx, `UPDATE iam_webhook_deliveries SET status = 'pending', next_attempt_at = NULL, updated_at = $1 WHERE id = $2`, nowUTC(), delivery.ID)
+	_, err = a.db.TxDB.Exec(ctx,
+		`UPDATE iam_webhook_deliveries SET status = 'pending', next_attempt_at = NULL, updated_at = $1 WHERE id = $2`,
+		nowUTC(), delivery.ID)
 	if err != nil {
 		return nil, fmt.Errorf("retry webhook delivery: %w", err)
 	}
@@ -1007,7 +1052,9 @@ func (a *PgWebhooks) RetryDelivery(ctx context.Context, projectID, environment, 
 	return nil, err
 }
 
-func (a *PgWebhooks) Test(ctx context.Context, projectID, environment, webhookID, eventType string) (*domain.WebhookDelivery, error) {
+func (a *PgWebhooks) Test(
+	ctx context.Context, projectID, environment, webhookID, eventType string,
+) (*domain.WebhookDelivery, error) {
 	if eventType == "" {
 		eventType = domain.WebhookEventSessionRevoked
 	}
@@ -1060,7 +1107,10 @@ func (a *PgWebhooks) ListEvents(ctx context.Context, cmd domain.WebhookEventList
 
 	if cmd.Cursor != "" {
 		args = append(args, cmd.Cursor)
-		query += fmt.Sprintf(" AND (created_at, id) < COALESCE((SELECT created_at, id FROM iam_events WHERE id = $%d), ('infinity'::timestamptz, '~'::text))", len(args))
+		query += fmt.Sprintf(
+			" AND (created_at, id) < COALESCE((SELECT created_at, id FROM iam_events WHERE id = $%d), "+
+				"('infinity'::timestamptz, '~'::text))",
+			len(args))
 	}
 
 	args = append(args, limit+1)
@@ -1101,9 +1151,15 @@ func (a *PgWebhooks) ListEvents(ctx context.Context, cmd domain.WebhookEventList
 	return page, nil
 }
 
-func (a *PgWebhooks) ReplayEvent(ctx context.Context, projectID, environment, eventID, webhookID string) ([]domain.WebhookDelivery, error) {
+func (a *PgWebhooks) ReplayEvent(
+	ctx context.Context, projectID, environment, eventID, webhookID string,
+) ([]domain.WebhookDelivery, error) {
 	var raw []byte
-	if err := a.db.TxDB.QueryRow(ctx, `SELECT data FROM iam_events WHERE id = $1 AND project_id = $2 AND environment = $3`, eventID, projectID, adminEnv(environment)).Scan(&raw); err != nil {
+
+	err := a.db.TxDB.QueryRow(ctx,
+		`SELECT data FROM iam_events WHERE id = $1 AND project_id = $2 AND environment = $3`,
+		eventID, projectID, adminEnv(environment)).Scan(&raw)
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound.WithMessage("event not found")
 		}

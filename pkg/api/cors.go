@@ -155,7 +155,7 @@ func setCORSHeaders(w http.ResponseWriter, origin string) {
 	headers.Set("Access-Control-Allow-Origin", origin)
 	headers.Set("Access-Control-Allow-Credentials", "true")
 	headers.Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-	headers.Set("Access-Control-Allow-Headers", "Authorization,Content-Type,X-Client-ID,X-CSRF-Token,X-Environment,X-Device-Name,X-Device-Fingerprint,Idempotency-Key")
+	headers.Set("Access-Control-Allow-Headers", "Authorization,Content-Type,X-Client-ID,X-CSRF-Token,X-Environment,X-Device-Name,X-Device-Fingerprint,Idempotency-Key") //nolint:lll
 	headers.Set("Access-Control-Expose-Headers", "Set-Cookie,RateLimit-Limit,RateLimit-Remaining,RateLimit-Reset")
 	headers.Set("Access-Control-Max-Age", "600")
 }
@@ -165,6 +165,6 @@ func setCORSHeadersPublic(w http.ResponseWriter) {
 	h.Add("Vary", "Origin")
 	h.Set("Access-Control-Allow-Origin", "*")
 	h.Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-	h.Set("Access-Control-Allow-Headers", "Authorization,Content-Type,X-Client-ID,X-CSRF-Token,X-Environment,X-Device-Name,X-Device-Fingerprint,Idempotency-Key")
+	h.Set("Access-Control-Allow-Headers", "Authorization,Content-Type,X-Client-ID,X-CSRF-Token,X-Environment,X-Device-Name,X-Device-Fingerprint,Idempotency-Key") //nolint:lll
 	h.Set("Access-Control-Max-Age", "600")
 }

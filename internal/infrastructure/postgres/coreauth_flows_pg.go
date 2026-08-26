@@ -125,7 +125,10 @@ func flowDataRM(d flowData) (json.RawMessage, error) {
 
 // flowLoad finds a live flow by project+token, enforcing tenant boundary, TTL,
 // and status=pending (§5 rule 3). Returns ErrFlowNotFound for any miss.
-func (a *pgCoreAuthFlows) flowLoad(ctx context.Context, projectID, token string) (*models.IamFlow, *domain.Flow, error) {
+func (a *pgCoreAuthFlows) flowLoad(
+	ctx context.Context,
+	projectID, token string,
+) (*models.IamFlow, *domain.Flow, error) {
 	// Hash the incoming token before the DB call.
 	hash := flowHashToken(token)
 
@@ -355,13 +358,17 @@ func (a *pgCoreAuthFlows) flowInsert(ctx context.Context, f *domain.Flow, hash s
 // Each kind may process the create-time credentials immediately (e.g. signin
 // verifies the password, recovery issues an OTP). Registered in flowCreators;
 // per-kind files override their entry from an init().
-type flowCreateFn func(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error)
+type flowCreateFn func(
+	ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd domain.FlowCreateCmd,
+) (*domain.FlowState, error)
 
 // flowCreators maps each FlowKind to its create handler. signup is wired here;
 // signin/recovery/email_change are registered by their own files (init()), and
 // fall back to flowCreateCollect (persist at collect_credentials) until then.
 var flowCreators = map[domain.FlowKind]flowCreateFn{
-	domain.FlowKindSignup: func(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+	domain.FlowKindSignup: func(
+		ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd domain.FlowCreateCmd,
+	) (*domain.FlowState, error) {
 		return a.advanceSignupCreate(ctx, f, cmd)
 	},
 }
@@ -392,7 +399,9 @@ func (a *pgCoreAuthFlows) Create(ctx context.Context, cmd domain.FlowCreateCmd) 
 	// target email/phone matches an unexpired admin block. No-op when the project
 	// has no blocks.
 	meta := domain.RequestMetaFromContext(ctx)
-	if blocked, err := NewPgRisk(a.db, a.emitter).IsBlocked(ctx, cmd.ProjectID, meta.IP, cmd.Email, cmd.Phone); err == nil && blocked {
+	if blocked, err := NewPgRisk(a.db, a.emitter).IsBlocked(
+		ctx, cmd.ProjectID, meta.IP, cmd.Email, cmd.Phone,
+	); err == nil && blocked {
 		return nil, domain.ErrForbidden.WithMessage("blocked")
 	}
 
@@ -525,7 +534,9 @@ func (a *pgCoreAuthFlows) Get(ctx context.Context, cmd domain.FlowGetCmd) (*doma
 //
 // Signature:
 //
-//		func(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error)
+//		func(
+//			ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd,
+//		) (*domain.FlowState, error)
 //
 //	  - ctx: request context
 //	  - a: the adapter (access to db, emitter, accounts)
@@ -536,7 +547,9 @@ func (a *pgCoreAuthFlows) Get(ctx context.Context, cmd domain.FlowGetCmd) (*doma
 // Must return the committed FlowState with the (possibly new) token in FlowToken.
 // Return a domain.Error to surface a client-visible error. The token in cmd is
 // still valid if the step did not require rotation.
-type flowAdvanceFn func(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error)
+type flowAdvanceFn func(
+	ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error)
 
 // flowAdvancers maps each FlowKind to its advance function. signin/recovery/
 // email_change stubs return ErrNotImplemented; next tasks replace them.
@@ -568,7 +581,9 @@ func flowVerifyConsumeCmd(projectID, accountID, challengeID, code, token string)
 	return cmd
 }
 
-func advanceNotImplemented(_ context.Context, _ *pgCoreAuthFlows, _ *models.IamFlow, _ *domain.Flow, _ domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func advanceNotImplemented(
+	_ context.Context, _ *pgCoreAuthFlows, _ *models.IamFlow, _ *domain.Flow, _ domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	return nil, domain.ErrNotImplemented
 }
 
@@ -641,7 +656,9 @@ func (a *pgCoreAuthFlows) Resend(ctx context.Context, cmd domain.FlowResendCmd) 
 // new challenge id, channel and expiry. Email re-issues a verification (or
 // password_reset for recovery) code; sms re-issues an OTP via the passwordless
 // adapter; magic_link re-issues a fresh link.
-func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Flow, ac *domain.FlowActiveChallenge) (*domain.Challenge, string, error) {
+func (a *pgCoreAuthFlows) flowReissueChallenge(
+	ctx context.Context, f *domain.Flow, ac *domain.FlowActiveChallenge,
+) (*domain.Challenge, string, error) {
 	switch {
 	case ac.Channel == channelSMS || f.Method == domain.FlowMethodPhoneOTP:
 		core, ok := a.accounts.(*pgCoreAuth)
@@ -701,7 +718,9 @@ func (a *pgCoreAuthFlows) flowReissueChallenge(ctx context.Context, f *domain.Fl
 	}
 }
 
-func (a *pgCoreAuthFlows) flowIssueRecoveryEmailChallenge(ctx context.Context, f *domain.Flow) (*domain.Challenge, error) {
+func (a *pgCoreAuthFlows) flowIssueRecoveryEmailChallenge(
+	ctx context.Context, f *domain.Flow,
+) (*domain.Challenge, error) {
 	if f.UserID == "" {
 		return &domain.Challenge{ID: newUUID(), Type: "password_reset", ExpiresAt: nowUTC().Add(coreAuthChallengeTTL)}, nil
 	}
@@ -794,7 +813,9 @@ func (a *pgCoreAuthFlows) flowAuthConfig(ctx context.Context, projectID string) 
 
 // flowPersistAtStep mints a token and persists a fresh flow halted at a terminal
 // or waiting step (blocked / request_access), with no challenge issued.
-func (a *pgCoreAuthFlows) flowPersistAtStep(ctx context.Context, f *domain.Flow, step domain.FlowStep, ferr *domain.FlowError) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) flowPersistAtStep(
+	ctx context.Context, f *domain.Flow, step domain.FlowStep, ferr *domain.FlowError,
+) (*domain.FlowState, error) {
 	f.Step = step
 	f.Error = ferr
 
@@ -817,7 +838,9 @@ func (a *pgCoreAuthFlows) flowPersistAtStep(ctx context.Context, f *domain.Flow,
 	return &domain.FlowState{FlowToken: token, Flow: f}, nil
 }
 
-func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) advanceSignupCreate(
+	ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd,
+) (*domain.FlowState, error) {
 	// 0. Enforce the project's registration policy (read from auth config).
 	mode, pwStrategy := a.flowAuthConfig(ctx, f.ProjectID)
 	f.RegistrationMode = mode
@@ -860,7 +883,9 @@ func (a *pgCoreAuthFlows) advanceSignupCreate(ctx context.Context, f *domain.Flo
 // claims the redeemed invite (only one concurrent request can win) and then
 // proceeds with the normal signup. Losing the claim race is surfaced as
 // invite_invalid so a single-use invite can never yield multiple accounts.
-func (a *pgCoreAuthFlows) advanceSignupCreateAccepted(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd, inviteRow *models.IamInvite) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) advanceSignupCreateAccepted(
+	ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd, inviteRow *models.IamInvite,
+) (*domain.FlowState, error) {
 	claimed, err := a.flowMarkInviteAccepted(ctx, inviteRow)
 	if err != nil {
 		return nil, err
@@ -877,7 +902,9 @@ func (a *pgCoreAuthFlows) advanceSignupCreateAccepted(ctx context.Context, f *do
 // flowSignupRegisterAndPersist registers the user, issues the email challenge,
 // and persists the flow at verify_email. Shared by the open and invite_only
 // (accepted) paths.
-func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd, pwStrategy string) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) flowSignupRegisterAndPersist(
+	ctx context.Context, f *domain.Flow, cmd domain.FlowCreateCmd, pwStrategy string,
+) (*domain.FlowState, error) {
 	// 1. Register the user. With the after_verify password strategy the account is
 	// created WITHOUT a password (set later at the set_password step).
 	password := cmd.Password
@@ -978,7 +1005,9 @@ func (a *pgCoreAuthFlows) flowRequiredConsents(ctx context.Context, projectID, l
 // for (project, request env, status=pending, unexpired, email match for
 // email-bound invites). Returns (row, true, nil) when redeemable; (nil, false,
 // nil) for any validation miss; (nil, false, err) only on an unexpected DB error.
-func (a *pgCoreAuthFlows) flowFindRedeemableInvite(ctx context.Context, projectID, rawToken, email string) (*models.IamInvite, bool, error) {
+func (a *pgCoreAuthFlows) flowFindRedeemableInvite(
+	ctx context.Context, projectID, rawToken, email string,
+) (*models.IamInvite, bool, error) {
 	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, false, err
@@ -1040,7 +1069,9 @@ func (a *pgCoreAuthFlows) flowMarkInviteAccepted(ctx context.Context, row *model
 }
 
 // advanceSignup handles Submit for signup flows.
-func advanceSignup(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func advanceSignup(
+	ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	//nolint:exhaustive // only the three steps a signup flow can be submitted
 	// from advance here; every other step is a caller error, which the
 	// default case reports as such.
@@ -1070,7 +1101,9 @@ func advanceSignup(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow,
 
 // signupVerifyEmail verifies the email OTP code or link token. On success it
 // rotates the token, completes the flow, and returns a session (§5 rules 2, 8).
-func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signupVerifyEmail(
+	ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	challenge := f.ActiveChallenge
 	if challenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active email challenge")
@@ -1086,7 +1119,9 @@ func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.Iam
 	}
 
 	// VerifyEmail consumes the challenge and marks the account email_verified.
-	acct, sess, err := a.accounts.VerifyEmail(ctx, flowVerifyConsumeCmd(f.ProjectID, f.UserID, challenge.ChallengeID, code, token))
+	acct, sess, err := a.accounts.VerifyEmail(
+		ctx, flowVerifyConsumeCmd(f.ProjectID, f.UserID, challenge.ChallengeID, code, token),
+	)
 	if err != nil {
 		// Wrong code/token: decrement attempts, embed error in flow, stay pending (§5 rule 6).
 		challenge.AttemptsLeft--
@@ -1096,7 +1131,9 @@ func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.Iam
 			return a.flowSave(ctx, row, f)
 		})
 
-		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil //nolint:nilerr // wrong code stays pending, see above
+		state := &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}
+
+		return state, nil //nolint:nilerr // wrong code stays pending, see above
 	}
 
 	// Email verified.
@@ -1126,7 +1163,9 @@ func (a *pgCoreAuthFlows) signupVerifyEmail(ctx context.Context, row *models.Iam
 // signupSetPassword handles the set_password step for the after_verify strategy:
 // it writes the account's first password credential, completes the flow, rotates
 // the token (privilege step §5 rule 2), and returns a fresh session.
-func (a *pgCoreAuthFlows) signupSetPassword(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signupSetPassword(
+	ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	if f.UserID == "" {
 		return nil, domain.ErrBadRequest.WithMessage("no verified user for signup")
 	}
@@ -1210,7 +1249,9 @@ func mergeConsentAcceptances(lists ...[]domain.AccountConsentAcceptance) []domai
 	return out
 }
 
-func (a *pgCoreAuthFlows) signupRevokeProvisionalSession(ctx context.Context, f *domain.Flow, sess *domain.Session) error {
+func (a *pgCoreAuthFlows) signupRevokeProvisionalSession(
+	ctx context.Context, f *domain.Flow, sess *domain.Session,
+) error {
 	if sess == nil {
 		return nil
 	}
@@ -1220,14 +1261,17 @@ func (a *pgCoreAuthFlows) signupRevokeProvisionalSession(ctx context.Context, f 
 		return nil
 	}
 
-	if err := pgCA.coreAuthRevokeSession(ctx, f.ProjectID, sess.ID); err != nil && !errors.Is(err, domain.ErrSessionNotFound) {
+	if err := pgCA.coreAuthRevokeSession(ctx, f.ProjectID, sess.ID); err != nil &&
+		!errors.Is(err, domain.ErrSessionNotFound) {
 		return err
 	}
 
 	return nil
 }
 
-func (a *pgCoreAuthFlows) signupRecordAcceptedConsents(ctx context.Context, f *domain.Flow, accepted []domain.AccountConsentAcceptance) error {
+func (a *pgCoreAuthFlows) signupRecordAcceptedConsents(
+	ctx context.Context, f *domain.Flow, accepted []domain.AccountConsentAcceptance,
+) error {
 	accepted = mergeConsentAcceptances(accepted)
 	if len(accepted) == 0 {
 		return nil
@@ -1293,7 +1337,13 @@ func (a *pgCoreAuthFlows) signupRecordAcceptedConsents(ctx context.Context, f *d
 	})
 }
 
-func (a *pgCoreAuthFlows) signupCompleteWithExistingSession(ctx context.Context, row *models.IamFlow, f *domain.Flow, accepted []domain.AccountConsentAcceptance, sess *domain.Session) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signupCompleteWithExistingSession(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	accepted []domain.AccountConsentAcceptance,
+	sess *domain.Session,
+) (*domain.FlowState, error) {
 	f.ConsentsRequired = nil
 	f.ConsentsAccepted = nil
 	f.Status = domain.FlowStatusCompleted
@@ -1314,7 +1364,12 @@ func (a *pgCoreAuthFlows) signupCompleteWithExistingSession(ctx context.Context,
 	return &domain.FlowState{FlowToken: newToken, Flow: f, Session: sess}, nil
 }
 
-func (a *pgCoreAuthFlows) signupCompleteWithFreshSession(ctx context.Context, row *models.IamFlow, f *domain.Flow, accepted []domain.AccountConsentAcceptance) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signupCompleteWithFreshSession(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	accepted []domain.AccountConsentAcceptance,
+) (*domain.FlowState, error) {
 	pgCA, ok := a.accounts.(*pgCoreAuth)
 	if !ok {
 		return nil, fmt.Errorf("signup complete with consents: %w", errAccountsNotPgCoreAuth)
@@ -1370,7 +1425,13 @@ func (a *pgCoreAuthFlows) signupCompleteWithFreshSession(ctx context.Context, ro
 // (no token rotation, no session surfaced — the user is not fully registered
 // yet); otherwise it records accepted consents, completes the flow, rotates the
 // token (§5 rule 2), and surfaces a session.
-func (a *pgCoreAuthFlows) flowCompleteOrGateConsents(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd, sess *domain.Session) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) flowCompleteOrGateConsents(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+	sess *domain.Session,
+) (*domain.FlowState, error) {
 	required := flowRequiredConsentDocs(f)
 	if len(required) == 0 {
 		return a.signupCompleteWithExistingSession(ctx, row, f, f.ConsentsAccepted, sess)
@@ -1416,7 +1477,9 @@ func (a *pgCoreAuthFlows) flowCompleteOrGateConsents(ctx context.Context, row *m
 // pass the array as a JSON-encoded string; both forms are accepted.
 // Validation is against f.ConsentsRequired (server truth); a client cannot
 // bypass the gate by omitting or faking entries.
-func (a *pgCoreAuthFlows) signupAcceptConsents(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) signupAcceptConsents(
+	ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	if f.UserID == "" {
 		return nil, domain.ErrBadRequest.WithMessage("no verified user for signup")
 	}

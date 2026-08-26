@@ -218,7 +218,10 @@ func (a *pgWebAuthnAccounts) loadWebauthnUser(ctx context.Context, accountID str
 
 // loadLibraryCredentials rehydrates the go-webauthn Credential records persisted
 // for an account from the credential `data` envelopes.
-func (a *pgWebAuthnAccounts) loadLibraryCredentials(ctx context.Context, accountID string) ([]gowebauthn.Credential, error) {
+func (a *pgWebAuthnAccounts) loadLibraryCredentials(
+	ctx context.Context,
+	accountID string,
+) ([]gowebauthn.Credential, error) {
 	rows, err := models.IamWebauthnCredentials.Query(
 		sm.Where(models.IamWebauthnCredentials.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
@@ -266,7 +269,13 @@ func (a *pgWebAuthnAccounts) consumeChallenge(ctx context.Context, row *models.I
 // the browser plus the opaque go-webauthn SessionData replayed on Finish*. The
 // code_hash column keys on the library challenge value for lookup; the Challenge
 // aggregate returned to the caller mirrors the publicKey options.
-func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctype string, publicKey map[string]any, session *gowebauthn.SessionData, accountID string) (*domain.Challenge, error) {
+func (a *pgWebAuthnAccounts) insertCeremony(
+	ctx context.Context,
+	projectID, ctype string,
+	publicKey map[string]any,
+	session *gowebauthn.SessionData,
+	accountID string,
+) (*domain.Challenge, error) {
 	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err
@@ -328,7 +337,10 @@ func (a *pgWebAuthnAccounts) insertCeremony(ctx context.Context, projectID, ctyp
 
 // loadCeremony fetches a ceremony challenge scoped to projectID, enforcing TTL +
 // the single-use invariant, and rehydrates the go-webauthn SessionData.
-func (a *pgWebAuthnAccounts) loadCeremony(ctx context.Context, projectID, challengeID, ctype string) (*models.IamChallenge, *domain.WebAuthnCeremonyData, *gowebauthn.SessionData, error) {
+func (a *pgWebAuthnAccounts) loadCeremony(
+	ctx context.Context,
+	projectID, challengeID, ctype string,
+) (*models.IamChallenge, *domain.WebAuthnCeremonyData, *gowebauthn.SessionData, error) {
 	row, err := models.FindIamChallenge(ctx, a.db.Bobx(), challengeID)
 	if err != nil {
 		return nil, nil, nil, translatePgErr("challenge", err)
@@ -391,7 +403,10 @@ func webauthnCredentialReader(credential map[string]any) (*bytes.Reader, error) 
 // loadCredential fetches a credential by id, enforcing the account boundary
 // (a row owned by another user is treated as not-found). It decodes the stored
 // wrapper so the opaque library material is preserved across mutations.
-func (a *pgWebAuthnAccounts) loadCredential(ctx context.Context, accountID, credentialID string) (*models.IamWebauthnCredential, *domain.WebAuthnStoredCredential, error) {
+func (a *pgWebAuthnAccounts) loadCredential(
+	ctx context.Context,
+	accountID, credentialID string,
+) (*models.IamWebauthnCredential, *domain.WebAuthnStoredCredential, error) {
 	row, err := models.FindIamWebauthnCredential(ctx, a.db.Bobx(), credentialID)
 	if err != nil {
 		return nil, nil, translatePgErr("webauthn_credential", err)
@@ -485,7 +500,11 @@ func (a *pgWebAuthnAccounts) BeginLogin(ctx context.Context, projectID, email st
 // consumed, not expired), rebuilds the ceremony's RP + bound user, and
 // validates the browser assertion against the stored SessionData via
 // go-webauthn (challenge, origin, RP id, credential public-key signature).
-func (a *pgWebAuthnAccounts) webauthnValidateLoginAssertion(ctx context.Context, challengeID string, credential map[string]any) (*models.IamChallenge, *webauthnUser, *gowebauthn.Credential, error) {
+func (a *pgWebAuthnAccounts) webauthnValidateLoginAssertion(
+	ctx context.Context,
+	challengeID string,
+	credential map[string]any,
+) (*models.IamChallenge, *webauthnUser, *gowebauthn.Credential, error) {
 	row, err := models.FindIamChallenge(ctx, a.db.Bobx(), challengeID)
 	if err != nil {
 		return nil, nil, nil, translatePgErr("challenge", err)
@@ -541,7 +560,11 @@ func (a *pgWebAuthnAccounts) webauthnValidateLoginAssertion(ctx context.Context,
 // detection: if both stored and incoming sign counts are non-zero and the
 // incoming count is not strictly greater, the authenticator may be cloned —
 // emit a security event and reject rather than accept the assertion.
-func (a *pgWebAuthnAccounts) webauthnBumpSignCount(ctx context.Context, projectID, accountID string, validated *gowebauthn.Credential) error {
+func (a *pgWebAuthnAccounts) webauthnBumpSignCount(
+	ctx context.Context,
+	projectID, accountID string,
+	validated *gowebauthn.Credential,
+) error {
 	credID := base64.RawURLEncoding.EncodeToString(validated.ID)
 
 	credRow, err := models.FindIamWebauthnCredential(ctx, a.db.Bobx(), credID)
@@ -559,7 +582,10 @@ func (a *pgWebAuthnAccounts) webauthnBumpSignCount(ctx context.Context, projectI
 			ProjectID:   projectID,
 			Environment: webauthnSignerEnv,
 			AggregateID: credID,
-			Payload:     map[string]any{"stored": credRow.SignCount, "received": validated.Authenticator.SignCount},
+			Payload: map[string]any{
+				"stored":   credRow.SignCount,
+				"received": validated.Authenticator.SignCount,
+			},
 		}); err != nil {
 			slog.Error("webauthn: failed to emit clone_detected event", "err", err, "credential_id", credID)
 		}
@@ -604,7 +630,11 @@ func (a *pgWebAuthnAccounts) webauthnBumpSignCount(ctx context.Context, projectI
 // PublicKeyCredential response: it checks the challenge, the origin, the RP id,
 // the credential public-key signature and the signature counter (clone
 // detection). We persist the bumped sign count and mint a signed access token.
-func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string, credential map[string]any) (*domain.Account, *domain.Session, error) {
+func (a *pgWebAuthnAccounts) FinishLogin(
+	ctx context.Context,
+	challengeID string,
+	credential map[string]any,
+) (*domain.Account, *domain.Session, error) {
 	// withTxRet returns a single value; pair the account+session through a
 	// local struct so the whole login stays inside one serializable tx.
 	type loginResult struct {
@@ -706,7 +736,11 @@ func (a *pgWebAuthnAccounts) BeginRegistration(ctx context.Context, accountID st
 // new credential. The library validates the attestation object + clientDataJSON
 // against the persisted SessionData (challenge, RP id, origin) and returns the
 // verified credential id, COSE public key and sign count, which we store.
-func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, challengeID string, credential map[string]any) (*domain.WebAuthnCredential, error) {
+func (a *pgWebAuthnAccounts) FinishRegistration(
+	ctx context.Context,
+	accountID, challengeID string,
+	credential map[string]any,
+) (*domain.WebAuthnCredential, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.WebAuthnCredential, error) {
 		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), accountID)
 		if err != nil {
@@ -754,7 +788,11 @@ func (a *pgWebAuthnAccounts) FinishRegistration(ctx context.Context, accountID, 
 // attestation statement). The optional display name is a UI-only attribute
 // supplied alongside the credential, pulled out before the protocol parse
 // (which ignores it), defaulting to "Passkey".
-func (a *pgWebAuthnAccounts) webauthnValidateRegistration(ctx context.Context, projectID, accountID, challengeID string, credential map[string]any) (*models.IamChallenge, string, *gowebauthn.Credential, error) {
+func (a *pgWebAuthnAccounts) webauthnValidateRegistration(
+	ctx context.Context,
+	projectID, accountID, challengeID string,
+	credential map[string]any,
+) (*models.IamChallenge, string, *gowebauthn.Credential, error) {
 	row, cer, session, err := a.loadCeremony(ctx, projectID, challengeID, "webauthn_register")
 	if err != nil {
 		return nil, "", nil, err
@@ -799,7 +837,12 @@ func (a *pgWebAuthnAccounts) webauthnValidateRegistration(ctx context.Context, p
 
 // webauthnInsertCredentialRow persists a newly verified credential. The
 // credential id surfaced to the client is the base64url raw id.
-func (a *pgWebAuthnAccounts) webauthnInsertCredentialRow(ctx context.Context, projectID, credEnv, accountID string, libCred *gowebauthn.Credential, name string) (*domain.WebAuthnCredential, error) {
+func (a *pgWebAuthnAccounts) webauthnInsertCredentialRow(
+	ctx context.Context,
+	projectID, credEnv, accountID string,
+	libCred *gowebauthn.Credential,
+	name string,
+) (*domain.WebAuthnCredential, error) {
 	credID := base64.RawURLEncoding.EncodeToString(libCred.ID)
 	now := nowUTC()
 	cred := domain.WebAuthnCredential{
@@ -846,7 +889,10 @@ func (a *pgWebAuthnAccounts) webauthnInsertCredentialRow(ctx context.Context, pr
 }
 
 // ListCredentials returns every passkey owned by the account.
-func (a *pgWebAuthnAccounts) ListCredentials(ctx context.Context, accountID string) ([]domain.WebAuthnCredential, error) {
+func (a *pgWebAuthnAccounts) ListCredentials(
+	ctx context.Context,
+	accountID string,
+) ([]domain.WebAuthnCredential, error) {
 	rows, err := models.IamWebauthnCredentials.Query(
 		sm.Where(models.IamWebauthnCredentials.Columns.UserID.EQ(psql.Arg(accountID))),
 	).All(ctx, a.db.Bobx())
@@ -901,7 +947,10 @@ func (a *pgWebAuthnAccounts) RemoveCredential(ctx context.Context, accountID, cr
 }
 
 // RenameCredential updates the display name of an owned passkey.
-func (a *pgWebAuthnAccounts) RenameCredential(ctx context.Context, cmd domain.WebAuthnRenameCredentialCmd) (*domain.WebAuthnCredential, error) {
+func (a *pgWebAuthnAccounts) RenameCredential(
+	ctx context.Context,
+	cmd domain.WebAuthnRenameCredentialCmd,
+) (*domain.WebAuthnCredential, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.WebAuthnCredential, error) {
 		row, stored, err := a.loadCredential(ctx, cmd.AccountID, cmd.CredentialID)
 		if err != nil {

@@ -143,8 +143,12 @@ type AdminConfig interface {
 	UpdateSmsProvider(ctx context.Context, cmd domain.AdminProviderCmd) (*domain.AdminProvider, error)
 	DeleteSmsProvider(ctx context.Context, cmd domain.AdminProviderDeleteCmd) error
 	ListOAuthProviders(ctx context.Context, projectID string) ([]domain.AdminOAuthProvider, error)
-	CreateOAuthProvider(ctx context.Context, projectID string, p domain.AdminOAuthProvider) (domain.AdminOAuthProvider, error)
-	UpdateOAuthProvider(ctx context.Context, projectID, id string, p domain.AdminOAuthProvider) (domain.AdminOAuthProvider, error)
+	CreateOAuthProvider(
+		ctx context.Context, projectID string, p domain.AdminOAuthProvider,
+	) (domain.AdminOAuthProvider, error)
+	UpdateOAuthProvider(
+		ctx context.Context, projectID, id string, p domain.AdminOAuthProvider,
+	) (domain.AdminOAuthProvider, error)
 	DeleteOAuthProvider(ctx context.Context, projectID, id string) error
 	GetRetentionPolicy(ctx context.Context, projectID string) ([]byte, error)
 	PutRetentionPolicy(ctx context.Context, projectID string, raw []byte) error
@@ -259,7 +263,9 @@ type AdminJobs interface {
 	List(ctx context.Context, projectID string, limit int) ([]domain.AdminJob, error)
 	Get(ctx context.Context, projectID, id string) (*domain.AdminJob, error)
 	Cancel(ctx context.Context, projectID, id string) error
-	CreateImportUsers(ctx context.Context, projectID string, users []map[string]jx.Raw, format string, sendInvites bool) (jobID string, status string, err error)
+	CreateImportUsers(
+		ctx context.Context, projectID string, users []map[string]jx.Raw, format string, sendInvites bool,
+	) (jobID string, status string, err error)
 	VerifyPasswordHash(hash, password, format string) (bool, error)
 }
 
@@ -288,7 +294,10 @@ func NewAdminService(deps AdminDeps) *AdminService { return &AdminService{deps: 
 
 var _ oas.Handler = (*AdminService)(nil)
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminWebhooksById(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminWebhooksByIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -300,7 +309,10 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminWebhooksById(ctx context.
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminWebhooksParams) (*oas.GetV1ProjectsByProjectIdAdminWebhooksOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhooks(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminWebhooksParams,
+) (*oas.GetV1ProjectsByProjectIdAdminWebhooksOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -326,7 +338,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context
 	return out, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminWebhooksByIdParams) (*oas.GetV1ProjectsByProjectIdAdminWebhooksByIdOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhooksById(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminWebhooksByIdParams,
+) (*oas.GetV1ProjectsByProjectIdAdminWebhooksByIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -339,7 +354,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhooksById(ctx context.Con
 	return &oas.GetV1ProjectsByProjectIdAdminWebhooksByIdOK{Webhook: oas.NewOptWebhook(oasWebhook(webhook))}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooks(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminWebhooksReq, params oas.PostV1ProjectsByProjectIdAdminWebhooksParams) (*oas.PostV1ProjectsByProjectIdAdminWebhooksCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooks(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminWebhooksReq,
+	params oas.PostV1ProjectsByProjectIdAdminWebhooksParams,
+) (*oas.PostV1ProjectsByProjectIdAdminWebhooksCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -358,15 +377,16 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooks(ctx context.Contex
 	}, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.Context, req *oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdReq, params oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdParams) (*oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminWebhooksById(
+	ctx context.Context,
+	req *oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdParams,
+) (*oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 
-	cmd, err := webhookUpdateCmd(params.ProjectID, params.XEnvironment.Or("live"), params.ID, req)
-	if err != nil {
-		return nil, err
-	}
+	cmd := webhookUpdateCmd(params.ProjectID, params.XEnvironment.Or("live"), params.ID, req)
 
 	webhook, err := s.deps.Webhooks.Update(ctx, cmd)
 	if err != nil {
@@ -376,7 +396,10 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminWebhooksById(ctx context.C
 	return &oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdOK{Webhook: oas.NewOptWebhook(oasWebhook(webhook))}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams) (*oas.PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretParams,
+) (*oas.PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -389,12 +412,18 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecret(ct
 	return &oas.PostV1ProjectsByProjectIdAdminWebhooksByIdRotateSecretOK{SigningSecret: oas.NewOptString(secret)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq, params oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams) (*oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestReq,
+	params oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestParams,
+) (*oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 
-	delivery, err := s.deps.Webhooks.Test(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.ID, req.EventType.Or(""))
+	delivery, err := s.deps.Webhooks.Test(
+		ctx, params.ProjectID, params.XEnvironment.Or("live"), params.ID, req.EventType.Or(""),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +431,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhooksByIdTest(ctx contex
 	return &oas.PostV1ProjectsByProjectIdAdminWebhooksByIdTestOK{Delivery: oasWebhookDelivery(delivery)}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams) (*oas.GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhookDeliveries(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminWebhookDeliveriesParams,
+) (*oas.GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -423,27 +455,38 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx contex
 	return &oas.GetV1ProjectsByProjectIdAdminWebhookDeliveriesOK{Data: data}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams) (*oas.PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetry(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryParams,
+) (*oas.PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 
-	delivery, err := s.deps.Webhooks.RetryDelivery(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.DeliveryID)
+	delivery, err := s.deps.Webhooks.RetryDelivery(
+		ctx, params.ProjectID, params.XEnvironment.Or("live"), params.DeliveryID,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &oas.PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK{Delivery: oasWebhookDelivery(delivery)}, nil
+	return &oas.PostV1ProjectsByProjectIdAdminWebhookDeliveriesByDeliveryIdRetryOK{
+		Delivery: oasWebhookDelivery(delivery),
+	}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminEvents(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminEventsParams) (*oas.GetV1ProjectsByProjectIdAdminEventsOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminEvents(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminEventsParams,
+) (*oas.GetV1ProjectsByProjectIdAdminEventsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 
 	page, err := s.deps.Webhooks.ListEvents(ctx, domain.WebhookEventListCmd{
 		ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"),
-		Type: params.Type.Or(""), UserID: params.UserID.Or(""), Cursor: params.Cursor.Or(""), Limit: params.Limit.Or(defaultWebhookEventListLimit),
+		Type: params.Type.Or(""), UserID: params.UserID.Or(""), Cursor: params.Cursor.Or(""),
+		Limit: params.Limit.Or(defaultWebhookEventListLimit),
 	})
 	if err != nil {
 		return nil, err
@@ -462,7 +505,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminEvents(ctx context.Context, 
 	return out, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq, params oas.PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams) (*oas.PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(
+	ctx context.Context,
+	req oas.OptPostV1ProjectsByProjectIdAdminEventsByEventIdReplayReq,
+	params oas.PostV1ProjectsByProjectIdAdminEventsByEventIdReplayParams,
+) (*oas.PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -472,7 +519,9 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx c
 		webhookID = value.WebhookID.Or("")
 	}
 
-	deliveries, err := s.deps.Webhooks.ReplayEvent(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.EventID, webhookID)
+	deliveries, err := s.deps.Webhooks.ReplayEvent(
+		ctx, params.ProjectID, params.XEnvironment.Or("live"), params.EventID, webhookID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -485,7 +534,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminEventsByEventIdReplay(ctx c
 	return &oas.PostV1ProjectsByProjectIdAdminEventsByEventIdReplayOK{Deliveries: data}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminAppsByAppIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -497,19 +549,27 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppId(ctx context.C
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 
-	if err := s.deps.Apps.DeleteSecret(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.AppID, params.SecretID); err != nil {
+	if err := s.deps.Apps.DeleteSecret(
+		ctx, params.ProjectID, params.XEnvironment.Or("live"), params.AppID, params.SecretID,
+	); err != nil {
 		return nil, err
 	}
 
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams) (r *oas.Ok, _ error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminEmailProvidersById(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminEmailProvidersByIdParams,
+) (r *oas.Ok, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -525,19 +585,27 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminEmailProvidersById(ctx co
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminJwksByKeyId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams) (r *oas.Ok, _ error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminJwksByKeyId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminJwksByKeyIdParams,
+) (r *oas.Ok, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 
-	if err := s.deps.Keys.DeleteSigningKey(ctx, adminCfg(params.ProjectID, params.XEnvironment), params.KeyID); err != nil {
+	if err := s.deps.Keys.DeleteSigningKey(
+		ctx, adminCfg(params.ProjectID, params.XEnvironment), params.KeyID,
+	); err != nil {
 		return nil, err
 	}
 
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams) (r *oas.Ok, _ error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminSmsProvidersById(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminSmsProvidersByIdParams,
+) (r *oas.Ok, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -553,7 +621,10 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminSmsProvidersById(ctx cont
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams) (r *oas.Ok, _ error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminTokenProfilesById(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminTokenProfilesByIdParams,
+) (r *oas.Ok, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -565,7 +636,10 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminTokenProfilesById(ctx con
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -577,31 +651,44 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserId(ctx context
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 
-	if err := s.deps.Users.DeleteIdentity(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID, params.IdentityID); err != nil {
+	if err := s.deps.Users.DeleteIdentity(
+		ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID, params.IdentityID,
+	); err != nil {
 		return nil, err
 	}
 
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 
-	if err := s.deps.Users.DeleteSession(ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID, params.SessionID); err != nil {
+	if err := s.deps.Users.DeleteSession(
+		ctx, params.ProjectID, params.XEnvironment.Or("live"), params.UserID, params.SessionID,
+	); err != nil {
 		return nil, err
 	}
 
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAccessRequestsParams) (r *oas.GetV1ProjectsByProjectIdAdminAccessRequestsOK, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminAccessRequests(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminAccessRequestsParams,
+) (r *oas.GetV1ProjectsByProjectIdAdminAccessRequestsOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -632,7 +719,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminAccessRequests(ctx context.C
 	return out, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminApps(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAppsParams) (*oas.GetV1ProjectsByProjectIdAdminAppsOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminApps(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminAppsParams,
+) (*oas.GetV1ProjectsByProjectIdAdminAppsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -650,7 +740,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminApps(ctx context.Context, pa
 	return &oas.GetV1ProjectsByProjectIdAdminAppsOK{Data: data}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAppsByAppIdParams) (*oas.GetV1ProjectsByProjectIdAdminAppsByAppIdOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminAppsByAppId(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminAppsByAppIdParams,
+) (*oas.GetV1ProjectsByProjectIdAdminAppsByAppIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -665,7 +758,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Cont
 	}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigAuthParams) (r *oas.AuthConfig, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigAuth(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminConfigAuthParams,
+) (r *oas.AuthConfig, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -683,7 +779,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigAuth(ctx context.Conte
 	return out, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams) (r *oas.PasswordPolicy, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams,
+) (r *oas.PasswordPolicy, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -701,7 +800,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx con
 	return out, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams) (r *oas.SessionPolicy, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigSessionPolicy(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminConfigSessionPolicyParams,
+) (r *oas.SessionPolicy, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -719,7 +821,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx cont
 	return out, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminConsents(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConsentsParams) (r *oas.ConsentConfig, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminConsents(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminConsentsParams,
+) (r *oas.ConsentConfig, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -737,7 +842,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminConsents(ctx context.Context
 	return out, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminEmailProvidersParams) (r *oas.GetV1ProjectsByProjectIdAdminEmailProvidersOK, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminEmailProviders(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminEmailProvidersParams,
+) (r *oas.GetV1ProjectsByProjectIdAdminEmailProvidersOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -783,7 +891,10 @@ func adminOAuthProviderFromReq(req *oas.OAuthProviderConfig) domain.AdminOAuthPr
 	}
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminOauthProvidersParams) (*oas.GetV1ProjectsByProjectIdAdminOauthProvidersOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminOauthProviders(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminOauthProvidersParams,
+) (*oas.GetV1ProjectsByProjectIdAdminOauthProvidersOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -801,7 +912,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminOauthProviders(ctx context.C
 	return &oas.GetV1ProjectsByProjectIdAdminOauthProvidersOK{Data: data}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminOauthProviders(ctx context.Context, req *oas.OAuthProviderConfig, params oas.PostV1ProjectsByProjectIdAdminOauthProvidersParams) (*oas.OAuthProviderConfig, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminOauthProviders(
+	ctx context.Context,
+	req *oas.OAuthProviderConfig,
+	params oas.PostV1ProjectsByProjectIdAdminOauthProvidersParams,
+) (*oas.OAuthProviderConfig, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -816,7 +931,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminOauthProviders(ctx context.
 	return &out, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, req *oas.OAuthProviderConfig, params oas.PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams) (*oas.OAuthProviderConfig, error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminOauthProvidersById(
+	ctx context.Context,
+	req *oas.OAuthProviderConfig,
+	params oas.PatchV1ProjectsByProjectIdAdminOauthProvidersByIdParams,
+) (*oas.OAuthProviderConfig, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -831,7 +950,10 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminOauthProvidersById(ctx con
 	return &out, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminOauthProvidersById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminOauthProvidersById(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminOauthProvidersByIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -901,7 +1023,11 @@ func (s *AdminService) adminTestGate(ctx context.Context, env string) (string, s
 	return p.ProjectID, env, nil
 }
 
-func (s *AdminService) PostV1TestSeed(ctx context.Context, req oas.PostV1TestSeedReq, params oas.PostV1TestSeedParams) (*oas.Ok, error) {
+func (s *AdminService) PostV1TestSeed(
+	ctx context.Context,
+	req oas.PostV1TestSeedReq,
+	params oas.PostV1TestSeedParams,
+) (*oas.Ok, error) {
 	projectID, env, err := s.adminTestGate(ctx, params.XEnvironment.Or(""))
 	if err != nil {
 		return nil, err
@@ -924,7 +1050,10 @@ func (s *AdminService) PostV1TestSeed(ctx context.Context, req oas.PostV1TestSee
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) PostV1TestReset(ctx context.Context, params oas.PostV1TestResetParams) (oas.PostV1TestResetOK, error) {
+func (s *AdminService) PostV1TestReset(
+	ctx context.Context,
+	params oas.PostV1TestResetParams,
+) (oas.PostV1TestResetOK, error) {
 	projectID, env, err := s.adminTestGate(ctx, params.XEnvironment.Or(""))
 	if err != nil {
 		return nil, err
@@ -943,7 +1072,11 @@ func (s *AdminService) PostV1TestReset(ctx context.Context, params oas.PostV1Tes
 	return out, nil
 }
 
-func (s *AdminService) PostV1TestClock(ctx context.Context, req *oas.PostV1TestClockReq, params oas.PostV1TestClockParams) (*oas.Ok, error) {
+func (s *AdminService) PostV1TestClock(
+	ctx context.Context,
+	req *oas.PostV1TestClockReq,
+	params oas.PostV1TestClockParams,
+) (*oas.Ok, error) {
 	projectID, env, err := s.adminTestGate(ctx, params.XEnvironment.Or(""))
 	if err != nil {
 		return nil, err
@@ -956,7 +1089,10 @@ func (s *AdminService) PostV1TestClock(ctx context.Context, req *oas.PostV1TestC
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) GetV1TestMessages(ctx context.Context, params oas.GetV1TestMessagesParams) (oas.GetV1TestMessagesOK, error) {
+func (s *AdminService) GetV1TestMessages(
+	ctx context.Context,
+	params oas.GetV1TestMessagesParams,
+) (oas.GetV1TestMessagesOK, error) {
 	projectID, env, err := s.adminTestGate(ctx, params.XEnvironment.Or(""))
 	if err != nil {
 		return nil, err
@@ -1008,7 +1144,10 @@ func riskRuleFromReq(req *oas.RiskRule) domain.AdminRiskRule {
 	}
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminRiskRulesParams) (*oas.GetV1ProjectsByProjectIdAdminRiskRulesOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminRiskRules(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminRiskRulesParams,
+) (*oas.GetV1ProjectsByProjectIdAdminRiskRulesOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1026,7 +1165,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminRiskRules(ctx context.Contex
 	return &oas.GetV1ProjectsByProjectIdAdminRiskRulesOK{Data: data, HasMore: oas.NewOptBool(false)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminRiskRules(ctx context.Context, req *oas.RiskRule, params oas.PostV1ProjectsByProjectIdAdminRiskRulesParams) (*oas.RiskRule, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminRiskRules(
+	ctx context.Context,
+	req *oas.RiskRule,
+	params oas.PostV1ProjectsByProjectIdAdminRiskRulesParams,
+) (*oas.RiskRule, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1041,7 +1184,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminRiskRules(ctx context.Conte
 	return &out, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, req *oas.RiskRule, params oas.PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams) (*oas.RiskRule, error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(
+	ctx context.Context,
+	req *oas.RiskRule,
+	params oas.PatchV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams,
+) (*oas.RiskRule, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1056,7 +1203,10 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx cont
 	return &out, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1068,7 +1218,10 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminRiskRulesByRuleId(ctx con
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminRiskEventsParams) (oas.GetV1ProjectsByProjectIdAdminRiskEventsOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminRiskEvents(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminRiskEventsParams,
+) (oas.GetV1ProjectsByProjectIdAdminRiskEventsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1086,7 +1239,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminRiskEvents(ctx context.Conte
 	return out, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminRateLimitBlocksReq, params oas.PostV1ProjectsByProjectIdAdminRateLimitBlocksParams) (oas.PostV1ProjectsByProjectIdAdminRateLimitBlocksOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminRateLimitBlocks(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminRateLimitBlocksReq,
+	params oas.PostV1ProjectsByProjectIdAdminRateLimitBlocksParams,
+) (oas.PostV1ProjectsByProjectIdAdminRateLimitBlocksOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1109,7 +1266,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminRateLimitBlocks(ctx context
 	return out, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminRateLimitBlocksByBlockIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1137,7 +1297,10 @@ func oasHook(hook domain.AdminHook) oas.Hook {
 	return out
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminHooks(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminHooksParams) (*oas.GetV1ProjectsByProjectIdAdminHooksOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminHooks(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminHooksParams,
+) (*oas.GetV1ProjectsByProjectIdAdminHooksOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1155,7 +1318,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminHooks(ctx context.Context, p
 	return &oas.GetV1ProjectsByProjectIdAdminHooksOK{Data: data, HasMore: oas.NewOptBool(false)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminHooks(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminHooksReq, params oas.PostV1ProjectsByProjectIdAdminHooksParams) (*oas.PostV1ProjectsByProjectIdAdminHooksCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminHooks(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminHooksReq,
+	params oas.PostV1ProjectsByProjectIdAdminHooksParams,
+) (*oas.PostV1ProjectsByProjectIdAdminHooksCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1173,7 +1340,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminHooks(ctx context.Context, 
 	}, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminHooksById(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminHooksByIdReq, params oas.PatchV1ProjectsByProjectIdAdminHooksByIdParams) (*oas.PatchV1ProjectsByProjectIdAdminHooksByIdOK, error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminHooksById(
+	ctx context.Context,
+	req oas.PatchV1ProjectsByProjectIdAdminHooksByIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminHooksByIdParams,
+) (*oas.PatchV1ProjectsByProjectIdAdminHooksByIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1240,7 +1411,10 @@ func decodeHookPatch(req oas.PatchV1ProjectsByProjectIdAdminHooksByIdReq) hookPa
 	return p
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminHooksByIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminHooksById(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminHooksByIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1252,7 +1426,11 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminHooksById(ctx context.Con
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminHooksByIdTest(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq, params oas.PostV1ProjectsByProjectIdAdminHooksByIdTestParams) (*oas.PostV1ProjectsByProjectIdAdminHooksByIdTestOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminHooksByIdTest(
+	ctx context.Context,
+	req oas.OptPostV1ProjectsByProjectIdAdminHooksByIdTestReq,
+	params oas.PostV1ProjectsByProjectIdAdminHooksByIdTestParams,
+) (*oas.PostV1ProjectsByProjectIdAdminHooksByIdTestOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1312,7 +1490,10 @@ func jobAPIStatus(s string) string {
 	return s
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminJobs(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminJobsParams) (*oas.GetV1ProjectsByProjectIdAdminJobsOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminJobs(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminJobsParams,
+) (*oas.GetV1ProjectsByProjectIdAdminJobsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1330,7 +1511,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminJobs(ctx context.Context, pa
 	return &oas.GetV1ProjectsByProjectIdAdminJobsOK{Data: data, HasMore: oas.NewOptBool(false)}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminJobsByJobIdParams) (*oas.GetV1ProjectsByProjectIdAdminJobsByJobIdOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminJobsByJobId(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminJobsByJobIdParams,
+) (*oas.GetV1ProjectsByProjectIdAdminJobsByJobIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1343,7 +1527,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminJobsByJobId(ctx context.Cont
 	return &oas.GetV1ProjectsByProjectIdAdminJobsByJobIdOK{Job: oas.NewOptJob(oasJob(*job))}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams) (*oas.PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminJobsByJobIdCancelParams,
+) (*oas.PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1360,7 +1547,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminJobsByJobIdCancel(ctx conte
 	return &oas.PostV1ProjectsByProjectIdAdminJobsByJobIdCancelOK{Job: oas.NewOptJob(oasJob(*job))}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminExportsByJobIdParams) (*oas.GetV1ProjectsByProjectIdAdminExportsByJobIdOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminExportsByJobId(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminExportsByJobIdParams,
+) (*oas.GetV1ProjectsByProjectIdAdminExportsByJobIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1380,7 +1570,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminExportsByJobId(ctx context.C
 	return out, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminImportUsersReq, params oas.PostV1ProjectsByProjectIdAdminImportUsersParams) (*oas.PostV1ProjectsByProjectIdAdminImportUsersOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminImportUsers(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminImportUsersReq,
+	params oas.PostV1ProjectsByProjectIdAdminImportUsersParams,
+) (*oas.PostV1ProjectsByProjectIdAdminImportUsersOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1390,7 +1584,9 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Con
 		users = append(users, map[string]jx.Raw(u))
 	}
 
-	jobID, status, err := s.deps.Jobs.CreateImportUsers(ctx, params.ProjectID, users, req.PasswordHashFormat.Or(""), req.SendInvites.Or(false))
+	jobID, status, err := s.deps.Jobs.CreateImportUsers(
+		ctx, params.ProjectID, users, req.PasswordHashFormat.Or(""), req.SendInvites.Or(false),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1401,7 +1597,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminImportUsers(ctx context.Con
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq, params oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams) (*oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyReq,
+	params oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyParams,
+) (*oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1414,7 +1614,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminImportPasswordHashesVerify(
 	return &oas.PostV1ProjectsByProjectIdAdminImportPasswordHashesVerifyOK{Valid: oas.NewOptBool(valid)}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminRetentionPolicyParams) (*oas.RetentionPolicy, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminRetentionPolicy(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminRetentionPolicyParams,
+) (*oas.RetentionPolicy, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1434,7 +1637,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.
 	return &out, nil
 }
 
-func (s *AdminService) PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.Context, req *oas.RetentionPolicy, params oas.PutV1ProjectsByProjectIdAdminRetentionPolicyParams) (*oas.RetentionPolicy, error) {
+func (s *AdminService) PutV1ProjectsByProjectIdAdminRetentionPolicy(
+	ctx context.Context,
+	req *oas.RetentionPolicy,
+	params oas.PutV1ProjectsByProjectIdAdminRetentionPolicyParams,
+) (*oas.RetentionPolicy, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1451,7 +1658,10 @@ func (s *AdminService) PutV1ProjectsByProjectIdAdminRetentionPolicy(ctx context.
 	return req, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAuditLogsParams) (*oas.GetV1ProjectsByProjectIdAdminAuditLogsOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminAuditLogs(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminAuditLogsParams,
+) (*oas.GetV1ProjectsByProjectIdAdminAuditLogsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1481,7 +1691,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminAuditLogs(ctx context.Contex
 	return out, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams) (*oas.GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdParams,
+) (*oas.GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1494,7 +1707,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminAuditLogsByAuditId(ctx conte
 	return &oas.GetV1ProjectsByProjectIdAdminAuditLogsByAuditIdOK{AuditLog: oas.NewOptAuditLog(oasAuditLog(*entry))}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminAuditExportReq, params oas.PostV1ProjectsByProjectIdAdminAuditExportParams) (*oas.PostV1ProjectsByProjectIdAdminAuditExportOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminAuditExport(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminAuditExportReq,
+	params oas.PostV1ProjectsByProjectIdAdminAuditExportParams,
+) (*oas.PostV1ProjectsByProjectIdAdminAuditExportOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1519,7 +1736,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminAuditExport(ctx context.Con
 	}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminEmailTemplatesParams) (r oas.GetV1ProjectsByProjectIdAdminEmailTemplatesOK, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminEmailTemplates(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminEmailTemplatesParams,
+) (r oas.GetV1ProjectsByProjectIdAdminEmailTemplatesOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1532,7 +1752,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminEmailTemplates(ctx context.C
 	return oas.GetV1ProjectsByProjectIdAdminEmailTemplatesOK(tmpls), nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminFeatures(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminFeaturesParams) (r oas.GetV1ProjectsByProjectIdAdminFeaturesOK, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminFeatures(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminFeaturesParams,
+) (r oas.GetV1ProjectsByProjectIdAdminFeaturesOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1545,7 +1768,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminFeatures(ctx context.Context
 	return oas.GetV1ProjectsByProjectIdAdminFeaturesOK(features), nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminI18nByLocaleParams) (r oas.GetV1ProjectsByProjectIdAdminI18nByLocaleOK, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminI18nByLocale(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminI18nByLocaleParams,
+) (r oas.GetV1ProjectsByProjectIdAdminI18nByLocaleOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1558,7 +1784,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Con
 	return oas.GetV1ProjectsByProjectIdAdminI18nByLocaleOK(msgs), nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminJwks(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminJwksParams) (r *oas.GetV1ProjectsByProjectIdAdminJwksOK, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminJwks(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminJwksParams,
+) (r *oas.GetV1ProjectsByProjectIdAdminJwksOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1576,7 +1805,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminJwks(ctx context.Context, pa
 	return &oas.GetV1ProjectsByProjectIdAdminJwksOK{Data: data}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminSmsProvidersParams) (r *oas.GetV1ProjectsByProjectIdAdminSmsProvidersOK, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminSmsProviders(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminSmsProvidersParams,
+) (r *oas.GetV1ProjectsByProjectIdAdminSmsProvidersOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1594,7 +1826,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminSmsProviders(ctx context.Con
 	return &oas.GetV1ProjectsByProjectIdAdminSmsProvidersOK{Data: data}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminTokenProfilesParams) (r *oas.GetV1ProjectsByProjectIdAdminTokenProfilesOK, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminTokenProfiles(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminTokenProfilesParams,
+) (r *oas.GetV1ProjectsByProjectIdAdminTokenProfilesOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1612,7 +1847,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Co
 	return &oas.GetV1ProjectsByProjectIdAdminTokenProfilesOK{Data: data}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersParams) (*oas.GetV1ProjectsByProjectIdAdminUsersOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminUsers(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminUsersParams,
+) (*oas.GetV1ProjectsByProjectIdAdminUsersOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1630,7 +1868,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsers(ctx context.Context, p
 	return &oas.GetV1ProjectsByProjectIdAdminUsersOK{Data: data}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdParams) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserId(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdParams,
+) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1645,7 +1886,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Co
 	}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesParams,
+) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1663,7 +1907,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdIdentities(ctx 
 	return &oas.GetV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesOK{Data: data}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsParams,
+) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1681,7 +1928,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdGrants(ctx cont
 	return &oas.GetV1ProjectsByProjectIdAdminUsersByUserIdGrantsOK{Data: data}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1693,7 +1943,10 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGran
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsParams,
+) (*oas.GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1711,7 +1964,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdSessions(ctx co
 	return &oas.GetV1ProjectsByProjectIdAdminUsersByUserIdSessionsOK{Data: data}, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminAppsByAppIdReq, params oas.PatchV1ProjectsByProjectIdAdminAppsByAppIdParams) (*oas.PatchV1ProjectsByProjectIdAdminAppsByAppIdOK, error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminAppsByAppId(
+	ctx context.Context,
+	req oas.PatchV1ProjectsByProjectIdAdminAppsByAppIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminAppsByAppIdParams,
+) (*oas.PatchV1ProjectsByProjectIdAdminAppsByAppIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1726,7 +1983,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminAppsByAppId(ctx context.Co
 	}, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Context, req *oas.AuthConfig, params oas.PatchV1ProjectsByProjectIdAdminConfigAuthParams) (r *oas.AuthConfig, _ error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigAuth(
+	ctx context.Context,
+	req *oas.AuthConfig,
+	params oas.PatchV1ProjectsByProjectIdAdminConfigAuthParams,
+) (r *oas.AuthConfig, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1748,7 +2009,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigAuth(ctx context.Con
 	return out, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, req *oas.PasswordPolicy, params oas.PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams) (r *oas.PasswordPolicy, _ error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(
+	ctx context.Context,
+	req *oas.PasswordPolicy,
+	params oas.PatchV1ProjectsByProjectIdAdminConfigPasswordPolicyParams,
+) (r *oas.PasswordPolicy, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1770,7 +2035,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx c
 	return out, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, req *oas.SessionPolicy, params oas.PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams) (r *oas.SessionPolicy, _ error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(
+	ctx context.Context,
+	req *oas.SessionPolicy,
+	params oas.PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams,
+) (r *oas.SessionPolicy, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1792,7 +2061,10 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx co
 	return out, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigRateLimitsParams) (r *oas.RateLimits, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigRateLimits(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminConfigRateLimitsParams,
+) (r *oas.RateLimits, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1810,7 +2082,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigRateLimits(ctx context
 	return out, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams) (r *oas.MfaPolicy, _ error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigMfaPolicy(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminConfigMfaPolicyParams,
+) (r *oas.MfaPolicy, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1828,7 +2103,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.
 	return out, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx context.Context, req *oas.MfaPolicy, params oas.PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams) (r *oas.MfaPolicy, _ error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(
+	ctx context.Context,
+	req *oas.MfaPolicy,
+	params oas.PatchV1ProjectsByProjectIdAdminConfigMfaPolicyParams,
+) (r *oas.MfaPolicy, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1850,7 +2129,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigMfaPolicy(ctx contex
 	return out, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx context.Context, req *oas.RateLimits, params oas.PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams) (r *oas.RateLimits, _ error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigRateLimits(
+	ctx context.Context,
+	req *oas.RateLimits,
+	params oas.PatchV1ProjectsByProjectIdAdminConfigRateLimitsParams,
+) (r *oas.RateLimits, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1872,7 +2155,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminConfigRateLimits(ctx conte
 	return out, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx context.Context, req *oas.EmailProvider, params oas.PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams) (r *oas.EmailProvider, _ error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminEmailProvidersById(
+	ctx context.Context,
+	req *oas.EmailProvider,
+	params oas.PatchV1ProjectsByProjectIdAdminEmailProvidersByIdParams,
+) (r *oas.EmailProvider, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1894,7 +2181,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminEmailProvidersById(ctx con
 	return &out, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq, params oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams) (r oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK, _ error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminEmailTemplatesById(
+	ctx context.Context,
+	req oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdParams,
+) (r oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1912,7 +2203,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminEmailTemplatesById(ctx con
 	return oas.PatchV1ProjectsByProjectIdAdminEmailTemplatesByIdOK(tmpl), nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx context.Context, req *oas.SmsProvider, params oas.PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams) (r *oas.SmsProvider, _ error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminSmsProvidersById(
+	ctx context.Context,
+	req *oas.SmsProvider,
+	params oas.PatchV1ProjectsByProjectIdAdminSmsProvidersByIdParams,
+) (r *oas.SmsProvider, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1934,7 +2229,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminSmsProvidersById(ctx conte
 	return &out, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params oas.PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams) (r *oas.PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK, _ error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminTokenProfilesById(
+	ctx context.Context,
+	req oas.PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams,
+) (r *oas.PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1954,7 +2253,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx cont
 	}, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params oas.PatchV1ProjectsByProjectIdAdminUsersByUserIdParams) (*oas.PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminUsersByUserId(
+	ctx context.Context,
+	req oas.PatchV1ProjectsByProjectIdAdminUsersByUserIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminUsersByUserIdParams,
+) (*oas.PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -1977,7 +2280,11 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(ctx context.Context, _ *oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq, params oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams) (r oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(
+	ctx context.Context,
+	_ *oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveReq,
+	params oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveParams,
+) (r oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK, _ error) {
 	p, err := requireProjectAdmin(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
@@ -1996,7 +2303,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminAccessRequestsByIdApprove(c
 	return oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdApproveOK(res), nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq, params oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams) (r *oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(
+	ctx context.Context,
+	req oas.OptPostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyReq,
+	params oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyParams,
+) (r *oas.PostV1ProjectsByProjectIdAdminAccessRequestsByIdDenyOK, _ error) {
 	p, err := requireProjectAdmin(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
@@ -2022,7 +2333,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminAccessRequestsByIdDeny(ctx 
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminAppsReq, params oas.PostV1ProjectsByProjectIdAdminAppsParams) (*oas.PostV1ProjectsByProjectIdAdminAppsCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminApps(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminAppsReq,
+	params oas.PostV1ProjectsByProjectIdAdminAppsParams,
+) (*oas.PostV1ProjectsByProjectIdAdminAppsCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2054,7 +2369,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminApps(ctx context.Context, r
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq, params oas.PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams) (*oas.PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsReq,
+	params oas.PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsParams,
+) (*oas.PostV1ProjectsByProjectIdAdminAppsByAppIdSecretsCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2070,7 +2389,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminAppsByAppIdSecrets(ctx cont
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailProviders(ctx context.Context, req *oas.EmailProvider, params oas.PostV1ProjectsByProjectIdAdminEmailProvidersParams) (r *oas.EmailProvider, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailProviders(
+	ctx context.Context,
+	req *oas.EmailProvider,
+	params oas.PostV1ProjectsByProjectIdAdminEmailProvidersParams,
+) (r *oas.EmailProvider, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2092,7 +2415,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailProviders(ctx context.
 	return &out, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq, params oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams) (r *oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(
+	ctx context.Context,
+	req oas.OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq,
+	params oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewParams,
+) (r *oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2119,7 +2446,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(c
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq, params oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams) (r *oas.Ok, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestReq,
+	params oas.PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTestParams,
+) (r *oas.Ok, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2138,7 +2469,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdSendTest(
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminSmsProvidersSendTest(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq, params oas.PostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams) (r *oas.Ok, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminSmsProvidersSendTest(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminSmsProvidersSendTestReq,
+	params oas.PostV1ProjectsByProjectIdAdminSmsProvidersSendTestParams,
+) (r *oas.Ok, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2157,7 +2492,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminSmsProvidersSendTest(ctx co
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams) (r *oas.PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateParams,
+) (r *oas.PostV1ProjectsByProjectIdAdminJwksByKeyIdActivateOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2172,7 +2510,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminJwksByKeyIdActivate(ctx con
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminJwksRotateReq, params oas.PostV1ProjectsByProjectIdAdminJwksRotateParams) (r *oas.PostV1ProjectsByProjectIdAdminJwksRotateOK, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminJwksRotate(
+	ctx context.Context,
+	req oas.OptPostV1ProjectsByProjectIdAdminJwksRotateReq,
+	params oas.PostV1ProjectsByProjectIdAdminJwksRotateParams,
+) (r *oas.PostV1ProjectsByProjectIdAdminJwksRotateOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2195,7 +2537,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminJwksRotate(ctx context.Cont
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Context, req *oas.SmsProvider, params oas.PostV1ProjectsByProjectIdAdminSmsProvidersParams) (r *oas.SmsProvider, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminSmsProviders(
+	ctx context.Context,
+	req *oas.SmsProvider,
+	params oas.PostV1ProjectsByProjectIdAdminSmsProvidersParams,
+) (r *oas.SmsProvider, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2217,7 +2563,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminSmsProviders(ctx context.Co
 	return &out, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.Context, req *oas.TokenProfile, params oas.PostV1ProjectsByProjectIdAdminTokenProfilesParams) (r *oas.PostV1ProjectsByProjectIdAdminTokenProfilesCreated, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminTokenProfiles(
+	ctx context.Context,
+	req *oas.TokenProfile,
+	params oas.PostV1ProjectsByProjectIdAdminTokenProfilesParams,
+) (r *oas.PostV1ProjectsByProjectIdAdminTokenProfilesCreated, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2237,7 +2587,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminTokenProfiles(ctx context.C
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq, params oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams) (r *oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK, _ error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewReq,
+	params oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewParams,
+) (r *oas.PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreviewOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2258,7 +2612,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminTokenProfilesByIdPreview(ct
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminUsersReq, params oas.PostV1ProjectsByProjectIdAdminUsersParams) (*oas.PostV1ProjectsByProjectIdAdminUsersCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsers(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminUsersReq,
+	params oas.PostV1ProjectsByProjectIdAdminUsersParams,
+) (*oas.PostV1ProjectsByProjectIdAdminUsersCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2281,12 +2639,18 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsers(ctx context.Context, 
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams) (*oas.Ok, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(
+	ctx context.Context,
+	req oas.OptPostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeReq,
+	params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymizeParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 
-	cmd := domain.AdminUserAnonymizeCmd{ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"), AccountID: params.UserID}
+	cmd := domain.AdminUserAnonymizeCmd{
+		ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"), AccountID: params.UserID,
+	}
 	if v, ok := req.Get(); ok {
 		cmd.Reason = v.Reason.Or("")
 	}
@@ -2298,7 +2662,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdAnonymize(ctx 
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanReq,
+	params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanParams,
+) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdBanOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2321,7 +2689,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdBan(ctx contex
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdExport(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdExportParams,
+) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdExportOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2336,7 +2707,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdExport(ctx con
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateReq,
+	params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateParams,
+) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonateOK, error) {
 	p, err := requireProjectAdmin(ctx, params.ProjectID)
 	if err != nil {
 		return nil, err
@@ -2360,7 +2735,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdImpersonate(ct
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(
+	ctx context.Context,
+	req oas.OptPostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetReq,
+	params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetParams,
+) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdMfaResetOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2383,7 +2762,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdMfaReset(ctx c
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams) (*oas.Ok, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordReq,
+	params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdPasswordParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2402,12 +2785,18 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdPassword(ctx c
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(ctx context.Context, req oas.OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke(
+	ctx context.Context,
+	req oas.OptPostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeReq,
+	params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeParams,
+) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevokeOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
 
-	cmd := domain.AdminUserSessionsRevokeCmd{ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"), AccountID: params.UserID}
+	cmd := domain.AdminUserSessionsRevokeCmd{
+		ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"), AccountID: params.UserID,
+	}
 	if v, ok := req.Get(); ok {
 		cmd.ExceptSessionID = v.ExceptSessionID.Or("")
 		cmd.Reason = v.Reason.Or("")
@@ -2423,7 +2812,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdSessionsRevoke
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanParams,
+) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdUnbanOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2438,7 +2830,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdUnban(ctx cont
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailParams,
+) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmailOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2453,7 +2848,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyEmail(ct
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneParams,
+) (*oas.PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhoneOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2468,7 +2866,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminUsersByUserIdVerifyPhone(ct
 	}, nil
 }
 
-func (s *AdminService) PutV1ProjectsByProjectIdAdminConsents(ctx context.Context, req *oas.ConsentConfig, params oas.PutV1ProjectsByProjectIdAdminConsentsParams) (r *oas.ConsentConfig, _ error) {
+func (s *AdminService) PutV1ProjectsByProjectIdAdminConsents(
+	ctx context.Context,
+	req *oas.ConsentConfig,
+	params oas.PutV1ProjectsByProjectIdAdminConsentsParams,
+) (r *oas.ConsentConfig, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2490,7 +2892,11 @@ func (s *AdminService) PutV1ProjectsByProjectIdAdminConsents(ctx context.Context
 	return out, nil
 }
 
-func (s *AdminService) PutV1ProjectsByProjectIdAdminFeatures(ctx context.Context, req oas.PutV1ProjectsByProjectIdAdminFeaturesReq, params oas.PutV1ProjectsByProjectIdAdminFeaturesParams) (r oas.PutV1ProjectsByProjectIdAdminFeaturesOK, _ error) {
+func (s *AdminService) PutV1ProjectsByProjectIdAdminFeatures(
+	ctx context.Context,
+	req oas.PutV1ProjectsByProjectIdAdminFeaturesReq,
+	params oas.PutV1ProjectsByProjectIdAdminFeaturesParams,
+) (r oas.PutV1ProjectsByProjectIdAdminFeaturesOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2507,7 +2913,11 @@ func (s *AdminService) PutV1ProjectsByProjectIdAdminFeatures(ctx context.Context
 	return oas.PutV1ProjectsByProjectIdAdminFeaturesOK(features), nil
 }
 
-func (s *AdminService) PutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Context, req oas.PutV1ProjectsByProjectIdAdminI18nByLocaleReq, params oas.PutV1ProjectsByProjectIdAdminI18nByLocaleParams) (r oas.PutV1ProjectsByProjectIdAdminI18nByLocaleOK, _ error) {
+func (s *AdminService) PutV1ProjectsByProjectIdAdminI18nByLocale(
+	ctx context.Context,
+	req oas.PutV1ProjectsByProjectIdAdminI18nByLocaleReq,
+	params oas.PutV1ProjectsByProjectIdAdminI18nByLocaleParams,
+) (r oas.PutV1ProjectsByProjectIdAdminI18nByLocaleOK, _ error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2527,7 +2937,10 @@ func (s *AdminService) PutV1ProjectsByProjectIdAdminI18nByLocale(ctx context.Con
 
 // ===== Service accounts =====
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminServiceAccountsParams) (*oas.GetV1ProjectsByProjectIdAdminServiceAccountsOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminServiceAccounts(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminServiceAccountsParams,
+) (*oas.GetV1ProjectsByProjectIdAdminServiceAccountsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2545,7 +2958,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.
 	return &oas.GetV1ProjectsByProjectIdAdminServiceAccountsOK{Data: data}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (*oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams,
+) (*oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2560,7 +2976,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx co
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminServiceAccountsReq, params oas.PostV1ProjectsByProjectIdAdminServiceAccountsParams) (*oas.PostV1ProjectsByProjectIdAdminServiceAccountsCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminServiceAccounts(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminServiceAccountsReq,
+	params oas.PostV1ProjectsByProjectIdAdminServiceAccountsParams,
+) (*oas.PostV1ProjectsByProjectIdAdminServiceAccountsCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2579,7 +2999,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context
 	}, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, req *oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (*oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(
+	ctx context.Context,
+	req *oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams,
+) (*oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2599,7 +3023,10 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx 
 	}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2611,7 +3038,11 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams) (*oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq,
+	params oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams,
+) (*oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2633,7 +3064,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecret
 	}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2647,7 +3081,10 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecr
 
 // ===== API keys =====
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminApiKeysParams) (*oas.GetV1ProjectsByProjectIdAdminApiKeysOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminApiKeys(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminApiKeysParams,
+) (*oas.GetV1ProjectsByProjectIdAdminApiKeysOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2665,7 +3102,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context,
 	return &oas.GetV1ProjectsByProjectIdAdminApiKeysOK{Data: data}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminApiKeysReq, params oas.PostV1ProjectsByProjectIdAdminApiKeysParams) (*oas.PostV1ProjectsByProjectIdAdminApiKeysCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminApiKeys(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminApiKeysReq,
+	params oas.PostV1ProjectsByProjectIdAdminApiKeysParams,
+) (*oas.PostV1ProjectsByProjectIdAdminApiKeysCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2686,7 +3127,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context
 	}, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, req *oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams) (*oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK, error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(
+	ctx context.Context,
+	req *oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams,
+) (*oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2707,7 +3152,10 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context
 	}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2719,7 +3167,10 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx contex
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams) (*oas.PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams,
+) (*oas.PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2737,7 +3188,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx co
 
 // ===== SSO connections =====
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminSsoConnectionsParams) (*oas.GetV1ProjectsByProjectIdAdminSsoConnectionsOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminSsoConnections(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminSsoConnectionsParams,
+) (*oas.GetV1ProjectsByProjectIdAdminSsoConnectionsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2755,7 +3209,10 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminSsoConnections(ctx context.C
 	return &oas.GetV1ProjectsByProjectIdAdminSsoConnectionsOK{Data: data}, nil
 }
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (*oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminSsoConnectionsById(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdParams,
+) (*oas.GetV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2770,7 +3227,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminSsoConnectionsById(ctx conte
 	}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminSsoConnectionsReq, params oas.PostV1ProjectsByProjectIdAdminSsoConnectionsParams) (*oas.PostV1ProjectsByProjectIdAdminSsoConnectionsCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminSsoConnections(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminSsoConnectionsReq,
+	params oas.PostV1ProjectsByProjectIdAdminSsoConnectionsParams,
+) (*oas.PostV1ProjectsByProjectIdAdminSsoConnectionsCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2791,7 +3252,11 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminSsoConnections(ctx context.
 	}, nil
 }
 
-func (s *AdminService) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, req oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq, params oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (*oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error) {
+func (s *AdminService) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(
+	ctx context.Context,
+	req oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdParams,
+) (*oas.PatchV1ProjectsByProjectIdAdminSsoConnectionsByIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2806,7 +3271,10 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminSsoConnectionsById(ctx con
 	}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminSsoConnectionsByIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2820,7 +3288,10 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminSsoConnectionsById(ctx co
 
 // ===== Verification domains =====
 
-func (s *AdminService) GetV1ProjectsByProjectIdAdminDomains(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminDomainsParams) (*oas.GetV1ProjectsByProjectIdAdminDomainsOK, error) {
+func (s *AdminService) GetV1ProjectsByProjectIdAdminDomains(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminDomainsParams,
+) (*oas.GetV1ProjectsByProjectIdAdminDomainsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2838,7 +3309,11 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminDomains(ctx context.Context,
 	return &oas.GetV1ProjectsByProjectIdAdminDomainsOK{Data: data}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminDomains(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminDomainsReq, params oas.PostV1ProjectsByProjectIdAdminDomainsParams) (*oas.PostV1ProjectsByProjectIdAdminDomainsCreated, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminDomains(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminDomainsReq,
+	params oas.PostV1ProjectsByProjectIdAdminDomainsParams,
+) (*oas.PostV1ProjectsByProjectIdAdminDomainsCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2863,7 +3338,10 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminDomains(ctx context.Context
 	}, nil
 }
 
-func (s *AdminService) DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams) (*oas.Ok, error) {
+func (s *AdminService) DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminDomainsByDomainIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -2875,7 +3353,10 @@ func (s *AdminService) DeleteV1ProjectsByProjectIdAdminDomainsByDomainId(ctx con
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *AdminService) PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams) (*oas.PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK, error) {
+func (s *AdminService) PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerify(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyParams,
+) (*oas.PostV1ProjectsByProjectIdAdminDomainsByDomainIdVerifyOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -3003,7 +3484,9 @@ func oasWebhookDelivery(delivery *domain.WebhookDelivery) oas.WebhookDelivery {
 	return out
 }
 
-func webhookUpdateCmd(projectID, environment, id string, req *oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdReq) (domain.WebhookUpdateCmd, error) {
+func webhookUpdateCmd(
+	projectID, environment, id string, req *oas.PatchV1ProjectsByProjectIdAdminWebhooksByIdReq,
+) domain.WebhookUpdateCmd {
 	cmd := domain.WebhookUpdateCmd{ProjectID: projectID, Environment: environment, ID: id}
 	if value, ok := req.URL.Get(); ok {
 		cmd.URL = &value
@@ -3022,7 +3505,7 @@ func webhookUpdateCmd(projectID, environment, id string, req *oas.PatchV1Project
 		cmd.Enabled = &value
 	}
 
-	return cmd, nil
+	return cmd
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserIdRoles(

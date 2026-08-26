@@ -51,7 +51,11 @@ func (a *pgAdminConfig) ListOAuthProviders(ctx context.Context, projectID string
 }
 
 // CreateOAuthProvider inserts a new provider, encrypting the client secret.
-func (a *pgAdminConfig) CreateOAuthProvider(ctx context.Context, projectID string, p domain.AdminOAuthProvider) (domain.AdminOAuthProvider, error) {
+func (a *pgAdminConfig) CreateOAuthProvider(
+	ctx context.Context,
+	projectID string,
+	p domain.AdminOAuthProvider,
+) (domain.AdminOAuthProvider, error) {
 	if p.Provider == "" {
 		return domain.AdminOAuthProvider{}, domain.ErrValidation.WithMessage("provider is required")
 	}
@@ -108,7 +112,11 @@ func (a *pgAdminConfig) CreateOAuthProvider(ctx context.Context, projectID strin
 
 // UpdateOAuthProvider replaces a provider by id. An empty ClientSecret keeps the
 // stored one (secret is write-only, so the client cannot read it to resend).
-func (a *pgAdminConfig) UpdateOAuthProvider(ctx context.Context, projectID, id string, p domain.AdminOAuthProvider) (domain.AdminOAuthProvider, error) {
+func (a *pgAdminConfig) UpdateOAuthProvider(
+	ctx context.Context,
+	projectID, id string,
+	p domain.AdminOAuthProvider,
+) (domain.AdminOAuthProvider, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (domain.AdminOAuthProvider, error) {
 		row, err := models.FindIamProvider(ctx, a.db.Bobx(), id)
 		if err != nil || row.ProjectID != projectID || row.Kind != adminOAuthProviderKind {

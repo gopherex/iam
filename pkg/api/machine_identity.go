@@ -17,7 +17,10 @@ import (
 
 type MachineIdentities interface {
 	CreateServiceAccount(ctx context.Context, cmd domain.ServiceAccountCmd) (*domain.ServiceAccount, error)
-	ListServiceAccounts(ctx context.Context, cmd domain.MachineIDServiceAccountListCmd) (*domain.MachineIDServiceAccountPage, error)
+	ListServiceAccounts(
+		ctx context.Context,
+		cmd domain.MachineIDServiceAccountListCmd,
+	) (*domain.MachineIDServiceAccountPage, error)
 	GetServiceAccount(ctx context.Context, projectID, serviceAccountID string) (*domain.ServiceAccount, error)
 	UpdateServiceAccount(ctx context.Context, cmd domain.MachineIDServiceAccountPatchCmd) (*domain.ServiceAccount, error)
 	DeleteServiceAccount(ctx context.Context, projectID, serviceAccountID string) error
@@ -47,7 +50,11 @@ func NewMachineIdentityService(deps MachineIdentityDeps) *MachineIdentityService
 var _ oas.Handler = (*MachineIdentityService)(nil)
 
 // PostV1ProjectsByProjectIdAdminServiceAccounts creates a service account in a project.
-func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminServiceAccountsReq, params oas.PostV1ProjectsByProjectIdAdminServiceAccountsParams) (*oas.PostV1ProjectsByProjectIdAdminServiceAccountsCreated, error) {
+func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccounts(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminServiceAccountsReq,
+	params oas.PostV1ProjectsByProjectIdAdminServiceAccountsParams,
+) (*oas.PostV1ProjectsByProjectIdAdminServiceAccountsCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -67,7 +74,10 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccounts(c
 }
 
 // PostV1ServiceAccountsTokens mints an access token for the calling service account.
-func (s *MachineIdentityService) PostV1ServiceAccountsTokens(ctx context.Context, _ *oas.PostV1ServiceAccountsTokensReq) (*oas.PostV1ServiceAccountsTokensOK, error) {
+func (s *MachineIdentityService) PostV1ServiceAccountsTokens(
+	ctx context.Context,
+	_ *oas.PostV1ServiceAccountsTokensReq,
+) (*oas.PostV1ServiceAccountsTokensOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -85,7 +95,11 @@ func (s *MachineIdentityService) PostV1ServiceAccountsTokens(ctx context.Context
 }
 
 // PostV1ProjectsByProjectIdAdminApiKeys creates an API key in a project.
-func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminApiKeysReq, params oas.PostV1ProjectsByProjectIdAdminApiKeysParams) (*oas.PostV1ProjectsByProjectIdAdminApiKeysCreated, error) {
+func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminApiKeys(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminApiKeysReq,
+	params oas.PostV1ProjectsByProjectIdAdminApiKeysParams,
+) (*oas.PostV1ProjectsByProjectIdAdminApiKeysCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -106,7 +120,10 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminApiKeys(ctx conte
 }
 
 // DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId revokes an API key.
-func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams) (*oas.Ok, error) {
+func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -119,7 +136,10 @@ func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminApiKeysByKeyId(
 }
 
 // GetV1ProjectsByProjectIdAdminServiceAccounts lists service accounts in a project.
-func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminServiceAccounts(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminServiceAccountsParams) (*oas.GetV1ProjectsByProjectIdAdminServiceAccountsOK, error) {
+func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminServiceAccounts(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminServiceAccountsParams,
+) (*oas.GetV1ProjectsByProjectIdAdminServiceAccountsOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -146,7 +166,10 @@ func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminServiceAccounts(ct
 }
 
 // GetV1ProjectsByProjectIdAdminServiceAccountsBySaId fetches one service account.
-func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (*oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error) {
+func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminServiceAccountsBySaId(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams,
+) (*oas.GetV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -162,7 +185,11 @@ func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminServiceAccountsByS
 }
 
 // PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId updates a service account.
-func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, req *oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq, params oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (*oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error) {
+func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminServiceAccountsBySaId(
+	ctx context.Context,
+	req *oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams,
+) (*oas.PatchV1ProjectsByProjectIdAdminServiceAccountsBySaIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -187,7 +214,10 @@ func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminServiceAccountsB
 }
 
 // DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId deletes a service account.
-func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams) (*oas.Ok, error) {
+func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -200,7 +230,11 @@ func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminServiceAccounts
 }
 
 // PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets mints a client secret.
-func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(ctx context.Context, req *oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq, params oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams) (*oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated, error) {
+func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecrets(
+	ctx context.Context,
+	req *oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsReq,
+	params oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsParams,
+) (*oas.PostV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsCreated, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -227,7 +261,10 @@ func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminServiceAccountsBy
 }
 
 // DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId revokes a secret.
-func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(ctx context.Context, params oas.DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams) (*oas.Ok, error) {
+func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretId(
+	ctx context.Context,
+	params oas.DeleteV1ProjectsByProjectIdAdminServiceAccountsBySaIdSecretsBySecretIdParams,
+) (*oas.Ok, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -240,7 +277,10 @@ func (s *MachineIdentityService) DeleteV1ProjectsByProjectIdAdminServiceAccounts
 }
 
 // GetV1ProjectsByProjectIdAdminApiKeys lists API keys in a project.
-func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminApiKeys(ctx context.Context, params oas.GetV1ProjectsByProjectIdAdminApiKeysParams) (*oas.GetV1ProjectsByProjectIdAdminApiKeysOK, error) {
+func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminApiKeys(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminApiKeysParams,
+) (*oas.GetV1ProjectsByProjectIdAdminApiKeysOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -259,7 +299,11 @@ func (s *MachineIdentityService) GetV1ProjectsByProjectIdAdminApiKeys(ctx contex
 }
 
 // PatchV1ProjectsByProjectIdAdminApiKeysByKeyId updates API-key metadata/scopes.
-func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(ctx context.Context, req *oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq, params oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams) (*oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK, error) {
+func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(
+	ctx context.Context,
+	req *oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdReq,
+	params oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdParams,
+) (*oas.PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}
@@ -285,7 +329,10 @@ func (s *MachineIdentityService) PatchV1ProjectsByProjectIdAdminApiKeysByKeyId(c
 }
 
 // PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate rotates the key secret.
-func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(ctx context.Context, params oas.PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams) (*oas.PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK, error) {
+func (s *MachineIdentityService) PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotate(
+	ctx context.Context,
+	params oas.PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateParams,
+) (*oas.PostV1ProjectsByProjectIdAdminApiKeysByKeyIdRotateOK, error) {
 	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
 		return nil, err
 	}

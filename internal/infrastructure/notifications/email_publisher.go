@@ -617,7 +617,7 @@ var errNoSMTPProvider = errors.New("notifications: no enabled smtp provider")
 var (
 	errEmailNoRecipient     = errors.New("notifications: email event has no recipient")
 	errSMTPConfigIncomplete = errors.New("notifications: smtp host and from are required")
-	errSMTPNoStartTLS       = errors.New("notifications: SMTP server does not advertise STARTTLS; set start_tls=false only for a trusted local relay")
+	errSMTPNoStartTLS       = errors.New("notifications: SMTP server does not advertise STARTTLS; set start_tls=false only for a trusted local relay") //nolint:lll
 )
 
 func (p *Publisher) decodeSMTPConfig(raw map[string]json.RawMessage) (*smtpConfig, error) {

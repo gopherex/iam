@@ -458,7 +458,9 @@ func (a *PgOperator) DeleteEnvironment(ctx context.Context, projectID, env strin
 // signAndPersistAdminToken signs tok's JWT, stores only its sha256 hash (so
 // the token stays revocable without persisting the bearer secret), and
 // returns the plaintext token exactly once.
-func (a *PgOperator) signAndPersistAdminToken(ctx context.Context, tok domain.OperatorAdminToken, now time.Time) (string, error) {
+func (a *PgOperator) signAndPersistAdminToken(
+	ctx context.Context, tok domain.OperatorAdminToken, now time.Time,
+) (string, error) {
 	signEnv, err := resolveSignEnv(ctx, a.db, tok.ProjectID, "live")
 	if err != nil {
 		return "", err

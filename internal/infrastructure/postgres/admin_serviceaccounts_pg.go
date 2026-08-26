@@ -45,7 +45,9 @@ func NewPgAdminServiceAccounts(db *DB, emitter Emitter) *pgAdminServiceAccounts 
 var _ api.AdminServiceAccounts = (*pgAdminServiceAccounts)(nil)
 
 // findSA loads a service account row enforcing the tenant boundary.
-func (a *pgAdminServiceAccounts) findSA(ctx context.Context, projectID, saID string) (*models.IamServiceAccount, *domain.ServiceAccount, error) {
+func (a *pgAdminServiceAccounts) findSA(
+	ctx context.Context, projectID, saID string,
+) (*models.IamServiceAccount, *domain.ServiceAccount, error) {
 	row, err := models.FindIamServiceAccount(ctx, a.db.Bobx(), saID)
 	if err != nil {
 		if adminIsNotFound(translatePgErr("service_account", err)) {
@@ -96,7 +98,9 @@ func (a *pgAdminServiceAccounts) Get(ctx context.Context, projectID, saID string
 }
 
 // Create inserts a new service account for the project.
-func (a *pgAdminServiceAccounts) Create(ctx context.Context, cmd domain.ServiceAccountCmd) (*domain.ServiceAccount, error) {
+func (a *pgAdminServiceAccounts) Create(
+	ctx context.Context, cmd domain.ServiceAccountCmd,
+) (*domain.ServiceAccount, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.ServiceAccount, error) {
 		svcAcct := &domain.ServiceAccount{
 			ID:        newUUID(),
@@ -141,7 +145,9 @@ func (a *pgAdminServiceAccounts) Create(ctx context.Context, cmd domain.ServiceA
 }
 
 // Update applies a partial update (scopes / disabled flag) to a service account.
-func (a *pgAdminServiceAccounts) Update(ctx context.Context, cmd domain.AdminServiceAccountUpdateCmd) (*domain.ServiceAccount, error) {
+func (a *pgAdminServiceAccounts) Update(
+	ctx context.Context, cmd domain.AdminServiceAccountUpdateCmd,
+) (*domain.ServiceAccount, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.ServiceAccount, error) {
 		row, svcAcct, err := a.findSA(ctx, cmd.ProjectID, cmd.ServiceAccountID)
 		if err != nil {
@@ -224,7 +230,9 @@ func (a *pgAdminServiceAccounts) Delete(ctx context.Context, projectID, saID str
 
 // AddSecret mints a new client secret for the service account. The plaintext is
 // returned once; only its sha256 hash is persisted (iam_app_secrets.app_id = saID).
-func (a *pgAdminServiceAccounts) AddSecret(ctx context.Context, cmd domain.AdminServiceAccountSecretCmd) (*domain.AdminSecret, error) {
+func (a *pgAdminServiceAccounts) AddSecret(
+	ctx context.Context, cmd domain.AdminServiceAccountSecretCmd,
+) (*domain.AdminSecret, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminSecret, error) {
 		// Tenant boundary.
 		if _, _, err := a.findSA(ctx, cmd.ProjectID, cmd.ServiceAccountID); err != nil {
@@ -269,7 +277,12 @@ func (a *pgAdminServiceAccounts) AddSecret(ctx context.Context, cmd domain.Admin
 			ProjectID:   cmd.ProjectID,
 			Environment: "",
 			AggregateID: secretID,
-			Payload:     map[string]any{"secret_id": secretID, "client_id": cmd.ServiceAccountID, "project_id": cmd.ProjectID, "name": cmd.Name},
+			Payload: map[string]any{
+				"secret_id":  secretID,
+				"client_id":  cmd.ServiceAccountID,
+				"project_id": cmd.ProjectID,
+				"name":       cmd.Name,
+			},
 		}); err != nil {
 			return nil, err
 		}

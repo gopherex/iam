@@ -45,7 +45,10 @@ func NewMFAService(deps MFADeps) *MFAService { return &MFAService{deps: deps} }
 
 var _ oas.Handler = (*MFAService)(nil)
 
-func (s *MFAService) DeleteV1AuthMfaFactorsByFactorId(ctx context.Context, params oas.DeleteV1AuthMfaFactorsByFactorIdParams) (*oas.Ok, error) {
+func (s *MFAService) DeleteV1AuthMfaFactorsByFactorId(
+	ctx context.Context,
+	params oas.DeleteV1AuthMfaFactorsByFactorIdParams,
+) (*oas.Ok, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -80,7 +83,11 @@ func (s *MFAService) GetV1AuthMfaFactors(ctx context.Context) (*oas.GetV1AuthMfa
 // PostV1AuthMfaChallenge is public (no session yet): it (re)issues a step-up
 // challenge mid-login. The account is identified by the flow_token minted at
 // password sign-in, not a principal.
-func (s *MFAService) PostV1AuthMfaChallenge(ctx context.Context, req oas.OptPostV1AuthMfaChallengeReq, params oas.PostV1AuthMfaChallengeParams) (*oas.Challenge, error) {
+func (s *MFAService) PostV1AuthMfaChallenge(
+	ctx context.Context,
+	req oas.OptPostV1AuthMfaChallengeReq,
+	params oas.PostV1AuthMfaChallengeParams,
+) (*oas.Challenge, error) {
 	flowToken, factorID := "", ""
 	if v, ok := req.Get(); ok {
 		flowToken = v.FlowToken.Or("")
@@ -95,7 +102,10 @@ func (s *MFAService) PostV1AuthMfaChallenge(ctx context.Context, req oas.OptPost
 	return oasChallenge(ch), nil
 }
 
-func (s *MFAService) PostV1AuthMfaEmailEnroll(ctx context.Context, req *oas.PostV1AuthMfaEmailEnrollReq) (*oas.PostV1AuthMfaEmailEnrollOK, error) {
+func (s *MFAService) PostV1AuthMfaEmailEnroll(
+	ctx context.Context,
+	req *oas.PostV1AuthMfaEmailEnrollReq,
+) (*oas.PostV1AuthMfaEmailEnrollOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -121,7 +131,10 @@ func (s *MFAService) PostV1AuthMfaEmailEnroll(ctx context.Context, req *oas.Post
 	return out, nil
 }
 
-func (s *MFAService) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, _ oas.OptPostV1AuthMfaRecoveryCodesGenerateReq) (*oas.PostV1AuthMfaRecoveryCodesGenerateOK, error) {
+func (s *MFAService) PostV1AuthMfaRecoveryCodesGenerate(
+	ctx context.Context,
+	_ oas.OptPostV1AuthMfaRecoveryCodesGenerateReq,
+) (*oas.PostV1AuthMfaRecoveryCodesGenerateOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -135,7 +148,11 @@ func (s *MFAService) PostV1AuthMfaRecoveryCodesGenerate(ctx context.Context, _ o
 	return &oas.PostV1AuthMfaRecoveryCodesGenerateOK{Codes: codes}, nil
 }
 
-func (s *MFAService) PostV1AuthMfaRecoveryCodesVerify(ctx context.Context, req *oas.PostV1AuthMfaRecoveryCodesVerifyReq, params oas.PostV1AuthMfaRecoveryCodesVerifyParams) (*oas.AuthResult, error) {
+func (s *MFAService) PostV1AuthMfaRecoveryCodesVerify(
+	ctx context.Context,
+	req *oas.PostV1AuthMfaRecoveryCodesVerifyReq,
+	params oas.PostV1AuthMfaRecoveryCodesVerifyParams,
+) (*oas.AuthResult, error) {
 	if req.Code == "" {
 		return nil, domain.ErrValidation.WithMessage("code is required")
 	}
@@ -152,7 +169,10 @@ func (s *MFAService) PostV1AuthMfaRecoveryCodesVerify(ctx context.Context, req *
 	return authResult(acct, sess), nil
 }
 
-func (s *MFAService) PostV1AuthMfaSmsEnroll(ctx context.Context, req *oas.PostV1AuthMfaSmsEnrollReq) (*oas.PostV1AuthMfaSmsEnrollOK, error) {
+func (s *MFAService) PostV1AuthMfaSmsEnroll(
+	ctx context.Context,
+	req *oas.PostV1AuthMfaSmsEnrollReq,
+) (*oas.PostV1AuthMfaSmsEnrollOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -178,7 +198,10 @@ func (s *MFAService) PostV1AuthMfaSmsEnroll(ctx context.Context, req *oas.PostV1
 	return out, nil
 }
 
-func (s *MFAService) PostV1AuthMfaTotpEnroll(ctx context.Context, _ oas.OptPostV1AuthMfaTotpEnrollReq) (*oas.PostV1AuthMfaTotpEnrollOK, error) {
+func (s *MFAService) PostV1AuthMfaTotpEnroll(
+	ctx context.Context,
+	_ oas.OptPostV1AuthMfaTotpEnrollReq,
+) (*oas.PostV1AuthMfaTotpEnrollOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -194,7 +217,10 @@ func (s *MFAService) PostV1AuthMfaTotpEnroll(ctx context.Context, _ oas.OptPostV
 	}, nil
 }
 
-func (s *MFAService) PostV1AuthMfaTotpVerify(ctx context.Context, req *oas.PostV1AuthMfaTotpVerifyReq) (*oas.PostV1AuthMfaTotpVerifyOK, error) {
+func (s *MFAService) PostV1AuthMfaTotpVerify(
+	ctx context.Context,
+	req *oas.PostV1AuthMfaTotpVerifyReq,
+) (*oas.PostV1AuthMfaTotpVerifyOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -214,7 +240,11 @@ func (s *MFAService) PostV1AuthMfaTotpVerify(ctx context.Context, req *oas.PostV
 	}, nil
 }
 
-func (s *MFAService) PostV1AuthMfaVerify(ctx context.Context, req *oas.PostV1AuthMfaVerifyReq, _ oas.PostV1AuthMfaVerifyParams) (*oas.AuthResult, error) {
+func (s *MFAService) PostV1AuthMfaVerify(
+	ctx context.Context,
+	req *oas.PostV1AuthMfaVerifyReq,
+	_ oas.PostV1AuthMfaVerifyParams,
+) (*oas.AuthResult, error) {
 	challengeID := req.ChallengeID.Or("")
 	if challengeID == "" {
 		return nil, domain.ErrValidation.WithMessage("challenge_id is required")
@@ -228,7 +258,10 @@ func (s *MFAService) PostV1AuthMfaVerify(ctx context.Context, req *oas.PostV1Aut
 	return authResult(acct, sess), nil
 }
 
-func (s *MFAService) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, req oas.OptPostV1AuthMfaWebauthnEnrollOptionsReq) (*oas.PostV1AuthMfaWebauthnEnrollOptionsOK, error) {
+func (s *MFAService) PostV1AuthMfaWebauthnEnrollOptions(
+	ctx context.Context,
+	req oas.OptPostV1AuthMfaWebauthnEnrollOptionsReq,
+) (*oas.PostV1AuthMfaWebauthnEnrollOptionsOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -249,11 +282,16 @@ func (s *MFAService) PostV1AuthMfaWebauthnEnrollOptions(ctx context.Context, req
 
 	return &oas.PostV1AuthMfaWebauthnEnrollOptionsOK{
 		ChallengeID: oas.NewOptString(ch.ID),
-		PublicKey:   oas.NewOptPostV1AuthMfaWebauthnEnrollOptionsOKPublicKey(oasRawMap[oas.PostV1AuthMfaWebauthnEnrollOptionsOKPublicKey](ch.PublicKey)),
+		PublicKey: oas.NewOptPostV1AuthMfaWebauthnEnrollOptionsOKPublicKey(
+			oasRawMap[oas.PostV1AuthMfaWebauthnEnrollOptionsOKPublicKey](ch.PublicKey),
+		),
 	}, nil
 }
 
-func (s *MFAService) PostV1AuthMfaWebauthnEnrollVerify(ctx context.Context, req *oas.PostV1AuthMfaWebauthnEnrollVerifyReq) (*oas.PostV1AuthMfaWebauthnEnrollVerifyOK, error) {
+func (s *MFAService) PostV1AuthMfaWebauthnEnrollVerify(
+	ctx context.Context,
+	req *oas.PostV1AuthMfaWebauthnEnrollVerifyReq,
+) (*oas.PostV1AuthMfaWebauthnEnrollVerifyOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err

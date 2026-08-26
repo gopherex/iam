@@ -92,7 +92,13 @@ func (a *pgJobs) Cancel(ctx context.Context, projectID, id string) error {
 // CreateImportUsers enqueues a bulk user-import job. The users list is stored in
 // the job spec (converting jx.Raw values so they persist as raw JSON, not
 // base64) and processed by the jobs worker.
-func (a *pgJobs) CreateImportUsers(ctx context.Context, projectID string, users []map[string]jx.Raw, format string, sendInvites bool) (string, string, error) {
+func (a *pgJobs) CreateImportUsers(
+	ctx context.Context,
+	projectID string,
+	users []map[string]jx.Raw,
+	format string,
+	sendInvites bool,
+) (string, string, error) {
 	converted := make([]any, 0, len(users))
 	for _, u := range users {
 		converted = append(converted, rawToJSON(u))

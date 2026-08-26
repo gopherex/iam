@@ -23,7 +23,9 @@ type PasswordlessAccounts interface {
 	// VerifyMagicLinkCallback consumes the link token like VerifyMagicLink and
 	// additionally returns a redirect target sanitized against the project's
 	// app_base_url (open-redirect safe), for the browser GET callback leg.
-	VerifyMagicLinkCallback(ctx context.Context, token, redirectTo string) (*domain.Account, *domain.Session, string, error)
+	VerifyMagicLinkCallback(
+		ctx context.Context, token, redirectTo string,
+	) (*domain.Account, *domain.Session, string, error)
 }
 
 type PasswordlessDeps struct{ Accounts PasswordlessAccounts }
@@ -41,8 +43,14 @@ func NewPasswordlessService(deps PasswordlessDeps) *PasswordlessService {
 
 var _ oas.Handler = (*PasswordlessService)(nil)
 
-func (s *PasswordlessService) PostV1AuthOtpStart(ctx context.Context, req *oas.OtpStartRequest, params oas.PostV1AuthOtpStartParams) (*oas.Challenge, error) {
-	ch, err := s.deps.Accounts.StartOTP(ctx, params.XClientID, req.Identifier, string(req.Channel), string(req.Purpose), req.Locale.Or(""))
+func (s *PasswordlessService) PostV1AuthOtpStart(
+	ctx context.Context,
+	req *oas.OtpStartRequest,
+	params oas.PostV1AuthOtpStartParams,
+) (*oas.Challenge, error) {
+	ch, err := s.deps.Accounts.StartOTP(
+		ctx, params.XClientID, req.Identifier, string(req.Channel), string(req.Purpose), req.Locale.Or(""),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +58,11 @@ func (s *PasswordlessService) PostV1AuthOtpStart(ctx context.Context, req *oas.O
 	return oasChallenge(ch), nil
 }
 
-func (s *PasswordlessService) PostV1AuthOtpVerify(ctx context.Context, req *oas.OtpVerifyRequest, _ oas.PostV1AuthOtpVerifyParams) (*oas.AuthResult, error) {
+func (s *PasswordlessService) PostV1AuthOtpVerify(
+	ctx context.Context,
+	req *oas.OtpVerifyRequest,
+	_ oas.PostV1AuthOtpVerifyParams,
+) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.VerifyOTP(ctx, req.ChallengeID, req.Code)
 	if err != nil {
 		return nil, err
@@ -59,7 +71,11 @@ func (s *PasswordlessService) PostV1AuthOtpVerify(ctx context.Context, req *oas.
 	return authResult(acct, sess), nil
 }
 
-func (s *PasswordlessService) PostV1AuthMagicLinkStart(ctx context.Context, req *oas.MagicLinkStartRequest, params oas.PostV1AuthMagicLinkStartParams) (*oas.Challenge, error) {
+func (s *PasswordlessService) PostV1AuthMagicLinkStart(
+	ctx context.Context,
+	req *oas.MagicLinkStartRequest,
+	params oas.PostV1AuthMagicLinkStartParams,
+) (*oas.Challenge, error) {
 	ch, err := s.deps.Accounts.StartMagicLink(ctx, params.XClientID, req.Email, req.RedirectTo, req.Locale.Or(""))
 	if err != nil {
 		return nil, err
@@ -68,7 +84,11 @@ func (s *PasswordlessService) PostV1AuthMagicLinkStart(ctx context.Context, req 
 	return oasChallenge(ch), nil
 }
 
-func (s *PasswordlessService) PostV1AuthMagicLinkVerify(ctx context.Context, req *oas.MagicLinkVerifyRequest, _ oas.PostV1AuthMagicLinkVerifyParams) (*oas.AuthResult, error) {
+func (s *PasswordlessService) PostV1AuthMagicLinkVerify(
+	ctx context.Context,
+	req *oas.MagicLinkVerifyRequest,
+	_ oas.PostV1AuthMagicLinkVerifyParams,
+) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.VerifyMagicLink(ctx, req.Token)
 	if err != nil {
 		return nil, err
@@ -80,7 +100,10 @@ func (s *PasswordlessService) PostV1AuthMagicLinkVerify(ctx context.Context, req
 // GetV1AuthMagicLinkCallback is the browser GET leg of a magic link: it consumes
 // the token, mints a session, sets the session cookies and redirects the browser
 // to the (sanitized) target. Mirrors the email-verification callback.
-func (s *PasswordlessService) GetV1AuthMagicLinkCallback(ctx context.Context, params oas.GetV1AuthMagicLinkCallbackParams) (*oas.GetV1AuthMagicLinkCallbackFound, error) {
+func (s *PasswordlessService) GetV1AuthMagicLinkCallback(
+	ctx context.Context,
+	params oas.GetV1AuthMagicLinkCallbackParams,
+) (*oas.GetV1AuthMagicLinkCallbackFound, error) {
 	_, sess, redirect, err := s.deps.Accounts.VerifyMagicLinkCallback(ctx, params.Token, params.RedirectTo.Or(""))
 	if err != nil {
 		return nil, err

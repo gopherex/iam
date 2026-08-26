@@ -96,7 +96,10 @@ func (a *pgAccountStore) accountLoadUser(ctx context.Context, projectID, account
 }
 
 // accountLoadSession fetches a session owned by the account (account == user).
-func (a *pgAccountStore) accountLoadSession(ctx context.Context, accountID, sessionID string) (*models.IamSession, error) {
+func (a *pgAccountStore) accountLoadSession(
+	ctx context.Context,
+	accountID, sessionID string,
+) (*models.IamSession, error) {
 	row, err := models.FindIamSession(ctx, a.db.Bobx(), sessionID)
 	if err != nil {
 		if isNoRows(err) {
@@ -349,7 +352,10 @@ func (a *pgAccountStore) RevokeSession(ctx context.Context, accountID, sessionID
 
 // RenameSession sets a human-friendly device name on one of the account's
 // sessions (stored in the session envelope).
-func (a *pgAccountStore) RenameSession(ctx context.Context, cmd domain.AccountRenameSessionCmd) (*domain.Session, error) {
+func (a *pgAccountStore) RenameSession(
+	ctx context.Context,
+	cmd domain.AccountRenameSessionCmd,
+) (*domain.Session, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Session, error) {
 		row, err := a.accountLoadSession(ctx, cmd.AccountID, cmd.SessionID)
 		if err != nil {
@@ -560,7 +566,10 @@ func (a *pgAccountStore) Capabilities(ctx context.Context, projectID, accountID 
 
 // Activity returns the account's paginated activity log. The cursor is the id of
 // the last event from the previous page (keyset over the `at` ordering).
-func (a *pgAccountStore) Activity(ctx context.Context, cmd domain.AccountActivityCmd) (*domain.AccountActivityPage, error) {
+func (a *pgAccountStore) Activity(
+	ctx context.Context,
+	cmd domain.AccountActivityCmd,
+) (*domain.AccountActivityPage, error) {
 	limit := cmd.Limit
 	if limit <= 0 || limit > 100 {
 		limit = 50
@@ -652,7 +661,10 @@ func (a *pgAccountStore) Consents(ctx context.Context, accountID string) ([]doma
 }
 
 // AcceptConsents records consent acceptances and returns the updated set.
-func (a *pgAccountStore) AcceptConsents(ctx context.Context, cmd domain.AccountAcceptConsentsCmd) ([]domain.AccountConsent, error) {
+func (a *pgAccountStore) AcceptConsents(
+	ctx context.Context,
+	cmd domain.AccountAcceptConsentsCmd,
+) ([]domain.AccountConsent, error) {
 	_, err := withTxRet(ctx, a.db, func(ctx context.Context) (struct{}, error) {
 		// resolve the project from the owning user so consent rows are scoped.
 		user, err := models.FindIamUser(ctx, a.db.Bobx(), cmd.AccountID)
@@ -797,7 +809,10 @@ func (a *pgAccountStore) ExportStatus(ctx context.Context, accountID, jobID stri
 // StartIdentityMerge begins merging another identity into the account. A
 // verification challenge is created with only the sha256 of the opaque code
 // persisted; the plaintext code would be delivered out-of-band.
-func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.AccountMergeStartCmd) (*domain.Challenge, error) {
+func (a *pgAccountStore) StartIdentityMerge(
+	ctx context.Context,
+	cmd domain.AccountMergeStartCmd,
+) (*domain.Challenge, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Challenge, error) {
 		user, err := models.FindIamUser(ctx, a.db.Bobx(), cmd.AccountID)
 		if err != nil {
@@ -874,7 +889,10 @@ type accountMergeChallengeEnv struct {
 // accountLoadValidMergeChallenge loads the merge challenge and validates it:
 // not consumed, not expired, bound to cmd.AccountID, and the code hashes to
 // the stored value.
-func (a *pgAccountStore) accountLoadValidMergeChallenge(ctx context.Context, cmd domain.AccountMergeConfirmCmd) (*models.IamChallenge, accountMergeChallengeEnv, error) {
+func (a *pgAccountStore) accountLoadValidMergeChallenge(
+	ctx context.Context,
+	cmd domain.AccountMergeConfirmCmd,
+) (*models.IamChallenge, accountMergeChallengeEnv, error) {
 	var env accountMergeChallengeEnv
 
 	ch, err := models.FindIamChallenge(ctx, a.db.Bobx(), cmd.ChallengeID)
@@ -915,7 +933,10 @@ func (a *pgAccountStore) accountLoadValidMergeChallenge(ctx context.Context, cmd
 // ConfirmIdentityMerge completes a pending identity merge: verifies the code
 // against the stored hash, consumes the challenge, links the target identity to
 // the account and returns the refreshed account + identity set.
-func (a *pgAccountStore) ConfirmIdentityMerge(ctx context.Context, cmd domain.AccountMergeConfirmCmd) (*domain.Account, []domain.Identity, error) {
+func (a *pgAccountStore) ConfirmIdentityMerge(
+	ctx context.Context,
+	cmd domain.AccountMergeConfirmCmd,
+) (*domain.Account, []domain.Identity, error) {
 	type result struct {
 		acc *domain.Account
 		ids []domain.Identity

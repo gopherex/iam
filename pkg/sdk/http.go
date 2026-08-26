@@ -67,5 +67,5 @@ func defaultHTTPErrorHandler(w http.ResponseWriter, _ *http.Request, _ error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("WWW-Authenticate", `Bearer realm="iam"`)
 	w.WriteHeader(http.StatusUnauthorized)
-	_ = json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"}) //nolint:errchkjson // response already committed; no remedy for an encode failure here
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"}) //nolint:errchkjson,lll // response already committed; no remedy for an encode failure here
 }

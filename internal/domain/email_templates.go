@@ -34,12 +34,14 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			"en": {
 				Subject: "Verify your email",
 				Text:    "Use code {{.code}} to verify your email.{{with .link}}\nOr open this link: {{.}}{{end}}",
-				HTML:    `<p>Use code <strong>{{.code}}</strong> to verify your email.</p>{{with .link}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+				HTML: `<p>Use code <strong>{{.code}}</strong> to verify your email.</p>
+{{with .link}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
 			"ru": {
 				Subject: "Подтвердите вашу почту",
 				Text:    "Введите код {{.code}}, чтобы подтвердить почту.{{with .link}}\nИли откройте ссылку: {{.}}{{end}}",
-				HTML:    `<p>Введите код <strong>{{.code}}</strong>, чтобы подтвердить почту.</p>{{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+				HTML: `<p>Введите код <strong>{{.code}}</strong>, чтобы подтвердить почту.</p>
+{{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
 		},
 	},
@@ -82,12 +84,14 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			"en": {
 				Subject: "Confirm your new email",
 				Text:    "Use code {{.code}} to confirm your new email.{{with .link}}\nOr open this link: {{.}}{{end}}",
-				HTML:    `<p>Use code <strong>{{.code}}</strong> to confirm your new email.</p>{{with .link}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+				HTML: `<p>Use code <strong>{{.code}}</strong> to confirm your new email.</p>
+{{with .link}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
 			"ru": {
 				Subject: "Подтвердите новую почту",
 				Text:    "Введите код {{.code}}, чтобы подтвердить новую почту.{{with .link}}\nИли откройте ссылку: {{.}}{{end}}",
-				HTML:    `<p>Введите код <strong>{{.code}}</strong>, чтобы подтвердить новую почту.</p>{{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+				HTML: `<p>Введите код <strong>{{.code}}</strong>, чтобы подтвердить новую почту.</p>
+{{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
 		},
 	},
@@ -98,12 +102,14 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			"en": {
 				Subject: "Reset your password",
 				Text:    "Use code {{.code}} to reset your password.{{with .link}}\nOr open this link: {{.}}{{end}}",
-				HTML:    `<p>Use code <strong>{{.code}}</strong> to reset your password.</p>{{with .link}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+				HTML: `<p>Use code <strong>{{.code}}</strong> to reset your password.</p>
+{{with .link}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
 			"ru": {
 				Subject: "Сброс пароля",
 				Text:    "Введите код {{.code}}, чтобы сбросить пароль.{{with .link}}\nИли откройте ссылку: {{.}}{{end}}",
-				HTML:    `<p>Введите код <strong>{{.code}}</strong>, чтобы сбросить пароль.</p>{{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+				HTML: `<p>Введите код <strong>{{.code}}</strong>, чтобы сбросить пароль.</p>
+{{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
 		},
 	},
@@ -130,12 +136,14 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			"en": {
 				Subject: "Continue where you left off",
 				Text:    "Use code {{.code}} to continue.{{with .continue_url}}\nOr open this link: {{.}}{{end}}",
-				HTML:    `<p>Use code <strong>{{.code}}</strong> to continue.</p>{{with .continue_url}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+				HTML: `<p>Use code <strong>{{.code}}</strong> to continue.</p>
+{{with .continue_url}}<p>Or open this link: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
 			"ru": {
 				Subject: "Продолжите с того же места",
 				Text:    "Введите код {{.code}}, чтобы продолжить.{{with .continue_url}}\nИли откройте ссылку: {{.}}{{end}}",
-				HTML:    `<p>Введите код <strong>{{.code}}</strong>, чтобы продолжить.</p>{{with .continue_url}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+				HTML: `<p>Введите код <strong>{{.code}}</strong>, чтобы продолжить.</p>
+{{with .continue_url}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
 		},
 	},
@@ -146,12 +154,16 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			"en": {
 				Subject: "You're invited",
 				Text:    "You've been invited. Accept your invitation: {{.invite_url}} (or use code {{.invite_token}})",
-				HTML:    `<p>You've been invited.</p>{{with .invite_url}}<p>Accept your invitation: <a href="{{.}}">{{.}}</a></p>{{end}}<p>Alternatively, use code <strong>{{.invite_token}}</strong>.</p>`,
+				HTML: `<p>You've been invited.</p>
+{{with .invite_url}}<p>Accept your invitation: <a href="{{.}}">{{.}}</a></p>{{end}}
+<p>Alternatively, use code <strong>{{.invite_token}}</strong>.</p>`,
 			},
 			"ru": {
 				Subject: "Вас пригласили",
 				Text:    "Вас пригласили. Примите приглашение: {{.invite_url}} (или используйте код {{.invite_token}})",
-				HTML:    `<p>Вас пригласили.</p>{{with .invite_url}}<p>Примите приглашение по ссылке: <a href="{{.}}">{{.}}</a></p>{{end}}<p>Или используйте код <strong>{{.invite_token}}</strong>.</p>`,
+				HTML: `<p>Вас пригласили.</p>
+{{with .invite_url}}<p>Примите приглашение по ссылке: <a href="{{.}}">{{.}}</a></p>{{end}}
+<p>Или используйте код <strong>{{.invite_token}}</strong>.</p>`,
 			},
 		},
 	},

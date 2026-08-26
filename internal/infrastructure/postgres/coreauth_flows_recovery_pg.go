@@ -54,7 +54,12 @@ func init() {
 // Anti-enumeration contract: always persists at step=verify_email and returns
 // the same FlowState shape. The difference between a real and a fake user
 // is invisible to the caller.
-func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+func createRecovery(
+	ctx context.Context,
+	a *pgCoreAuthFlows,
+	f *domain.Flow,
+	cmd domain.FlowCreateCmd,
+) (*domain.FlowState, error) {
 	// Type-assert to access internal pgCoreAuth helpers. Both adapters live in
 	// the same postgres package; this assertion is safe within the package.
 	pgCA, ok := a.accounts.(*pgCoreAuth)
@@ -88,7 +93,14 @@ func createRecovery(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, cmd
 // the email is queued; an unknown one gets a dangling fake descriptor so the
 // two paths are indistinguishable on the wire (anti-enumeration, §5.4). Sets
 // f.UserID as a side effect when the account is real.
-func recoveryEmailChallenge(ctx context.Context, a *pgCoreAuthFlows, pgCA *pgCoreAuth, f *domain.Flow, cmd domain.FlowCreateCmd, now time.Time) (*domain.FlowActiveChallenge, error) {
+func recoveryEmailChallenge(
+	ctx context.Context,
+	a *pgCoreAuthFlows,
+	pgCA *pgCoreAuth,
+	f *domain.Flow,
+	cmd domain.FlowCreateCmd,
+	now time.Time,
+) (*domain.FlowActiveChallenge, error) {
 	userRow, err := pgCA.coreAuthFindUserByEmail(ctx, cmd.ProjectID, cmd.Email)
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
 		return nil, fmt.Errorf("recovery create: lookup: %w", err)
@@ -162,16 +174,23 @@ func recoveryEmailChallenge(ctx context.Context, a *pgCoreAuthFlows, pgCA *pgCor
 // finalizeRecoveryFlow stores the resolved active challenge, mints the flow
 // token, and persists the flow row — the shared tail of both recovery
 // channels (email, phone_otp).
-func finalizeRecoveryFlow(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flow, ac *domain.FlowActiveChallenge, fd flowData, errPrefix string) (*domain.FlowState, error) {
+func finalizeRecoveryFlow(
+	ctx context.Context,
+	a *pgCoreAuthFlows,
+	f *domain.Flow,
+	ac *domain.FlowActiveChallenge,
+	flowRecord flowData,
+	errPrefix string,
+) (*domain.FlowState, error) {
 	f.ActiveChallenge = ac
-	fd.ActiveChallenge = ac
+	flowRecord.ActiveChallenge = ac
 
 	token, hash, err := flowMintToken()
 	if err != nil {
 		return nil, fmt.Errorf("%s: mint token: %w", errPrefix, err)
 	}
 
-	if err := a.flowInsert(ctx, f, hash, fd); err != nil {
+	if err := a.flowInsert(ctx, f, hash, flowRecord); err != nil {
 		return nil, fmt.Errorf("%s: insert flow: %w", errPrefix, err)
 	}
 
@@ -184,7 +203,12 @@ func finalizeRecoveryFlow(ctx context.Context, a *pgCoreAuthFlows, f *domain.Flo
 // anti-enumeration contract: a real phone gets a "phone" reset challenge; an
 // unknown phone gets a dangling fake descriptor. Requires an enabled SMS
 // provider (pre-flight) so the code can actually be delivered.
-func (a *pgCoreAuthFlows) createRecoveryPhone(ctx context.Context, pgCA *pgCoreAuth, f *domain.Flow, cmd domain.FlowCreateCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) createRecoveryPhone(
+	ctx context.Context,
+	pgCA *pgCoreAuth,
+	f *domain.Flow,
+	cmd domain.FlowCreateCmd,
+) (*domain.FlowState, error) {
 	now := nowUTC()
 	f.Method = "phone_otp"
 	f.Step = domain.FlowStepVerifyPhone
@@ -217,7 +241,12 @@ func (a *pgCoreAuthFlows) createRecoveryPhone(ctx context.Context, pgCA *pgCoreA
 
 // issuePhoneResetChallenge persists ch and queues the SMS carrying its code,
 // atomically so a delivery failure leaves no dangling challenge row.
-func issuePhoneResetChallenge(ctx context.Context, pgCA *pgCoreAuth, ch coreAuthChallengeData, environment, accountID, phone, locale, code string) error {
+func issuePhoneResetChallenge(
+	ctx context.Context,
+	pgCA *pgCoreAuth,
+	ch coreAuthChallengeData,
+	environment, accountID, phone, locale, code string,
+) error {
 	return pgCA.db.withTx(ctx, func(ctx context.Context) error {
 		if _, insErr := pgCA.coreAuthInsertChallenge(ctx, ch); insErr != nil {
 			return insErr
@@ -246,7 +275,14 @@ func issuePhoneResetChallenge(ctx context.Context, pgCA *pgCoreAuth, ch coreAuth
 // phone gets a persisted "phone" reset challenge and an SMS queued, an
 // unknown one gets a dangling fake descriptor. Sets f.UserID as a side effect
 // when the account is real.
-func recoveryPhoneChallenge(ctx context.Context, pgCA *pgCoreAuth, f *domain.Flow, cmd domain.FlowCreateCmd, phone string, now time.Time) (*domain.FlowActiveChallenge, error) {
+func recoveryPhoneChallenge(
+	ctx context.Context,
+	pgCA *pgCoreAuth,
+	f *domain.Flow,
+	cmd domain.FlowCreateCmd,
+	phone string,
+	now time.Time,
+) (*domain.FlowActiveChallenge, error) {
 	userRow, err := pgCA.coreAuthFindUserByPhone(ctx, cmd.ProjectID, phone)
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
 		return nil, fmt.Errorf("recovery create phone: lookup: %w", err)
@@ -310,7 +346,13 @@ func recoveryPhoneChallenge(ctx context.Context, pgCA *pgCoreAuth, f *domain.Flo
 // ─── advance ─────────────────────────────────────────────────────────────────
 
 // advanceRecovery routes Submit actions to the correct step handler.
-func advanceRecovery(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func advanceRecovery(
+	ctx context.Context,
+	a *pgCoreAuthFlows,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	//nolint:exhaustive // only the three steps a recovery flow can be
 	// submitted from advance here; every other step is a caller error, which
 	// the default case reports as such.
@@ -345,7 +387,12 @@ func advanceRecovery(ctx context.Context, a *pgCoreAuthFlows, row *models.IamFlo
 // set_password. Wrong secrets decrement attempts and embed an error — the flow
 // stays pending and the token does NOT rotate (§5 rule 6). Non-existent-user
 // flows always fail identically (anti-enumeration §5.4).
-func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) recoveryVerifyEmail(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	activeChallenge := f.ActiveChallenge
 	if activeChallenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active email challenge")
@@ -375,7 +422,12 @@ func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.I
 	}
 
 	res, consumeErr := withTxRet(ctx, a.db, func(ctx context.Context) (consumeResult, error) {
-		_, data, err := pgCA.coreAuthConsumeChallenge(ctx, f.ProjectID, flowVerifyConsumeCmd(f.ProjectID, "", activeChallenge.ChallengeID, code, token), "password_reset")
+		data, err := pgCA.coreAuthConsumeChallenge(
+			ctx,
+			f.ProjectID,
+			flowVerifyConsumeCmd(f.ProjectID, "", activeChallenge.ChallengeID, code, token),
+			"password_reset",
+		)
 		if err != nil {
 			return consumeResult{}, err
 		}
@@ -390,7 +442,8 @@ func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.I
 			return a.flowSave(ctx, row, f)
 		})
 
-		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil //nolint:nilerr // wrong code stays pending, see above
+		//nolint:nilerr // wrong code stays pending, see above
+		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
 	}
 
 	// Code verified — advance to set_password. Do NOT rotate yet (token rotates
@@ -414,7 +467,12 @@ func (a *pgCoreAuthFlows) recoveryVerifyEmail(ctx context.Context, row *models.I
 // recoveryVerifyPhone is recoveryVerifyEmail over an SMS "phone" challenge. On a
 // correct code it advances to set_password; wrong code decrements attempts and
 // stays pending (anti-enumeration identical to the email path).
-func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) recoveryVerifyPhone(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	activeChallenge := f.ActiveChallenge
 	if activeChallenge == nil {
 		return nil, domain.ErrBadRequest.WithMessage("no active phone challenge")
@@ -435,7 +493,7 @@ func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.I
 	}
 
 	res, consumeErr := withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
-		_, data, err := pgCA.coreAuthConsumeChallenge(ctx, f.ProjectID, domain.CoreAuthVerifyConsumeCmd{
+		data, err := pgCA.coreAuthConsumeChallenge(ctx, f.ProjectID, domain.CoreAuthVerifyConsumeCmd{
 			ProjectID:   f.ProjectID,
 			ChallengeID: activeChallenge.ChallengeID,
 			Code:        code,
@@ -453,7 +511,8 @@ func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.I
 			return a.flowSave(ctx, row, f)
 		})
 
-		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil //nolint:nilerr // wrong code stays pending, see above
+		//nolint:nilerr // wrong code stays pending, see above
+		return &domain.FlowState{FlowToken: cmd.FlowToken, Flow: f}, nil
 	}
 
 	f.UserID = res
@@ -479,7 +538,12 @@ func (a *pgCoreAuthFlows) recoveryVerifyPhone(ctx context.Context, row *models.I
 // The password is passed directly to bcrypt via coreAuthHashPassword and then
 // written with coreAuthUpsertPasswordCredential — it is NEVER stored in flow
 // data (§5 rule 5).
-func (a *pgCoreAuthFlows) recoverySetPassword(ctx context.Context, row *models.IamFlow, f *domain.Flow, cmd domain.FlowSubmitCmd) (*domain.FlowState, error) {
+func (a *pgCoreAuthFlows) recoverySetPassword(
+	ctx context.Context,
+	row *models.IamFlow,
+	f *domain.Flow,
+	cmd domain.FlowSubmitCmd,
+) (*domain.FlowState, error) {
 	if f.UserID == "" {
 		// Should not happen if the state machine is followed correctly.
 		return nil, domain.ErrBadRequest.WithMessage("no verified user for recovery")
@@ -524,7 +588,13 @@ func (a *pgCoreAuthFlows) recoverySetPassword(ctx context.Context, row *models.I
 // policy, writes the new credential, revokes existing sessions, and mints a
 // fresh one — all inside one transaction so a mid-way failure leaves the old
 // credential and sessions intact.
-func recoveryResetPassword(ctx context.Context, a *pgCoreAuthFlows, pgCA *pgCoreAuth, f *domain.Flow, password string) (*domain.Session, error) {
+func recoveryResetPassword(
+	ctx context.Context,
+	a *pgCoreAuthFlows,
+	pgCA *pgCoreAuth,
+	f *domain.Flow,
+	password string,
+) (*domain.Session, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Session, error) {
 		userRow, err := models.FindIamUser(ctx, a.db.Bobx(), f.UserID)
 		if err != nil {

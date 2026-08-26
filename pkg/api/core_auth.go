@@ -31,8 +31,14 @@ type CoreAuthAccounts interface {
 	// Email verification / change.
 	StartEmailVerification(ctx context.Context, cmd domain.CoreAuthVerifyStartCmd) (*domain.Challenge, error)
 	VerifyEmail(ctx context.Context, cmd domain.CoreAuthVerifyConsumeCmd) (*domain.Account, *domain.Session, error)
-	VerifyEmailCallback(ctx context.Context, cmd domain.CoreAuthEmailVerificationCallbackCmd) (*domain.CoreAuthEmailVerificationCallbackResult, error)
-	VerifyCaptcha(ctx context.Context, projectID, provider, token, action string) (*domain.CoreAuthCaptchaVerifyResult, error)
+	VerifyEmailCallback(
+		ctx context.Context,
+		cmd domain.CoreAuthEmailVerificationCallbackCmd,
+	) (*domain.CoreAuthEmailVerificationCallbackResult, error)
+	VerifyCaptcha(
+		ctx context.Context,
+		projectID, provider, token, action string,
+	) (*domain.CoreAuthCaptchaVerifyResult, error)
 	// EnforceCaptcha is the gate applied at public auth entry points (sign-up,
 	// password-forgot, flow create). It is a no-op for projects that have not
 	// configured a captcha secret; otherwise a missing token yields
@@ -97,7 +103,10 @@ func NewCoreAuthService(deps CoreAuthDeps) *CoreAuthService { return &CoreAuthSe
 
 var _ oas.Handler = (*CoreAuthService)(nil)
 
-func (s *CoreAuthService) GetV1AuthEmailChangeCancel(ctx context.Context, params oas.GetV1AuthEmailChangeCancelParams) (*oas.Ok, error) {
+func (s *CoreAuthService) GetV1AuthEmailChangeCancel(
+	ctx context.Context,
+	params oas.GetV1AuthEmailChangeCancelParams,
+) (*oas.Ok, error) {
 	// Public op (security: []): the opaque token identifies the pending change.
 	if err := s.deps.Accounts.CancelEmailChange(ctx, params.Token); err != nil {
 		return nil, err
@@ -106,7 +115,10 @@ func (s *CoreAuthService) GetV1AuthEmailChangeCancel(ctx context.Context, params
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *CoreAuthService) GetV1AuthEmailVerificationCallback(ctx context.Context, params oas.GetV1AuthEmailVerificationCallbackParams) (r *oas.GetV1AuthEmailVerificationCallbackFound, _ error) {
+func (s *CoreAuthService) GetV1AuthEmailVerificationCallback(
+	ctx context.Context,
+	params oas.GetV1AuthEmailVerificationCallbackParams,
+) (r *oas.GetV1AuthEmailVerificationCallbackFound, _ error) {
 	// Public op (security: []): the opaque token identifies the pending
 	// verification. The port consumes it and returns where to redirect the
 	// browser plus an optional session cookie.
@@ -159,7 +171,11 @@ func (s *CoreAuthService) GetV1TokensCurrent(ctx context.Context) (*oas.GetV1Tok
 	}, nil
 }
 
-func (s *CoreAuthService) PostV1AuthAccessRequests(ctx context.Context, req *oas.PostV1AuthAccessRequestsReq, params oas.PostV1AuthAccessRequestsParams) (*oas.PostV1AuthAccessRequestsOK, error) {
+func (s *CoreAuthService) PostV1AuthAccessRequests(
+	ctx context.Context,
+	req *oas.PostV1AuthAccessRequestsReq,
+	params oas.PostV1AuthAccessRequestsParams,
+) (*oas.PostV1AuthAccessRequestsOK, error) {
 	// Public op (security: []): the project is taken from X-Client-Id.
 	accessReq, err := s.deps.Accounts.CreateAccessRequest(ctx, domain.CoreAuthAccessRequestCmd{
 		ProjectID:    params.XClientID,
@@ -176,7 +192,10 @@ func (s *CoreAuthService) PostV1AuthAccessRequests(ctx context.Context, req *oas
 	}, nil
 }
 
-func (s *CoreAuthService) PostV1AuthEmailChangeStart(ctx context.Context, req *oas.PostV1AuthEmailChangeStartReq) (*oas.Challenge, error) {
+func (s *CoreAuthService) PostV1AuthEmailChangeStart(
+	ctx context.Context,
+	req *oas.PostV1AuthEmailChangeStartReq,
+) (*oas.Challenge, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -196,7 +215,10 @@ func (s *CoreAuthService) PostV1AuthEmailChangeStart(ctx context.Context, req *o
 	return oasChallenge(ch), nil
 }
 
-func (s *CoreAuthService) PostV1AuthEmailChangeVerify(ctx context.Context, req *oas.PostV1AuthEmailChangeVerifyReq) (*oas.PostV1AuthEmailChangeVerifyOK, error) {
+func (s *CoreAuthService) PostV1AuthEmailChangeVerify(
+	ctx context.Context,
+	req *oas.PostV1AuthEmailChangeVerifyReq,
+) (*oas.PostV1AuthEmailChangeVerifyOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -216,7 +238,11 @@ func (s *CoreAuthService) PostV1AuthEmailChangeVerify(ctx context.Context, req *
 	return &oas.PostV1AuthEmailChangeVerifyOK{User: oas.NewOptUser(oasUser(acct))}, nil
 }
 
-func (s *CoreAuthService) PostV1AuthEmailVerificationStart(ctx context.Context, req *oas.PostV1AuthEmailVerificationStartReq, params oas.PostV1AuthEmailVerificationStartParams) (*oas.Challenge, error) {
+func (s *CoreAuthService) PostV1AuthEmailVerificationStart(
+	ctx context.Context,
+	req *oas.PostV1AuthEmailVerificationStartReq,
+	params oas.PostV1AuthEmailVerificationStartParams,
+) (*oas.Challenge, error) {
 	// Public op (security: []): project from X-Client-Id; email from the body.
 	ch, err := s.deps.Accounts.StartEmailVerification(ctx, domain.CoreAuthVerifyStartCmd{
 		ProjectID:  params.XClientID,
@@ -231,7 +257,11 @@ func (s *CoreAuthService) PostV1AuthEmailVerificationStart(ctx context.Context, 
 	return oasChallenge(ch), nil
 }
 
-func (s *CoreAuthService) PostV1AuthEmailVerificationVerify(ctx context.Context, req *oas.PostV1AuthEmailVerificationVerifyReq, params oas.PostV1AuthEmailVerificationVerifyParams) (*oas.AuthResult, error) {
+func (s *CoreAuthService) PostV1AuthEmailVerificationVerify(
+	ctx context.Context,
+	req *oas.PostV1AuthEmailVerificationVerifyReq,
+	params oas.PostV1AuthEmailVerificationVerifyParams,
+) (*oas.AuthResult, error) {
 	// Public op (security: []): a successful verify mints a session.
 	acct, sess, err := s.deps.Accounts.VerifyEmail(ctx, domain.CoreAuthVerifyConsumeCmd{
 		ProjectID:   params.XClientID,
@@ -246,7 +276,11 @@ func (s *CoreAuthService) PostV1AuthEmailVerificationVerify(ctx context.Context,
 	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthGuest(ctx context.Context, _ *oas.PostV1AuthGuestReq, params oas.PostV1AuthGuestParams) (*oas.AuthResult, error) {
+func (s *CoreAuthService) PostV1AuthGuest(
+	ctx context.Context,
+	_ *oas.PostV1AuthGuestReq,
+	params oas.PostV1AuthGuestParams,
+) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.CreateGuest(ctx, params.XClientID)
 	if err != nil {
 		return nil, err
@@ -255,7 +289,10 @@ func (s *CoreAuthService) PostV1AuthGuest(ctx context.Context, _ *oas.PostV1Auth
 	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthPasswordChange(ctx context.Context, req *oas.PasswordChangeRequest) (*oas.Ok, error) {
+func (s *CoreAuthService) PostV1AuthPasswordChange(
+	ctx context.Context,
+	req *oas.PasswordChangeRequest,
+) (*oas.Ok, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -274,7 +311,11 @@ func (s *CoreAuthService) PostV1AuthPasswordChange(ctx context.Context, req *oas
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *CoreAuthService) PostV1AuthPasswordCheck(ctx context.Context, req *oas.PostV1AuthPasswordCheckReq, params oas.PostV1AuthPasswordCheckParams) (*oas.PostV1AuthPasswordCheckOK, error) {
+func (s *CoreAuthService) PostV1AuthPasswordCheck(
+	ctx context.Context,
+	req *oas.PostV1AuthPasswordCheckReq,
+	params oas.PostV1AuthPasswordCheckParams,
+) (*oas.PostV1AuthPasswordCheckOK, error) {
 	// Public op (security: []): project from X-Client-Id.
 	res, err := s.deps.Accounts.CheckPassword(ctx, params.XClientID, req.Password)
 	if err != nil {
@@ -288,7 +329,11 @@ func (s *CoreAuthService) PostV1AuthPasswordCheck(ctx context.Context, req *oas.
 	}, nil
 }
 
-func (s *CoreAuthService) PostV1AuthPasswordForgot(ctx context.Context, req *oas.PasswordForgotRequest, params oas.PostV1AuthPasswordForgotParams) (*oas.Ok, error) {
+func (s *CoreAuthService) PostV1AuthPasswordForgot(
+	ctx context.Context,
+	req *oas.PasswordForgotRequest,
+	params oas.PostV1AuthPasswordForgotParams,
+) (*oas.Ok, error) {
 	// Public op (security: []): project from X-Client-Id.
 	if err := s.deps.Accounts.EnforceCaptcha(ctx, params.XClientID, req.CaptchaToken.Or(""), "recovery"); err != nil {
 		return nil, err
@@ -307,7 +352,11 @@ func (s *CoreAuthService) PostV1AuthPasswordForgot(ctx context.Context, req *oas
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *CoreAuthService) PostV1AuthPasswordReset(ctx context.Context, req *oas.PasswordResetRequest, params oas.PostV1AuthPasswordResetParams) (*oas.AuthResult, error) {
+func (s *CoreAuthService) PostV1AuthPasswordReset(
+	ctx context.Context,
+	req *oas.PasswordResetRequest,
+	params oas.PostV1AuthPasswordResetParams,
+) (*oas.AuthResult, error) {
 	// Public op (security: []): the reset token/challenge identifies the account;
 	// a successful reset mints a session.
 	acct, sess, err := s.deps.Accounts.ResetPassword(ctx, domain.CoreAuthPasswordResetCmd{
@@ -324,7 +373,10 @@ func (s *CoreAuthService) PostV1AuthPasswordReset(ctx context.Context, req *oas.
 	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthPasswordVerify(ctx context.Context, req *oas.PostV1AuthPasswordVerifyReq) (*oas.PostV1AuthPasswordVerifyOK, error) {
+func (s *CoreAuthService) PostV1AuthPasswordVerify(
+	ctx context.Context,
+	req *oas.PostV1AuthPasswordVerifyReq,
+) (*oas.PostV1AuthPasswordVerifyOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -346,7 +398,10 @@ func (s *CoreAuthService) PostV1AuthPasswordVerify(ctx context.Context, req *oas
 	}, nil
 }
 
-func (s *CoreAuthService) PostV1AuthPhoneChangeStart(ctx context.Context, req *oas.PostV1AuthPhoneChangeStartReq) (*oas.Challenge, error) {
+func (s *CoreAuthService) PostV1AuthPhoneChangeStart(
+	ctx context.Context,
+	req *oas.PostV1AuthPhoneChangeStartReq,
+) (*oas.Challenge, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -365,7 +420,10 @@ func (s *CoreAuthService) PostV1AuthPhoneChangeStart(ctx context.Context, req *o
 	return oasChallenge(ch), nil
 }
 
-func (s *CoreAuthService) PostV1AuthPhoneChangeVerify(ctx context.Context, req *oas.PostV1AuthPhoneChangeVerifyReq) (*oas.PostV1AuthPhoneChangeVerifyOK, error) {
+func (s *CoreAuthService) PostV1AuthPhoneChangeVerify(
+	ctx context.Context,
+	req *oas.PostV1AuthPhoneChangeVerifyReq,
+) (*oas.PostV1AuthPhoneChangeVerifyOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -384,7 +442,11 @@ func (s *CoreAuthService) PostV1AuthPhoneChangeVerify(ctx context.Context, req *
 	return &oas.PostV1AuthPhoneChangeVerifyOK{User: oas.NewOptUser(oasUser(acct))}, nil
 }
 
-func (s *CoreAuthService) PostV1AuthPhoneVerificationStart(ctx context.Context, req *oas.PostV1AuthPhoneVerificationStartReq, params oas.PostV1AuthPhoneVerificationStartParams) (*oas.Challenge, error) {
+func (s *CoreAuthService) PostV1AuthPhoneVerificationStart(
+	ctx context.Context,
+	req *oas.PostV1AuthPhoneVerificationStartReq,
+	params oas.PostV1AuthPhoneVerificationStartParams,
+) (*oas.Challenge, error) {
 	// Public op (security: []): project from X-Client-Id.
 	ch, err := s.deps.Accounts.StartPhoneVerification(ctx, domain.CoreAuthVerifyStartCmd{
 		ProjectID: params.XClientID,
@@ -399,7 +461,11 @@ func (s *CoreAuthService) PostV1AuthPhoneVerificationStart(ctx context.Context, 
 	return oasChallenge(ch), nil
 }
 
-func (s *CoreAuthService) PostV1AuthPhoneVerificationVerify(ctx context.Context, req *oas.PostV1AuthPhoneVerificationVerifyReq, params oas.PostV1AuthPhoneVerificationVerifyParams) (oas.PhoneVerifyResult, error) {
+func (s *CoreAuthService) PostV1AuthPhoneVerificationVerify(
+	ctx context.Context,
+	req *oas.PostV1AuthPhoneVerificationVerifyReq,
+	params oas.PostV1AuthPhoneVerificationVerifyParams,
+) (oas.PhoneVerifyResult, error) {
 	// Public op (security: []): a successful verify mints a session.
 	acct, sess, err := s.deps.Accounts.VerifyPhone(ctx, domain.CoreAuthVerifyConsumeCmd{
 		ProjectID:   params.XClientID,
@@ -413,7 +479,10 @@ func (s *CoreAuthService) PostV1AuthPhoneVerificationVerify(ctx context.Context,
 	return oas.NewAuthResultPhoneVerifyResult(*authResult(acct, sess)), nil
 }
 
-func (s *CoreAuthService) PostV1AuthSessionStepUp(ctx context.Context, req *oas.PostV1AuthSessionStepUpReq) (oas.StepUpResult, error) {
+func (s *CoreAuthService) PostV1AuthSessionStepUp(
+	ctx context.Context,
+	req *oas.PostV1AuthSessionStepUpReq,
+) (oas.StepUpResult, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return oas.StepUpResult{}, err
@@ -452,7 +521,10 @@ func (s *CoreAuthService) PostV1AuthSessionStepUp(ctx context.Context, req *oas.
 	return oas.NewAuthNextStepStepUpResult(next), nil
 }
 
-func (s *CoreAuthService) PostV1AuthSessionSwitchGroup(ctx context.Context, req *oas.PostV1AuthSessionSwitchGroupReq) (*oas.AuthResult, error) {
+func (s *CoreAuthService) PostV1AuthSessionSwitchGroup(
+	ctx context.Context,
+	req *oas.PostV1AuthSessionSwitchGroupReq,
+) (*oas.AuthResult, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -466,7 +538,11 @@ func (s *CoreAuthService) PostV1AuthSessionSwitchGroup(ctx context.Context, req 
 	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthSignInPassword(ctx context.Context, req *oas.PasswordSignInRequest, params oas.PostV1AuthSignInPasswordParams) (oas.AuthResultOrNextStep, error) {
+func (s *CoreAuthService) PostV1AuthSignInPassword(
+	ctx context.Context,
+	req *oas.PasswordSignInRequest,
+	params oas.PostV1AuthSignInPasswordParams,
+) (oas.AuthResultOrNextStep, error) {
 	res, err := s.deps.Accounts.AuthenticatePassword(ctx, params.XClientID, req.Email.Or(""), req.Password)
 	if err != nil {
 		return oas.AuthResultOrNextStep{}, err
@@ -546,7 +622,10 @@ func (s *CoreAuthService) PostV1AuthSignOut(ctx context.Context, req oas.OptPost
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *CoreAuthService) PostV1AuthSignOutAll(ctx context.Context, req oas.OptPostV1AuthSignOutAllReq) (*oas.PostV1AuthSignOutAllOK, error) {
+func (s *CoreAuthService) PostV1AuthSignOutAll(
+	ctx context.Context,
+	req oas.OptPostV1AuthSignOutAllReq,
+) (*oas.PostV1AuthSignOutAllOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -565,7 +644,11 @@ func (s *CoreAuthService) PostV1AuthSignOutAll(ctx context.Context, req oas.OptP
 	return &oas.PostV1AuthSignOutAllOK{RevokedCount: oas.NewOptInt(n)}, nil
 }
 
-func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpRequest, params oas.PostV1AuthSignUpParams) (*oas.AuthResult, error) {
+func (s *CoreAuthService) PostV1AuthSignUp(
+	ctx context.Context,
+	req *oas.SignUpRequest,
+	params oas.PostV1AuthSignUpParams,
+) (*oas.AuthResult, error) {
 	consents := make([]domain.AccountConsentAcceptance, 0, len(req.Consents))
 	for _, c := range req.Consents {
 		consents = append(consents, domain.AccountConsentAcceptance{Key: c.Key, Version: c.Version})
@@ -596,7 +679,11 @@ func (s *CoreAuthService) PostV1AuthSignUp(ctx context.Context, req *oas.SignUpR
 	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthTokenExchange(ctx context.Context, req *oas.CodeExchangeRequest, _ oas.PostV1AuthTokenExchangeParams) (*oas.AuthResult, error) {
+func (s *CoreAuthService) PostV1AuthTokenExchange(
+	ctx context.Context,
+	req *oas.CodeExchangeRequest,
+	_ oas.PostV1AuthTokenExchangeParams,
+) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.ExchangeCode(ctx, req.Code, req.CodeVerifier.Or(""))
 	if err != nil {
 		return nil, err
@@ -605,7 +692,11 @@ func (s *CoreAuthService) PostV1AuthTokenExchange(ctx context.Context, req *oas.
 	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthImpersonateRedeem(ctx context.Context, req *oas.PostV1AuthImpersonateRedeemReq, params oas.PostV1AuthImpersonateRedeemParams) (*oas.AuthResult, error) {
+func (s *CoreAuthService) PostV1AuthImpersonateRedeem(
+	ctx context.Context,
+	req *oas.PostV1AuthImpersonateRedeemReq,
+	params oas.PostV1AuthImpersonateRedeemParams,
+) (*oas.AuthResult, error) {
 	acct, sess, err := s.deps.Accounts.RedeemImpersonation(ctx, req.Token, params.XClientID)
 	if err != nil {
 		return nil, err
@@ -614,7 +705,11 @@ func (s *CoreAuthService) PostV1AuthImpersonateRedeem(ctx context.Context, req *
 	return authResult(acct, sess), nil
 }
 
-func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.OptRefreshRequest, params oas.PostV1AuthTokenRefreshParams) (*oas.AuthResultHeaders, error) {
+func (s *CoreAuthService) PostV1AuthTokenRefresh(
+	ctx context.Context,
+	req oas.OptRefreshRequest,
+	params oas.PostV1AuthTokenRefreshParams,
+) (*oas.AuthResultHeaders, error) {
 	refreshToken := ""
 	if v, ok := req.Get(); ok {
 		refreshToken = v.RefreshToken.Or("")
@@ -648,7 +743,10 @@ func (s *CoreAuthService) PostV1AuthTokenRefresh(ctx context.Context, req oas.Op
 	return out, nil
 }
 
-func (s *CoreAuthService) PostV1ChallengesCaptchaVerify(ctx context.Context, req *oas.PostV1ChallengesCaptchaVerifyReq) (r *oas.PostV1ChallengesCaptchaVerifyOK, _ error) {
+func (s *CoreAuthService) PostV1ChallengesCaptchaVerify(
+	ctx context.Context,
+	req *oas.PostV1ChallengesCaptchaVerifyReq,
+) (r *oas.PostV1ChallengesCaptchaVerifyOK, _ error) {
 	// Public op (security: []): verify a CAPTCHA token against the configured
 	// provider. The adapter resolves the project from request context.
 	res, err := s.deps.Accounts.VerifyCaptcha(ctx, "", req.Provider, req.Token, req.Action.Or(""))
@@ -662,7 +760,10 @@ func (s *CoreAuthService) PostV1ChallengesCaptchaVerify(ctx context.Context, req
 	}, nil
 }
 
-func (s *CoreAuthService) PostV1TokensIntrospect(ctx context.Context, req *oas.PostV1TokensIntrospectReq) (*oas.PostV1TokensIntrospectOK, error) {
+func (s *CoreAuthService) PostV1TokensIntrospect(
+	ctx context.Context,
+	req *oas.PostV1TokensIntrospectReq,
+) (*oas.PostV1TokensIntrospectOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -695,7 +796,10 @@ func (s *CoreAuthService) PostV1TokensRevoke(ctx context.Context, req *oas.PostV
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *CoreAuthService) PostV1TokensVerify(ctx context.Context, req *oas.PostV1TokensVerifyReq) (*oas.PostV1TokensVerifyOK, error) {
+func (s *CoreAuthService) PostV1TokensVerify(
+	ctx context.Context,
+	req *oas.PostV1TokensVerifyReq,
+) (*oas.PostV1TokensVerifyOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err

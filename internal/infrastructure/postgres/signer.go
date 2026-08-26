@@ -125,7 +125,12 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 
 // Sign mints a signed RS256 JWT for project/env with the given claims and TTL.
 // iss/aud/sub should be passed as claims by the caller.
-func (s *Signer) Sign(ctx context.Context, projectID, env string, claims map[string]any, ttl time.Duration) (string, error) {
+func (s *Signer) Sign(
+	ctx context.Context,
+	projectID, env string,
+	claims map[string]any,
+	ttl time.Duration,
+) (string, error) {
 	kid, priv, err := s.activeKey(ctx, projectID, env)
 	if err != nil {
 		return "", err

@@ -1799,7 +1799,13 @@ func (a *pgOIDCGrants) oidcLoadValidAuthCodeRow(ctx context.Context, hash string
 // checks: client_secret for a confidential client not already authenticated
 // at the transport (H-01), the redirect_uri matching what was stored at
 // authorize time (H-03), PKCE, and prior consent (M-02).
-func (a *pgOIDCGrants) oidcVerifyAuthCodeGrant(ctx context.Context, cmd domain.OIDCTokenCmd, row *models.IamAuthCode, codeData authCodeData, effectiveClientID string) error {
+func (a *pgOIDCGrants) oidcVerifyAuthCodeGrant(
+	ctx context.Context,
+	cmd domain.OIDCTokenCmd,
+	row *models.IamAuthCode,
+	codeData authCodeData,
+	effectiveClientID string,
+) error {
 	if cmd.AuthenticatedClientID != effectiveClientID {
 		if err := a.oidcVerifyClientSecret(ctx, effectiveClientID, cmd.ClientSecret); err != nil {
 			return err
@@ -1830,7 +1836,9 @@ func (a *pgOIDCGrants) oidcVerifyAuthCodeGrant(ctx context.Context, cmd domain.O
 // already authenticated at the transport (H-01), the redirect_uri matching
 // what was stored at authorize time (H-03), PKCE before the code is consumed
 // so a failed exchange doesn't burn a valid code, and prior consent (M-02).
-func (a *pgOIDCGrants) tokenAuthorizationCodeGrant(ctx context.Context, cmd domain.OIDCTokenCmd) (map[string]any, error) {
+func (a *pgOIDCGrants) tokenAuthorizationCodeGrant(
+	ctx context.Context, cmd domain.OIDCTokenCmd,
+) (map[string]any, error) {
 	if cmd.Code == "" {
 		return nil, domain.ErrBadRequest
 	}
@@ -2088,7 +2096,9 @@ func (a *pgOIDCGrants) denyAccessToken(ctx context.Context, cmd domain.OIDCRevok
 // verifyRefreshToken validates a signed refresh-token JWT against the project's
 // signing keys and returns its bound principal/scope context. An invalid token,
 // or one that is not a refresh token, maps to ErrInvalidToken.
-func (a *pgOIDCGrants) verifyRefreshToken(ctx context.Context, projectID, env, token string) (sub, clientID string, scopes []string, err error) {
+func (a *pgOIDCGrants) verifyRefreshToken(
+	ctx context.Context, projectID, env, token string,
+) (string, string, []string, error) {
 	claims, verr := a.db.Signer().Verify(ctx, projectID, env, token)
 	if verr != nil {
 		return "", "", nil, verr
@@ -2098,9 +2108,11 @@ func (a *pgOIDCGrants) verifyRefreshToken(ctx context.Context, projectID, env, t
 		return "", "", nil, domain.ErrInvalidToken
 	}
 
-	sub, _ = claims["sub"].(string)
+	sub, _ := claims["sub"].(string)
 
-	clientID, _ = claims["client_id"].(string)
+	clientID, _ := claims["client_id"].(string)
+
+	var scopes []string
 	if s, ok := claims["scope"].(string); ok {
 		scopes = splitScopes(s)
 	}
@@ -2185,7 +2197,9 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 		}
 	}
 
-	access, accessTTL, refreshTTL, err := a.mintOIDCAccessToken(ctx, sub, env, issuer, profile, groups, accessTTL, refreshTTL)
+	access, accessTTL, refreshTTL, err := a.mintOIDCAccessToken(
+		ctx, sub, env, issuer, profile, groups, accessTTL, refreshTTL,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -2237,7 +2251,14 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 // over it, then applyTokenProfile may override the TTLs, then groups/session
 // are layered on. Returns the (possibly profile-adjusted) TTLs alongside the
 // token since the refresh token minted afterward must use the same values.
-func (a *pgOIDCGrants) mintOIDCAccessToken(ctx context.Context, sub oidcTokenSubject, env, issuer string, profile *oidcTokenProfile, groups []string, accessTTL, refreshTTL time.Duration) (string, time.Duration, time.Duration, error) {
+func (a *pgOIDCGrants) mintOIDCAccessToken(
+	ctx context.Context,
+	sub oidcTokenSubject,
+	env, issuer string,
+	profile *oidcTokenProfile,
+	groups []string,
+	accessTTL, refreshTTL time.Duration,
+) (string, time.Duration, time.Duration, error) {
 	accessClaims := tokenProfileClaims(profile)
 	if accessClaims == nil {
 		accessClaims = map[string]any{}
@@ -2286,7 +2307,9 @@ func (a *pgOIDCGrants) mintOIDCAccessToken(ctx context.Context, sub oidcTokenSub
 // JWT for an offline_access grant. Recording it is what makes rotation,
 // revocation, and replay detection possible — a refresh token that exists
 // only as a signature supports none of those.
-func (a *pgOIDCGrants) mintOIDCRefreshToken(ctx context.Context, sub oidcTokenSubject, env, issuer string, refreshTTL time.Duration) (string, error) {
+func (a *pgOIDCGrants) mintOIDCRefreshToken(
+	ctx context.Context, sub oidcTokenSubject, env, issuer string, refreshTTL time.Duration,
+) (string, error) {
 	refreshClaims := map[string]any{
 		claimIssuer:      issuer,
 		claimSubject:     sub.subject,
@@ -2574,7 +2597,9 @@ const oidcParTTL = 90 * time.Second
 // oidcParRequestURIPrefix is the RFC 9126 URN namespace for a pushed request.
 const oidcParRequestURIPrefix = "urn:ietf:params:oauth:request_uri:"
 
-func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.OIDCParCmd) (*domain.OIDCParResult, error) {
+func (a *pgOIDCGrants) PushAuthorizationRequest(
+	ctx context.Context, cmd domain.OIDCParCmd,
+) (*domain.OIDCParResult, error) {
 	// RFC 9126 §2.1: the pushed request must be validated as the authorization
 	// endpoint would validate it. Doing it here means a request that could never
 	// be authorized is refused now, instead of after the user has been walked
@@ -2719,7 +2744,14 @@ func (a *pgOIDCGrants) consumePushedRequest(
 // insertDeviceCodeRow persists the pending device-code row: device_code is
 // stored as a hash (only the caller ever sees the plaintext), the
 // OIDCDevicePending view goes into the data envelope for the verification UI.
-func insertDeviceCodeRow(ctx context.Context, db *DB, clientRow *models.IamAppClient, deviceCode, userCode string, expiresAt time.Time, pending domain.OIDCDevicePending) (*models.IamDeviceCode, error) {
+func insertDeviceCodeRow(
+	ctx context.Context,
+	db *DB,
+	clientRow *models.IamAppClient,
+	deviceCode, userCode string,
+	expiresAt time.Time,
+	pending domain.OIDCDevicePending,
+) (*models.IamDeviceCode, error) {
 	raw, err := marshal(&pending)
 	if err != nil {
 		return nil, err
@@ -2752,7 +2784,9 @@ func insertDeviceCodeRow(ctx context.Context, db *DB, clientRow *models.IamAppCl
 // DeviceAuthorization starts a device authorization grant (RFC 8628). The
 // device_code is stored as a hash; the plaintext device_code and user_code are
 // returned to the client exactly once.
-func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCDeviceAuthorizationCmd) (*domain.OIDCDeviceAuthorization, error) {
+func (a *pgOIDCGrants) DeviceAuthorization(
+	ctx context.Context, cmd domain.OIDCDeviceAuthorizationCmd,
+) (*domain.OIDCDeviceAuthorization, error) {
 	// Resolve the client so the pending grant is stored under its real tenant.
 	// The verification page looks the user_code up by PROJECT (that is all a
 	// signed-in browser knows), so a row keyed by client id can never be found —
@@ -2926,7 +2960,9 @@ func (a *pgOIDCGrants) oidcScopeClaims(ctx context.Context, accountID string, sc
 // ResolveDevice returns the pending device authorization for a user-facing code,
 // scoped to the requesting client's project. A row whose project_id does not
 // match is treated as not-found.
-func (a *pgOIDCGrants) ResolveDevice(ctx context.Context, code domain.OIDCDeviceUserCode) (*domain.OIDCDevicePending, error) {
+func (a *pgOIDCGrants) ResolveDevice(
+	ctx context.Context, code domain.OIDCDeviceUserCode,
+) (*domain.OIDCDevicePending, error) {
 	rows, err := models.IamDeviceCodes.Query(
 		sm.Where(models.IamDeviceCodes.Columns.UserCode.EQ(psql.Arg(code.UserCode))),
 		sm.Where(models.IamDeviceCodes.Columns.ProjectID.EQ(psql.Arg(code.ProjectID))),

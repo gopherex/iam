@@ -144,7 +144,9 @@ func (a *pgAdminConnections) Create(ctx context.Context, cmd domain.AdminConnect
 //     their current value.  The same logic as fedApplyConnectionPatch is used
 //     so that admin and federation patches behave identically.
 //  4. Re-marshal the modified aggregate and write it back with fedConnSetter.
-func (a *pgAdminConnections) Update(ctx context.Context, projectID, connID string, patch map[string]any) (*domain.Connection, error) {
+func (a *pgAdminConnections) Update(
+	ctx context.Context, projectID, connID string, patch map[string]any,
+) (*domain.Connection, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Connection, error) {
 		row, err := models.FindIamSsoConnection(ctx, a.db.Bobx(), connID)
 		if err != nil {
@@ -257,7 +259,9 @@ func (a *pgAdminConnections) ListDomains(ctx context.Context, projectID string) 
 // "verify_token") so VerifyDomain can check it later; it is returned to the
 // caller as the TXT record value they must publish under
 // _iam-verify.<domain>.
-func (a *pgAdminConnections) CreateDomain(ctx context.Context, cmd domain.AdminDomainCmd) (*domain.AdminDomainRegistration, error) {
+func (a *pgAdminConnections) CreateDomain(
+	ctx context.Context, cmd domain.AdminDomainCmd,
+) (*domain.AdminDomainRegistration, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.AdminDomainRegistration, error) {
 		// Mint a random verification token (plaintext, URL-safe hex); we store it
 		// in the envelope rather than a separate column, so VerifyDomain can

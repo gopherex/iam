@@ -217,7 +217,9 @@ func (a *pgOAuthSocial) EnabledProviders(ctx context.Context, projectID string) 
 // createAndLinkSocialAccount provisions a fresh iam_users account and links a
 // new iam_identities row to it — the first-login half shared by CompleteLogin
 // and resolveLoginAndMint.
-func (a *pgOAuthSocial) createAndLinkSocialAccount(ctx context.Context, projectID, provider, providerAccountID, email string) (*domain.Account, error) {
+func (a *pgOAuthSocial) createAndLinkSocialAccount(
+	ctx context.Context, projectID, provider, providerAccountID, email string,
+) (*domain.Account, error) {
 	acct, err := a.createSocialAccount(ctx, projectID, email)
 	if err != nil {
 		return nil, err
@@ -251,7 +253,9 @@ func (a *pgOAuthSocial) createAndLinkSocialAccount(ctx context.Context, projectI
 // and fetches the userinfo claims (provider account id + email), then upserts the
 // iam_identities link, resolves/creates the iam_users account, and mints an
 // iam_sessions row.
-func (a *pgOAuthSocial) CompleteLogin(ctx context.Context, projectID, provider, code string) (*domain.Account, *domain.Session, error) {
+func (a *pgOAuthSocial) CompleteLogin(
+	ctx context.Context, projectID, provider, code string,
+) (*domain.Account, *domain.Session, error) {
 	if projectID == "" || provider == "" || code == "" {
 		return nil, nil, domain.ErrBadRequest
 	}
@@ -426,7 +430,9 @@ type oauthExchangeCodeData struct {
 // payload: missing/consumed/expired codes, a row with no stored session, and
 // (when the flow carried a PKCE challenge) a verifier that doesn't hash to
 // it all map to domain.ErrInvalidToken.
-func (a *pgOAuthSocial) oauthLookupAuthCode(ctx context.Context, cmd domain.OAuthSocialExchangeCmd) (*models.IamAuthCode, oauthExchangeCodeData, error) {
+func (a *pgOAuthSocial) oauthLookupAuthCode(
+	ctx context.Context, cmd domain.OAuthSocialExchangeCmd,
+) (*models.IamAuthCode, oauthExchangeCodeData, error) {
 	var data oauthExchangeCodeData
 
 	hash := fedHashToken(cmd.Code)
@@ -475,7 +481,9 @@ func (a *pgOAuthSocial) oauthLookupAuthCode(ctx context.Context, cmd domain.OAut
 // before the stored session is returned. When a PKCE code_challenge was stored
 // with the code, the supplied CodeVerifier must hash (S256) to it; a flow that
 // carried no challenge skips PKCE.
-func (a *pgOAuthSocial) Exchange(ctx context.Context, cmd domain.OAuthSocialExchangeCmd) (*domain.Account, *domain.Session, error) {
+func (a *pgOAuthSocial) Exchange(
+	ctx context.Context, cmd domain.OAuthSocialExchangeCmd,
+) (*domain.Account, *domain.Session, error) {
 	if cmd.ProjectID == "" || cmd.Code == "" {
 		return nil, nil, domain.ErrBadRequest
 	}
@@ -579,7 +587,9 @@ func (a *pgOAuthSocial) authCodeOpts(codeChallenge, prompt, loginHint string) []
 
 // CompleteLoginRedirect handles the provider callback and returns the product
 // redirect URL plus an optional Set-Cookie value (cookie mode).
-func (a *pgOAuthSocial) CompleteLoginRedirect(ctx context.Context, cmd domain.OAuthSocialCallbackCmd) (domain.OAuthSocialCallbackResult, error) {
+func (a *pgOAuthSocial) CompleteLoginRedirect(
+	ctx context.Context, cmd domain.OAuthSocialCallbackCmd,
+) (domain.OAuthSocialCallbackResult, error) {
 	if cmd.Error != "" {
 		return domain.OAuthSocialCallbackResult{}, domain.ErrProviderError.WithMessage(cmd.Error)
 	}
@@ -704,7 +714,9 @@ func (a *pgOAuthSocial) storeExchangeCode(ctx context.Context, projectID string,
 // resolveLoginAndMint upserts the identity link for an exchanged provider
 // account, resolves/creates the iam_users account and mints an iam_sessions row,
 // all inside one serializable tx. Shared by CompleteLogin and the redirect flow.
-func (a *pgOAuthSocial) resolveLoginAndMint(ctx context.Context, projectID, provider, providerAccountID, email string) (*domain.Session, error) {
+func (a *pgOAuthSocial) resolveLoginAndMint(
+	ctx context.Context, projectID, provider, providerAccountID, email string,
+) (*domain.Session, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Session, error) {
 		ident, err := a.findIdentity(ctx, projectID, provider, providerAccountID)
 		if err != nil && !errors.Is(err, domain.ErrNotFound) {
@@ -774,7 +786,9 @@ func (a *pgOAuthSocial) StartLink(ctx context.Context, cmd domain.OAuthSocialLin
 // linkOAuthIdentity attaches (provider, providerAccountID) to accountID,
 // rejecting a provider account already linked to this account (ErrAlreadyLinked)
 // or to a different one (ErrIdentityExists).
-func (a *pgOAuthSocial) linkOAuthIdentity(ctx context.Context, projectID, accountID, provider, providerAccountID, email string) error {
+func (a *pgOAuthSocial) linkOAuthIdentity(
+	ctx context.Context, projectID, accountID, provider, providerAccountID, email string,
+) error {
 	return a.db.withTx(ctx, func(ctx context.Context) error {
 		if existing, err := a.findIdentity(ctx, projectID, provider, providerAccountID); err == nil {
 			if existing.UserID == accountID {
@@ -869,7 +883,9 @@ func (a *pgOAuthSocial) CompleteLink(ctx context.Context, cmd domain.OAuthSocial
 // RedirectURL (the callback URL is request/deployment specific). A missing
 // provider maps to ErrNotFound; a provider lacking client/endpoint config maps
 // to ErrProviderError.
-func (a *pgOAuthSocial) loadOAuthConfig(ctx context.Context, projectID, provider, redirectOverride string) (*oauth2.Config, *oauthProviderData, error) {
+func (a *pgOAuthSocial) loadOAuthConfig(
+	ctx context.Context, projectID, provider, redirectOverride string,
+) (*oauth2.Config, *oauthProviderData, error) {
 	rows, err := models.IamProviders.Query(
 		sm.Where(models.IamProviders.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamProviders.Columns.Provider.EQ(psql.Arg(provider))),
@@ -898,7 +914,9 @@ func (a *pgOAuthSocial) loadOAuthConfig(ctx context.Context, projectID, provider
 	}
 
 	if providerCfg.ClientID == "" || providerCfg.AuthURL == "" || providerCfg.TokenURL == "" {
-		return nil, nil, domain.ErrProviderError.WithMessage("oauth provider misconfigured: missing client_id/auth_url/token_url")
+		return nil, nil, domain.ErrProviderError.WithMessage(
+			"oauth provider misconfigured: missing client_id/auth_url/token_url",
+		)
 	}
 
 	redirect := providerCfg.RedirectURL
@@ -925,7 +943,9 @@ func (a *pgOAuthSocial) loadOAuthConfig(ctx context.Context, projectID, provider
 // external account id + email. The optional codeVerifier carries the PKCE
 // verifier paired with the StartLogin challenge. Upstream/transport failures map
 // to ErrProviderError.
-func (a *pgOAuthSocial) oauthExchange(ctx context.Context, cfg *oauth2.Config, d *oauthProviderData, code, codeVerifier string) (providerAccountID, email string, err error) {
+func (a *pgOAuthSocial) oauthExchange(
+	ctx context.Context, cfg *oauth2.Config, providerCfg *oauthProviderData, code, codeVerifier string,
+) (string, string, error) {
 	var opts []oauth2.AuthCodeOption
 	if codeVerifier != "" {
 		opts = append(opts, oauth2.VerifierOption(codeVerifier))
@@ -936,16 +956,16 @@ func (a *pgOAuthSocial) oauthExchange(ctx context.Context, cfg *oauth2.Config, d
 		return "", "", domain.ErrProviderError.WithMessage("oauth code exchange failed")
 	}
 
-	if d.UserInfoURL == "" {
+	if providerCfg.UserInfoURL == "" {
 		return "", "", domain.ErrProviderError.WithMessage("oauth provider misconfigured: missing userinfo_url")
 	}
 
-	info, err := a.fetchUserInfo(ctx, cfg, tok, d.UserInfoURL)
+	info, err := a.fetchUserInfo(ctx, cfg, tok, providerCfg.UserInfoURL)
 	if err != nil {
 		return "", "", err
 	}
 
-	providerAccountID = info.externalID()
+	providerAccountID := info.externalID()
 	if providerAccountID == "" {
 		return "", "", domain.ErrProviderError.WithMessage("oauth userinfo missing subject id")
 	}
@@ -956,7 +976,9 @@ func (a *pgOAuthSocial) oauthExchange(ctx context.Context, cfg *oauth2.Config, d
 // fetchUserInfo GETs the provider userinfo endpoint using the exchanged token
 // (cfg.Client attaches the bearer token and auto-refreshes) and decodes the
 // claims. Non-2xx / transport / decode failures map to ErrProviderError.
-func (a *pgOAuthSocial) fetchUserInfo(ctx context.Context, cfg *oauth2.Config, tok *oauth2.Token, userInfoURL string) (oauthUserInfo, error) {
+func (a *pgOAuthSocial) fetchUserInfo(
+	ctx context.Context, cfg *oauth2.Config, tok *oauth2.Token, userInfoURL string,
+) (oauthUserInfo, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, userInfoURL, http.NoBody)
 	if err != nil {
 		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo request build failed")
@@ -987,7 +1009,9 @@ func (a *pgOAuthSocial) fetchUserInfo(ctx context.Context, cfg *oauth2.Config, t
 
 // findIdentity loads the OAuth identity for a (project, provider, providerAccountID)
 // triple, mapping no-rows to domain.ErrNotFound. Tenant-scoped by project_id.
-func (a *pgOAuthSocial) findIdentity(ctx context.Context, projectID, provider, providerAccountID string) (*models.IamIdentity, error) {
+func (a *pgOAuthSocial) findIdentity(
+	ctx context.Context, projectID, provider, providerAccountID string,
+) (*models.IamIdentity, error) {
 	env, err := effectiveEnv(ctx, a.db, projectID)
 	if err != nil {
 		return nil, err

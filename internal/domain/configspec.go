@@ -616,8 +616,10 @@ func (c SessionPolicySpec) validateOrdering() error {
 	}
 
 	if c.IdleTimeout != nil && c.AbsoluteTimeout != nil && *c.IdleTimeout > *c.AbsoluteTimeout {
-		return ErrValidation.WithDetails(map[string]any{"idle_timeout": *c.IdleTimeout, "absolute_timeout": *c.AbsoluteTimeout}).
-			WithMessage("idle_timeout must not exceed absolute_timeout")
+		return ErrValidation.WithDetails(map[string]any{
+			"idle_timeout":     *c.IdleTimeout,
+			"absolute_timeout": *c.AbsoluteTimeout,
+		}).WithMessage("idle_timeout must not exceed absolute_timeout")
 	}
 
 	if c.IdleTimeout != nil && c.RefreshTTL != nil && *c.IdleTimeout > *c.RefreshTTL {
@@ -922,7 +924,9 @@ func (d ConsentDocumentSpec) validateRequiredPresentability(fieldPath func(strin
 	hasURL := d.URL != nil && strings.TrimSpace(*d.URL) != ""
 
 	if !hasBody && !hasURL {
-		return ErrValidation.WithMessage(fieldPath("body") + " or " + fieldPath("url") + " is required for a required consent")
+		return ErrValidation.WithMessage(
+			fieldPath("body") + " or " + fieldPath("url") + " is required for a required consent",
+		)
 	}
 
 	return nil

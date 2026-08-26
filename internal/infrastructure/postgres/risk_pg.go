@@ -78,7 +78,11 @@ func (a *pgRisk) ListRules(ctx context.Context, projectID string) ([]domain.Admi
 	return out, nil
 }
 
-func (a *pgRisk) CreateRule(ctx context.Context, projectID string, r domain.AdminRiskRule) (domain.AdminRiskRule, error) {
+func (a *pgRisk) CreateRule(
+	ctx context.Context,
+	projectID string,
+	r domain.AdminRiskRule,
+) (domain.AdminRiskRule, error) {
 	if err := r.Validate(); err != nil {
 		return domain.AdminRiskRule{}, err
 	}
@@ -101,7 +105,11 @@ func (a *pgRisk) CreateRule(ctx context.Context, projectID string, r domain.Admi
 	return r, nil
 }
 
-func (a *pgRisk) UpdateRule(ctx context.Context, projectID, id string, r domain.AdminRiskRule) (domain.AdminRiskRule, error) {
+func (a *pgRisk) UpdateRule(
+	ctx context.Context,
+	projectID, id string,
+	r domain.AdminRiskRule,
+) (domain.AdminRiskRule, error) {
 	if err := r.Validate(); err != nil {
 		return domain.AdminRiskRule{}, err
 	}
@@ -145,7 +153,11 @@ type blockData struct {
 	Reason string `json:"reason,omitempty"`
 }
 
-func (a *pgRisk) CreateBlock(ctx context.Context, projectID, env string, b domain.AdminBlock) (domain.AdminBlock, error) {
+func (a *pgRisk) CreateBlock(
+	ctx context.Context,
+	projectID, env string,
+	b domain.AdminBlock,
+) (domain.AdminBlock, error) {
 	id := newUUID()
 
 	raw, err := json.Marshal(blockData{Type: b.Type, Reason: b.Reason})

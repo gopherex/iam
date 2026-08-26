@@ -57,7 +57,9 @@ type OIDCGrants interface {
 	PushAuthorizationRequest(ctx context.Context, cmd domain.OIDCParCmd) (*domain.OIDCParResult, error)
 	// DeviceAuthorization starts a device authorization grant (RFC 8628).
 	// Client-authenticated.
-	DeviceAuthorization(ctx context.Context, cmd domain.OIDCDeviceAuthorizationCmd) (*domain.OIDCDeviceAuthorization, error)
+	DeviceAuthorization(
+		ctx context.Context, cmd domain.OIDCDeviceAuthorizationCmd,
+	) (*domain.OIDCDeviceAuthorization, error)
 
 	// Userinfo returns the OIDC userinfo claims for the bearer-authenticated
 	// account. accountID/sessionID come from the principal.
@@ -102,7 +104,9 @@ func NewOIDCProviderService(deps OIDCProviderDeps) *OIDCProviderService {
 
 var _ oas.Handler = (*OIDCProviderService)(nil)
 
-func (s *OIDCProviderService) DeleteV1OauthGrantsByGrantId(ctx context.Context, params oas.DeleteV1OauthGrantsByGrantIdParams) (*oas.Ok, error) {
+func (s *OIDCProviderService) DeleteV1OauthGrantsByGrantId(
+	ctx context.Context, params oas.DeleteV1OauthGrantsByGrantIdParams,
+) (*oas.Ok, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -148,7 +152,9 @@ func (s *OIDCProviderService) GetOauth2Authorize(
 	return &oas.GetOauth2AuthorizeFound{Location: optURI(res.RedirectTo)}, nil
 }
 
-func (s *OIDCProviderService) GetOauth2Logout(ctx context.Context, params oas.GetOauth2LogoutParams) (r *oas.GetOauth2LogoutFound, _ error) {
+func (s *OIDCProviderService) GetOauth2Logout(
+	ctx context.Context, params oas.GetOauth2LogoutParams,
+) (r *oas.GetOauth2LogoutFound, _ error) {
 	// Public RP-initiated logout.
 	res, err := s.deps.Grants.Logout(ctx, domain.OIDCLogoutCmd{
 		IDTokenHint:           params.IDTokenHint.Or(""),
@@ -181,7 +187,9 @@ func (s *OIDCProviderService) GetOauth2Userinfo(ctx context.Context) (r oas.GetO
 	return oasRawMap[oas.GetOauth2UserinfoOK](claims), nil
 }
 
-func (s *OIDCProviderService) GetPByProjectIdEByEnvWellKnownJwksJson(ctx context.Context, params oas.GetPByProjectIdEByEnvWellKnownJwksJsonParams) (r oas.GetPByProjectIdEByEnvWellKnownJwksJsonOK, _ error) {
+func (s *OIDCProviderService) GetPByProjectIdEByEnvWellKnownJwksJson(
+	ctx context.Context, params oas.GetPByProjectIdEByEnvWellKnownJwksJsonParams,
+) (r oas.GetPByProjectIdEByEnvWellKnownJwksJsonOK, _ error) {
 	// Public discovery endpoint scoped by project/env path params.
 	jwks, err := s.deps.Grants.JWKS(ctx, params.ProjectID, params.Env)
 	if err != nil {
@@ -191,7 +199,9 @@ func (s *OIDCProviderService) GetPByProjectIdEByEnvWellKnownJwksJson(ctx context
 	return oasRawMap[oas.GetPByProjectIdEByEnvWellKnownJwksJsonOK](jwks), nil
 }
 
-func (s *OIDCProviderService) GetPByProjectIdEByEnvWellKnownOpenidConfiguration(ctx context.Context, params oas.GetPByProjectIdEByEnvWellKnownOpenidConfigurationParams) (r oas.GetPByProjectIdEByEnvWellKnownOpenidConfigurationOK, _ error) {
+func (s *OIDCProviderService) GetPByProjectIdEByEnvWellKnownOpenidConfiguration(
+	ctx context.Context, params oas.GetPByProjectIdEByEnvWellKnownOpenidConfigurationParams,
+) (r oas.GetPByProjectIdEByEnvWellKnownOpenidConfigurationOK, _ error) {
 	// Public discovery endpoint scoped by project/env path params.
 	cfg, err := s.deps.Grants.OpenIDConfiguration(ctx, params.ProjectID, params.Env)
 	if err != nil {
@@ -201,7 +211,9 @@ func (s *OIDCProviderService) GetPByProjectIdEByEnvWellKnownOpenidConfiguration(
 	return oasRawMap[oas.GetPByProjectIdEByEnvWellKnownOpenidConfigurationOK](cfg), nil
 }
 
-func (s *OIDCProviderService) GetV1Device(ctx context.Context, params oas.GetV1DeviceParams) (r *oas.GetV1DeviceOK, _ error) {
+func (s *OIDCProviderService) GetV1Device(
+	ctx context.Context, params oas.GetV1DeviceParams,
+) (r *oas.GetV1DeviceOK, _ error) {
 	// Public verification UI lookup: project comes from the X-Client-Id header.
 	pending, err := s.deps.Grants.ResolveDevice(ctx, domain.OIDCDeviceUserCode{
 		ProjectID: params.XClientID,
@@ -214,7 +226,9 @@ func (s *OIDCProviderService) GetV1Device(ctx context.Context, params oas.GetV1D
 	return oasOIDCDevicePending(pending), nil
 }
 
-func (s *OIDCProviderService) GetV1OauthGrants(ctx context.Context, _ oas.GetV1OauthGrantsParams) (*oas.GetV1OauthGrantsOK, error) {
+func (s *OIDCProviderService) GetV1OauthGrants(
+	ctx context.Context, _ oas.GetV1OauthGrantsParams,
+) (*oas.GetV1OauthGrantsOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -233,7 +247,9 @@ func (s *OIDCProviderService) GetV1OauthGrants(ctx context.Context, _ oas.GetV1O
 	return &oas.GetV1OauthGrantsOK{Data: data}, nil
 }
 
-func (s *OIDCProviderService) GetV1OauthInteractionByInteractionId(ctx context.Context, params oas.GetV1OauthInteractionByInteractionIdParams) (*oas.GetV1OauthInteractionByInteractionIdOK, error) {
+func (s *OIDCProviderService) GetV1OauthInteractionByInteractionId(
+	ctx context.Context, params oas.GetV1OauthInteractionByInteractionIdParams,
+) (*oas.GetV1OauthInteractionByInteractionIdOK, error) {
 	in, err := s.deps.Grants.ResolveInteraction(ctx, params.InteractionID)
 	if err != nil {
 		return nil, err
@@ -265,14 +281,18 @@ func (s *OIDCProviderService) GetV1OauthInteractionByInteractionId(ctx context.C
 	return out, nil
 }
 
-func (s *OIDCProviderService) PostOauth2BackchannelLogout(ctx context.Context, req *oas.PostOauth2BackchannelLogoutReq) error {
+func (s *OIDCProviderService) PostOauth2BackchannelLogout(
+	ctx context.Context, req *oas.PostOauth2BackchannelLogoutReq,
+) error {
 	// Public back-channel logout: the logout_token carries the subject/sessions.
 	return s.deps.Grants.BackchannelLogout(ctx, domain.OIDCBackchannelLogoutCmd{
 		LogoutToken: req.LogoutToken.Or(""),
 	})
 }
 
-func (s *OIDCProviderService) PostOauth2DeviceAuthorization(ctx context.Context, req *oas.PostOauth2DeviceAuthorizationReq) (r *oas.PostOauth2DeviceAuthorizationOK, _ error) {
+func (s *OIDCProviderService) PostOauth2DeviceAuthorization(
+	ctx context.Context, req *oas.PostOauth2DeviceAuthorizationReq,
+) (r *oas.PostOauth2DeviceAuthorizationOK, _ error) {
 	// Client-authenticated device authorization request.
 	auth, err := s.deps.Grants.DeviceAuthorization(ctx, domain.OIDCDeviceAuthorizationCmd{
 		ClientID: req.ClientID.Or(""),
@@ -292,7 +312,9 @@ func (s *OIDCProviderService) PostOauth2DeviceAuthorization(ctx context.Context,
 	}, nil
 }
 
-func (s *OIDCProviderService) PostOauth2Introspect(ctx context.Context, req *oas.PostOauth2IntrospectReq) (r *oas.PostOauth2IntrospectOK, _ error) {
+func (s *OIDCProviderService) PostOauth2Introspect(
+	ctx context.Context, req *oas.PostOauth2IntrospectReq,
+) (r *oas.PostOauth2IntrospectOK, _ error) {
 	// Client-authenticated token introspection (RFC 7662). The verifying tenant
 	// is the authenticated client's project — never the token's self-asserted
 	// issuer (cross-tenant confusion).
@@ -321,7 +343,9 @@ func (s *OIDCProviderService) PostOauth2Introspect(ctx context.Context, req *oas
 	return out, nil
 }
 
-func (s *OIDCProviderService) PostOauth2Par(ctx context.Context, req *oas.PushedAuthorizationRequest) (r *oas.PostOauth2ParCreated, _ error) {
+func (s *OIDCProviderService) PostOauth2Par(
+	ctx context.Context, req *oas.PushedAuthorizationRequest,
+) (r *oas.PostOauth2ParCreated, _ error) {
 	// Client-authenticated pushed authorization request (RFC 9126). A client may
 	// only push a request for itself: the client_id in the body must be the one
 	// that authenticated, or a client could lodge a request under another's
@@ -384,7 +408,9 @@ func oidcEnv(p *domain.Principal) string {
 	return "live"
 }
 
-func (s *OIDCProviderService) PostOauth2Token(ctx context.Context, req *oas.PostOauth2TokenReq) (r oas.PostOauth2TokenOK, _ error) {
+func (s *OIDCProviderService) PostOauth2Token(
+	ctx context.Context, req *oas.PostOauth2TokenReq,
+) (r oas.PostOauth2TokenOK, _ error) {
 	// The token endpoint accepts four kinds of client: client_secret_basic (the
 	// transport authenticated it), client_secret_post and private_key_jwt (the
 	// body does), and a public client with PKCE (none of them). Transport
@@ -428,7 +454,9 @@ func (s *OIDCProviderService) PostOauth2Token(ctx context.Context, req *oas.Post
 	return oasRawMap[oas.PostOauth2TokenOK](res), nil
 }
 
-func (s *OIDCProviderService) PostV1DeviceApprove(ctx context.Context, req *oas.PostV1DeviceApproveReq) (r *oas.Ok, _ error) {
+func (s *OIDCProviderService) PostV1DeviceApprove(
+	ctx context.Context, req *oas.PostV1DeviceApproveReq,
+) (r *oas.Ok, _ error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -464,7 +492,11 @@ func (s *OIDCProviderService) PostV1DeviceDeny(ctx context.Context, req *oas.Pos
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
 
-func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdConsent(ctx context.Context, req *oas.PostV1OauthInteractionByInteractionIdConsentReq, params oas.PostV1OauthInteractionByInteractionIdConsentParams) (*oas.PostV1OauthInteractionByInteractionIdConsentOK, error) {
+func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdConsent(
+	ctx context.Context,
+	req *oas.PostV1OauthInteractionByInteractionIdConsentReq,
+	params oas.PostV1OauthInteractionByInteractionIdConsentParams,
+) (*oas.PostV1OauthInteractionByInteractionIdConsentOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -491,7 +523,11 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdConsent(ctx c
 	return out, nil
 }
 
-func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdLogin(ctx context.Context, _ oas.OptPostV1OauthInteractionByInteractionIdLoginReq, params oas.PostV1OauthInteractionByInteractionIdLoginParams) (*oas.PostV1OauthInteractionByInteractionIdLoginOK, error) {
+func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdLogin(
+	ctx context.Context,
+	_ oas.OptPostV1OauthInteractionByInteractionIdLoginReq,
+	params oas.PostV1OauthInteractionByInteractionIdLoginParams,
+) (*oas.PostV1OauthInteractionByInteractionIdLoginOK, error) {
 	p, err := requirePrincipal(ctx)
 	if err != nil {
 		return nil, err
@@ -504,7 +540,11 @@ func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdLogin(ctx con
 	return &oas.PostV1OauthInteractionByInteractionIdLoginOK{}, nil
 }
 
-func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdReject(ctx context.Context, req oas.OptPostV1OauthInteractionByInteractionIdRejectReq, params oas.PostV1OauthInteractionByInteractionIdRejectParams) (*oas.PostV1OauthInteractionByInteractionIdRejectOK, error) {
+func (s *OIDCProviderService) PostV1OauthInteractionByInteractionIdReject(
+	ctx context.Context,
+	req oas.OptPostV1OauthInteractionByInteractionIdRejectReq,
+	params oas.PostV1OauthInteractionByInteractionIdRejectParams,
+) (*oas.PostV1OauthInteractionByInteractionIdRejectOK, error) {
 	cmd := domain.OIDCRejectCmd{InteractionID: params.InteractionID}
 	if v, ok := req.Get(); ok {
 		cmd.Error = v.Error.Or("")

@@ -227,7 +227,9 @@ func newProjectLimiters(reader RateLimitConfigReader, ttl time.Duration) *projec
 
 // limiterFor returns the per-project limiter and namespaced key for path, or
 // (nil,"",false) when no project override applies (caller uses the default).
-func (p *projectLimiters) limiterFor(ctx context.Context, clientID, env, path, ipKey string) (*rateLimiter, string, bool) {
+func (p *projectLimiters) limiterFor(
+	ctx context.Context, clientID, env, path, ipKey string,
+) (*rateLimiter, string, bool) {
 	if clientID == "" {
 		return nil, "", false
 	}
@@ -398,7 +400,10 @@ func SensitiveRateLimitMiddleware(next http.Handler) http.Handler {
 		key := rateLimitKey(r)
 		if !sensitiveLimiter.allow(key) {
 			w.Header().Set("Retry-After", "60")
-			http.Error(w, `{"error":"rate_limit_exceeded","message":"Too many attempts. Try again later."}`, http.StatusTooManyRequests)
+			http.Error(
+				w, `{"error":"rate_limit_exceeded","message":"Too many attempts. Try again later."}`,
+				http.StatusTooManyRequests,
+			)
 
 			return
 		}
@@ -412,7 +417,10 @@ func GuestRateLimitMiddleware(next http.Handler) http.Handler {
 		key := rateLimitKey(r)
 		if !guestLimiter.allow(key) {
 			w.Header().Set("Retry-After", "60")
-			http.Error(w, `{"error":"rate_limit_exceeded","message":"Too many guest accounts created."}`, http.StatusTooManyRequests)
+			http.Error(
+				w, `{"error":"rate_limit_exceeded","message":"Too many guest accounts created."}`,
+				http.StatusTooManyRequests,
+			)
 
 			return
 		}

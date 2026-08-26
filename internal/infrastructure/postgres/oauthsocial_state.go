@@ -87,12 +87,16 @@ func (a *pgOAuthSocial) storeState(ctx context.Context, projectID, provider, sta
 // consumeState verifies and single-use-consumes a CSRF state, returning the
 // stored redirect + account it was bound to. Unknown/expired/replayed/mismatched
 // state is rejected (no session is minted by the caller).
-func (a *pgOAuthSocial) consumeState(ctx context.Context, projectID, provider, state string) (redirect, accountID string, err error) {
+func (a *pgOAuthSocial) consumeState(
+	ctx context.Context, projectID, provider, state string,
+) (string, string, error) {
 	if state == "" {
 		return "", "", domain.ErrBadRequest.WithMessage("state is required")
 	}
 
-	err = a.db.withTx(ctx, func(ctx context.Context) error {
+	var redirect, accountID string
+
+	err := a.db.withTx(ctx, func(ctx context.Context) error {
 		row, qerr := models.IamChallenges.Query(
 			sm.Where(models.IamChallenges.Columns.ProjectID.EQ(psql.Arg(projectID))),
 			sm.Where(models.IamChallenges.Columns.Type.EQ(psql.Arg("oauth_state"))),

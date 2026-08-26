@@ -33,7 +33,10 @@ func fedHash(s string) string {
 }
 
 // fedStoreSamlRequest records the issued RelayState for an SP-initiated flow.
-func (a *pgFederationRuntime) fedStoreSamlRequest(ctx context.Context, projectID, connectionID, relayState, redirect string) error {
+func (a *pgFederationRuntime) fedStoreSamlRequest(
+	ctx context.Context,
+	projectID, connectionID, relayState, redirect string,
+) error {
 	if relayState == "" {
 		return nil // nothing to correlate (no SP-initiated state)
 	}
@@ -68,12 +71,17 @@ func (a *pgFederationRuntime) fedStoreSamlRequest(ctx context.Context, projectID
 // fedConsumeSamlRequest verifies + single-use-consumes a RelayState for the
 // connection. ok=false means no outstanding SP-initiated request matched (the
 // caller decides whether to allow IdP-initiated for the connection).
-func (a *pgFederationRuntime) fedConsumeSamlRequest(ctx context.Context, projectID, connectionID, relayState string) (ok bool, err error) {
+func (a *pgFederationRuntime) fedConsumeSamlRequest(
+	ctx context.Context,
+	projectID, connectionID, relayState string,
+) (bool, error) {
 	if relayState == "" {
 		return false, nil
 	}
 
-	err = a.db.withTx(ctx, func(ctx context.Context) error {
+	var ok bool
+
+	err := a.db.withTx(ctx, func(ctx context.Context) error {
 		row, qerr := models.IamChallenges.Query(
 			sm.Where(models.IamChallenges.Columns.ProjectID.EQ(psql.Arg(projectID))),
 			sm.Where(models.IamChallenges.Columns.Type.EQ(psql.Arg("saml_request"))),
@@ -110,7 +118,11 @@ func (a *pgFederationRuntime) fedConsumeSamlRequest(ctx context.Context, project
 
 // fedAssertNotReplayed records a consumed assertion ID and rejects a duplicate
 // (replay) within the assertion validity window.
-func (a *pgFederationRuntime) fedAssertNotReplayed(ctx context.Context, projectID, connectionID, assertionID string, notOnOrAfter time.Time) error {
+func (a *pgFederationRuntime) fedAssertNotReplayed(
+	ctx context.Context,
+	projectID, connectionID, assertionID string,
+	notOnOrAfter time.Time,
+) error {
 	if assertionID == "" {
 		return domain.ErrSSOError
 	}

@@ -32,7 +32,7 @@ func (e *auditingEmitter) Emit(ctx context.Context, event domain.Event) error {
 	if p, ok := api.PrincipalFrom(ctx); ok && p != nil && auditableActor(p.Kind) && event.ProjectID != "" {
 		// Best-effort like record() below: the marshaled value is a fixed
 		// literal (a PrincipalKind string), so this cannot actually fail.
-		data, _ := json.Marshal(map[string]any{"actor_kind": string(p.Kind)}) //nolint:errchkjson // literal string value, cannot fail
+		data, _ := json.Marshal(map[string]any{"actor_kind": string(p.Kind)}) //nolint:errchkjson,lll // literal string value, cannot fail
 		_ = e.audit.record(ctx, event.ProjectID, event.Type, auditActorID(p), event.AggregateID, data)
 	}
 

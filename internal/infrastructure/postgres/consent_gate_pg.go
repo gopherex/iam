@@ -70,7 +70,10 @@ type consentRequiredDoc struct {
 //  4. the first required document seen for that key.
 //
 // Non-required documents never gate. Returns nil when nothing is required.
-func resolveRequiredConsents(docs []domain.ConsentDocumentSpec, requestedLocale, defaultLocale string) []consentRequiredDoc {
+func resolveRequiredConsents(
+	docs []domain.ConsentDocumentSpec,
+	requestedLocale, defaultLocale string,
+) []consentRequiredDoc {
 	byKey, order := groupRequiredConsentDocs(docs)
 	if len(order) == 0 {
 		return nil
@@ -158,7 +161,10 @@ func pickConsentCandidate(cands []consentDocCandidate, requestedLocale, defaultL
 // (key, version) match — accepting an older version does not satisfy a newer
 // requirement. Validation is against the server-resolved requirement set, so a
 // tampered client cannot bypass the gate by claiming extra acceptances.
-func missingRequiredConsents(required []consentRequiredDoc, accepted []domain.AccountConsentAcceptance) []consentRequiredDoc {
+func missingRequiredConsents(
+	required []consentRequiredDoc,
+	accepted []domain.AccountConsentAcceptance,
+) []consentRequiredDoc {
 	if len(required) == 0 {
 		return nil
 	}
@@ -198,7 +204,11 @@ func consentRefDetails(missing []consentRequiredDoc) map[string]any {
 // Fail policy: not-found/empty config → no requirement (nil); a genuine config
 // read error is propagated (fail-closed) so a transient error never silently
 // skips a configured legal gate.
-func (a *pgCoreAuth) coreAuthCheckRequiredConsents(ctx context.Context, projectID, requestedLocale string, accepted []domain.AccountConsentAcceptance) error {
+func (a *pgCoreAuth) coreAuthCheckRequiredConsents(
+	ctx context.Context,
+	projectID, requestedLocale string,
+	accepted []domain.AccountConsentAcceptance,
+) error {
 	docs, err := a.cfg.ConsentConfig(ctx, projectID)
 	if err != nil {
 		return err
@@ -238,7 +248,10 @@ func (a *pgCoreAuth) coreAuthConsentLocales(ctx context.Context, projectID, requ
 
 // resolveConsentLocales resolves the best locale per key across ALL documents
 // (not just required ones), so non-required acceptances still record a locale.
-func resolveConsentLocales(docs []domain.ConsentDocumentSpec, requestedLocale, defaultLocale string) []consentRequiredDoc {
+func resolveConsentLocales(
+	docs []domain.ConsentDocumentSpec,
+	requestedLocale, defaultLocale string,
+) []consentRequiredDoc {
 	all := make([]domain.ConsentDocumentSpec, 0, len(docs))
 	yes := true
 

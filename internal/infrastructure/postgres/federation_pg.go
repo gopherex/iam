@@ -528,7 +528,11 @@ func fedOauth2Config(c *domain.Connection) (*oauth2.Config, *domain.FederationOi
 // fedVerifyIDToken verifies an OIDC id_token against the provider's JWKS
 // (cfg.JWKSURL) and returns its claims. The signature is checked with the
 // provider keys; issuer/audience are checked against the connection config.
-func fedVerifyIDToken(ctx context.Context, cfg *domain.FederationOidcConfig, rawIDToken string) (map[string]any, error) {
+func fedVerifyIDToken(
+	ctx context.Context,
+	cfg *domain.FederationOidcConfig,
+	rawIDToken string,
+) (map[string]any, error) {
 	if cfg.JWKSURL == "" {
 		return nil, domain.ErrProviderError
 	}
@@ -677,7 +681,10 @@ func NewPgFederationConnections(db *DB, emitter Emitter) *pgFederationConnection
 
 var _ api.FederationConnections = (*pgFederationConnections)(nil)
 
-func (a *pgFederationConnections) CreateConnection(ctx context.Context, cmd domain.ConnectionCmd) (*domain.Connection, error) {
+func (a *pgFederationConnections) CreateConnection(
+	ctx context.Context,
+	cmd domain.ConnectionCmd,
+) (*domain.Connection, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Connection, error) {
 		conn := &domain.Connection{
 			ID:        newUUID(),
@@ -753,7 +760,10 @@ func (a *pgFederationConnections) ListConnections(ctx context.Context, projectID
 	return out, nil
 }
 
-func (a *pgFederationConnections) UpdateConnection(ctx context.Context, cmd domain.FederationConnectionUpdateCmd) (*domain.Connection, error) {
+func (a *pgFederationConnections) UpdateConnection(
+	ctx context.Context,
+	cmd domain.FederationConnectionUpdateCmd,
+) (*domain.Connection, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Connection, error) {
 		row, err := models.FindIamSsoConnection(ctx, a.db.Bobx(), cmd.ID)
 		if err != nil {
@@ -1113,7 +1123,10 @@ func (a *pgFederationConnections) TestConnection(ctx context.Context, projectID,
 	}
 }
 
-func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Context, projectID, id string) (string, error) {
+func (a *pgFederationConnections) RotateConnectionCertificate(
+	ctx context.Context,
+	projectID, id string,
+) (string, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (string, error) {
 		row, err := models.FindIamSsoConnection(ctx, a.db.Bobx(), id)
 		if err != nil {
@@ -1180,7 +1193,10 @@ func (a *pgFederationConnections) RotateConnectionCertificate(ctx context.Contex
 	})
 }
 
-func (a *pgFederationConnections) AddDomain(ctx context.Context, projectID, connectionID, name string) (*domain.Domain, error) {
+func (a *pgFederationConnections) AddDomain(
+	ctx context.Context,
+	projectID, connectionID, name string,
+) (*domain.Domain, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Domain, error) {
 		dom := &domain.Domain{
 			ID:           newUUID(),
@@ -1231,7 +1247,10 @@ func (a *pgFederationConnections) AddDomain(ctx context.Context, projectID, conn
 	})
 }
 
-func (a *pgFederationConnections) VerifyDomain(ctx context.Context, projectID, domainID string) (*domain.Domain, error) {
+func (a *pgFederationConnections) VerifyDomain(
+	ctx context.Context,
+	projectID, domainID string,
+) (*domain.Domain, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.Domain, error) {
 		row, err := models.FindIamDomain(ctx, a.db.Bobx(), domainID)
 		if err != nil {
@@ -1339,7 +1358,10 @@ func (a *pgFederationConnections) DeleteDomain(ctx context.Context, projectID, d
 	})
 }
 
-func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domain.FederationScimTokenCmd) (*domain.ScimToken, string, error) {
+func (a *pgFederationConnections) CreateScimToken(
+	ctx context.Context,
+	cmd domain.FederationScimTokenCmd,
+) (*domain.ScimToken, string, error) {
 	type result struct {
 		tok    *domain.ScimToken
 		secret string
@@ -1415,7 +1437,10 @@ func (a *pgFederationConnections) CreateScimToken(ctx context.Context, cmd domai
 	return res.tok, res.secret, nil
 }
 
-func (a *pgFederationConnections) ListScimTokens(ctx context.Context, projectID, connectionID string) ([]domain.ScimToken, error) {
+func (a *pgFederationConnections) ListScimTokens(
+	ctx context.Context,
+	projectID, connectionID string,
+) ([]domain.ScimToken, error) {
 	rows, err := models.IamScimTokens.Query(
 		sm.Where(models.IamScimTokens.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamScimTokens.Columns.ConnectionID.EQ(psql.Arg(connectionID))),
@@ -1470,7 +1495,10 @@ func (a *pgFederationConnections) DeleteScimToken(ctx context.Context, projectID
 	})
 }
 
-func (a *pgFederationConnections) ResolveConnection(ctx context.Context, projectID, email string) (*domain.Connection, error) {
+func (a *pgFederationConnections) ResolveConnection(
+	ctx context.Context,
+	projectID, email string,
+) (*domain.Connection, error) {
 	// Route the email's domain to its verified connection: find the domain row
 	// for the (project, host), then load the connection it binds to.
 	host := fedEmailDomain(email)
@@ -1557,7 +1585,10 @@ func (a *pgFederationRuntime) fedConnByID(ctx context.Context, connectionID stri
 	return row, nil
 }
 
-func (a *pgFederationRuntime) OidcStart(ctx context.Context, cmd domain.FederationSsoStartCmd) (*domain.FederationSsoRedirect, error) {
+func (a *pgFederationRuntime) OidcStart(
+	ctx context.Context,
+	cmd domain.FederationSsoStartCmd,
+) (*domain.FederationSsoRedirect, error) {
 	row, err := a.fedConnByID(ctx, cmd.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -1593,7 +1624,10 @@ func (a *pgFederationRuntime) OidcStart(ctx context.Context, cmd domain.Federati
 	return &domain.FederationSsoRedirect{URL: authURL}, nil
 }
 
-func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.FederationSsoCallbackCmd) (*domain.FederationSsoRedirect, error) {
+func (a *pgFederationRuntime) OidcCallback(
+	ctx context.Context,
+	cmd domain.FederationSsoCallbackCmd,
+) (*domain.FederationSsoRedirect, error) {
 	row, err := a.fedConnByID(ctx, cmd.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -1658,7 +1692,12 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 			Type:        "federation.sso.oidc_callback",
 			ProjectID:   row.ProjectID,
 			AggregateID: cmd.ConnectionID,
-			Payload:     map[string]any{"connection_id": cmd.ConnectionID, "subject": subject, "email": email, "provider": provider},
+			Payload: map[string]any{
+				"connection_id": cmd.ConnectionID,
+				"subject":       subject,
+				"email":         email,
+				"provider":      provider,
+			},
 		})
 	}); err != nil {
 		return nil, err
@@ -1670,7 +1709,10 @@ func (a *pgFederationRuntime) OidcCallback(ctx context.Context, cmd domain.Feder
 	}, nil
 }
 
-func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.FederationSsoStartCmd) (*domain.FederationSsoRedirect, error) {
+func (a *pgFederationRuntime) SamlLogin(
+	ctx context.Context,
+	cmd domain.FederationSsoStartCmd,
+) (*domain.FederationSsoRedirect, error) {
 	row, err := a.fedConnByID(ctx, cmd.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -1706,7 +1748,9 @@ func (a *pgFederationRuntime) SamlLogin(ctx context.Context, cmd domain.Federati
 	return &domain.FederationSsoRedirect{URL: redirectURL.String()}, nil
 }
 
-func (a *pgFederationRuntime) SamlAcs(ctx context.Context, cmd domain.FederationSamlAcsCmd) (*domain.FederationSsoRedirect, error) {
+func (a *pgFederationRuntime) SamlAcs(
+	ctx context.Context, cmd domain.FederationSamlAcsCmd,
+) (*domain.FederationSsoRedirect, error) {
 	row, err := a.fedConnByID(ctx, cmd.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -1865,7 +1909,10 @@ func (a *pgFederationRuntime) SamlMetadata(ctx context.Context, connectionID str
 	return out, nil
 }
 
-func (a *pgFederationRuntime) Exchange(ctx context.Context, projectID, code string) (*domain.Account, *domain.Session, error) {
+func (a *pgFederationRuntime) Exchange(
+	ctx context.Context,
+	projectID, code string,
+) (*domain.Account, *domain.Session, error) {
 	type result struct {
 		acc  *domain.Account
 		sess *domain.Session
@@ -2009,7 +2056,10 @@ func (a *pgFederationRuntime) fedProvisionAndStoreCode(
 // fedCreateAndLinkAccount provisions a fresh iam_users account (status
 // active, kind human, primary_email=email) and links an iam_identities row
 // (Type "saml" | "oidc") to it — the first-login half of fedProvisionSubject.
-func (a *pgFederationRuntime) fedCreateAndLinkAccount(ctx context.Context, projectID, provider, idType, providerAccountID, email string) (*domain.Account, error) {
+func (a *pgFederationRuntime) fedCreateAndLinkAccount(
+	ctx context.Context,
+	projectID, provider, idType, providerAccountID, email string,
+) (*domain.Account, error) {
 	acct, err := a.fedCreateAccount(ctx, projectID, email)
 	if err != nil {
 		return nil, err
@@ -2030,7 +2080,13 @@ func (a *pgFederationRuntime) fedCreateAndLinkAccount(ctx context.Context, proje
 		ProjectID:   projectID,
 		Environment: "",
 		AggregateID: acct.ID,
-		Payload:     map[string]any{"user_id": acct.ID, "project_id": projectID, "provider": provider, "provider_account_id": providerAccountID, "id_type": idType},
+		Payload: map[string]any{
+			"user_id":             acct.ID,
+			"project_id":          projectID,
+			"provider":            provider,
+			"provider_account_id": providerAccountID,
+			"id_type":             idType,
+		},
 	}); err != nil {
 		return nil, err
 	}
@@ -2044,7 +2100,10 @@ func (a *pgFederationRuntime) fedCreateAndLinkAccount(ctx context.Context, proje
 // fedCreateAndLinkAccount); otherwise it loads the existing account. It then
 // mints an iam_sessions row + signed access-token JWT (fedMintSession). Runs
 // inside the caller's tx.
-func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID, _, provider, idType, providerAccountID, email string) (*domain.Account, *domain.Session, error) {
+func (a *pgFederationRuntime) fedProvisionSubject(
+	ctx context.Context,
+	projectID, _, provider, idType, providerAccountID, email string,
+) (*domain.Account, *domain.Session, error) {
 	ident, err := a.fedFindIdentity(ctx, projectID, provider, providerAccountID)
 	if err != nil && !errors.Is(err, domain.ErrNotFound) {
 		return nil, nil, err
@@ -2081,7 +2140,10 @@ func (a *pgFederationRuntime) fedProvisionSubject(ctx context.Context, projectID
 
 // fedFindIdentity loads the SSO identity for a (project, provider, providerAccountID)
 // triple, mapping no-rows to domain.ErrNotFound. Tenant-scoped by project_id.
-func (a *pgFederationRuntime) fedFindIdentity(ctx context.Context, projectID, provider, providerAccountID string) (*models.IamIdentity, error) {
+func (a *pgFederationRuntime) fedFindIdentity(
+	ctx context.Context,
+	projectID, provider, providerAccountID string,
+) (*models.IamIdentity, error) {
 	rows, err := models.IamIdentities.Query(
 		sm.Where(models.IamIdentities.Columns.ProjectID.EQ(psql.Arg(projectID))),
 		sm.Where(models.IamIdentities.Columns.Provider.EQ(psql.Arg(provider))),
@@ -2101,7 +2163,11 @@ func (a *pgFederationRuntime) fedFindIdentity(ctx context.Context, projectID, pr
 // fedInsertIdentity writes the SSO provider link row for an account. Lookup
 // columns carry the provider correlation; the domain Identity is stored in the
 // data envelope.
-func (a *pgFederationRuntime) fedInsertIdentity(ctx context.Context, ident *domain.Identity, projectID, userID string) error {
+func (a *pgFederationRuntime) fedInsertIdentity(
+	ctx context.Context,
+	ident *domain.Identity,
+	projectID, userID string,
+) error {
 	raw, err := marshal(ident)
 	if err != nil {
 		return err
@@ -2226,7 +2292,11 @@ func (a *pgFederationRuntime) fedLoadAccount(ctx context.Context, projectID, use
 // instead of constants compiled in here.
 //
 // amr carries the SSO method ("saml" | "oidc").
-func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.Account, amr string) (*domain.Session, error) {
+func (a *pgFederationRuntime) fedMintSession(
+	ctx context.Context,
+	acct *domain.Account,
+	amr string,
+) (*domain.Session, error) {
 	return mintSessionVia(ctx, a.db, a.emitter, a.cfg, acct, "", []string{amr}, aal1)
 }
 
@@ -2326,9 +2396,13 @@ func fedScimListEnvelope(resources []map[string]any, startIndex int) map[string]
 
 // fedScimList is the shared list path for Users and Groups (scoped by connection
 // + resource type).
-func (a *pgFederationScim) fedScimList(ctx context.Context, q domain.FederationScimListQuery, resourceType string) (map[string]any, error) {
+func (a *pgFederationScim) fedScimList(
+	ctx context.Context,
+	query domain.FederationScimListQuery,
+	resourceType string,
+) (map[string]any, error) {
 	rows, err := models.IamScimResources.Query(
-		sm.Where(models.IamScimResources.Columns.ConnectionID.EQ(psql.Arg(q.ConnectionID))),
+		sm.Where(models.IamScimResources.Columns.ConnectionID.EQ(psql.Arg(query.ConnectionID))),
 		sm.Where(models.IamScimResources.Columns.ResourceType.EQ(psql.Arg(resourceType))),
 	).All(ctx, a.db.Bobx())
 	if err != nil {
@@ -2345,11 +2419,14 @@ func (a *pgFederationScim) fedScimList(ctx context.Context, q domain.FederationS
 		resources = append(resources, m)
 	}
 
-	return fedScimListEnvelope(resources, q.StartIndex), nil
+	return fedScimListEnvelope(resources, query.StartIndex), nil
 }
 
 // fedScimGet loads a single resource scoped to its connection + type.
-func (a *pgFederationScim) fedScimGet(ctx context.Context, connectionID, resourceID, resourceType string) (*models.IamScimResource, error) {
+func (a *pgFederationScim) fedScimGet(
+	ctx context.Context,
+	connectionID, resourceID, resourceType string,
+) (*models.IamScimResource, error) {
 	row, err := models.FindIamScimResource(ctx, a.db.Bobx(), resourceID)
 	if err != nil {
 		if errors.Is(translatePgErr("scim_resource", err), ErrNotFound) {
@@ -2367,7 +2444,11 @@ func (a *pgFederationScim) fedScimGet(ctx context.Context, connectionID, resourc
 }
 
 // fedScimCreate inserts a new SCIM resource on a connection (id minted here).
-func (a *pgFederationScim) fedScimCreate(ctx context.Context, cmd domain.FederationScimWriteCmd, resourceType string) (map[string]any, error) {
+func (a *pgFederationScim) fedScimCreate(
+	ctx context.Context,
+	cmd domain.FederationScimWriteCmd,
+	resourceType string,
+) (map[string]any, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]any, error) {
 		projectID, err := a.fedScimProjectForConnection(ctx, cmd.ConnectionID)
 		if err != nil {
@@ -2435,7 +2516,11 @@ func (a *pgFederationScim) fedScimCreate(ctx context.Context, cmd domain.Federat
 }
 
 // fedScimReplace overwrites a resource's attributes wholesale (PUT semantics).
-func (a *pgFederationScim) fedScimReplace(ctx context.Context, cmd domain.FederationScimWriteCmd, resourceType string) (map[string]any, error) {
+func (a *pgFederationScim) fedScimReplace(
+	ctx context.Context,
+	cmd domain.FederationScimWriteCmd,
+	resourceType string,
+) (map[string]any, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]any, error) {
 		row, err := a.fedScimGet(ctx, cmd.ConnectionID, cmd.ResourceID, resourceType)
 		if err != nil {
@@ -2487,7 +2572,11 @@ func (a *pgFederationScim) fedScimReplace(ctx context.Context, cmd domain.Federa
 
 // fedScimPatch applies a shallow attribute merge (the supplied keys overwrite the
 // stored ones; this adapter does not interpret SCIM PATCH op/path grammar).
-func (a *pgFederationScim) fedScimPatch(ctx context.Context, cmd domain.FederationScimPatchCmd, resourceType string) (map[string]any, error) {
+func (a *pgFederationScim) fedScimPatch(
+	ctx context.Context,
+	cmd domain.FederationScimPatchCmd,
+	resourceType string,
+) (map[string]any, error) {
 	return withTxRet(ctx, a.db, func(ctx context.Context) (map[string]any, error) {
 		row, err := a.fedScimGet(ctx, cmd.ConnectionID, cmd.ResourceID, resourceType)
 		if err != nil {
@@ -2619,7 +2708,10 @@ func (a *pgFederationScim) CreateGroup(ctx context.Context, cmd domain.Federatio
 	return a.fedScimCreate(ctx, cmd, scimResourceTypeGroup)
 }
 
-func (a *pgFederationScim) ReplaceGroup(ctx context.Context, cmd domain.FederationScimWriteCmd) (map[string]any, error) {
+func (a *pgFederationScim) ReplaceGroup(
+	ctx context.Context,
+	cmd domain.FederationScimWriteCmd,
+) (map[string]any, error) {
 	return a.fedScimReplace(ctx, cmd, scimResourceTypeGroup)
 }
 

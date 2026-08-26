@@ -46,7 +46,10 @@ func NewPlatformService(deps PlatformDeps) *PlatformService { return &PlatformSe
 
 var _ oas.Handler = (*PlatformService)(nil)
 
-func (s *PlatformService) GetV1ConfigPublic(ctx context.Context, params oas.GetV1ConfigPublicParams) (*oas.PublicConfig, error) {
+func (s *PlatformService) GetV1ConfigPublic(
+	ctx context.Context,
+	params oas.GetV1ConfigPublicParams,
+) (*oas.PublicConfig, error) {
 	cfg, err := s.deps.Config.PublicConfig(ctx, params.XClientID, params.XClientID)
 	if err != nil {
 		return nil, err
@@ -96,7 +99,9 @@ func oasPublicConfig(c *domain.PublicConfig) *oas.PublicConfig {
 		}
 
 		if c.Registration.PasswordStrategy != "" {
-			reg.PasswordStrategy = oas.NewOptRegistrationConfigPasswordStrategy(oas.RegistrationConfigPasswordStrategy(c.Registration.PasswordStrategy))
+			reg.PasswordStrategy = oas.NewOptRegistrationConfigPasswordStrategy(
+				oas.RegistrationConfigPasswordStrategy(c.Registration.PasswordStrategy),
+			)
 		}
 
 		r.Registration = oas.NewOptRegistrationConfig(reg)
