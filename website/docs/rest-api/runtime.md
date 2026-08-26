@@ -189,11 +189,10 @@ and nothing more — follow it with an invite to actually onboard the person. Se
 
 The [TypeScript SDK](/sdk/typescript) `iam.account` namespace wraps these.
 
-:::note Self-service export is not processed yet
-`POST /v1/users/me/export` enqueues an `account_export` job, but no worker
-handles that type, so it stays `running`. Answer a subject-access request from
-the admin API for now — see [Import & export](/guides/import-export).
-:::
+`POST /v1/users/me/export` returns a `job_id`; poll
+`GET /v1/users/me/export/{job_id}` for `{status, download_url}`. The document
+excludes credential material — see
+[Import & export](/guides/import-export).
 
 ## Bootstrap & system (public)
 

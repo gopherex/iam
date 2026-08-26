@@ -710,6 +710,9 @@ func (a *pgAccountStore) StartExport(ctx context.Context, accountID string) (*do
 			"job_id":     jobID,
 			"account_id": accountID,
 			"status":     job.Status,
+			// The subject goes in `spec` because that is what the jobs worker
+			// reads; the flat keys stay for anything already looking at them.
+			"spec": map[string]any{"account_id": accountID},
 		}
 
 		raw, err := marshal(env)

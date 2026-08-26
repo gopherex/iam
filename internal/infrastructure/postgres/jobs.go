@@ -16,6 +16,9 @@ const (
 
 // jobData is the iam_jobs.data envelope: the input spec, progress, and a result
 // reference or error once the worker has run it.
+// jobFieldStatus is the status key inside a job's envelope.
+const jobFieldStatus = "status"
+
 type jobData struct {
 	Spec     map[string]any `json:"spec,omitempty"`
 	Progress int            `json:"progress,omitempty"`

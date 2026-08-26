@@ -5450,7 +5450,11 @@ paths:
                     type:
                     - string
                     - 'null'
-                    maxLength: 2048
+                    description: >-
+                      The export itself, inline as a `data:` URL — there is no
+                      object store in the request path, so the document is the
+                      response. Decode it client-side.
+                    maxLength: 8388608
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime
@@ -12788,7 +12792,11 @@ paths:
                     type:
                     - string
                     - 'null'
-                    maxLength: 2048
+                    description: >-
+                      The export itself, inline as a `data:` URL — there is no
+                      object store in the request path, so the document is the
+                      response. Decode it client-side.
+                    maxLength: 8388608
         default:
           $ref: '#/components/responses/Default'
       security:

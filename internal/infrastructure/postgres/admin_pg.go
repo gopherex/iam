@@ -583,7 +583,12 @@ func (a *pgAdminUsers) Export(ctx context.Context, projectID, environment, accou
 		}
 
 		jobID := newUUID()
-		job := map[string]any{"type": "user_export", "user_id": accountID, "status": "running"}
+		// The subject goes in `spec` because that is what the jobs worker reads;
+		// the flat keys stay for anything already looking at them.
+		job := map[string]any{
+			"type": "user_export", eventFieldUserID: accountID, jobFieldStatus: inviteStatusPend,
+			"spec": map[string]any{eventFieldUserID: accountID},
+		}
 
 		jraw, err := marshal(job)
 		if err != nil {
@@ -595,8 +600,10 @@ func (a *pgAdminUsers) Export(ctx context.Context, projectID, environment, accou
 			ID:        &jobID,
 			ProjectID: &projectID,
 			Type:      ptr("user_export"),
-			Status:    ptr("running"),
-			Data:      &jrm,
+			// Pending, not running: the worker claims pending rows, so a job
+			// inserted as running is one nothing ever picks up.
+			Status: ptr(inviteStatusPend),
+			Data:   &jrm,
 		}).One(ctx, a.db.Bobx()); err != nil {
 			return "", err
 		}

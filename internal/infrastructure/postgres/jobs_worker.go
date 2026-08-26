@@ -76,6 +76,8 @@ func (db *DB) drainOneJob(ctx context.Context, log *xlog.Logger) bool {
 		result, perr = db.processAuditExport(ctx, projectID, d.Spec)
 	case "import_users":
 		result, perr = db.processImportUsers(ctx, projectID, d.Spec)
+	case "user_export", "account_export":
+		result, perr = db.processDataExport(ctx, projectID, d.Spec)
 	default:
 		perr = fmt.Errorf("unknown job type %q", typ)
 	}

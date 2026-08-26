@@ -94,15 +94,31 @@ The export is JSON and is returned **inline as a `data:` URL**, not as a link to
 object storage — decode it client-side. It is capped at 50 000 rows, so narrow
 the window rather than exporting a year at once.
 
-## Per-user export
+## Subject data export
 
-`POST admin/users/{user_id}/export` starts a job for a subject-access request.
+Two endpoints ask for the same thing: an administrator answering a
+subject-access request, and the person themselves.
 
-:::caution Not yet processed
-The job is enqueued but no worker handles the `user_export` type, so it stays
-`running`. To answer an erasure or access request today, read the user with
-`GET admin/users/{id}` together with `/sessions`, `/identities` and `/grants`.
-:::
+```bash
+# administrator
+curl -sX POST .../admin/users/usr_9/export -H "Authorization: Bearer $ADMIN_TOKEN"
+# -> { "job_id": "job_exp_3" }
+curl -s  .../admin/exports/job_exp_3       -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# the person, on their own session
+curl -sX POST https://auth.example.com/v1/users/me/export -H "Authorization: Bearer $ACCESS"
+curl -s  https://auth.example.com/v1/users/me/export/job_exp_4 -H "Authorization: Bearer $ACCESS"
+```
+
+The document contains the profile, the linked identities, the sessions, the
+OAuth grants and the security activity — up to 1000 rows per collection.
+
+It deliberately **excludes credential material**: a password hash, a TOTP seed
+and a refresh token are facts about the account rather than about the person, and
+including them would turn an access request into a credential leak.
+
+Like the audit export, it comes back inline as a `data:` URL rather than as a
+link to object storage.
 
 ## Config as code
 

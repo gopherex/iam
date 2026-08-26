@@ -6873,7 +6873,7 @@ func (s *GetV1ProjectsByProjectIdAdminExportsByJobIdOK) Validate() error {
 				if err := (validate.String{
 					MinLength:     0,
 					MinLengthSet:  false,
-					MaxLength:     2048,
+					MaxLength:     8388608,
 					MaxLengthSet:  true,
 					Email:         false,
 					Hostname:      false,
@@ -8573,7 +8573,7 @@ func (s *GetV1UsersMeExportByJobIdOK) Validate() error {
 				if err := (validate.String{
 					MinLength:     0,
 					MinLengthSet:  false,
-					MaxLength:     2048,
+					MaxLength:     8388608,
 					MaxLengthSet:  true,
 					Email:         false,
 					Hostname:      false,

@@ -4833,7 +4833,9 @@ func (s *GetV1ProjectsByProjectIdAdminEventsOK) SetHasMore(val OptBool) {
 }
 
 type GetV1ProjectsByProjectIdAdminExportsByJobIdOK struct {
-	Status      OptString    `json:"status"`
+	Status OptString `json:"status"`
+	// The export itself, inline as a `data:` URL — there is no object store in the request path, so
+	// the document is the response. Decode it client-side.
 	DownloadURL OptNilString `json:"download_url"`
 }
 
@@ -5790,7 +5792,9 @@ func (s *GetV1UsersMeConsentsOKConsentsItem) SetLocale(val OptString) {
 }
 
 type GetV1UsersMeExportByJobIdOK struct {
-	Status      OptString    `json:"status"`
+	Status OptString `json:"status"`
+	// The export itself, inline as a `data:` URL — there is no object store in the request path, so
+	// the document is the response. Decode it client-side.
 	DownloadURL OptNilString `json:"download_url"`
 }
 
