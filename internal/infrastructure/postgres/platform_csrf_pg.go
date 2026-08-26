@@ -110,7 +110,7 @@ func (a *pgPlatform) VerifyCsrfToken(ctx context.Context, clientID, token string
 // csrfRandomToken returns a URL-safe opaque token drawn from crypto/rand.
 // Only its sha256 hash is ever persisted.
 func csrfRandomToken() (string, error) {
-	b := make([]byte, 32)
+	b := make([]byte, randomTokenBytes)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}

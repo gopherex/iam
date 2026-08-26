@@ -218,7 +218,7 @@ func (a *pgHooks) InvokeHooks(ctx context.Context, projectID, hookType string, p
 		_ = json.Unmarshal(row.Data, &d)
 
 		status, _, callErr := a.call(ctx, d, payload)
-		ok := callErr == nil && status >= 200 && status < 300
+		ok := callErr == nil && status >= httpStatusSuccessMin && status < httpStatusSuccessMax
 
 		if !ok && !d.FailOpen {
 			return false, nil // fail closed: deny the action

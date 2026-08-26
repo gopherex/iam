@@ -638,7 +638,7 @@ func (a *pgWebAuthnAccounts) FinishLogin(ctx context.Context, challengeID string
 		// amr=webauthn). Previously this signed an access JWT and built a session
 		// struct but never wrote iam_sessions / a refresh-token row, so the token
 		// authenticated against nothing and the refresh token was dangling.
-		sess, err := mintSessionVia(ctx, a.db, a.emitter, a.cfg, acct, "", []string{"webauthn"}, 2)
+		sess, err := mintSessionVia(ctx, a.db, a.emitter, a.cfg, acct, "", []string{"webauthn"}, aal2)
 		if err != nil {
 			return loginResult{}, err
 		}

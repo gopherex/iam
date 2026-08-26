@@ -43,6 +43,9 @@ const (
 	// oauthSocialExchangeCodeTTL bounds the single-use exchange code that maps a
 	// minted session to the ?code= redirect handed back by CompleteLoginRedirect.
 	oauthSocialExchangeCodeTTL = 5 * time.Minute
+	// oauthUserInfoMaxBytes caps how much of a provider's userinfo response
+	// body is read.
+	oauthUserInfoMaxBytes = 1 << 20 // 1 MiB
 )
 
 // pgOAuthSocial is the Postgres-backed OAuthSocialAccounts adapter.
@@ -964,7 +967,7 @@ func (a *pgOAuthSocial) fetchUserInfo(ctx context.Context, cfg *oauth2.Config, t
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, oauthUserInfoMaxBytes))
 	if err != nil {
 		return oauthUserInfo{}, domain.ErrProviderError.WithMessage("oauth userinfo read failed")
 	}
@@ -1139,5 +1142,5 @@ func (a *pgOAuthSocial) loadAccount(ctx context.Context, projectID, userID strin
 // absolute timeouts had no anchor). Delegating fixes both. MUST run inside the
 // caller's transaction.
 func (a *pgOAuthSocial) mintSession(ctx context.Context, acct *domain.Account) (*domain.Session, error) {
-	return mintSessionVia(ctx, a.db, a.emitter, a.cfg, acct, "", []string{"oauth"}, 1)
+	return mintSessionVia(ctx, a.db, a.emitter, a.cfg, acct, "", []string{"oauth"}, aal1)
 }

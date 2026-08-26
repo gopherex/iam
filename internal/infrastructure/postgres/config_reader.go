@@ -40,6 +40,9 @@ const (
 	defaultPasswordMinLength = 8
 	// configReaderDefaultTTL is the cache window when none is supplied.
 	configReaderDefaultTTL = 30 * time.Second
+	// staleEntryGrace briefly extends a cache entry's exp on a failed refresh
+	// (fail-open path) so enforcement isn't hammering the DB every call.
+	staleEntryGrace = 5 * time.Second
 )
 
 // ---------------------------------------------------------------------------
@@ -219,7 +222,7 @@ func (r *configReader) loadDoc(ctx context.Context, projectID, env, key string, 
 		// the DB. With no prior entry, fall back to "absent" (nil) for the same
 		// short window so enforcement uses defaults rather than failing.
 		prev := r.entries[ck]
-		prev.exp = time.Now().Add(5 * time.Second)
+		prev.exp = time.Now().Add(staleEntryGrace)
 		r.entries[ck] = prev
 
 		return prev.raw, nil

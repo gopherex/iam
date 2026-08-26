@@ -90,6 +90,17 @@ func hasObviousSequence(pw string) bool {
 	return allSame
 }
 
+// Length tiers for passwordStrengthScore's base length component, and the
+// bounds/penalty of the resulting 0..4 score.
+const (
+	passwordLenExcellent    = 16
+	passwordLenStrong       = 12
+	passwordLenGood         = 10
+	passwordLenMinimum      = 8
+	passwordSequencePenalty = 2
+	passwordScoreMax        = 4
+)
+
 // passwordStrengthScore returns a 0..4 estimate. 0 = trivially weak (too short,
 // common, all one class & sequence), 4 = long and diverse.
 func passwordStrengthScore(pw string) int {
@@ -105,28 +116,28 @@ func passwordStrengthScore(pw string) int {
 	score := 0
 
 	switch {
-	case n >= 16:
+	case n >= passwordLenExcellent:
 		score = 3
-	case n >= 12:
+	case n >= passwordLenStrong:
 		score = 2
-	case n >= 10:
+	case n >= passwordLenGood:
 		score = 1
-	case n >= 8:
+	case n >= passwordLenMinimum:
 		score = 1
 	}
 	// Character-class diversity bonus (beyond a single class).
 	score += passwordCharClasses(pw) - 1
 	// Penalize obvious sequences / single-char repeats.
 	if hasObviousSequence(pw) {
-		score -= 2
+		score -= passwordSequencePenalty
 	}
 
 	if score < 0 {
 		score = 0
 	}
 
-	if score > 4 {
-		score = 4
+	if score > passwordScoreMax {
+		score = passwordScoreMax
 	}
 
 	return score

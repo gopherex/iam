@@ -55,6 +55,14 @@ const mfaChallengeTTL = 5 * time.Minute
 // mfaRecoveryCodeCount is the size of a freshly minted recovery-code batch.
 const mfaRecoveryCodeCount = 10
 
+// mfaDeliveredCodeBytes sizes an out-of-band (SMS/email) delivered MFA code
+// (8 hex chars). mfaRecoveryCodeBytes sizes a recovery code (32 hex chars,
+// 128 bits) — high-entropy since it is the account's offline backup factor.
+const (
+	mfaDeliveredCodeBytes = 4
+	mfaRecoveryCodeBytes  = 16
+)
+
 // mfaMaxFactorsPerAccount is the maximum number of MFA factors an account may
 // have enrolled (M-14: prevents unbounded factor creation).
 const mfaMaxFactorsPerAccount = 10
@@ -374,7 +382,7 @@ func (a *pgMFAAccounts) Challenge(ctx context.Context, accountID, factorID strin
 
 		var code string
 		if deliver {
-			code, err = mfaNewOpaqueToken(4) // 8 hex chars
+			code, err = mfaNewOpaqueToken(mfaDeliveredCodeBytes)
 			if err != nil {
 				return nil, err
 			}
@@ -652,7 +660,7 @@ func (a *pgMFAAccounts) GenerateRecoveryCodes(ctx context.Context, accountID str
 
 		codes := make([]string, 0, mfaRecoveryCodeCount)
 		for range mfaRecoveryCodeCount {
-			code, err := mfaNewOpaqueToken(16) // 32 hex chars, 128 bits
+			code, err := mfaNewOpaqueToken(mfaRecoveryCodeBytes)
 			if err != nil {
 				return nil, err
 			}
@@ -1199,7 +1207,7 @@ func (a *pgMFAAccounts) mfaEnrollDelivery(ctx context.Context, accountID, factor
 			return result{}, err
 		}
 
-		code, err := mfaNewOpaqueToken(4) // 8 hex chars delivered out-of-band
+		code, err := mfaNewOpaqueToken(mfaDeliveredCodeBytes)
 		if err != nil {
 			return result{}, err
 		}
@@ -1280,5 +1288,5 @@ const mfaDefaultEnv = "live"
 // row, so the returned AAL2 token authenticated against nothing and the refresh
 // token was dangling. MUST run inside the caller's transaction.
 func (a *pgMFAAccounts) mfaMintSession(ctx context.Context, acc *domain.Account) (*domain.Session, error) {
-	return mintSessionVia(ctx, a.db, a.emitter, a.cfg, acc, "", []string{"mfa"}, 2)
+	return mintSessionVia(ctx, a.db, a.emitter, a.cfg, acc, "", []string{"mfa"}, aal2)
 }

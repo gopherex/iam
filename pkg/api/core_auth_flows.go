@@ -334,13 +334,16 @@ func maskEmail(email string) string {
 	return string(local[0]) + "***" + host
 }
 
+// maskPhoneVisibleDigits is how many trailing digits maskPhone leaves visible.
+const maskPhoneVisibleDigits = 2
+
 // maskPhone masks a phone number showing only the last 2 digits.
 func maskPhone(phone string) string {
-	if len(phone) <= 2 {
+	if len(phone) <= maskPhoneVisibleDigits {
 		return "***"
 	}
 
-	return "***" + phone[len(phone)-2:]
+	return "***" + phone[len(phone)-maskPhoneVisibleDigits:]
 }
 
 // WithCoreAuthFlows adds the CoreAuthFlowService to the Service, replacing

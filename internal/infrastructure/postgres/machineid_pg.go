@@ -309,7 +309,7 @@ func (a *PgMachineIdentities) CreateServiceAccountSecret(ctx context.Context, cm
 			return nil, err
 		}
 
-		plaintext, err := machineIDRandomToken(32)
+		plaintext, err := machineIDRandomToken(randomTokenBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -475,17 +475,21 @@ func (a *PgMachineIdentities) loadAPIKey(ctx context.Context, projectID, keyID s
 	return row, &key, nil
 }
 
+// apiKeyPrefixRandomBytes sizes the short, human-visible prefix minted before
+// the "." in an API key secret.
+const apiKeyPrefixRandomBytes = 6
+
 // mintAPIKeySecret builds a plaintext secret of the form "<prefix>.<random>"
 // and returns the plaintext, the prefix and the sha256 hash to persist.
 func mintAPIKeySecret() (plaintext, prefix, hash string, err error) {
-	p, err := machineIDRandomToken(6)
+	p, err := machineIDRandomToken(apiKeyPrefixRandomBytes)
 	if err != nil {
 		return "", "", "", err
 	}
 
 	prefix = "iak_" + p
 
-	body, err := machineIDRandomToken(32)
+	body, err := machineIDRandomToken(randomTokenBytes)
 	if err != nil {
 		return "", "", "", err
 	}

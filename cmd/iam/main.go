@@ -43,6 +43,15 @@ import (
 // configured before the service accepts traffic.
 var errEncryptionKeyRequired = errors.New("service.auth.encryption_key is required")
 
+const (
+	maxRequestBodyBytes    = 1 << 20 // 1 MiB cap on request bodies
+	maxHeaderBytes         = 1 << 20 // 1 MiB cap on request headers
+	probeReadHeaderTimeout = 5 * time.Second
+	outboxMaxAttempts      = 10
+	outboxMaxBackoff       = 5 * time.Minute
+	configReaderCacheTTL   = 30 * time.Second
+)
+
 // apiPathPrefixes returns the URL namespaces served by the generated API.
 // Anything outside them falls through to the SPA, which is how the hosted OIDC
 // provider screens under /oauth/ are reached: /oauth2/ is the protocol surface
@@ -165,17 +174,17 @@ func buildServers(cfg *config.Config, db *postgres.DB, emitter postgres.Emitter,
 
 	httpSrv := &http.Server{
 		Addr:           cfg.Service.HTTP.Addr,
-		Handler:        http.MaxBytesHandler(root, 1<<20),
+		Handler:        http.MaxBytesHandler(root, maxRequestBodyBytes),
 		ReadTimeout:    time.Duration(cfg.Service.HTTP.ReadTimeoutSec) * time.Second,
 		WriteTimeout:   time.Duration(cfg.Service.HTTP.WriteTimeoutSec) * time.Second,
-		MaxHeaderBytes: 1 << 20,
+		MaxHeaderBytes: maxHeaderBytes,
 	}
 
 	var probeSrv *http.Server
 	if separateProbes {
 		// A probe request is a tiny GET with no body, so a short bound is safe
 		// and is what closes off Slowloris against this listener too.
-		probeSrv = &http.Server{Addr: cfg.Service.HTTP.ProbeAddr, Handler: probeMux, ReadHeaderTimeout: 5 * time.Second}
+		probeSrv = &http.Server{Addr: cfg.Service.HTTP.ProbeAddr, Handler: probeMux, ReadHeaderTimeout: probeReadHeaderTimeout}
 	}
 
 	return httpSrv, probeSrv, live
@@ -370,8 +379,8 @@ func setupOutboxAndEmitter(ctx context.Context, cfg *config.Config, db *postgres
 		outbox.WithLogger(buildSlogLogger()),
 		outbox.WithPollInterval(time.Second),
 		outbox.WithBatchSize(1),
-		outbox.WithMaxAttempts(10),
-		outbox.WithRetryBackoff(outbox.ExpBackoff(time.Second, 5*time.Minute, true)),
+		outbox.WithMaxAttempts(outboxMaxAttempts),
+		outbox.WithRetryBackoff(outbox.ExpBackoff(time.Second, outboxMaxBackoff, true)),
 	)
 	if err != nil {
 		log.Error("outbox init failed", xlog.Error("err", err))
@@ -541,7 +550,7 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 	// cfgReader is the shared runtime reader for project-config docs
 	// (password_policy / session_policy / auth / ...). One instance is injected
 	// into every enforcement adapter so its TTL cache is shared.
-	cfgReader := postgres.NewConfigReader(db, 30*time.Second)
+	cfgReader := postgres.NewConfigReader(db, configReaderCacheTTL)
 	coreAuth := postgres.NewPgCoreAuth(db, emitter, cfgReader) // implements CoreAuthAccounts + CoreAuthTokens
 
 	return api.New(

@@ -29,6 +29,9 @@ var (
 	ErrWebhookSecretInvalid = errors.New("iam sdk: invalid webhook signing secret")
 )
 
+// defaultWebhookMaxSkew is used when WebhookVerifierConfig.MaxSkew is zero.
+const defaultWebhookMaxSkew = 5 * time.Minute
+
 // WebhookVerifierConfig configures Standard Webhooks verification. Replay
 // storage intentionally belongs to the consumer: persist WebhookEvent.ID after
 // Verify succeeds when a consumer needs one-time processing semantics.
@@ -104,7 +107,7 @@ func NewWebhookVerifier(config WebhookVerifierConfig) (*WebhookVerifier, error) 
 
 	maxSkew := config.MaxSkew
 	if maxSkew == 0 {
-		maxSkew = 5 * time.Minute
+		maxSkew = defaultWebhookMaxSkew
 	}
 
 	if maxSkew < 0 {

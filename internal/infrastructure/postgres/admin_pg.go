@@ -1558,7 +1558,7 @@ func (a *pgAdminApps) AddSecret(ctx context.Context, projectID, environment, app
 			return nil, err
 		}
 		// Mint an opaque client secret; persist only its sha256 hash.
-		secret, hash, err := adminRandomToken(32)
+		secret, hash, err := adminRandomToken(randomTokenBytes)
 		if err != nil {
 			return nil, err
 		}

@@ -75,7 +75,7 @@ var _ api.CoreAuthFlows = (*pgCoreAuthFlows)(nil)
 
 // flowMintToken mints a new opaque flow_token (≥256-bit random, `ftk_` prefix).
 func flowMintToken() (token, hash string, err error) {
-	b := make([]byte, 32) // 256 bits
+	b := make([]byte, randomTokenBytes)
 	if _, err = rand.Read(b); err != nil {
 		return token, hash, err
 	}

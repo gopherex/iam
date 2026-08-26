@@ -31,6 +31,8 @@ const (
 	webhookDefaultPageLimit  = 50
 	webhookMaxPageLimit      = 200
 	webhookMaxRedirects      = 3
+	webhookBackoffMaxShift   = 8 // 1s<<8 = 256s, the last doubling before the cap below
+	webhookBackoffCap        = 5 * time.Minute
 )
 
 var (
@@ -838,7 +840,7 @@ func (a *PgWebhooks) sendWebhookRequest(req *http.Request) (*int, string, error)
 		requestErr = readErr
 	}
 
-	if requestErr == nil && (response.StatusCode < 200 || response.StatusCode >= 300) {
+	if requestErr == nil && (response.StatusCode < httpStatusSuccessMin || response.StatusCode >= httpStatusSuccessMax) {
 		requestErr = fmt.Errorf("%w: HTTP %d", errWebhookBadStatus, response.StatusCode)
 	}
 
@@ -861,9 +863,9 @@ func (a *PgWebhooks) recordWebhookSuccess(ctx context.Context, deliveryID string
 // backoff (1s, 2s, 4s, ... capped at 5m) and returns the fresh row alongside
 // requestErr (the caller reports it so pg-outbox retries the delivery job).
 func (a *PgWebhooks) recordWebhookFailure(ctx context.Context, deliveryID string, attempts int, attemptedAt time.Time, status *int, responseBody string, requestErr error) (*domain.WebhookDelivery, error) {
-	delay := time.Second << min(attempts-1, 8)
-	if delay > 5*time.Minute {
-		delay = 5 * time.Minute
+	delay := time.Second << min(attempts-1, webhookBackoffMaxShift)
+	if delay > webhookBackoffCap {
+		delay = webhookBackoffCap
 	}
 
 	message := requestErr.Error()

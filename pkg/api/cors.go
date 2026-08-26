@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+const (
+	originSourceFetchTimeout = 3 * time.Second
+	originSourceStaleGrace   = 5 * time.Second
+	defaultOriginCacheTTL    = 60 * time.Second
+)
+
 // OriginSource supplies the per-tenant CORS allow-list: the union of every app
 // client's allowed_origins. CORS preflight (OPTIONS) carries no X-Client-Id, so
 // the decision can only be made against this global union; tenant isolation is
@@ -62,13 +68,13 @@ func (c *originCache) allowed(origin string) bool {
 		return ok
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), originSourceFetchTimeout)
 	defer cancel()
 
 	origins, err := c.src.AllowedOrigins(ctx)
 	if err != nil {
 		// Keep the stale set; extend exp briefly to avoid hammering the DB.
-		c.exp = time.Now().Add(5 * time.Second)
+		c.exp = time.Now().Add(originSourceStaleGrace)
 		_, ok := c.set[origin]
 
 		return ok
@@ -111,7 +117,7 @@ func CORSMiddleware(allowedOrigins []string, source OriginSource, ttl time.Durat
 	}
 
 	if ttl <= 0 {
-		ttl = 60 * time.Second
+		ttl = defaultOriginCacheTTL
 	}
 
 	cache := &originCache{src: source, ttl: ttl}

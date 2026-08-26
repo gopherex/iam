@@ -57,6 +57,9 @@ func (identityCipher) Decrypt(value string) (string, error) {
 	return value, nil
 }
 
+// aes256KeyBytes is the required key length for AES-256 (256 bits).
+const aes256KeyBytes = 32
+
 // aesCipher is the AES-256-GCM Cipher.
 type aesCipher struct{ aead cipher.AEAD }
 
@@ -72,7 +75,7 @@ func NewCipher(keyB64 string) (Cipher, error) {
 		return nil, errEncryptionKeyNotB64
 	}
 
-	if len(key) != 32 {
+	if len(key) != aes256KeyBytes {
 		return nil, errEncryptionKeyBadSize
 	}
 

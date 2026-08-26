@@ -20,6 +20,12 @@ import (
 	"github.com/gopherex/iam/internal/oas"
 )
 
+const (
+	defaultWebhookListLimit      = 50
+	defaultWebhookDeliveryLimit  = 100
+	defaultWebhookEventListLimit = 50
+)
+
 type AdminUsers interface {
 	List(ctx context.Context, projectID, environment string) ([]domain.Account, error)
 	Get(ctx context.Context, projectID, environment, accountID string) (*domain.Account, error)
@@ -300,7 +306,7 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhooks(ctx context.Context
 
 	webhooks, next, hasMore, err := s.deps.Webhooks.List(ctx, domain.WebhookListCmd{
 		ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"),
-		Cursor: params.Cursor.Or(""), Limit: params.Limit.Or(50),
+		Cursor: params.Cursor.Or(""), Limit: params.Limit.Or(defaultWebhookListLimit),
 	})
 	if err != nil {
 		return nil, err
@@ -402,7 +408,7 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminWebhookDeliveries(ctx contex
 
 	deliveries, err := s.deps.Webhooks.ListDeliveries(ctx, domain.WebhookDeliveryListCmd{
 		ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"),
-		WebhookID: params.WebhookID.Or(""), Status: string(params.Status.Or("")), Limit: 100,
+		WebhookID: params.WebhookID.Or(""), Status: string(params.Status.Or("")), Limit: defaultWebhookDeliveryLimit,
 	})
 	if err != nil {
 		return nil, err
@@ -436,7 +442,7 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminEvents(ctx context.Context, 
 
 	page, err := s.deps.Webhooks.ListEvents(ctx, domain.WebhookEventListCmd{
 		ProjectID: params.ProjectID, Environment: params.XEnvironment.Or("live"),
-		Type: params.Type.Or(""), UserID: params.UserID.Or(""), Cursor: params.Cursor.Or(""), Limit: params.Limit.Or(50),
+		Type: params.Type.Or(""), UserID: params.UserID.Or(""), Cursor: params.Cursor.Or(""), Limit: params.Limit.Or(defaultWebhookEventListLimit),
 	})
 	if err != nil {
 		return nil, err

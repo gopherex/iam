@@ -16,6 +16,11 @@ const DeviceFingerprintHeader = "X-Device-Fingerprint"
 // management UIs. It is metadata, not an authentication factor.
 const DeviceNameHeader = "X-Device-Name"
 
+const (
+	maxFingerprintRunes = 256
+	maxDeviceNameRunes  = 1024
+)
+
 // RequestMetaMiddleware captures the originating device/network context (client
 // IP, User-Agent, optional fingerprint) into the request context so the
 // session-minting path can record it on the session. Place it early in the
@@ -25,8 +30,8 @@ func RequestMetaMiddleware(next http.Handler) http.Handler {
 		meta := domain.RequestMeta{
 			IP:          clientIP(r),
 			UserAgent:   r.Header.Get("User-Agent"),
-			Fingerprint: truncateRunes(strings.TrimSpace(r.Header.Get(DeviceFingerprintHeader)), 256),
-			DeviceName:  truncateRunes(strings.TrimSpace(r.Header.Get(DeviceNameHeader)), 1024),
+			Fingerprint: truncateRunes(strings.TrimSpace(r.Header.Get(DeviceFingerprintHeader)), maxFingerprintRunes),
+			DeviceName:  truncateRunes(strings.TrimSpace(r.Header.Get(DeviceNameHeader)), maxDeviceNameRunes),
 		}
 		next.ServeHTTP(w, r.WithContext(domain.WithRequestMeta(r.Context(), meta)))
 	})

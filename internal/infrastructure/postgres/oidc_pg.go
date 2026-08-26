@@ -202,19 +202,23 @@ func oidcRandToken(nbytes int) (string, error) {
 	return hex.EncodeToString(buf), nil
 }
 
+// oidcUserCodeLength is the number of alphabet characters in a device
+// user-code (rendered as two groups of oidcUserCodeLength/2 with a dash).
+const oidcUserCodeLength = 8
+
 // oidcUserCode mints a short, human-enterable device user-code.
 func oidcUserCode() (string, error) {
 	const alphabet = "BCDFGHJKLMNPQRSTVWXZ23456789"
 
-	buf := make([]byte, 8)
+	buf := make([]byte, oidcUserCodeLength)
 	if _, err := rand.Read(buf); err != nil {
 		return "", err
 	}
 
-	out := make([]byte, 0, 9)
+	out := make([]byte, 0, oidcUserCodeLength+1) // +1 for the dash
 
 	for i, b := range buf {
-		if i == 4 {
+		if i == oidcUserCodeLength/2 {
 			out = append(out, '-')
 		}
 
@@ -2603,7 +2607,7 @@ func (a *pgOIDCGrants) PushAuthorizationRequest(ctx context.Context, cmd domain.
 	cmd.RedirectURI = redirectURI
 
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.OIDCParResult, error) {
-		opaque, err := oidcRandToken(32)
+		opaque, err := oidcRandToken(randomTokenBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -2759,7 +2763,7 @@ func (a *pgOIDCGrants) DeviceAuthorization(ctx context.Context, cmd domain.OIDCD
 	}
 
 	return withTxRet(ctx, a.db, func(ctx context.Context) (*domain.OIDCDeviceAuthorization, error) {
-		deviceCode, err := oidcRandToken(32)
+		deviceCode, err := oidcRandToken(randomTokenBytes)
 		if err != nil {
 			return nil, err
 		}

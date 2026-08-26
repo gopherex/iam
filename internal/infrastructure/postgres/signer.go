@@ -78,7 +78,7 @@ func (s *Signer) activeKey(ctx context.Context, projectID, env string) (string, 
 	err = s.db.withTx(ctx, func(ctx context.Context) error {
 		var genErr error
 
-		priv, genErr = rsa.GenerateKey(rand.Reader, 2048)
+		priv, genErr = rsa.GenerateKey(rand.Reader, rsaKeyBits)
 		if genErr != nil {
 			return genErr
 		}
@@ -303,7 +303,7 @@ func encodePrivatePEM(k *rsa.PrivateKey) string {
 // newRSAKeyPEM generates a fresh RSA-2048 private key and returns its PEM. Used
 // by the admin signing-key create/rotate path.
 func newRSAKeyPEM() (string, error) {
-	k, err := rsa.GenerateKey(rand.Reader, 2048)
+	k, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
 	if err != nil {
 		return "", err
 	}

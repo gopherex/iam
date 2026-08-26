@@ -230,7 +230,7 @@ func (a *pgAdminServiceAccounts) AddSecret(ctx context.Context, cmd domain.Admin
 			return nil, err
 		}
 		// Mint an opaque secret; persist only its sha256 hash.
-		secret, hash, err := adminRandomToken(32)
+		secret, hash, err := adminRandomToken(randomTokenBytes)
 		if err != nil {
 			return nil, err
 		}

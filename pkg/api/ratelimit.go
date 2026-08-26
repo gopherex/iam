@@ -103,10 +103,23 @@ func rateLimitKey(r *http.Request) string {
 	return clientIP(r)
 }
 
+const (
+	authLimiterLimit      = 30
+	sensitiveLimiterLimit = 10
+	guestLimiterLimit     = 5
+
+	// projectRuleCacheTTL bounds how long a per-project rate-limit rule set is
+	// cached before being re-fetched from the config reader.
+	projectRuleCacheTTL = 30 * time.Second
+	// projectRuleStaleGrace briefly extends a cached (possibly stale) rule set
+	// on a reader error, to avoid hammering it on every request.
+	projectRuleStaleGrace = 5 * time.Second
+)
+
 var (
-	authLimiter      = newRateLimiter(30, time.Minute)
-	sensitiveLimiter = newRateLimiter(10, time.Minute)
-	guestLimiter     = newRateLimiter(5, time.Minute)
+	authLimiter      = newRateLimiter(authLimiterLimit, time.Minute)
+	sensitiveLimiter = newRateLimiter(sensitiveLimiterLimit, time.Minute)
+	guestLimiter     = newRateLimiter(guestLimiterLimit, time.Minute)
 )
 
 // RateLimitConfigReader yields a project's effective rate-limit rules for the
@@ -144,7 +157,7 @@ func RateLimitMiddleware(next http.Handler) http.Handler {
 func NewRateLimitMiddleware(reader RateLimitConfigReader) func(http.Handler) http.Handler {
 	var pl *projectLimiters
 	if reader != nil {
-		pl = newProjectLimiters(reader, 30*time.Second)
+		pl = newProjectLimiters(reader, projectRuleCacheTTL)
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -201,7 +214,7 @@ type ruleCacheEntry struct {
 
 func newProjectLimiters(reader RateLimitConfigReader, ttl time.Duration) *projectLimiters {
 	if ttl <= 0 {
-		ttl = 30 * time.Second
+		ttl = projectRuleCacheTTL
 	}
 
 	return &projectLimiters{
@@ -251,13 +264,13 @@ func (p *projectLimiters) resolve(ctx context.Context, scope, clientID, env stri
 	rules, err := p.reader.RateLimitRules(ctx, clientID, env)
 	if err != nil {
 		if e, ok := p.rules[scope]; ok {
-			e.exp = time.Now().Add(5 * time.Second) // keep stale, back off
+			e.exp = time.Now().Add(projectRuleStaleGrace) // keep stale, back off
 			p.rules[scope] = e
 
 			return e
 		}
 
-		e := ruleCacheEntry{byEndpoint: map[string]RateLimitRule{}, exp: time.Now().Add(5 * time.Second)}
+		e := ruleCacheEntry{byEndpoint: map[string]RateLimitRule{}, exp: time.Now().Add(projectRuleStaleGrace)}
 		p.rules[scope] = e
 
 		return e

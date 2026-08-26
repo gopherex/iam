@@ -145,10 +145,14 @@ const (
 
 // ----- core-auth crypto helpers -----
 
+// coreAuthPasswordHashCost is raised above bcrypt.DefaultCost (10) for
+// end-user account passwords, the credential bcrypt protects most broadly.
+const coreAuthPasswordHashCost = 12
+
 // coreAuthHashPassword bcrypt-hashes a plaintext password for the secret column
 // / credential envelope.
 func coreAuthHashPassword(plaintext string) (string, error) {
-	h, err := bcrypt.GenerateFromPassword([]byte(plaintext), 12)
+	h, err := bcrypt.GenerateFromPassword([]byte(plaintext), coreAuthPasswordHashCost)
 	if err != nil {
 		return "", err
 	}
@@ -164,7 +168,7 @@ func coreAuthCheckPassword(hash, plaintext string) bool {
 // coreAuthRandomToken returns a URL-safe opaque token drawn from crypto/rand.
 // Only its sha256 hash is ever persisted.
 func coreAuthRandomToken() (string, error) {
-	b := make([]byte, 32)
+	b := make([]byte, randomTokenBytes)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
@@ -172,17 +176,29 @@ func coreAuthRandomToken() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
+// otpCodeDigits is the length of a one-time numeric code minted by
+// coreAuthRandomCode (and the equivalent digit-code helpers elsewhere in this
+// package).
+const otpCodeDigits = 6
+
+// otpCodeModulus reduces a random uint32 into the otpCodeDigits-digit range.
+const otpCodeModulus = 1000000
+
+// otpRandSourceBytes is the width of the uint32 random source read for
+// coreAuthRandomCode, one byte per octet of the assembled value.
+const otpRandSourceBytes = 4
+
 // coreAuthRandomCode returns a 6-digit numeric one-time code from crypto/rand.
 func coreAuthRandomCode() (string, error) {
-	b := make([]byte, 4)
+	b := make([]byte, otpRandSourceBytes)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
 
-	n := (uint32(b[0])<<24 | uint32(b[1])<<16 | uint32(b[2])<<8 | uint32(b[3])) % 1000000
+	n := (uint32(b[0])<<24 | uint32(b[1])<<16 | uint32(b[2])<<8 | uint32(b[3])) % otpCodeModulus
 
-	out := make([]byte, 6)
-	for i := 5; i >= 0; i-- {
+	out := make([]byte, otpCodeDigits)
+	for i := otpCodeDigits - 1; i >= 0; i-- {
 		out[i] = byte('0' + n%10)
 		n /= 10
 	}
@@ -382,6 +398,14 @@ func (a *pgCoreAuth) coreAuthFindPasswordCredential(ctx context.Context, project
 // refresh token was dangling. Delegating here produces a real, refreshable,
 // expiring session with the project's session_policy TTLs.
 //
+// aal1 and aal2 are the NIST 800-63B authenticator assurance levels this
+// package mints sessions at: aal1 for a single factor, aal2 once a second
+// factor (MFA, WebAuthn) has verified.
+const (
+	aal1 = 1
+	aal2 = 2
+)
+
 // MUST be called inside db.withTx / withTxRet (it issues multiple mutations).
 func mintSessionVia(ctx context.Context, db *DB, emitter Emitter, cfg *configReader, acc *domain.Account, clientID string, amr []string, aal int) (*domain.Session, error) {
 	return NewPgCoreAuth(db, emitter, cfg).coreAuthMintSession(ctx, acc, clientID, amr, aal)
@@ -2544,6 +2568,11 @@ func (a *pgCoreAuth) coreAuthLoadCaptchaConfig(ctx context.Context, projectID, p
 	return cfg, cfg.Secret != "", nil
 }
 
+const (
+	captchaVerifyTimeout   = 10 * time.Second
+	captchaVerifyBodyLimit = 1 << 20 // 1 MiB
+)
+
 // coreAuthCaptchaSiteverify posts token to the provider's siteverify endpoint
 // and scores the response. Every failure mode short of a successful, parsed
 // response — bad URL, network error, bad body — degrades to Valid:false
@@ -2558,7 +2587,7 @@ func coreAuthCaptchaSiteverify(ctx context.Context, cfg coreAuthCaptchaConfig, t
 	form.Set("secret", cfg.Secret)
 	form.Set("response", token)
 
-	verifyCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	verifyCtx, cancel := context.WithTimeout(ctx, captchaVerifyTimeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(verifyCtx, http.MethodPost, verifyURL, strings.NewReader(form.Encode()))
@@ -2568,13 +2597,13 @@ func coreAuthCaptchaSiteverify(ctx context.Context, cfg coreAuthCaptchaConfig, t
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
+	resp, err := (&http.Client{Timeout: captchaVerifyTimeout}).Do(req)
 	if err != nil {
 		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, captchaVerifyBodyLimit))
 	if err != nil {
 		return &domain.CoreAuthCaptchaVerifyResult{Valid: false, Score: 0}, nil
 	}

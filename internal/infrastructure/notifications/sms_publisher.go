@@ -25,6 +25,10 @@ import (
 // cannot wedge the outbox consumer.
 const smsHTTPTimeout = 10 * time.Second
 
+// gatewayErrSnippetMaxBytes bounds how much of a failed gateway response body
+// is quoted back into the error.
+const gatewayErrSnippetMaxBytes = 512
+
 // smsJob is the SMS analog of emailJob: a template key + the resolved phone
 // recipient. The body is rendered from inline defaults (defaultSMSText) since
 // SMS copy is short and few — no DB-backed catalog for v1.
@@ -466,7 +470,7 @@ func (c *smsConfig) do(req *http.Request) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, gatewayErrSnippetMaxBytes))
 		return fmt.Errorf("%w %d: %s", errSMSGatewayResponse, resp.StatusCode, strings.TrimSpace(string(snippet)))
 	}
 

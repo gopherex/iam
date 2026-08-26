@@ -231,14 +231,17 @@ func encodeAuditCursor(at time.Time, id string) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(strconv.FormatInt(at.UnixNano(), 10) + "|" + id))
 }
 
+// auditCursorParts is the "<unix_nano>|<id>" cursor's field count.
+const auditCursorParts = 2
+
 func decodeAuditCursor(cur string) (time.Time, string, bool) {
 	b, err := base64.RawURLEncoding.DecodeString(cur)
 	if err != nil {
 		return time.Time{}, "", false
 	}
 
-	parts := strings.SplitN(string(b), "|", 2)
-	if len(parts) != 2 {
+	parts := strings.SplitN(string(b), "|", auditCursorParts)
+	if len(parts) != auditCursorParts {
 		return time.Time{}, "", false
 	}
 

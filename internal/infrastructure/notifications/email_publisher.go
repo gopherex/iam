@@ -31,6 +31,11 @@ import (
 
 const defaultLocale = "en"
 
+const (
+	defaultSMTPPort = 587
+	smtpsPort       = 465
+)
+
 // backchannelTimeout bounds one back-channel logout POST. A relying party that
 // cannot answer within it is retried by the outbox rather than waited on.
 const backchannelTimeout = 10 * time.Second
@@ -607,14 +612,14 @@ var (
 func (p *Publisher) decodeSMTPConfig(raw map[string]json.RawMessage) (*smtpConfig, error) {
 	cfg := &smtpConfig{
 		Host:     rawString(raw, "host"),
-		Port:     rawInt(raw, "port", 587),
+		Port:     rawInt(raw, "port", defaultSMTPPort),
 		Username: rawString(raw, "username"),
 		Password: rawString(raw, "password"),
 		From:     rawString(raw, "from"),
 		FromName: rawString(raw, "from_name"),
 		Secure:   rawBool(raw, "secure") || rawBool(raw, "ssl"),
 	}
-	if cfg.Port == 465 {
+	if cfg.Port == smtpsPort {
 		cfg.Secure = true
 	}
 	// STARTTLS defaults on for non-implicit-TLS connections (required at connect

@@ -19,6 +19,7 @@ import (
 const (
 	jobsWorkerInterval = 5 * time.Second
 	auditExportMaxRows = 50000
+	importMaxRowErrors = 100
 )
 
 var (
@@ -211,7 +212,7 @@ func (db *DB) processImportUsers(ctx context.Context, projectID string, spec map
 		if err := db.importOneUser(ctx, projectID, email, name, hash, format); err != nil {
 			failed++
 
-			if len(rowErrors) < 100 {
+			if len(rowErrors) < importMaxRowErrors {
 				rowErrors = append(rowErrors, email+": "+err.Error())
 			}
 

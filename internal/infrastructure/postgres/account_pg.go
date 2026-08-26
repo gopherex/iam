@@ -56,11 +56,18 @@ func accountRandomToken(nbytes int) (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
+// accountCodeRandomBytes is the byte width hex-encoded into accountRandomCode.
+const accountCodeRandomBytes = 4
+
 // accountRandomCode returns a short numeric-ish opaque code (hex of 4 bytes).
-func accountRandomCode() (string, error) { return accountRandomToken(4) }
+func accountRandomCode() (string, error) { return accountRandomToken(accountCodeRandomBytes) }
 
 // accountSeconds converts a seconds count into a time.Duration.
 func accountSeconds(n int) time.Duration { return time.Duration(n) * time.Second }
+
+// identityMergeChallengeTTL is how long an identity-merge confirmation code
+// stays valid.
+const identityMergeChallengeTTL = 10 * time.Minute
 
 // accountHashToken returns the sha256 hex digest of an opaque token; only the
 // digest is ever persisted, never the plaintext.
@@ -806,7 +813,7 @@ func (a *pgAccountStore) StartIdentityMerge(ctx context.Context, cmd domain.Acco
 		}
 
 		challengeID := newUUID()
-		expires := nowUTC().Add(accountSeconds(600)) // 10m
+		expires := nowUTC().Add(identityMergeChallengeTTL)
 
 		env := map[string]any{
 			"account_id":        cmd.AccountID,

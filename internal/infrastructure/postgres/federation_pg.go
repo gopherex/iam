@@ -67,7 +67,7 @@ import (
 // plaintext secret handed back to the caller exactly once; only its hash is
 // stored.
 func fedRandomToken() (string, error) {
-	b := make([]byte, 32)
+	b := make([]byte, randomTokenBytes)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
@@ -594,13 +594,20 @@ func fedAudienceContains(aud any, clientID string) bool {
 // security boundary — nothing here trusts the fingerprint to authenticate
 // anything). Used by RotateConnectionCertificate to roll the SP's SAML signing
 // material.
+// fedSPCertSerialBits and fedSPCertValidityYears size the self-signed SP
+// certificate minted below.
+const (
+	fedSPCertSerialBits    = 128
+	fedSPCertValidityYears = 2
+)
+
 func fedGenerateSPCertificate(commonName string) (certPEM, keyPEM, fingerprint string, err error) {
-	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	priv, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
 	if err != nil {
 		return "", "", "", err
 	}
 
-	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), fedSPCertSerialBits))
 	if err != nil {
 		return "", "", "", err
 	}
@@ -610,7 +617,7 @@ func fedGenerateSPCertificate(commonName string) (certPEM, keyPEM, fingerprint s
 		SerialNumber:          serial,
 		Subject:               pkix.Name{CommonName: commonName},
 		NotBefore:             now.Add(-time.Minute),
-		NotAfter:              now.AddDate(2, 0, 0),
+		NotAfter:              now.AddDate(fedSPCertValidityYears, 0, 0),
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		BasicConstraintsValid: true,
 	}
@@ -2219,7 +2226,7 @@ func (a *pgFederationRuntime) fedLoadAccount(ctx context.Context, projectID, use
 //
 // amr carries the SSO method ("saml" | "oidc").
 func (a *pgFederationRuntime) fedMintSession(ctx context.Context, acct *domain.Account, amr string) (*domain.Session, error) {
-	return mintSessionVia(ctx, a.db, a.emitter, a.cfg, acct, "", []string{amr}, 1)
+	return mintSessionVia(ctx, a.db, a.emitter, a.cfg, acct, "", []string{amr}, aal1)
 }
 
 // ===========================================================================

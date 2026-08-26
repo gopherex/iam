@@ -37,7 +37,7 @@ const (
 
 // inviteMintToken mints a new opaque invite token (`inv_` prefix, ≥256-bit).
 func inviteMintToken() (token, hash string, err error) {
-	b := make([]byte, 32) // 256 bits
+	b := make([]byte, randomTokenBytes)
 	if _, err = rand.Read(b); err != nil {
 		return token, hash, err
 	}
