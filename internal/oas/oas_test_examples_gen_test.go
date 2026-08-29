@@ -5241,6 +5241,20 @@ func TestPublicConfigFeatures_EncodeDecode(t *testing.T) {
 	typ2 = make(PublicConfigFeatures)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestPublicConfigMetadata_EncodeDecode(t *testing.T) {
+	var typ PublicConfigMetadata
+	typ = make(PublicConfigMetadata)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PublicConfigMetadata
+	typ2 = make(PublicConfigMetadata)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestPublicConfigMfaPolicy_EncodeDecode(t *testing.T) {
 	var typ PublicConfigMfaPolicy
 	typ = make(PublicConfigMfaPolicy)
@@ -5305,6 +5319,20 @@ func TestPublicConfigProvidersItem_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 PublicConfigProvidersItem
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestPublicMetadata_EncodeDecode(t *testing.T) {
+	var typ PublicMetadata
+	typ = make(PublicMetadata)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PublicMetadata
+	typ2 = make(PublicMetadata)
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestPutV1ProjectsByProjectIdAdminFeaturesOK_EncodeDecode(t *testing.T) {

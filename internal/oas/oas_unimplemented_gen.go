@@ -763,6 +763,16 @@ func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ct
 	return r, ht.ErrNotImplemented
 }
 
+// GetV1ProjectsByProjectIdAdminConfigPublicMetadata implements getV1ProjectsByProjectIdAdminConfigPublicMetadata operation.
+//
+// The free-form key/value document surfaced at `/v1/config/public` for this project environment.
+// Public — see the field's description on `PublicConfig`.
+//
+// GET /v1/projects/{project_id}/admin/config/public-metadata
+func (UnimplementedHandler) GetV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPublicMetadataParams) (r PublicMetadata, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetV1ProjectsByProjectIdAdminConfigRateLimits implements getV1ProjectsByProjectIdAdminConfigRateLimits operation.
 //
 // Get rate limits.
@@ -2707,6 +2717,15 @@ func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminClients(ctx context.Con
 //
 // PUT /v1/projects/{project_id}/admin/config
 func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminConfig(ctx context.Context, req *ProjectConfig, params PutV1ProjectsByProjectIdAdminConfigParams) (r *ConfigApplyResult, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PutV1ProjectsByProjectIdAdminConfigPublicMetadata implements putV1ProjectsByProjectIdAdminConfigPublicMetadata operation.
+//
+// A replacement, not a merge: a key left out of the request is removed.
+//
+// PUT /v1/projects/{project_id}/admin/config/public-metadata
+func (UnimplementedHandler) PutV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx context.Context, req PublicMetadata, params PutV1ProjectsByProjectIdAdminConfigPublicMetadataParams) (r PublicMetadata, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

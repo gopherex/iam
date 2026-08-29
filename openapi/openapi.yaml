@@ -1450,6 +1450,23 @@ components:
           maxLength: 35
         consents:
           $ref: '#/components/schemas/ConsentConfig'
+        metadata:
+          type: object
+          description: >-
+            Free-form string key/value pairs an admin publishes for the
+            project's own client apps to read before anyone signs in — feature
+            flags, a maintenance banner, a minimum client version. This
+            document is deliberately unstructured (not a closed registry like
+            `features`) and deliberately public: anyone who can reach
+            `/v1/config/public` with this project's client id reads it, so it
+            must never hold anything that is not meant to be public. There is
+            no separate flag-management service in IAM; this is the whole
+            mechanism, and it exists because the bootstrap call every client
+            already makes before login is the cheapest place to also carry it.
+          additionalProperties:
+            type: string
+            maxLength: 4096
+          maxProperties: 100
     WebAuthnCredential:
       type: object
       properties:
@@ -1989,6 +2006,15 @@ components:
           items:
             $ref: '#/components/schemas/RateLimitRule'
           maxItems: 1000
+    PublicMetadata:
+      type: object
+      description: >-
+        Free-form string key/value pairs published at `/v1/config/public`.
+        Public and unstructured by design — see `PublicConfig.metadata`.
+      additionalProperties:
+        type: string
+        maxLength: 4096
+      maxProperties: 100
     RetentionPolicy:
       type: object
       properties:
@@ -10513,6 +10539,70 @@ paths:
                 type: object
                 additionalProperties:
                   type: boolean
+        default:
+          $ref: '#/components/responses/Default'
+      security:
+      - adminToken: []
+      x-audience: project-admin
+      x-scopes:
+      - project
+      - environment
+      parameters:
+      - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
+  /v1/projects/{project_id}/admin/config/public-metadata:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    - $ref: '#/components/parameters/XEnvironment'
+    get:
+      operationId: getV1ProjectsByProjectIdAdminConfigPublicMetadata
+      x-since: 3.1.0
+      tags:
+      - Admin Config
+      summary: Get the public metadata document.
+      description: >-
+        The free-form key/value document surfaced at `/v1/config/public` for
+        this project environment. Public — see the field's description on
+        `PublicConfig`.
+      responses:
+        '200':
+          description: Public metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicMetadata'
+        default:
+          $ref: '#/components/responses/Default'
+      security:
+      - adminToken: []
+      x-audience: project-admin
+      x-scopes:
+      - project
+      - environment
+      parameters:
+      - $ref: '#/components/parameters/XEnvironment'
+      x-ogen-operation-group: Admin
+    put:
+      operationId: putV1ProjectsByProjectIdAdminConfigPublicMetadata
+      x-since: 3.1.0
+      tags:
+      - Admin Config
+      summary: Replace the public metadata document.
+      description: >-
+        A replacement, not a merge: a key left out of the request is removed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicMetadata'
+      responses:
+        '200':
+          description: Public metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicMetadata'
         default:
           $ref: '#/components/responses/Default'
       security:

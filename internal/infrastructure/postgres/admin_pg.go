@@ -2046,6 +2046,40 @@ func (a *pgAdminConfig) PutConsent(
 	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, "consent", cmd.Doc)
 }
 
+// GetPublicMetadata / PutPublicMetadata read and write the public_metadata doc:
+// free-form string flags a project's own client apps read before login, at
+// /v1/config/public. Public, unstructured, and bounded — see
+// domain.PublicMetadataSpec.
+func (a *pgAdminConfig) GetPublicMetadata(
+	ctx context.Context, cmd domain.AdminConfigGetCmd,
+) (domain.AdminConfigDoc, error) {
+	return a.getConfigDoc(ctx, cmd.ProjectID, cmd.Environment, publicMetadataConfigKey)
+}
+
+func (a *pgAdminConfig) PutPublicMetadata(
+	ctx context.Context, cmd domain.AdminConfigUpdateCmd,
+) (domain.AdminConfigDoc, error) {
+	raw, err := configDocToRawJSON(cmd.Doc)
+	if err != nil {
+		return nil, err
+	}
+
+	spec, err := domain.ParsePublicMetadata(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := spec.Validate(); err != nil {
+		return nil, err
+	}
+
+	return a.putConfigDoc(ctx, cmd.ProjectID, cmd.Environment, publicMetadataConfigKey, cmd.Doc)
+}
+
+// publicMetadataConfigKey is the iam_config key public_metadata is stored
+// under, and the key PublicConfig's loader reads back.
+const publicMetadataConfigKey = "public_metadata"
+
 func (a *pgAdminConfig) GetFeatures(ctx context.Context, cmd domain.AdminConfigGetCmd) (map[string]bool, error) {
 	row, err := models.IamConfigs.Query(
 		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),

@@ -178,6 +178,25 @@ func (a *pgPlatform) PublicConfig(ctx context.Context, projectID, clientID strin
 		cfg.ConsentDocuments = cc.Documents
 	}
 
+	metaRow, err := models.IamConfigs.Query(
+		sm.Where(models.IamConfigs.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamConfigs.Columns.Environment.EQ(psql.Arg(env))),
+		sm.Where(models.IamConfigs.Columns.Key.EQ(psql.Arg(publicMetadataConfigKey))),
+	).One(ctx, a.db.Bobx())
+	if err != nil {
+		if !errors.Is(translatePgErr("config", err), ErrNotFound) {
+			return nil, fmt.Errorf("load public metadata: %w", err)
+		}
+		// Unset: no metadata to publish.
+	} else if len(metaRow.Data) > 0 {
+		var meta map[string]string
+		if err := unmarshal(metaRow.Data, &meta); err != nil {
+			return nil, err
+		}
+
+		cfg.Metadata = meta
+	}
+
 	return cfg, nil
 }
 

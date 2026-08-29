@@ -123,6 +123,10 @@ func oasPublicConfig(c *domain.PublicConfig) *oas.PublicConfig {
 		r.Consents = oas.NewOptConsentConfig(oas.ConsentConfig{Documents: docs})
 	}
 
+	if len(c.Metadata) > 0 {
+		r.Metadata = oas.NewOptPublicConfigMetadata(oas.PublicConfigMetadata(c.Metadata))
+	}
+
 	return r
 }
 

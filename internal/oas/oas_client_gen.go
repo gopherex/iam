@@ -370,6 +370,13 @@ type AdminInvoker interface {
 	//
 	// GET /v1/projects/{project_id}/admin/config/password-policy
 	GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams, options ...RequestOption) (*PasswordPolicy, error)
+	// GetV1ProjectsByProjectIdAdminConfigPublicMetadata invokes getV1ProjectsByProjectIdAdminConfigPublicMetadata operation.
+	//
+	// The free-form key/value document surfaced at `/v1/config/public` for this project environment.
+	// Public — see the field's description on `PublicConfig`.
+	//
+	// GET /v1/projects/{project_id}/admin/config/public-metadata
+	GetV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPublicMetadataParams, options ...RequestOption) (PublicMetadata, error)
 	// GetV1ProjectsByProjectIdAdminConfigRateLimits invokes getV1ProjectsByProjectIdAdminConfigRateLimits operation.
 	//
 	// Get rate limits.
@@ -920,6 +927,12 @@ type AdminInvoker interface {
 	//
 	// PUT /v1/projects/{project_id}/admin/config
 	PutV1ProjectsByProjectIdAdminConfig(ctx context.Context, request *ProjectConfig, params PutV1ProjectsByProjectIdAdminConfigParams, options ...RequestOption) (*ConfigApplyResult, error)
+	// PutV1ProjectsByProjectIdAdminConfigPublicMetadata invokes putV1ProjectsByProjectIdAdminConfigPublicMetadata operation.
+	//
+	// A replacement, not a merge: a key left out of the request is removed.
+	//
+	// PUT /v1/projects/{project_id}/admin/config/public-metadata
+	PutV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx context.Context, request PublicMetadata, params PutV1ProjectsByProjectIdAdminConfigPublicMetadataParams, options ...RequestOption) (PublicMetadata, error)
 	// PutV1ProjectsByProjectIdAdminConsents invokes putV1ProjectsByProjectIdAdminConsents operation.
 	//
 	// Set required consents.
@@ -15550,6 +15563,176 @@ func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx conte
 
 	stage = "DecodeResponse"
 	result, err := decodeGetV1ProjectsByProjectIdAdminConfigPasswordPolicyResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetV1ProjectsByProjectIdAdminConfigPublicMetadata invokes getV1ProjectsByProjectIdAdminConfigPublicMetadata operation.
+//
+// The free-form key/value document surfaced at `/v1/config/public` for this project environment.
+// Public — see the field's description on `PublicConfig`.
+//
+// GET /v1/projects/{project_id}/admin/config/public-metadata
+func (c *Client) GetV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPublicMetadataParams, options ...RequestOption) (PublicMetadata, error) {
+	res, err := c.sendGetV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx, params, options...)
+	return res, err
+}
+
+func (c *Client) sendGetV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPublicMetadataParams, requestOptions ...RequestOption) (res PublicMetadata, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getV1ProjectsByProjectIdAdminConfigPublicMetadata"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/projects/{project_id}/admin/config/public-metadata"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetV1ProjectsByProjectIdAdminConfigPublicMetadataOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [3]string
+	pathParts[0] = "/v1/projects/"
+	{
+		// Encode "project_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ProjectID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/admin/config/public-metadata"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:AdminToken"
+			switch err := c.securityAdminToken(ctx, GetV1ProjectsByProjectIdAdminConfigPublicMetadataOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"AdminToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodeGetV1ProjectsByProjectIdAdminConfigPublicMetadataResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -51897,6 +52080,187 @@ func (c *Client) sendPutV1ProjectsByProjectIdAdminConfig(ctx context.Context, re
 
 	stage = "DecodeResponse"
 	result, err := decodePutV1ProjectsByProjectIdAdminConfigResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PutV1ProjectsByProjectIdAdminConfigPublicMetadata invokes putV1ProjectsByProjectIdAdminConfigPublicMetadata operation.
+//
+// A replacement, not a merge: a key left out of the request is removed.
+//
+// PUT /v1/projects/{project_id}/admin/config/public-metadata
+func (c *Client) PutV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx context.Context, request PublicMetadata, params PutV1ProjectsByProjectIdAdminConfigPublicMetadataParams, options ...RequestOption) (PublicMetadata, error) {
+	res, err := c.sendPutV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx, request, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPutV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx context.Context, request PublicMetadata, params PutV1ProjectsByProjectIdAdminConfigPublicMetadataParams, requestOptions ...RequestOption) (res PublicMetadata, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("putV1ProjectsByProjectIdAdminConfigPublicMetadata"),
+		semconv.HTTPRequestMethodKey.String("PUT"),
+		semconv.URLTemplateKey.String("/v1/projects/{project_id}/admin/config/public-metadata"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PutV1ProjectsByProjectIdAdminConfigPublicMetadataOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [3]string
+	pathParts[0] = "/v1/projects/"
+	{
+		// Encode "project_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ProjectID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/admin/config/public-metadata"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "PUT", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePutV1ProjectsByProjectIdAdminConfigPublicMetadataRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Environment",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.XEnvironment.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:AdminToken"
+			switch err := c.securityAdminToken(ctx, PutV1ProjectsByProjectIdAdminConfigPublicMetadataOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"AdminToken\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePutV1ProjectsByProjectIdAdminConfigPublicMetadataResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

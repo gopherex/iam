@@ -248,6 +248,35 @@ Keys: `password`, `otp`, `phone_login`, `magic_link`, `webauthn`, `oauth`,
 `phone_change`, `resumable_flows`, `impersonation`, `consent`,
 `access_requests`, `step_up`.
 
+## Public metadata
+
+`GET/PUT admin/config/public-metadata` is a flat `map[string]string` published
+at the unauthenticated `GET /v1/config/public` bootstrap call — the same call
+your client already makes before anyone signs in, to render the login screen.
+Unlike `features`, there is no closed key registry: this document is for your
+own product flags (a feature flag, a maintenance banner, a minimum client
+version), not a toggle for a subsystem IAM implements.
+
+```bash
+curl -sX PUT .../admin/config/public-metadata -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"beta_banner": "true", "min_client_version": "1.4.0"}'
+```
+
+`PUT` is a **replacement**: a key left out of the request is removed, same as
+`consents` below. Bounded to 100 entries and 4096 characters per value, so it
+cannot be grown into an unbounded document by accident.
+
+**It is public.** Anyone who knows this project's client ID reads every key and
+value — there is no admin-only variant. Put nothing here that is not meant to
+be world-readable; a value that must stay authenticated belongs in a real
+config document behind `adminToken`, or in a system built for secrets.
+
+There is no separate flag-management service in IAM, and this is deliberately
+not meant to become one — it exists because the bootstrap call is already the
+cheapest place to carry a handful of public strings, not because IAM intends to
+grow into general application configuration.
+
 ## Consent documents
 
 `GET/PUT admin/consents` holds the documents a user must accept. A `required`

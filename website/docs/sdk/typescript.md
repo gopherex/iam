@@ -310,7 +310,15 @@ send it back, or the fields you leave out are cleared.
 ```ts
 const { data } = await iam.config.getPublicConfig();
 // enabled methods, locales, registration mode — for rendering your login UI
+
+data?.metadata?.beta_banner; // your own public flags, published under
+                             // admin/config/public-metadata — see Admin & config
 ```
+
+`metadata` is a flat `{ [key: string]: string }` of whatever your project
+published for its own client apps. It is public and unstructured by design —
+there is no key registry to look up here, and nothing in it is meant to stay
+authenticated.
 
 ## `iam.client` — raw generated operations
 

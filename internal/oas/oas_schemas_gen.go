@@ -12186,6 +12186,52 @@ func (o OptPublicConfigFeatures) Or(d PublicConfigFeatures) PublicConfigFeatures
 	return d
 }
 
+// NewOptPublicConfigMetadata returns new OptPublicConfigMetadata with value set to v.
+func NewOptPublicConfigMetadata(v PublicConfigMetadata) OptPublicConfigMetadata {
+	return OptPublicConfigMetadata{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPublicConfigMetadata is optional PublicConfigMetadata.
+type OptPublicConfigMetadata struct {
+	Value PublicConfigMetadata
+	Set   bool
+}
+
+// IsSet returns true if OptPublicConfigMetadata was set.
+func (o OptPublicConfigMetadata) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPublicConfigMetadata) Reset() {
+	var v PublicConfigMetadata
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPublicConfigMetadata) SetTo(v PublicConfigMetadata) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPublicConfigMetadata) Get() (v PublicConfigMetadata, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPublicConfigMetadata) Or(d PublicConfigMetadata) PublicConfigMetadata {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptPublicConfigMfaPolicy returns new OptPublicConfigMfaPolicy with value set to v.
 func NewOptPublicConfigMfaPolicy(v PublicConfigMfaPolicy) OptPublicConfigMfaPolicy {
 	return OptPublicConfigMfaPolicy{
@@ -20040,6 +20086,14 @@ type PublicConfig struct {
 	Locales        []string                      `json:"locales"`
 	DefaultLocale  OptString                     `json:"default_locale"`
 	Consents       OptConsentConfig              `json:"consents"`
+	// Free-form string key/value pairs an admin publishes for the project's own client apps to read
+	// before anyone signs in — feature flags, a maintenance banner, a minimum client version. This
+	// document is deliberately unstructured (not a closed registry like `features`) and deliberately
+	// public: anyone who can reach `/v1/config/public` with this project's client id reads it, so it
+	// must never hold anything that is not meant to be public. There is no separate flag-management
+	// service in IAM; this is the whole mechanism, and it exists because the bootstrap call every client
+	// already makes before login is the cheapest place to also carry it.
+	Metadata OptPublicConfigMetadata `json:"metadata"`
 }
 
 // GetProject returns the value of Project.
@@ -20092,6 +20146,11 @@ func (s *PublicConfig) GetConsents() OptConsentConfig {
 	return s.Consents
 }
 
+// GetMetadata returns the value of Metadata.
+func (s *PublicConfig) GetMetadata() OptPublicConfigMetadata {
+	return s.Metadata
+}
+
 // SetProject sets the value of Project.
 func (s *PublicConfig) SetProject(val OptPublicConfigProject) {
 	s.Project = val
@@ -20142,12 +20201,35 @@ func (s *PublicConfig) SetConsents(val OptConsentConfig) {
 	s.Consents = val
 }
 
+// SetMetadata sets the value of Metadata.
+func (s *PublicConfig) SetMetadata(val OptPublicConfigMetadata) {
+	s.Metadata = val
+}
+
 type PublicConfigFeatures map[string]bool
 
 func (s *PublicConfigFeatures) init() PublicConfigFeatures {
 	m := *s
 	if m == nil {
 		m = map[string]bool{}
+		*s = m
+	}
+	return m
+}
+
+// Free-form string key/value pairs an admin publishes for the project's own client apps to read
+// before anyone signs in — feature flags, a maintenance banner, a minimum client version. This
+// document is deliberately unstructured (not a closed registry like `features`) and deliberately
+// public: anyone who can reach `/v1/config/public` with this project's client id reads it, so it
+// must never hold anything that is not meant to be public. There is no separate flag-management
+// service in IAM; this is the whole mechanism, and it exists because the bootstrap call every client
+// already makes before login is the cheapest place to also carry it.
+type PublicConfigMetadata map[string]string
+
+func (s *PublicConfigMetadata) init() PublicConfigMetadata {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
 		*s = m
 	}
 	return m
@@ -20234,6 +20316,20 @@ func (s *PublicConfigProvidersItem) SetID(val OptString) {
 // SetName sets the value of Name.
 func (s *PublicConfigProvidersItem) SetName(val OptString) {
 	s.Name = val
+}
+
+// Free-form string key/value pairs published at `/v1/config/public`. Public and unstructured by
+// design — see `PublicConfig.metadata`.
+// Ref: #/components/schemas/PublicMetadata
+type PublicMetadata map[string]string
+
+func (s *PublicMetadata) init() PublicMetadata {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
 }
 
 // Ref: #/components/schemas/PushedAuthorizationRequest

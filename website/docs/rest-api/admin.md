@@ -20,7 +20,7 @@ Secured with `adminToken`; accepts `X-Environment`.
 | **Service accounts** | CRUD + `/secrets` (runtime minting: `POST /v1/service-accounts/tokens`) |
 | **API keys** | CRUD + `/rotate` |
 | **Connections (SSO)** | SAML/OIDC connection CRUD, `/test`, `/rotate-certificate`, `/scim/tokens`; verified `domains` |
-| **Config** | `GET/PUT config` (every document at once, `?dry_run`), `GET/PUT config/{auth, password-policy, session-policy, mfa-policy, rate-limits}`, `features`, `consents`, `retention-policy`, `i18n/{locale}` |
+| **Config** | `GET/PUT config` (every document at once, `?dry_run`), `GET/PUT config/{auth, password-policy, session-policy, mfa-policy, rate-limits}`, `config/public-metadata`, `features`, `consents`, `retention-policy`, `i18n/{locale}` |
 | **Signing keys** | `jwks`, `jwks/rotate`, `jwks/{key_id}/activate`, `DELETE jwks/{key_id}`; `token-profiles[/{id}][/preview]` |
 | **Invites** | `GET/POST /invites`, `POST /invites/{id}/revoke` (token shown once) |
 | **Webhooks & hooks** | `webhooks[/{id}]`, `/rotate-secret`, `/test`; `webhook-deliveries[/{id}/retry]`; `events[/{id}/replay]`; `hooks[/{id}][/test]` |

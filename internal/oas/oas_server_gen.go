@@ -295,6 +295,13 @@ type AdminHandler interface {
 	//
 	// GET /v1/projects/{project_id}/admin/config/password-policy
 	GetV1ProjectsByProjectIdAdminConfigPasswordPolicy(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPasswordPolicyParams) (*PasswordPolicy, error)
+	// GetV1ProjectsByProjectIdAdminConfigPublicMetadata implements getV1ProjectsByProjectIdAdminConfigPublicMetadata operation.
+	//
+	// The free-form key/value document surfaced at `/v1/config/public` for this project environment.
+	// Public — see the field's description on `PublicConfig`.
+	//
+	// GET /v1/projects/{project_id}/admin/config/public-metadata
+	GetV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx context.Context, params GetV1ProjectsByProjectIdAdminConfigPublicMetadataParams) (PublicMetadata, error)
 	// GetV1ProjectsByProjectIdAdminConfigRateLimits implements getV1ProjectsByProjectIdAdminConfigRateLimits operation.
 	//
 	// Get rate limits.
@@ -845,6 +852,12 @@ type AdminHandler interface {
 	//
 	// PUT /v1/projects/{project_id}/admin/config
 	PutV1ProjectsByProjectIdAdminConfig(ctx context.Context, req *ProjectConfig, params PutV1ProjectsByProjectIdAdminConfigParams) (*ConfigApplyResult, error)
+	// PutV1ProjectsByProjectIdAdminConfigPublicMetadata implements putV1ProjectsByProjectIdAdminConfigPublicMetadata operation.
+	//
+	// A replacement, not a merge: a key left out of the request is removed.
+	//
+	// PUT /v1/projects/{project_id}/admin/config/public-metadata
+	PutV1ProjectsByProjectIdAdminConfigPublicMetadata(ctx context.Context, req PublicMetadata, params PutV1ProjectsByProjectIdAdminConfigPublicMetadataParams) (PublicMetadata, error)
 	// PutV1ProjectsByProjectIdAdminConsents implements putV1ProjectsByProjectIdAdminConsents operation.
 	//
 	// Set required consents.

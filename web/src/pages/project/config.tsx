@@ -4,6 +4,7 @@ import type {
   ConsentDocument,
   MfaPolicy,
   PasswordPolicy,
+  PublicMetadata,
   RateLimitRule,
   RateLimits,
   RegistrationConfig,
@@ -13,6 +14,7 @@ import {
   getV1ProjectsByProjectIdAdminConfigAuth,
   getV1ProjectsByProjectIdAdminConfigMfaPolicy,
   getV1ProjectsByProjectIdAdminConfigPasswordPolicy,
+  getV1ProjectsByProjectIdAdminConfigPublicMetadata,
   getV1ProjectsByProjectIdAdminConfigRateLimits,
   getV1ProjectsByProjectIdAdminConfigSessionPolicy,
   getV1ProjectsByProjectIdAdminConsents,
@@ -21,16 +23,18 @@ import {
   patchV1ProjectsByProjectIdAdminConfigPasswordPolicy,
   patchV1ProjectsByProjectIdAdminConfigRateLimits,
   patchV1ProjectsByProjectIdAdminConfigSessionPolicy,
+  putV1ProjectsByProjectIdAdminConfigPublicMetadata,
   putV1ProjectsByProjectIdAdminConsents,
 } from '@gopherex/iam-sdk';
 import { useStore } from '@nanostores/react';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { $environment } from '@/stores/auth';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/page-header';
 import { ErrorState, LoadingState } from '@/components/states';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -944,6 +948,141 @@ function TermsTab({ projectId, env }: { projectId: string; env: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// Public metadata tab
+// ---------------------------------------------------------------------------
+
+// Entries are edited as an ordered list rather than directly as an object: a
+// map has no stable order to render inputs in, and mid-edit an in-progress key
+// (typed but not yet unique, or momentarily blank) has to stay representable
+// without corrupting the ones around it.
+type MetadataEntry = { key: string; value: string };
+
+function metadataToEntries(m: PublicMetadata | undefined): MetadataEntry[] {
+  return Object.entries(m ?? {}).map(([key, value]) => ({ key, value }));
+}
+
+// Last write wins on a duplicate key, matching how the map the server stores
+// resolves the same conflict.
+function entriesToMetadata(entries: MetadataEntry[]): PublicMetadata {
+  const out: Record<string, string> = {};
+  for (const { key, value } of entries) {
+    if (key.trim() === '') continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+function PublicMetadataTab({ projectId, env }: { projectId: string; env: string }) {
+  const { data, loading, error, reload } = useApi(
+    () =>
+      call(
+        getV1ProjectsByProjectIdAdminConfigPublicMetadata({
+          path: { project_id: projectId },
+          headers: ENV_HEADER(env),
+        }),
+      ),
+    [projectId, env],
+  );
+
+  const [entries, setEntries] = useState<MetadataEntry[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (data) setEntries(metadataToEntries(data));
+  }, [data]);
+
+  function updateEntry(index: number, patch: Partial<MetadataEntry>) {
+    setEntries((prev) => prev.map((entry, i) => (i === index ? { ...entry, ...patch } : entry)));
+  }
+
+  function addEntry() {
+    setEntries((prev) => [...prev, { key: '', value: '' }]);
+  }
+
+  function removeEntry(index: number) {
+    setEntries((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function save() {
+    setBusy(true);
+    try {
+      const updated = await call(
+        putV1ProjectsByProjectIdAdminConfigPublicMetadata({
+          path: { project_id: projectId },
+          headers: ENV_HEADER(env),
+          body: entriesToMetadata(entries),
+        }),
+      );
+      setEntries(metadataToEntries(updated));
+      toast.success('Public metadata saved');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to save public metadata');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (loading) return <LoadingState label="Loading public metadata…" />;
+  if (error) return <ErrorState error={error} onRetry={reload} />;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Public metadata</CardTitle>
+        <CardDescription>
+          Free-form flags for your own client apps — a feature flag, a maintenance banner, a minimum client
+          version — read from <code>/v1/config/public</code> before anyone signs in.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Alert variant="destructive">
+          <AlertTriangle />
+          <AlertTitle>Public — never put secrets here</AlertTitle>
+          <AlertDescription>
+            Anyone who knows this project's client ID can read every key and value below, without signing in.
+            There is no admin-only variant of this document.
+          </AlertDescription>
+        </Alert>
+
+        {entries.map((entry, idx) => (
+          <div key={idx} className="flex items-end gap-3">
+            <div className="flex-1 space-y-1.5">
+              <Label>Key</Label>
+              <Input
+                value={entry.key}
+                onChange={(e) => updateEntry(idx, { key: e.target.value })}
+                placeholder="beta_banner"
+              />
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <Label>Value</Label>
+              <Input
+                value={entry.value}
+                onChange={(e) => updateEntry(idx, { value: e.target.value })}
+                placeholder="true"
+              />
+            </div>
+            <Button variant="ghost" size="icon-sm" onClick={() => removeEntry(idx)} title="Remove entry">
+              <Trash2 className="size-3.5 text-destructive" />
+            </Button>
+          </div>
+        ))}
+        <Button variant="outline" size="sm" onClick={addEntry}>
+          <Plus className="size-3.5" />
+          Add entry
+        </Button>
+      </CardContent>
+      <CardFooter className="justify-end">
+        <Button onClick={save} disabled={busy}>
+          {busy && <Loader2 className="size-4 animate-spin" />}
+          Save
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page root
 // ---------------------------------------------------------------------------
 
@@ -966,6 +1105,7 @@ export function ConfigPage() {
           <TabsTrigger value="policies">Policies</TabsTrigger>
           <TabsTrigger value="terms">Terms</TabsTrigger>
           <TabsTrigger value="rate-limits">Rate limits</TabsTrigger>
+          <TabsTrigger value="public-metadata">Public metadata</TabsTrigger>
         </TabsList>
 
         <TabsContent value="auth">
@@ -982,6 +1122,10 @@ export function ConfigPage() {
 
         <TabsContent value="rate-limits">
           <RateLimitsTab projectId={projectId!} env={env} />
+        </TabsContent>
+
+        <TabsContent value="public-metadata">
+          <PublicMetadataTab projectId={projectId!} env={env} />
         </TabsContent>
       </Tabs>
     </div>

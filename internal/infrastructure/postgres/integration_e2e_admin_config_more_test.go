@@ -39,6 +39,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -1139,4 +1140,85 @@ func TestE2EAdminAccessRequestsListWithStatus(t *testing.T) {
 			}
 		}
 	})
+}
+
+// TestE2EAdminPublicMetadata verifies public_metadata: written through the
+// admin endpoint, it is a replacement (a key left out is gone), it is bounded,
+// and it surfaces at the unauthenticated /v1/config/public bootstrap call —
+// which is the entire point of the mechanism.
+func TestE2EAdminPublicMetadata(t *testing.T) {
+	ctx := context.Background()
+	ts := e2eServer(t)
+	projectID, token := e2eProjectAdmin(t, ctx)
+	base := ts.URL + "/v1/projects/" + projectID + "/admin/config/public-metadata"
+
+	put := e2eReq(t, ctx, http.MethodPut, base,
+		map[string]any{"beta_banner": "true", "min_client_version": "1.2.0"}, e2eBearer(token))
+	e2eWantStatus(t, put, http.StatusOK)
+
+	var got map[string]string
+	e2eDecode(t, put, &got)
+
+	if got["beta_banner"] != "true" || got["min_client_version"] != "1.2.0" {
+		t.Fatalf("unexpected put response: %v", got)
+	}
+
+	get := e2eReq(t, ctx, http.MethodGet, base, nil, e2eBearer(token))
+	e2eWantStatus(t, get, http.StatusOK)
+	e2eDecode(t, get, &got)
+
+	if got["beta_banner"] != "true" {
+		t.Fatalf("get after put: %v", got)
+	}
+
+	// A replacement, not a merge: omitting a key drops it.
+	put2 := e2eReq(t, ctx, http.MethodPut, base,
+		map[string]any{"min_client_version": "1.3.0"}, e2eBearer(token))
+	e2eWantStatus(t, put2, http.StatusOK)
+
+	get2 := e2eReq(t, ctx, http.MethodGet, base, nil, e2eBearer(token))
+	e2eWantStatus(t, get2, http.StatusOK)
+
+	// A fresh map: json.Unmarshal into an existing map merges keys rather than
+	// replacing its contents, which would hide exactly the bug this asserts
+	// against.
+	got = map[string]string{}
+	e2eDecode(t, get2, &got)
+
+	if _, ok := got["beta_banner"]; ok {
+		t.Fatalf("beta_banner survived a replacing PUT that omitted it: %v", got)
+	}
+
+	if got["min_client_version"] != "1.3.0" {
+		t.Fatalf("min_client_version not replaced: %v", got)
+	}
+
+	// Bounded: too many entries is refused, not silently truncated.
+	tooMany := map[string]any{}
+	for i := 0; i < 101; i++ {
+		tooMany[fmt.Sprintf("k%d", i)] = "v"
+	}
+
+	overflow := e2eReq(t, ctx, http.MethodPut, base, tooMany, e2eBearer(token))
+	if overflow.Status < 400 {
+		t.Fatalf("status = %d, want a 4xx for over 100 entries", overflow.Status)
+	}
+
+	// The whole point: an unauthenticated client sees it at bootstrap.
+	restore := e2eReq(t, ctx, http.MethodPut, base,
+		map[string]any{"beta_banner": "true"}, e2eBearer(token))
+	e2eWantStatus(t, restore, http.StatusOK)
+
+	pub := e2eReq(t, ctx, http.MethodGet, ts.URL+"/v1/config/public", nil,
+		map[string]string{"X-Client-Id": projectID})
+	e2eWantStatus(t, pub, http.StatusOK)
+
+	var pubBody struct {
+		Metadata map[string]string `json:"metadata"`
+	}
+	e2eDecode(t, pub, &pubBody)
+
+	if pubBody.Metadata["beta_banner"] != "true" {
+		t.Fatalf("public config does not carry the published metadata: %v", pubBody.Metadata)
+	}
 }

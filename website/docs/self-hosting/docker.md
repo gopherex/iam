@@ -75,6 +75,89 @@ Ports: `8080` = API + admin SPA, `8081` = liveness/readiness probes
 
 Full env-var contract: [Configuration](/self-hosting/configuration).
 
+## Bootstrapping a sibling service in `docker compose`
+
+A common shape: deploy IAM alongside your own product container, and hand that
+container an OAuth client secret so it can call IAM as itself. IAM has no
+declarative "put this exact secret in" mechanism — a client secret is
+sha256-hashed at rest, so there is no plaintext to put in a config file and read
+back (see [Config as code](/guides/admin-config)). What it does have is
+generate-once-on-create, which a bootstrap step captures and hands off through a
+shared volume — the same pattern Terraform, Vault and Kubernetes Secrets all use
+for write-only values.
+
+Run a one-shot `iam-bootstrap` container between IAM becoming healthy and your
+product starting, and pass the file on:
+
+```yaml
+services:
+  iam:
+    image: ghcr.io/gopherex/iam:latest
+    environment:
+      IAM_SERVICE_HTTP_PUBLIC_URL: http://iam:8080
+      IAM_SERVICE_AUTH_MASTER_KEY: ${MASTER_KEY}
+      IAM_SERVICE_AUTH_ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      # ... Postgres vars
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/healthz/readiness"]
+
+  iam-bootstrap:
+    image: curlimages/curl
+    depends_on:
+      iam: { condition: service_healthy }
+    volumes: ["bootstrap:/out"]
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -eu
+        base=http://iam:8080
+        project=$(curl -sf -X POST "$base/mgmt/v1/projects" \
+          -H "Authorization: Bearer $MASTER_KEY" -H "Content-Type: application/json" \
+          -d '{"name":"Acme"}' | jq -r .project.id)
+        token=$(curl -sf -X POST "$base/mgmt/v1/projects/$project/admin-tokens" \
+          -H "Authorization: Bearer $MASTER_KEY" -H "Content-Type: application/json" \
+          -d '{"name":"bootstrap"}' | jq -r .admin_token)
+        app=$(curl -sf -X POST "$base/v1/projects/$project/admin/apps" \
+          -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
+          -d '{"name":"product","type":"web","redirect_uris":["https://app.example.com/callback"]}' \
+          | jq -r .app.id)
+        curl -sf -X POST "$base/v1/projects/$project/admin/apps/$app/secrets" \
+          -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
+          -d '{"name":"prod"}' | jq -r .client_secret > /out/client_secret
+        echo "$project" > /out/project_id
+        echo "$app" > /out/client_id
+
+  product:
+    depends_on:
+      iam-bootstrap: { condition: service_completed_successfully }
+    volumes: ["bootstrap:/secrets:ro"]
+    entrypoint:
+      - sh
+      - -c
+      - export IAM_CLIENT_ID=$(cat /secrets/client_id) IAM_CLIENT_SECRET=$(cat /secrets/client_secret); exec ./product
+
+volumes:
+  bootstrap:
+```
+
+Notes:
+
+- `condition: service_completed_successfully` needs Compose v2.20+ / Docker
+  Engine 24+; on older Compose, poll for the file's existence instead of
+  `depends_on`.
+- Run `iam-bootstrap` only once (a fresh project every run is not what you
+  want): guard it — check whether a project with the expected name/slug
+  already exists before creating one, or run it as a one-off (`docker compose
+  run`) rather than every `up`.
+- The secrets endpoints are ordinary [admin API](/rest-api/admin) calls;
+  nothing above is bootstrap-specific. Swap `curl`/`jq` for the [TypeScript
+  SDK](/sdk/typescript) or [Go SDK](/sdk/go) in a real init container if you'd
+  rather not shell out.
+- This mints a **new** secret every run of the bootstrap step. An app client
+  can hold several live secrets at once (rotate in, then delete the old one)
+  — see [Machine identity](/guides/machine-identity).
+
 ## Frontend iteration (no image rebuild)
 
 Run the API on the host and the Vite dev server (proxies `/v1` + `/mgmt`):

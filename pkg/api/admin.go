@@ -130,6 +130,9 @@ type AdminConfig interface {
 	GetFeatures(ctx context.Context, cmd domain.AdminConfigGetCmd) (map[string]bool, error)
 	PutFeatures(ctx context.Context, cmd domain.AdminFeaturesUpdateCmd) (map[string]bool, error)
 
+	GetPublicMetadata(ctx context.Context, cmd domain.AdminConfigGetCmd) (domain.AdminConfigDoc, error)
+	PutPublicMetadata(ctx context.Context, cmd domain.AdminConfigUpdateCmd) (domain.AdminConfigDoc, error)
+
 	GetI18n(ctx context.Context, cmd domain.AdminConfigGetCmd, locale string) (map[string]jx.Raw, error)
 	PutI18n(ctx context.Context, cmd domain.AdminI18nUpdateCmd) (map[string]jx.Raw, error)
 
@@ -1766,6 +1769,83 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminFeatures(
 	}
 
 	return oas.GetV1ProjectsByProjectIdAdminFeaturesOK(features), nil
+}
+
+func (s *AdminService) GetV1ProjectsByProjectIdAdminConfigPublicMetadata(
+	ctx context.Context,
+	params oas.GetV1ProjectsByProjectIdAdminConfigPublicMetadataParams,
+) (oas.PublicMetadata, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	doc, err := s.deps.Config.GetPublicMetadata(ctx, adminCfg(params.ProjectID, params.XEnvironment))
+	if err != nil {
+		return nil, err
+	}
+
+	return oasPublicMetadataFromDoc(doc)
+}
+
+func (s *AdminService) PutV1ProjectsByProjectIdAdminConfigPublicMetadata(
+	ctx context.Context,
+	req oas.PublicMetadata,
+	params oas.PutV1ProjectsByProjectIdAdminConfigPublicMetadataParams,
+) (oas.PublicMetadata, error) {
+	if _, err := requireProjectAdmin(ctx, params.ProjectID); err != nil {
+		return nil, err
+	}
+
+	doc, err := oasPublicMetadataToDoc(req)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := s.deps.Config.PutPublicMetadata(ctx, domain.AdminConfigUpdateCmd{
+		ProjectID:   params.ProjectID,
+		Environment: params.XEnvironment.Or(""),
+		Doc:         doc,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return oasPublicMetadataFromDoc(out)
+}
+
+// oasPublicMetadataToDoc renders a public-metadata map into the generic
+// AdminConfigDoc envelope (map[string]jx.Raw) the config-doc storage helpers
+// share, so public_metadata reuses the same get/put/validate path as every
+// other iam_config document instead of its own copy of that plumbing.
+func oasPublicMetadataToDoc(m oas.PublicMetadata) (domain.AdminConfigDoc, error) {
+	doc := make(domain.AdminConfigDoc, len(m))
+
+	for k, v := range m {
+		raw, err := json.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("encode public_metadata field %q: %w", k, err)
+		}
+
+		doc[k] = raw
+	}
+
+	return doc, nil
+}
+
+// oasPublicMetadataFromDoc is the inverse of oasPublicMetadataToDoc.
+func oasPublicMetadataFromDoc(doc domain.AdminConfigDoc) (oas.PublicMetadata, error) {
+	out := make(oas.PublicMetadata, len(doc))
+
+	for k, raw := range doc {
+		var v string
+		if err := json.Unmarshal(raw, &v); err != nil {
+			return nil, domain.ErrValidation.WithMessage("public_metadata: value for " + k + " must be a string")
+		}
+
+		out[k] = v
+	}
+
+	return out, nil
 }
 
 func (s *AdminService) GetV1ProjectsByProjectIdAdminI18nByLocale(

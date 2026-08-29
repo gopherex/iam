@@ -269,6 +269,10 @@ type PublicConfig struct {
 	DefaultLocale    string
 	ConsentDocuments []ConsentDocument
 	Registration     *RegistrationInfo
+	// Metadata is the project's public_metadata doc: free-form string flags an
+	// admin publishes for their own client apps to read before login. See
+	// PublicMetadataSpec.
+	Metadata map[string]string
 }
 
 // RegistrationInfo is the public view of a project's signup policy, so the app

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -187,6 +188,61 @@ var FeatureKeys = newStringSet(
 	"access_requests",
 	"step_up",
 )
+
+// ---------------------------------------------------------------------------
+// public_metadata doc — iam_config key="public_metadata"
+// ---------------------------------------------------------------------------
+
+// PublicMetadataMaxEntries / PublicMetadataMaxValueLength bound the document:
+// it is served on every unauthenticated bootstrap call, so its size is not the
+// operator's to grow without limit.
+const (
+	PublicMetadataMaxEntries     = 100
+	PublicMetadataMaxValueLength = 4096
+	publicMetadataMaxKeyLength   = 256
+)
+
+// PublicMetadataSpec mirrors the public_metadata jsonb doc: a flat
+// map[string]string. Deliberately unstructured — unlike `features`, there is no
+// closed registry of keys, because the values are a client's own product
+// flags, not a toggle for a subsystem IAM implements.
+type PublicMetadataSpec map[string]string
+
+// ParsePublicMetadata strictly decodes the public_metadata doc.
+func ParsePublicMetadata(raw []byte) (PublicMetadataSpec, error) {
+	var c PublicMetadataSpec
+	if err := strictUnmarshal(raw, &c); err != nil {
+		return c, ErrValidation.WithMessage("invalid public_metadata: " + err.Error())
+	}
+
+	return c, nil
+}
+
+// Validate bounds the document's size. There is no key registry to check
+// against: the whole point is that a client can publish whatever key it wants
+// without IAM knowing what it means.
+func (c PublicMetadataSpec) Validate() error {
+	if len(c) > PublicMetadataMaxEntries {
+		return ErrValidation.WithDetails(map[string]any{
+			detailValue: len(c), detailAllowed: PublicMetadataMaxEntries,
+		}).WithMessage("public_metadata: too many entries")
+	}
+
+	for k, v := range c {
+		if k == "" || len(k) > publicMetadataMaxKeyLength {
+			return ErrValidation.WithDetails(map[string]any{detailField: k}).
+				WithMessage("public_metadata: key length must be between 1 and " +
+					strconv.Itoa(publicMetadataMaxKeyLength))
+		}
+
+		if len(v) > PublicMetadataMaxValueLength {
+			return ErrValidation.WithDetails(map[string]any{detailField: k}).
+				WithMessage("public_metadata: value for " + k + " exceeds maximum length")
+		}
+	}
+
+	return nil
+}
 
 // ---------------------------------------------------------------------------
 // Shared helpers

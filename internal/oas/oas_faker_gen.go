@@ -4185,6 +4185,15 @@ func (s *OptPublicConfigFeatures) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptPublicConfigMetadata) SetFake() {
+	var elem PublicConfigMetadata
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
 func (s *OptPublicConfigMfaPolicy) SetFake() {
 	var elem PublicConfigMfaPolicy
 	{
@@ -8018,6 +8027,11 @@ func (s *PublicConfig) SetFake() {
 			s.Consents.SetFake()
 		}
 	}
+	{
+		{
+			s.Metadata.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.
@@ -8025,6 +8039,17 @@ func (s *PublicConfigFeatures) SetFake() {
 	var (
 		elem bool
 		m    map[string]bool = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
+	}
+}
+
+// SetFake set fake values.
+func (s *PublicConfigMetadata) SetFake() {
+	var (
+		elem string
+		m    map[string]string = s.init()
 	)
 	for i := 0; i < 0; i++ {
 		m[fmt.Sprintf("fake%d", i)] = elem
@@ -8089,6 +8114,17 @@ func (s *PublicConfigProvidersItem) SetFake() {
 		{
 			s.Name.SetFake()
 		}
+	}
+}
+
+// SetFake set fake values.
+func (s *PublicMetadata) SetFake() {
+	var (
+		elem string
+		m    map[string]string = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
 	}
 }
 
