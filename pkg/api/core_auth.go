@@ -181,6 +181,7 @@ func (s *CoreAuthService) PostV1AuthAccessRequests(
 		ProjectID:    params.XClientID,
 		Email:        req.Email,
 		Reason:       req.Reason.Or(""),
+		Locale:       req.Locale.Or(""),
 		CaptchaToken: req.CaptchaToken.Or(""),
 	})
 	if err != nil {

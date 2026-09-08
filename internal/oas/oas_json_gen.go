@@ -25942,6 +25942,12 @@ func (s *PostV1AuthAccessRequestsReq) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Locale.Set {
+			e.FieldStart("locale")
+			s.Locale.Encode(e)
+		}
+	}
+	{
 		if s.Fields.Set {
 			e.FieldStart("fields")
 			s.Fields.Encode(e)
@@ -25955,11 +25961,12 @@ func (s *PostV1AuthAccessRequestsReq) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfPostV1AuthAccessRequestsReq = [4]string{
+var jsonFieldsNameOfPostV1AuthAccessRequestsReq = [5]string{
 	0: "email",
 	1: "reason",
-	2: "fields",
-	3: "captcha_token",
+	2: "locale",
+	3: "fields",
+	4: "captcha_token",
 }
 
 // Decode decodes PostV1AuthAccessRequestsReq from json.
@@ -25992,6 +25999,16 @@ func (s *PostV1AuthAccessRequestsReq) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"reason\"")
+			}
+		case "locale":
+			if err := func() error {
+				s.Locale.Reset()
+				if err := s.Locale.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"locale\"")
 			}
 		case "fields":
 			if err := func() error {

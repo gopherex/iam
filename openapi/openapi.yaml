@@ -13386,6 +13386,14 @@ paths:
                 reason:
                   type: string
                   maxLength: 1024
+                locale:
+                  type: string
+                  description: >-
+                    Preferred language for the decision emails (approved /
+                    denied). Empty falls back to the project default, then
+                    English.
+                  pattern: ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+                  maxLength: 35
                 fields:
                   type: object
                   additionalProperties: true

@@ -15575,8 +15575,11 @@ func (s *PostV1AuthAccessRequestsOK) SetRequest(val OptAccessRequest) {
 }
 
 type PostV1AuthAccessRequestsReq struct {
-	Email        string                               `json:"email"`
-	Reason       OptString                            `json:"reason"`
+	Email  string    `json:"email"`
+	Reason OptString `json:"reason"`
+	// Preferred language for the decision emails (approved / denied). Empty falls back to the project
+	// default, then English.
+	Locale       OptString                            `json:"locale"`
 	Fields       OptPostV1AuthAccessRequestsReqFields `json:"fields"`
 	CaptchaToken OptString                            `json:"captcha_token"`
 }
@@ -15589,6 +15592,11 @@ func (s *PostV1AuthAccessRequestsReq) GetEmail() string {
 // GetReason returns the value of Reason.
 func (s *PostV1AuthAccessRequestsReq) GetReason() OptString {
 	return s.Reason
+}
+
+// GetLocale returns the value of Locale.
+func (s *PostV1AuthAccessRequestsReq) GetLocale() OptString {
+	return s.Locale
 }
 
 // GetFields returns the value of Fields.
@@ -15609,6 +15617,11 @@ func (s *PostV1AuthAccessRequestsReq) SetEmail(val string) {
 // SetReason sets the value of Reason.
 func (s *PostV1AuthAccessRequestsReq) SetReason(val OptString) {
 	s.Reason = val
+}
+
+// SetLocale sets the value of Locale.
+func (s *PostV1AuthAccessRequestsReq) SetLocale(val OptString) {
+	s.Locale = val
 }
 
 // SetFields sets the value of Fields.

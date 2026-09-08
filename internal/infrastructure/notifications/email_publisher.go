@@ -385,11 +385,23 @@ func accessDecisionJobFromEvent(event eventEnvelope) (emailJob, bool) {
 	job := emailJob{
 		TemplateID: templateID,
 		To:         accessRequestRecipient(event.Payload),
+		Locale:     accessRequestLocale(event.Payload),
 		Data:       payloadData(event.Payload),
 	}
 	job.Data["reason"] = accessRequestReason(event.Payload)
 
 	return job, true
+}
+
+// accessRequestLocale reads the requester's preferred locale from an
+// access_request.* payload (captured at submission). resolveLocale treats it
+// like a request locale: it wins over the account/project defaults.
+func accessRequestLocale(payload map[string]any) string {
+	if v := stringValue(payload, "locale"); v != "" {
+		return v
+	}
+
+	return stringValue(payload, "Locale")
 }
 
 // accessRequestRecipient resolves the requester's address from an

@@ -105,13 +105,15 @@ type CoreAuthStepUpResult struct {
 }
 
 // CoreAuthAccessRequest is a request for access to a project that gates
-// self-service sign-up behind approval.
+// self-service sign-up behind approval. Locale is the requester's preferred
+// language (from submission), reused for the decision emails.
 type CoreAuthAccessRequest struct {
 	ID        string
 	ProjectID string
 	Email     string
 	Reason    string
 	Status    string
+	Locale    string
 }
 
 // CoreAuthAccessRequestCmd creates an access request.
@@ -119,6 +121,7 @@ type CoreAuthAccessRequestCmd struct {
 	ProjectID    string
 	Email        string
 	Reason       string
+	Locale       string
 	CaptchaToken string
 }
 

@@ -377,6 +377,7 @@ func TestEmailJobFromEventAccessRequestDecision(t *testing.T) {
 		"ProjectID": "prj_1",
 		"Email":     "user@example.com",
 		"Status":    "approved",
+		"Locale":    "ru",
 	}
 
 	job, ok := emailJobFromEvent(eventEnvelope{Type: "access_request.approved", Payload: payload})
@@ -390,6 +391,10 @@ func TestEmailJobFromEventAccessRequestDecision(t *testing.T) {
 
 	if job.To != "user@example.com" {
 		t.Fatalf("to = %q", job.To)
+	}
+
+	if job.Locale != "ru" {
+		t.Fatalf("locale = %q, want ru (requester's submission locale)", job.Locale)
 	}
 
 	job, ok = emailJobFromEvent(eventEnvelope{

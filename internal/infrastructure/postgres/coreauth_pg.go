@@ -3573,6 +3573,7 @@ func (a *pgCoreAuth) CreateAccessRequest(
 			Email:     cmd.Email,
 			Reason:    cmd.Reason,
 			Status:    "pending",
+			Locale:    strings.TrimSpace(cmd.Locale),
 		}
 
 		raw, err := marshal(request)
