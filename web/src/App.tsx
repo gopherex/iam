@@ -14,6 +14,7 @@ import { ClientsPage } from '@/pages/project/clients';
 import { ConfigPage } from '@/pages/project/config';
 import { ConnectionsPage } from '@/pages/project/connections';
 import { DomainsPage } from '@/pages/project/domains';
+import { EmailTemplatesPage } from '@/pages/project/email-templates';
 import { EnvironmentsPage } from '@/pages/project/environments';
 import { InvitesPage } from '@/pages/project/invites';
 import { ProvidersPage } from '@/pages/project/providers';
@@ -52,6 +53,7 @@ export function App() {
             <Route path="environments" element={<EnvironmentsPage />} />
             <Route path="providers" element={<ProvidersPage />} />
             <Route path="invites" element={<InvitesPage />} />
+            <Route path="email-templates" element={<EmailTemplatesPage />} />
             <Route path="config" element={<ConfigPage />} />
             <Route path="access-requests" element={<AccessRequestsPage />} />
           </Route>

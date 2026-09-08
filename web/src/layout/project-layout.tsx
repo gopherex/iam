@@ -6,6 +6,7 @@ import {
 import {
   AppWindow,
   Bot,
+  FileText,
   Globe,
   Inbox,
   KeyRound,
@@ -80,6 +81,7 @@ function projectNav(id: string): NavItem[] {
     { label: 'Environments', to: `${base}/environments`, icon: Layers },
     { label: 'Providers', to: `${base}/providers`, icon: Send },
     { label: 'Invitations', to: `${base}/invites`, icon: MailPlus },
+    { label: 'Email Templates', to: `${base}/email-templates`, icon: FileText },
     { label: 'Configuration', to: `${base}/config`, icon: Settings2 },
     { label: 'Access Requests', to: `${base}/access-requests`, icon: Inbox },
   ];
