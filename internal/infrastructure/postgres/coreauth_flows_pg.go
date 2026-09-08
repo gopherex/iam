@@ -873,10 +873,40 @@ func (a *pgCoreAuthFlows) advanceSignupCreate(
 		// accepted in the same (ambient) transaction once the user is created.
 		return a.advanceSignupCreateAccepted(ctx, f, cmd, inviteRow)
 	case "request_access":
+		// An approved access request for this email admits the signup (the admin
+		// decision email links the requester back to this flow entry); no request
+		// yet — or a pending/denied one — waits at the request_access step.
+		approved, err := a.flowAccessRequestApproved(ctx, f.ProjectID, f.Environment, cmd.Email)
+		if err != nil {
+			return nil, err
+		}
+
+		if approved {
+			return a.flowSignupRegisterAndPersist(ctx, f, cmd, pwStrategy)
+		}
+
 		return a.flowPersistAtStep(ctx, f, domain.FlowStepRequestAccess, nil)
 	}
 
 	return a.flowSignupRegisterAndPersist(ctx, f, cmd, pwStrategy)
+}
+
+// flowAccessRequestApproved reports whether an approved access request exists
+// for email in the project+environment: the admin has admitted this email past
+// the request_access gate. "No such request" is an ordinary answer, not an
+// error, hence the .All+len idiom over .One.
+func (a *pgCoreAuthFlows) flowAccessRequestApproved(ctx context.Context, projectID, env, email string) (bool, error) {
+	rows, err := models.IamAccessRequests.Query(
+		sm.Where(models.IamAccessRequests.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamAccessRequests.Columns.Environment.EQ(psql.Arg(env))),
+		sm.Where(models.IamAccessRequests.Columns.Email.EQ(psql.Arg(email))),
+		sm.Where(models.IamAccessRequests.Columns.Status.EQ(psql.Arg("approved"))),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return false, fmt.Errorf("find access request: %w", err)
+	}
+
+	return len(rows) > 0, nil
 }
 
 // advanceSignupCreateAccepted runs the invite_only success path: it atomically

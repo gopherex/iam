@@ -167,6 +167,42 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			},
 		},
 	},
+	{
+		Key:  "access_request_approved",
+		Name: "Access request approved",
+		Locales: map[string]BuiltinEmailCopy{
+			"en": {
+				Subject: "Your access request was approved",
+				Text:    "Good news — your access request was approved.{{with .link}}\nContinue your sign-up: {{.}}{{end}}",
+				HTML: `<p>Good news — your access request was approved.</p>
+{{with .link}}<p>Continue your sign-up: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+			},
+			"ru": {
+				Subject: "Ваша заявка на доступ одобрена",
+				Text:    "Хорошая новость — ваша заявка на доступ одобрена.{{with .link}}\nПродолжите регистрацию: {{.}}{{end}}",
+				HTML: `<p>Хорошая новость — ваша заявка на доступ одобрена.</p>
+{{with .link}}<p>Продолжите регистрацию: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+			},
+		},
+	},
+	{
+		Key:  "access_request_denied",
+		Name: "Access request declined",
+		Locales: map[string]BuiltinEmailCopy{
+			"en": {
+				Subject: "Your access request was declined",
+				Text:    "Your access request was declined.{{with .reason}}\nReason: {{.}}{{end}}",
+				HTML: `<p>Your access request was declined.</p>
+{{with .reason}}<p>Reason: {{.}}</p>{{end}}`,
+			},
+			"ru": {
+				Subject: "Ваша заявка на доступ отклонена",
+				Text:    "Ваша заявка на доступ отклонена.{{with .reason}}\nПричина: {{.}}{{end}}",
+				HTML: `<p>Ваша заявка на доступ отклонена.</p>
+{{with .reason}}<p>Причина: {{.}}</p>{{end}}`,
+			},
+		},
+	},
 }
 
 // BuiltinEmailTemplateByKey returns the catalog entry for key, or nil when key

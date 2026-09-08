@@ -67,6 +67,48 @@ func TestE2EFlowRegistrationEnforcement(t *testing.T) {
 		}
 	})
 
+	t.Run("request_access approved admits signup", func(t *testing.T) {
+		projectID, token := e2eProjectAdmin(t, ctx)
+		patchAuth(projectID, token, map[string]any{"mode": "request_access"})
+
+		email := "ra-" + newUUID()[:8] + "@example.com"
+		reqID := e2eSubmitAccessRequest(t, ctx, ts.URL, projectID, email)
+
+		approve := ts.URL + "/v1/projects/" + projectID + "/admin/access-requests/" + reqID + "/approve"
+		r := e2eReq(t, ctx, http.MethodPost, approve, nil,
+			map[string]string{"Authorization": "Bearer " + token, "X-Environment": "live"})
+		e2eWantStatus(t, r, http.StatusOK)
+
+		fs, r := flowCreate(t, ctx, ts, projectID, map[string]any{
+			"kind": "signup", "email": email, "password": "Sup3rStr0ng!",
+		})
+		e2eWantStatus(t, r, http.StatusOK)
+		if fs.Step != "verify_email" {
+			t.Fatalf("step = %q, want verify_email", fs.Step)
+		}
+	})
+
+	t.Run("request_access denied still waits at request_access", func(t *testing.T) {
+		projectID, token := e2eProjectAdmin(t, ctx)
+		patchAuth(projectID, token, map[string]any{"mode": "request_access"})
+
+		email := "rd-" + newUUID()[:8] + "@example.com"
+		reqID := e2eSubmitAccessRequest(t, ctx, ts.URL, projectID, email)
+
+		deny := ts.URL + "/v1/projects/" + projectID + "/admin/access-requests/" + reqID + "/deny"
+		r := e2eReq(t, ctx, http.MethodPost, deny, map[string]any{"reason": "no"},
+			map[string]string{"Authorization": "Bearer " + token, "X-Environment": "live"})
+		e2eWantStatus(t, r, http.StatusOK)
+
+		fs, r := flowCreate(t, ctx, ts, projectID, map[string]any{
+			"kind": "signup", "email": email, "password": "Sup3rStr0ng!",
+		})
+		e2eWantStatus(t, r, http.StatusOK)
+		if fs.Step != "request_access" {
+			t.Fatalf("step = %q, want request_access", fs.Step)
+		}
+	})
+
 	t.Run("open mode signs up normally", func(t *testing.T) {
 		projectID, token := e2eProjectAdmin(t, ctx)
 		patchAuth(projectID, token, map[string]any{"mode": "open"})

@@ -3,12 +3,15 @@ package notifications
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	htmltemplate "html/template"
 	"mime"
+	"mime/quotedprintable"
 	"net"
 	"net/http"
 	"net/mail"
@@ -41,6 +44,14 @@ const (
 // templateKeyFlowContinue is the emailJob.TemplateID for the cross-device
 // "continue your sign-up" deep-link email.
 const templateKeyFlowContinue = "flow_continue"
+
+// templateKeyAccessApproved/ templateKeyAccessDenied are the emailJob.TemplateIDs
+// for the access-request decision emails the admin approve/deny actions send to
+// the requester.
+const (
+	templateKeyAccessApproved = "access_request_approved"
+	templateKeyAccessDenied   = "access_request_denied"
+)
 
 const (
 	defaultSMTPPort = 587
@@ -177,9 +188,25 @@ func (p *Publisher) applyTemplateLink(ctx context.Context, event eventEnvelope, 
 		// Accept deep-link from the per-tenant base (per-invite redirect_to
 		// when allowed, else app_base_url) + raw invite_token.
 		return p.applyInviteLink(ctx, event, job)
+	case templateKeyAccessApproved, templateKeyAccessDenied:
+		// Decision emails link to the app's sign-up entry when a base URL is
+		// configured, but the decision itself is informative: no base URL sends
+		// the email without a link rather than skipping the send.
+		return p.applyAccessDecisionLink(ctx, event, job)
 	default:
 		return job, true
 	}
+}
+
+// applyAccessDecisionLink attaches the project's app base URL as the decision
+// email's continue link when one is configured. Returns ok=true always: unlike
+// invite/flow-continue, a missing base URL must not drop the notification.
+func (p *Publisher) applyAccessDecisionLink(ctx context.Context, event eventEnvelope, job emailJob) (emailJob, bool) {
+	if base := p.projectAppBaseURL(ctx, event.ProjectID, event.Environment); base != "" {
+		job.Data["link"] = base
+	}
+
+	return job, true
 }
 
 func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
@@ -208,13 +235,19 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 		return err
 	}
 
+	// Access-request decisions are dual-channel: operators may subscribe to the
+	// event via webhooks (the only delivery these events had before the decision
+	// emails existed) AND the requester must be notified by email. Fan out the
+	// webhook first, then fall through to the email job.
+	if isAccessDecisionEvent(event.Type) {
+		if err := p.publishEventWebhooks(ctx, domainEvent); err != nil {
+			return err
+		}
+	}
+
 	job, ok := emailJobFromEvent(event)
 	if !ok {
-		if p.webhooks != nil {
-			return p.webhooks.PublishEvent(ctx, domainEvent)
-		}
-
-		return nil
+		return p.publishEventWebhooks(ctx, domainEvent)
 	}
 
 	if job.To == "" {
@@ -257,7 +290,30 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	return nil
 }
 
+// isAccessDecisionEvent reports whether an event type is an admin's
+// approve/deny decision on an access request (the access_request.* types that
+// carry a requester to notify).
+func isAccessDecisionEvent(t string) bool {
+	return t == "access_request.approved" || t == "access_request.denied"
+}
+
+// publishEventWebhooks fans a domain event out to the project's webhook
+// subscriptions. No subscriptions configured is a no-op success.
+func (p *Publisher) publishEventWebhooks(ctx context.Context, event domain.Event) error {
+	if p.webhooks == nil {
+		return nil
+	}
+
+	return p.webhooks.PublishEvent(ctx, event)
+}
+
 func emailJobFromEvent(event eventEnvelope) (emailJob, bool) {
+	// Access-request decisions get their own mapping (recipient + reason from
+	// the tag-less aggregate snapshot) — see accessDecisionJobFromEvent.
+	if job, ok := accessDecisionJobFromEvent(event); ok {
+		return withDerivedTemplateFields(job, event.Payload), true
+	}
+
 	data := payloadData(event.Payload)
 	// Locale may be empty here; publishOne resolves it (request → account →
 	// project default → "en") with DB context before rendering.
@@ -308,6 +364,56 @@ func emailJobFromEvent(event eventEnvelope) (emailJob, bool) {
 	}
 
 	return withDerivedTemplateFields(job, event.Payload), true
+}
+
+// accessDecisionJobFromEvent maps an admin's access-request decision to the
+// requester's notification email. domain.CoreAuthAccessRequest carries no json
+// tags, so the envelope marshals its fields with capitalized keys ("Email") —
+// accessRequestRecipient accepts both spellings.
+func accessDecisionJobFromEvent(event eventEnvelope) (emailJob, bool) {
+	var templateID string
+
+	switch event.Type {
+	case "access_request.approved":
+		templateID = templateKeyAccessApproved
+	case "access_request.denied":
+		templateID = templateKeyAccessDenied
+	default:
+		return emailJob{}, false
+	}
+
+	job := emailJob{
+		TemplateID: templateID,
+		To:         accessRequestRecipient(event.Payload),
+		Data:       payloadData(event.Payload),
+	}
+	job.Data["reason"] = accessRequestReason(event.Payload)
+
+	return job, true
+}
+
+// accessRequestRecipient resolves the requester's address from an
+// access_request.* payload. domain.CoreAuthAccessRequest carries no json tags,
+// so the event envelope marshals its fields with capitalized keys ("Email");
+// accept both spellings and require a mailbox (contains "@").
+func accessRequestRecipient(payload map[string]any) string {
+	for _, key := range []string{"email", "Email"} {
+		if v := stringValue(payload, key); strings.Contains(v, "@") {
+			return v
+		}
+	}
+
+	return ""
+}
+
+// accessRequestReason surfaces the recorded denial/rejection reason under the
+// lowercase template key, mirroring the capitalized envelope field.
+func accessRequestReason(payload map[string]any) string {
+	if v := stringValue(payload, "reason"); v != "" {
+		return v
+	}
+
+	return stringValue(payload, "Reason")
 }
 
 // withDerivedTemplateFields fills in the template-data fields every job shares
@@ -612,11 +718,13 @@ func (p *Publisher) smtpProvider(ctx context.Context, projectID string) (*smtpCo
 // not wedge the outbox on every verification email.
 var errNoSMTPProvider = errors.New("notifications: no enabled smtp provider")
 
-// errEmailNoRecipient, errSMTPConfigIncomplete, errSMTPNoStartTLS are the
-// email publisher's other terminal validation/delivery failures.
+// errEmailNoRecipient, errSMTPConfigIncomplete, errSMTPFromInvalid,
+// errSMTPNoStartTLS are the email publisher's other terminal validation/delivery
+// failures.
 var (
 	errEmailNoRecipient     = errors.New("notifications: email event has no recipient")
 	errSMTPConfigIncomplete = errors.New("notifications: smtp host and from are required")
+	errSMTPFromInvalid      = errors.New("notifications: smtp from must be a valid email address")
 	errSMTPNoStartTLS       = errors.New("notifications: SMTP server does not advertise STARTTLS; set start_tls=false only for a trusted local relay") //nolint:lll
 )
 
@@ -666,6 +774,13 @@ func (p *Publisher) decodeSMTPConfig(raw map[string]json.RawMessage) (*smtpConfi
 
 	if cfg.Host == "" || cfg.From == "" {
 		return nil, errSMTPConfigIncomplete
+	}
+
+	// A From without a mailbox (e.g. the Username fallback above for API-key
+	// style usernames like "apikey") is a guaranteed spam-folder sender; fail
+	// the config loudly so the operator sets a real address.
+	if _, err := mail.ParseAddress(cfg.From); err != nil {
+		return nil, fmt.Errorf("%w: %q", errSMTPFromInvalid, cfg.From)
 	}
 
 	return cfg, nil
@@ -787,36 +902,12 @@ func defaultTemplate(key, locale string) map[string]string {
 	return out
 }
 
+// send delivers one rendered email over SMTP. The wire format comes from
+// buildMessage; only the SMTP conversation lives here.
 func (c *smtpConfig) send(ctx context.Context, to string, msg renderedEmail) error {
 	addr := net.JoinHostPort(c.Host, strconv.Itoa(c.Port))
-	from := mail.Address{Name: c.FromName, Address: c.From}
-	rcpt := mail.Address{Address: to}
-	headers := map[string]string{
-		"From":         from.String(),
-		"To":           rcpt.String(),
-		"Subject":      mime.QEncoding.Encode("utf-8", msg.Subject),
-		"Date":         time.Now().Format(time.RFC1123Z),
-		"MIME-Version": "1.0",
-	}
 
-	body := msg.Text
-	if msg.HTML != "" {
-		headers["Content-Type"] = `text/html; charset="utf-8"`
-		body = msg.HTML
-	} else {
-		headers["Content-Type"] = `text/plain; charset="utf-8"`
-	}
-
-	var raw bytes.Buffer
-	for k, v := range headers {
-		raw.WriteString(k)
-		raw.WriteString(": ")
-		raw.WriteString(v)
-		raw.WriteString("\r\n")
-	}
-
-	raw.WriteString("\r\n")
-	raw.WriteString(body)
+	raw := c.buildMessage(to, msg)
 
 	client, err := c.connect(ctx, addr)
 	if err != nil {
@@ -843,7 +934,7 @@ func (c *smtpConfig) send(ctx context.Context, to string, msg renderedEmail) err
 		return fmt.Errorf("smtp data: %w", err)
 	}
 
-	if _, err := w.Write(raw.Bytes()); err != nil {
+	if _, err := w.Write(raw); err != nil {
 		_ = w.Close()
 		return fmt.Errorf("smtp write body: %w", err)
 	}
@@ -857,6 +948,115 @@ func (c *smtpConfig) send(ctx context.Context, to string, msg renderedEmail) err
 	}
 
 	return nil
+}
+
+// buildMessage renders the full RFC 5322 message for delivery. Deliverability
+// rules spam filters check — and this builder therefore enforces:
+//   - a generated Message-ID in the From domain (a missing or foreign-domain
+//     id is a strong spam signal);
+//   - a deterministic header order;
+//   - multipart/alternative with the plain-text part first when both bodies
+//     exist (an HTML-only message scores worse);
+//   - quoted-printable body encoding: the message stays 7-bit clean for relays
+//     without 8BITMIME instead of raw UTF-8 under an implicit (invalid) 7bit
+//     content-transfer-encoding.
+func (c *smtpConfig) buildMessage(to string, msg renderedEmail) []byte {
+	from := mail.Address{Name: c.FromName, Address: c.From}
+	rcpt := mail.Address{Address: to}
+
+	var raw bytes.Buffer
+	writeMIMEHeader(&raw, "From", from.String())
+	writeMIMEHeader(&raw, "To", rcpt.String())
+	writeMIMEHeader(&raw, "Subject", mime.QEncoding.Encode("utf-8", msg.Subject))
+	writeMIMEHeader(&raw, "Date", time.Now().Format(time.RFC1123Z))
+	writeMIMEHeader(&raw, "Message-ID", c.messageID())
+	writeMIMEHeader(&raw, "MIME-Version", "1.0")
+
+	switch {
+	case msg.HTML != "" && msg.Text != "":
+		boundary := mimeBoundary()
+		writeMIMEHeader(&raw, "Content-Type", `multipart/alternative; boundary="`+boundary+`"`)
+		raw.WriteString("\r\n")
+
+		writeMIMEPart(&raw, boundary, `text/plain; charset="utf-8"`, msg.Text)
+		writeMIMEPart(&raw, boundary, `text/html; charset="utf-8"`, msg.HTML)
+
+		raw.WriteString("--" + boundary + "--\r\n")
+	case msg.HTML != "":
+		writeMIMEHeader(&raw, "Content-Type", `text/html; charset="utf-8"`)
+		writeMIMEBody(&raw, msg.HTML)
+	default:
+		writeMIMEHeader(&raw, "Content-Type", `text/plain; charset="utf-8"`)
+		writeMIMEBody(&raw, msg.Text)
+	}
+
+	return raw.Bytes()
+}
+
+// writeMIMEHeader appends one CRLF-terminated header line.
+func writeMIMEHeader(buf *bytes.Buffer, key, value string) {
+	buf.WriteString(key)
+	buf.WriteString(": ")
+	buf.WriteString(value)
+	buf.WriteString("\r\n")
+}
+
+// writeMIMEPart appends one multipart part header block plus its
+// quoted-printable body.
+func writeMIMEPart(buf *bytes.Buffer, boundary, contentType, body string) {
+	buf.WriteString("--" + boundary + "\r\n")
+	writeMIMEHeader(buf, "Content-Type", contentType)
+	writeMIMEHeader(buf, "Content-Transfer-Encoding", "quoted-printable")
+	buf.WriteString("\r\n")
+	writeQPBody(buf, body)
+}
+
+// writeMIMEBody appends a single-part body (header + quoted-printable content).
+func writeMIMEBody(buf *bytes.Buffer, body string) {
+	writeMIMEHeader(buf, "Content-Transfer-Encoding", "quoted-printable")
+	buf.WriteString("\r\n")
+	writeQPBody(buf, body)
+}
+
+// writeQPBody writes body to buf quoted-printable encoded.
+func writeQPBody(buf *bytes.Buffer, body string) {
+	w := quotedprintable.NewWriter(buf)
+	_, _ = w.Write([]byte(body))
+	_ = w.Close()
+
+	buf.WriteString("\r\n")
+}
+
+// mimeNonceBytes is the entropy in a generated Message-ID / multipart boundary
+// token (128 bits).
+const mimeNonceBytes = 16
+
+// messageID mints a globally unique id in the From address's domain:
+// <unix-nano.random-hex@from-domain>.
+func (c *smtpConfig) messageID() string {
+	fromDomain := "localhost"
+	if at := strings.LastIndex(c.From, "@"); at >= 0 && at+1 < len(c.From) {
+		fromDomain = c.From[at+1:]
+	}
+
+	nonce := make([]byte, mimeNonceBytes)
+	if _, err := rand.Read(nonce); err != nil {
+		// crypto/rand failing is effectively unreachable; degrade to a
+		// time-only id rather than dropping the header.
+		return fmt.Sprintf("<%d@%s>", time.Now().UnixNano(), fromDomain)
+	}
+
+	return fmt.Sprintf("<%d.%s@%s>", time.Now().UnixNano(), hex.EncodeToString(nonce), fromDomain)
+}
+
+// mimeBoundary mints a multipart boundary token.
+func mimeBoundary() string {
+	b := make([]byte, mimeNonceBytes)
+	if _, err := rand.Read(b); err != nil {
+		return fmt.Sprintf("=_b%d", time.Now().UnixNano())
+	}
+
+	return "=_b" + hex.EncodeToString(b)
 }
 
 func (c *smtpConfig) connect(ctx context.Context, addr string) (*smtp.Client, error) {

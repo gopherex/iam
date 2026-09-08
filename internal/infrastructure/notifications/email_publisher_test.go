@@ -367,6 +367,206 @@ func TestInviteDefaultTemplate(t *testing.T) {
 	}
 }
 
+func TestEmailJobFromEventAccessRequestDecision(t *testing.T) {
+	t.Parallel()
+
+	// domain.CoreAuthAccessRequest has no json tags, so the envelope carries
+	// capitalized keys — the recipient lookup must accept that spelling.
+	payload := map[string]any{
+		"ID":        "ar_123",
+		"ProjectID": "prj_1",
+		"Email":     "user@example.com",
+		"Status":    "approved",
+	}
+
+	job, ok := emailJobFromEvent(eventEnvelope{Type: "access_request.approved", Payload: payload})
+	if !ok {
+		t.Fatal("expected email job")
+	}
+
+	if job.TemplateID != "access_request_approved" {
+		t.Fatalf("template = %q", job.TemplateID)
+	}
+
+	if job.To != "user@example.com" {
+		t.Fatalf("to = %q", job.To)
+	}
+
+	job, ok = emailJobFromEvent(eventEnvelope{
+		Type:    "access_request.denied",
+		Payload: map[string]any{"Email": "user@example.com", "Reason": "not in team"},
+	})
+	if !ok {
+		t.Fatal("expected email job")
+	}
+
+	if job.TemplateID != "access_request_denied" {
+		t.Fatalf("template = %q", job.TemplateID)
+	}
+
+	if job.Data["reason"] != "not in team" {
+		t.Fatalf("reason = %v", job.Data["reason"])
+	}
+}
+
+func TestEmailJobFromEventAccessRequestNoRecipient(t *testing.T) {
+	t.Parallel()
+
+	job, ok := emailJobFromEvent(eventEnvelope{
+		Type:    "access_request.approved",
+		Payload: map[string]any{"ID": "ar_123", "Status": "approved"},
+	})
+	if !ok {
+		t.Fatal("expected email job (recipient checked by publishOne)")
+	}
+
+	if job.To != "" {
+		t.Fatalf("to = %q, want empty", job.To)
+	}
+}
+
+func TestAccessDecisionDefaultTemplates(t *testing.T) {
+	t.Parallel()
+
+	approved := defaultTemplate("access_request_approved", "ru")
+
+	got, err := renderText(approved["text"], map[string]any{"link": "https://app.example.com"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := "Хорошая новость — ваша заявка на доступ одобрена.\nПродолжите регистрацию: https://app.example.com"
+	if got != want {
+		t.Fatalf("approved text = %q", got)
+	}
+
+	// Without a configured app base URL the email still sends, just link-less.
+	got, err = renderText(approved["text"], nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got != "Хорошая новость — ваша заявка на доступ одобрена." || strings.Contains(got, "<no value>") {
+		t.Fatalf("approved text without link = %q", got)
+	}
+
+	denied := defaultTemplate("access_request_denied", "ru")
+
+	got, err = renderText(denied["text"], map[string]any{"reason": "не входит в команду"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want = "Ваша заявка на доступ отклонена.\nПричина: не входит в команду"
+	if got != want {
+		t.Fatalf("denied text = %q", got)
+	}
+
+	got, err = renderText(denied["text"], nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got != "Ваша заявка на доступ отклонена." || strings.Contains(got, "<no value>") {
+		t.Fatalf("denied text without reason = %q", got)
+	}
+}
+
+func TestIsAccessDecisionEvent(t *testing.T) {
+	t.Parallel()
+
+	for _, typ := range []string{"access_request.approved", "access_request.denied"} {
+		if !isAccessDecisionEvent(typ) {
+			t.Errorf("isAccessDecisionEvent(%q) = false", typ)
+		}
+	}
+
+	for _, typ := range []string{"access_request.created", "invite.created", ""} {
+		if isAccessDecisionEvent(typ) {
+			t.Errorf("isAccessDecisionEvent(%q) = true", typ)
+		}
+	}
+}
+
+func TestBuildMessageMultipart(t *testing.T) {
+	t.Parallel()
+
+	c := &smtpConfig{From: "noreply@example.com", FromName: "Example"}
+	msg := renderedEmail{
+		Subject: "Подтвердите почту",
+		Text:    "Код: 260129",
+		HTML:    `<p>Код: <strong>260129</strong></p>`,
+	}
+
+	raw := c.buildMessage("user@example.org", msg)
+
+	s := string(raw)
+
+	// Deterministic header order.
+	for _, pair := range [][2]string{
+		{"From:", "To:"},
+		{"To:", "Subject:"},
+		{"Subject:", "Date:"},
+		{"Date:", "Message-ID:"},
+		{"Message-ID:", "MIME-Version:"},
+	} {
+		if !strings.Contains(s, pair[0]+" ") || !strings.Contains(s, pair[1]+" ") ||
+			strings.Index(s, pair[0]) > strings.Index(s, pair[1]) {
+			t.Fatalf("headers %q before %q violated:\n%s", pair[0], pair[1], s)
+		}
+	}
+
+	// Message-ID in the From domain, angle-bracketed.
+	if !strings.Contains(s, "@example.com>\r\n") {
+		t.Fatalf("message-id must end in @example.com>:\n%s", s)
+	}
+
+	// Both parts, text first, QP-encoded (Cyrillic must not appear raw).
+	if !strings.Contains(s, `multipart/alternative; boundary="`) {
+		t.Fatalf("expected multipart/alternative:\n%s", s)
+	}
+
+	if ti, hi := strings.Index(s, `text/plain`), strings.Index(s, `text/html`); ti < 0 || hi < 0 || ti > hi {
+		t.Fatalf("text part must precede html part:\n%s", s)
+	}
+
+	if got := strings.Count(s, "quoted-printable"); got != 2 {
+		t.Fatalf("quoted-printable count = %d, want 2:\n%s", got, s)
+	}
+
+	if strings.Contains(s, "Код:") {
+		t.Fatalf("raw UTF-8 body leaked (must be QP-encoded):\n%s", s)
+	}
+}
+
+func TestBuildMessageSinglePart(t *testing.T) {
+	t.Parallel()
+
+	c := &smtpConfig{From: "noreply@example.com"}
+
+	raw := c.buildMessage("user@example.org", renderedEmail{Subject: "s", Text: "plain body"})
+	if s := string(raw); !strings.Contains(s, `Content-Type: text/plain`) || strings.Contains(s, "multipart") {
+		t.Fatalf("text-only message:\n%s", s)
+	}
+
+	raw = c.buildMessage("user@example.org", renderedEmail{Subject: "s", HTML: "<p>html</p>"})
+	if s := string(raw); !strings.Contains(s, `Content-Type: text/html`) || strings.Contains(s, "multipart") {
+		t.Fatalf("html-only message:\n%s", s)
+	}
+}
+
+func TestMessageIDDomain(t *testing.T) {
+	t.Parallel()
+
+	if id := (&smtpConfig{From: "noreply@example.com"}).messageID(); !strings.HasPrefix(id, "<") || !strings.HasSuffix(id, "@example.com>") {
+		t.Fatalf("id = %q", id)
+	}
+
+	if id := (&smtpConfig{}).messageID(); !strings.HasSuffix(id, "@localhost>") {
+		t.Fatalf("id without from = %q", id)
+	}
+}
+
 func TestOTPDefaultTemplate(t *testing.T) {
 	t.Parallel()
 
