@@ -703,8 +703,8 @@ export class IamAuth {
   }
 
   /** Submit an access request (request-access registration mode; no session needed). */
-  async requestAccess(params: { email: string; reason?: string; captchaToken?: string }): Promise<{ data: { id?: string; status?: string } | null; error: IamAuthError | null }> {
-    const r = await postV1AuthAccessRequests({ client: this.client, headers: this.headers(), body: { email: params.email, reason: params.reason, captcha_token: params.captchaToken } });
+  async requestAccess(params: { email: string; reason?: string; locale?: string; captchaToken?: string }): Promise<{ data: { id?: string; status?: string } | null; error: IamAuthError | null }> {
+    const r = await postV1AuthAccessRequests({ client: this.client, headers: this.headers(), body: { email: params.email, reason: params.reason, locale: params.locale, captcha_token: params.captchaToken } });
     if (r.error) return { data: null, error: authError(r) };
     const body = r.data as { request?: { id?: string; status?: string } } | undefined;
     return { data: body?.request ?? null, error: null };
