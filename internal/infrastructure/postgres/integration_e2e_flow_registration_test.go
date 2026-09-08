@@ -8,6 +8,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
 )
@@ -78,6 +79,33 @@ func TestE2EFlowRegistrationEnforcement(t *testing.T) {
 		r := e2eReq(t, ctx, http.MethodPost, approve, nil,
 			map[string]string{"Authorization": "Bearer " + token, "X-Environment": "live"})
 		e2eWantStatus(t, r, http.StatusOK)
+
+		// Approve mints a single-use invite bound to the requester's email —
+		// the approval email's magic link redeems through it.
+		invites := e2eReq(t, ctx, http.MethodGet,
+			ts.URL+"/v1/projects/"+projectID+"/admin/invites", nil,
+			map[string]string{"Authorization": "Bearer " + token, "X-Environment": "live"})
+		e2eWantStatus(t, invites, http.StatusOK)
+
+		var list struct {
+			Invites []struct {
+				Email  string `json:"email"`
+				Status string `json:"status"`
+			} `json:"invites"`
+		}
+		if err := json.Unmarshal(invites.Body, &list); err != nil {
+			t.Fatalf("decode invites: %v", err)
+		}
+
+		found := false
+		for _, inv := range list.Invites {
+			if inv.Email == email && inv.Status == "pending" {
+				found = true
+			}
+		}
+		if !found {
+			t.Fatalf("no pending invite bound to %s among %+v", email, list.Invites)
+		}
 
 		fs, r := flowCreate(t, ctx, ts, projectID, map[string]any{
 			"kind": "signup", "email": email, "password": "Sup3rStr0ng!",

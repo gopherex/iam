@@ -188,7 +188,12 @@ func (p *Publisher) applyTemplateLink(ctx context.Context, event eventEnvelope, 
 		// Accept deep-link from the per-tenant base (per-invite redirect_to
 		// when allowed, else app_base_url) + raw invite_token.
 		return p.applyInviteLink(ctx, event, job)
-	case templateKeyAccessApproved, templateKeyAccessDenied:
+	case templateKeyAccessApproved:
+		// The approval email carries the decision invite's magic deep link
+		// (<base>/invite?token=…) when Approve minted one; without a token (or
+		// base URL) it degrades to the plain entry link / link-less send.
+		return p.applyAccessApprovedLink(ctx, event, job)
+	case templateKeyAccessDenied:
 		// Decision emails link to the app's sign-up entry when a base URL is
 		// configured, but the decision itself is informative: no base URL sends
 		// the email without a link rather than skipping the send.
@@ -196,6 +201,32 @@ func (p *Publisher) applyTemplateLink(ctx context.Context, event eventEnvelope, 
 	default:
 		return job, true
 	}
+}
+
+// applyAccessApprovedLink builds the approval email's deep link from the
+// single-use invite minted at decision time. Returns ok=true always: the
+// notification must reach the requester even without a configured base URL or
+// a legacy event that predates invite minting.
+func (p *Publisher) applyAccessApprovedLink(ctx context.Context, event eventEnvelope, job emailJob) (emailJob, bool) {
+	base := p.projectAppBaseURL(ctx, event.ProjectID, event.Environment)
+	if base == "" {
+		return job, true
+	}
+
+	token := stringValue(event.Payload, "invite_token")
+	if token == "" {
+		job.Data["link"] = base
+
+		return job, true
+	}
+
+	if link := inviteURL(base, token); link != "" {
+		job.Data["invite_url"] = link
+		job.Data["invite_token"] = token
+		job.Data["link"] = link
+	}
+
+	return job, true
 }
 
 // applyAccessDecisionLink attaches the project's app base URL as the decision

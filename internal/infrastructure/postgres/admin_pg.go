@@ -3487,12 +3487,29 @@ func (a *pgAdminAccessRequests) Approve(
 			return nil, err
 		}
 
+		inviteToken, err := a.mintDecisionInvite(ctx, row, request)
+		if err != nil {
+			return nil, err
+		}
+
+		// The decision email's payload is the aggregate snapshot plus the raw
+		// (single-use) invite token so the notification layer can build the
+		// <app_base_url>/invite?token=… deep link. The token is never persisted
+		// raw — only its hash, in iam_invites.
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "access_request.approved",
 			ProjectID:   cmd.ProjectID,
-			Environment: "",
+			Environment: row.Environment,
 			AggregateID: request.ID,
-			Payload:     request,
+			Payload: map[string]any{
+				"ID":           request.ID,
+				"ProjectID":    request.ProjectID,
+				"Email":        request.Email,
+				"Reason":       request.Reason,
+				"Status":       request.Status,
+				"Locale":       request.Locale,
+				"invite_token": inviteToken,
+			},
 		}); err != nil {
 			return nil, err
 		}
@@ -3505,6 +3522,46 @@ func (a *pgAdminAccessRequests) Approve(
 
 		return out, nil
 	})
+}
+
+// mintDecisionInvite creates the single-use, email-bound invitation that turns
+// the approval into a magic deep link: <app_base_url>/invite?token=…. Reuses
+// the admin invite machinery (inv_ token, sha256 hash, default 7-day TTL) so
+// the link also redeems under invite_only. Lives in the approve transaction:
+// an invite exists iff the approval committed.
+func (a *pgAdminAccessRequests) mintDecisionInvite(
+	ctx context.Context, row *models.IamAccessRequest, request domain.CoreAuthAccessRequest,
+) (string, error) {
+	token, hash, err := inviteMintToken()
+	if err != nil {
+		return "", fmt.Errorf("approve access request: mint invite: %w", err)
+	}
+
+	now := nowUTC()
+
+	env := row.Environment
+	if env == "" {
+		env = coreAuthDefaultEnv
+	}
+
+	setter := &models.IamInviteSetter{
+		ID:        ptr(newUUID()),
+		ProjectID: &request.ProjectID,
+		Email:     ptr(null.From(request.Email)),
+		TokenHash: &hash,
+		Status:    ptr(inviteStatusPend),
+		ExpiresAt: ptr(null.From(now.Add(inviteDefaultTTL))),
+		CreatedAt: &now,
+		UpdatedAt: &now,
+		Data:      ptr(json.RawMessage(`{}`)),
+	}
+	setter.Environment = &env
+
+	if _, err := models.IamInvites.Insert(setter).One(ctx, a.db.Bobx()); err != nil {
+		return "", fmt.Errorf("approve access request: insert invite: %w", err)
+	}
+
+	return token, nil
 }
 
 func (a *pgAdminAccessRequests) Deny(

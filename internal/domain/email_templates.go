@@ -173,15 +173,21 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 		Locales: map[string]BuiltinEmailCopy{
 			"en": {
 				Subject: "Your access request was approved",
-				Text:    "Good news — your access request was approved.{{with .link}}\nContinue your sign-up: {{.}}{{end}}",
+				Text: "Good news — your access request was approved." +
+					"{{with .link}}\nAccept your access and finish signing up: {{.}}{{end}}" +
+					"{{with .invite_token}}\nAlternatively, use code {{.}} during sign-up.{{end}}",
 				HTML: `<p>Good news — your access request was approved.</p>
-{{with .link}}<p>Continue your sign-up: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+{{with .link}}<p><a href="{{.}}">Accept your access and finish signing up</a></p>{{end}}
+{{with .invite_token}}<p>Alternatively, use code <strong>{{.}}</strong> during sign-up.</p>{{end}}`,
 			},
 			"ru": {
 				Subject: "Ваша заявка на доступ одобрена",
-				Text:    "Хорошая новость — ваша заявка на доступ одобрена.{{with .link}}\nПродолжите регистрацию: {{.}}{{end}}",
+				Text: "Хорошая новость — ваша заявка на доступ одобрена." +
+					"{{with .link}}\nПримите приглашение и завершите регистрацию: {{.}}{{end}}" +
+					"{{with .invite_token}}\nИли используйте код {{.}} при регистрации.{{end}}",
 				HTML: `<p>Хорошая новость — ваша заявка на доступ одобрена.</p>
-{{with .link}}<p>Продолжите регистрацию: <a href="{{.}}">{{.}}</a></p>{{end}}`,
+{{with .link}}<p><a href="{{.}}">Примите приглашение и завершите регистрацию</a></p>{{end}}
+{{with .invite_token}}<p>Или используйте код <strong>{{.}}</strong> при регистрации.</p>{{end}}`,
 			},
 		},
 	},

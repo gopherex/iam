@@ -367,17 +367,59 @@ func TestInviteDefaultTemplate(t *testing.T) {
 	}
 }
 
+func TestInviteURL(t *testing.T) {
+	t.Parallel()
+
+	if got := inviteURL("https://app.example.com", "inv_abc"); got != "https://app.example.com/invite?token=inv_abc" {
+		t.Fatalf("url = %q", got)
+	}
+
+	if inviteURL("", "inv_abc") != "" || inviteURL("https://app.example.com", "") != "" || inviteURL("not-a-url", "inv_abc") != "" {
+		t.Fatal("empty/bad base or token must yield empty link")
+	}
+}
+
+func TestAccessApprovedDefaultTemplate(t *testing.T) {
+	t.Parallel()
+
+	tpl := defaultTemplate("access_request_approved", "ru")
+
+	got, err := renderText(tpl["text"], map[string]any{
+		"link":         "https://app.example.com/invite?token=inv_abc",
+		"invite_token": "inv_abc",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := "Хорошая новость — ваша заявка на доступ одобрена.\nПримите приглашение и завершите регистрацию: https://app.example.com/invite?token=inv_abc\nИли используйте код inv_abc при регистрации."
+	if got != want {
+		t.Fatalf("approved text = %q", got)
+	}
+
+	// Legacy/no-token event: link-less send must stay clean.
+	got, err = renderText(tpl["text"], nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got != "Хорошая новость — ваша заявка на доступ одобрена." || strings.Contains(got, "<no value>") {
+		t.Fatalf("approved text without link/token = %q", got)
+	}
+}
+
 func TestEmailJobFromEventAccessRequestDecision(t *testing.T) {
 	t.Parallel()
 
 	// domain.CoreAuthAccessRequest has no json tags, so the envelope carries
 	// capitalized keys — the recipient lookup must accept that spelling.
 	payload := map[string]any{
-		"ID":        "ar_123",
-		"ProjectID": "prj_1",
-		"Email":     "user@example.com",
-		"Status":    "approved",
-		"Locale":    "ru",
+		"ID":           "ar_123",
+		"ProjectID":    "prj_1",
+		"Email":        "user@example.com",
+		"Status":       "approved",
+		"Locale":       "ru",
+		"invite_token": "inv_abc",
 	}
 
 	job, ok := emailJobFromEvent(eventEnvelope{Type: "access_request.approved", Payload: payload})
@@ -395,6 +437,10 @@ func TestEmailJobFromEventAccessRequestDecision(t *testing.T) {
 
 	if job.Locale != "ru" {
 		t.Fatalf("locale = %q, want ru (requester's submission locale)", job.Locale)
+	}
+
+	if job.Data["invite_token"] != "inv_abc" {
+		t.Fatalf("invite_token = %v, want inv_abc", job.Data["invite_token"])
 	}
 
 	job, ok = emailJobFromEvent(eventEnvelope{
@@ -440,7 +486,7 @@ func TestAccessDecisionDefaultTemplates(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := "Хорошая новость — ваша заявка на доступ одобрена.\nПродолжите регистрацию: https://app.example.com"
+	want := "Хорошая новость — ваша заявка на доступ одобрена.\nПримите приглашение и завершите регистрацию: https://app.example.com"
 	if got != want {
 		t.Fatalf("approved text = %q", got)
 	}
