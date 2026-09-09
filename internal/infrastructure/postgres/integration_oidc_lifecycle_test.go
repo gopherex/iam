@@ -209,7 +209,7 @@ func TestOIDCTokenTTLFollowsSessionPolicy(t *testing.T) {
 	ctx := context.Background()
 	f := newPKCEFixture(t, ctx, "spa")
 
-	cfgAdmin := NewPgAdminConfig(testDB, nopEmitter{})
+	cfgAdmin := NewPgAdminConfig(testDB, nopEmitter{}, nil)
 	if _, err := cfgAdmin.UpdateSessionPolicy(ctx, domain.AdminConfigUpdateCmd{
 		ProjectID:   f.projectID,
 		Environment: "live",

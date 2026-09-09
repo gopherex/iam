@@ -33649,6 +33649,91 @@ func decodePostV1AuthImpersonateRedeemParams(args [0]string, argsEscaped bool, r
 	return params, nil
 }
 
+// PostV1AuthInvitesByInviteIdRevokeParams is parameters of postV1AuthInvitesByInviteIdRevoke operation.
+type PostV1AuthInvitesByInviteIdRevokeParams struct {
+	InviteID string
+}
+
+func unpackPostV1AuthInvitesByInviteIdRevokeParams(packed middleware.Parameters) (params PostV1AuthInvitesByInviteIdRevokeParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "invite_id",
+			In:   "path",
+		}
+		params.InviteID = packed[key].(string)
+	}
+	return params
+}
+
+func decodePostV1AuthInvitesByInviteIdRevokeParams(args [1]string, argsEscaped bool, r *http.Request) (params PostV1AuthInvitesByInviteIdRevokeParams, _ error) {
+	// Decode path: invite_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "invite_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.InviteID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     256,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.InviteID)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "invite_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // PostV1AuthMagicLinkStartParams is parameters of postV1AuthMagicLinkStart operation.
 type PostV1AuthMagicLinkStartParams struct {
 	XClientID string

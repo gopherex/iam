@@ -36,6 +36,11 @@ func oasUser(a *domain.Account) oas.User {
 	if a.PrimaryPhone != "" {
 		user.PrimaryPhone = oas.NewOptNilString(a.PrimaryPhone)
 	}
+
+	// Per-user member-invite cap override (nil = project default applies).
+	if a.InviteCap != nil {
+		user.InviteCap = oas.NewOptNilInt(*a.InviteCap)
+	}
 	// Surface the editable profile (name/locale) so PATCH /v1/users/me and reads
 	// reflect the stored values. Locale is only set when non-empty: an empty
 	// string fails the oas locale pattern on response validation.

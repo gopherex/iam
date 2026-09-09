@@ -782,8 +782,9 @@ func (s *AuditLogData) init() AuditLogData {
 
 // Ref: #/components/schemas/AuthConfig
 type AuthConfig struct {
-	Methods      []string              `json:"methods"`
-	Registration OptRegistrationConfig `json:"registration"`
+	Methods       []string               `json:"methods"`
+	Registration  OptRegistrationConfig  `json:"registration"`
+	MemberInvites OptMemberInvitesConfig `json:"member_invites"`
 	// Public base URL of this project's hosted auth UI. Used to build cross-device resume deep-links
 	// (the "continue on another device" email links to <app_base_url>/continue?flow=<token>). Empty
 	// disables that email unless a per-flow redirect_to is supplied and allowed.
@@ -801,6 +802,11 @@ func (s *AuthConfig) GetMethods() []string {
 // GetRegistration returns the value of Registration.
 func (s *AuthConfig) GetRegistration() OptRegistrationConfig {
 	return s.Registration
+}
+
+// GetMemberInvites returns the value of MemberInvites.
+func (s *AuthConfig) GetMemberInvites() OptMemberInvitesConfig {
+	return s.MemberInvites
 }
 
 // GetAppBaseURL returns the value of AppBaseURL.
@@ -831,6 +837,11 @@ func (s *AuthConfig) SetMethods(val []string) {
 // SetRegistration sets the value of Registration.
 func (s *AuthConfig) SetRegistration(val OptRegistrationConfig) {
 	s.Registration = val
+}
+
+// SetMemberInvites sets the value of MemberInvites.
+func (s *AuthConfig) SetMemberInvites(val OptMemberInvitesConfig) {
+	s.MemberInvites = val
 }
 
 // SetAppBaseURL sets the value of AppBaseURL.
@@ -4026,6 +4037,31 @@ func (s *GetV1AuthIdentitiesOK) SetData(val []Identity) {
 	s.Data = val
 }
 
+type GetV1AuthInvitesOK struct {
+	Invites []Invite       `json:"invites"`
+	Quota   OptInviteQuota `json:"quota"`
+}
+
+// GetInvites returns the value of Invites.
+func (s *GetV1AuthInvitesOK) GetInvites() []Invite {
+	return s.Invites
+}
+
+// GetQuota returns the value of Quota.
+func (s *GetV1AuthInvitesOK) GetQuota() OptInviteQuota {
+	return s.Quota
+}
+
+// SetInvites sets the value of Invites.
+func (s *GetV1AuthInvitesOK) SetInvites(val []Invite) {
+	s.Invites = val
+}
+
+// SetQuota sets the value of Quota.
+func (s *GetV1AuthInvitesOK) SetQuota(val OptInviteQuota) {
+	s.Quota = val
+}
+
 // GetV1AuthMagicLinkCallbackFound is response for GetV1AuthMagicLinkCallback operation.
 type GetV1AuthMagicLinkCallbackFound struct {
 	Location  OptURI
@@ -6306,6 +6342,45 @@ func (s *InviteCreatedStatus) UnmarshalText(data []byte) error {
 	}
 }
 
+// The caller's member-invitation budget: the effective cap (user override or project default; 0 =
+// right revoked), occupied slots (pending-unexpired + accepted), and the creatable remainder.
+// Ref: #/components/schemas/InviteQuota
+type InviteQuota struct {
+	Cap  OptInt `json:"cap"`
+	Used OptInt `json:"used"`
+	Left OptInt `json:"left"`
+}
+
+// GetCap returns the value of Cap.
+func (s *InviteQuota) GetCap() OptInt {
+	return s.Cap
+}
+
+// GetUsed returns the value of Used.
+func (s *InviteQuota) GetUsed() OptInt {
+	return s.Used
+}
+
+// GetLeft returns the value of Left.
+func (s *InviteQuota) GetLeft() OptInt {
+	return s.Left
+}
+
+// SetCap sets the value of Cap.
+func (s *InviteQuota) SetCap(val OptInt) {
+	s.Cap = val
+}
+
+// SetUsed sets the value of Used.
+func (s *InviteQuota) SetUsed(val OptInt) {
+	s.Used = val
+}
+
+// SetLeft sets the value of Left.
+func (s *InviteQuota) SetLeft(val OptInt) {
+	s.Left = val
+}
+
 type InviteStatus string
 
 const (
@@ -6642,6 +6717,35 @@ func (s *MasterKey) SetToken(val string) {
 // SetRoles sets the value of Roles.
 func (s *MasterKey) SetRoles(val []string) {
 	s.Roles = val
+}
+
+// Member-invitation policy: whether signed-in users may invite others and the default per-user cap
+// of simultaneously active invitations (pending-unexpired + accepted). A per-user invite_cap
+// override in the admin user record wins over the default; 0 revokes the right.
+// Ref: #/components/schemas/MemberInvitesConfig
+type MemberInvitesConfig struct {
+	Enabled    OptBool `json:"enabled"`
+	DefaultCap OptInt  `json:"default_cap"`
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *MemberInvitesConfig) GetEnabled() OptBool {
+	return s.Enabled
+}
+
+// GetDefaultCap returns the value of DefaultCap.
+func (s *MemberInvitesConfig) GetDefaultCap() OptInt {
+	return s.DefaultCap
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *MemberInvitesConfig) SetEnabled(val OptBool) {
+	s.Enabled = val
+}
+
+// SetDefaultCap sets the value of DefaultCap.
+func (s *MemberInvitesConfig) SetDefaultCap(val OptInt) {
+	s.DefaultCap = val
 }
 
 // Ref: #/components/schemas/MfaPolicy
@@ -9202,6 +9306,98 @@ func (o OptInt) Or(d int) int {
 	return d
 }
 
+// NewOptInviteCreated returns new OptInviteCreated with value set to v.
+func NewOptInviteCreated(v InviteCreated) OptInviteCreated {
+	return OptInviteCreated{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInviteCreated is optional InviteCreated.
+type OptInviteCreated struct {
+	Value InviteCreated
+	Set   bool
+}
+
+// IsSet returns true if OptInviteCreated was set.
+func (o OptInviteCreated) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInviteCreated) Reset() {
+	var v InviteCreated
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInviteCreated) SetTo(v InviteCreated) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInviteCreated) Get() (v InviteCreated, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInviteCreated) Or(d InviteCreated) InviteCreated {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInviteQuota returns new OptInviteQuota with value set to v.
+func NewOptInviteQuota(v InviteQuota) OptInviteQuota {
+	return OptInviteQuota{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInviteQuota is optional InviteQuota.
+type OptInviteQuota struct {
+	Value InviteQuota
+	Set   bool
+}
+
+// IsSet returns true if OptInviteQuota was set.
+func (o OptInviteQuota) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInviteQuota) Reset() {
+	var v InviteQuota
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInviteQuota) SetTo(v InviteQuota) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInviteQuota) Get() (v InviteQuota, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInviteQuota) Or(d InviteQuota) InviteQuota {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptJob returns new OptJob with value set to v.
 func NewOptJob(v Job) OptJob {
 	return OptJob{
@@ -9334,6 +9530,52 @@ func (o OptJobStatus) Get() (v JobStatus, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptJobStatus) Or(d JobStatus) JobStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMemberInvitesConfig returns new OptMemberInvitesConfig with value set to v.
+func NewOptMemberInvitesConfig(v MemberInvitesConfig) OptMemberInvitesConfig {
+	return OptMemberInvitesConfig{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMemberInvitesConfig is optional MemberInvitesConfig.
+type OptMemberInvitesConfig struct {
+	Value MemberInvitesConfig
+	Set   bool
+}
+
+// IsSet returns true if OptMemberInvitesConfig was set.
+func (o OptMemberInvitesConfig) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMemberInvitesConfig) Reset() {
+	var v MemberInvitesConfig
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMemberInvitesConfig) SetTo(v MemberInvitesConfig) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMemberInvitesConfig) Get() (v MemberInvitesConfig, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMemberInvitesConfig) Or(d MemberInvitesConfig) MemberInvitesConfig {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -15897,6 +16139,57 @@ func (s *PostV1AuthImpersonateRedeemReq) SetToken(val string) {
 	s.Token = val
 }
 
+type PostV1AuthInvitesCreated struct {
+	Invite OptInviteCreated `json:"invite"`
+	Quota  OptInviteQuota   `json:"quota"`
+}
+
+// GetInvite returns the value of Invite.
+func (s *PostV1AuthInvitesCreated) GetInvite() OptInviteCreated {
+	return s.Invite
+}
+
+// GetQuota returns the value of Quota.
+func (s *PostV1AuthInvitesCreated) GetQuota() OptInviteQuota {
+	return s.Quota
+}
+
+// SetInvite sets the value of Invite.
+func (s *PostV1AuthInvitesCreated) SetInvite(val OptInviteCreated) {
+	s.Invite = val
+}
+
+// SetQuota sets the value of Quota.
+func (s *PostV1AuthInvitesCreated) SetQuota(val OptInviteQuota) {
+	s.Quota = val
+}
+
+type PostV1AuthInvitesReq struct {
+	Email string `json:"email"`
+	// Optional base for the invitation email link; its origin must match the project's app_base_url.
+	RedirectTo OptNilString `json:"redirect_to"`
+}
+
+// GetEmail returns the value of Email.
+func (s *PostV1AuthInvitesReq) GetEmail() string {
+	return s.Email
+}
+
+// GetRedirectTo returns the value of RedirectTo.
+func (s *PostV1AuthInvitesReq) GetRedirectTo() OptNilString {
+	return s.RedirectTo
+}
+
+// SetEmail sets the value of Email.
+func (s *PostV1AuthInvitesReq) SetEmail(val string) {
+	s.Email = val
+}
+
+// SetRedirectTo sets the value of RedirectTo.
+func (s *PostV1AuthInvitesReq) SetRedirectTo(val OptNilString) {
+	s.RedirectTo = val
+}
+
 type PostV1AuthMfaChallengeReq struct {
 	FlowToken OptNilString `json:"flow_token"`
 	FactorID  OptNilString `json:"factor_id"`
@@ -22276,17 +22569,20 @@ func (s *TokenProfileClaimsTemplate) init() TokenProfileClaimsTemplate {
 
 // Ref: #/components/schemas/User
 type User struct {
-	ID            string          `json:"id"`
-	Kind          UserKind        `json:"kind"`
-	Status        UserStatus      `json:"status"`
-	PrimaryEmail  OptNilString    `json:"primary_email"`
-	EmailVerified OptBool         `json:"email_verified"`
-	PrimaryPhone  OptNilString    `json:"primary_phone"`
-	PhoneVerified OptBool         `json:"phone_verified"`
-	Profile       OptCoreProfile  `json:"profile"`
-	Metadata      OptUserMetadata `json:"metadata"`
-	CreatedAt     OptTimestamp    `json:"created_at"`
-	UpdatedAt     OptTimestamp    `json:"updated_at"`
+	ID            string         `json:"id"`
+	Kind          UserKind       `json:"kind"`
+	Status        UserStatus     `json:"status"`
+	PrimaryEmail  OptNilString   `json:"primary_email"`
+	EmailVerified OptBool        `json:"email_verified"`
+	PrimaryPhone  OptNilString   `json:"primary_phone"`
+	PhoneVerified OptBool        `json:"phone_verified"`
+	Profile       OptCoreProfile `json:"profile"`
+	// Effective member-invite cap for this user: a per-user override stored on the account, or the
+	// project member_invites default when null. 0 means the right is revoked.
+	InviteCap OptNilInt       `json:"invite_cap"`
+	Metadata  OptUserMetadata `json:"metadata"`
+	CreatedAt OptTimestamp    `json:"created_at"`
+	UpdatedAt OptTimestamp    `json:"updated_at"`
 }
 
 // GetID returns the value of ID.
@@ -22327,6 +22623,11 @@ func (s *User) GetPhoneVerified() OptBool {
 // GetProfile returns the value of Profile.
 func (s *User) GetProfile() OptCoreProfile {
 	return s.Profile
+}
+
+// GetInviteCap returns the value of InviteCap.
+func (s *User) GetInviteCap() OptNilInt {
+	return s.InviteCap
 }
 
 // GetMetadata returns the value of Metadata.
@@ -22382,6 +22683,11 @@ func (s *User) SetPhoneVerified(val OptBool) {
 // SetProfile sets the value of Profile.
 func (s *User) SetProfile(val OptCoreProfile) {
 	s.Profile = val
+}
+
+// SetInviteCap sets the value of InviteCap.
+func (s *User) SetInviteCap(val OptNilInt) {
+	s.InviteCap = val
 }
 
 // SetMetadata sets the value of Metadata.

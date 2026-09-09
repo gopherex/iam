@@ -23,12 +23,25 @@ type InviteCreateCmd struct {
 	Email       string    // optional; empty → open invite, no email sent
 	ExpiresAt   time.Time // zero → default TTL
 	RedirectTo  string    // optional base for the email link
+	// CreatedBy marks a member (user-driven) invitation: the invite occupies
+	// one of that user's invite-cap slots. Empty = admin/system invite (the
+	// admin API, access-request approvals, the telegram bot), uncapped.
+	CreatedBy string
 }
 
 // InviteCreated is the create result carrying the one-time raw token.
 type InviteCreated struct {
 	Invite
 	Token string
+}
+
+// InviteQuota is a user's member-invitation budget: Cap is the effective
+// limit (user override or project default), Used the occupied slots
+// (pending-unexpired + accepted), Left the creatable count.
+type InviteQuota struct {
+	Cap  int
+	Used int
+	Left int
 }
 
 // InviteListCmd lists invitations for a project.

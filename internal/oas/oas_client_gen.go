@@ -639,7 +639,8 @@ type AdminInvoker interface {
 	PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, request PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK, error)
 	// PatchV1ProjectsByProjectIdAdminUsersByUserId invokes patchV1ProjectsByProjectIdAdminUsersByUserId operation.
 	//
-	// Update a user.
+	// Patchable fields: name, locale, and invite_cap (integer or null — null clears the per-user
+	// override so the project member_invites default applies; 0 revokes the member-invitation right).
 	//
 	// PATCH /v1/projects/{project_id}/admin/users/{user_id}
 	PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, error)
@@ -1001,6 +1002,12 @@ type CoreAuthInvoker interface {
 	//
 	// GET /v1/auth/flows/current
 	GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams, options ...RequestOption) (*FlowStateHeaders, error)
+	// GetV1AuthInvites invokes getV1AuthInvites operation.
+	//
+	// List the caller's own invitations and quota.
+	//
+	// GET /v1/auth/invites
+	GetV1AuthInvites(ctx context.Context, options ...RequestOption) (*GetV1AuthInvitesOK, error)
 	// GetV1AuthSession invokes getV1AuthSession operation.
 	//
 	// Get current session and user.
@@ -1076,6 +1083,21 @@ type CoreAuthInvoker interface {
 	//
 	// POST /v1/auth/impersonate/redeem
 	PostV1AuthImpersonateRedeem(ctx context.Context, request *PostV1AuthImpersonateRedeemReq, params PostV1AuthImpersonateRedeemParams, options ...RequestOption) (*AuthResult, error)
+	// PostV1AuthInvites invokes postV1AuthInvites operation.
+	//
+	// Creates an email-bound invitation on the caller's own quota. The invitee receives the invitation
+	// email immediately; the raw invite_token (and its shareable link) is returned exactly once for the
+	// caller to pass along. Fails 403 when member invitations are disabled for the caller and 409
+	// invite_quota_exceeded when the cap is reached.
+	//
+	// POST /v1/auth/invites
+	PostV1AuthInvites(ctx context.Context, request *PostV1AuthInvitesReq, options ...RequestOption) (*PostV1AuthInvitesCreated, error)
+	// PostV1AuthInvitesByInviteIdRevoke invokes postV1AuthInvitesByInviteIdRevoke operation.
+	//
+	// Revoke the caller's own pending invitation (frees the slot).
+	//
+	// POST /v1/auth/invites/{invite_id}/revoke
+	PostV1AuthInvitesByInviteIdRevoke(ctx context.Context, params PostV1AuthInvitesByInviteIdRevokeParams, options ...RequestOption) (*Ok, error)
 	// PostV1AuthPasswordChange invokes postV1AuthPasswordChange operation.
 	//
 	// Change a known password.
@@ -11315,6 +11337,139 @@ func (c *Client) sendGetV1AuthIdentities(ctx context.Context, requestOptions ...
 
 	stage = "DecodeResponse"
 	result, err := decodeGetV1AuthIdentitiesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetV1AuthInvites invokes getV1AuthInvites operation.
+//
+// List the caller's own invitations and quota.
+//
+// GET /v1/auth/invites
+func (c *Client) GetV1AuthInvites(ctx context.Context, options ...RequestOption) (*GetV1AuthInvitesOK, error) {
+	res, err := c.sendGetV1AuthInvites(ctx, options...)
+	return res, err
+}
+
+func (c *Client) sendGetV1AuthInvites(ctx context.Context, requestOptions ...RequestOption) (res *GetV1AuthInvitesOK, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getV1AuthInvites"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/auth/invites"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetV1AuthInvitesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [1]string
+	pathParts[0] = "/v1/auth/invites"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetV1AuthInvitesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodeGetV1AuthInvitesResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -28749,7 +28904,8 @@ func (c *Client) sendPatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx contex
 
 // PatchV1ProjectsByProjectIdAdminUsersByUserId invokes patchV1ProjectsByProjectIdAdminUsersByUserId operation.
 //
-// Update a user.
+// Patchable fields: name, locale, and invite_cap (integer or null — null clears the per-user
+// override so the project member_invites default applies; 0 revokes the member-invitation right).
 //
 // PATCH /v1/projects/{project_id}/admin/users/{user_id}
 func (c *Client) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, request PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams, options ...RequestOption) (*PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, error) {
@@ -33359,6 +33515,306 @@ func (c *Client) sendPostV1AuthImpersonateRedeem(ctx context.Context, request *P
 
 	stage = "DecodeResponse"
 	result, err := decodePostV1AuthImpersonateRedeemResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostV1AuthInvites invokes postV1AuthInvites operation.
+//
+// Creates an email-bound invitation on the caller's own quota. The invitee receives the invitation
+// email immediately; the raw invite_token (and its shareable link) is returned exactly once for the
+// caller to pass along. Fails 403 when member invitations are disabled for the caller and 409
+// invite_quota_exceeded when the cap is reached.
+//
+// POST /v1/auth/invites
+func (c *Client) PostV1AuthInvites(ctx context.Context, request *PostV1AuthInvitesReq, options ...RequestOption) (*PostV1AuthInvitesCreated, error) {
+	res, err := c.sendPostV1AuthInvites(ctx, request, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1AuthInvites(ctx context.Context, request *PostV1AuthInvitesReq, requestOptions ...RequestOption) (res *PostV1AuthInvitesCreated, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1AuthInvites"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/auth/invites"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1AuthInvitesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [1]string
+	pathParts[0] = "/v1/auth/invites"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostV1AuthInvitesRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, PostV1AuthInvitesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1AuthInvitesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostV1AuthInvitesByInviteIdRevoke invokes postV1AuthInvitesByInviteIdRevoke operation.
+//
+// Revoke the caller's own pending invitation (frees the slot).
+//
+// POST /v1/auth/invites/{invite_id}/revoke
+func (c *Client) PostV1AuthInvitesByInviteIdRevoke(ctx context.Context, params PostV1AuthInvitesByInviteIdRevokeParams, options ...RequestOption) (*Ok, error) {
+	res, err := c.sendPostV1AuthInvitesByInviteIdRevoke(ctx, params, options...)
+	return res, err
+}
+
+func (c *Client) sendPostV1AuthInvitesByInviteIdRevoke(ctx context.Context, params PostV1AuthInvitesByInviteIdRevokeParams, requestOptions ...RequestOption) (res *Ok, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("postV1AuthInvitesByInviteIdRevoke"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/v1/auth/invites/{invite_id}/revoke"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, PostV1AuthInvitesByInviteIdRevokeOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	var reqCfg requestConfig
+	reqCfg.setDefaults(c.baseClient)
+	for _, o := range requestOptions {
+		o(&reqCfg)
+	}
+
+	stage = "BuildURL"
+	u := c.serverURL
+	if override := reqCfg.ServerURL; override != nil {
+		u = override
+	}
+	u = uri.Clone(u)
+	var pathParts [3]string
+	pathParts[0] = "/v1/auth/invites/"
+	{
+		// Encode "invite_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "invite_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.InviteID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/revoke"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, PostV1AuthInvitesByInviteIdRevokeOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	if err := c.onRequest(ctx, r); err != nil {
+		return res, errors.Wrap(err, "client edit request")
+	}
+
+	if err := reqCfg.onRequest(r); err != nil {
+		return res, errors.Wrap(err, "edit request")
+	}
+
+	stage = "SendRequest"
+	resp, err := reqCfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	if err := c.onResponse(ctx, resp); err != nil {
+		return res, errors.Wrap(err, "client edit response")
+	}
+
+	if err := reqCfg.onResponse(resp); err != nil {
+		return res, errors.Wrap(err, "edit response")
+	}
+
+	stage = "DecodeResponse"
+	result, err := decodePostV1AuthInvitesByInviteIdRevokeResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

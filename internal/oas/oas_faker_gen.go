@@ -373,6 +373,11 @@ func (s *AuthConfig) SetFake() {
 	}
 	{
 		{
+			s.MemberInvites.SetFake()
+		}
+	}
+	{
+		{
 			s.AppBaseURL.SetFake()
 		}
 	}
@@ -1669,6 +1674,27 @@ func (s *GetV1AuthIdentitiesOK) SetFake() {
 				}
 				s.Data = append(s.Data, elem)
 			}
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *GetV1AuthInvitesOK) SetFake() {
+	{
+		{
+			s.Invites = nil
+			for i := 0; i < 0; i++ {
+				var elem Invite
+				{
+					elem.SetFake()
+				}
+				s.Invites = append(s.Invites, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Quota.SetFake()
 		}
 	}
 }
@@ -3010,6 +3036,25 @@ func (s *InviteCreatedStatus) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *InviteQuota) SetFake() {
+	{
+		{
+			s.Cap.SetFake()
+		}
+	}
+	{
+		{
+			s.Used.SetFake()
+		}
+	}
+	{
+		{
+			s.Left.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *InviteStatus) SetFake() {
 	*s = InviteStatusPending
 }
@@ -3106,6 +3151,20 @@ func (s *MagicLinkVerifyRequest) SetFake() {
 	{
 		{
 			s.Token = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *MemberInvitesConfig) SetFake() {
+	{
+		{
+			s.Enabled.SetFake()
+		}
+	}
+	{
+		{
+			s.DefaultCap.SetFake()
 		}
 	}
 }
@@ -3675,6 +3734,24 @@ func (s *OptInt) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptInviteCreated) SetFake() {
+	var elem InviteCreated
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptInviteQuota) SetFake() {
+	var elem InviteQuota
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
 func (s *OptJob) SetFake() {
 	var elem Job
 	{
@@ -3695,6 +3772,15 @@ func (s *OptJobProgress) SetFake() {
 // SetFake set fake values.
 func (s *OptJobStatus) SetFake() {
 	var elem JobStatus
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptMemberInvitesConfig) SetFake() {
+	var elem MemberInvitesConfig
 	{
 		elem.SetFake()
 	}
@@ -5525,6 +5611,34 @@ func (s *PostV1AuthImpersonateRedeemReq) SetFake() {
 	{
 		{
 			s.Token = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *PostV1AuthInvitesCreated) SetFake() {
+	{
+		{
+			s.Invite.SetFake()
+		}
+	}
+	{
+		{
+			s.Quota.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *PostV1AuthInvitesReq) SetFake() {
+	{
+		{
+			s.Email = "string"
+		}
+	}
+	{
+		{
+			s.RedirectTo.SetFake()
 		}
 	}
 }
@@ -8979,6 +9093,11 @@ func (s *User) SetFake() {
 	{
 		{
 			s.Profile.SetFake()
+		}
+	}
+	{
+		{
+			s.InviteCap.SetFake()
 		}
 	}
 	{

@@ -564,7 +564,8 @@ type AdminHandler interface {
 	PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx context.Context, req PatchV1ProjectsByProjectIdAdminTokenProfilesByIdReq, params PatchV1ProjectsByProjectIdAdminTokenProfilesByIdParams) (*PatchV1ProjectsByProjectIdAdminTokenProfilesByIdOK, error)
 	// PatchV1ProjectsByProjectIdAdminUsersByUserId implements patchV1ProjectsByProjectIdAdminUsersByUserId operation.
 	//
-	// Update a user.
+	// Patchable fields: name, locale, and invite_cap (integer or null — null clears the per-user
+	// override so the project member_invites default applies; 0 revokes the member-invitation right).
 	//
 	// PATCH /v1/projects/{project_id}/admin/users/{user_id}
 	PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, req PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams) (*PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, error)
@@ -926,6 +927,12 @@ type CoreAuthHandler interface {
 	//
 	// GET /v1/auth/flows/current
 	GetV1AuthFlowsCurrent(ctx context.Context, params GetV1AuthFlowsCurrentParams) (*FlowStateHeaders, error)
+	// GetV1AuthInvites implements getV1AuthInvites operation.
+	//
+	// List the caller's own invitations and quota.
+	//
+	// GET /v1/auth/invites
+	GetV1AuthInvites(ctx context.Context) (*GetV1AuthInvitesOK, error)
 	// GetV1AuthSession implements getV1AuthSession operation.
 	//
 	// Get current session and user.
@@ -1001,6 +1008,21 @@ type CoreAuthHandler interface {
 	//
 	// POST /v1/auth/impersonate/redeem
 	PostV1AuthImpersonateRedeem(ctx context.Context, req *PostV1AuthImpersonateRedeemReq, params PostV1AuthImpersonateRedeemParams) (*AuthResult, error)
+	// PostV1AuthInvites implements postV1AuthInvites operation.
+	//
+	// Creates an email-bound invitation on the caller's own quota. The invitee receives the invitation
+	// email immediately; the raw invite_token (and its shareable link) is returned exactly once for the
+	// caller to pass along. Fails 403 when member invitations are disabled for the caller and 409
+	// invite_quota_exceeded when the cap is reached.
+	//
+	// POST /v1/auth/invites
+	PostV1AuthInvites(ctx context.Context, req *PostV1AuthInvitesReq) (*PostV1AuthInvitesCreated, error)
+	// PostV1AuthInvitesByInviteIdRevoke implements postV1AuthInvitesByInviteIdRevoke operation.
+	//
+	// Revoke the caller's own pending invitation (frees the slot).
+	//
+	// POST /v1/auth/invites/{invite_id}/revoke
+	PostV1AuthInvitesByInviteIdRevoke(ctx context.Context, params PostV1AuthInvitesByInviteIdRevokeParams) (*Ok, error)
 	// PostV1AuthPasswordChange implements postV1AuthPasswordChange operation.
 	//
 	// Change a known password.

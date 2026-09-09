@@ -1055,6 +1055,18 @@ func TestGetV1AuthIdentitiesOK_EncodeDecode(t *testing.T) {
 	var typ2 GetV1AuthIdentitiesOK
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestGetV1AuthInvitesOK_EncodeDecode(t *testing.T) {
+	var typ GetV1AuthInvitesOK
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 GetV1AuthInvitesOK
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestGetV1AuthMfaFactorsOK_EncodeDecode(t *testing.T) {
 	var typ GetV1AuthMfaFactorsOK
 	typ.SetFake()
@@ -1993,6 +2005,18 @@ func TestInviteCreatedStatus_EncodeDecode(t *testing.T) {
 	var typ2 InviteCreatedStatus
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestInviteQuota_EncodeDecode(t *testing.T) {
+	var typ InviteQuota
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 InviteQuota
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestInviteStatus_EncodeDecode(t *testing.T) {
 	var typ InviteStatus
 	typ.SetFake()
@@ -2075,6 +2099,18 @@ func TestMagicLinkVerifyRequest_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 MagicLinkVerifyRequest
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestMemberInvitesConfig_EncodeDecode(t *testing.T) {
+	var typ MemberInvitesConfig
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 MemberInvitesConfig
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestMfaPolicy_EncodeDecode(t *testing.T) {
@@ -3079,6 +3115,30 @@ func TestPostV1AuthImpersonateRedeemReq_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 PostV1AuthImpersonateRedeemReq
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestPostV1AuthInvitesCreated_EncodeDecode(t *testing.T) {
+	var typ PostV1AuthInvitesCreated
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PostV1AuthInvitesCreated
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestPostV1AuthInvitesReq_EncodeDecode(t *testing.T) {
+	var typ PostV1AuthInvitesReq
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 PostV1AuthInvitesReq
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestPostV1AuthMfaChallengeReq_EncodeDecode(t *testing.T) {

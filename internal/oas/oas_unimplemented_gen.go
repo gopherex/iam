@@ -515,6 +515,15 @@ func (UnimplementedHandler) GetV1AuthIdentities(ctx context.Context) (r *GetV1Au
 	return r, ht.ErrNotImplemented
 }
 
+// GetV1AuthInvites implements getV1AuthInvites operation.
+//
+// List the caller's own invitations and quota.
+//
+// GET /v1/auth/invites
+func (UnimplementedHandler) GetV1AuthInvites(ctx context.Context) (r *GetV1AuthInvitesOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetV1AuthMagicLinkCallback implements getV1AuthMagicLinkCallback operation.
 //
 // Magic-link callback (redirects with code).
@@ -1428,7 +1437,8 @@ func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminTokenProfilesById(ctx
 
 // PatchV1ProjectsByProjectIdAdminUsersByUserId implements patchV1ProjectsByProjectIdAdminUsersByUserId operation.
 //
-// Update a user.
+// Patchable fields: name, locale, and invite_cap (integer or null — null clears the per-user
+// override so the project member_invites default applies; 0 revokes the member-invitation right).
 //
 // PATCH /v1/projects/{project_id}/admin/users/{user_id}
 func (UnimplementedHandler) PatchV1ProjectsByProjectIdAdminUsersByUserId(ctx context.Context, req PatchV1ProjectsByProjectIdAdminUsersByUserIdReq, params PatchV1ProjectsByProjectIdAdminUsersByUserIdParams) (r *PatchV1ProjectsByProjectIdAdminUsersByUserIdOK, _ error) {
@@ -1709,6 +1719,27 @@ func (UnimplementedHandler) PostV1AuthIdentitiesMergeStart(ctx context.Context, 
 //
 // POST /v1/auth/impersonate/redeem
 func (UnimplementedHandler) PostV1AuthImpersonateRedeem(ctx context.Context, req *PostV1AuthImpersonateRedeemReq, params PostV1AuthImpersonateRedeemParams) (r *AuthResult, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PostV1AuthInvites implements postV1AuthInvites operation.
+//
+// Creates an email-bound invitation on the caller's own quota. The invitee receives the invitation
+// email immediately; the raw invite_token (and its shareable link) is returned exactly once for the
+// caller to pass along. Fails 403 when member invitations are disabled for the caller and 409
+// invite_quota_exceeded when the cap is reached.
+//
+// POST /v1/auth/invites
+func (UnimplementedHandler) PostV1AuthInvites(ctx context.Context, req *PostV1AuthInvitesReq) (r *PostV1AuthInvitesCreated, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PostV1AuthInvitesByInviteIdRevoke implements postV1AuthInvitesByInviteIdRevoke operation.
+//
+// Revoke the caller's own pending invitation (frees the slot).
+//
+// POST /v1/auth/invites/{invite_id}/revoke
+func (UnimplementedHandler) PostV1AuthInvitesByInviteIdRevoke(ctx context.Context, params PostV1AuthInvitesByInviteIdRevokeParams) (r *Ok, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

@@ -31,8 +31,12 @@ type Account struct {
 	PhoneVerified bool
 	Name          string
 	Locale        string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	// InviteCap is the per-user member-invite cap override (nil = the project
+	// member_invites default applies; 0 = the right is revoked). Lives in the
+	// account envelope under the lowercase tag.
+	InviteCap *int `json:"invite_cap,omitempty"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Session struct {

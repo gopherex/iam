@@ -552,6 +552,16 @@ components:
           type: boolean
         profile:
           $ref: '#/components/schemas/CoreProfile'
+        invite_cap:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 100000
+          description: >-
+            Effective member-invite cap for this user: a per-user override
+            stored on the account, or the project member_invites default when
+            null. 0 means the right is revoked.
         metadata:
           type: object
           additionalProperties: true
@@ -2086,6 +2096,8 @@ components:
           maxItems: 1000
         registration:
           $ref: '#/components/schemas/RegistrationConfig'
+        member_invites:
+          $ref: '#/components/schemas/MemberInvitesConfig'
         app_base_url:
           type: string
           description: >-
@@ -2104,6 +2116,21 @@ components:
             type: string
           maxItems: 1000
       additionalProperties: true
+    MemberInvitesConfig:
+      type: object
+      description: >-
+        Member-invitation policy: whether signed-in users may invite others and
+        the default per-user cap of simultaneously active invitations
+        (pending-unexpired + accepted). A per-user invite_cap override in the
+        admin user record wins over the default; 0 revokes the right.
+      properties:
+        enabled:
+          type: boolean
+        default_cap:
+          type: integer
+          minimum: 0
+          maximum: 100000
+      additionalProperties: false
     EmailProvider:
       type: object
       properties:
@@ -2158,6 +2185,22 @@ components:
           $ref: '#/components/schemas/Timestamp'
         created_at:
           $ref: '#/components/schemas/Timestamp'
+    InviteQuota:
+      type: object
+      description: >-
+        The caller's member-invitation budget: the effective cap (user
+        override or project default; 0 = right revoked), occupied slots
+        (pending-unexpired + accepted), and the creatable remainder.
+      properties:
+        cap:
+          type: integer
+          minimum: 0
+        used:
+          type: integer
+          minimum: 0
+        left:
+          type: integer
+          minimum: 0
     InviteCreateRequest:
       type: object
       properties:
@@ -9016,6 +9059,10 @@ paths:
       tags:
       - Admin Users
       summary: Update a user.
+      description: >-
+        Patchable fields: name, locale, and invite_cap (integer or null —
+        null clears the per-user override so the project member_invites
+        default applies; 0 revokes the member-invitation right).
       requestBody:
         required: true
         content:
@@ -13425,6 +13472,120 @@ paths:
                 properties:
                   request:
                     $ref: '#/components/schemas/AccessRequest'
+        default:
+          $ref: '#/components/responses/Default'
+      x-audience: runtime
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: CoreAuth
+  /v1/auth/invites:
+    post:
+      operationId: postV1AuthInvites
+      x-since: 1.7.0
+      tags:
+      - Core Auth
+      summary: Invite a person (member invitation; email-bound, capped).
+      description: >-
+        Creates an email-bound invitation on the caller's own quota. The
+        invitee receives the invitation email immediately; the raw
+        invite_token (and its shareable link) is returned exactly once for the
+        caller to pass along. Fails 403 when member invitations are disabled
+        for the caller and 409 invite_quota_exceeded when the cap is reached.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              properties:
+                email:
+                  type: string
+                  pattern: ^[^@\s]+@[^@\s]+\.[^@\s]+$
+                  maxLength: 254
+                redirect_to:
+                  type:
+                  - string
+                  - 'null'
+                  maxLength: 2048
+                  description: >-
+                    Optional base for the invitation email link; its origin
+                    must match the project's app_base_url.
+      responses:
+        '201':
+          description: Invitation created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invite:
+                    $ref: '#/components/schemas/InviteCreated'
+                  quota:
+                    $ref: '#/components/schemas/InviteQuota'
+        default:
+          $ref: '#/components/responses/Default'
+      x-audience: runtime
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: CoreAuth
+    get:
+      operationId: getV1AuthInvites
+      x-since: 1.7.0
+      tags:
+      - Core Auth
+      summary: List the caller's own invitations and quota.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Invitations.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invites:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invite'
+                  quota:
+                    $ref: '#/components/schemas/InviteQuota'
+        default:
+          $ref: '#/components/responses/Default'
+      x-audience: runtime
+      x-scopes:
+      - project
+      - environment
+      x-ogen-operation-group: CoreAuth
+  /v1/auth/invites/{invite_id}/revoke:
+    post:
+      operationId: postV1AuthInvitesByInviteIdRevoke
+      x-since: 1.7.0
+      tags:
+      - Core Auth
+      summary: Revoke the caller's own pending invitation (frees the slot).
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: invite_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
         default:
           $ref: '#/components/responses/Default'
       x-audience: runtime

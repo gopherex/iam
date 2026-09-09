@@ -100,6 +100,10 @@ func e2eServer(t *testing.T) *httptest.Server {
 	em := Emitter(NewAuditingEmitter(testDB, e2eEmitter))
 	platform := NewPgPlatform(testDB)
 	coreAuth := NewPgCoreAuth(testDB, em, nil)
+	// One shared config reader: the admin config writer invalidates it on
+	// PATCH so e2e steps see config changes immediately (as production's
+	// shared reader does).
+	e2eCfg := NewConfigReader(testDB, time.Second)
 
 	handler := api.New(
 		api.WithPlatform(api.NewPlatformService(api.PlatformDeps{
@@ -110,6 +114,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 			Accounts: coreAuth,
 			Tokens:   coreAuth,
 			MFA:      NewPgMFAAccounts(testDB, em, nil),
+			Invites:  NewPgInvites(testDB, em, e2eCfg),
 		})),
 		api.WithCoreAuthFlows(api.CoreAuthFlowDeps{
 			Flows: NewPgCoreAuthFlows(testDB, em, coreAuth, nil),
@@ -146,11 +151,11 @@ func e2eServer(t *testing.T) *httptest.Server {
 			ServiceAccounts: NewPgAdminServiceAccounts(testDB, em),
 			APIKeys:         NewPgAdminAPIKeys(testDB, em),
 			Connections:     NewPgAdminConnections(testDB, em),
-			Config:          NewPgAdminConfig(testDB, em),
+			Config:          NewPgAdminConfig(testDB, em, e2eCfg),
 			Roles:           NewPgRoles(testDB, em),
 			Keys:            NewPgAdminKeys(testDB, em),
 			AccessRequests:  NewPgAdminAccessRequests(testDB, em),
-			Invites:         NewPgInvites(testDB, em),
+			Invites:         NewPgInvites(testDB, em, nil),
 			Grants:          NewPgOIDCGrants(testDB, em, NewConfigReader(testDB, time.Second)),
 			Audit:           NewPgAudit(testDB, em),
 			Jobs:            NewPgJobs(testDB, em),

@@ -303,6 +303,10 @@ func (a *pgAdminUsers) Update(ctx context.Context, cmd domain.AdminUserUpdateCmd
 			acc.Locale = cmd.Locale
 		}
 
+		if cmd.InviteCapSet {
+			acc.InviteCap = cmd.InviteCap
+		}
+
 		acc.UpdatedAt = nowUTC()
 		if err := a.persist(ctx, row, acc); err != nil {
 			return nil, err
@@ -1676,11 +1680,16 @@ const eventFieldEnvironment = "environment"
 type pgAdminConfig struct {
 	db      *DB
 	emitter Emitter
+	// cfg is the shared runtime config reader: writing a config document
+	// invalidates its cache so changes apply immediately, not after the TTL.
+	cfg *configReader
 }
 
-// NewPgAdminConfig builds the Postgres-backed AdminConfig adapter.
-func NewPgAdminConfig(db *DB, emitter Emitter) *pgAdminConfig {
-	return &pgAdminConfig{db: db, emitter: emitter}
+// NewPgAdminConfig builds the Postgres-backed AdminConfig adapter. cfg should
+// be the same reader instance the runtime (flows, invites, platform) reads
+// through; nil disables cache invalidation (changes propagate within the TTL).
+func NewPgAdminConfig(db *DB, emitter Emitter, cfg *configReader) *pgAdminConfig {
+	return &pgAdminConfig{db: db, emitter: emitter, cfg: cfg}
 }
 
 var _ api.AdminConfig = (*pgAdminConfig)(nil)
@@ -1795,6 +1804,10 @@ func (a *pgAdminConfig) writeConfigDoc(
 			return fmt.Errorf("insert config document %q: %w", key, ierr)
 		}
 	}
+
+	// The document changed: drop the runtime cache entry so readers see the
+	// new value immediately instead of after the reader TTL.
+	a.cfg.invalidate(projectID, env, key)
 
 	return a.emitter.Emit(ctx, domain.Event{
 		Type:        "config.updated",

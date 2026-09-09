@@ -2342,12 +2342,16 @@ func (s *AdminService) PatchV1ProjectsByProjectIdAdminUsersByUserId(
 		return nil, err
 	}
 
+	inviteCap, inviteCapSet := oasRawIntPtr(req, "invite_cap")
+
 	cmd := domain.AdminUserUpdateCmd{
-		ProjectID:   params.ProjectID,
-		Environment: params.XEnvironment.Or("live"),
-		AccountID:   params.UserID,
-		Name:        oasRawString(req, "name"),
-		Locale:      oasRawString(req, "locale"),
+		ProjectID:    params.ProjectID,
+		Environment:  params.XEnvironment.Or("live"),
+		AccountID:    params.UserID,
+		Name:         oasRawString(req, "name"),
+		Locale:       oasRawString(req, "locale"),
+		InviteCap:    inviteCap,
+		InviteCapSet: inviteCapSet,
 	}
 
 	acct, err := s.deps.Users.Update(ctx, cmd)
@@ -3468,6 +3472,27 @@ func oasRawString[T ~map[string]jx.Raw](m T, key string) string {
 	}
 
 	return v
+}
+
+// oasRawIntPtr extracts an optional integer field from a patch body,
+// distinguishing absent (nil,false), explicit null (nil,true — clear the
+// override) and a value (n,true).
+func oasRawIntPtr[T ~map[string]jx.Raw](m T, key string) (*int, bool) {
+	raw, ok := m[key]
+	if !ok {
+		return nil, false
+	}
+
+	if string(raw) == "null" {
+		return nil, true
+	}
+
+	var v int
+	if err := json.Unmarshal(raw, &v); err != nil {
+		return nil, false
+	}
+
+	return &v, true
 }
 
 // oasRawPatch decodes a map[string]jx.Raw patch body into a generic

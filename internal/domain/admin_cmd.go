@@ -26,6 +26,10 @@ type AdminUserUpdateCmd struct {
 	AccountID   string
 	Name        string
 	Locale      string
+	// InviteCap patches the per-user member-invite cap override. InviteCapSet
+	// distinguishes "absent" (keep) from "explicit null" (clear the override).
+	InviteCap    *int
+	InviteCapSet bool
 }
 
 // AdminUserBanCmd bans a user, optionally with a reason and an expiry.

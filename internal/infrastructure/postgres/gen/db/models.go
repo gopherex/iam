@@ -20,6 +20,14 @@ type IamUsers struct {
 	Data         json.RawMessage
 }
 
+type IamUserRoles struct {
+	ProjectID   string
+	Environment string
+	UserID      string
+	Role        string
+	CreatedAt   time.Time
+}
+
 type IamCredentials struct {
 	ID          string
 	ProjectID   string
@@ -70,6 +78,14 @@ type IamRefreshTokens struct {
 	ExpiresAt   *time.Time
 	CreatedAt   time.Time
 	Data        json.RawMessage
+}
+
+type IamRevokedTokens struct {
+	Jti         string
+	ProjectID   string
+	Environment string
+	ExpiresAt   time.Time
+	RevokedAt   time.Time
 }
 
 type IamFactors struct {
@@ -151,6 +167,7 @@ type IamInvites struct {
 	ProjectID   string
 	Environment string
 	Email       *string
+	CreatedBy   *string
 	TokenHash   string
 	Status      string
 	ExpiresAt   *time.Time

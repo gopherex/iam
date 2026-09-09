@@ -25,6 +25,7 @@ type IamInvite struct {
 	ProjectID   string              `db:"project_id" `
 	Environment string              `db:"environment" `
 	Email       null.Val[string]    `db:"email" `
+	CreatedBy   null.Val[string]    `db:"created_by" `
 	TokenHash   string              `db:"token_hash" `
 	Status      string              `db:"status" `
 	ExpiresAt   null.Val[time.Time] `db:"expires_at" `
@@ -46,7 +47,7 @@ type IamInvitesQuery = *psql.ViewQuery[*IamInvite, IamInviteSlice]
 
 func buildIamInviteColumns(tableName string) iamInviteColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "environment", "email", "token_hash", "status", "expires_at", "accepted_at", "created_at", "updated_at", "data",
+		"id", "project_id", "environment", "email", "created_by", "token_hash", "status", "expires_at", "accepted_at", "created_at", "updated_at", "data",
 	)
 
 	if tableName != "" {
@@ -60,6 +61,7 @@ func buildIamInviteColumns(tableName string) iamInviteColumns {
 		ProjectID:   buildIamInviteColumn(tableName, "project_id"),
 		Environment: buildIamInviteColumn(tableName, "environment"),
 		Email:       buildIamInviteColumn(tableName, "email"),
+		CreatedBy:   buildIamInviteColumn(tableName, "created_by"),
 		TokenHash:   buildIamInviteColumn(tableName, "token_hash"),
 		Status:      buildIamInviteColumn(tableName, "status"),
 		ExpiresAt:   buildIamInviteColumn(tableName, "expires_at"),
@@ -77,6 +79,7 @@ type iamInviteColumns struct {
 	ProjectID   iamInviteColumn
 	Environment iamInviteColumn
 	Email       iamInviteColumn
+	CreatedBy   iamInviteColumn
 	TokenHash   iamInviteColumn
 	Status      iamInviteColumn
 	ExpiresAt   iamInviteColumn
@@ -133,6 +136,7 @@ type IamInviteSetter struct {
 	ProjectID   *string              `db:"project_id" `
 	Environment *string              `db:"environment" `
 	Email       *null.Val[string]    `db:"email" `
+	CreatedBy   *null.Val[string]    `db:"created_by" `
 	TokenHash   *string              `db:"token_hash" `
 	Status      *string              `db:"status" `
 	ExpiresAt   *null.Val[time.Time] `db:"expires_at" `
@@ -143,7 +147,7 @@ type IamInviteSetter struct {
 }
 
 func (s IamInviteSetter) SetColumns() []string {
-	vals := make([]string, 0, 11)
+	vals := make([]string, 0, 12)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
@@ -155,6 +159,9 @@ func (s IamInviteSetter) SetColumns() []string {
 	}
 	if s.Email != nil {
 		vals = append(vals, "email")
+	}
+	if s.CreatedBy != nil {
+		vals = append(vals, "created_by")
 	}
 	if s.TokenHash != nil {
 		vals = append(vals, "token_hash")
@@ -211,6 +218,15 @@ func (s IamInviteSetter) Overwrite(t *IamInvite) {
 				return *new(null.Val[string])
 			}
 			v := s.Email
+			return *v
+		}()
+	}
+	if s.CreatedBy != nil {
+		t.CreatedBy = func() null.Val[string] {
+			if s.CreatedBy == nil {
+				return *new(null.Val[string])
+			}
+			v := s.CreatedBy
 			return *v
 		}()
 	}
@@ -280,7 +296,7 @@ func (s *IamInviteSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 11)
+		vals := make([]bob.Expression, 12)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -326,30 +342,42 @@ func (s *IamInviteSetter) Apply(q *dialect.InsertQuery) {
 			vals[3] = psql.Raw("DEFAULT")
 		}
 
+		if s.CreatedBy != nil {
+			vals[4] = psql.Arg(func() null.Val[string] {
+				if s.CreatedBy == nil {
+					return *new(null.Val[string])
+				}
+				v := s.CreatedBy
+				return *v
+			}())
+		} else {
+			vals[4] = psql.Raw("DEFAULT")
+		}
+
 		if s.TokenHash != nil {
-			vals[4] = psql.Arg(func() string {
+			vals[5] = psql.Arg(func() string {
 				if s.TokenHash == nil {
 					return *new(string)
 				}
 				return *s.TokenHash
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.Status != nil {
-			vals[5] = psql.Arg(func() string {
+			vals[6] = psql.Arg(func() string {
 				if s.Status == nil {
 					return *new(string)
 				}
 				return *s.Status
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.ExpiresAt != nil {
-			vals[6] = psql.Arg(func() null.Val[time.Time] {
+			vals[7] = psql.Arg(func() null.Val[time.Time] {
 				if s.ExpiresAt == nil {
 					return *new(null.Val[time.Time])
 				}
@@ -357,11 +385,11 @@ func (s *IamInviteSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.AcceptedAt != nil {
-			vals[7] = psql.Arg(func() null.Val[time.Time] {
+			vals[8] = psql.Arg(func() null.Val[time.Time] {
 				if s.AcceptedAt == nil {
 					return *new(null.Val[time.Time])
 				}
@@ -369,40 +397,40 @@ func (s *IamInviteSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[8] = psql.Arg(func() time.Time {
+			vals[9] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[8] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		if s.UpdatedAt != nil {
-			vals[9] = psql.Arg(func() time.Time {
+			vals[10] = psql.Arg(func() time.Time {
 				if s.UpdatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.UpdatedAt
 			}())
 		} else {
-			vals[9] = psql.Raw("DEFAULT")
+			vals[10] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[10] = psql.Arg(func() json.RawMessage {
+			vals[11] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[10] = psql.Raw("DEFAULT")
+			vals[11] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -414,7 +442,7 @@ func (s IamInviteSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamInviteSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 11)
+	exprs := make([]bob.Expression, 0, 12)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -441,6 +469,13 @@ func (s IamInviteSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "email")...),
 			psql.Arg(s.Email),
+		}})
+	}
+
+	if s.CreatedBy != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "created_by")...),
+			psql.Arg(s.CreatedBy),
 		}})
 	}
 
@@ -755,6 +790,7 @@ type iamInviteWhere[Q psql.Filterable] struct {
 	ProjectID   psql.WhereMod[Q, string]
 	Environment psql.WhereMod[Q, string]
 	Email       psql.WhereNullMod[Q, string]
+	CreatedBy   psql.WhereNullMod[Q, string]
 	TokenHash   psql.WhereMod[Q, string]
 	Status      psql.WhereMod[Q, string]
 	ExpiresAt   psql.WhereNullMod[Q, time.Time]
@@ -774,6 +810,7 @@ func buildIamInviteWhere[Q psql.Filterable](cols iamInviteColumns) iamInviteWher
 		ProjectID:   psql.Where[Q, string](cols.ProjectID.Expression),
 		Environment: psql.Where[Q, string](cols.Environment.Expression),
 		Email:       psql.WhereNull[Q, string](cols.Email.Expression),
+		CreatedBy:   psql.WhereNull[Q, string](cols.CreatedBy.Expression),
 		TokenHash:   psql.Where[Q, string](cols.TokenHash.Expression),
 		Status:      psql.Where[Q, string](cols.Status.Expression),
 		ExpiresAt:   psql.WhereNull[Q, time.Time](cols.ExpiresAt.Expression),

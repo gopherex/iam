@@ -115,3 +115,25 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminInvitesByInviteIdRevoke(
 
 	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
 }
+
+// oasInviteCreated maps the domain create result onto the wire form.
+func oasInviteCreated(created *domain.InviteCreated) oas.InviteCreated {
+	out := oas.InviteCreated{
+		ID:          created.ID,
+		Status:      oas.InviteCreatedStatus(created.Status),
+		InviteToken: created.Token,
+	}
+	if created.Email != "" {
+		out.Email = oas.NewOptString(created.Email)
+	}
+
+	if !created.ExpiresAt.IsZero() {
+		out.ExpiresAt = oas.NewOptTimestamp(oas.Timestamp(created.ExpiresAt))
+	}
+
+	if !created.CreatedAt.IsZero() {
+		out.CreatedAt = oas.NewOptTimestamp(oas.Timestamp(created.CreatedAt))
+	}
+
+	return out
+}

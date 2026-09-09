@@ -421,17 +421,28 @@ type AuthRegistrationConfig struct {
 	PasswordStrategy *string `json:"password_strategy,omitempty"`
 }
 
+// AuthMemberInvitesConfig mirrors the nested `member_invites` object in the
+// auth doc: the project-wide default for user-driven invitations. Enabled
+// gates the right entirely; DefaultCap bounds one user's simultaneously
+// active invitations (pending-unexpired + accepted). Per-user invite_cap
+// overrides in the user envelope win; 0 there revokes the right.
+type AuthMemberInvitesConfig struct {
+	Enabled    *bool `json:"enabled,omitempty"`
+	DefaultCap *int  `json:"default_cap,omitempty"`
+}
+
 // AuthConfigSpec is the typed mirror of the iam_config key="auth" document.
 // Field tags are the exact stored jsonb keys. `locales` and `supported_locales`
 // both appear in the wild (oas writes supported_locales, platform_pg reads
 // locales); both are accepted and reconciled in Validate.
 type AuthConfigSpec struct {
-	Methods          []string                `json:"methods,omitempty"`
-	Registration     *AuthRegistrationConfig `json:"registration,omitempty"`
-	AppBaseURL       *string                 `json:"app_base_url,omitempty"`
-	DefaultLocale    *string                 `json:"default_locale,omitempty"`
-	SupportedLocales []string                `json:"supported_locales,omitempty"`
-	Locales          []string                `json:"locales,omitempty"`
+	Methods          []string                 `json:"methods,omitempty"`
+	Registration     *AuthRegistrationConfig  `json:"registration,omitempty"`
+	MemberInvites    *AuthMemberInvitesConfig `json:"member_invites,omitempty"`
+	AppBaseURL       *string                  `json:"app_base_url,omitempty"`
+	DefaultLocale    *string                  `json:"default_locale,omitempty"`
+	SupportedLocales []string                 `json:"supported_locales,omitempty"`
+	Locales          []string                 `json:"locales,omitempty"`
 }
 
 // ParseAuthConfig strictly decodes the auth doc, rejecting unknown top-level keys.
@@ -454,6 +465,10 @@ func (c AuthConfigSpec) Validate() error {
 		return err
 	}
 
+	if err := c.validateMemberInvites(); err != nil {
+		return err
+	}
+
 	if c.AppBaseURL != nil && strings.TrimSpace(*c.AppBaseURL) != "" {
 		if err := ValidateAbsoluteHTTPURL("app_base_url", *c.AppBaseURL); err != nil {
 			return err
@@ -461,6 +476,34 @@ func (c AuthConfigSpec) Validate() error {
 	}
 
 	return c.validateDefaultLocale()
+}
+
+// memberInvitesMaxCap bounds the default per-user cap (mirrors the OAS schema).
+const memberInvitesMaxCap = 100000
+
+// validateMemberInvites enforces the member_invites rules: a non-zero default
+// cap requires the feature to be enabled, and both fields within bounds.
+func (c AuthConfigSpec) validateMemberInvites() error {
+	memberInvites := c.MemberInvites
+	if memberInvites == nil {
+		return nil
+	}
+
+	if memberInvites.DefaultCap != nil {
+		if *memberInvites.DefaultCap < 0 || *memberInvites.DefaultCap > memberInvitesMaxCap {
+			return ErrValidation.WithDetails(map[string]any{
+				"field": "member_invites.default_cap",
+				"min":   0,
+				"max":   memberInvitesMaxCap,
+			}).WithMessage("member_invites.default_cap out of range")
+		}
+
+		if *memberInvites.DefaultCap > 0 && memberInvites.Enabled != nil && !*memberInvites.Enabled {
+			return ErrValidation.WithMessage("member_invites.default_cap requires member_invites.enabled")
+		}
+	}
+
+	return nil
 }
 
 func (c AuthConfigSpec) validateMethods() error {

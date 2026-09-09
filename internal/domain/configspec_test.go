@@ -51,6 +51,34 @@ func TestAuthConfigSpec_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "member_invites enabled with cap",
+			spec: domain.AuthConfigSpec{MemberInvites: &domain.AuthMemberInvitesConfig{
+				Enabled: ptr(true), DefaultCap: ptr(5),
+			}},
+			wantErr: false,
+		},
+		{
+			name: "member_invites disabled with zero cap",
+			spec: domain.AuthConfigSpec{MemberInvites: &domain.AuthMemberInvitesConfig{
+				Enabled: ptr(false), DefaultCap: ptr(0),
+			}},
+			wantErr: false,
+		},
+		{
+			name: "member_invites cap without enabled rejected",
+			spec: domain.AuthConfigSpec{MemberInvites: &domain.AuthMemberInvitesConfig{
+				Enabled: ptr(false), DefaultCap: ptr(5),
+			}},
+			wantErr: true,
+		},
+		{
+			name: "member_invites negative cap rejected",
+			spec: domain.AuthConfigSpec{MemberInvites: &domain.AuthMemberInvitesConfig{
+				Enabled: ptr(true), DefaultCap: ptr(-1),
+			}},
+			wantErr: true,
+		},
+		{
 			name:    "all supported methods",
 			spec:    domain.AuthConfigSpec{Methods: []string{"email", "oauth", "passkey", "magic_link"}},
 			wantErr: false,

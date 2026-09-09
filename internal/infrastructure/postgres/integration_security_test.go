@@ -83,7 +83,7 @@ func TestProviderConfigSecretsAtRest(t *testing.T) {
 	testDB.UseCipher(testCipher(t))
 	defer testDB.UseCipher(NewIdentityCipher())
 
-	cfg := NewPgAdminConfig(testDB, nopEmitter{})
+	cfg := NewPgAdminConfig(testDB, nopEmitter{}, nil)
 	projectID := newUUID()
 	cmd := domain.AdminProviderCmd{
 		ProjectID: projectID,

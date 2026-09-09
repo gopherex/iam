@@ -205,6 +205,7 @@ CREATE TABLE iam_invites (
   project_id  text NOT NULL,
   environment text NOT NULL DEFAULT 'live',
   email       text,                              -- null = not bound to a specific address
+  created_by  text,                              -- null = admin/system invite; user id for member invites
   token_hash  text NOT NULL,
   status      text NOT NULL DEFAULT 'pending',   -- pending | accepted | revoked
   expires_at  timestamptz,
@@ -215,6 +216,7 @@ CREATE TABLE iam_invites (
 );
 CREATE INDEX idx_iam_invites_project ON iam_invites (project_id, status);
 CREATE INDEX idx_iam_invites_hash ON iam_invites (token_hash);
+CREATE INDEX idx_iam_invites_creator ON iam_invites (project_id, environment, created_by);
 
 -- ============================================================
 -- Machine identity & app clients

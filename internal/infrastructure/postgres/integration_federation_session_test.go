@@ -116,7 +116,7 @@ func TestFederationSessionTTLFollowsPolicy(t *testing.T) {
 	ctx := context.Background()
 	projectID := e2eProject(t, ctx)
 
-	if _, err := NewPgAdminConfig(testDB, nopEmitter{}).UpdateSessionPolicy(ctx, domain.AdminConfigUpdateCmd{
+	if _, err := NewPgAdminConfig(testDB, nopEmitter{}, nil).UpdateSessionPolicy(ctx, domain.AdminConfigUpdateCmd{
 		ProjectID:   projectID,
 		Environment: "live",
 		Doc:         mustConfigDoc(t, map[string]any{"access_ttl": 900, "refresh_ttl": 3 * 24 * 3600}),

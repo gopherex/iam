@@ -83,6 +83,17 @@ type CoreAuthDeps struct {
 	Accounts CoreAuthAccounts
 	Tokens   CoreAuthTokens
 	MFA      CoreAuthMFA
+	Invites  MemberInvites
+}
+
+// MemberInvites is the user-scoped invitation surface: create on the caller's
+// own quota, list own, revoke own pending. Implemented by the same pgInvites
+// adapter behind the admin invites API.
+type MemberInvites interface {
+	Create(ctx context.Context, cmd domain.InviteCreateCmd) (*domain.InviteCreated, error)
+	InviteQuota(ctx context.Context, projectID, env, userID string) (domain.InviteQuota, error)
+	ListByCreator(ctx context.Context, projectID, env, userID string) ([]domain.Invite, error)
+	RevokeOwn(ctx context.Context, projectID, env, inviteID, userID string) error
 }
 
 // CoreAuthMFA issues the step-up challenge when password sign-in needs a second

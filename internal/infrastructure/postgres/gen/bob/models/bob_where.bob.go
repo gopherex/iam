@@ -18,10 +18,12 @@ var (
 
 func Where[Q psql.Filterable]() struct {
 	IamUsers               iamUserWhere[Q]
+	IamUserRoles           iamUserRoleWhere[Q]
 	IamCredentials         iamCredentialWhere[Q]
 	IamIdentities          iamIdentityWhere[Q]
 	IamSessions            iamSessionWhere[Q]
 	IamRefreshTokens       iamRefreshTokenWhere[Q]
+	IamRevokedTokens       iamRevokedTokenWhere[Q]
 	IamFactors             iamFactorWhere[Q]
 	IamWebauthnCredentials iamWebauthnCredentialWhere[Q]
 	IamRecoveryCodes       iamRecoveryCodeWhere[Q]
@@ -63,10 +65,12 @@ func Where[Q psql.Filterable]() struct {
 } {
 	return struct {
 		IamUsers               iamUserWhere[Q]
+		IamUserRoles           iamUserRoleWhere[Q]
 		IamCredentials         iamCredentialWhere[Q]
 		IamIdentities          iamIdentityWhere[Q]
 		IamSessions            iamSessionWhere[Q]
 		IamRefreshTokens       iamRefreshTokenWhere[Q]
+		IamRevokedTokens       iamRevokedTokenWhere[Q]
 		IamFactors             iamFactorWhere[Q]
 		IamWebauthnCredentials iamWebauthnCredentialWhere[Q]
 		IamRecoveryCodes       iamRecoveryCodeWhere[Q]
@@ -107,10 +111,12 @@ func Where[Q psql.Filterable]() struct {
 		IamWebhookDeliveries   iamWebhookDeliveryWhere[Q]
 	}{
 		IamUsers:               buildIamUserWhere[Q](IamUsers.Columns),
+		IamUserRoles:           buildIamUserRoleWhere[Q](IamUserRoles.Columns),
 		IamCredentials:         buildIamCredentialWhere[Q](IamCredentials.Columns),
 		IamIdentities:          buildIamIdentityWhere[Q](IamIdentities.Columns),
 		IamSessions:            buildIamSessionWhere[Q](IamSessions.Columns),
 		IamRefreshTokens:       buildIamRefreshTokenWhere[Q](IamRefreshTokens.Columns),
+		IamRevokedTokens:       buildIamRevokedTokenWhere[Q](IamRevokedTokens.Columns),
 		IamFactors:             buildIamFactorWhere[Q](IamFactors.Columns),
 		IamWebauthnCredentials: buildIamWebauthnCredentialWhere[Q](IamWebauthnCredentials.Columns),
 		IamRecoveryCodes:       buildIamRecoveryCodeWhere[Q](IamRecoveryCodes.Columns),

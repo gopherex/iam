@@ -1009,6 +1009,28 @@ func encodeGetV1AuthIdentitiesResponse(response *GetV1AuthIdentitiesOK, w http.R
 	return nil
 }
 
+func encodeGetV1AuthInvitesResponse(response *GetV1AuthInvitesOK, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeGetV1AuthMagicLinkCallbackResponse(response *GetV1AuthMagicLinkCallbackFound, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Access-Control-Expose-Headers", "Location,Set-Cookie")
 	// Encoding response headers.
@@ -3821,6 +3843,42 @@ func encodePostV1AuthImpersonateRedeemResponse(response *AuthResult, w http.Resp
 	}(); err != nil {
 		return errors.Wrap(err, "validate")
 	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodePostV1AuthInvitesResponse(response *PostV1AuthInvitesCreated, w http.ResponseWriter, span trace.Span) error {
+	if err := func() error {
+		if err := response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "validate")
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(201)
+	span.SetStatus(codes.Ok, http.StatusText(201))
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodePostV1AuthInvitesByInviteIdRevokeResponse(response *Ok, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))

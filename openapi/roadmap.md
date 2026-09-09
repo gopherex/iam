@@ -56,6 +56,21 @@ First runnable product. A single project/env can do full password-based auth.
 - **Roles**: per-environment role assignment for a user, and the OIDC `groups`
   scope that projects those roles into the access and id token.
 
+## v1.7.0 — Member invitations
+
+Users invite users, with quotas.
+
+- **Member invites**: signed-in users create email-bound invitations on their
+  own budget (`POST/GET /v1/auth/invites`, own revoke frees the slot). The
+  invitee is emailed immediately; the raw token/link returns once for the
+  caller to share.
+- **Caps**: project default in the auth doc (`member_invites.enabled`,
+  `member_invites.default_cap`) with per-user overrides via the admin user
+  record (`invite_cap`, 0 revokes the right). Slots = pending-unexpired +
+  accepted; concurrent creates serialize on a per-user advisory lock.
+- **Admin surface**: invite_cap on the users API + panel; admin/system invites
+  (panel, access-request approvals, telegram bot) remain uncapped.
+
 ## v2.0.0 — IAM as OIDC provider
 
 New product role: IAM becomes an OAuth2/OIDC identity provider.
