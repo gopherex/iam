@@ -1,0 +1,31 @@
+# Multi-stage build for the iam-bot Telegram operator: Go-only build (no web
+# assets) into a minimal static image.
+#
+# Build from the repository root:
+#   docker build -f deployments/Dockerfile.iam-bot -t iam-bot .
+
+# --- 1. Go binary ---
+FROM golang:1.26-alpine AS go
+WORKDIR /src
+RUN apk add --no-cache git
+ARG SERVICE_NAME=iam-bot
+ARG VERSION=0.0.0
+ARG COMMIT=unknown
+ARG BUILD_TIME=
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN build_time="${BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}" && \
+    CGO_ENABLED=0 go build -trimpath \
+    -ldflags="-s -w -X github.com/gopherex/iam/internal/build.ServiceName=${SERVICE_NAME} -X github.com/gopherex/iam/internal/build.Version=${VERSION} -X github.com/gopherex/iam/internal/build.Commit=${COMMIT} -X github.com/gopherex/iam/internal/build.BuildTime=${build_time}" \
+    -o /iam-bot ./cmd/iam-bot
+
+# --- 2. runtime ---
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=go /iam-bot /iam-bot
+# /state holds the seen-request JSON (mount a volume or set IAM_BOT_STATE_PATH).
+# 8081 = liveness/readiness probes (IAM_BOT_HEALTH_ADDR).
+WORKDIR /state
+EXPOSE 8081
+USER nonroot:nonroot
+ENTRYPOINT ["/iam-bot"]

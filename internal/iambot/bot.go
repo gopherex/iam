@@ -8,6 +8,7 @@ import (
 
 	tgbot "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"github.com/gopherex/xlog"
 )
 
 // Callback data prefixes for the inline decision buttons.
@@ -33,14 +34,20 @@ type Bot struct {
 	cfg      Config
 	iam      *IAM
 	state    *State
+	log      *xlog.Logger
 	telegram *tgbot.Bot
 }
 
 // New builds the Telegram bot with its handlers registered.
-func New(cfg Config, iam *IAM, state *State) (*Bot, error) {
-	b := &Bot{cfg: cfg, iam: iam, state: state}
+func New(cfg Config, iam *IAM, state *State, log *xlog.Logger) (*Bot, error) {
+	b := &Bot{cfg: cfg, iam: iam, state: state, log: log}
 
-	instance, err := tgbot.New(cfg.TelegramToken, tgbot.WithDefaultHandler(b.defaultHandler))
+	// WithSkipGetMe: construction must not touch the network, so an IAM-bot
+	// restart survives a transient Telegram outage (long polling reconnects
+	// on its own) instead of crash-looping on getMe.
+	instance, err := tgbot.New(cfg.TelegramToken,
+		tgbot.WithSkipGetMe(),
+		tgbot.WithDefaultHandler(b.defaultHandler))
 	if err != nil {
 		return nil, fmt.Errorf("telegram bot: %w", err)
 	}
@@ -199,10 +206,12 @@ func (b *Bot) onCallback(ctx context.Context, _ *tgbot.Bot, upd *models.Update) 
 	case errors.Is(err, ErrNotFound):
 		b.answerCallback(ctx, query.ID, "Already decided elsewhere.")
 		b.editCard(ctx, query, "⏭ request "+shortID(id)+" was already decided elsewhere")
+		b.log.Info("decision: already decided elsewhere", idField(id), operatorField(query.From.ID))
 
 		return
 	default:
 		b.answerCallback(ctx, query.ID, "Failed: "+err.Error())
+		b.log.Error("decision failed", idField(id), operatorField(query.From.ID), errField(err))
 
 		return
 	}
@@ -214,6 +223,7 @@ func (b *Bot) onCallback(ctx context.Context, _ *tgbot.Bot, upd *models.Update) 
 
 	b.answerCallback(ctx, query.ID, mark+" "+action)
 	b.editCard(ctx, query, mark+" request "+shortID(id)+" "+action+" — decision email sent")
+	b.log.Info("decision applied", idField(id), xlog.Int64("operator", query.From.ID), xlog.String("action", action))
 }
 
 func (b *Bot) answerCallback(ctx context.Context, cqID, text string) {
@@ -250,6 +260,12 @@ func (b *Bot) Announce(ctx context.Context, req *AccessRequest) error {
 		}
 	}
 
+	if firstErr != nil {
+		b.log.Warn("announce failed", idField(req.ID), errField(firstErr))
+	} else {
+		b.log.Info("announced", idField(req.ID), xlog.String("email", req.Email))
+	}
+
 	return firstErr
 }
 
@@ -282,6 +298,11 @@ func decisionKeyboard(id string) models.InlineKeyboardMarkup {
 
 // shortIDLen is how much of a request id confirmation messages show.
 const shortIDLen = 8
+
+// Log field helpers shared across the package.
+func idField(id string) xlog.Field      { return xlog.String("request_id", id) }
+func errField(err error) xlog.Field     { return xlog.Error("err", err) }
+func operatorField(id int64) xlog.Field { return xlog.Int64("operator", id) }
 
 // shortID renders a short id prefix for confirmation messages.
 func shortID(id string) string {

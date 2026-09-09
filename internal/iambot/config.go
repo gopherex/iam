@@ -36,6 +36,12 @@ type Config struct {
 	StatePath string
 	// PollInterval is how often pending access requests are re-listed.
 	PollInterval time.Duration
+	// HealthAddr is the liveness/readiness listener (":8081"); empty disables.
+	HealthAddr string
+	// LogFormat is "json" (default) or "text".
+	LogFormat string
+	// LogLevel is the xlog level (default "info").
+	LogLevel string
 }
 
 // FromEnv builds the Config from IAM_BOT_* environment variables.
@@ -48,6 +54,9 @@ func FromEnv() (Config, error) {
 		Environment:   os.Getenv("IAM_BOT_ENVIRONMENT"),
 		StatePath:     os.Getenv("IAM_BOT_STATE_PATH"),
 		PollInterval:  defaultPollInterval,
+		HealthAddr:    os.Getenv("IAM_BOT_HEALTH_ADDR"),
+		LogFormat:     os.Getenv("IAM_BOT_LOG_FORMAT"),
+		LogLevel:      os.Getenv("IAM_BOT_LOG_LEVEL"),
 	}
 
 	if cfg.StatePath == "" {

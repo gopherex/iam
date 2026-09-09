@@ -2,6 +2,8 @@ package iambot
 
 import (
 	"context"
+	"errors"
+	"sync"
 	"time"
 )
 
@@ -11,6 +13,13 @@ type Poller struct {
 	bot   *Bot
 	iam   *IAM
 	state *State
+
+	interval time.Duration
+
+	mu          sync.RWMutex
+	started     bool
+	lastSuccess time.Time
+	lastErr     error
 }
 
 // NewPoller builds the backlog watcher.
@@ -22,6 +31,8 @@ func NewPoller(bot *Bot, iam *IAM, state *State) *Poller {
 // silently absorbs the existing backlog (a brand-new bot must not spam the
 // whole pending history); everything pending stays reachable via /pending.
 func (p *Poller) Run(ctx context.Context, interval time.Duration) error {
+	p.interval = interval
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -41,8 +52,12 @@ func (p *Poller) Run(ctx context.Context, interval time.Duration) error {
 func (p *Poller) pollOnce(ctx context.Context) {
 	pending, err := p.iam.ListPending(ctx)
 	if err != nil {
+		p.noteResult(err)
+
 		return // transient: next tick retries; /pending surfaces errors on demand
 	}
+
+	p.noteResult(nil)
 
 	live := make(map[string]struct{}, len(pending))
 	ids := make([]string, 0, len(pending))
@@ -76,10 +91,53 @@ func (p *Poller) pollOnce(ctx context.Context) {
 	p.state.Prune(live)
 
 	if err := p.state.Save(p.statePath()); err != nil {
-		// Nothing to do beyond continuing: the worst case after a crash is a
-		// duplicate announcement for requests seen since the last save.
-		_ = err
+		p.bot.log.Warn("state save failed", errField(err), idField(p.statePath()))
 	}
+}
+
+// noteResult records the outcome of a polling pass for HealthCheck.
+func (p *Poller) noteResult(err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.started = true
+
+	p.lastErr = err
+	if err == nil {
+		p.lastSuccess = time.Now()
+	}
+}
+
+// errHealthNotStarted / errHealthStale are the readiness failure modes.
+var (
+	errHealthNotStarted = errors.New("iambot: poller has not completed a pass yet")
+	errHealthStale      = errors.New("iambot: last successful poll is stale")
+)
+
+// staleFactor is how many intervals the last successful poll may age before
+// readiness goes red.
+const staleFactor = 3
+
+// HealthCheck reports readiness: at least one pass ran, the last pass did not
+// error, and the last success is not older than a few intervals.
+func (p *Poller) HealthCheck(context.Context) error {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if !p.started {
+		return errHealthNotStarted
+	}
+
+	if p.lastErr != nil {
+		return p.lastErr
+	}
+
+	stale := time.Duration(staleFactor) * p.interval
+	if stale > 0 && time.Since(p.lastSuccess) > stale {
+		return errHealthStale
+	}
+
+	return nil
 }
 
 // statePath is the persisted state location from the bot config.

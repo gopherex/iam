@@ -97,6 +97,12 @@ generate-ts:
 build: build-web
 	CGO_ENABLED=0 go build -tags embed -ldflags "$(BUILD_LDFLAGS)" -o $(SERVER_BIN) ./cmd/iam
 
+## build-bot: build the Telegram operator bot binary
+.PHONY: build-bot
+BOT_LDFLAGS := -X '$(BUILD_PKG).ServiceName=iam-bot' -X '$(BUILD_PKG).Version=$(VERSION)' -X '$(BUILD_PKG).Commit=$(COMMIT)' -X '$(BUILD_PKG).BuildTime=$(BUILD_TIME)'
+build-bot:
+	CGO_ENABLED=0 go build -trimpath -ldflags "$(BOT_LDFLAGS)" -o bin/iam-bot ./cmd/iam-bot
+
 ## build-web: build the SDK then the admin SPA into web/dist (embedded by `build`)
 .PHONY: build-web
 build-web: generate-ts
