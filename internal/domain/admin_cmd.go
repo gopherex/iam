@@ -337,11 +337,11 @@ type AdminTemplateUpdateCmd struct {
 // Draft* fields render an unsaved editor body instead of the stored template
 // (live preview); empty draft fields fall back to the stored part.
 type AdminTemplatePreviewCmd struct {
-	ProjectID   string
-	Environment string
-	TemplateID  string
-	Locale      string
-	Data        map[string]jx.Raw
+	ProjectID    string
+	Environment  string
+	TemplateID   string
+	Locale       string
+	Data         map[string]jx.Raw
 	DraftSubject string
 	DraftText    string
 	DraftHTML    string
