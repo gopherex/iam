@@ -1101,6 +1101,7 @@ interface EditUserDialogProps {
 function EditUserDialog({ open, onOpenChange, user, projectId, onSaved }: EditUserDialogProps) {
   const [name, setName] = useState(user.profile?.name ?? '');
   const [locale, setLocale] = useState(user.profile?.locale ?? '');
+  const [inviteCap, setInviteCap] = useState(user.invite_cap != null ? String(user.invite_cap) : '');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -1117,6 +1118,9 @@ function EditUserDialog({ open, onOpenChange, user, projectId, onSaved }: EditUs
               name: name || null,
               locale: locale || undefined,
             },
+            // Empty = no per-user override (project member_invites default
+            // applies); 0 = the member-invitation right is revoked.
+            invite_cap: inviteCap === '' ? null : Number(inviteCap),
           },
         }),
       );
@@ -1156,6 +1160,21 @@ function EditUserDialog({ open, onOpenChange, user, projectId, onSaved }: EditUs
               onChange={(e) => setLocale(e.target.value)}
               placeholder="en"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="eu-invite-cap">Invite cap</Label>
+            <Input
+              id="eu-invite-cap"
+              type="number"
+              min={0}
+              value={inviteCap}
+              onChange={(e) => setInviteCap(e.target.value)}
+              placeholder="project default"
+            />
+            <p className="text-xs text-muted-foreground">
+              Member invitations this user may have active. Empty = project
+              member_invites default; 0 = invitations revoked.
+            </p>
           </div>
           {err && <p className="text-sm text-destructive">{err}</p>}
           <DialogFooter>

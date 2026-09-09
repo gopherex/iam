@@ -54,6 +54,7 @@ import {
   type Subscription,
 } from './types';
 import { IamAccount } from './account';
+import { IamMemberInvites } from './member-invites';
 import { IamMfa } from './mfa';
 import { IamWebAuthn } from './webauthn';
 import { IamTokens } from './tokens';
@@ -945,6 +946,7 @@ export function createIamClient(options: IamClientOptions): {
   webauthn: IamWebAuthn;
   tokens: IamTokens;
   oidc: IamOidc;
+  invites: IamMemberInvites;
   flow: FlowController;
   /**
    * One-shot bootstrap: restores the persisted session and fetches (and caches)
@@ -966,6 +968,7 @@ export function createIamClient(options: IamClientOptions): {
     webauthn: new IamWebAuthn(auth.client, headers),
     tokens: new IamTokens(auth.client, headers),
     oidc: new IamOidc(auth.client, headers),
+    invites: new IamMemberInvites(auth.client, headers),
     flow: createFlowController({
       baseUrl: options.baseUrl,
       clientId: options.clientId,

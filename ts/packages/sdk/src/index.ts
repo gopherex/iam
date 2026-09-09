@@ -79,6 +79,8 @@ export type { CsrfProvider } from './auth/csrf';
 // client). Redemption is iam.flow.redeemInvite on the user client.
 export { IamInvitesAdmin, createIamInvitesAdmin } from './auth/invites';
 export type { IamInvitesAdminOptions } from './auth/invites';
+export { IamMemberInvites } from './auth/member-invites';
+export type { MemberInviteCreated, MemberInviteList } from './auth/member-invites';
 // Dynamic client registration (RFC 7591) and client management (RFC 7592).
 // Registration takes a project-admin token as its initial access token; the
 // management calls take the registration access token issued for that client.
