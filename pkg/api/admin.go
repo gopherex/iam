@@ -2512,6 +2512,9 @@ func (s *AdminService) PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview(
 	if v, ok := req.Get(); ok {
 		cmd.Locale = v.Locale.Or("")
 		cmd.Data = map[string]jx.Raw(v.Data.Or(nil))
+		cmd.DraftSubject = v.Subject.Or("")
+		cmd.DraftText = v.Text.Or("")
+		cmd.DraftHTML = v.HTML.Or("")
 	}
 
 	prev, err := s.deps.Config.PreviewEmailTemplate(ctx, cmd)

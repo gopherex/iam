@@ -34181,11 +34181,32 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) encodeField
 			s.Data.Encode(e)
 		}
 	}
+	{
+		if s.Subject.Set {
+			e.FieldStart("subject")
+			s.Subject.Encode(e)
+		}
+	}
+	{
+		if s.Text.Set {
+			e.FieldStart("text")
+			s.Text.Encode(e)
+		}
+	}
+	{
+		if s.HTML.Set {
+			e.FieldStart("html")
+			s.HTML.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq = [2]string{
+var jsonFieldsNameOfPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq = [5]string{
 	0: "locale",
 	1: "data",
+	2: "subject",
+	3: "text",
+	4: "html",
 }
 
 // Decode decodes PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq from json.
@@ -34215,6 +34236,36 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) Decode(d *j
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"data\"")
+			}
+		case "subject":
+			if err := func() error {
+				s.Subject.Reset()
+				if err := s.Subject.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"subject\"")
+			}
+		case "text":
+			if err := func() error {
+				s.Text.Reset()
+				if err := s.Text.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"text\"")
+			}
+		case "html":
+			if err := func() error {
+				s.HTML.Reset()
+				if err := s.HTML.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"html\"")
 			}
 		default:
 			return d.Skip()

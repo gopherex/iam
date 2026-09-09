@@ -17953,6 +17953,13 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK) SetText(val 
 type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq struct {
 	Locale OptString                                                         `json:"locale"`
 	Data   OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReqData `json:"data"`
+	// Draft subject to render instead of the stored one (live preview while editing). At least one draft
+	// field switches the preview to draft mode per part.
+	Subject OptString `json:"subject"`
+	// Draft text body to render instead of the stored one.
+	Text OptString `json:"text"`
+	// Draft html body to render instead of the stored one.
+	HTML OptString `json:"html"`
 }
 
 // GetLocale returns the value of Locale.
@@ -17965,6 +17972,21 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) GetData() O
 	return s.Data
 }
 
+// GetSubject returns the value of Subject.
+func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) GetSubject() OptString {
+	return s.Subject
+}
+
+// GetText returns the value of Text.
+func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) GetText() OptString {
+	return s.Text
+}
+
+// GetHTML returns the value of HTML.
+func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) GetHTML() OptString {
+	return s.HTML
+}
+
 // SetLocale sets the value of Locale.
 func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) SetLocale(val OptString) {
 	s.Locale = val
@@ -17973,6 +17995,21 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) SetLocale(v
 // SetData sets the value of Data.
 func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) SetData(val OptPostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReqData) {
 	s.Data = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) SetSubject(val OptString) {
+	s.Subject = val
+}
+
+// SetText sets the value of Text.
+func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) SetText(val OptString) {
+	s.Text = val
+}
+
+// SetHTML sets the value of HTML.
+func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) SetHTML(val OptString) {
+	s.HTML = val
 }
 
 type PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReqData map[string]jx.Raw

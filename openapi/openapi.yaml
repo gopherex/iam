@@ -11375,6 +11375,21 @@ paths:
                 data:
                   type: object
                   additionalProperties: true
+                subject:
+                  type: string
+                  description: >-
+                    Draft subject to render instead of the stored one (live
+                    preview while editing). At least one draft field switches
+                    the preview to draft mode per part.
+                  maxLength: 65536
+                text:
+                  type: string
+                  description: Draft text body to render instead of the stored one.
+                  maxLength: 65536
+                html:
+                  type: string
+                  description: Draft html body to render instead of the stored one.
+                  maxLength: 65536
       responses:
         '200':
           description: Rendered.

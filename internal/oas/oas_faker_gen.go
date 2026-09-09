@@ -6685,6 +6685,21 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewReq) SetFake() {
 			s.Data.SetFake()
 		}
 	}
+	{
+		{
+			s.Subject.SetFake()
+		}
+	}
+	{
+		{
+			s.Text.SetFake()
+		}
+	}
+	{
+		{
+			s.HTML.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.

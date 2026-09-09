@@ -6,7 +6,7 @@ import {
 } from '@gopherex/iam-sdk';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Eye, Loader2, Mail, MoreHorizontal, Pencil } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { DataTable } from '@/components/data-table';
@@ -78,8 +78,16 @@ function templateId(row: TemplateRow): string {
 }
 
 // ---------------------------------------------------------------------------
-// Edit dialog
+// Edit dialog (with live draft preview)
 // ---------------------------------------------------------------------------
+
+const SAMPLE_DATA_DEFAULT = `{
+  "code": "123456",
+  "link": "https://example.test/auth/callback?token=sample-token",
+  "email": "user@example.com",
+  "invite_token": "inv_sample",
+  "reason": "sample reason"
+}`;
 
 function EditTemplateDialog({
   projectId,
@@ -98,9 +106,12 @@ function EditTemplateDialog({
   const [text, setText] = useState('');
   const [html, setHtml] = useState('');
   const [locale, setLocale] = useState('');
+  const [sampleData, setSampleData] = useState(SAMPLE_DATA_DEFAULT);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
+  const [previewErr, setPreviewErr] = useState<string | null>(null);
 
   // Populate fields each time a different row opens the dialog.
   if (row && loadedFor !== templateId(row)) {
@@ -109,8 +120,43 @@ function EditTemplateDialog({
     setText(row.text ?? '');
     setHtml(row.html ?? '');
     setLocale(row.locale ?? '');
+    setSampleData(SAMPLE_DATA_DEFAULT);
     setErr(null);
+    setPreview(null);
+    setPreviewErr(null);
   }
+
+  // Live preview: re-render the draft (debounced) whenever the editor body,
+  // locale, or sample data changes. Failures surface next to the result, they
+  // must not block editing.
+  useEffect(() => {
+    if (!open || !row) return;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await call(
+            postV1ProjectsByProjectIdAdminEmailTemplatesByIdPreview({
+              path: { project_id: projectId, id: templateId(row) },
+              body: {
+                locale: locale.trim() || undefined,
+                subject: subject.trim() || undefined,
+                text: text || undefined,
+                html: html || undefined,
+                data: JSON.parse(sampleData || '{}') as Record<string, unknown>,
+              },
+            }),
+          );
+          setPreview(res as Preview);
+          setPreviewErr(null);
+        } catch (e) {
+          setPreview(null);
+          setPreviewErr(e instanceof Error ? e.message : 'Failed to render preview');
+        }
+      })();
+    }, 600);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, row?.id, subject, text, html, locale, sampleData]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -141,12 +187,12 @@ function EditTemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Edit template — {row?.name ?? row?.id}</DialogTitle>
           <DialogDescription>
-            Go text/template syntax: {'{{.code}}'}, {'{{.link}}'}, etc. Saved as a project override;
-            leave fields empty to keep them.
+            Go text/template syntax: {'{{.code}}'}, {'{{.link}}'}, etc. The preview below re-renders
+            as you type; save writes a project override.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
@@ -170,23 +216,71 @@ function EditTemplateDialog({
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="tpl-text">Plain text body</Label>
-            <Textarea
-              id="tpl-text"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={5}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tpl-html">HTML body</Label>
-            <Textarea
-              id="tpl-html"
-              value={html}
-              onChange={(e) => setHtml(e.target.value)}
-              rows={8}
-            />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="tpl-text">Plain text body</Label>
+                <Textarea
+                  id="tpl-text"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  rows={5}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tpl-html">HTML body</Label>
+                <Textarea
+                  id="tpl-html"
+                  value={html}
+                  onChange={(e) => setHtml(e.target.value)}
+                  rows={8}
+                />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="tpl-data">Sample data (JSON)</Label>
+                <Textarea
+                  id="tpl-data"
+                  value={sampleData}
+                  onChange={(e) => setSampleData(e.target.value)}
+                  rows={5}
+                  className="min-h-20"
+                />
+              </div>
+              {previewErr && <p className="text-sm text-destructive">{previewErr}</p>}
+              {preview && (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Subject (rendered)
+                    </p>
+                    <p className="text-sm">{preview.subject || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Text (rendered)
+                    </p>
+                    <pre className="rounded-lg border bg-muted/40 p-3 text-xs whitespace-pre-wrap">
+                      {preview.text || '—'}
+                    </pre>
+                  </div>
+                  {preview.html && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">
+                        HTML (rendered)
+                      </p>
+                      <iframe
+                        title="Template HTML preview"
+                        srcDoc={preview.html}
+                        sandbox=""
+                        className="w-full h-40 rounded-lg border bg-white"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           {err && <p className="text-sm text-destructive">{err}</p>}
           <DialogFooter>

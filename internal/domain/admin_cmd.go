@@ -333,13 +333,18 @@ type AdminTemplateUpdateCmd struct {
 	Patch       map[string]jx.Raw
 }
 
-// AdminTemplatePreviewCmd renders an email template with sample data.
+// AdminTemplatePreviewCmd renders an email template with sample data. The
+// Draft* fields render an unsaved editor body instead of the stored template
+// (live preview); empty draft fields fall back to the stored part.
 type AdminTemplatePreviewCmd struct {
 	ProjectID   string
 	Environment string
 	TemplateID  string
 	Locale      string
 	Data        map[string]jx.Raw
+	DraftSubject string
+	DraftText    string
+	DraftHTML    string
 }
 
 // AdminTemplatePreview is a rendered email template.

@@ -2546,8 +2546,13 @@ func (a *pgAdminConfig) UpdateEmailTemplate(
 		if err != nil {
 			return nil, fmt.Errorf("list email templates: %w", err)
 		}
-		// Merge the patch onto the current template body.
-		body := map[string]jx.Raw{}
+		// Merge the patch onto the current template body. The envelope is a
+		// flat map of string fields (subject/text/html/locale/…): patch values
+		// are unquoted to strings and the whole body is marshaled as
+		// map[string]string — marshaling the raw jx.Raw patch values instead
+		// would base64-encode them (encoding/json treats []byte as base64),
+		// corrupting every saved override.
+		body := map[string]string{}
 
 		var cur *models.IamEmailTemplate
 		if len(existing) > 0 {
@@ -2560,12 +2565,25 @@ func (a *pgAdminConfig) UpdateEmailTemplate(
 		}
 
 		for k, v := range cmd.Patch {
-			body[k] = v
+			var s string
+			if err := json.Unmarshal(v, &s); err != nil {
+				return nil, domain.ErrValidation.WithMessage("template field " + k + " must be a string")
+			}
+
+			body[k] = s
 		}
 
-		locale := adminTemplateLocaleFromPatch(body)
-		body["id"] = adminRawString(cmd.TemplateID)
-		body["locale"] = adminRawString(locale)
+		locale := adminTemplateLocaleFromPatch(cmd.Patch)
+		if locale == "" {
+			locale = body["locale"]
+		}
+
+		if locale == "" {
+			locale = adminTemplateLocale
+		}
+
+		body["id"] = cmd.TemplateID
+		body["locale"] = locale
 
 		raw, err := json.Marshal(body)
 		if err != nil {
@@ -2592,6 +2610,11 @@ func (a *pgAdminConfig) UpdateEmailTemplate(
 			}
 		}
 
+		out := make(map[string]jx.Raw, len(body))
+		for k, v := range body {
+			out[k] = adminRawString(v)
+		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "config.email_template_updated",
 			ProjectID:   cmd.ProjectID,
@@ -2605,7 +2628,7 @@ func (a *pgAdminConfig) UpdateEmailTemplate(
 			return nil, err
 		}
 
-		return body, nil
+		return out, nil
 	})
 }
 
@@ -2620,6 +2643,20 @@ func (a *pgAdminConfig) PreviewEmailTemplate(
 	body := map[string]string{}
 	if len(row.Data) > 0 {
 		_ = json.Unmarshal(row.Data, &body) // best-effort: only string fields render
+	}
+
+	// Live preview: an unsaved editor body replaces the stored part per part,
+	// so operators see the rendered result before saving anything.
+	if cmd.DraftSubject != "" {
+		body["subject"] = cmd.DraftSubject
+	}
+
+	if cmd.DraftText != "" {
+		body["text"] = cmd.DraftText
+	}
+
+	if cmd.DraftHTML != "" {
+		body["html"] = cmd.DraftHTML
 	}
 
 	data := adminTemplateData(cmd.Data)
@@ -2839,6 +2876,9 @@ func adminTemplateData(in map[string]jx.Raw) map[string]any {
 		"reset_url":        "https://example.test/reset?token=sample-token",
 		"magic_link":       "https://example.test/auth/magic?token=sample-token",
 		"verification_url": "https://example.test/auth/verify?token=sample-token",
+		"invite_token":     "inv_sample",
+		"invite_url":       "https://example.test/invite?token=inv_sample",
+		"reason":           "sample reason",
 	}
 
 	for k, raw := range in {

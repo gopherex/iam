@@ -39,6 +39,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -624,6 +625,39 @@ func TestE2EAdminConfigEmailTemplates(t *testing.T) {
 		r := e2eReq(t, ctx, http.MethodPost, base+"/"+templateID+"/preview",
 			map[string]any{}, e2eBearer(token))
 		e2eWantStatus(t, r, http.StatusOK)
+	})
+
+	t.Run("preview renders draft over stored body", func(t *testing.T) {
+		// Save a stored override first, then render an unsaved draft: the
+		// draft parts must win, missing draft parts fall back to the stored
+		// template, and request data must substitute template variables.
+		r := e2eReq(t, ctx, http.MethodPatch, base+"/"+templateID,
+			map[string]any{"subject": "Stored subject", "text": "Stored text {{.email}}"},
+			e2eBearer(token))
+		e2eWantStatus(t, r, http.StatusOK)
+
+		r = e2eReq(t, ctx, http.MethodPost, base+"/"+templateID+"/preview",
+			map[string]any{
+				"subject": "Draft subject for {{.email}}",
+				"data":    map[string]any{"email": "user@example.com"},
+			}, e2eBearer(token))
+		e2eWantStatus(t, r, http.StatusOK)
+
+		var resp struct {
+			Subject string `json:"subject"`
+			Text    string `json:"text"`
+		}
+		if err := json.Unmarshal(r.Body, &resp); err != nil {
+			t.Fatalf("decode preview: %v", err)
+		}
+
+		if resp.Subject != "Draft subject for user@example.com" {
+			t.Fatalf("subject = %q, want draft rendering", resp.Subject)
+		}
+
+		if resp.Text != "Stored text user@example.com" {
+			t.Fatalf("text = %q, want stored fallback rendering", resp.Text)
+		}
 	})
 
 	t.Run("no auth list returns 401", func(t *testing.T) {
