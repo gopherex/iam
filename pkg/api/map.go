@@ -57,6 +57,14 @@ func oasUser(a *domain.Account) oas.User {
 		user.Profile = oas.NewOptCoreProfile(prof)
 	}
 
+	if !a.CreatedAt.IsZero() {
+		user.CreatedAt = oas.NewOptTimestamp(oas.Timestamp(a.CreatedAt))
+	}
+
+	if !a.UpdatedAt.IsZero() {
+		user.UpdatedAt = oas.NewOptTimestamp(oas.Timestamp(a.UpdatedAt))
+	}
+
 	return user
 }
 

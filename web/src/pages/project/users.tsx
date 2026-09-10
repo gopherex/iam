@@ -146,6 +146,45 @@ export function UsersPage() {
       },
     },
     {
+      accessorFn: (u) => u.profile?.name ?? '',
+      id: 'name',
+      header: 'Name',
+      cell: ({ row }) =>
+        row.original.profile?.name ?? (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
+      accessorFn: (u) => (u.email_verified || u.phone_verified ? 'verified' : 'unverified'),
+      id: 'verified',
+      header: 'Verified',
+      cell: ({ row }) => {
+        const u = row.original;
+        const verified = u.email_verified || u.phone_verified;
+        return (
+          <Badge variant={verified ? 'secondary' : 'outline'} className="text-xs">
+            {verified ? 'verified' : '—'}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorFn: (u) =>
+        u.invite_cap == null ? 'default' : u.invite_cap === 0 ? 'revoked' : String(u.invite_cap),
+      id: 'invites',
+      header: 'Invites',
+      cell: ({ row }) => {
+        const cap = row.original.invite_cap;
+        if (cap == null) {
+          return <span className="text-sm text-muted-foreground">default</span>;
+        }
+        if (cap === 0) {
+          return <Badge variant="destructive" className="text-xs">revoked</Badge>;
+        }
+        return <span className="text-sm font-medium">{cap}</span>;
+      },
+    },
+    {
       accessorKey: 'kind',
       header: 'Kind',
       cell: ({ row }) => (
@@ -548,7 +587,7 @@ function UserDetailDialog({ user, projectId, onClose, onReload }: UserDetailDial
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>User detail</DialogTitle>
           <DialogDescription>
@@ -571,21 +610,24 @@ function UserDetailDialog({ user, projectId, onClose, onReload }: UserDetailDial
             </button>
           ))}
         </div>
-        {tab === 'info' && (
-          <UserInfoTab user={user} projectId={projectId} onReload={onReload} />
-        )}
-        {tab === 'roles' && (
-          <UserRolesTab user={user} projectId={projectId} />
-        )}
-        {tab === 'sessions' && (
-          <UserSessionsTab user={user} projectId={projectId} />
-        )}
-        {tab === 'identities' && (
-          <UserIdentitiesTab user={user} projectId={projectId} />
-        )}
-        {tab === 'grants' && (
-          <UserGrantsTab user={user} projectId={projectId} />
-        )}
+        {/* Bounded scroll area: long lists (sessions) must stay inside the dialog. */}
+        <div className="max-h-[70vh] overflow-y-auto">
+          {tab === 'info' && (
+            <UserInfoTab user={user} projectId={projectId} onReload={onReload} />
+          )}
+          {tab === 'roles' && (
+            <UserRolesTab user={user} projectId={projectId} />
+          )}
+          {tab === 'sessions' && (
+            <UserSessionsTab user={user} projectId={projectId} />
+          )}
+          {tab === 'identities' && (
+            <UserIdentitiesTab user={user} projectId={projectId} />
+          )}
+          {tab === 'grants' && (
+            <UserGrantsTab user={user} projectId={projectId} />
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -747,6 +789,16 @@ function UserInfoTab({
         <div>
           <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Locale</dt>
           <dd className="mt-1">{user.profile?.locale ?? <span className="text-muted-foreground">—</span>}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Invite cap</dt>
+          <dd className="mt-1">
+            {user.invite_cap != null ? (
+              user.invite_cap === 0 ? 'revoked (0)' : String(user.invite_cap)
+            ) : (
+              <span className="text-muted-foreground">project default</span>
+            )}
+          </dd>
         </div>
         <div>
           <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Created</dt>
@@ -1113,11 +1165,10 @@ function EditUserDialog({ open, onOpenChange, user, projectId, onSaved }: EditUs
       await call(
         patchV1ProjectsByProjectIdAdminUsersByUserId({
           path: { project_id: projectId, user_id: user.id },
+          // The PATCH handler reads top-level name/locale/invite_cap keys.
           body: {
-            profile: {
-              name: name || null,
-              locale: locale || undefined,
-            },
+            name: name || undefined,
+            locale: locale || undefined,
             // Empty = no per-user override (project member_invites default
             // applies); 0 = the member-invitation right is revoked.
             invite_cap: inviteCap === '' ? null : Number(inviteCap),

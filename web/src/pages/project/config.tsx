@@ -259,13 +259,78 @@ function AuthTab({ projectId, env }: { projectId: string; env: string }) {
           </Button>
         </CardFooter>
       </Card>
+
+      {/* Member invitations */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Member invitations</CardTitle>
+          <CardDescription>
+            Let signed-in users invite people, each within a personal budget of
+            simultaneously active invitations.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SwitchField
+            id="mi-enabled"
+            label="Users can invite"
+            description="When off, the /v1/auth/invites surface answers 403 for everyone."
+            checked={form.member_invites?.enabled ?? false}
+            onCheckedChange={(v) =>
+              setForm((p) =>
+                p
+                  ? {
+                      ...p,
+                      member_invites: {
+                        ...p.member_invites,
+                        enabled: v,
+                        default_cap: p.member_invites?.default_cap ?? 5,
+                      },
+                    }
+                  : p,
+              )
+            }
+          />
+          <Separator className="my-4" />
+          <div className="space-y-2">
+            <Label htmlFor="mi-default-cap">Default cap per user</Label>
+            <Input
+              id="mi-default-cap"
+              type="number"
+              min={0}
+              disabled={!form.member_invites?.enabled}
+              value={form.member_invites?.default_cap ?? 0}
+              onChange={(e) =>
+                setForm((p) =>
+                  p
+                    ? {
+                        ...p,
+                        member_invites: {
+                          ...p.member_invites,
+                          enabled: p.member_invites?.enabled ?? true,
+                          default_cap: Number(e.target.value),
+                        },
+                      }
+                    : p,
+                )
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              A slot is held by each pending-unexpired or accepted invitation.
+              Per-user overrides live on the user record (Users → Edit → Invite
+              cap); 0 there revokes the right for that user.
+            </p>
+          </div>
+        </CardContent>
+        <CardFooter className="justify-end">
+          <Button onClick={save} disabled={busy}>
+            {busy && <Loader2 className="size-4 animate-spin" />}
+            Save
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Policies tab (password + session + MFA)
-// ---------------------------------------------------------------------------
 
 function NumberField({
   label,
