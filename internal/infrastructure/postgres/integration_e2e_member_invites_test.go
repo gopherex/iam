@@ -192,4 +192,43 @@ func TestE2EMemberInvites(t *testing.T) {
 		ts.URL+"/v1/projects/"+projectID+"/admin/invites",
 		map[string]any{"email": "admin-invited@example.com"}, e2eBearer(adminToken))
 	e2eWantStatus(t, ar, http.StatusCreated)
+
+	// 11. The admin listing surfaces the inviter on member invites (and its
+	// absence on admin/system ones).
+	alr := e2eReq(t, ctx, http.MethodGet,
+		ts.URL+"/v1/projects/"+projectID+"/admin/invites", nil, e2eBearer(adminToken))
+	e2eWantStatus(t, alr, http.StatusOK)
+
+	var adminList struct {
+		Invites []struct {
+			Email          string  `json:"email"`
+			CreatedBy      *string `json:"created_by"`
+			CreatedByEmail *string `json:"created_by_email"`
+		} `json:"invites"`
+	}
+	if err := json.Unmarshal(alr.Body, &adminList); err != nil {
+		t.Fatalf("decode admin invites: %v", err)
+	}
+
+	memberSeen, adminSeen := false, false
+	for _, inv := range adminList.Invites {
+		if inv.Email == "friend-6@example.com" {
+			memberSeen = true
+			if inv.CreatedBy == nil || *inv.CreatedBy != userID {
+				t.Fatalf("member invite created_by = %+v, want %s", inv.CreatedBy, userID)
+			}
+			if inv.CreatedByEmail == nil {
+				t.Fatal("member invite must carry the resolved inviter email")
+			}
+		}
+		if inv.Email == "admin-invited@example.com" {
+			adminSeen = true
+			if inv.CreatedBy != nil {
+				t.Fatalf("admin invite created_by = %+v, want null", inv.CreatedBy)
+			}
+		}
+	}
+	if !memberSeen || !adminSeen {
+		t.Fatalf("invites missing from admin list: member=%v admin=%v", memberSeen, adminSeen)
+	}
 }

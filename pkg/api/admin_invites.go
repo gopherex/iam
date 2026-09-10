@@ -26,6 +26,13 @@ func oasInvite(inv *domain.Invite) oas.Invite {
 		out.CreatedAt = oas.NewOptTimestamp(oas.Timestamp(inv.CreatedAt))
 	}
 
+	if inv.CreatedBy != "" {
+		out.CreatedBy = oas.NewOptNilString(inv.CreatedBy)
+		if inv.CreatedByEmail != "" {
+			out.CreatedByEmail = oas.NewOptNilString(inv.CreatedByEmail)
+		}
+	}
+
 	return out
 }
 

@@ -14421,14 +14421,28 @@ func (s *Invite) encodeFields(e *jx.Encoder) {
 			s.CreatedAt.Encode(e)
 		}
 	}
+	{
+		if s.CreatedBy.Set {
+			e.FieldStart("created_by")
+			s.CreatedBy.Encode(e)
+		}
+	}
+	{
+		if s.CreatedByEmail.Set {
+			e.FieldStart("created_by_email")
+			s.CreatedByEmail.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfInvite = [5]string{
+var jsonFieldsNameOfInvite = [7]string{
 	0: "id",
 	1: "email",
 	2: "status",
 	3: "expires_at",
 	4: "created_at",
+	5: "created_by",
+	6: "created_by_email",
 }
 
 // Decode decodes Invite from json.
@@ -14491,6 +14505,26 @@ func (s *Invite) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"created_at\"")
+			}
+		case "created_by":
+			if err := func() error {
+				s.CreatedBy.Reset()
+				if err := s.CreatedBy.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"created_by\"")
+			}
+		case "created_by_email":
+			if err := func() error {
+				s.CreatedByEmail.Reset()
+				if err := s.CreatedByEmail.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"created_by_email\"")
 			}
 		default:
 			return d.Skip()

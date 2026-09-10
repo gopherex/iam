@@ -89,6 +89,10 @@ func inviteToDomain(row *models.IamInvite) domain.Invite {
 		inv.ExpiresAt = exp
 	}
 
+	if creator, ok := row.CreatedBy.Get(); ok {
+		inv.CreatedBy = creator
+	}
+
 	return inv
 }
 
@@ -369,7 +373,8 @@ func (a *pgInvites) RevokeOwn(ctx context.Context, projectID, env, inviteID, use
 	})
 }
 
-// List returns the project's invitations (most recent first).
+// List returns the project's invitations (most recent first). Member invites
+// are enriched with the inviter's email (batch-resolved, best-effort).
 func (a *pgInvites) List(ctx context.Context, cmd domain.InviteListCmd) ([]domain.Invite, error) {
 	rows, err := models.IamInvites.Query(
 		sm.Where(models.IamInvites.Columns.ProjectID.EQ(psql.Arg(cmd.ProjectID))),
@@ -380,12 +385,59 @@ func (a *pgInvites) List(ctx context.Context, cmd domain.InviteListCmd) ([]domai
 		return nil, fmt.Errorf("invite list: %w", err)
 	}
 
+	creatorEmails := a.creatorEmails(ctx, rows)
+
 	out := make([]domain.Invite, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, inviteToDomain(row))
+		inv := inviteToDomain(row)
+		if inv.CreatedBy != "" {
+			inv.CreatedByEmail = creatorEmails[inv.CreatedBy]
+		}
+
+		out = append(out, inv)
 	}
 
 	return out, nil
+}
+
+// creatorEmails batch-resolves the distinct inviters' account ids to their
+// primary emails. Best-effort: a deleted account just yields no entry.
+func (a *pgInvites) creatorEmails(ctx context.Context, rows models.IamInviteSlice) map[string]string {
+	ids := make([]string, 0, len(rows))
+	seen := make(map[string]struct{}, len(rows))
+	for _, row := range rows {
+		if creator, ok := row.CreatedBy.Get(); ok && creator != "" {
+			if _, dup := seen[creator]; !dup {
+				seen[creator] = struct{}{}
+				ids = append(ids, creator)
+			}
+		}
+	}
+
+	out := make(map[string]string, len(ids))
+	if len(ids) == 0 {
+		return out
+	}
+
+	anyIDs := make([]any, 0, len(ids))
+	for _, id := range ids {
+		anyIDs = append(anyIDs, id)
+	}
+
+	accounts, err := models.IamUsers.Query(
+		sm.Where(models.IamUsers.Columns.ID.In(psql.Arg(anyIDs...))),
+	).All(ctx, a.db.Bobx())
+	if err != nil {
+		return out // enrichment only; the listing itself must not fail
+	}
+
+	for _, acc := range accounts {
+		if email, ok := acc.PrimaryEmail.Get(); ok && email != "" {
+			out[acc.ID] = email
+		}
+	}
+
+	return out
 }
 
 // Revoke marks a pending invitation revoked. Tenant-scoped; a foreign or missing

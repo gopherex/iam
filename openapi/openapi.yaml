@@ -2185,6 +2185,21 @@ components:
           $ref: '#/components/schemas/Timestamp'
         created_at:
           $ref: '#/components/schemas/Timestamp'
+        created_by:
+          type:
+          - string
+          - 'null'
+          maxLength: 256
+          description: >-
+            The inviting user's account id for member invitations; null for
+            admin/system invites.
+        created_by_email:
+          type:
+          - string
+          - 'null'
+          pattern: ^[^@\s]+@[^@\s]+\.[^@\s]+$
+          maxLength: 254
+          description: The resolved inviter address (admin listings, best-effort).
     InviteQuota:
       type: object
       description: >-

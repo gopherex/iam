@@ -2975,6 +2975,16 @@ func (s *Invite) SetFake() {
 			s.CreatedAt.SetFake()
 		}
 	}
+	{
+		{
+			s.CreatedBy.SetFake()
+		}
+	}
+	{
+		{
+			s.CreatedByEmail.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.

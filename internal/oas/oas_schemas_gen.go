@@ -6130,6 +6130,10 @@ type Invite struct {
 	Status    InviteStatus `json:"status"`
 	ExpiresAt OptTimestamp `json:"expires_at"`
 	CreatedAt OptTimestamp `json:"created_at"`
+	// The inviting user's account id for member invitations; null for admin/system invites.
+	CreatedBy OptNilString `json:"created_by"`
+	// The resolved inviter address (admin listings, best-effort).
+	CreatedByEmail OptNilString `json:"created_by_email"`
 }
 
 // GetID returns the value of ID.
@@ -6157,6 +6161,16 @@ func (s *Invite) GetCreatedAt() OptTimestamp {
 	return s.CreatedAt
 }
 
+// GetCreatedBy returns the value of CreatedBy.
+func (s *Invite) GetCreatedBy() OptNilString {
+	return s.CreatedBy
+}
+
+// GetCreatedByEmail returns the value of CreatedByEmail.
+func (s *Invite) GetCreatedByEmail() OptNilString {
+	return s.CreatedByEmail
+}
+
 // SetID sets the value of ID.
 func (s *Invite) SetID(val string) {
 	s.ID = val
@@ -6180,6 +6194,16 @@ func (s *Invite) SetExpiresAt(val OptTimestamp) {
 // SetCreatedAt sets the value of CreatedAt.
 func (s *Invite) SetCreatedAt(val OptTimestamp) {
 	s.CreatedAt = val
+}
+
+// SetCreatedBy sets the value of CreatedBy.
+func (s *Invite) SetCreatedBy(val OptNilString) {
+	s.CreatedBy = val
+}
+
+// SetCreatedByEmail sets the value of CreatedByEmail.
+func (s *Invite) SetCreatedByEmail(val OptNilString) {
+	s.CreatedByEmail = val
 }
 
 // Ref: #/components/schemas/InviteCreateRequest

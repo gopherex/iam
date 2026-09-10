@@ -326,6 +326,25 @@ export function InvitesPage() {
         ),
     },
     {
+      id: 'invited_by',
+      header: 'Invited by',
+      accessorFn: (i) => i.created_by_email ?? i.created_by ?? '',
+      cell: ({ row }) => {
+        const inv = row.original;
+        if (inv.created_by_email) {
+          return <span className="text-sm">{inv.created_by_email}</span>;
+        }
+        if (inv.created_by) {
+          return (
+            <span className="font-mono text-xs text-muted-foreground" title={inv.created_by}>
+              {(inv.created_by.length > 8 ? inv.created_by.slice(0, 8) : inv.created_by) + '…'}
+            </span>
+          );
+        }
+        return <span className="text-muted-foreground">— (admin)</span>;
+      },
+    },
+    {
       id: 'status',
       header: 'Status',
       accessorKey: 'status',

@@ -12,6 +12,11 @@ type Invite struct {
 	Status    string // pending | accepted | revoked
 	ExpiresAt time.Time
 	CreatedAt time.Time
+	// CreatedBy is the inviting user's account id for member invitations;
+	// empty for admin/system invites (panel, approvals, integrations).
+	CreatedBy string
+	// CreatedByEmail is the resolved inviter address (admin listings only).
+	CreatedByEmail string
 }
 
 // InviteCreateCmd creates a new invitation. When Email is set the invite is
@@ -42,6 +47,14 @@ type InviteQuota struct {
 	Cap  int
 	Used int
 	Left int
+}
+
+// WithCreatorEmail is the admin-listing enrichment: the inviter's account id
+// resolved to their email (best-effort — the account may be gone).
+func (i Invite) WithCreatorEmail(email string) Invite {
+	i.CreatedByEmail = email
+
+	return i
 }
 
 // InviteListCmd lists invitations for a project.
