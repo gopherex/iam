@@ -65,16 +65,67 @@ A flow started in this mode parks at step `request_access` rather than failing,
 so the same client code handles it as a state, not an error. Submitting the
 request is the client's job — parking the flow does not create the record.
 
-:::note Approval is a decision, not an onboarding
-`approve` marks the request `approved` and emits `access_request.approved`. It
-does **not** issue an invite, create the account, or resume a parked flow. To
-actually let the person in, follow an approval with an
-[invite](#invitations) — or subscribe to the event and do it from your own
-backend.
+:::note Approval is a decision + an invite
+`approve` marks the request `approved` and, in the same transaction, mints a
+single-use **email-bound invitation** for the requester. The decision email
+carries the magic sign-up link (`<app_base_url>/invite?token=…`, also offered
+as a raw code). A subsequent sign-up flow with the same email passes the
+`request_access` gate automatically — no invite token needs to be attached.
 :::
 
 The whole feature can be switched off with the `access_requests`
 [feature flag](/guides/admin-config).
+
+## Member invitations (users inviting users)
+
+Beyond admin-issued invites, signed-in users can invite people themselves —
+on their own budget. The `auth` doc's `member_invites` block is the project
+default:
+
+```json
+{
+  "member_invites": { "enabled": true, "default_cap": 5 }
+}
+```
+
+- `enabled` gates the feature; a `default_cap` above zero requires it.
+- A **per-user override** on the user record wins over the default:
+  `PATCH /v1/projects/{id}/admin/users/{user_id}` with `{"invite_cap": 10}`;
+  `0` revokes the right for that user, `null` falls back to the project
+  default.
+
+### The user surface
+
+```bash
+# the signed-in user invites a friend; the email goes out immediately and
+# the raw token/link is returned exactly once for the caller to share
+curl -sX POST https://auth.example.com/v1/auth/invites \
+  -H "Authorization: Bearer <user_access_token>" -H "Content-Type: application/json" \
+  -d '{"email":"friend@example.com"}'
+# -> { "invite": { "invite_token": "inv_… (shown once)" }, "quota": {"cap":5,"used":1,"left":4} }
+
+curl -s https://auth.example.com/v1/auth/invites \
+  -H "Authorization: Bearer <user_access_token>"
+# -> own invitations + quota
+
+curl -sX POST https://auth.example.com/v1/auth/invites/<invite_id>/revoke \
+  -H "Authorization: Bearer <user_access_token>"
+# revokes the caller's own pending invite, freeing its slot
+```
+
+Errors: `403` when member invitations are disabled or the user's cap is `0`,
+`409 invite_quota_exceeded` when the budget is spent. In the TS SDK this is
+`iam.invites.create/list/revoke` on the user client.
+
+### How the cap is counted
+
+A **slot** is occupied by each of the user's invitations that is
+`pending`-and-unexpired or `accepted`. Revoking (or letting expire) a pending
+invitation frees its slot; an accepted one occupies it forever. Concurrent
+creates by the same user are serialized, so the cap cannot be raced past.
+Member invitations are always **email-bound** (no open share-links). Admin-
+and system-issued invites (admin panel, access-request approvals, integrations)
+are uncapped.
 
 ## Password strategy
 

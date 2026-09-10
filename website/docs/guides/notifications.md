@@ -106,7 +106,7 @@ curl -sX POST .../admin/sms-providers/send-test -H "Authorization: Bearer $ADMIN
 
 ## Email templates
 
-Eight built-in templates cover everything IAM sends. Each ships copy in `en` and
+Ten built-in templates cover everything IAM sends. Each ships copy in `en` and
 `ru`, and each can be overridden per project.
 
 | Key | Sent when |
@@ -119,6 +119,11 @@ Eight built-in templates cover everything IAM sends. Each ships copy in `en` and
 | `mfa_email` | an MFA challenge over email |
 | `flow_continue` | "continue on another device" for a resumable flow |
 | `invite` | an invitation to sign up |
+| `access_request_approved` | an access request was approved (carries the magic invite link) |
+| `access_request_denied` | an access request was declined (carries the reason, when given) |
+
+The decision emails honor the **locale the requester submitted** with their
+access request (falling back to the project default, then `en`).
 
 ```bash
 # what exists, built-in copy included
@@ -129,9 +134,11 @@ curl -sX PATCH .../admin/email-templates/otp -H "Authorization: Bearer $ADMIN_TO
   -H "Content-Type: application/json" \
   -d '{"locale":"en","subject":"Your Acme code","text":"Code: {{.code}}","html":"<p>Code: <b>{{.code}}</b></p>"}'
 
-# render it without sending
+# render it without sending — pass unsaved subject/text/html to preview a
+# draft as you would edit it in the admin panel
 curl -sX POST .../admin/email-templates/otp/preview -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" -d '{"locale":"en"}'
+  -H "Content-Type: application/json" \
+  -d '{"locale":"en","subject":"Draft {{.code}}"}'
 
 # send it for real — the fastest way to prove SMTP works
 curl -sX POST .../admin/email-templates/otp/send-test -H "Authorization: Bearer $ADMIN_TOKEN" \
