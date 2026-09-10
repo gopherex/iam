@@ -46,3 +46,6 @@ dist/
 yarn-error.log
 /iam
 /bin/
+
+# local scratch space
+/tmp/
