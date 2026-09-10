@@ -26974,6 +26974,15 @@ func (c *Client) PatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.
 }
 
 func (c *Client) sendPatchV1ProjectsByProjectIdAdminConfigSessionPolicy(ctx context.Context, request *SessionPolicy, params PatchV1ProjectsByProjectIdAdminConfigSessionPolicyParams, requestOptions ...RequestOption) (res *SessionPolicy, err error) {
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("patchV1ProjectsByProjectIdAdminConfigSessionPolicy"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),

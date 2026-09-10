@@ -424,7 +424,7 @@ func mintSessionVia(
 // project when there is no client, and client_id is only claimed when set.
 func (a *pgCoreAuth) coreAuthSignAccessToken(
 	ctx context.Context, acc *domain.Account, sessionID, clientID, signEnv string,
-	amr []string, aal int, ttl time.Duration,
+	amr []string, aal int, ttl time.Duration, includeRoles bool,
 ) (string, error) {
 	aud := clientID
 	if aud == "" {
@@ -445,6 +445,15 @@ func (a *pgCoreAuth) coreAuthSignAccessToken(
 	}
 	if clientID != "" {
 		claims[claimClientID] = clientID
+	}
+
+	// Roles claim is opt-in (session_policy.access_token_claims) and resolved
+	// strictly server-side at signing time — client input never participates.
+	// An empty role set emits nothing.
+	if includeRoles {
+		if roles, err := userRoles(ctx, a.db, acc.ProjectID, signEnv, acc.ID); err == nil && len(roles) > 0 {
+			claims[claimRoles] = roles
+		}
 	}
 
 	return a.db.Signer().Sign(ctx, acc.ProjectID, signEnv, claims, ttl)
@@ -545,7 +554,7 @@ func (a *pgCoreAuth) coreAuthMintSession(
 	}
 
 	accessToken, err := a.coreAuthSignAccessToken(
-		ctx, acc, sessionID, clientID, signEnv, amr, aal, sessionPolicy.AccessTTL,
+		ctx, acc, sessionID, clientID, signEnv, amr, aal, sessionPolicy.AccessTTL, sessionPolicy.RolesClaimEnabled(),
 	)
 	if err != nil {
 		return nil, err
@@ -703,7 +712,7 @@ func (a *pgCoreAuth) coreAuthRotateSession(
 	}
 
 	accessToken, err := a.coreAuthSignAccessToken(
-		ctx, acc, row.ID, clientID, signEnv, amr, aal, sessionPolicy.AccessTTL,
+		ctx, acc, row.ID, clientID, signEnv, amr, aal, sessionPolicy.AccessTTL, sessionPolicy.RolesClaimEnabled(),
 	)
 	if err != nil {
 		return nil, err
@@ -3912,6 +3921,14 @@ func (a *pgCoreAuth) CurrentClaims(ctx context.Context, sessionID string) (map[s
 
 	if v, ok := row.ExpiresAt.Get(); ok {
 		claims[claimExpiresAt] = v.Unix()
+	}
+
+	// Mirror the token's opt-in roles claim (session_policy) so
+	// GET /v1/tokens/current never diverges from the signed access token.
+	if policy, err := a.cfg.SessionPolicyForEnv(ctx, row.ProjectID, env); err == nil && policy.RolesClaimEnabled() {
+		if roles, err := userRoles(ctx, a.db, row.ProjectID, env, sess.AccountID); err == nil && len(roles) > 0 {
+			claims[claimRoles] = roles
+		}
 	}
 
 	return claims, nil

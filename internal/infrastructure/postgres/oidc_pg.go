@@ -71,6 +71,7 @@ const (
 	claimAAL         = "aal"
 	claimAMR         = "amr"
 	claimTokenType   = "typ"
+	claimRoles       = "roles"
 	claimEnvironment = "env"
 	claimClientID    = "client_id"
 	claimScope       = "scope"

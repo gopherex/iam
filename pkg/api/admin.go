@@ -105,6 +105,8 @@ type AdminConnections interface {
 type AdminRoles interface {
 	ListRoles(ctx context.Context, cmd domain.AdminUserRolesCmd) ([]string, error)
 	SetRoles(ctx context.Context, cmd domain.AdminUserRolesSetCmd) ([]string, error)
+	// RolesForUsers batch-resolves role sets for admin user listings.
+	RolesForUsers(ctx context.Context, projectID, env string, userIDs []string) (map[string][]string, error)
 }
 
 type AdminConfig interface {
@@ -1940,9 +1942,24 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsers(
 		return nil, err
 	}
 
+	ids := make([]string, 0, len(accts))
+	for i := range accts {
+		ids = append(ids, accts[i].ID)
+	}
+
+	roleSets, err := s.deps.Roles.RolesForUsers(ctx, params.ProjectID, params.XEnvironment.Or("live"), ids)
+	if err != nil {
+		return nil, err
+	}
+
 	data := make([]oas.User, 0, len(accts))
 	for i := range accts {
-		data = append(data, oasUser(&accts[i]))
+		user := oasUser(&accts[i])
+		if roles := roleSets[accts[i].ID]; len(roles) > 0 {
+			user.Roles = roles
+		}
+
+		data = append(data, user)
 	}
 
 	return &oas.GetV1ProjectsByProjectIdAdminUsersOK{Data: data}, nil
@@ -1961,8 +1978,19 @@ func (s *AdminService) GetV1ProjectsByProjectIdAdminUsersByUserId(
 		return nil, err
 	}
 
+	user := oasUser(acct)
+
+	roleSets, err := s.deps.Roles.RolesForUsers(ctx, params.ProjectID, params.XEnvironment.Or("live"), []string{acct.ID})
+	if err != nil {
+		return nil, err
+	}
+
+	if roles := roleSets[acct.ID]; len(roles) > 0 {
+		user.Roles = roles
+	}
+
 	return &oas.GetV1ProjectsByProjectIdAdminUsersByUserIdOK{
-		User: oas.NewOptUser(oasUser(acct)),
+		User: oas.NewOptUser(user),
 	}, nil
 }
 

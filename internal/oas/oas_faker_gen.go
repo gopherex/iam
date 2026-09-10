@@ -8832,6 +8832,23 @@ func (s *SessionPolicy) SetFake() {
 			s.ReuseDetection.SetFake()
 		}
 	}
+	{
+		{
+			s.AccessTokenClaims = nil
+			for i := 0; i < 0; i++ {
+				var elem SessionPolicyAccessTokenClaimsItem
+				{
+					elem.SetFake()
+				}
+				s.AccessTokenClaims = append(s.AccessTokenClaims, elem)
+			}
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SessionPolicyAccessTokenClaimsItem) SetFake() {
+	*s = SessionPolicyAccessTokenClaimsItemRoles
 }
 
 // SetFake set fake values.
@@ -9108,6 +9125,18 @@ func (s *User) SetFake() {
 	{
 		{
 			s.InviteCap.SetFake()
+		}
+	}
+	{
+		{
+			s.Roles = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.Roles = append(s.Roles, elem)
+			}
 		}
 	}
 	{

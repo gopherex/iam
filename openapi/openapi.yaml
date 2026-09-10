@@ -562,6 +562,15 @@ components:
             Effective member-invite cap for this user: a per-user override
             stored on the account, or the project member_invites default when
             null. 0 means the right is revoked.
+        roles:
+          type: array
+          items:
+            type: string
+            maxLength: 256
+          maxItems: 100
+          description: >-
+            The user's IAM role assignments in this environment (admin
+            listings only). Changing them revokes the user's sessions.
         metadata:
           type: object
           additionalProperties: true
@@ -1980,6 +1989,18 @@ components:
           type: integer
         reuse_detection:
           type: boolean
+        access_token_claims:
+          type: array
+          items:
+            type: string
+            enum:
+            - roles
+          maxItems: 10
+          description: >-
+            Extra claims opted into the project's core-auth access tokens.
+            "roles" resolves the user's IAM role assignments server-side at
+            signing time (empty sets emit nothing). Changing a user's roles
+            revokes their sessions.
     MfaPolicy:
       type: object
       properties:

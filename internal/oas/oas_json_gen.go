@@ -45955,14 +45955,25 @@ func (s *SessionPolicy) encodeFields(e *jx.Encoder) {
 			s.ReuseDetection.Encode(e)
 		}
 	}
+	{
+		if s.AccessTokenClaims != nil {
+			e.FieldStart("access_token_claims")
+			e.ArrStart()
+			for _, elem := range s.AccessTokenClaims {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
 }
 
-var jsonFieldsNameOfSessionPolicy = [5]string{
+var jsonFieldsNameOfSessionPolicy = [6]string{
 	0: "access_ttl",
 	1: "refresh_ttl",
 	2: "idle_timeout",
 	3: "absolute_timeout",
 	4: "reuse_detection",
+	5: "access_token_claims",
 }
 
 // Decode decodes SessionPolicy from json.
@@ -46023,6 +46034,23 @@ func (s *SessionPolicy) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"reuse_detection\"")
 			}
+		case "access_token_claims":
+			if err := func() error {
+				s.AccessTokenClaims = make([]SessionPolicyAccessTokenClaimsItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem SessionPolicyAccessTokenClaimsItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.AccessTokenClaims = append(s.AccessTokenClaims, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_token_claims\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -46043,6 +46071,44 @@ func (s *SessionPolicy) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *SessionPolicy) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SessionPolicyAccessTokenClaimsItem as json.
+func (s SessionPolicyAccessTokenClaimsItem) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes SessionPolicyAccessTokenClaimsItem from json.
+func (s *SessionPolicyAccessTokenClaimsItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SessionPolicyAccessTokenClaimsItem to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch SessionPolicyAccessTokenClaimsItem(v) {
+	case SessionPolicyAccessTokenClaimsItemRoles:
+		*s = SessionPolicyAccessTokenClaimsItemRoles
+	default:
+		*s = SessionPolicyAccessTokenClaimsItem(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s SessionPolicyAccessTokenClaimsItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SessionPolicyAccessTokenClaimsItem) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -47292,6 +47358,16 @@ func (s *User) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Roles != nil {
+			e.FieldStart("roles")
+			e.ArrStart()
+			for _, elem := range s.Roles {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
 		if s.Metadata.Set {
 			e.FieldStart("metadata")
 			s.Metadata.Encode(e)
@@ -47311,7 +47387,7 @@ func (s *User) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUser = [12]string{
+var jsonFieldsNameOfUser = [13]string{
 	0:  "id",
 	1:  "kind",
 	2:  "status",
@@ -47321,9 +47397,10 @@ var jsonFieldsNameOfUser = [12]string{
 	6:  "phone_verified",
 	7:  "profile",
 	8:  "invite_cap",
-	9:  "metadata",
-	10: "created_at",
-	11: "updated_at",
+	9:  "roles",
+	10: "metadata",
+	11: "created_at",
+	12: "updated_at",
 }
 
 // Decode decodes User from json.
@@ -47426,6 +47503,25 @@ func (s *User) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"invite_cap\"")
+			}
+		case "roles":
+			if err := func() error {
+				s.Roles = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.Roles = append(s.Roles, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"roles\"")
 			}
 		case "metadata":
 			if err := func() error {

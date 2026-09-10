@@ -57,6 +57,13 @@ func (a *pgRoles) SetRoles(ctx context.Context, cmd domain.AdminUserRolesSetCmd)
 	env := adminEnv(cmd.Environment)
 
 	return withTxRet(ctx, a.db, func(ctx context.Context) ([]string, error) {
+		// Snapshot the previous set: sessions are revoked only on an actual
+		// change, so re-saving the same roles must not kick the user out.
+		prev, err := userRoles(ctx, a.db, cmd.ProjectID, env, cmd.UserID)
+		if err != nil {
+			return nil, err
+		}
+
 		if _, err := a.db.TxDB.Exec(ctx,
 			`DELETE FROM iam_user_roles WHERE project_id = $1 AND environment = $2 AND user_id = $3`,
 			cmd.ProjectID, env, cmd.UserID,
@@ -73,6 +80,18 @@ func (a *pgRoles) SetRoles(ctx context.Context, cmd domain.AdminUserRolesSetCmd)
 			}
 		}
 
+		// A changed role set invalidates live tokens carrying the old roles:
+		// revoke the user's sessions (same transaction), letting the existing
+		// session.revoked fan-out (backchannel logout, webhooks) fence relying
+		// parties instantly. Promotion is simply a re-login.
+		if !rolesEqual(prev, roles) {
+			if _, rerr := revokeUserSessions(
+				ctx, a.db, a.emitter, cmd.ProjectID, env, cmd.UserID, "", "roles_changed",
+			); rerr != nil {
+				return nil, rerr
+			}
+		}
+
 		if err := a.emitter.Emit(ctx, domain.Event{
 			Type:        "user.roles.updated",
 			ProjectID:   cmd.ProjectID,
@@ -85,6 +104,64 @@ func (a *pgRoles) SetRoles(ctx context.Context, cmd domain.AdminUserRolesSetCmd)
 
 		return roles, nil
 	})
+}
+
+// rolesEqual is an order-insensitive set comparison.
+func rolesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	counts := make(map[string]int, len(a))
+	for _, r := range a {
+		counts[r]++
+	}
+
+	for _, r := range b {
+		counts[r]--
+		if counts[r] < 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+// RolesForUsers batch-resolves the role sets of many users in one query
+// (admin listings); users without roles are absent from the map.
+func (a *pgRoles) RolesForUsers(
+	ctx context.Context, projectID, env string, userIDs []string,
+) (map[string][]string, error) {
+	out := make(map[string][]string, len(userIDs))
+	if len(userIDs) == 0 {
+		return out, nil
+	}
+
+	rows, err := a.db.Pool.Query(ctx,
+		`SELECT user_id, role FROM iam_user_roles
+		  WHERE project_id = $1 AND environment = $2 AND user_id = ANY($3)
+		  ORDER BY user_id, role`,
+		projectID, adminEnv(env), userIDs,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list user roles: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var userID, role string
+		if err := rows.Scan(&userID, &role); err != nil {
+			return nil, fmt.Errorf("scan user role: %w", err)
+		}
+
+		out[userID] = append(out[userID], role)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("list user roles: %w", err)
+	}
+
+	return out, nil
 }
 
 // userRoles reads a user's roles. It is a package-level helper (not a method) so

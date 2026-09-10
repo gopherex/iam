@@ -583,6 +583,23 @@ function SessionPolicyCard({ projectId, env }: { projectId: string; env: string 
           checked={form.reuse_detection}
           onCheckedChange={(v) => setForm((p) => p ? { ...p, reuse_detection: v } : p)}
         />
+        <Separator />
+        <SwitchField
+          id="sess-roles-claim"
+          label="Roles claim in access tokens"
+          description="Include the user's IAM roles in core-auth access tokens (opt-in; changing a user's roles revokes their sessions either way)."
+          checked={(form.access_token_claims ?? []).includes('roles')}
+          onCheckedChange={(v) =>
+            setForm((p) =>
+              p
+                ? {
+                    ...p,
+                    access_token_claims: v ? ['roles'] : [],
+                  }
+                : p,
+            )
+          }
+        />
       </CardContent>
       <CardFooter className="justify-end">
         <Button onClick={save} disabled={busy}>

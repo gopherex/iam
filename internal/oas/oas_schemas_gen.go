@@ -22052,6 +22052,10 @@ type SessionPolicy struct {
 	IdleTimeout     OptInt  `json:"idle_timeout"`
 	AbsoluteTimeout OptInt  `json:"absolute_timeout"`
 	ReuseDetection  OptBool `json:"reuse_detection"`
+	// Extra claims opted into the project's core-auth access tokens. "roles" resolves the user's IAM
+	// role assignments server-side at signing time (empty sets emit nothing). Changing a user's roles
+	// revokes their sessions.
+	AccessTokenClaims []SessionPolicyAccessTokenClaimsItem `json:"access_token_claims"`
 }
 
 // GetAccessTTL returns the value of AccessTTL.
@@ -22079,6 +22083,11 @@ func (s *SessionPolicy) GetReuseDetection() OptBool {
 	return s.ReuseDetection
 }
 
+// GetAccessTokenClaims returns the value of AccessTokenClaims.
+func (s *SessionPolicy) GetAccessTokenClaims() []SessionPolicyAccessTokenClaimsItem {
+	return s.AccessTokenClaims
+}
+
 // SetAccessTTL sets the value of AccessTTL.
 func (s *SessionPolicy) SetAccessTTL(val OptInt) {
 	s.AccessTTL = val
@@ -22102,6 +22111,45 @@ func (s *SessionPolicy) SetAbsoluteTimeout(val OptInt) {
 // SetReuseDetection sets the value of ReuseDetection.
 func (s *SessionPolicy) SetReuseDetection(val OptBool) {
 	s.ReuseDetection = val
+}
+
+// SetAccessTokenClaims sets the value of AccessTokenClaims.
+func (s *SessionPolicy) SetAccessTokenClaims(val []SessionPolicyAccessTokenClaimsItem) {
+	s.AccessTokenClaims = val
+}
+
+type SessionPolicyAccessTokenClaimsItem string
+
+const (
+	SessionPolicyAccessTokenClaimsItemRoles SessionPolicyAccessTokenClaimsItem = "roles"
+)
+
+// AllValues returns all SessionPolicyAccessTokenClaimsItem values.
+func (SessionPolicyAccessTokenClaimsItem) AllValues() []SessionPolicyAccessTokenClaimsItem {
+	return []SessionPolicyAccessTokenClaimsItem{
+		SessionPolicyAccessTokenClaimsItemRoles,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SessionPolicyAccessTokenClaimsItem) MarshalText() ([]byte, error) {
+	switch s {
+	case SessionPolicyAccessTokenClaimsItemRoles:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SessionPolicyAccessTokenClaimsItem) UnmarshalText(data []byte) error {
+	switch SessionPolicyAccessTokenClaimsItem(data) {
+	case SessionPolicyAccessTokenClaimsItemRoles:
+		*s = SessionPolicyAccessTokenClaimsItemRoles
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // Ref: #/components/schemas/SessionTokens
@@ -22603,7 +22651,10 @@ type User struct {
 	Profile       OptCoreProfile `json:"profile"`
 	// Effective member-invite cap for this user: a per-user override stored on the account, or the
 	// project member_invites default when null. 0 means the right is revoked.
-	InviteCap OptNilInt       `json:"invite_cap"`
+	InviteCap OptNilInt `json:"invite_cap"`
+	// The user's IAM role assignments in this environment (admin listings only). Changing them revokes
+	// the user's sessions.
+	Roles     []string        `json:"roles"`
 	Metadata  OptUserMetadata `json:"metadata"`
 	CreatedAt OptTimestamp    `json:"created_at"`
 	UpdatedAt OptTimestamp    `json:"updated_at"`
@@ -22652,6 +22703,11 @@ func (s *User) GetProfile() OptCoreProfile {
 // GetInviteCap returns the value of InviteCap.
 func (s *User) GetInviteCap() OptNilInt {
 	return s.InviteCap
+}
+
+// GetRoles returns the value of Roles.
+func (s *User) GetRoles() []string {
+	return s.Roles
 }
 
 // GetMetadata returns the value of Metadata.
@@ -22712,6 +22768,11 @@ func (s *User) SetProfile(val OptCoreProfile) {
 // SetInviteCap sets the value of InviteCap.
 func (s *User) SetInviteCap(val OptNilInt) {
 	s.InviteCap = val
+}
+
+// SetRoles sets the value of Roles.
+func (s *User) SetRoles(val []string) {
+	s.Roles = val
 }
 
 // SetMetadata sets the value of Metadata.

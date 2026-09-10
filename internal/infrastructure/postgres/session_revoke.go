@@ -63,3 +63,37 @@ func revokeSessionRecord(ctx context.Context, db *DB, emitter Emitter, row *mode
 		},
 	})
 }
+
+// revokeUserSessions revokes every live session of a user (project+env
+// scoped) except exceptID, emitting the session.revoked events downstream
+// consumers (backchannel logout, webhooks) already subscribe to. Used by the
+// admin paths: ban, and role changes (a stale role must not ride a live
+// token). Must run inside the caller's transaction.
+func revokeUserSessions(
+	ctx context.Context, db *DB, emitter Emitter, projectID, env, userID, exceptID, reason string,
+) (int, error) {
+	rows, err := models.IamSessions.Query(
+		sm.Where(models.IamSessions.Columns.ProjectID.EQ(psql.Arg(projectID))),
+		sm.Where(models.IamSessions.Columns.Environment.EQ(psql.Arg(adminEnv(env)))),
+		sm.Where(models.IamSessions.Columns.UserID.EQ(psql.Arg(userID))),
+	).All(ctx, db.Bobx())
+	if err != nil {
+		return 0, fmt.Errorf("list sessions: %w", err)
+	}
+
+	revoked := 0
+
+	for _, row := range rows {
+		if exceptID != "" && row.ID == exceptID {
+			continue
+		}
+
+		if err := revokeSessionRecord(ctx, db, emitter, row, reason); err != nil {
+			return revoked, err
+		}
+
+		revoked++
+	}
+
+	return revoked, nil
+}

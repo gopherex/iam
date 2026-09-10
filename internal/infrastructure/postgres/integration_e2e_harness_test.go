@@ -99,11 +99,12 @@ func e2eServer(t *testing.T) *httptest.Server {
 	// payloadFor lookups keep working.
 	em := Emitter(NewAuditingEmitter(testDB, e2eEmitter))
 	platform := NewPgPlatform(testDB)
-	coreAuth := NewPgCoreAuth(testDB, em, nil)
 	// One shared config reader: the admin config writer invalidates it on
 	// PATCH so e2e steps see config changes immediately (as production's
-	// shared reader does).
+	// shared reader does). coreAuth MUST ride the same reader — its signer
+	// re-reads session_policy (the access_token_claims flag) on every login.
 	e2eCfg := NewConfigReader(testDB, time.Second)
+	coreAuth := NewPgCoreAuth(testDB, em, e2eCfg)
 
 	handler := api.New(
 		api.WithPlatform(api.NewPlatformService(api.PlatformDeps{

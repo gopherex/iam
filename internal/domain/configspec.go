@@ -645,6 +645,29 @@ type SessionPolicySpec struct {
 	IdleTimeout     *int  `json:"idle_timeout,omitempty"`
 	AbsoluteTimeout *int  `json:"absolute_timeout,omitempty"`
 	ReuseDetection  *bool `json:"reuse_detection,omitempty"`
+	// AccessTokenClaims opts the project's core-auth access tokens into extra
+	// claims. Known value: "roles" (the user's IAM role assignments, resolved
+	// server-side at signing time).
+	AccessTokenClaims []string `json:"access_token_claims,omitempty"`
+}
+
+// SessionPolicyClaimsRoles reports whether the policy opts tokens into the
+// roles claim.
+const sessionPolicyClaimRoles = "roles"
+
+// ValidateSessionPolicyClaims rejects unknown access_token_claims values.
+func ValidateSessionPolicyClaims(claims []string) error {
+	for _, c := range claims {
+		if c != sessionPolicyClaimRoles {
+			return ErrValidation.WithDetails(map[string]any{
+				"field":   "access_token_claims",
+				"value":   c,
+				"allowed": []string{sessionPolicyClaimRoles},
+			}).WithMessage("unsupported access token claim: " + c)
+		}
+	}
+
+	return nil
 }
 
 // ParseSessionPolicy strictly decodes the session_policy doc.
@@ -694,6 +717,10 @@ func (c SessionPolicySpec) Validate() error {
 	}
 
 	if err := check("absolute_timeout", c.AbsoluteTimeout, maxAbsolute); err != nil {
+		return err
+	}
+
+	if err := ValidateSessionPolicyClaims(c.AccessTokenClaims); err != nil {
 		return err
 	}
 

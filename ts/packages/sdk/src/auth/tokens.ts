@@ -27,6 +27,30 @@ export class IamTokens {
   ) {}
 
   /**
+   * Decode an access token's JWT payload WITHOUT verification — a client-side
+   * convenience for reading claims (sub, roles when the project opts in via
+   * session_policy.access_token_claims, …). Authorization decisions must
+   * verify the signature server-side; this is display/UI logic only.
+   * Returns null for a malformed token.
+   */
+  static decode(token: string): Record<string, unknown> | null {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    try {
+      const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const json = decodeURIComponent(
+        atob(payload)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join(''),
+      );
+      return JSON.parse(json) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Live token introspection (RFC 7662 style).
    * Returns `{ active, … }` for the given opaque or JWT token.
    */

@@ -203,6 +203,26 @@ export function UsersPage() {
       ),
     },
     {
+      accessorFn: (u) => (u.roles ?? []).join(','),
+      id: 'roles',
+      header: 'Roles',
+      cell: ({ row }) => {
+        const roles = row.original.roles ?? [];
+        if (roles.length === 0) {
+          return <span className="text-muted-foreground">—</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {roles.map((r) => (
+              <Badge key={r} variant="outline" className="text-xs">
+                {r}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
       accessorFn: (u) => u.created_at ?? '',
       id: 'created_at',
       header: 'Created',

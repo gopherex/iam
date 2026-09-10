@@ -5791,6 +5791,18 @@ func TestSessionPolicy_EncodeDecode(t *testing.T) {
 	var typ2 SessionPolicy
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestSessionPolicyAccessTokenClaimsItem_EncodeDecode(t *testing.T) {
+	var typ SessionPolicyAccessTokenClaimsItem
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SessionPolicyAccessTokenClaimsItem
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestSessionTokens_EncodeDecode(t *testing.T) {
 	var typ SessionTokens
 	typ.SetFake()

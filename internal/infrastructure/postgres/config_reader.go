@@ -66,6 +66,20 @@ type EffectiveSessionPolicy struct {
 	IdleTimeout     time.Duration // default 0 = disabled
 	AbsoluteTimeout time.Duration // default 0 = disabled
 	ReuseDetection  bool          // default false
+	// AccessTokenClaims opts core-auth access tokens into extra claims
+	// (currently "roles" — the signer resolves the user's role assignments).
+	AccessTokenClaims []string
+}
+
+// RolesClaimEnabled reports whether the policy opts tokens into "roles".
+func (p EffectiveSessionPolicy) RolesClaimEnabled() bool {
+	for _, c := range p.AccessTokenClaims {
+		if c == "roles" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // EffectiveMFAPolicy is the runtime view of mfa_policy.
@@ -361,6 +375,8 @@ func parseSessionPolicy(raw []byte) EffectiveSessionPolicy {
 	if spec.ReuseDetection != nil {
 		eff.ReuseDetection = *spec.ReuseDetection
 	}
+
+	eff.AccessTokenClaims = spec.AccessTokenClaims
 	// Defensive ordering: a refresh TTL must outlast the access TTL.
 	if eff.RefreshTTL <= eff.AccessTTL {
 		eff.RefreshTTL = coreAuthRefreshTTL
