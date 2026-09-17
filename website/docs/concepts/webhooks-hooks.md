@@ -32,12 +32,18 @@ curl -sX POST https://auth.example.com/v1/projects/prj_7Fk2/admin/webhooks \
 Each delivery is HMAC-SHA256 signed. Verify it as:
 
 ```
-signature = HMAC_SHA256(secret, event_id + "." + timestamp + "." + raw_body)
+key = base64_decode(secret.remove_prefix("whsec_"))  // whsec_ secrets
+key = secret                                       // legacy secrets
+signature = HMAC_SHA256(key, event_id + "." + timestamp + "." + raw_body)
 ```
 
 Headers follow Standard Webhooks: `Webhook-Id`, `Webhook-Timestamp`,
 `Webhook-Signature` (`v1,<base64>`). Secret rotation keeps the previous secret
-valid for a 24h overlap (dual-signature).
+valid for a 24h overlap (dual-signature). Both the current and previous secret
+use the same decoding rules. The `whsec_` prefix and Base64 text are never part
+of the HMAC key. Malformed prefixed secrets are rejected, without falling back
+to signing with the raw text. Existing secrets retain their format and do not
+need to be reissued; receivers using `pkg/sdk.WebhookVerifier` use the same decoder.
 
 ### Event catalogue
 

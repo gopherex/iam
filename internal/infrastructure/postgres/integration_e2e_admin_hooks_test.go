@@ -4,9 +4,14 @@ package postgres
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 )
@@ -23,11 +28,24 @@ func TestE2EAdminHooks(t *testing.T) {
 	deny.Store(true)
 
 	var hit atomic.Int32
+	var signingKey atomic.Value
 
 	hook := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hit.Add(1)
-		if r.Header.Get("Webhook-Signature") == "" {
-			t.Error("hook call missing signature")
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("read hook: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		mac := hmac.New(sha256.New, signingKey.Load().([]byte))
+		_, _ = fmt.Fprintf(mac, ".%s.", r.Header.Get("Webhook-Timestamp"))
+		_, _ = mac.Write(body)
+		signature, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"))
+		if err != nil || !hmac.Equal(signature, mac.Sum(nil)) {
+			t.Error("hook signature does not match its issued secret")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
 		}
 
 		if deny.Load() {
@@ -58,6 +76,12 @@ func TestE2EAdminHooks(t *testing.T) {
 	if created.Hook.ID == "" || created.SigningSecret == "" {
 		t.Fatalf("create hook response = %+v", created)
 	}
+
+	key, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(created.SigningSecret, "whsec_"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	signingKey.Store(key)
 
 	// Sign-up while the hook denies → registration is blocked (fail-closed).
 	rs := e2eReq(t, ctx, http.MethodPost, ts.URL+"/v1/auth/sign-up",

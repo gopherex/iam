@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gopherex/iam/internal/domain"
+	iamsdk "github.com/gopherex/iam/pkg/sdk"
 )
 
 func TestWebhookDeliveryLifecycle(t *testing.T) {
@@ -21,12 +23,26 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 	var fail atomic.Bool
 	var calls atomic.Int32
 	var lastSignature atomic.Value
+	var verifiers atomic.Value
 	projectID := newUUID()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls.Add(1)
 		lastSignature.Store(r.Header.Get("Webhook-Signature"))
+		raw, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("read request: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		for _, verifier := range verifiers.Load().([]*iamsdk.WebhookVerifier) {
+			if _, err := verifier.Verify(r.Header, raw); err != nil {
+				t.Errorf("SDK rejected delivered webhook: %v", err)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+		}
 		var event domain.PublicEvent
-		if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		if err := json.Unmarshal(raw, &event); err != nil {
 			t.Errorf("decode event: %v", err)
 		}
 		if event.ID == "" || event.Version != 1 {
@@ -81,6 +97,16 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 		t.Fatal("signing secret stored in plaintext")
 	}
 
+	verifier, err := iamsdk.NewWebhookVerifier(iamsdk.WebhookVerifierConfig{SigningSecret: secret})
+	if err != nil {
+		t.Fatal(err)
+	}
+	verifiers.Store([]*iamsdk.WebhookVerifier{verifier})
+	tested, err := service.Test(ctx, projectID, "live", created.ID, domain.WebhookEventSessionRevoked)
+	if err != nil || tested.Status != "succeeded" {
+		t.Fatalf("test delivery: %+v %v", tested, err)
+	}
+
 	eventID := newUUID()
 	if err := service.PublishEvent(ctx, domain.Event{
 		ID: eventID, Type: domain.WebhookEventSessionRevoked, ProjectID: projectID,
@@ -90,7 +116,7 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 	deliveries, err := service.ListDeliveries(ctx, domain.WebhookDeliveryListCmd{ProjectID: projectID, Environment: "live"})
-	if err != nil || len(deliveries) != 1 || deliveries[0].Status != "succeeded" {
+	if err != nil || len(deliveries) != 2 || deliveries[0].Status != "succeeded" {
 		t.Fatalf("deliveries=%+v err=%v", deliveries, err)
 	}
 	if signature, _ := lastSignature.Load().(string); !strings.Contains(signature, "v1,") {
@@ -101,7 +127,12 @@ func TestWebhookDeliveryLifecycle(t *testing.T) {
 	if err != nil || newSecret == secret || newSecret == "" {
 		t.Fatalf("rotate secret: changed=%v err=%v", newSecret != secret, err)
 	}
-	if _, err := service.Test(ctx, projectID, "live", created.ID, domain.WebhookEventSessionRevoked); err != nil {
+	rotatedVerifier, err := iamsdk.NewWebhookVerifier(iamsdk.WebhookVerifierConfig{SigningSecret: newSecret})
+	if err != nil {
+		t.Fatal(err)
+	}
+	verifiers.Store([]*iamsdk.WebhookVerifier{verifier, rotatedVerifier})
+	if result, err := service.Test(ctx, projectID, "live", created.ID, domain.WebhookEventSessionRevoked); err != nil || result.Status != "succeeded" {
 		t.Fatal(err)
 	}
 	if signature, _ := lastSignature.Load().(string); strings.Count(signature, "v1,") != 2 {

@@ -22,6 +22,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/gopherex/iam/internal/domain"
+	"github.com/gopherex/iam/internal/webhooksecret"
 )
 
 const (
@@ -795,8 +796,8 @@ func (a *PgWebhooks) loadDeliveryParts(
 	return delivery, webhook, event, nil
 }
 
-func webhookSignature(secret, eventID string, timestamp int64, body []byte) string {
-	mac := hmac.New(sha256.New, []byte(secret))
+func webhookSignature(key []byte, eventID string, timestamp int64, body []byte) string {
+	mac := hmac.New(sha256.New, key)
 	_, _ = fmt.Fprintf(mac, "%s.%d.", eventID, timestamp)
 	_, _ = mac.Write(body)
 
@@ -842,9 +843,19 @@ func buildWebhookRequest(
 
 	timestamp := nowUTC().Unix()
 
-	signatures := []string{"v1," + webhookSignature(webhook.SigningSecret, event.ID, timestamp, body)}
+	key, err := webhooksecret.Decode(webhook.SigningSecret)
+	if err != nil {
+		return nil, fmt.Errorf("build webhook request: signing secret: %w", err)
+	}
+
+	signatures := []string{"v1," + webhookSignature(key, event.ID, timestamp, body)}
 	if webhook.PreviousSigningSecret != "" && nowIn(ctx).Before(webhook.PreviousSecretValidUntil) {
-		signatures = append(signatures, "v1,"+webhookSignature(webhook.PreviousSigningSecret, event.ID, timestamp, body))
+		previousKey, err := webhooksecret.Decode(webhook.PreviousSigningSecret)
+		if err != nil {
+			return nil, fmt.Errorf("build webhook request: previous signing secret: %w", err)
+		}
+
+		signatures = append(signatures, "v1,"+webhookSignature(previousKey, event.ID, timestamp, body))
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhook.URL, bytes.NewReader(body))

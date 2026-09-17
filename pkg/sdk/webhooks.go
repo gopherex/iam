@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gopherex/iam/internal/webhooksecret"
 )
 
 var (
@@ -162,22 +164,18 @@ func (v *WebhookVerifier) Verify(headers http.Header, body []byte) (*WebhookEven
 	return &event, nil
 }
 
+// Preserve the SDK's public error sentinels while sharing key decoding with IAM.
 func decodeWebhookSecret(value string) ([]byte, error) {
-	value = strings.TrimSpace(value)
-	if value == "" {
+	key, err := webhooksecret.Decode(value)
+	if errors.Is(err, webhooksecret.ErrRequired) {
 		return nil, ErrWebhookSecretRequired
 	}
 
-	if encoded, ok := strings.CutPrefix(value, "whsec_"); ok {
-		secret, err := base64.StdEncoding.DecodeString(encoded)
-		if err != nil || len(secret) == 0 {
-			return nil, ErrWebhookSecretInvalid
-		}
-
-		return secret, nil
+	if err != nil {
+		return nil, ErrWebhookSecretInvalid
 	}
 
-	return []byte(value), nil
+	return key, nil
 }
 
 func parseWebhookHeaders(headers http.Header) (string, int64, []string, error) {

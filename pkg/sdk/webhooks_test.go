@@ -115,3 +115,22 @@ func signature(secret, id string, timestamp int64, body []byte) string {
 
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
+
+func TestWebhookVerifierSecretErrors(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		secret string
+		want   error
+	}{
+		{"", ErrWebhookSecretRequired},
+		{" \t", ErrWebhookSecretRequired},
+		{"whsec_", ErrWebhookSecretInvalid},
+		{"whsec_!invalid!", ErrWebhookSecretInvalid},
+	} {
+		_, err := NewWebhookVerifier(WebhookVerifierConfig{SigningSecret: tc.secret})
+		if !errors.Is(err, tc.want) {
+			t.Fatalf("error=%v want=%v", err, tc.want)
+		}
+	}
+}

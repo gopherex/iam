@@ -16,6 +16,7 @@ import (
 
 	"github.com/gopherex/iam/internal/domain"
 	models "github.com/gopherex/iam/internal/infrastructure/postgres/gen/bob/models"
+	"github.com/gopherex/iam/internal/webhooksecret"
 )
 
 const (
@@ -249,12 +250,17 @@ func (a *pgHooks) call(ctx context.Context, cfg hookData, payload []byte) (int, 
 		secret = dec
 	}
 
+	key, err := webhooksecret.Decode(secret)
+	if err != nil {
+		return 0, "", fmt.Errorf("hook call: signing secret: %w", err)
+	}
+
 	ts := nowUTC().Unix()
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "gopherex-iam-hooks/1")
 	req.Header.Set("Webhook-Timestamp", strconv.FormatInt(ts, 10))
-	req.Header.Set("Webhook-Signature", "v1,"+webhookSignature(secret, "", ts, payload))
+	req.Header.Set("Webhook-Signature", "v1,"+webhookSignature(key, "", ts, payload))
 
 	resp, err := a.httpClient.Do(req)
 	if err != nil {
