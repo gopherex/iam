@@ -29,6 +29,12 @@ func oasUser(a *domain.Account) oas.User {
 		Status:        oas.UserStatus(a.Status),
 		EmailVerified: oas.NewOptBool(a.EmailVerified),
 	}
+	if a.Deletion != nil {
+		converted, err := securityResponse[oas.AccountDeletion](a.Deletion, nil)
+		if err == nil {
+			user.Deletion = oas.NewOptAccountDeletion(*converted)
+		}
+	}
 	if a.PrimaryEmail != "" {
 		user.PrimaryEmail = oas.NewOptNilString(a.PrimaryEmail)
 	}

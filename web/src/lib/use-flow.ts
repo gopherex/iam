@@ -62,12 +62,12 @@ function getController(): FlowController {
   return _controller;
 }
 
-export function useFlow(opts?: { flowToken?: string }): UseFlowReturn {
-  const controller = getController();
+export function useFlow(opts?: { flowToken?: string; controller?: FlowController }): UseFlowReturn {
+  const controller = opts?.controller ?? getController();
   const [state, setState] = useState<FlowState | null>(controller.currentState);
   const [error, setError] = useState<IamAuthError | null>(null);
   const [loading, setLoading] = useState(true);
-  const resumedRef = useRef(false);
+  const resumedRef = useRef<FlowController | null>(null);
 
   // Subscribe to controller changes.
   useEffect(() => {
@@ -80,8 +80,8 @@ export function useFlow(opts?: { flowToken?: string }): UseFlowReturn {
 
   // Resume on mount (once per mount, not per StrictMode re-run).
   useEffect(() => {
-    if (resumedRef.current) return;
-    resumedRef.current = true;
+    if (resumedRef.current === controller) return;
+    resumedRef.current = controller;
 
     void (async () => {
       setLoading(true);

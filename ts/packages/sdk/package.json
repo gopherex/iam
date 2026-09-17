@@ -22,7 +22,8 @@
     "build": "tsup",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "clean": "rm -rf dist src/gen",
-    "prepack": "yarn generate && yarn build"
+    "prepack": "yarn generate && yarn build",
+    "test": "yarn build && node --test test/*.test.mjs"
   },
   "dependencies": {
     "@hey-api/client-fetch": "^0.10.0"

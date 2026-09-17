@@ -1,3 +1,4 @@
+import { UserDeletionDetails } from './account-deletion';
 import {
   deleteV1ProjectsByProjectIdAdminUsersByUserId,
   deleteV1ProjectsByProjectIdAdminUsersByUserIdGrantsByGrantId,
@@ -201,6 +202,11 @@ export function UsersPage() {
           {row.original.status}
         </Badge>
       ),
+    },
+    {
+      id: 'deletion',
+      header: 'Deletion',
+      cell: ({ row }) => row.original.deletion?.status === 'pending' ? <div className="space-y-1"><Badge variant="outline">Scheduled</Badge><p className="text-xs text-muted-foreground">{fmtDate(row.original.deletion.delete_at)}</p></div> : <span className="text-muted-foreground">—</span>,
     },
     {
       accessorFn: (u) => (u.roles ?? []).join(','),
@@ -597,7 +603,7 @@ interface UserDetailDialogProps {
 }
 
 function UserDetailDialog({ user, projectId, onClose, onReload }: UserDetailDialogProps) {
-  const [tab, setTab] = useState<'info' | 'roles' | 'sessions' | 'identities' | 'grants'>('info');
+  const [tab, setTab] = useState<'info' | 'roles' | 'sessions' | 'identities' | 'grants' | 'deletion'>('info');
   const [open, setOpen] = useState(true);
 
   function handleOpenChange(v: boolean) {
@@ -615,7 +621,7 @@ function UserDetailDialog({ user, projectId, onClose, onReload }: UserDetailDial
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-1 border-b pb-2">
-          {(['info', 'roles', 'sessions', 'identities', 'grants'] as const).map((t) => (
+          {(['info', 'roles', 'sessions', 'identities', 'grants', 'deletion'] as const).map((t) => (
             <button
               key={t}
               type="button"
@@ -635,6 +641,7 @@ function UserDetailDialog({ user, projectId, onClose, onReload }: UserDetailDial
           {tab === 'info' && (
             <UserInfoTab user={user} projectId={projectId} onReload={onReload} />
           )}
+          {tab === 'deletion' && <UserDeletionDetails projectId={projectId} userId={user.id!} onChanged={onReload} />}
           {tab === 'roles' && (
             <UserRolesTab user={user} projectId={projectId} />
           )}

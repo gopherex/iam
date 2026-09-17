@@ -21,6 +21,7 @@ import "time"
 // passkeys, sessions, consents. All of these are consistency-bound to it.
 
 type Account struct {
+	Deletion      *AccountDeletion `json:"deletion,omitempty"`
 	ID            string
 	ProjectID     string
 	Kind          string // human | guest | system

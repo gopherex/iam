@@ -94,12 +94,14 @@ function ResendCountdown({
 
 /** collect_credentials: a form to start a new flow */
 function CollectCredentials({
+  fixedKind = false,
   defaultKind,
   loading,
   onStart,
   error,
 }: {
   defaultKind: FlowKind;
+  fixedKind?: boolean;
   loading: boolean;
   onStart: (params: { kind: FlowKind; email?: string; password?: string; name?: string }) => void;
   error: string | null;
@@ -127,7 +129,7 @@ function CollectCredentials({
   return (
     <form onSubmit={submit} className="space-y-4">
       {/* Kind selector */}
-      <div className="flex rounded-lg border border-border overflow-hidden text-sm">
+      {!fixedKind && <div className="flex rounded-lg border border-border overflow-hidden text-sm">
         {(['signin', 'signup', 'recovery'] as FlowKind[]).map((k) => (
           <button
             key={k}
@@ -142,7 +144,7 @@ function CollectCredentials({
             {k === 'signin' ? 'Sign in' : k === 'signup' ? 'Sign up' : 'Recovery'}
           </button>
         ))}
-      </div>
+      </div>}
 
       {isSignup && (
         <div className="space-y-2">
@@ -625,6 +627,7 @@ export function flowStepMeta(t: T, step: string): { title: string; description: 
 }
 
 export interface FlowStepsProps {
+  fixedKind?: boolean;
   flow: UseFlowReturn;
   /** Flow kind to start when the user has none in progress. */
   kind: FlowKind;
@@ -638,7 +641,7 @@ export interface FlowStepsProps {
  * the FlowController is the state — so mounting it on a second page cannot
  * diverge from the first.
  */
-export function FlowSteps({ flow, kind, t, startOptions }: FlowStepsProps) {
+export function FlowSteps({ flow, kind, t, startOptions, fixedKind }: FlowStepsProps) {
   const { state, error, loading, start, submit, resend, abandon } = flow;
 
   const step = state?.step ?? 'collect_credentials';
@@ -659,6 +662,7 @@ export function FlowSteps({ flow, kind, t, startOptions }: FlowStepsProps) {
     return start({ ...params, cookieMode: startOptions?.cookieMode });
   }
 
+  if (!state && !loading) return <CollectCredentials fixedKind={fixedKind} defaultKind={kind} loading={loading} error={inlineError} onStart={startFlow} />;
   return (
     <>
           {/* Loading spinner while resuming */}
@@ -692,6 +696,7 @@ export function FlowSteps({ flow, kind, t, startOptions }: FlowStepsProps) {
             <>
               {step === 'collect_credentials' && (
                 <CollectCredentials
+                  fixedKind={fixedKind}
                   defaultKind={kindParam}
                   loading={loading}
                   error={inlineError}

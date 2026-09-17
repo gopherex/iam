@@ -161,3 +161,8 @@ locale under `admin/i18n/{locale}`.
 In a non-`live` environment, `GET /v1/test/messages` returns the messages IAM
 would have sent, so an end-to-end test can read the code it needs. See
 [Test mode](/guides/test-mode).
+
+## Account security
+
+See [Account security and recovery](/guides/account-security) for incident detection,
+restricted application flows, device trust, support recovery and security deliveries.

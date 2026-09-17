@@ -27,6 +27,76 @@ const builtinEmailLocaleFallback = "en"
 // notification layer emits. Slice order is the admin display order. Keep the copy
 // in sync with the renderer fallbacks.
 var BuiltinEmailTemplates = []BuiltinEmailTemplate{
+	{Key: "account_deletion", Name: "Account deletion", Locales: map[string]BuiltinEmailCopy{
+		"en": {Subject: "Account deletion", Text: "{{.summary}}\n{{if .link}}Manage your account: {{.link}}{{end}}"},
+		"ru": {Subject: "Удаление аккаунта", Text: "{{.summary}}\n{{if .link}}Управление аккаунтом: {{.link}}{{end}}"},
+	}},
+	{
+		Key:  "security_status",
+		Name: "Account protection status",
+		Locales: map[string]BuiltinEmailCopy{
+			"en": {
+				Subject: "Account protection status",
+				Text:    "Account security status: {{.summary}}. If you did not request this, contact support.",
+			},
+			"ru": {
+				Subject: "Защита аккаунта",
+				Text: "Состояние безопасности аккаунта: {{.summary}}. Если вы не отправляли это" +
+					"т запрос, свяжитесь с поддержкой.",
+			},
+		},
+	},
+	{
+		Key:  "security_alert",
+		Name: "Account security alert",
+		Locales: map[string]BuiltinEmailCopy{
+			"en": {
+				Subject: "Account security activity",
+				Text: "An account security event was recorded: {{.summary}}\nReview activity: {{" +
+					".link}}\nOpening this link does not change your account.",
+				HTML: `<p>Account security activity: {{.summary}}</p>
+<p><a href="{{.link}}">Review activity</a></p>
+<p>Opening this link does not change your account.</p>`,
+			},
+			"ru": {
+				Subject: "Безопасность аккаунта",
+				Text: "Зафиксировано событие безопасности: {{.summary}}\nПроверить активность: {" +
+					"{.link}}\nОткрытие ссылки не изменяет аккаунт.",
+				HTML: `<p>Событие безопасности: {{.summary}}</p>
+<p><a href="{{.link}}">Проверить активность</a></p>
+<p>Открытие ссылки не изменяет аккаунт.</p>`,
+			},
+		},
+	},
+	{
+		Key:  "security_code",
+		Name: "Security verification code",
+		Locales: map[string]BuiltinEmailCopy{
+			"en": {
+				Subject: "Confirm your security request",
+				Text:    "Your verification code is {{.code}}. It expires in 10 minutes. Do not share it.",
+			},
+			"ru": {
+				Subject: "Подтвердите запрос безопасности",
+				Text:    "Код подтверждения: {{.code}}. Действует 10 минут. Никому не сообщайте его.",
+			},
+		},
+	},
+	{
+		Key:  "security_recovery",
+		Name: "Account recovery status",
+		Locales: map[string]BuiltinEmailCopy{
+			"en": {
+				Subject: "Your account recovery request",
+				Text:    "Recovery status: {{.summary}}\nContinue: {{.link}}\nThis link does not sign you in.",
+			},
+			"ru": {
+				Subject: "Восстановление аккаунта",
+				Text: "Статус обращения: {{.summary}}\nПродолжить: {{.link}}\nЭта ссылка не выпол" +
+					"няет вход в аккаунт.",
+			},
+		},
+	},
 	{
 		Key:  "email_verification",
 		Name: "Email verification",
@@ -39,7 +109,8 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			},
 			"ru": {
 				Subject: "Подтвердите вашу почту",
-				Text:    "Введите код {{.code}}, чтобы подтвердить почту.{{with .link}}\nИли откройте ссылку: {{.}}{{end}}",
+				Text: "Введите код {{.code}}, чтобы подтвердить почту.{{with .link}}\nИли открой" +
+					"те ссылку: {{.}}{{end}}",
 				HTML: `<p>Введите код <strong>{{.code}}</strong>, чтобы подтвердить почту.</p>
 {{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
@@ -89,7 +160,8 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			},
 			"ru": {
 				Subject: "Подтвердите новую почту",
-				Text:    "Введите код {{.code}}, чтобы подтвердить новую почту.{{with .link}}\nИли откройте ссылку: {{.}}{{end}}",
+				Text: "Введите код {{.code}}, чтобы подтвердить новую почту.{{with .link}}\nИли " +
+					"откройте ссылку: {{.}}{{end}}",
 				HTML: `<p>Введите код <strong>{{.code}}</strong>, чтобы подтвердить новую почту.</p>
 {{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
@@ -107,7 +179,8 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			},
 			"ru": {
 				Subject: "Сброс пароля",
-				Text:    "Введите код {{.code}}, чтобы сбросить пароль.{{with .link}}\nИли откройте ссылку: {{.}}{{end}}",
+				Text: "Введите код {{.code}}, чтобы сбросить пароль.{{with .link}}\nИли откройте" +
+					" ссылку: {{.}}{{end}}",
 				HTML: `<p>Введите код <strong>{{.code}}</strong>, чтобы сбросить пароль.</p>
 {{with .link}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},
@@ -141,7 +214,8 @@ var BuiltinEmailTemplates = []BuiltinEmailTemplate{
 			},
 			"ru": {
 				Subject: "Продолжите с того же места",
-				Text:    "Введите код {{.code}}, чтобы продолжить.{{with .continue_url}}\nИли откройте ссылку: {{.}}{{end}}",
+				Text: "Введите код {{.code}}, чтобы продолжить.{{with .continue_url}}\nИли откро" +
+					"йте ссылку: {{.}}{{end}}",
 				HTML: `<p>Введите код <strong>{{.code}}</strong>, чтобы продолжить.</p>
 {{with .continue_url}}<p>Или откройте ссылку: <a href="{{.}}">{{.}}</a></p>{{end}}`,
 			},

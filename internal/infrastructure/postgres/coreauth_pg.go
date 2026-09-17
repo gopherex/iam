@@ -113,6 +113,13 @@ func (a *pgCoreAuth) coreAuthVerifyAccess(
 		return claims, nil, nil //nolint:nilerr // session gone == revoked, see func doc
 	}
 
+	if row.ProjectID != projectID || row.Environment != env {
+		return claims, nil, nil
+	}
+
+	if err := accountDeletionAccess(ctx, a.db, row.ProjectID, row.Environment, row.UserID); err != nil {
+		return claims, nil, err
+	}
 	if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
 		return claims, nil, nil
 	}
@@ -327,6 +334,11 @@ func coreAuthLoadSession(row *models.IamSession, projectID string) (*domain.Sess
 // coreAuthAccountActive maps a non-active account status onto the matching
 // 403 domain error; an active account returns nil.
 func coreAuthAccountActive(acc *domain.Account) error {
+	if acc.Deletion != nil && acc.Deletion.Status == deletionPending && acc.Deletion.DeleteAt != nil &&
+		!nowUTC().Before(*acc.Deletion.DeleteAt) {
+		return domain.ErrForbidden.WithMessage("The account deletion deadline has passed")
+	}
+
 	switch acc.Status {
 	case coreAuthStatusSuspended:
 		return domain.ErrAccountSuspended
@@ -534,6 +546,9 @@ func newCoreAuthSession(
 func (a *pgCoreAuth) coreAuthMintSession(
 	ctx context.Context, acc *domain.Account, clientID string, amr []string, aal int,
 ) (*domain.Session, error) {
+	if err := NewPgSecurity(a.db, a.emitter).guardSignIn(ctx, acc, aal); err != nil {
+		return nil, err
+	}
 	now := nowUTC()
 	sessionID := newUUID()
 
@@ -1634,6 +1649,12 @@ func (a *pgCoreAuth) coreAuthVerifyPassword(
 
 	if !coreAuthCheckPassword(cred.Secret, password) {
 		a.coreAuthRecordLoginFailure(ctx, cred, credData)
+
+		if err := NewPgSecurity(a.db, a.emitter).recordFailure(
+			ctx, cred.ProjectID, cred.UserID, "password_failures",
+		); err != nil {
+			return 0, err
+		}
 
 		return 0, domain.ErrInvalidCredentials
 	}
@@ -2790,6 +2811,16 @@ func (a *pgCoreAuth) VerifyEmailChange(
 			return nil, err
 		}
 
+		oldContact := securityIncidentPrivate{}
+		if acc.EmailVerified {
+			oldContact.Email = acc.PrimaryEmail
+		}
+
+		if acc.PhoneVerified {
+			oldContact.Phone = acc.PrimaryPhone
+		}
+
+		ctx = context.WithValue(ctx, securityOldContactKey{}, oldContact)
 		acc.PrimaryEmail = data.Subject
 
 		acc.EmailVerified = true
@@ -2965,7 +2996,10 @@ func (a *pgCoreAuth) VerifyPhoneChange(
 			return nil, err
 		}
 
+		ctx = context.WithValue(ctx, securityOldContactKey{}, securityVerifiedContacts(acc))
 		acc.PrimaryPhone = data.Subject
+
+		acc.PhoneVerified = true
 		if err := a.coreAuthUpdateAccount(ctx, acc); err != nil {
 			return nil, err
 		}
@@ -3257,6 +3291,10 @@ func (a *pgCoreAuth) ChangePassword(ctx context.Context, cmd domain.CoreAuthPass
 
 		acc, err := coreAuthLoadAccount(userRow, userRow.ProjectID)
 		if err != nil {
+			return err
+		}
+
+		if err := securityAccountGuard(ctx, a.db, acc.ProjectID, acc.ID); err != nil {
 			return err
 		}
 		// Verify the current password against the stored bcrypt credential.
@@ -3643,6 +3681,9 @@ func (a *pgCoreAuth) Introspect(
 		sm.Where(models.IamRefreshTokens.Columns.ProjectID.EQ(psql.Arg(projectID))),
 	).One(ctx, a.db.Bobx()); err == nil {
 		active := !row.Revoked
+		if err := accountDeletionAccess(ctx, a.db, row.ProjectID, row.Environment, row.UserID); err != nil {
+			active = false
+		}
 		if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
 			active = false
 		}

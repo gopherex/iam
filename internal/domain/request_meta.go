@@ -6,10 +6,12 @@ import "context"
 // middleware and read by the session-minting path so sessions carry the
 // originating device (for self-managed-session UIs and theft detection).
 type RequestMeta struct {
-	IP          string
-	UserAgent   string
-	Fingerprint string
-	DeviceName  string
+	IP            string
+	UserAgent     string
+	Fingerprint   string
+	DeviceName    string
+	DeviceToken   string
+	SecurityProof string
 }
 
 type requestMetaKey struct{}

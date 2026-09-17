@@ -60,6 +60,8 @@ import { IamWebAuthn } from './webauthn';
 import { IamTokens } from './tokens';
 import { IamOidc } from './oidc';
 import { createFlowController, type FlowController } from './flow';
+import { IamSecurity } from './security';
+import { flowStorageKey } from './flow-storage';
 
 const RETRY_HEADER = 'X-IAM-Retry';
 const BROADCAST_NAME = 'iam:auth';
@@ -139,9 +141,9 @@ export class IamConfig {
 
 function authError(result: { error?: unknown; response?: Response }): IamAuthError {
   const status = result.response?.status;
-  const env = result.error as { error?: { code?: string; message?: string } } | undefined;
+  const env = result.error as { error?: { code?: string; message?: string; details?: Record<string, unknown> } } | undefined;
   if (env?.error?.code) {
-    return new IamAuthError(env.error.message ?? env.error.code, env.error.code, status);
+    return new IamAuthError(env.error.message ?? env.error.code, env.error.code, status, env.error.details);
   }
   return new IamAuthError('request failed', 'request_failed', status);
 }
@@ -167,6 +169,10 @@ export class IamAuth {
   private inflightRefresh: Promise<boolean> | null = null;
   private channel: BroadcastChannel | null = null;
   private initialized: Promise<void>;
+	private securityProof: string | null = null;
+  private deviceReady: Promise<void>;
+  private deviceToken: string | null = null;
+	private deviceTokenKey: string;
   public readonly client: Client;
 
   constructor(opts: IamClientOptions) {
@@ -177,6 +183,7 @@ export class IamAuth {
     this.persist = opts.persistSession ?? true;
     this.storage = opts.storage ?? (this.persist ? defaultStorage() : new MemoryStorage());
     this.storageKey = opts.storageKey ?? 'iam.session';
+		this.deviceTokenKey = flowStorageKey(opts.baseUrl, opts.clientId, opts.environment, 'device');
     this.autoRefresh = opts.autoRefresh ?? true;
     this.marginMs = (opts.refreshMarginSeconds ?? 30) * 1000;
     this.client = createClient(createConfig<GeneratedClientOptions>({
@@ -189,7 +196,8 @@ export class IamAuth {
       this.channel = new BroadcastChannel(BROADCAST_NAME);
       this.channel.onmessage = () => void this.reloadFromStorage();
     }
-    this.initialized = this.loadInitial();
+    this.deviceReady = this.loadDevice();
+    this.initialized = this.loadWithDevice();
   }
 
   // ----- public API -----
@@ -198,6 +206,35 @@ export class IamAuth {
   async ready(): Promise<void> {
     await this.initialized;
   }
+
+	private async loadDevice(): Promise<void> {
+    this.deviceToken = await this.storage.getItem(this.deviceTokenKey);
+  }
+
+  setSecuritySignInProof(token: string): void { this.securityProof = token; }
+
+  private async loadWithDevice(): Promise<void> {
+    await this.deviceReady;
+		await this.loadInitial();
+	}
+
+	/** Remember an IAM-issued device capability; this does not trust it for MFA. */
+	async rememberSecurityDevice(token: string): Promise<void> {
+		this.deviceToken = token;
+		await this.storage.setItem(this.deviceTokenKey, token);
+	}
+
+	/** @internal Security recovery keeps its own capability after logout. */
+	async clearRevokedSecuritySession(ids: string[], current = false): Promise<void> {
+		await this.ready();
+		if (!this.session) return;
+		if (current) { await this.setSession(null, 'SIGNED_OUT'); return; }
+		try {
+			const part = this.session.access_token.split('.')[1];
+			const claims = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))) as { sid?: string };
+			if (claims.sid && ids.includes(claims.sid)) await this.setSession(null, 'SIGNED_OUT');
+		} catch { /* malformed local tokens cannot identify a revoked session */ }
+	}
 
   /** The current session, or null. */
   async getSession(): Promise<Session | null> {
@@ -714,11 +751,13 @@ export class IamAuth {
   // ----- engine -----
 
   /** @internal — shared with the account/mfa/webauthn namespaces. */
-  headers(): { 'X-Client-Id': string; 'X-Environment'?: string; 'X-Device-Name'?: string; 'X-Device-Fingerprint'?: string } {
-    const h: { 'X-Client-Id': string; 'X-Environment'?: string; 'X-Device-Name'?: string; 'X-Device-Fingerprint'?: string } = { 'X-Client-Id': this.clientId };
+  headers(): { 'X-Client-Id': string; 'X-Environment'?: string; 'X-Device-Name'?: string; 'X-Device-Fingerprint'?: string; 'X-Device-Token'?: string; 'X-Security-Proof'?: string } {
+    const h: { 'X-Client-Id': string; 'X-Environment'?: string; 'X-Device-Name'?: string; 'X-Device-Fingerprint'?: string; 'X-Device-Token'?: string; 'X-Security-Proof'?: string } = { 'X-Client-Id': this.clientId };
     if (this.environment) h['X-Environment'] = this.environment;
     if (this.deviceName) h['X-Device-Name'] = this.deviceName;
     if (this.deviceFingerprint) h['X-Device-Fingerprint'] = this.deviceFingerprint;
+    if (this.deviceToken) h['X-Device-Token'] = this.deviceToken;
+    if (this.securityProof) h['X-Security-Proof'] = this.securityProof;
     return h;
   }
 
@@ -770,6 +809,7 @@ export class IamAuth {
 
   private async setSession(session: Session | null, event: AuthChangeEvent): Promise<void> {
     this.session = session;
+    if (session) this.securityProof = null;
     if (this.persist) {
       try {
         if (session) await this.storage.setItem(this.storageKey, JSON.stringify(session));
@@ -857,7 +897,10 @@ export class IamAuth {
   }
 
   private installInterceptors(): void {
-    this.client.interceptors.request.use((request: Request) => {
+    this.client.interceptors.request.use(async (request: Request) => {
+      await this.deviceReady;
+      if (this.deviceToken) request.headers.set("X-Device-Token", this.deviceToken);
+      if (this.securityProof) request.headers.set("X-Security-Proof", this.securityProof);
       if (this.clientId && !request.headers.has('X-Client-Id')) {
         request.headers.set('X-Client-Id', this.clientId);
       }
@@ -938,6 +981,7 @@ function encodeAssertion(cred: PublicKeyCredential): Record<string, unknown> {
  * surface plus the underlying client for raw/management calls.
  */
 export function createIamClient(options: IamClientOptions): {
+	security: IamSecurity;
   auth: IamAuth;
   config: IamConfig;
   client: Client;
@@ -960,6 +1004,7 @@ export function createIamClient(options: IamClientOptions): {
   const headers = () => auth.headers();
   const config = new IamConfig(auth.client, options.clientId, options.environment);
   return {
+		security: new IamSecurity(options, auth),
     auth,
     config,
     client: auth.client,
@@ -970,6 +1015,7 @@ export function createIamClient(options: IamClientOptions): {
     oidc: new IamOidc(auth.client, headers),
     invites: new IamMemberInvites(auth.client, headers),
     flow: createFlowController({
+      multiTab: options.multiTab,
       baseUrl: options.baseUrl,
       clientId: options.clientId,
       environment: options.environment,

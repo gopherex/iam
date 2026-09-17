@@ -60,6 +60,9 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 
 // operationRolesAdminToken is a private map storing roles per operation.
 var operationRolesAdminToken = map[string][]string{
+	AdminListSecurityIncidentsOperation:                                             []string{},
+	CancelAdminAccountDeletionOperation:                                             []string{},
+	DecideSecurityCaseOperation:                                                     []string{},
 	DeleteV1ProjectsByProjectIdAdminApiKeysByKeyIdOperation:                         []string{},
 	DeleteV1ProjectsByProjectIdAdminAppsByAppIdOperation:                            []string{},
 	DeleteV1ProjectsByProjectIdAdminAppsByAppIdSecretsBySecretIdOperation:           []string{},
@@ -81,6 +84,10 @@ var operationRolesAdminToken = map[string][]string{
 	DeleteV1ProjectsByProjectIdAdminUsersByUserIdIdentitiesByIdentityIdOperation:    []string{},
 	DeleteV1ProjectsByProjectIdAdminUsersByUserIdSessionsBySessionIdOperation:       []string{},
 	DeleteV1ProjectsByProjectIdAdminWebhooksByIdOperation:                           []string{},
+	GetAccountDeletionPolicyOperation:                                               []string{},
+	GetAdminAccountDeletionOperation:                                                []string{},
+	GetSecurityCaseOperation:                                                        []string{},
+	GetSecurityPolicyOperation:                                                      []string{},
 	GetV1ProjectsByProjectIdAdminAccessRequestsOperation:                            []string{},
 	GetV1ProjectsByProjectIdAdminApiKeysOperation:                                   []string{},
 	GetV1ProjectsByProjectIdAdminAppsOperation:                                      []string{},
@@ -128,6 +135,8 @@ var operationRolesAdminToken = map[string][]string{
 	GetV1ProjectsByProjectIdAdminWebhooksOperation:                                  []string{},
 	GetV1ProjectsByProjectIdAdminWebhooksByIdOperation:                              []string{},
 	GetV1TestMessagesOperation:                                                      []string{},
+	ListSecurityCasesOperation:                                                      []string{},
+	ListSecurityDeliveriesOperation:                                                 []string{},
 	PatchV1ProjectsByProjectIdAdminApiKeysByKeyIdOperation:                          []string{},
 	PatchV1ProjectsByProjectIdAdminAppsByAppIdOperation:                             []string{},
 	PatchV1ProjectsByProjectIdAdminConfigAuthOperation:                              []string{},
@@ -200,6 +209,8 @@ var operationRolesAdminToken = map[string][]string{
 	PostV1TestClockOperation:                                                        []string{},
 	PostV1TestResetOperation:                                                        []string{},
 	PostV1TestSeedOperation:                                                         []string{},
+	PutAccountDeletionPolicyOperation:                                               []string{},
+	PutSecurityPolicyOperation:                                                      []string{},
 	PutV1ProjectsByProjectIdAdminClientsOperation:                                   []string{},
 	PutV1ProjectsByProjectIdAdminConfigOperation:                                    []string{},
 	PutV1ProjectsByProjectIdAdminConfigPublicMetadataOperation:                      []string{},
@@ -208,6 +219,7 @@ var operationRolesAdminToken = map[string][]string{
 	PutV1ProjectsByProjectIdAdminI18nByLocaleOperation:                              []string{},
 	PutV1ProjectsByProjectIdAdminRetentionPolicyOperation:                           []string{},
 	PutV1ProjectsByProjectIdAdminUsersByUserIdRolesOperation:                        []string{},
+	RetrySecurityDeliveryOperation:                                                  []string{},
 }
 
 // GetRolesForAdminToken returns the required roles for the given operation.
@@ -233,6 +245,7 @@ func GetRolesForAdminToken(operation string) []string {
 
 // operationRolesBearerAuth is a private map storing roles per operation.
 var operationRolesBearerAuth = map[string][]string{
+	CancelAccountDeletionOperation:                         []string{},
 	DeleteV1AuthIdentitiesByIdentityIdOperation:            []string{},
 	DeleteV1AuthMfaFactorsByFactorIdOperation:              []string{},
 	DeleteV1AuthWebauthnCredentialsByCredentialIdOperation: []string{},
@@ -240,7 +253,9 @@ var operationRolesBearerAuth = map[string][]string{
 	DeleteV1SessionsOperation:                              []string{},
 	DeleteV1SessionsBySessionIdOperation:                   []string{},
 	DeleteV1UsersMeOperation:                               []string{},
+	GetAccountDeletionOperation:                            []string{},
 	GetOauth2UserinfoOperation:                             []string{},
+	GetSecurityIncidentOperation:                           []string{},
 	GetV1AccountCapabilitiesOperation:                      []string{},
 	GetV1AuthIdentitiesOperation:                           []string{},
 	GetV1AuthInvitesOperation:                              []string{},
@@ -256,6 +271,8 @@ var operationRolesBearerAuth = map[string][]string{
 	GetV1UsersMeActivityOperation:                          []string{},
 	GetV1UsersMeConsentsOperation:                          []string{},
 	GetV1UsersMeExportByJobIdOperation:                     []string{},
+	ListSecurityDevicesOperation:                           []string{},
+	ListSecurityIncidentsOperation:                         []string{},
 	PatchV1AuthWebauthnCredentialsByCredentialIdOperation:  []string{},
 	PatchV1SessionsBySessionIdOperation:                    []string{},
 	PatchV1UsersMeOperation:                                []string{},
@@ -293,6 +310,9 @@ var operationRolesBearerAuth = map[string][]string{
 	PostV1TokensVerifyOperation:                            []string{},
 	PostV1UsersMeConsentsOperation:                         []string{},
 	PostV1UsersMeExportOperation:                           []string{},
+	RegisterSecurityDeviceOperation:                        []string{},
+	StartSecurityFlowOperation:                             []string{},
+	UpdateSecurityDeviceOperation:                          []string{},
 }
 
 // GetRolesForBearerAuth returns the required roles for the given operation.
@@ -348,9 +368,14 @@ func GetRolesForClientSecretBasic(operation string) []string {
 
 // operationRolesMasterKey is a private map storing roles per operation.
 var operationRolesMasterKey = map[string][]string{
+	AdminListSecurityIncidentsOperation:                          []string{},
+	CancelAdminAccountDeletionOperation:                          []string{},
+	DecideSecurityCaseOperation:                                  []string{},
 	DeleteMgmtV1ProjectsByProjectIdOperation:                     []string{},
 	DeleteMgmtV1ProjectsByProjectIdAdminTokensByTokenIdOperation: []string{},
 	DeleteMgmtV1ProjectsByProjectIdEnvironmentsByEnvOperation:    []string{},
+	GetAccountDeletionPolicyOperation:                            []string{},
+	GetAdminAccountDeletionOperation:                             []string{},
 	GetMgmtV1ProjectsOperation:                                   []string{},
 	GetMgmtV1ProjectsByProjectIdOperation:                        []string{},
 	GetMgmtV1ProjectsByProjectIdAdminTokensOperation:             []string{},
@@ -358,6 +383,10 @@ var operationRolesMasterKey = map[string][]string{
 	GetMgmtV1ProjectsByProjectIdEnvironmentsOperation:            []string{},
 	GetMgmtV1ProjectsByProjectIdEnvironmentsByEnvOperation:       []string{},
 	GetMgmtV1ProjectsByProjectIdFeaturesOperation:                []string{},
+	GetSecurityCaseOperation:                                     []string{},
+	GetSecurityPolicyOperation:                                   []string{},
+	ListSecurityCasesOperation:                                   []string{},
+	ListSecurityDeliveriesOperation:                              []string{},
 	PatchMgmtV1ProjectsByProjectIdOperation:                      []string{},
 	PatchMgmtV1ProjectsByProjectIdFeaturesOperation:              []string{},
 	PostMgmtV1ProjectsOperation:                                  []string{},
@@ -365,6 +394,9 @@ var operationRolesMasterKey = map[string][]string{
 	PostMgmtV1ProjectsByProjectIdConfigApplyOperation:            []string{},
 	PostMgmtV1ProjectsByProjectIdConfigPlanOperation:             []string{},
 	PostMgmtV1ProjectsByProjectIdEnvironmentsOperation:           []string{},
+	PutAccountDeletionPolicyOperation:                            []string{},
+	PutSecurityPolicyOperation:                                   []string{},
+	RetrySecurityDeliveryOperation:                               []string{},
 }
 
 // GetRolesForMasterKey returns the required roles for the given operation.

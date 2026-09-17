@@ -562,6 +562,10 @@ func (a *pgMFAAccounts) mfaVerifyChallengeCode(
 	if !codeOK {
 		a.mfaBumpChallengeAttempts(ctx, row.ID, data)
 
+		if err := NewPgSecurity(a.db, a.emitter).recordFailure(ctx, row.ProjectID, accountID, "mfa_failures"); err != nil {
+			return nil, "", err
+		}
+
 		return nil, "", domain.ErrMFAInvalid
 	}
 
@@ -725,7 +729,7 @@ func (a *pgMFAAccounts) RemoveFactor(ctx context.Context, accountID, factorID st
 			ProjectID:   row.ProjectID,
 			Environment: "",
 			AggregateID: row.ID,
-			Payload:     map[string]any{"id": row.ID, "project_id": row.ProjectID},
+			Payload:     map[string]any{"id": row.ID, "project_id": row.ProjectID, "account_id": row.UserID},
 		}); err != nil {
 			return err
 		}

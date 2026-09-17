@@ -102,18 +102,21 @@ off entirely with the `impersonation` [feature flag](/guides/admin-config).
 ## Deleting and anonymizing
 
 ```bash
-curl -sX DELETE "$U/usr_9"           # soft delete — restorable during the grace period
-curl -sX DELETE "$U/usr_9?hard=true" # immediate, unrecoverable
+curl -sX DELETE "$U/usr_9" -H "Authorization: Bearer $ADMIN_TOKEN" # immediate admin deletion
 
 curl -sX POST "$U/usr_9/anonymize" -H "Content-Type: application/json" \
   -d '{"reason":"GDPR erasure request"}'
 ```
 
-Anonymizing strips the personal data but keeps the row, so audit history and
-foreign keys stay intact. That is usually what an erasure request actually
-needs; a hard delete is for a record that should never have existed. The grace
-period and purge schedule come from
-[`retention-policy`](/guides/admin-config).
+Administrative deletion removes the user immediately and revokes sessions.
+It does not use the self-service cancellation period. For user-initiated deletion,
+use the [account deletion API and SDK](/guides/account-deletion): confirmation,
+7 days by default, full access until the deadline, and explicit cancellation.
+The admin user list and detail dialog display that pending request separately
+from account status.
+
+Anonymizing removes personal fields while retaining the user record. Audit/event
+history and application-owned data have their own retention and cleanup rules.
 
 `POST /{id}/export` starts a data-export job for a subject-access request — see
 [Import & export](/guides/import-export).

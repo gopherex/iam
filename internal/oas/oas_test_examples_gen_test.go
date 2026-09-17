@@ -49,6 +49,66 @@ func TestAccessRequestStatus_EncodeDecode(t *testing.T) {
 	var typ2 AccessRequestStatus
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestAccountDeletion_EncodeDecode(t *testing.T) {
+	var typ AccountDeletion
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AccountDeletion
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAccountDeletionEvent_EncodeDecode(t *testing.T) {
+	var typ AccountDeletionEvent
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AccountDeletionEvent
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAccountDeletionHistory_EncodeDecode(t *testing.T) {
+	var typ AccountDeletionHistory
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AccountDeletionHistory
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAccountDeletionInput_EncodeDecode(t *testing.T) {
+	var typ AccountDeletionInput
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AccountDeletionInput
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAccountDeletionPolicy_EncodeDecode(t *testing.T) {
+	var typ AccountDeletionPolicy
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AccountDeletionPolicy
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestActivityEvent_EncodeDecode(t *testing.T) {
 	var typ ActivityEvent
 	typ.SetFake()
@@ -59,6 +119,18 @@ func TestActivityEvent_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 ActivityEvent
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAdminAccountDeletionCancelInput_EncodeDecode(t *testing.T) {
+	var typ AdminAccountDeletionCancelInput
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AdminAccountDeletionCancelInput
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestApiKey_EncodeDecode(t *testing.T) {
@@ -523,18 +595,6 @@ func TestDeleteV1SessionsReq_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 DeleteV1SessionsReq
-	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
-}
-func TestDeleteV1UsersMeReq_EncodeDecode(t *testing.T) {
-	var typ DeleteV1UsersMeReq
-	typ.SetFake()
-
-	e := jx.Encoder{}
-	typ.Encode(&e)
-	data := e.Bytes()
-	require.True(t, std.Valid(data), "Encoded: %s", data)
-
-	var typ2 DeleteV1UsersMeReq
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestDomain_EncodeDecode(t *testing.T) {
@@ -5741,6 +5801,276 @@ func TestScimUserName_EncodeDecode(t *testing.T) {
 
 	var typ2 ScimUserName
 	typ2 = make(ScimUserName)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityCase_EncodeDecode(t *testing.T) {
+	var typ SecurityCase
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityCase
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityCaseDecision_EncodeDecode(t *testing.T) {
+	var typ SecurityCaseDecision
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityCaseDecision
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityCaseList_EncodeDecode(t *testing.T) {
+	var typ SecurityCaseList
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityCaseList
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityCaseMessage_EncodeDecode(t *testing.T) {
+	var typ SecurityCaseMessage
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityCaseMessage
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityDelivery_EncodeDecode(t *testing.T) {
+	var typ SecurityDelivery
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityDelivery
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityDeliveryList_EncodeDecode(t *testing.T) {
+	var typ SecurityDeliveryList
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityDeliveryList
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityDevice_EncodeDecode(t *testing.T) {
+	var typ SecurityDevice
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityDevice
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityDeviceInput_EncodeDecode(t *testing.T) {
+	var typ SecurityDeviceInput
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityDeviceInput
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityDeviceInputAction_EncodeDecode(t *testing.T) {
+	var typ SecurityDeviceInputAction
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityDeviceInputAction
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityDeviceList_EncodeDecode(t *testing.T) {
+	var typ SecurityDeviceList
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityDeviceList
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityDeviceRegistration_EncodeDecode(t *testing.T) {
+	var typ SecurityDeviceRegistration
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityDeviceRegistration
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityEvent_EncodeDecode(t *testing.T) {
+	var typ SecurityEvent
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityEvent
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityFlowInput_EncodeDecode(t *testing.T) {
+	var typ SecurityFlowInput
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityFlowInput
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityFlowInputCredential_EncodeDecode(t *testing.T) {
+	var typ SecurityFlowInputCredential
+	typ = make(SecurityFlowInputCredential)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityFlowInputCredential
+	typ2 = make(SecurityFlowInputCredential)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityFlowState_EncodeDecode(t *testing.T) {
+	var typ SecurityFlowState
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityFlowState
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityFlowStateChallenge_EncodeDecode(t *testing.T) {
+	var typ SecurityFlowStateChallenge
+	typ = make(SecurityFlowStateChallenge)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityFlowStateChallenge
+	typ2 = make(SecurityFlowStateChallenge)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityIncident_EncodeDecode(t *testing.T) {
+	var typ SecurityIncident
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityIncident
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityIncidentList_EncodeDecode(t *testing.T) {
+	var typ SecurityIncidentList
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityIncidentList
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityPolicy_EncodeDecode(t *testing.T) {
+	var typ SecurityPolicy
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityPolicy
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityPolicyClientUrls_EncodeDecode(t *testing.T) {
+	var typ SecurityPolicyClientUrls
+	typ = make(SecurityPolicyClientUrls)
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityPolicyClientUrls
+	typ2 = make(SecurityPolicyClientUrls)
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecurityProofFactor_EncodeDecode(t *testing.T) {
+	var typ SecurityProofFactor
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecurityProofFactor
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestSecuritySession_EncodeDecode(t *testing.T) {
+	var typ SecuritySession
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 SecuritySession
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestServiceAccount_EncodeDecode(t *testing.T) {

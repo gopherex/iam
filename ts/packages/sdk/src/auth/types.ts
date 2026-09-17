@@ -33,11 +33,13 @@ export type AuthChangeEvent =
 export class IamAuthError extends Error {
   code: string;
   status?: number;
-  constructor(message: string, code = 'auth_error', status?: number) {
+  details?: Record<string, unknown>;
+  constructor(message: string, code = 'auth_error', status?: number, details?: Record<string, unknown>) {
     super(message);
     this.name = 'IamAuthError';
     this.code = code;
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -81,6 +83,8 @@ export interface IamClientOptions {
   deviceFingerprint?: string;
   /** Session store (default: localStorage in the browser, in-memory otherwise). */
   storage?: StorageAdapter;
+	/** Restricted recovery capabilities (browser default: sessionStorage). */
+	securityStorage?: StorageAdapter;
   /** Storage key for the persisted session (default: "iam.session"). */
   storageKey?: string;
   /** Persist the session across reloads (default: true). */

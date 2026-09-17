@@ -13,6 +13,42 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// AdminListSecurityIncidents implements adminListSecurityIncidents operation.
+//
+// AdminListSecurityIncidents.
+//
+// GET /v1/projects/{project_id}/admin/security/incidents
+func (UnimplementedHandler) AdminListSecurityIncidents(ctx context.Context, params AdminListSecurityIncidentsParams) (r *SecurityIncidentList, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CancelAccountDeletion implements cancelAccountDeletion operation.
+//
+// CancelAccountDeletion.
+//
+// POST /v1/users/me/deletion/cancel
+func (UnimplementedHandler) CancelAccountDeletion(ctx context.Context, req *AccountDeletionInput) (r *AccountDeletion, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CancelAdminAccountDeletion implements cancelAdminAccountDeletion operation.
+//
+// Cancel a pending account deletion before its deadline.
+//
+// POST /v1/projects/{project_id}/admin/users/{user_id}/deletion/cancel
+func (UnimplementedHandler) CancelAdminAccountDeletion(ctx context.Context, req *AdminAccountDeletionCancelInput, params CancelAdminAccountDeletionParams) (r *AccountDeletion, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// DecideSecurityCase implements decideSecurityCase operation.
+//
+// DecideSecurityCase.
+//
+// POST /v1/projects/{project_id}/admin/security/cases/{case_id}/decision
+func (UnimplementedHandler) DecideSecurityCase(ctx context.Context, req *SecurityCaseDecision, params DecideSecurityCaseParams) (r *SecurityCase, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // DeleteMgmtV1ProjectsByProjectId implements deleteMgmtV1ProjectsByProjectId operation.
 //
 // Delete a project.
@@ -321,10 +357,46 @@ func (UnimplementedHandler) DeleteV1SessionsBySessionId(ctx context.Context, par
 
 // DeleteV1UsersMe implements deleteV1UsersMe operation.
 //
-// Delete own account (step-up).
+// DeleteV1UsersMe.
 //
 // DELETE /v1/users/me
-func (UnimplementedHandler) DeleteV1UsersMe(ctx context.Context, req OptDeleteV1UsersMeReq) (r *Ok, _ error) {
+func (UnimplementedHandler) DeleteV1UsersMe(ctx context.Context, req *AccountDeletionInput) (r *AccountDeletion, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ExchangeSecurityContinuation implements exchangeSecurityContinuation operation.
+//
+// ExchangeSecurityContinuation.
+//
+// POST /v1/security/continuations/exchange
+func (UnimplementedHandler) ExchangeSecurityContinuation(ctx context.Context, req *SecurityFlowInput, params ExchangeSecurityContinuationParams) (r *SecurityFlowState, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAccountDeletion implements getAccountDeletion operation.
+//
+// GetAccountDeletion.
+//
+// GET /v1/users/me/deletion
+func (UnimplementedHandler) GetAccountDeletion(ctx context.Context) (r *AccountDeletion, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAccountDeletionPolicy implements getAccountDeletionPolicy operation.
+//
+// GetAccountDeletionPolicy.
+//
+// GET /v1/projects/{project_id}/admin/account-deletion-policy
+func (UnimplementedHandler) GetAccountDeletionPolicy(ctx context.Context, params GetAccountDeletionPolicyParams) (r *AccountDeletionPolicy, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAdminAccountDeletion implements getAdminAccountDeletion operation.
+//
+// GetAdminAccountDeletion.
+//
+// GET /v1/projects/{project_id}/admin/users/{user_id}/deletion
+func (UnimplementedHandler) GetAdminAccountDeletion(ctx context.Context, params GetAdminAccountDeletionParams) (r *AccountDeletionHistory, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -458,6 +530,42 @@ func (UnimplementedHandler) GetPByProjectIdEByEnvWellKnownJwksJson(ctx context.C
 //
 // GET /p/{project_id}/e/{env}/.well-known/openid-configuration
 func (UnimplementedHandler) GetPByProjectIdEByEnvWellKnownOpenidConfiguration(ctx context.Context, params GetPByProjectIdEByEnvWellKnownOpenidConfigurationParams) (r GetPByProjectIdEByEnvWellKnownOpenidConfigurationOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetSecurityCase implements getSecurityCase operation.
+//
+// GetSecurityCase.
+//
+// GET /v1/projects/{project_id}/admin/security/cases/{case_id}
+func (UnimplementedHandler) GetSecurityCase(ctx context.Context, params GetSecurityCaseParams) (r *SecurityCase, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetSecurityFlow implements getSecurityFlow operation.
+//
+// GetSecurityFlow.
+//
+// GET /v1/security/flows/current
+func (UnimplementedHandler) GetSecurityFlow(ctx context.Context, params GetSecurityFlowParams) (r *SecurityFlowState, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetSecurityIncident implements getSecurityIncident operation.
+//
+// GetSecurityIncident.
+//
+// GET /v1/security/incidents/{incident_id}
+func (UnimplementedHandler) GetSecurityIncident(ctx context.Context, params GetSecurityIncidentParams) (r *SecurityIncident, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetSecurityPolicy implements getSecurityPolicy operation.
+//
+// GetSecurityPolicy.
+//
+// GET /v1/projects/{project_id}/admin/security/policy
+func (UnimplementedHandler) GetSecurityPolicy(ctx context.Context, params GetSecurityPolicyParams) (r *SecurityPolicy, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1249,6 +1357,42 @@ func (UnimplementedHandler) GetV1UsersMeConsents(ctx context.Context) (r *GetV1U
 //
 // GET /v1/users/me/export/{job_id}
 func (UnimplementedHandler) GetV1UsersMeExportByJobId(ctx context.Context, params GetV1UsersMeExportByJobIdParams) (r *GetV1UsersMeExportByJobIdOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListSecurityCases implements listSecurityCases operation.
+//
+// ListSecurityCases.
+//
+// GET /v1/projects/{project_id}/admin/security/cases
+func (UnimplementedHandler) ListSecurityCases(ctx context.Context, params ListSecurityCasesParams) (r *SecurityCaseList, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListSecurityDeliveries implements listSecurityDeliveries operation.
+//
+// ListSecurityDeliveries.
+//
+// GET /v1/projects/{project_id}/admin/security/deliveries
+func (UnimplementedHandler) ListSecurityDeliveries(ctx context.Context, params ListSecurityDeliveriesParams) (r *SecurityDeliveryList, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListSecurityDevices implements listSecurityDevices operation.
+//
+// ListSecurityDevices.
+//
+// GET /v1/security/devices
+func (UnimplementedHandler) ListSecurityDevices(ctx context.Context, params ListSecurityDevicesParams) (r *SecurityDeviceList, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListSecurityIncidents implements listSecurityIncidents operation.
+//
+// ListSecurityIncidents.
+//
+// GET /v1/security/incidents
+func (UnimplementedHandler) ListSecurityIncidents(ctx context.Context, params ListSecurityIncidentsParams) (r *SecurityIncidentList, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2715,6 +2859,15 @@ func (UnimplementedHandler) PostV1UsersMeExport(ctx context.Context) (r *PostV1U
 	return r, ht.ErrNotImplemented
 }
 
+// PutAccountDeletionPolicy implements putAccountDeletionPolicy operation.
+//
+// PutAccountDeletionPolicy.
+//
+// PUT /v1/projects/{project_id}/admin/account-deletion-policy
+func (UnimplementedHandler) PutAccountDeletionPolicy(ctx context.Context, req *AccountDeletionPolicy, params PutAccountDeletionPolicyParams) (r *AccountDeletionPolicy, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // PutOauth2RegisterByClientId implements putOauth2RegisterByClientId operation.
 //
 // Replaces the client's metadata. Absent fields are cleared, as RFC 7592 requires — this is a
@@ -2722,6 +2875,15 @@ func (UnimplementedHandler) PostV1UsersMeExport(ctx context.Context) (r *PostV1U
 //
 // PUT /oauth2/register/{client_id}
 func (UnimplementedHandler) PutOauth2RegisterByClientId(ctx context.Context, req *ClientRegistration, params PutOauth2RegisterByClientIdParams) (r *ClientRegistrationResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PutSecurityPolicy implements putSecurityPolicy operation.
+//
+// PutSecurityPolicy.
+//
+// PUT /v1/projects/{project_id}/admin/security/policy
+func (UnimplementedHandler) PutSecurityPolicy(ctx context.Context, req *SecurityPolicy, params PutSecurityPolicyParams) (r *SecurityPolicy, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -2822,6 +2984,69 @@ func (UnimplementedHandler) PutV1ScimV2ByConnectionIdGroupsByGroupId(ctx context
 //
 // PUT /v1/scim/v2/{connection_id}/Users/{scim_user_id}
 func (UnimplementedHandler) PutV1ScimV2ByConnectionIdUsersByScimUserId(ctx context.Context, req *ScimUser, params PutV1ScimV2ByConnectionIdUsersByScimUserIdParams) (r PutV1ScimV2ByConnectionIdUsersByScimUserIdOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// RegisterSecurityDevice implements registerSecurityDevice operation.
+//
+// RegisterSecurityDevice.
+//
+// POST /v1/security/devices
+func (UnimplementedHandler) RegisterSecurityDevice(ctx context.Context, req *SecurityDeviceInput, params RegisterSecurityDeviceParams) (r *SecurityDeviceRegistration, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ResendSecurityFlow implements resendSecurityFlow operation.
+//
+// ResendSecurityFlow.
+//
+// POST /v1/security/flows/current/resend
+func (UnimplementedHandler) ResendSecurityFlow(ctx context.Context, params ResendSecurityFlowParams) (r *SecurityFlowState, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// RetrySecurityDelivery implements retrySecurityDelivery operation.
+//
+// RetrySecurityDelivery.
+//
+// POST /v1/projects/{project_id}/admin/security/deliveries/{delivery_id}/retry
+func (UnimplementedHandler) RetrySecurityDelivery(ctx context.Context, params RetrySecurityDeliveryParams) (r *SecurityDelivery, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// StartSecurityFlow implements startSecurityFlow operation.
+//
+// StartSecurityFlow.
+//
+// POST /v1/security/flows
+func (UnimplementedHandler) StartSecurityFlow(ctx context.Context, req *SecurityFlowInput, params StartSecurityFlowParams) (r *SecurityFlowState, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// StartSecurityRecovery implements startSecurityRecovery operation.
+//
+// StartSecurityRecovery.
+//
+// POST /v1/security/recovery
+func (UnimplementedHandler) StartSecurityRecovery(ctx context.Context, req *SecurityFlowInput, params StartSecurityRecoveryParams) (r *SecurityFlowState, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SubmitSecurityFlow implements submitSecurityFlow operation.
+//
+// SubmitSecurityFlow.
+//
+// POST /v1/security/flows/current/submit
+func (UnimplementedHandler) SubmitSecurityFlow(ctx context.Context, req *SecurityFlowInput, params SubmitSecurityFlowParams) (r *SecurityFlowState, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdateSecurityDevice implements updateSecurityDevice operation.
+//
+// UpdateSecurityDevice.
+//
+// POST /v1/security/devices/{device_id}
+func (UnimplementedHandler) UpdateSecurityDevice(ctx context.Context, req *SecurityDeviceInput, params UpdateSecurityDeviceParams) (r *SecurityDevice, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

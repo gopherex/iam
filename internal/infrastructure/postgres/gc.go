@@ -22,6 +22,8 @@ type gcSweep struct {
 }
 
 var gcSweeps = []gcSweep{
+	{"iam_security_continuations", `DELETE FROM iam_security_continuations WHERE expires_at < now()`},
+	{"iam_security_attempts", `DELETE FROM iam_security_attempts WHERE window_start < now() - interval '2 days'`},
 	{"iam_challenges", `DELETE FROM iam_challenges WHERE expires_at < now()`},
 	{"iam_flows", `DELETE FROM iam_flows WHERE expires_at < now()`},
 	{"iam_auth_codes", `DELETE FROM iam_auth_codes WHERE expires_at < now()`},
@@ -82,6 +84,7 @@ func (db *DB) gcSweepAll(ctx context.Context, log *xlog.Logger) {
 	}
 
 	db.gcRetentionSweep(ctx, log)
+	db.gcSecurityRetention(ctx, log)
 }
 
 // gcRetentionSweep prunes audit logs and events past each project's configured
@@ -152,5 +155,31 @@ func (db *DB) gcRetentionSweep(ctx context.Context, log *xlog.Logger) {
 				`DELETE FROM iam_events WHERE project_id = $1 AND created_at < now() - make_interval(days => $2)`,
 				p.project, p.eventDays)
 		}
+	}
+}
+
+// gcSecurityRetention applies environment-scoped security retention. Active
+// account guards are deliberately retained until recovery is completed.
+func (db *DB) gcSecurityRetention(ctx context.Context, log *xlog.Logger) {
+	for _, sweep := range securityRetentionSweeps() {
+		_, err := db.Pool.Exec(ctx, `DELETE FROM `+sweep.table+` AS records USING iam_security_policies AS policies
+WHERE records.project_id=policies.project_id AND records.environment=policies.environment
+AND (`+sweep.predicate+`) AND `+sweep.age+`
+ < now()-make_interval(days=>GREATEST(1,(policies.data->>'retention_days')::integer))`)
+		if err != nil && ctx.Err() == nil {
+			log.Warn("security retention failed", xlog.String("table", sweep.table), xlog.Error("err", err))
+		}
+	}
+
+	_, err := db.Pool.Exec(ctx, `DELETE FROM iam_security_devices AS devices USING iam_security_policies AS policies
+ WHERE
+devices.project_id=policies.project_id AND devices.environment=policies.environment
+ AND (devices.data->>'last_seen_at')::timestamptz
+ < now()-make_interval(days=>GREATEST(1,(policies.data->>'retention_days')::integer))
+ AND NOT EXISTS(SELECT 1 FROM iam_sessions WHERE project_id=devices.project_id
+ AND environment=devices.environment
+ AND user_id=devices.user_id AND data->>'device_id'=devices.id)`)
+	if err != nil && ctx.Err() == nil {
+		log.Warn("security device retention failed", xlog.Error("err", err))
 	}
 }

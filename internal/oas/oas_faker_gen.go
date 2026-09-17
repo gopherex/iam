@@ -60,6 +60,123 @@ func (s *AccessRequestStatus) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *AccountDeletion) SetFake() {
+	{
+		{
+			s.Ok = true
+		}
+	}
+	{
+		{
+			s.RequestID.SetFake()
+		}
+	}
+	{
+		{
+			s.Status = "string"
+		}
+	}
+	{
+		{
+			s.RequestedAt.SetFake()
+		}
+	}
+	{
+		{
+			s.DeleteAt.SetFake()
+		}
+	}
+	{
+		{
+			s.CancelledAt.SetFake()
+		}
+	}
+	{
+		{
+			s.GraceDays = int(0)
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *AccountDeletionEvent) SetFake() {
+	{
+		{
+			s.ActorID.SetFake()
+		}
+	}
+	{
+		{
+			s.Reason.SetFake()
+		}
+	}
+	{
+		{
+			s.Type = "string"
+		}
+	}
+	{
+		{
+			s.At = time.Now()
+		}
+	}
+	{
+		{
+			s.RequestID = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *AccountDeletionHistory) SetFake() {
+	{
+		{
+			s.Deletion.SetFake()
+		}
+	}
+	{
+		{
+			s.Events = nil
+			for i := 0; i < 0; i++ {
+				var elem AccountDeletionEvent
+				{
+					elem.SetFake()
+				}
+				s.Events = append(s.Events, elem)
+			}
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *AccountDeletionInput) SetFake() {
+	{
+		{
+			s.Password.SetFake()
+		}
+	}
+	{
+		{
+			s.ProofToken.SetFake()
+		}
+	}
+	{
+		{
+			s.Reason.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *AccountDeletionPolicy) SetFake() {
+	{
+		{
+			s.GraceDays = int(0)
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *ActivityEvent) SetFake() {
 	{
 		{
@@ -84,6 +201,20 @@ func (s *ActivityEvent) SetFake() {
 	{
 		{
 			s.At.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *AdminAccountDeletionCancelInput) SetFake() {
+	{
+		{
+			s.RequestID = "string"
+		}
+	}
+	{
+		{
+			s.Reason = "string"
 		}
 	}
 }
@@ -968,20 +1099,6 @@ func (s *DeleteV1SessionsReq) SetFake() {
 	{
 		{
 			s.ExceptCurrent.SetFake()
-		}
-	}
-}
-
-// SetFake set fake values.
-func (s *DeleteV1UsersMeReq) SetFake() {
-	{
-		{
-			s.Password.SetFake()
-		}
-	}
-	{
-		{
-			s.Reason.SetFake()
 		}
 	}
 }
@@ -3357,6 +3474,15 @@ func (s *OptAccessRequestStatus) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *OptAccountDeletion) SetFake() {
+	var elem AccountDeletion
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
 func (s *OptApiKey) SetFake() {
 	var elem ApiKey
 	{
@@ -3521,15 +3647,6 @@ func (s *OptDateTime) SetFake() {
 // SetFake set fake values.
 func (s *OptDeleteV1SessionsReq) SetFake() {
 	var elem DeleteV1SessionsReq
-	{
-		elem.SetFake()
-	}
-	s.SetTo(elem)
-}
-
-// SetFake set fake values.
-func (s *OptDeleteV1UsersMeReq) SetFake() {
-	var elem DeleteV1UsersMeReq
 	{
 		elem.SetFake()
 	}
@@ -3739,6 +3856,15 @@ func (s *OptInt) SetFake() {
 	var elem int
 	{
 		elem = int(0)
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptInt32) SetFake() {
+	var elem int32
+	{
+		elem = int32(0)
 	}
 	s.SetTo(elem)
 }
@@ -4445,6 +4571,51 @@ func (s *OptSSOConnectionType) SetFake() {
 // SetFake set fake values.
 func (s *OptScimUserName) SetFake() {
 	var elem ScimUserName
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptSecurityCase) SetFake() {
+	var elem SecurityCase
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptSecurityDeviceInputAction) SetFake() {
+	var elem SecurityDeviceInputAction
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptSecurityFlowInputCredential) SetFake() {
+	var elem SecurityFlowInputCredential
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptSecurityFlowStateChallenge) SetFake() {
+	var elem SecurityFlowStateChallenge
+	{
+		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptSecurityIncident) SetFake() {
+	var elem SecurityIncident
 	{
 		elem.SetFake()
 	}
@@ -8699,6 +8870,822 @@ func (s *ScimUserName) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *SecurityCase) SetFake() {
+	{
+		{
+			s.ID = "string"
+		}
+	}
+	{
+		{
+			s.AccountID.SetFake()
+		}
+	}
+	{
+		{
+			s.Status = "string"
+		}
+	}
+	{
+		{
+			s.ContactMasked = "string"
+		}
+	}
+	{
+		{
+			s.CreatedAt = time.Now()
+		}
+	}
+	{
+		{
+			s.UpdatedAt = time.Now()
+		}
+	}
+	{
+		{
+			s.Messages = nil
+			for i := 0; i < 0; i++ {
+				var elem SecurityCaseMessage
+				{
+					elem.SetFake()
+				}
+				s.Messages = append(s.Messages, elem)
+			}
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityCaseDecision) SetFake() {
+	{
+		{
+			s.Action = "string"
+		}
+	}
+	{
+		{
+			s.Message = "string"
+		}
+	}
+	{
+		{
+			s.Evidence = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityCaseList) SetFake() {
+	{
+		{
+			s.Data = nil
+			for i := 0; i < 0; i++ {
+				var elem SecurityCase
+				{
+					elem.SetFake()
+				}
+				s.Data = append(s.Data, elem)
+			}
+		}
+	}
+	{
+		{
+			s.HasMore = true
+		}
+	}
+	{
+		{
+			s.NextCursor.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityCaseMessage) SetFake() {
+	{
+		{
+			s.At = time.Now()
+		}
+	}
+	{
+		{
+			s.Author = "string"
+		}
+	}
+	{
+		{
+			s.Message = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityDelivery) SetFake() {
+	{
+		{
+			s.ID = "string"
+		}
+	}
+	{
+		{
+			s.IncidentID.SetFake()
+		}
+	}
+	{
+		{
+			s.CaseID.SetFake()
+		}
+	}
+	{
+		{
+			s.Channel = "string"
+		}
+	}
+	{
+		{
+			s.RecipientMasked = "string"
+		}
+	}
+	{
+		{
+			s.Status = "string"
+		}
+	}
+	{
+		{
+			s.Attempts = int32(0)
+		}
+	}
+	{
+		{
+			s.LastError.SetFake()
+		}
+	}
+	{
+		{
+			s.CreatedAt = time.Now()
+		}
+	}
+	{
+		{
+			s.UpdatedAt = time.Now()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityDeliveryList) SetFake() {
+	{
+		{
+			s.Data = nil
+			for i := 0; i < 0; i++ {
+				var elem SecurityDelivery
+				{
+					elem.SetFake()
+				}
+				s.Data = append(s.Data, elem)
+			}
+		}
+	}
+	{
+		{
+			s.HasMore = true
+		}
+	}
+	{
+		{
+			s.NextCursor.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityDevice) SetFake() {
+	{
+		{
+			s.ID = "string"
+		}
+	}
+	{
+		{
+			s.Name = "string"
+		}
+	}
+	{
+		{
+			s.FirstSeenAt = time.Now()
+		}
+	}
+	{
+		{
+			s.LastSeenAt = time.Now()
+		}
+	}
+	{
+		{
+			s.TrustedUntil.SetFake()
+		}
+	}
+	{
+		{
+			s.Revoked = true
+		}
+	}
+	{
+		{
+			s.Current = true
+		}
+	}
+	{
+		{
+			s.SessionIds = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.SessionIds = append(s.SessionIds, elem)
+			}
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityDeviceInput) SetFake() {
+	{
+		{
+			s.Name.SetFake()
+		}
+	}
+	{
+		{
+			s.Action.SetFake()
+		}
+	}
+	{
+		{
+			s.ProofToken.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityDeviceInputAction) SetFake() {
+	*s = SecurityDeviceInputActionRename
+}
+
+// SetFake set fake values.
+func (s *SecurityDeviceList) SetFake() {
+	{
+		{
+			s.Data = nil
+			for i := 0; i < 0; i++ {
+				var elem SecurityDevice
+				{
+					elem.SetFake()
+				}
+				s.Data = append(s.Data, elem)
+			}
+		}
+	}
+	{
+		{
+			s.HasMore = true
+		}
+	}
+	{
+		{
+			s.NextCursor.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityDeviceRegistration) SetFake() {
+	{
+		{
+			s.Device.SetFake()
+		}
+	}
+	{
+		{
+			s.DeviceToken = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityEvent) SetFake() {
+	{
+		{
+			s.ID = "string"
+		}
+	}
+	{
+		{
+			s.Type = "string"
+		}
+	}
+	{
+		{
+			s.At = time.Now()
+		}
+	}
+	{
+		{
+			s.Outcome = "string"
+		}
+	}
+	{
+		{
+			s.SessionID.SetFake()
+		}
+	}
+	{
+		{
+			s.DeviceID.SetFake()
+		}
+	}
+	{
+		{
+			s.IP.SetFake()
+		}
+	}
+	{
+		{
+			s.UserAgent.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityFlowInput) SetFake() {
+	{
+		{
+			s.ExchangeKey.SetFake()
+		}
+	}
+	{
+		{
+			s.RequestID.SetFake()
+		}
+	}
+	{
+		{
+			s.DeviceID.SetFake()
+		}
+	}
+	{
+		{
+			s.Credential.SetFake()
+		}
+	}
+	{
+		{
+			s.Action.SetFake()
+		}
+	}
+	{
+		{
+			s.IncidentID.SetFake()
+		}
+	}
+	{
+		{
+			s.SessionID.SetFake()
+		}
+	}
+	{
+		{
+			s.ContinuationToken.SetFake()
+		}
+	}
+	{
+		{
+			s.Identifier.SetFake()
+		}
+	}
+	{
+		{
+			s.Contact.SetFake()
+		}
+	}
+	{
+		{
+			s.Code.SetFake()
+		}
+	}
+	{
+		{
+			s.Password.SetFake()
+		}
+	}
+	{
+		{
+			s.NewPassword.SetFake()
+		}
+	}
+	{
+		{
+			s.FactorID.SetFake()
+		}
+	}
+	{
+		{
+			s.Message.SetFake()
+		}
+	}
+	{
+		{
+			s.AllSessions.SetFake()
+		}
+	}
+	{
+		{
+			s.Version.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityFlowInputCredential) SetFake() {
+	var (
+		elem jx.Raw
+		m    map[string]jx.Raw = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityFlowState) SetFake() {
+	{
+		{
+			s.Deletion.SetFake()
+		}
+	}
+	{
+		{
+			s.Sessions = nil
+			for i := 0; i < 0; i++ {
+				var elem SecuritySession
+				{
+					elem.SetFake()
+				}
+				s.Sessions = append(s.Sessions, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Challenge.SetFake()
+		}
+	}
+	{
+		{
+			s.FlowToken.SetFake()
+		}
+	}
+	{
+		{
+			s.Kind = "string"
+		}
+	}
+	{
+		{
+			s.Status = "string"
+		}
+	}
+	{
+		{
+			s.Step = "string"
+		}
+	}
+	{
+		{
+			s.Version = int32(0)
+		}
+	}
+	{
+		{
+			s.NextActions = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.NextActions = append(s.NextActions, elem)
+			}
+		}
+	}
+	{
+		{
+			s.ExpiresAt = time.Now()
+		}
+	}
+	{
+		{
+			s.Incident.SetFake()
+		}
+	}
+	{
+		{
+			s.Case.SetFake()
+		}
+	}
+	{
+		{
+			s.ContactMasked.SetFake()
+		}
+	}
+	{
+		{
+			s.AttemptsLeft = int32(0)
+		}
+	}
+	{
+		{
+			s.ResendAt.SetFake()
+		}
+	}
+	{
+		{
+			s.Factors = nil
+			for i := 0; i < 0; i++ {
+				var elem SecurityProofFactor
+				{
+					elem.SetFake()
+				}
+				s.Factors = append(s.Factors, elem)
+			}
+		}
+	}
+	{
+		{
+			s.AllSessions = true
+		}
+	}
+	{
+		{
+			s.RevokedSessionIds = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.RevokedSessionIds = append(s.RevokedSessionIds, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Outcome.SetFake()
+		}
+	}
+	{
+		{
+			s.ErrorCode.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityFlowStateChallenge) SetFake() {
+	var (
+		elem jx.Raw
+		m    map[string]jx.Raw = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityIncident) SetFake() {
+	{
+		{
+			s.ID = "string"
+		}
+	}
+	{
+		{
+			s.AccountID = "string"
+		}
+	}
+	{
+		{
+			s.Status = "string"
+		}
+	}
+	{
+		{
+			s.Severity = "string"
+		}
+	}
+	{
+		{
+			s.Reasons = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.Reasons = append(s.Reasons, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Events = nil
+			for i := 0; i < 0; i++ {
+				var elem SecurityEvent
+				{
+					elem.SetFake()
+				}
+				s.Events = append(s.Events, elem)
+			}
+		}
+	}
+	{
+		{
+			s.SessionID.SetFake()
+		}
+	}
+	{
+		{
+			s.DeviceID.SetFake()
+		}
+	}
+	{
+		{
+			s.CreatedAt = time.Now()
+		}
+	}
+	{
+		{
+			s.UpdatedAt = time.Now()
+		}
+	}
+	{
+		{
+			s.PolicyVersion = int32(0)
+		}
+	}
+	{
+		{
+			s.RevokedSessionIds = nil
+			for i := 0; i < 0; i++ {
+				var elem string
+				{
+					elem = "string"
+				}
+				s.RevokedSessionIds = append(s.RevokedSessionIds, elem)
+			}
+		}
+	}
+	{
+		{
+			s.Resolution.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityIncidentList) SetFake() {
+	{
+		{
+			s.Data = nil
+			for i := 0; i < 0; i++ {
+				var elem SecurityIncident
+				{
+					elem.SetFake()
+				}
+				s.Data = append(s.Data, elem)
+			}
+		}
+	}
+	{
+		{
+			s.HasMore = true
+		}
+	}
+	{
+		{
+			s.NextCursor.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityPolicy) SetFake() {
+	{
+		{
+			s.Version = int32(0)
+		}
+	}
+	{
+		{
+			s.Mode = "string"
+		}
+	}
+	{
+		{
+			s.ContinueURL = "string"
+		}
+	}
+	{
+		{
+			s.ClientUrls.SetFake()
+		}
+	}
+	{
+		{
+			s.Notify = true
+		}
+	}
+	{
+		{
+			s.RequireNewDeviceProof = true
+		}
+	}
+	{
+		{
+			s.FlowTTLSeconds = int32(0)
+		}
+	}
+	{
+		{
+			s.TrustTTLSeconds = int32(0)
+		}
+	}
+	{
+		{
+			s.RetentionDays = int32(0)
+		}
+	}
+	{
+		{
+			s.FailureThreshold = int32(0)
+		}
+	}
+	{
+		{
+			s.FailureWindowSeconds = int32(0)
+		}
+	}
+	{
+		{
+			s.NotificationCooldownSeconds = int32(0)
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityPolicyClientUrls) SetFake() {
+	var (
+		elem string
+		m    map[string]string = s.init()
+	)
+	for i := 0; i < 0; i++ {
+		m[fmt.Sprintf("fake%d", i)] = elem
+	}
+}
+
+// SetFake set fake values.
+func (s *SecurityProofFactor) SetFake() {
+	{
+		{
+			s.ID = "string"
+		}
+	}
+	{
+		{
+			s.Type = "string"
+		}
+	}
+	{
+		{
+			s.Hint = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *SecuritySession) SetFake() {
+	{
+		{
+			s.ID = "string"
+		}
+	}
+	{
+		{
+			s.Name = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *ServiceAccount) SetFake() {
 	{
 		{
@@ -9082,6 +10069,11 @@ func (s *TokenProfileClaimsTemplate) SetFake() {
 
 // SetFake set fake values.
 func (s *User) SetFake() {
+	{
+		{
+			s.Deletion.SetFake()
+		}
+	}
 	{
 		{
 			s.ID = "string"

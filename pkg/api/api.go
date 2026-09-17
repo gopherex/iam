@@ -34,6 +34,7 @@ type Handler = oas.Handler
 // handlers. It satisfies oas.Handler by embedding each group interface; every
 // operation belongs to exactly one group, so the method sets are disjoint.
 type Service struct {
+	oas.AccountSecurityHandler
 	oas.PlatformHandler
 	oas.CoreAuthHandler
 	oas.PasswordlessHandler
@@ -111,6 +112,7 @@ type Option func(*Service)
 // options to replace any group with a real implementation.
 func New(opts ...Option) *Service {
 	s := &Service{
+		AccountSecurityHandler: &AccountSecurityService{},
 		PlatformHandler:        &PlatformService{},
 		CoreAuthHandler:        &CoreAuthService{},
 		PasswordlessHandler:    &PasswordlessService{},

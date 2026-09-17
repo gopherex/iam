@@ -21,16 +21,17 @@ import (
 
 // IamUser is an object representing the database table.
 type IamUser struct {
-	ID           string           `db:"id,pk" `
-	ProjectID    string           `db:"project_id" `
-	Environment  string           `db:"environment" `
-	Kind         string           `db:"kind" `
-	Status       string           `db:"status" `
-	PrimaryEmail null.Val[string] `db:"primary_email" `
-	PrimaryPhone null.Val[string] `db:"primary_phone" `
-	CreatedAt    time.Time        `db:"created_at" `
-	UpdatedAt    time.Time        `db:"updated_at" `
-	Data         json.RawMessage  `db:"data" `
+	SecurityRecoveredAt null.Val[time.Time] `db:"security_recovered_at" `
+	ID                  string              `db:"id,pk" `
+	ProjectID           string              `db:"project_id" `
+	Environment         string              `db:"environment" `
+	Kind                string              `db:"kind" `
+	Status              string              `db:"status" `
+	PrimaryEmail        null.Val[string]    `db:"primary_email" `
+	PrimaryPhone        null.Val[string]    `db:"primary_phone" `
+	CreatedAt           time.Time           `db:"created_at" `
+	UpdatedAt           time.Time           `db:"updated_at" `
+	Data                json.RawMessage     `db:"data" `
 }
 
 // IamUserSlice is an alias for a slice of pointers to IamUser.
@@ -45,7 +46,7 @@ type IamUsersQuery = *psql.ViewQuery[*IamUser, IamUserSlice]
 
 func buildIamUserColumns(tableName string) iamUserColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "project_id", "environment", "kind", "status", "primary_email", "primary_phone", "created_at", "updated_at", "data",
+		"security_recovered_at", "id", "project_id", "environment", "kind", "status", "primary_email", "primary_phone", "created_at", "updated_at", "data",
 	)
 
 	if tableName != "" {
@@ -53,34 +54,36 @@ func buildIamUserColumns(tableName string) iamUserColumns {
 	}
 
 	return iamUserColumns{
-		ColumnsExpr:  columnsExpr,
-		tableAlias:   tableName,
-		ID:           buildIamUserColumn(tableName, "id"),
-		ProjectID:    buildIamUserColumn(tableName, "project_id"),
-		Environment:  buildIamUserColumn(tableName, "environment"),
-		Kind:         buildIamUserColumn(tableName, "kind"),
-		Status:       buildIamUserColumn(tableName, "status"),
-		PrimaryEmail: buildIamUserColumn(tableName, "primary_email"),
-		PrimaryPhone: buildIamUserColumn(tableName, "primary_phone"),
-		CreatedAt:    buildIamUserColumn(tableName, "created_at"),
-		UpdatedAt:    buildIamUserColumn(tableName, "updated_at"),
-		Data:         buildIamUserColumn(tableName, "data"),
+		ColumnsExpr:         columnsExpr,
+		tableAlias:          tableName,
+		SecurityRecoveredAt: buildIamUserColumn(tableName, "security_recovered_at"),
+		ID:                  buildIamUserColumn(tableName, "id"),
+		ProjectID:           buildIamUserColumn(tableName, "project_id"),
+		Environment:         buildIamUserColumn(tableName, "environment"),
+		Kind:                buildIamUserColumn(tableName, "kind"),
+		Status:              buildIamUserColumn(tableName, "status"),
+		PrimaryEmail:        buildIamUserColumn(tableName, "primary_email"),
+		PrimaryPhone:        buildIamUserColumn(tableName, "primary_phone"),
+		CreatedAt:           buildIamUserColumn(tableName, "created_at"),
+		UpdatedAt:           buildIamUserColumn(tableName, "updated_at"),
+		Data:                buildIamUserColumn(tableName, "data"),
 	}
 }
 
 type iamUserColumns struct {
 	expr.ColumnsExpr
-	tableAlias   string
-	ID           iamUserColumn
-	ProjectID    iamUserColumn
-	Environment  iamUserColumn
-	Kind         iamUserColumn
-	Status       iamUserColumn
-	PrimaryEmail iamUserColumn
-	PrimaryPhone iamUserColumn
-	CreatedAt    iamUserColumn
-	UpdatedAt    iamUserColumn
-	Data         iamUserColumn
+	tableAlias          string
+	SecurityRecoveredAt iamUserColumn
+	ID                  iamUserColumn
+	ProjectID           iamUserColumn
+	Environment         iamUserColumn
+	Kind                iamUserColumn
+	Status              iamUserColumn
+	PrimaryEmail        iamUserColumn
+	PrimaryPhone        iamUserColumn
+	CreatedAt           iamUserColumn
+	UpdatedAt           iamUserColumn
+	Data                iamUserColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -126,20 +129,24 @@ func (c iamUserColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type IamUserSetter struct {
-	ID           *string           `db:"id,pk" `
-	ProjectID    *string           `db:"project_id" `
-	Environment  *string           `db:"environment" `
-	Kind         *string           `db:"kind" `
-	Status       *string           `db:"status" `
-	PrimaryEmail *null.Val[string] `db:"primary_email" `
-	PrimaryPhone *null.Val[string] `db:"primary_phone" `
-	CreatedAt    *time.Time        `db:"created_at" `
-	UpdatedAt    *time.Time        `db:"updated_at" `
-	Data         *json.RawMessage  `db:"data" `
+	SecurityRecoveredAt *null.Val[time.Time] `db:"security_recovered_at" `
+	ID                  *string              `db:"id,pk" `
+	ProjectID           *string              `db:"project_id" `
+	Environment         *string              `db:"environment" `
+	Kind                *string              `db:"kind" `
+	Status              *string              `db:"status" `
+	PrimaryEmail        *null.Val[string]    `db:"primary_email" `
+	PrimaryPhone        *null.Val[string]    `db:"primary_phone" `
+	CreatedAt           *time.Time           `db:"created_at" `
+	UpdatedAt           *time.Time           `db:"updated_at" `
+	Data                *json.RawMessage     `db:"data" `
 }
 
 func (s IamUserSetter) SetColumns() []string {
-	vals := make([]string, 0, 10)
+	vals := make([]string, 0, 11)
+	if s.SecurityRecoveredAt != nil {
+		vals = append(vals, "security_recovered_at")
+	}
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
@@ -174,6 +181,15 @@ func (s IamUserSetter) SetColumns() []string {
 }
 
 func (s IamUserSetter) Overwrite(t *IamUser) {
+	if s.SecurityRecoveredAt != nil {
+		t.SecurityRecoveredAt = func() null.Val[time.Time] {
+			if s.SecurityRecoveredAt == nil {
+				return *new(null.Val[time.Time])
+			}
+			v := s.SecurityRecoveredAt
+			return *v
+		}()
+	}
 	if s.ID != nil {
 		t.ID = func() string {
 			if s.ID == nil {
@@ -264,64 +280,76 @@ func (s *IamUserSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 10)
+		vals := make([]bob.Expression, 11)
+		if s.SecurityRecoveredAt != nil {
+			vals[0] = psql.Arg(func() null.Val[time.Time] {
+				if s.SecurityRecoveredAt == nil {
+					return *new(null.Val[time.Time])
+				}
+				v := s.SecurityRecoveredAt
+				return *v
+			}())
+		} else {
+			vals[0] = psql.Raw("DEFAULT")
+		}
+
 		if s.ID != nil {
-			vals[0] = psql.Arg(func() string {
+			vals[1] = psql.Arg(func() string {
 				if s.ID == nil {
 					return *new(string)
 				}
 				return *s.ID
 			}())
 		} else {
-			vals[0] = psql.Raw("DEFAULT")
+			vals[1] = psql.Raw("DEFAULT")
 		}
 
 		if s.ProjectID != nil {
-			vals[1] = psql.Arg(func() string {
+			vals[2] = psql.Arg(func() string {
 				if s.ProjectID == nil {
 					return *new(string)
 				}
 				return *s.ProjectID
 			}())
 		} else {
-			vals[1] = psql.Raw("DEFAULT")
+			vals[2] = psql.Raw("DEFAULT")
 		}
 
 		if s.Environment != nil {
-			vals[2] = psql.Arg(func() string {
+			vals[3] = psql.Arg(func() string {
 				if s.Environment == nil {
 					return *new(string)
 				}
 				return *s.Environment
 			}())
 		} else {
-			vals[2] = psql.Raw("DEFAULT")
+			vals[3] = psql.Raw("DEFAULT")
 		}
 
 		if s.Kind != nil {
-			vals[3] = psql.Arg(func() string {
+			vals[4] = psql.Arg(func() string {
 				if s.Kind == nil {
 					return *new(string)
 				}
 				return *s.Kind
 			}())
 		} else {
-			vals[3] = psql.Raw("DEFAULT")
+			vals[4] = psql.Raw("DEFAULT")
 		}
 
 		if s.Status != nil {
-			vals[4] = psql.Arg(func() string {
+			vals[5] = psql.Arg(func() string {
 				if s.Status == nil {
 					return *new(string)
 				}
 				return *s.Status
 			}())
 		} else {
-			vals[4] = psql.Raw("DEFAULT")
+			vals[5] = psql.Raw("DEFAULT")
 		}
 
 		if s.PrimaryEmail != nil {
-			vals[5] = psql.Arg(func() null.Val[string] {
+			vals[6] = psql.Arg(func() null.Val[string] {
 				if s.PrimaryEmail == nil {
 					return *new(null.Val[string])
 				}
@@ -329,11 +357,11 @@ func (s *IamUserSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[5] = psql.Raw("DEFAULT")
+			vals[6] = psql.Raw("DEFAULT")
 		}
 
 		if s.PrimaryPhone != nil {
-			vals[6] = psql.Arg(func() null.Val[string] {
+			vals[7] = psql.Arg(func() null.Val[string] {
 				if s.PrimaryPhone == nil {
 					return *new(null.Val[string])
 				}
@@ -341,40 +369,40 @@ func (s *IamUserSetter) Apply(q *dialect.InsertQuery) {
 				return *v
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		if s.CreatedAt != nil {
-			vals[7] = psql.Arg(func() time.Time {
+			vals[8] = psql.Arg(func() time.Time {
 				if s.CreatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.CreatedAt
 			}())
 		} else {
-			vals[7] = psql.Raw("DEFAULT")
+			vals[8] = psql.Raw("DEFAULT")
 		}
 
 		if s.UpdatedAt != nil {
-			vals[8] = psql.Arg(func() time.Time {
+			vals[9] = psql.Arg(func() time.Time {
 				if s.UpdatedAt == nil {
 					return *new(time.Time)
 				}
 				return *s.UpdatedAt
 			}())
 		} else {
-			vals[8] = psql.Raw("DEFAULT")
+			vals[9] = psql.Raw("DEFAULT")
 		}
 
 		if s.Data != nil {
-			vals[9] = psql.Arg(func() json.RawMessage {
+			vals[10] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[9] = psql.Raw("DEFAULT")
+			vals[10] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -386,7 +414,14 @@ func (s IamUserSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s IamUserSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 10)
+	exprs := make([]bob.Expression, 0, 11)
+
+	if s.SecurityRecoveredAt != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "security_recovered_at")...),
+			psql.Arg(s.SecurityRecoveredAt),
+		}})
+	}
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -716,16 +751,17 @@ func (o IamUserSlice) ReloadAll(ctx context.Context, exec bob.Executor) error {
 }
 
 type iamUserWhere[Q psql.Filterable] struct {
-	ID           psql.WhereMod[Q, string]
-	ProjectID    psql.WhereMod[Q, string]
-	Environment  psql.WhereMod[Q, string]
-	Kind         psql.WhereMod[Q, string]
-	Status       psql.WhereMod[Q, string]
-	PrimaryEmail psql.WhereNullMod[Q, string]
-	PrimaryPhone psql.WhereNullMod[Q, string]
-	CreatedAt    psql.WhereMod[Q, time.Time]
-	UpdatedAt    psql.WhereMod[Q, time.Time]
-	Data         psql.WhereMod[Q, json.RawMessage]
+	SecurityRecoveredAt psql.WhereNullMod[Q, time.Time]
+	ID                  psql.WhereMod[Q, string]
+	ProjectID           psql.WhereMod[Q, string]
+	Environment         psql.WhereMod[Q, string]
+	Kind                psql.WhereMod[Q, string]
+	Status              psql.WhereMod[Q, string]
+	PrimaryEmail        psql.WhereNullMod[Q, string]
+	PrimaryPhone        psql.WhereNullMod[Q, string]
+	CreatedAt           psql.WhereMod[Q, time.Time]
+	UpdatedAt           psql.WhereMod[Q, time.Time]
+	Data                psql.WhereMod[Q, json.RawMessage]
 }
 
 func (iamUserWhere[Q]) AliasedAs(alias string) iamUserWhere[Q] {
@@ -734,15 +770,16 @@ func (iamUserWhere[Q]) AliasedAs(alias string) iamUserWhere[Q] {
 
 func buildIamUserWhere[Q psql.Filterable](cols iamUserColumns) iamUserWhere[Q] {
 	return iamUserWhere[Q]{
-		ID:           psql.Where[Q, string](cols.ID.Expression),
-		ProjectID:    psql.Where[Q, string](cols.ProjectID.Expression),
-		Environment:  psql.Where[Q, string](cols.Environment.Expression),
-		Kind:         psql.Where[Q, string](cols.Kind.Expression),
-		Status:       psql.Where[Q, string](cols.Status.Expression),
-		PrimaryEmail: psql.WhereNull[Q, string](cols.PrimaryEmail.Expression),
-		PrimaryPhone: psql.WhereNull[Q, string](cols.PrimaryPhone.Expression),
-		CreatedAt:    psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		UpdatedAt:    psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
-		Data:         psql.Where[Q, json.RawMessage](cols.Data.Expression),
+		SecurityRecoveredAt: psql.WhereNull[Q, time.Time](cols.SecurityRecoveredAt.Expression),
+		ID:                  psql.Where[Q, string](cols.ID.Expression),
+		ProjectID:           psql.Where[Q, string](cols.ProjectID.Expression),
+		Environment:         psql.Where[Q, string](cols.Environment.Expression),
+		Kind:                psql.Where[Q, string](cols.Kind.Expression),
+		Status:              psql.Where[Q, string](cols.Status.Expression),
+		PrimaryEmail:        psql.WhereNull[Q, string](cols.PrimaryEmail.Expression),
+		PrimaryPhone:        psql.WhereNull[Q, string](cols.PrimaryPhone.Expression),
+		CreatedAt:           psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		UpdatedAt:           psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
+		Data:                psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

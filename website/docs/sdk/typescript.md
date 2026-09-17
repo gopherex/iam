@@ -150,8 +150,13 @@ await iam.account.listIdentities();
 await iam.account.changeEmailStart({ email, redirectTo });
 await iam.account.changeEmailVerify({ code });     // or { token }
 await iam.account.startExport();                    // GDPR data export job
-await iam.account.deleteAccount({ password });
+await iam.account.deletion.get();
+await iam.account.deletion.request({ password });   // schedule; retain the session
+await iam.account.deletion.cancel({ password });    // explicit cancellation
 ```
+
+Deletion defaults to 7 days. MFA/passwordless accounts require an additional
+proof flow; see [Account deletion](/guides/account-deletion).
 
 ## `iam.mfa`
 
@@ -374,3 +379,8 @@ See the [Errors reference](/rest-api/errors) for the full code table.
 - Cross-tab sync via `BroadcastChannel('iam:auth')`; disable with
   `multiTab: false`.
 - For SSR/Node, import `MemoryStorage` or set `persistSession: false`.
+
+## Account security
+
+See [Account security and recovery](/guides/account-security) for incident detection,
+restricted application flows, device trust, support recovery and security deliveries.

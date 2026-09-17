@@ -37,6 +37,8 @@ const sidebars = {
         'guides/machine-identity',
         'guides/enterprise-sso',
         'guides/security-controls',
+        'guides/account-security',
+        'guides/account-deletion',
         'guides/import-export',
         'guides/test-mode',
       ],

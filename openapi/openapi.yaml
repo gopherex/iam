@@ -526,6 +526,8 @@ components:
       - kind
       - status
       properties:
+        deletion:
+          $ref: '#/components/schemas/AccountDeletion'
         id:
           type: string
           example: usr_9aQ2
@@ -2722,6 +2724,636 @@ components:
         login_hint:
           type: string
           maxLength: 1024
+    SecurityScope:
+      type: object
+      properties: {}
+    SecurityPolicy:
+      type: object
+      properties:
+        version:
+          type: integer
+          format: int32
+        mode:
+          type: string
+          maxLength: 4096
+        continue_url:
+          type: string
+          maxLength: 4096
+        client_urls:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 2048
+        notify:
+          type: boolean
+        require_new_device_proof:
+          type: boolean
+        flow_ttl_seconds:
+          type: integer
+          format: int32
+        trust_ttl_seconds:
+          type: integer
+          format: int32
+        retention_days:
+          type: integer
+          format: int32
+        failure_threshold:
+          type: integer
+          format: int32
+        failure_window_seconds:
+          type: integer
+          format: int32
+        notification_cooldown_seconds:
+          type: integer
+          format: int32
+      required:
+      - version
+      - mode
+      - continue_url
+      - client_urls
+      - notify
+      - require_new_device_proof
+      - flow_ttl_seconds
+      - trust_ttl_seconds
+      - retention_days
+      - failure_threshold
+      - failure_window_seconds
+      - notification_cooldown_seconds
+    SecurityDevice:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 4096
+        name:
+          type: string
+          maxLength: 4096
+        first_seen_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        trusted_until:
+          type: string
+          format: date-time
+        revoked:
+          type: boolean
+        current:
+          type: boolean
+        session_ids:
+          type: array
+          items:
+            type: string
+            maxLength: 4096
+          maxItems: 1000
+      required:
+      - id
+      - name
+      - first_seen_at
+      - last_seen_at
+      - revoked
+      - current
+      - session_ids
+    SecurityDeviceRegistration:
+      type: object
+      properties:
+        device:
+          $ref: '#/components/schemas/SecurityDevice'
+        device_token:
+          type: string
+          maxLength: 4096
+      required:
+      - device
+      - device_token
+    SecurityEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 4096
+        type:
+          type: string
+          maxLength: 4096
+        at:
+          type: string
+          format: date-time
+        outcome:
+          type: string
+          maxLength: 4096
+        session_id:
+          type: string
+          maxLength: 4096
+        device_id:
+          type: string
+          maxLength: 4096
+        ip:
+          type: string
+          maxLength: 4096
+        user_agent:
+          type: string
+          maxLength: 4096
+      required:
+      - id
+      - type
+      - at
+      - outcome
+    SecurityIncident:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 4096
+        account_id:
+          type: string
+          maxLength: 4096
+        status:
+          type: string
+          maxLength: 4096
+        severity:
+          type: string
+          maxLength: 4096
+        reasons:
+          type: array
+          items:
+            type: string
+            maxLength: 4096
+          maxItems: 1000
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityEvent'
+          maxItems: 1000
+        session_id:
+          type: string
+          maxLength: 4096
+        device_id:
+          type: string
+          maxLength: 4096
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        policy_version:
+          type: integer
+          format: int32
+        revoked_session_ids:
+          type: array
+          items:
+            type: string
+            maxLength: 4096
+          maxItems: 1000
+        resolution:
+          type: string
+          maxLength: 4096
+      required:
+      - id
+      - account_id
+      - status
+      - severity
+      - reasons
+      - events
+      - created_at
+      - updated_at
+      - policy_version
+      - revoked_session_ids
+    SecurityCaseMessage:
+      type: object
+      properties:
+        at:
+          type: string
+          format: date-time
+        author:
+          type: string
+          maxLength: 4096
+        message:
+          type: string
+          maxLength: 4096
+      required:
+      - at
+      - author
+      - message
+    SecurityCase:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 4096
+        account_id:
+          type: string
+          maxLength: 4096
+        status:
+          type: string
+          maxLength: 4096
+        contact_masked:
+          type: string
+          maxLength: 4096
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityCaseMessage'
+          maxItems: 1000
+      required:
+      - id
+      - status
+      - contact_masked
+      - created_at
+      - updated_at
+      - messages
+    SecurityDelivery:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 4096
+        incident_id:
+          type: string
+          maxLength: 4096
+        case_id:
+          type: string
+          maxLength: 4096
+        channel:
+          type: string
+          maxLength: 4096
+        recipient_masked:
+          type: string
+          maxLength: 4096
+        status:
+          type: string
+          maxLength: 4096
+        attempts:
+          type: integer
+          format: int32
+        last_error:
+          type: string
+          maxLength: 4096
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - channel
+      - recipient_masked
+      - status
+      - attempts
+      - created_at
+      - updated_at
+    SecurityFlowState:
+      type: object
+      properties:
+        deletion:
+          $ref: '#/components/schemas/AccountDeletion'
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecuritySession'
+          maxItems: 1000
+        challenge:
+          type: object
+          additionalProperties: true
+        flow_token:
+          type: string
+          maxLength: 4096
+        kind:
+          type: string
+          maxLength: 4096
+        status:
+          type: string
+          maxLength: 4096
+        step:
+          type: string
+          maxLength: 4096
+        version:
+          type: integer
+          format: int32
+        next_actions:
+          type: array
+          items:
+            type: string
+            maxLength: 4096
+          maxItems: 1000
+        expires_at:
+          type: string
+          format: date-time
+        incident:
+          $ref: '#/components/schemas/SecurityIncident'
+        case:
+          $ref: '#/components/schemas/SecurityCase'
+        contact_masked:
+          type: string
+          maxLength: 4096
+        attempts_left:
+          type: integer
+          format: int32
+        resend_at:
+          type: string
+          format: date-time
+        factors:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityProofFactor'
+          maxItems: 1000
+        all_sessions:
+          type: boolean
+        revoked_session_ids:
+          type: array
+          items:
+            type: string
+            maxLength: 4096
+          maxItems: 1000
+        outcome:
+          type: string
+          maxLength: 4096
+        error_code:
+          type: string
+          maxLength: 4096
+      required:
+      - kind
+      - status
+      - step
+      - version
+      - next_actions
+      - expires_at
+      - attempts_left
+      - all_sessions
+      - revoked_session_ids
+    SecurityFlowInput:
+      type: object
+      properties:
+        exchange_key:
+          type: string
+          minLength: 32
+          maxLength: 128
+          description: Client-generated secret binding a short retry window to one continuation exchange.
+        request_id:
+          type: string
+          description: Deletion request being explicitly cancelled during verified recovery.
+        device_id:
+          type: string
+          maxLength: 4096
+        credential:
+          type: object
+          additionalProperties: true
+        action:
+          type: string
+          maxLength: 4096
+        incident_id:
+          type: string
+          maxLength: 4096
+        session_id:
+          type: string
+          maxLength: 4096
+        continuation_token:
+          type: string
+          maxLength: 4096
+        identifier:
+          type: string
+          maxLength: 4096
+        contact:
+          type: string
+          maxLength: 4096
+        code:
+          type: string
+          maxLength: 4096
+        password:
+          type: string
+          maxLength: 4096
+        new_password:
+          type: string
+          maxLength: 4096
+        factor_id:
+          type: string
+          maxLength: 4096
+        message:
+          type: string
+          maxLength: 4096
+        all_sessions:
+          type: boolean
+        version:
+          type: integer
+          format: int32
+    SecurityCaseDecision:
+      type: object
+      properties:
+        action:
+          type: string
+          maxLength: 4096
+        message:
+          type: string
+          maxLength: 4096
+        evidence:
+          type: string
+          maxLength: 4096
+      required:
+      - action
+      - message
+      - evidence
+    SecurityProofFactor:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 4096
+        type:
+          type: string
+          maxLength: 4096
+        hint:
+          type: string
+          maxLength: 4096
+      required:
+      - id
+      - type
+      - hint
+    SecuritySession:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 4096
+        name:
+          type: string
+          maxLength: 4096
+      required:
+      - id
+      - name
+    SecurityIncidentList:
+      type: object
+      required:
+      - data
+      - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityIncident'
+        has_more:
+          type: boolean
+        next_cursor:
+          type: string
+    SecurityDeviceList:
+      type: object
+      required:
+      - data
+      - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityDevice'
+        has_more:
+          type: boolean
+        next_cursor:
+          type: string
+    SecurityCaseList:
+      type: object
+      required:
+      - data
+      - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityCase'
+        has_more:
+          type: boolean
+        next_cursor:
+          type: string
+    SecurityDeliveryList:
+      type: object
+      required:
+      - data
+      - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityDelivery'
+        has_more:
+          type: boolean
+        next_cursor:
+          type: string
+    SecurityDeviceInput:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 256
+        action:
+          type: string
+          enum:
+          - rename
+          - trust
+          - untrust
+          - revoke
+        proof_token:
+          type: string
+          maxLength: 256
+    AccountDeletion:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        request_id:
+          type: string
+          maxLength: 1024
+        status:
+          type: string
+          maxLength: 1024
+        requested_at:
+          type: string
+          format: date-time
+        delete_at:
+          type: string
+          format: date-time
+        cancelled_at:
+          type: string
+          format: date-time
+        grace_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+      required:
+      - ok
+      - status
+      - grace_days
+    AccountDeletionPolicy:
+      type: object
+      properties:
+        grace_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+      required:
+      - grace_days
+    AccountDeletionInput:
+      type: object
+      properties:
+        password:
+          type: string
+          maxLength: 256
+        proof_token:
+          type: string
+          maxLength: 1024
+        reason:
+          type: string
+          maxLength: 1024
+    AccountDeletionEvent:
+      type: object
+      properties:
+        actor_id:
+          type: string
+        reason:
+          type: string
+        type:
+          type: string
+          maxLength: 1024
+        at:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          maxLength: 1024
+      required:
+      - type
+      - at
+      - request_id
+    AdminAccountDeletionCancelInput:
+      type: object
+      required:
+      - request_id
+      - reason
+      properties:
+        request_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1024
+    AccountDeletionHistory:
+      type: object
+      properties:
+        deletion:
+          $ref: '#/components/schemas/AccountDeletion'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountDeletionEvent'
+      required:
+      - deletion
+      - events
 paths:
   /v1/health:
     get:
@@ -5420,37 +6052,27 @@ paths:
       x-ogen-operation-group: Account
     delete:
       operationId: deleteV1UsersMe
-      x-since: 1.0.0
       tags:
       - Users
-      summary: Delete own account (step-up).
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                password:
-                  type: string
-                  minLength: 8
-                  maxLength: 256
-                reason:
-                  type: string
-                  maxLength: 1024
+      summary: deleteV1UsersMe
+      x-ogen-operation-group: Account
+      security:
+      - bearerAuth: []
       responses:
         '200':
-          description: OK.
+          description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Ok'
+                $ref: '#/components/schemas/AccountDeletion'
         default:
           $ref: '#/components/responses/Default'
-      x-audience: runtime
-      x-scopes:
-      - project
-      - environment
-      x-ogen-operation-group: Account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountDeletionInput'
   /v1/account/capabilities:
     get:
       operationId: getV1AccountCapabilities
@@ -14439,3 +15061,746 @@ paths:
       x-scopes:
       - project
       x-ogen-operation-group: Operator
+
+  /v1/security/incidents:
+    get:
+      operationId: listSecurityIncidents
+      tags:
+      - AccountSecurity
+      summary: listSecurityIncidents
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: cursor
+        in: query
+        schema:
+          type: string
+          maxLength: 256
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 30
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityIncidentList'
+        default:
+          $ref: '#/components/responses/Default'
+  /v1/security/incidents/{incident_id}:
+    get:
+      operationId: getSecurityIncident
+      tags:
+      - AccountSecurity
+      summary: getSecurityIncident
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityIncident'
+        default:
+          $ref: '#/components/responses/Default'
+  /v1/security/devices:
+    get:
+      operationId: listSecurityDevices
+      tags:
+      - AccountSecurity
+      summary: listSecurityDevices
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: cursor
+        in: query
+        schema:
+          type: string
+          maxLength: 256
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 30
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityDeviceList'
+        default:
+          $ref: '#/components/responses/Default'
+    post:
+      operationId: registerSecurityDevice
+      tags:
+      - AccountSecurity
+      summary: registerSecurityDevice
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityDeviceRegistration'
+        default:
+          $ref: '#/components/responses/Default'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityDeviceInput'
+  /v1/security/devices/{device_id}:
+    post:
+      operationId: updateSecurityDevice
+      tags:
+      - AccountSecurity
+      summary: updateSecurityDevice
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: device_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityDevice'
+        default:
+          $ref: '#/components/responses/Default'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityDeviceInput'
+  /v1/security/flows:
+    post:
+      operationId: startSecurityFlow
+      tags:
+      - AccountSecurity
+      summary: startSecurityFlow
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityFlowState'
+        default:
+          $ref: '#/components/responses/Default'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityFlowInput'
+  /v1/security/continuations/exchange:
+    post:
+      operationId: exchangeSecurityContinuation
+      tags:
+      - AccountSecurity
+      summary: exchangeSecurityContinuation
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityFlowState'
+        default:
+          $ref: '#/components/responses/Default'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityFlowInput'
+  /v1/security/recovery:
+    post:
+      operationId: startSecurityRecovery
+      tags:
+      - AccountSecurity
+      summary: startSecurityRecovery
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityFlowState'
+        default:
+          $ref: '#/components/responses/Default'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityFlowInput'
+  /v1/security/flows/current:
+    get:
+      operationId: getSecurityFlow
+      tags:
+      - AccountSecurity
+      summary: getSecurityFlow
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: X-Security-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityFlowState'
+        default:
+          $ref: '#/components/responses/Default'
+  /v1/security/flows/current/submit:
+    post:
+      operationId: submitSecurityFlow
+      tags:
+      - AccountSecurity
+      summary: submitSecurityFlow
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: X-Security-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityFlowState'
+        default:
+          $ref: '#/components/responses/Default'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityFlowInput'
+  /v1/security/flows/current/resend:
+    post:
+      operationId: resendSecurityFlow
+      tags:
+      - AccountSecurity
+      summary: resendSecurityFlow
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - $ref: '#/components/parameters/XClientId'
+      - name: X-Security-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityFlowState'
+        default:
+          $ref: '#/components/responses/Default'
+  /v1/projects/{project_id}/admin/security/policy:
+    get:
+      operationId: getSecurityPolicy
+      tags:
+      - AccountSecurity
+      summary: getSecurityPolicy
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityPolicy'
+        default:
+          $ref: '#/components/responses/Default'
+    put:
+      operationId: putSecurityPolicy
+      tags:
+      - AccountSecurity
+      summary: putSecurityPolicy
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityPolicy'
+        default:
+          $ref: '#/components/responses/Default'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityPolicy'
+  /v1/projects/{project_id}/admin/security/incidents:
+    get:
+      operationId: adminListSecurityIncidents
+      tags:
+      - AccountSecurity
+      summary: adminListSecurityIncidents
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      - name: cursor
+        in: query
+        schema:
+          type: string
+          maxLength: 256
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 30
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityIncidentList'
+        default:
+          $ref: '#/components/responses/Default'
+  /v1/projects/{project_id}/admin/security/cases:
+    get:
+      operationId: listSecurityCases
+      tags:
+      - AccountSecurity
+      summary: listSecurityCases
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      - name: cursor
+        in: query
+        schema:
+          type: string
+          maxLength: 256
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 30
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityCaseList'
+        default:
+          $ref: '#/components/responses/Default'
+  /v1/projects/{project_id}/admin/security/cases/{case_id}:
+    get:
+      operationId: getSecurityCase
+      tags:
+      - AccountSecurity
+      summary: getSecurityCase
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      - name: case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityCase'
+        default:
+          $ref: '#/components/responses/Default'
+  /v1/projects/{project_id}/admin/security/cases/{case_id}/decision:
+    post:
+      operationId: decideSecurityCase
+      tags:
+      - AccountSecurity
+      summary: decideSecurityCase
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      - name: case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityCase'
+        default:
+          $ref: '#/components/responses/Default'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityCaseDecision'
+  /v1/projects/{project_id}/admin/security/deliveries:
+    get:
+      operationId: listSecurityDeliveries
+      tags:
+      - AccountSecurity
+      summary: listSecurityDeliveries
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      - name: cursor
+        in: query
+        schema:
+          type: string
+          maxLength: 256
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 30
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityDeliveryList'
+        default:
+          $ref: '#/components/responses/Default'
+  /v1/projects/{project_id}/admin/security/deliveries/{delivery_id}/retry:
+    post:
+      operationId: retrySecurityDelivery
+      tags:
+      - AccountSecurity
+      summary: retrySecurityDelivery
+      x-ogen-operation-group: AccountSecurity
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      - name: delivery_id
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityDelivery'
+        default:
+          $ref: '#/components/responses/Default'
+
+  /v1/users/me/deletion:
+    get:
+      operationId: getAccountDeletion
+      tags:
+      - Users
+      summary: getAccountDeletion
+      x-ogen-operation-group: Account
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDeletion'
+        default:
+          $ref: '#/components/responses/Default'
+  /v1/users/me/deletion/cancel:
+    post:
+      operationId: cancelAccountDeletion
+      tags:
+      - Users
+      summary: cancelAccountDeletion
+      x-ogen-operation-group: Account
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDeletion'
+        default:
+          $ref: '#/components/responses/Default'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountDeletionInput'
+  /v1/projects/{project_id}/admin/account-deletion-policy:
+    get:
+      operationId: getAccountDeletionPolicy
+      tags:
+      - Users
+      summary: getAccountDeletionPolicy
+      x-ogen-operation-group: Account
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDeletionPolicy'
+        default:
+          $ref: '#/components/responses/Default'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: putAccountDeletionPolicy
+      tags:
+      - Users
+      summary: putAccountDeletionPolicy
+      x-ogen-operation-group: Account
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDeletionPolicy'
+        default:
+          $ref: '#/components/responses/Default'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountDeletionPolicy'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /v1/projects/{project_id}/admin/users/{user_id}/deletion:
+    get:
+      operationId: getAdminAccountDeletion
+      tags:
+      - Users
+      summary: getAdminAccountDeletion
+      x-ogen-operation-group: Account
+      security:
+      - adminToken: []
+      - masterKey: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDeletionHistory'
+        default:
+          $ref: '#/components/responses/Default'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /v1/projects/{project_id}/admin/users/{user_id}/deletion/cancel:
+    post:
+      operationId: cancelAdminAccountDeletion
+      tags:
+      - Users
+      summary: Cancel a pending account deletion before its deadline
+      x-ogen-operation-group: Account
+      security:
+      - adminToken: []
+      - masterKey: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/XEnvironment'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminAccountDeletionCancelInput'
+      responses:
+        '200':
+          description: Cancellation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDeletion'
+        default:
+          $ref: '#/components/responses/Default'

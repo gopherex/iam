@@ -97,7 +97,7 @@ func e2eServer(t *testing.T) *httptest.Server {
 	// Wrap the capture emitter with auditing so privileged mutations write audit
 	// rows (as production does); the capture emitter is still the inner sink, so
 	// payloadFor lookups keep working.
-	em := Emitter(NewAuditingEmitter(testDB, e2eEmitter))
+	em := NewSecurityEmitter(testDB, NewAuditingEmitter(testDB, e2eEmitter))
 	platform := NewPgPlatform(testDB)
 	// One shared config reader: the admin config writer invalidates it on
 	// PATCH so e2e steps see config changes immediately (as production's
@@ -132,8 +132,10 @@ func e2eServer(t *testing.T) *httptest.Server {
 		api.WithMFA(api.NewMFAService(api.MFADeps{
 			Accounts: NewPgMFAAccounts(testDB, em, nil),
 		})),
+		api.WithAccountSecurity(api.NewAccountSecurityService(NewPgSecurity(testDB, em))),
 		api.WithAccount(api.NewAccountService(api.AccountDeps{
 			Accounts: NewPgAccountStore(testDB, em),
+			Deletion: NewPgAccountStore(testDB, em),
 		})),
 		api.WithMachineIdentity(api.NewMachineIdentityService(api.MachineIdentityDeps{
 			Keys: NewPgMachineIdentities(testDB, em),

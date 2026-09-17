@@ -17,8 +17,9 @@ const DeviceFingerprintHeader = "X-Device-Fingerprint"
 const DeviceNameHeader = "X-Device-Name"
 
 const (
-	maxFingerprintRunes = 256
-	maxDeviceNameRunes  = 1024
+	maxSecurityTokenRunes = 256
+	maxFingerprintRunes   = 256
+	maxDeviceNameRunes    = 1024
 )
 
 // RequestMetaMiddleware captures the originating device/network context (client
@@ -28,10 +29,12 @@ const (
 func RequestMetaMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		meta := domain.RequestMeta{
-			IP:          clientIP(r),
-			UserAgent:   r.Header.Get("User-Agent"),
-			Fingerprint: truncateRunes(strings.TrimSpace(r.Header.Get(DeviceFingerprintHeader)), maxFingerprintRunes),
-			DeviceName:  truncateRunes(strings.TrimSpace(r.Header.Get(DeviceNameHeader)), maxDeviceNameRunes),
+			SecurityProof: truncateRunes(strings.TrimSpace(r.Header.Get("X-Security-Proof")), maxSecurityTokenRunes),
+			DeviceToken:   truncateRunes(strings.TrimSpace(r.Header.Get("X-Device-Token")), maxSecurityTokenRunes),
+			IP:            clientIP(r),
+			UserAgent:     r.Header.Get("User-Agent"),
+			Fingerprint:   truncateRunes(strings.TrimSpace(r.Header.Get(DeviceFingerprintHeader)), maxFingerprintRunes),
+			DeviceName:    truncateRunes(strings.TrimSpace(r.Header.Get(DeviceNameHeader)), maxDeviceNameRunes),
 		}
 		next.ServeHTTP(w, r.WithContext(domain.WithRequestMeta(r.Context(), meta)))
 	})

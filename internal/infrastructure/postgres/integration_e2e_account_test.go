@@ -108,8 +108,8 @@ func TestE2EAccountDeleteMe(t *testing.T) {
 		e2eWantStatus(t, r, http.StatusUnauthorized)
 	})
 
-	t.Run("authenticated delete succeeds", func(t *testing.T) {
-		r := e2eReq(t, ctx, http.MethodDelete, ts.URL+"/v1/users/me", nil, e2eBearer(sess.AccessToken))
+	t.Run("authenticated deletion is scheduled", func(t *testing.T) {
+		r := e2eReq(t, ctx, http.MethodDelete, ts.URL+"/v1/users/me", map[string]any{"password": "Sup3rStr0ng!Pass"}, e2eBearer(sess.AccessToken))
 		e2eWantStatus(t, r, http.StatusOK)
 		var body struct {
 			Ok bool `json:"ok"`

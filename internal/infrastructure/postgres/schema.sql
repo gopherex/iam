@@ -13,7 +13,99 @@
 -- Identity core
 -- ============================================================
 
+-- Security capabilities never contain ordinary access/refresh sessions.
+CREATE TABLE iam_security_policies (
+  project_id text NOT NULL,
+  environment text NOT NULL,
+  data jsonb NOT NULL,
+  PRIMARY KEY (project_id, environment)
+);
+CREATE TABLE iam_security_guards (
+  flow_id text NOT NULL,
+  project_id text NOT NULL,
+  environment text NOT NULL,
+  user_id text NOT NULL,
+  created_at timestamptz NOT NULL,
+  PRIMARY KEY (project_id, environment, user_id)
+);
+CREATE TABLE iam_security_devices (
+  id text PRIMARY KEY,
+  project_id text NOT NULL,
+  environment text NOT NULL,
+  user_id text NOT NULL,
+  token_hash text NOT NULL UNIQUE,
+  data jsonb NOT NULL
+);
+CREATE INDEX idx_security_devices_user ON iam_security_devices (project_id, environment, user_id, id);
+CREATE TABLE iam_security_incidents (
+  id text PRIMARY KEY,
+  project_id text NOT NULL,
+  environment text NOT NULL,
+  user_id text NOT NULL,
+  status text NOT NULL,
+  created_at timestamptz NOT NULL,
+  data jsonb NOT NULL,
+  private_data text NOT NULL DEFAULT ''
+);
+CREATE INDEX idx_security_incidents_user ON iam_security_incidents (project_id, environment, user_id, id);
+CREATE INDEX idx_security_incidents_retention ON iam_security_incidents (project_id, environment, created_at);
+CREATE TABLE iam_security_continuations (
+    exchange_data text NOT NULL DEFAULT '',
+  token_hash text PRIMARY KEY,
+  project_id text NOT NULL,
+  environment text NOT NULL,
+  user_id text NOT NULL,
+  incident_id text NOT NULL DEFAULT '',
+  case_id text NOT NULL DEFAULT '',
+  purpose text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  consumed boolean NOT NULL DEFAULT false
+);
+CREATE TABLE iam_security_cases (
+  id text PRIMARY KEY,
+  project_id text NOT NULL,
+  environment text NOT NULL,
+  user_id text NOT NULL DEFAULT '',
+  status text NOT NULL,
+  created_at timestamptz NOT NULL,
+  data jsonb NOT NULL,
+  private_data text NOT NULL
+);
+CREATE INDEX idx_security_cases_queue ON iam_security_cases (project_id, environment, id);
+CREATE TABLE iam_security_deliveries (
+  id text PRIMARY KEY,
+  project_id text NOT NULL,
+  environment text NOT NULL,
+  user_id text NOT NULL,
+  dedup_key text NOT NULL UNIQUE,
+  status text NOT NULL,
+  created_at timestamptz NOT NULL,
+  data jsonb NOT NULL,
+  private_data text NOT NULL
+);
+CREATE INDEX idx_security_deliveries_queue ON iam_security_deliveries (project_id, environment, id);
+CREATE TABLE iam_security_attempts (
+  project_id text NOT NULL,
+  environment text NOT NULL,
+  subject_hash text NOT NULL,
+  kind text NOT NULL,
+  window_start timestamptz NOT NULL,
+  attempts integer NOT NULL,
+  PRIMARY KEY (project_id, environment, subject_hash, kind)
+);
+CREATE TABLE iam_security_case_decisions (
+  id text PRIMARY KEY,
+  project_id text NOT NULL,
+  environment text NOT NULL,
+  case_id text NOT NULL,
+  actor_id text NOT NULL,
+  action text NOT NULL,
+  evidence text NOT NULL,
+  created_at timestamptz NOT NULL
+);
+
 CREATE TABLE iam_users (
+    security_recovered_at timestamptz,
   id            text PRIMARY KEY,
   project_id    text NOT NULL,
   environment text NOT NULL DEFAULT 'live',
@@ -624,3 +716,34 @@ CREATE INDEX idx_iam_webhook_deliveries_project_created
 CREATE INDEX idx_iam_webhook_deliveries_retry
   ON iam_webhook_deliveries (status, next_attempt_at)
   WHERE status IN ('pending', 'failed');
+
+CREATE INDEX idx_iam_admin_tokens_hash ON iam_admin_tokens (hash);
+
+CREATE TABLE iam_account_deletions (
+ project_id text NOT NULL,
+ environment text NOT NULL,
+ user_id text NOT NULL,
+ request_id text NOT NULL,
+ status text NOT NULL,
+ delete_at timestamptz NOT NULL,
+ data jsonb NOT NULL,
+ PRIMARY KEY(project_id,environment,user_id)
+);
+CREATE INDEX idx_account_deletions_due ON iam_account_deletions(delete_at) WHERE status='pending';
+
+-- The users JSON envelope is read by existing profile/admin APIs. Preserve its
+-- authoritative deletion state when a concurrent profile/auth update carries
+-- an older account snapshot.
+CREATE FUNCTION iam_preserve_account_deletion() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE deletion_data jsonb;
+BEGIN
+ SELECT data INTO deletion_data FROM iam_account_deletions
+ WHERE project_id=NEW.project_id AND environment=NEW.environment AND user_id=NEW.id;
+ IF deletion_data IS NOT NULL THEN
+  NEW.data := jsonb_set(NEW.data, '{deletion}', deletion_data);
+ END IF;
+ RETURN NEW;
+END;
+$$;
+CREATE TRIGGER iam_users_preserve_deletion BEFORE UPDATE OF data ON iam_users
+FOR EACH ROW EXECUTE FUNCTION iam_preserve_account_deletion();

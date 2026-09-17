@@ -114,6 +114,10 @@ func (a *pgAuthenticator) checkSessionLive(ctx context.Context, sid string) erro
 		return domain.ErrUnauthorized
 	}
 
+	if err := accountDeletionAccess(ctx, a.db, row.ProjectID, row.Environment, row.UserID); err != nil {
+		return err
+	}
+
 	if v, ok := row.ExpiresAt.Get(); ok && nowIn(ctx).After(v) {
 		return domain.ErrUnauthorized
 	}
@@ -200,12 +204,13 @@ func (a *pgAuthenticator) Admin(ctx context.Context, token string) (*domain.Prin
 	}
 
 	return &domain.Principal{
-		Kind:        domain.PrincipalAdmin,
-		AccountID:   claimStr(claims, "sub"),
-		ProjectID:   claimStr(claims, "pid"),
-		Environment: claimEnv(claims),
-		ClientID:    claimStr(claims, "act"),
-		Scopes:      claimScopes(claims),
+		Kind:         domain.PrincipalAdmin,
+		CredentialID: row.ID,
+		AccountID:    claimStr(claims, "sub"),
+		ProjectID:    claimStr(claims, "pid"),
+		Environment:  claimEnv(claims),
+		ClientID:     claimStr(claims, "act"),
+		Scopes:       claimScopes(claims),
 	}, nil
 }
 

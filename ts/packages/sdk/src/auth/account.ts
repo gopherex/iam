@@ -1,3 +1,4 @@
+import { getAccountDeletion, cancelAccountDeletion, type AccountDeletion, type AccountDeletionInput } from '../gen';
 /**
  * IamAccount — authenticated self-service account operations.
  * All methods share the same bearer-carrying Client and headers()
@@ -117,9 +118,9 @@ export interface RevokeAllResult {
 
 function accountError(result: { error?: unknown; response?: Response }): IamAuthError {
   const status = result.response?.status;
-  const env = result.error as { error?: { code?: string; message?: string } } | undefined;
+  const env = result.error as { error?: { code?: string; message?: string; details?: Record<string, unknown> } } | undefined;
   if (env?.error?.code) {
-    return new IamAuthError(env.error.message ?? env.error.code, env.error.code, status);
+    return new IamAuthError(env.error.message ?? env.error.code, env.error.code, status, env.error.details);
   }
   return new IamAuthError('request failed', 'request_failed', status);
 }
@@ -166,16 +167,27 @@ export class IamAccount {
     return { data: { user: data.user }, error: null };
   }
 
-  async deleteAccount(params?: {
-    password?: string;
-    reason?: string;
-  }): Promise<{ error: IamAuthError | null }> {
-    const r = await deleteV1UsersMe({
-      client: this._client,
-      headers: this._headers(),
-      body: params ? { password: params.password, reason: params.reason } : undefined,
-    });
-    return { error: r.error ? accountError(r) : null };
+  /** Scheduling keeps every ordinary session alive until the returned deadline. */
+  readonly deletion = {
+    get: () => this.getDeletion(),
+    request: (input: { password?: string; proofToken?: string; reason?: string }) => this.deleteAccount(input),
+    cancel: (input: { password?: string; proofToken?: string }) => this.cancelDeletion(input),
+  };
+
+  async getDeletion(): Promise<{ data: AccountDeletion | null; error: IamAuthError | null }> {
+    const result = await getAccountDeletion({ client: this._client, headers: this._headers() });
+    return { data: result.data ?? null, error: result.error ? accountError(result) : null };
+  }
+
+  async deleteAccount(input: { password?: string; proofToken?: string; reason?: string } = {}): Promise<{ data: AccountDeletion | null; error: IamAuthError | null }> {
+    const body: AccountDeletionInput = { password: input.password, proof_token: input.proofToken, reason: input.reason };
+    const result = await deleteV1UsersMe({ client: this._client, headers: this._headers(), body });
+    return { data: result.data ?? null, error: result.error ? accountError(result) : null };
+  }
+
+  async cancelDeletion(input: { password?: string; proofToken?: string }): Promise<{ data: AccountDeletion | null; error: IamAuthError | null }> {
+    const result = await cancelAccountDeletion({ client: this._client, headers: this._headers(), body: { password: input.password, proof_token: input.proofToken } });
+    return { data: result.data ?? null, error: result.error ? accountError(result) : null };
   }
 
   // ---- capabilities -------------------------------------------------------

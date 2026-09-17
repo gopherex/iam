@@ -564,6 +564,10 @@ func publicEventFromDomain(event domain.Event) (domain.PublicEvent, string, bool
 		}
 
 		data = map[string]any{"user_id": userID}
+	case domain.WebhookEventDeletionScheduled, domain.WebhookEventDeletionCancelled:
+		original := publicMap(event.Payload)
+		userID = event.AggregateID
+		data = map[string]any{"user_id": userID, "request_id": original["request_id"], "delete_at": original["delete_at"]}
 	case domain.WebhookEventEmailChanged:
 		account := accountFromPayload(event.Payload)
 

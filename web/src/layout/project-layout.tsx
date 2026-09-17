@@ -72,6 +72,7 @@ function projectNav(id: string): NavItem[] {
   return [
     { label: 'Overview', to: base, icon: LayoutDashboard, end: true },
     { label: 'Users', to: `${base}/users`, icon: Users },
+    { label: 'Account Security', to: `${base}/security`, icon: KeySquare },
     { label: 'App Clients', to: `${base}/clients`, icon: AppWindow },
     { label: 'Service Accounts', to: `${base}/service-accounts`, icon: Bot },
     { label: 'API Keys', to: `${base}/api-keys`, icon: KeyRound },
@@ -122,7 +123,7 @@ export function ProjectLayout() {
             path: { project_id: projectId },
             body: {
               name: 'admin-panel',
-              scopes: ['admin:ui'],
+              scopes: ['admin:ui', 'security:recovery'],
               expires_at: new Date(Date.now() + TTL_MS).toISOString(),
             },
           }),

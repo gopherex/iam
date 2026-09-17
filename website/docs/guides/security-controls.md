@@ -126,3 +126,8 @@ anything carrying a code or a one-time proof stays inside IAM.
 Authorization. IAM decides *who is calling* and how strongly that was proved
 (`aal`, `amr`, `groups`); deciding *what they may do* belongs to your
 authorization layer, which builds on the identity IAM issues.
+
+## Account security
+
+See [Account security and recovery](/guides/account-security) for incident detection,
+restricted application flows, device trust, support recovery and security deliveries.

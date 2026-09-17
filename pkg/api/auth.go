@@ -2,6 +2,9 @@ package api
 
 import (
 	"context"
+	"errors"
+
+	"github.com/ogen-go/ogen/ogenerrors"
 
 	"github.com/gopherex/iam/internal/domain"
 	"github.com/gopherex/iam/internal/oas"
@@ -117,6 +120,11 @@ func (h securityHandler) HandleAdminToken(
 	ctx context.Context, _ oas.OperationName, t oas.AdminToken,
 ) (context.Context, error) {
 	p, err := h.a.Admin(ctx, t.Token)
+	// Both alternatives use the Bearer header. Let ogen try the other declared
+	// scheme when this credential is not an admin token.
+	if errors.Is(err, domain.ErrUnauthorized) {
+		return ctx, ogenerrors.ErrSkipServerSecurity
+	}
 	return h.auth(ctx, p, err)
 }
 
@@ -124,6 +132,9 @@ func (h securityHandler) HandleMasterKey(
 	ctx context.Context, _ oas.OperationName, t oas.MasterKey,
 ) (context.Context, error) {
 	p, err := h.a.Master(ctx, t.Token)
+	if errors.Is(err, domain.ErrUnauthorized) {
+		return ctx, ogenerrors.ErrSkipServerSecurity
+	}
 	return h.auth(ctx, p, err)
 }
 

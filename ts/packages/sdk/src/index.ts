@@ -24,6 +24,8 @@ export type {
   Subscription,
 } from './auth/types';
 export { MemoryStorage } from './auth/storage';
+export { IamSecurity, SecurityFlowController } from './auth/security';
+export type { SecurityAction, SecurityFlowResult, SecurityFlowListener } from './auth/security';
 export { createFlowController } from './auth/flow';
 export type {
   FlowController,

@@ -9,6 +9,7 @@ import (
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
 	AccountHandler
+	AccountSecurityHandler
 	AdminHandler
 	CoreAuthHandler
 	FederationHandler
@@ -30,6 +31,18 @@ type Handler interface {
 //
 // x-ogen-operation-group: Account
 type AccountHandler interface {
+	// CancelAccountDeletion implements cancelAccountDeletion operation.
+	//
+	// CancelAccountDeletion.
+	//
+	// POST /v1/users/me/deletion/cancel
+	CancelAccountDeletion(ctx context.Context, req *AccountDeletionInput) (*AccountDeletion, error)
+	// CancelAdminAccountDeletion implements cancelAdminAccountDeletion operation.
+	//
+	// Cancel a pending account deletion before its deadline.
+	//
+	// POST /v1/projects/{project_id}/admin/users/{user_id}/deletion/cancel
+	CancelAdminAccountDeletion(ctx context.Context, req *AdminAccountDeletionCancelInput, params CancelAdminAccountDeletionParams) (*AccountDeletion, error)
 	// DeleteV1AuthIdentitiesByIdentityId implements deleteV1AuthIdentitiesByIdentityId operation.
 	//
 	// Unlink an identity (step-up).
@@ -50,10 +63,28 @@ type AccountHandler interface {
 	DeleteV1SessionsBySessionId(ctx context.Context, params DeleteV1SessionsBySessionIdParams) (*Ok, error)
 	// DeleteV1UsersMe implements deleteV1UsersMe operation.
 	//
-	// Delete own account (step-up).
+	// DeleteV1UsersMe.
 	//
 	// DELETE /v1/users/me
-	DeleteV1UsersMe(ctx context.Context, req OptDeleteV1UsersMeReq) (*Ok, error)
+	DeleteV1UsersMe(ctx context.Context, req *AccountDeletionInput) (*AccountDeletion, error)
+	// GetAccountDeletion implements getAccountDeletion operation.
+	//
+	// GetAccountDeletion.
+	//
+	// GET /v1/users/me/deletion
+	GetAccountDeletion(ctx context.Context) (*AccountDeletion, error)
+	// GetAccountDeletionPolicy implements getAccountDeletionPolicy operation.
+	//
+	// GetAccountDeletionPolicy.
+	//
+	// GET /v1/projects/{project_id}/admin/account-deletion-policy
+	GetAccountDeletionPolicy(ctx context.Context, params GetAccountDeletionPolicyParams) (*AccountDeletionPolicy, error)
+	// GetAdminAccountDeletion implements getAdminAccountDeletion operation.
+	//
+	// GetAdminAccountDeletion.
+	//
+	// GET /v1/projects/{project_id}/admin/users/{user_id}/deletion
+	GetAdminAccountDeletion(ctx context.Context, params GetAdminAccountDeletionParams) (*AccountDeletionHistory, error)
 	// GetV1AccountCapabilities implements getV1AccountCapabilities operation.
 	//
 	// What this user may self-manage.
@@ -144,6 +175,132 @@ type AccountHandler interface {
 	//
 	// POST /v1/users/me/export
 	PostV1UsersMeExport(ctx context.Context) (*PostV1UsersMeExportOK, error)
+	// PutAccountDeletionPolicy implements putAccountDeletionPolicy operation.
+	//
+	// PutAccountDeletionPolicy.
+	//
+	// PUT /v1/projects/{project_id}/admin/account-deletion-policy
+	PutAccountDeletionPolicy(ctx context.Context, req *AccountDeletionPolicy, params PutAccountDeletionPolicyParams) (*AccountDeletionPolicy, error)
+}
+
+// AccountSecurityHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: AccountSecurity
+type AccountSecurityHandler interface {
+	// AdminListSecurityIncidents implements adminListSecurityIncidents operation.
+	//
+	// AdminListSecurityIncidents.
+	//
+	// GET /v1/projects/{project_id}/admin/security/incidents
+	AdminListSecurityIncidents(ctx context.Context, params AdminListSecurityIncidentsParams) (*SecurityIncidentList, error)
+	// DecideSecurityCase implements decideSecurityCase operation.
+	//
+	// DecideSecurityCase.
+	//
+	// POST /v1/projects/{project_id}/admin/security/cases/{case_id}/decision
+	DecideSecurityCase(ctx context.Context, req *SecurityCaseDecision, params DecideSecurityCaseParams) (*SecurityCase, error)
+	// ExchangeSecurityContinuation implements exchangeSecurityContinuation operation.
+	//
+	// ExchangeSecurityContinuation.
+	//
+	// POST /v1/security/continuations/exchange
+	ExchangeSecurityContinuation(ctx context.Context, req *SecurityFlowInput, params ExchangeSecurityContinuationParams) (*SecurityFlowState, error)
+	// GetSecurityCase implements getSecurityCase operation.
+	//
+	// GetSecurityCase.
+	//
+	// GET /v1/projects/{project_id}/admin/security/cases/{case_id}
+	GetSecurityCase(ctx context.Context, params GetSecurityCaseParams) (*SecurityCase, error)
+	// GetSecurityFlow implements getSecurityFlow operation.
+	//
+	// GetSecurityFlow.
+	//
+	// GET /v1/security/flows/current
+	GetSecurityFlow(ctx context.Context, params GetSecurityFlowParams) (*SecurityFlowState, error)
+	// GetSecurityIncident implements getSecurityIncident operation.
+	//
+	// GetSecurityIncident.
+	//
+	// GET /v1/security/incidents/{incident_id}
+	GetSecurityIncident(ctx context.Context, params GetSecurityIncidentParams) (*SecurityIncident, error)
+	// GetSecurityPolicy implements getSecurityPolicy operation.
+	//
+	// GetSecurityPolicy.
+	//
+	// GET /v1/projects/{project_id}/admin/security/policy
+	GetSecurityPolicy(ctx context.Context, params GetSecurityPolicyParams) (*SecurityPolicy, error)
+	// ListSecurityCases implements listSecurityCases operation.
+	//
+	// ListSecurityCases.
+	//
+	// GET /v1/projects/{project_id}/admin/security/cases
+	ListSecurityCases(ctx context.Context, params ListSecurityCasesParams) (*SecurityCaseList, error)
+	// ListSecurityDeliveries implements listSecurityDeliveries operation.
+	//
+	// ListSecurityDeliveries.
+	//
+	// GET /v1/projects/{project_id}/admin/security/deliveries
+	ListSecurityDeliveries(ctx context.Context, params ListSecurityDeliveriesParams) (*SecurityDeliveryList, error)
+	// ListSecurityDevices implements listSecurityDevices operation.
+	//
+	// ListSecurityDevices.
+	//
+	// GET /v1/security/devices
+	ListSecurityDevices(ctx context.Context, params ListSecurityDevicesParams) (*SecurityDeviceList, error)
+	// ListSecurityIncidents implements listSecurityIncidents operation.
+	//
+	// ListSecurityIncidents.
+	//
+	// GET /v1/security/incidents
+	ListSecurityIncidents(ctx context.Context, params ListSecurityIncidentsParams) (*SecurityIncidentList, error)
+	// PutSecurityPolicy implements putSecurityPolicy operation.
+	//
+	// PutSecurityPolicy.
+	//
+	// PUT /v1/projects/{project_id}/admin/security/policy
+	PutSecurityPolicy(ctx context.Context, req *SecurityPolicy, params PutSecurityPolicyParams) (*SecurityPolicy, error)
+	// RegisterSecurityDevice implements registerSecurityDevice operation.
+	//
+	// RegisterSecurityDevice.
+	//
+	// POST /v1/security/devices
+	RegisterSecurityDevice(ctx context.Context, req *SecurityDeviceInput, params RegisterSecurityDeviceParams) (*SecurityDeviceRegistration, error)
+	// ResendSecurityFlow implements resendSecurityFlow operation.
+	//
+	// ResendSecurityFlow.
+	//
+	// POST /v1/security/flows/current/resend
+	ResendSecurityFlow(ctx context.Context, params ResendSecurityFlowParams) (*SecurityFlowState, error)
+	// RetrySecurityDelivery implements retrySecurityDelivery operation.
+	//
+	// RetrySecurityDelivery.
+	//
+	// POST /v1/projects/{project_id}/admin/security/deliveries/{delivery_id}/retry
+	RetrySecurityDelivery(ctx context.Context, params RetrySecurityDeliveryParams) (*SecurityDelivery, error)
+	// StartSecurityFlow implements startSecurityFlow operation.
+	//
+	// StartSecurityFlow.
+	//
+	// POST /v1/security/flows
+	StartSecurityFlow(ctx context.Context, req *SecurityFlowInput, params StartSecurityFlowParams) (*SecurityFlowState, error)
+	// StartSecurityRecovery implements startSecurityRecovery operation.
+	//
+	// StartSecurityRecovery.
+	//
+	// POST /v1/security/recovery
+	StartSecurityRecovery(ctx context.Context, req *SecurityFlowInput, params StartSecurityRecoveryParams) (*SecurityFlowState, error)
+	// SubmitSecurityFlow implements submitSecurityFlow operation.
+	//
+	// SubmitSecurityFlow.
+	//
+	// POST /v1/security/flows/current/submit
+	SubmitSecurityFlow(ctx context.Context, req *SecurityFlowInput, params SubmitSecurityFlowParams) (*SecurityFlowState, error)
+	// UpdateSecurityDevice implements updateSecurityDevice operation.
+	//
+	// UpdateSecurityDevice.
+	//
+	// POST /v1/security/devices/{device_id}
+	UpdateSecurityDevice(ctx context.Context, req *SecurityDeviceInput, params UpdateSecurityDeviceParams) (*SecurityDevice, error)
 }
 
 // AdminHandler handles operations described by OpenAPI v3 specification.

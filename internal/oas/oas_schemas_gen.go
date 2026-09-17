@@ -145,6 +145,224 @@ func (s *AccessRequestStatus) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/AccountDeletion
+type AccountDeletion struct {
+	Ok          bool        `json:"ok"`
+	RequestID   OptString   `json:"request_id"`
+	Status      string      `json:"status"`
+	RequestedAt OptDateTime `json:"requested_at"`
+	DeleteAt    OptDateTime `json:"delete_at"`
+	CancelledAt OptDateTime `json:"cancelled_at"`
+	GraceDays   int         `json:"grace_days"`
+}
+
+// GetOk returns the value of Ok.
+func (s *AccountDeletion) GetOk() bool {
+	return s.Ok
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *AccountDeletion) GetRequestID() OptString {
+	return s.RequestID
+}
+
+// GetStatus returns the value of Status.
+func (s *AccountDeletion) GetStatus() string {
+	return s.Status
+}
+
+// GetRequestedAt returns the value of RequestedAt.
+func (s *AccountDeletion) GetRequestedAt() OptDateTime {
+	return s.RequestedAt
+}
+
+// GetDeleteAt returns the value of DeleteAt.
+func (s *AccountDeletion) GetDeleteAt() OptDateTime {
+	return s.DeleteAt
+}
+
+// GetCancelledAt returns the value of CancelledAt.
+func (s *AccountDeletion) GetCancelledAt() OptDateTime {
+	return s.CancelledAt
+}
+
+// GetGraceDays returns the value of GraceDays.
+func (s *AccountDeletion) GetGraceDays() int {
+	return s.GraceDays
+}
+
+// SetOk sets the value of Ok.
+func (s *AccountDeletion) SetOk(val bool) {
+	s.Ok = val
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *AccountDeletion) SetRequestID(val OptString) {
+	s.RequestID = val
+}
+
+// SetStatus sets the value of Status.
+func (s *AccountDeletion) SetStatus(val string) {
+	s.Status = val
+}
+
+// SetRequestedAt sets the value of RequestedAt.
+func (s *AccountDeletion) SetRequestedAt(val OptDateTime) {
+	s.RequestedAt = val
+}
+
+// SetDeleteAt sets the value of DeleteAt.
+func (s *AccountDeletion) SetDeleteAt(val OptDateTime) {
+	s.DeleteAt = val
+}
+
+// SetCancelledAt sets the value of CancelledAt.
+func (s *AccountDeletion) SetCancelledAt(val OptDateTime) {
+	s.CancelledAt = val
+}
+
+// SetGraceDays sets the value of GraceDays.
+func (s *AccountDeletion) SetGraceDays(val int) {
+	s.GraceDays = val
+}
+
+// Ref: #/components/schemas/AccountDeletionEvent
+type AccountDeletionEvent struct {
+	ActorID   OptString `json:"actor_id"`
+	Reason    OptString `json:"reason"`
+	Type      string    `json:"type"`
+	At        time.Time `json:"at"`
+	RequestID string    `json:"request_id"`
+}
+
+// GetActorID returns the value of ActorID.
+func (s *AccountDeletionEvent) GetActorID() OptString {
+	return s.ActorID
+}
+
+// GetReason returns the value of Reason.
+func (s *AccountDeletionEvent) GetReason() OptString {
+	return s.Reason
+}
+
+// GetType returns the value of Type.
+func (s *AccountDeletionEvent) GetType() string {
+	return s.Type
+}
+
+// GetAt returns the value of At.
+func (s *AccountDeletionEvent) GetAt() time.Time {
+	return s.At
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *AccountDeletionEvent) GetRequestID() string {
+	return s.RequestID
+}
+
+// SetActorID sets the value of ActorID.
+func (s *AccountDeletionEvent) SetActorID(val OptString) {
+	s.ActorID = val
+}
+
+// SetReason sets the value of Reason.
+func (s *AccountDeletionEvent) SetReason(val OptString) {
+	s.Reason = val
+}
+
+// SetType sets the value of Type.
+func (s *AccountDeletionEvent) SetType(val string) {
+	s.Type = val
+}
+
+// SetAt sets the value of At.
+func (s *AccountDeletionEvent) SetAt(val time.Time) {
+	s.At = val
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *AccountDeletionEvent) SetRequestID(val string) {
+	s.RequestID = val
+}
+
+// Ref: #/components/schemas/AccountDeletionHistory
+type AccountDeletionHistory struct {
+	Deletion AccountDeletion        `json:"deletion"`
+	Events   []AccountDeletionEvent `json:"events"`
+}
+
+// GetDeletion returns the value of Deletion.
+func (s *AccountDeletionHistory) GetDeletion() AccountDeletion {
+	return s.Deletion
+}
+
+// GetEvents returns the value of Events.
+func (s *AccountDeletionHistory) GetEvents() []AccountDeletionEvent {
+	return s.Events
+}
+
+// SetDeletion sets the value of Deletion.
+func (s *AccountDeletionHistory) SetDeletion(val AccountDeletion) {
+	s.Deletion = val
+}
+
+// SetEvents sets the value of Events.
+func (s *AccountDeletionHistory) SetEvents(val []AccountDeletionEvent) {
+	s.Events = val
+}
+
+// Ref: #/components/schemas/AccountDeletionInput
+type AccountDeletionInput struct {
+	Password   OptString `json:"password"`
+	ProofToken OptString `json:"proof_token"`
+	Reason     OptString `json:"reason"`
+}
+
+// GetPassword returns the value of Password.
+func (s *AccountDeletionInput) GetPassword() OptString {
+	return s.Password
+}
+
+// GetProofToken returns the value of ProofToken.
+func (s *AccountDeletionInput) GetProofToken() OptString {
+	return s.ProofToken
+}
+
+// GetReason returns the value of Reason.
+func (s *AccountDeletionInput) GetReason() OptString {
+	return s.Reason
+}
+
+// SetPassword sets the value of Password.
+func (s *AccountDeletionInput) SetPassword(val OptString) {
+	s.Password = val
+}
+
+// SetProofToken sets the value of ProofToken.
+func (s *AccountDeletionInput) SetProofToken(val OptString) {
+	s.ProofToken = val
+}
+
+// SetReason sets the value of Reason.
+func (s *AccountDeletionInput) SetReason(val OptString) {
+	s.Reason = val
+}
+
+// Ref: #/components/schemas/AccountDeletionPolicy
+type AccountDeletionPolicy struct {
+	GraceDays int `json:"grace_days"`
+}
+
+// GetGraceDays returns the value of GraceDays.
+func (s *AccountDeletionPolicy) GetGraceDays() int {
+	return s.GraceDays
+}
+
+// SetGraceDays sets the value of GraceDays.
+func (s *AccountDeletionPolicy) SetGraceDays(val int) {
+	s.GraceDays = val
+}
+
 // Ref: #/components/schemas/ActivityEvent
 type ActivityEvent struct {
 	ID     OptString    `json:"id"`
@@ -202,6 +420,32 @@ func (s *ActivityEvent) SetDevice(val OptNilString) {
 // SetAt sets the value of At.
 func (s *ActivityEvent) SetAt(val OptTimestamp) {
 	s.At = val
+}
+
+// Ref: #/components/schemas/AdminAccountDeletionCancelInput
+type AdminAccountDeletionCancelInput struct {
+	RequestID string `json:"request_id"`
+	Reason    string `json:"reason"`
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *AdminAccountDeletionCancelInput) GetRequestID() string {
+	return s.RequestID
+}
+
+// GetReason returns the value of Reason.
+func (s *AdminAccountDeletionCancelInput) GetReason() string {
+	return s.Reason
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *AdminAccountDeletionCancelInput) SetRequestID(val string) {
+	s.RequestID = val
+}
+
+// SetReason sets the value of Reason.
+func (s *AdminAccountDeletionCancelInput) SetReason(val string) {
+	s.Reason = val
 }
 
 type AdminToken struct {
@@ -2312,31 +2556,6 @@ func (s *DeleteV1SessionsReq) GetExceptCurrent() OptBool {
 // SetExceptCurrent sets the value of ExceptCurrent.
 func (s *DeleteV1SessionsReq) SetExceptCurrent(val OptBool) {
 	s.ExceptCurrent = val
-}
-
-type DeleteV1UsersMeReq struct {
-	Password OptString `json:"password"`
-	Reason   OptString `json:"reason"`
-}
-
-// GetPassword returns the value of Password.
-func (s *DeleteV1UsersMeReq) GetPassword() OptString {
-	return s.Password
-}
-
-// GetReason returns the value of Reason.
-func (s *DeleteV1UsersMeReq) GetReason() OptString {
-	return s.Reason
-}
-
-// SetPassword sets the value of Password.
-func (s *DeleteV1UsersMeReq) SetPassword(val OptString) {
-	s.Password = val
-}
-
-// SetReason sets the value of Reason.
-func (s *DeleteV1UsersMeReq) SetReason(val OptString) {
-	s.Reason = val
 }
 
 // Ref: #/components/schemas/Domain
@@ -7306,6 +7525,52 @@ func (o OptAccessRequestStatus) Or(d AccessRequestStatus) AccessRequestStatus {
 	return d
 }
 
+// NewOptAccountDeletion returns new OptAccountDeletion with value set to v.
+func NewOptAccountDeletion(v AccountDeletion) OptAccountDeletion {
+	return OptAccountDeletion{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAccountDeletion is optional AccountDeletion.
+type OptAccountDeletion struct {
+	Value AccountDeletion
+	Set   bool
+}
+
+// IsSet returns true if OptAccountDeletion was set.
+func (o OptAccountDeletion) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAccountDeletion) Reset() {
+	var v AccountDeletion
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAccountDeletion) SetTo(v AccountDeletion) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAccountDeletion) Get() (v AccountDeletion, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAccountDeletion) Or(d AccountDeletion) AccountDeletion {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptApiKey returns new OptApiKey with value set to v.
 func NewOptApiKey(v ApiKey) OptApiKey {
 	return OptApiKey{
@@ -8174,52 +8439,6 @@ func (o OptDeleteV1SessionsReq) Get() (v DeleteV1SessionsReq, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptDeleteV1SessionsReq) Or(d DeleteV1SessionsReq) DeleteV1SessionsReq {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptDeleteV1UsersMeReq returns new OptDeleteV1UsersMeReq with value set to v.
-func NewOptDeleteV1UsersMeReq(v DeleteV1UsersMeReq) OptDeleteV1UsersMeReq {
-	return OptDeleteV1UsersMeReq{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDeleteV1UsersMeReq is optional DeleteV1UsersMeReq.
-type OptDeleteV1UsersMeReq struct {
-	Value DeleteV1UsersMeReq
-	Set   bool
-}
-
-// IsSet returns true if OptDeleteV1UsersMeReq was set.
-func (o OptDeleteV1UsersMeReq) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDeleteV1UsersMeReq) Reset() {
-	var v DeleteV1UsersMeReq
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDeleteV1UsersMeReq) SetTo(v DeleteV1UsersMeReq) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDeleteV1UsersMeReq) Get() (v DeleteV1UsersMeReq, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDeleteV1UsersMeReq) Or(d DeleteV1UsersMeReq) DeleteV1UsersMeReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -9324,6 +9543,52 @@ func (o OptInt) Get() (v int, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt32 returns new OptInt32 with value set to v.
+func NewOptInt32(v int32) OptInt32 {
+	return OptInt32{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt32 is optional int32.
+type OptInt32 struct {
+	Value int32
+	Set   bool
+}
+
+// IsSet returns true if OptInt32 was set.
+func (o OptInt32) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt32) Reset() {
+	var v int32
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt32) SetTo(v int32) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt32) Get() (v int32, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt32) Or(d int32) int32 {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -13366,6 +13631,236 @@ func (o OptScimUserName) Get() (v ScimUserName, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptScimUserName) Or(d ScimUserName) ScimUserName {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSecurityCase returns new OptSecurityCase with value set to v.
+func NewOptSecurityCase(v SecurityCase) OptSecurityCase {
+	return OptSecurityCase{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSecurityCase is optional SecurityCase.
+type OptSecurityCase struct {
+	Value SecurityCase
+	Set   bool
+}
+
+// IsSet returns true if OptSecurityCase was set.
+func (o OptSecurityCase) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSecurityCase) Reset() {
+	var v SecurityCase
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSecurityCase) SetTo(v SecurityCase) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSecurityCase) Get() (v SecurityCase, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSecurityCase) Or(d SecurityCase) SecurityCase {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSecurityDeviceInputAction returns new OptSecurityDeviceInputAction with value set to v.
+func NewOptSecurityDeviceInputAction(v SecurityDeviceInputAction) OptSecurityDeviceInputAction {
+	return OptSecurityDeviceInputAction{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSecurityDeviceInputAction is optional SecurityDeviceInputAction.
+type OptSecurityDeviceInputAction struct {
+	Value SecurityDeviceInputAction
+	Set   bool
+}
+
+// IsSet returns true if OptSecurityDeviceInputAction was set.
+func (o OptSecurityDeviceInputAction) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSecurityDeviceInputAction) Reset() {
+	var v SecurityDeviceInputAction
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSecurityDeviceInputAction) SetTo(v SecurityDeviceInputAction) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSecurityDeviceInputAction) Get() (v SecurityDeviceInputAction, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSecurityDeviceInputAction) Or(d SecurityDeviceInputAction) SecurityDeviceInputAction {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSecurityFlowInputCredential returns new OptSecurityFlowInputCredential with value set to v.
+func NewOptSecurityFlowInputCredential(v SecurityFlowInputCredential) OptSecurityFlowInputCredential {
+	return OptSecurityFlowInputCredential{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSecurityFlowInputCredential is optional SecurityFlowInputCredential.
+type OptSecurityFlowInputCredential struct {
+	Value SecurityFlowInputCredential
+	Set   bool
+}
+
+// IsSet returns true if OptSecurityFlowInputCredential was set.
+func (o OptSecurityFlowInputCredential) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSecurityFlowInputCredential) Reset() {
+	var v SecurityFlowInputCredential
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSecurityFlowInputCredential) SetTo(v SecurityFlowInputCredential) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSecurityFlowInputCredential) Get() (v SecurityFlowInputCredential, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSecurityFlowInputCredential) Or(d SecurityFlowInputCredential) SecurityFlowInputCredential {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSecurityFlowStateChallenge returns new OptSecurityFlowStateChallenge with value set to v.
+func NewOptSecurityFlowStateChallenge(v SecurityFlowStateChallenge) OptSecurityFlowStateChallenge {
+	return OptSecurityFlowStateChallenge{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSecurityFlowStateChallenge is optional SecurityFlowStateChallenge.
+type OptSecurityFlowStateChallenge struct {
+	Value SecurityFlowStateChallenge
+	Set   bool
+}
+
+// IsSet returns true if OptSecurityFlowStateChallenge was set.
+func (o OptSecurityFlowStateChallenge) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSecurityFlowStateChallenge) Reset() {
+	var v SecurityFlowStateChallenge
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSecurityFlowStateChallenge) SetTo(v SecurityFlowStateChallenge) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSecurityFlowStateChallenge) Get() (v SecurityFlowStateChallenge, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSecurityFlowStateChallenge) Or(d SecurityFlowStateChallenge) SecurityFlowStateChallenge {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSecurityIncident returns new OptSecurityIncident with value set to v.
+func NewOptSecurityIncident(v SecurityIncident) OptSecurityIncident {
+	return OptSecurityIncident{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSecurityIncident is optional SecurityIncident.
+type OptSecurityIncident struct {
+	Value SecurityIncident
+	Set   bool
+}
+
+// IsSet returns true if OptSecurityIncident was set.
+func (o OptSecurityIncident) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSecurityIncident) Reset() {
+	var v SecurityIncident
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSecurityIncident) SetTo(v SecurityIncident) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSecurityIncident) Get() (v SecurityIncident, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSecurityIncident) Or(d SecurityIncident) SecurityIncident {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -21821,6 +22316,1521 @@ func (s *ScimUserName) init() ScimUserName {
 	return m
 }
 
+// Ref: #/components/schemas/SecurityCase
+type SecurityCase struct {
+	ID            string                `json:"id"`
+	AccountID     OptString             `json:"account_id"`
+	Status        string                `json:"status"`
+	ContactMasked string                `json:"contact_masked"`
+	CreatedAt     time.Time             `json:"created_at"`
+	UpdatedAt     time.Time             `json:"updated_at"`
+	Messages      []SecurityCaseMessage `json:"messages"`
+}
+
+// GetID returns the value of ID.
+func (s *SecurityCase) GetID() string {
+	return s.ID
+}
+
+// GetAccountID returns the value of AccountID.
+func (s *SecurityCase) GetAccountID() OptString {
+	return s.AccountID
+}
+
+// GetStatus returns the value of Status.
+func (s *SecurityCase) GetStatus() string {
+	return s.Status
+}
+
+// GetContactMasked returns the value of ContactMasked.
+func (s *SecurityCase) GetContactMasked() string {
+	return s.ContactMasked
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SecurityCase) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SecurityCase) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// GetMessages returns the value of Messages.
+func (s *SecurityCase) GetMessages() []SecurityCaseMessage {
+	return s.Messages
+}
+
+// SetID sets the value of ID.
+func (s *SecurityCase) SetID(val string) {
+	s.ID = val
+}
+
+// SetAccountID sets the value of AccountID.
+func (s *SecurityCase) SetAccountID(val OptString) {
+	s.AccountID = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SecurityCase) SetStatus(val string) {
+	s.Status = val
+}
+
+// SetContactMasked sets the value of ContactMasked.
+func (s *SecurityCase) SetContactMasked(val string) {
+	s.ContactMasked = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SecurityCase) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SecurityCase) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+// SetMessages sets the value of Messages.
+func (s *SecurityCase) SetMessages(val []SecurityCaseMessage) {
+	s.Messages = val
+}
+
+// Ref: #/components/schemas/SecurityCaseDecision
+type SecurityCaseDecision struct {
+	Action   string `json:"action"`
+	Message  string `json:"message"`
+	Evidence string `json:"evidence"`
+}
+
+// GetAction returns the value of Action.
+func (s *SecurityCaseDecision) GetAction() string {
+	return s.Action
+}
+
+// GetMessage returns the value of Message.
+func (s *SecurityCaseDecision) GetMessage() string {
+	return s.Message
+}
+
+// GetEvidence returns the value of Evidence.
+func (s *SecurityCaseDecision) GetEvidence() string {
+	return s.Evidence
+}
+
+// SetAction sets the value of Action.
+func (s *SecurityCaseDecision) SetAction(val string) {
+	s.Action = val
+}
+
+// SetMessage sets the value of Message.
+func (s *SecurityCaseDecision) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetEvidence sets the value of Evidence.
+func (s *SecurityCaseDecision) SetEvidence(val string) {
+	s.Evidence = val
+}
+
+// Ref: #/components/schemas/SecurityCaseList
+type SecurityCaseList struct {
+	Data       []SecurityCase `json:"data"`
+	HasMore    bool           `json:"has_more"`
+	NextCursor OptString      `json:"next_cursor"`
+}
+
+// GetData returns the value of Data.
+func (s *SecurityCaseList) GetData() []SecurityCase {
+	return s.Data
+}
+
+// GetHasMore returns the value of HasMore.
+func (s *SecurityCaseList) GetHasMore() bool {
+	return s.HasMore
+}
+
+// GetNextCursor returns the value of NextCursor.
+func (s *SecurityCaseList) GetNextCursor() OptString {
+	return s.NextCursor
+}
+
+// SetData sets the value of Data.
+func (s *SecurityCaseList) SetData(val []SecurityCase) {
+	s.Data = val
+}
+
+// SetHasMore sets the value of HasMore.
+func (s *SecurityCaseList) SetHasMore(val bool) {
+	s.HasMore = val
+}
+
+// SetNextCursor sets the value of NextCursor.
+func (s *SecurityCaseList) SetNextCursor(val OptString) {
+	s.NextCursor = val
+}
+
+// Ref: #/components/schemas/SecurityCaseMessage
+type SecurityCaseMessage struct {
+	At      time.Time `json:"at"`
+	Author  string    `json:"author"`
+	Message string    `json:"message"`
+}
+
+// GetAt returns the value of At.
+func (s *SecurityCaseMessage) GetAt() time.Time {
+	return s.At
+}
+
+// GetAuthor returns the value of Author.
+func (s *SecurityCaseMessage) GetAuthor() string {
+	return s.Author
+}
+
+// GetMessage returns the value of Message.
+func (s *SecurityCaseMessage) GetMessage() string {
+	return s.Message
+}
+
+// SetAt sets the value of At.
+func (s *SecurityCaseMessage) SetAt(val time.Time) {
+	s.At = val
+}
+
+// SetAuthor sets the value of Author.
+func (s *SecurityCaseMessage) SetAuthor(val string) {
+	s.Author = val
+}
+
+// SetMessage sets the value of Message.
+func (s *SecurityCaseMessage) SetMessage(val string) {
+	s.Message = val
+}
+
+// Ref: #/components/schemas/SecurityDelivery
+type SecurityDelivery struct {
+	ID              string    `json:"id"`
+	IncidentID      OptString `json:"incident_id"`
+	CaseID          OptString `json:"case_id"`
+	Channel         string    `json:"channel"`
+	RecipientMasked string    `json:"recipient_masked"`
+	Status          string    `json:"status"`
+	Attempts        int32     `json:"attempts"`
+	LastError       OptString `json:"last_error"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *SecurityDelivery) GetID() string {
+	return s.ID
+}
+
+// GetIncidentID returns the value of IncidentID.
+func (s *SecurityDelivery) GetIncidentID() OptString {
+	return s.IncidentID
+}
+
+// GetCaseID returns the value of CaseID.
+func (s *SecurityDelivery) GetCaseID() OptString {
+	return s.CaseID
+}
+
+// GetChannel returns the value of Channel.
+func (s *SecurityDelivery) GetChannel() string {
+	return s.Channel
+}
+
+// GetRecipientMasked returns the value of RecipientMasked.
+func (s *SecurityDelivery) GetRecipientMasked() string {
+	return s.RecipientMasked
+}
+
+// GetStatus returns the value of Status.
+func (s *SecurityDelivery) GetStatus() string {
+	return s.Status
+}
+
+// GetAttempts returns the value of Attempts.
+func (s *SecurityDelivery) GetAttempts() int32 {
+	return s.Attempts
+}
+
+// GetLastError returns the value of LastError.
+func (s *SecurityDelivery) GetLastError() OptString {
+	return s.LastError
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SecurityDelivery) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SecurityDelivery) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SecurityDelivery) SetID(val string) {
+	s.ID = val
+}
+
+// SetIncidentID sets the value of IncidentID.
+func (s *SecurityDelivery) SetIncidentID(val OptString) {
+	s.IncidentID = val
+}
+
+// SetCaseID sets the value of CaseID.
+func (s *SecurityDelivery) SetCaseID(val OptString) {
+	s.CaseID = val
+}
+
+// SetChannel sets the value of Channel.
+func (s *SecurityDelivery) SetChannel(val string) {
+	s.Channel = val
+}
+
+// SetRecipientMasked sets the value of RecipientMasked.
+func (s *SecurityDelivery) SetRecipientMasked(val string) {
+	s.RecipientMasked = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SecurityDelivery) SetStatus(val string) {
+	s.Status = val
+}
+
+// SetAttempts sets the value of Attempts.
+func (s *SecurityDelivery) SetAttempts(val int32) {
+	s.Attempts = val
+}
+
+// SetLastError sets the value of LastError.
+func (s *SecurityDelivery) SetLastError(val OptString) {
+	s.LastError = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SecurityDelivery) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SecurityDelivery) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+// Ref: #/components/schemas/SecurityDeliveryList
+type SecurityDeliveryList struct {
+	Data       []SecurityDelivery `json:"data"`
+	HasMore    bool               `json:"has_more"`
+	NextCursor OptString          `json:"next_cursor"`
+}
+
+// GetData returns the value of Data.
+func (s *SecurityDeliveryList) GetData() []SecurityDelivery {
+	return s.Data
+}
+
+// GetHasMore returns the value of HasMore.
+func (s *SecurityDeliveryList) GetHasMore() bool {
+	return s.HasMore
+}
+
+// GetNextCursor returns the value of NextCursor.
+func (s *SecurityDeliveryList) GetNextCursor() OptString {
+	return s.NextCursor
+}
+
+// SetData sets the value of Data.
+func (s *SecurityDeliveryList) SetData(val []SecurityDelivery) {
+	s.Data = val
+}
+
+// SetHasMore sets the value of HasMore.
+func (s *SecurityDeliveryList) SetHasMore(val bool) {
+	s.HasMore = val
+}
+
+// SetNextCursor sets the value of NextCursor.
+func (s *SecurityDeliveryList) SetNextCursor(val OptString) {
+	s.NextCursor = val
+}
+
+// Ref: #/components/schemas/SecurityDevice
+type SecurityDevice struct {
+	ID           string      `json:"id"`
+	Name         string      `json:"name"`
+	FirstSeenAt  time.Time   `json:"first_seen_at"`
+	LastSeenAt   time.Time   `json:"last_seen_at"`
+	TrustedUntil OptDateTime `json:"trusted_until"`
+	Revoked      bool        `json:"revoked"`
+	Current      bool        `json:"current"`
+	SessionIds   []string    `json:"session_ids"`
+}
+
+// GetID returns the value of ID.
+func (s *SecurityDevice) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SecurityDevice) GetName() string {
+	return s.Name
+}
+
+// GetFirstSeenAt returns the value of FirstSeenAt.
+func (s *SecurityDevice) GetFirstSeenAt() time.Time {
+	return s.FirstSeenAt
+}
+
+// GetLastSeenAt returns the value of LastSeenAt.
+func (s *SecurityDevice) GetLastSeenAt() time.Time {
+	return s.LastSeenAt
+}
+
+// GetTrustedUntil returns the value of TrustedUntil.
+func (s *SecurityDevice) GetTrustedUntil() OptDateTime {
+	return s.TrustedUntil
+}
+
+// GetRevoked returns the value of Revoked.
+func (s *SecurityDevice) GetRevoked() bool {
+	return s.Revoked
+}
+
+// GetCurrent returns the value of Current.
+func (s *SecurityDevice) GetCurrent() bool {
+	return s.Current
+}
+
+// GetSessionIds returns the value of SessionIds.
+func (s *SecurityDevice) GetSessionIds() []string {
+	return s.SessionIds
+}
+
+// SetID sets the value of ID.
+func (s *SecurityDevice) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SecurityDevice) SetName(val string) {
+	s.Name = val
+}
+
+// SetFirstSeenAt sets the value of FirstSeenAt.
+func (s *SecurityDevice) SetFirstSeenAt(val time.Time) {
+	s.FirstSeenAt = val
+}
+
+// SetLastSeenAt sets the value of LastSeenAt.
+func (s *SecurityDevice) SetLastSeenAt(val time.Time) {
+	s.LastSeenAt = val
+}
+
+// SetTrustedUntil sets the value of TrustedUntil.
+func (s *SecurityDevice) SetTrustedUntil(val OptDateTime) {
+	s.TrustedUntil = val
+}
+
+// SetRevoked sets the value of Revoked.
+func (s *SecurityDevice) SetRevoked(val bool) {
+	s.Revoked = val
+}
+
+// SetCurrent sets the value of Current.
+func (s *SecurityDevice) SetCurrent(val bool) {
+	s.Current = val
+}
+
+// SetSessionIds sets the value of SessionIds.
+func (s *SecurityDevice) SetSessionIds(val []string) {
+	s.SessionIds = val
+}
+
+// Ref: #/components/schemas/SecurityDeviceInput
+type SecurityDeviceInput struct {
+	Name       OptString                    `json:"name"`
+	Action     OptSecurityDeviceInputAction `json:"action"`
+	ProofToken OptString                    `json:"proof_token"`
+}
+
+// GetName returns the value of Name.
+func (s *SecurityDeviceInput) GetName() OptString {
+	return s.Name
+}
+
+// GetAction returns the value of Action.
+func (s *SecurityDeviceInput) GetAction() OptSecurityDeviceInputAction {
+	return s.Action
+}
+
+// GetProofToken returns the value of ProofToken.
+func (s *SecurityDeviceInput) GetProofToken() OptString {
+	return s.ProofToken
+}
+
+// SetName sets the value of Name.
+func (s *SecurityDeviceInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetAction sets the value of Action.
+func (s *SecurityDeviceInput) SetAction(val OptSecurityDeviceInputAction) {
+	s.Action = val
+}
+
+// SetProofToken sets the value of ProofToken.
+func (s *SecurityDeviceInput) SetProofToken(val OptString) {
+	s.ProofToken = val
+}
+
+type SecurityDeviceInputAction string
+
+const (
+	SecurityDeviceInputActionRename  SecurityDeviceInputAction = "rename"
+	SecurityDeviceInputActionTrust   SecurityDeviceInputAction = "trust"
+	SecurityDeviceInputActionUntrust SecurityDeviceInputAction = "untrust"
+	SecurityDeviceInputActionRevoke  SecurityDeviceInputAction = "revoke"
+)
+
+// AllValues returns all SecurityDeviceInputAction values.
+func (SecurityDeviceInputAction) AllValues() []SecurityDeviceInputAction {
+	return []SecurityDeviceInputAction{
+		SecurityDeviceInputActionRename,
+		SecurityDeviceInputActionTrust,
+		SecurityDeviceInputActionUntrust,
+		SecurityDeviceInputActionRevoke,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SecurityDeviceInputAction) MarshalText() ([]byte, error) {
+	switch s {
+	case SecurityDeviceInputActionRename:
+		return []byte(s), nil
+	case SecurityDeviceInputActionTrust:
+		return []byte(s), nil
+	case SecurityDeviceInputActionUntrust:
+		return []byte(s), nil
+	case SecurityDeviceInputActionRevoke:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SecurityDeviceInputAction) UnmarshalText(data []byte) error {
+	switch SecurityDeviceInputAction(data) {
+	case SecurityDeviceInputActionRename:
+		*s = SecurityDeviceInputActionRename
+		return nil
+	case SecurityDeviceInputActionTrust:
+		*s = SecurityDeviceInputActionTrust
+		return nil
+	case SecurityDeviceInputActionUntrust:
+		*s = SecurityDeviceInputActionUntrust
+		return nil
+	case SecurityDeviceInputActionRevoke:
+		*s = SecurityDeviceInputActionRevoke
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/SecurityDeviceList
+type SecurityDeviceList struct {
+	Data       []SecurityDevice `json:"data"`
+	HasMore    bool             `json:"has_more"`
+	NextCursor OptString        `json:"next_cursor"`
+}
+
+// GetData returns the value of Data.
+func (s *SecurityDeviceList) GetData() []SecurityDevice {
+	return s.Data
+}
+
+// GetHasMore returns the value of HasMore.
+func (s *SecurityDeviceList) GetHasMore() bool {
+	return s.HasMore
+}
+
+// GetNextCursor returns the value of NextCursor.
+func (s *SecurityDeviceList) GetNextCursor() OptString {
+	return s.NextCursor
+}
+
+// SetData sets the value of Data.
+func (s *SecurityDeviceList) SetData(val []SecurityDevice) {
+	s.Data = val
+}
+
+// SetHasMore sets the value of HasMore.
+func (s *SecurityDeviceList) SetHasMore(val bool) {
+	s.HasMore = val
+}
+
+// SetNextCursor sets the value of NextCursor.
+func (s *SecurityDeviceList) SetNextCursor(val OptString) {
+	s.NextCursor = val
+}
+
+// Ref: #/components/schemas/SecurityDeviceRegistration
+type SecurityDeviceRegistration struct {
+	Device      SecurityDevice `json:"device"`
+	DeviceToken string         `json:"device_token"`
+}
+
+// GetDevice returns the value of Device.
+func (s *SecurityDeviceRegistration) GetDevice() SecurityDevice {
+	return s.Device
+}
+
+// GetDeviceToken returns the value of DeviceToken.
+func (s *SecurityDeviceRegistration) GetDeviceToken() string {
+	return s.DeviceToken
+}
+
+// SetDevice sets the value of Device.
+func (s *SecurityDeviceRegistration) SetDevice(val SecurityDevice) {
+	s.Device = val
+}
+
+// SetDeviceToken sets the value of DeviceToken.
+func (s *SecurityDeviceRegistration) SetDeviceToken(val string) {
+	s.DeviceToken = val
+}
+
+// Ref: #/components/schemas/SecurityEvent
+type SecurityEvent struct {
+	ID        string    `json:"id"`
+	Type      string    `json:"type"`
+	At        time.Time `json:"at"`
+	Outcome   string    `json:"outcome"`
+	SessionID OptString `json:"session_id"`
+	DeviceID  OptString `json:"device_id"`
+	IP        OptString `json:"ip"`
+	UserAgent OptString `json:"user_agent"`
+}
+
+// GetID returns the value of ID.
+func (s *SecurityEvent) GetID() string {
+	return s.ID
+}
+
+// GetType returns the value of Type.
+func (s *SecurityEvent) GetType() string {
+	return s.Type
+}
+
+// GetAt returns the value of At.
+func (s *SecurityEvent) GetAt() time.Time {
+	return s.At
+}
+
+// GetOutcome returns the value of Outcome.
+func (s *SecurityEvent) GetOutcome() string {
+	return s.Outcome
+}
+
+// GetSessionID returns the value of SessionID.
+func (s *SecurityEvent) GetSessionID() OptString {
+	return s.SessionID
+}
+
+// GetDeviceID returns the value of DeviceID.
+func (s *SecurityEvent) GetDeviceID() OptString {
+	return s.DeviceID
+}
+
+// GetIP returns the value of IP.
+func (s *SecurityEvent) GetIP() OptString {
+	return s.IP
+}
+
+// GetUserAgent returns the value of UserAgent.
+func (s *SecurityEvent) GetUserAgent() OptString {
+	return s.UserAgent
+}
+
+// SetID sets the value of ID.
+func (s *SecurityEvent) SetID(val string) {
+	s.ID = val
+}
+
+// SetType sets the value of Type.
+func (s *SecurityEvent) SetType(val string) {
+	s.Type = val
+}
+
+// SetAt sets the value of At.
+func (s *SecurityEvent) SetAt(val time.Time) {
+	s.At = val
+}
+
+// SetOutcome sets the value of Outcome.
+func (s *SecurityEvent) SetOutcome(val string) {
+	s.Outcome = val
+}
+
+// SetSessionID sets the value of SessionID.
+func (s *SecurityEvent) SetSessionID(val OptString) {
+	s.SessionID = val
+}
+
+// SetDeviceID sets the value of DeviceID.
+func (s *SecurityEvent) SetDeviceID(val OptString) {
+	s.DeviceID = val
+}
+
+// SetIP sets the value of IP.
+func (s *SecurityEvent) SetIP(val OptString) {
+	s.IP = val
+}
+
+// SetUserAgent sets the value of UserAgent.
+func (s *SecurityEvent) SetUserAgent(val OptString) {
+	s.UserAgent = val
+}
+
+// Ref: #/components/schemas/SecurityFlowInput
+type SecurityFlowInput struct {
+	// Client-generated secret binding a short retry window to one continuation exchange.
+	ExchangeKey OptString `json:"exchange_key"`
+	// Deletion request being explicitly cancelled during verified recovery.
+	RequestID         OptString                      `json:"request_id"`
+	DeviceID          OptString                      `json:"device_id"`
+	Credential        OptSecurityFlowInputCredential `json:"credential"`
+	Action            OptString                      `json:"action"`
+	IncidentID        OptString                      `json:"incident_id"`
+	SessionID         OptString                      `json:"session_id"`
+	ContinuationToken OptString                      `json:"continuation_token"`
+	Identifier        OptString                      `json:"identifier"`
+	Contact           OptString                      `json:"contact"`
+	Code              OptString                      `json:"code"`
+	Password          OptString                      `json:"password"`
+	NewPassword       OptString                      `json:"new_password"`
+	FactorID          OptString                      `json:"factor_id"`
+	Message           OptString                      `json:"message"`
+	AllSessions       OptBool                        `json:"all_sessions"`
+	Version           OptInt32                       `json:"version"`
+}
+
+// GetExchangeKey returns the value of ExchangeKey.
+func (s *SecurityFlowInput) GetExchangeKey() OptString {
+	return s.ExchangeKey
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *SecurityFlowInput) GetRequestID() OptString {
+	return s.RequestID
+}
+
+// GetDeviceID returns the value of DeviceID.
+func (s *SecurityFlowInput) GetDeviceID() OptString {
+	return s.DeviceID
+}
+
+// GetCredential returns the value of Credential.
+func (s *SecurityFlowInput) GetCredential() OptSecurityFlowInputCredential {
+	return s.Credential
+}
+
+// GetAction returns the value of Action.
+func (s *SecurityFlowInput) GetAction() OptString {
+	return s.Action
+}
+
+// GetIncidentID returns the value of IncidentID.
+func (s *SecurityFlowInput) GetIncidentID() OptString {
+	return s.IncidentID
+}
+
+// GetSessionID returns the value of SessionID.
+func (s *SecurityFlowInput) GetSessionID() OptString {
+	return s.SessionID
+}
+
+// GetContinuationToken returns the value of ContinuationToken.
+func (s *SecurityFlowInput) GetContinuationToken() OptString {
+	return s.ContinuationToken
+}
+
+// GetIdentifier returns the value of Identifier.
+func (s *SecurityFlowInput) GetIdentifier() OptString {
+	return s.Identifier
+}
+
+// GetContact returns the value of Contact.
+func (s *SecurityFlowInput) GetContact() OptString {
+	return s.Contact
+}
+
+// GetCode returns the value of Code.
+func (s *SecurityFlowInput) GetCode() OptString {
+	return s.Code
+}
+
+// GetPassword returns the value of Password.
+func (s *SecurityFlowInput) GetPassword() OptString {
+	return s.Password
+}
+
+// GetNewPassword returns the value of NewPassword.
+func (s *SecurityFlowInput) GetNewPassword() OptString {
+	return s.NewPassword
+}
+
+// GetFactorID returns the value of FactorID.
+func (s *SecurityFlowInput) GetFactorID() OptString {
+	return s.FactorID
+}
+
+// GetMessage returns the value of Message.
+func (s *SecurityFlowInput) GetMessage() OptString {
+	return s.Message
+}
+
+// GetAllSessions returns the value of AllSessions.
+func (s *SecurityFlowInput) GetAllSessions() OptBool {
+	return s.AllSessions
+}
+
+// GetVersion returns the value of Version.
+func (s *SecurityFlowInput) GetVersion() OptInt32 {
+	return s.Version
+}
+
+// SetExchangeKey sets the value of ExchangeKey.
+func (s *SecurityFlowInput) SetExchangeKey(val OptString) {
+	s.ExchangeKey = val
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *SecurityFlowInput) SetRequestID(val OptString) {
+	s.RequestID = val
+}
+
+// SetDeviceID sets the value of DeviceID.
+func (s *SecurityFlowInput) SetDeviceID(val OptString) {
+	s.DeviceID = val
+}
+
+// SetCredential sets the value of Credential.
+func (s *SecurityFlowInput) SetCredential(val OptSecurityFlowInputCredential) {
+	s.Credential = val
+}
+
+// SetAction sets the value of Action.
+func (s *SecurityFlowInput) SetAction(val OptString) {
+	s.Action = val
+}
+
+// SetIncidentID sets the value of IncidentID.
+func (s *SecurityFlowInput) SetIncidentID(val OptString) {
+	s.IncidentID = val
+}
+
+// SetSessionID sets the value of SessionID.
+func (s *SecurityFlowInput) SetSessionID(val OptString) {
+	s.SessionID = val
+}
+
+// SetContinuationToken sets the value of ContinuationToken.
+func (s *SecurityFlowInput) SetContinuationToken(val OptString) {
+	s.ContinuationToken = val
+}
+
+// SetIdentifier sets the value of Identifier.
+func (s *SecurityFlowInput) SetIdentifier(val OptString) {
+	s.Identifier = val
+}
+
+// SetContact sets the value of Contact.
+func (s *SecurityFlowInput) SetContact(val OptString) {
+	s.Contact = val
+}
+
+// SetCode sets the value of Code.
+func (s *SecurityFlowInput) SetCode(val OptString) {
+	s.Code = val
+}
+
+// SetPassword sets the value of Password.
+func (s *SecurityFlowInput) SetPassword(val OptString) {
+	s.Password = val
+}
+
+// SetNewPassword sets the value of NewPassword.
+func (s *SecurityFlowInput) SetNewPassword(val OptString) {
+	s.NewPassword = val
+}
+
+// SetFactorID sets the value of FactorID.
+func (s *SecurityFlowInput) SetFactorID(val OptString) {
+	s.FactorID = val
+}
+
+// SetMessage sets the value of Message.
+func (s *SecurityFlowInput) SetMessage(val OptString) {
+	s.Message = val
+}
+
+// SetAllSessions sets the value of AllSessions.
+func (s *SecurityFlowInput) SetAllSessions(val OptBool) {
+	s.AllSessions = val
+}
+
+// SetVersion sets the value of Version.
+func (s *SecurityFlowInput) SetVersion(val OptInt32) {
+	s.Version = val
+}
+
+type SecurityFlowInputCredential map[string]jx.Raw
+
+func (s *SecurityFlowInputCredential) init() SecurityFlowInputCredential {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// Ref: #/components/schemas/SecurityFlowState
+type SecurityFlowState struct {
+	Deletion          OptAccountDeletion            `json:"deletion"`
+	Sessions          []SecuritySession             `json:"sessions"`
+	Challenge         OptSecurityFlowStateChallenge `json:"challenge"`
+	FlowToken         OptString                     `json:"flow_token"`
+	Kind              string                        `json:"kind"`
+	Status            string                        `json:"status"`
+	Step              string                        `json:"step"`
+	Version           int32                         `json:"version"`
+	NextActions       []string                      `json:"next_actions"`
+	ExpiresAt         time.Time                     `json:"expires_at"`
+	Incident          OptSecurityIncident           `json:"incident"`
+	Case              OptSecurityCase               `json:"case"`
+	ContactMasked     OptString                     `json:"contact_masked"`
+	AttemptsLeft      int32                         `json:"attempts_left"`
+	ResendAt          OptDateTime                   `json:"resend_at"`
+	Factors           []SecurityProofFactor         `json:"factors"`
+	AllSessions       bool                          `json:"all_sessions"`
+	RevokedSessionIds []string                      `json:"revoked_session_ids"`
+	Outcome           OptString                     `json:"outcome"`
+	ErrorCode         OptString                     `json:"error_code"`
+}
+
+// GetDeletion returns the value of Deletion.
+func (s *SecurityFlowState) GetDeletion() OptAccountDeletion {
+	return s.Deletion
+}
+
+// GetSessions returns the value of Sessions.
+func (s *SecurityFlowState) GetSessions() []SecuritySession {
+	return s.Sessions
+}
+
+// GetChallenge returns the value of Challenge.
+func (s *SecurityFlowState) GetChallenge() OptSecurityFlowStateChallenge {
+	return s.Challenge
+}
+
+// GetFlowToken returns the value of FlowToken.
+func (s *SecurityFlowState) GetFlowToken() OptString {
+	return s.FlowToken
+}
+
+// GetKind returns the value of Kind.
+func (s *SecurityFlowState) GetKind() string {
+	return s.Kind
+}
+
+// GetStatus returns the value of Status.
+func (s *SecurityFlowState) GetStatus() string {
+	return s.Status
+}
+
+// GetStep returns the value of Step.
+func (s *SecurityFlowState) GetStep() string {
+	return s.Step
+}
+
+// GetVersion returns the value of Version.
+func (s *SecurityFlowState) GetVersion() int32 {
+	return s.Version
+}
+
+// GetNextActions returns the value of NextActions.
+func (s *SecurityFlowState) GetNextActions() []string {
+	return s.NextActions
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *SecurityFlowState) GetExpiresAt() time.Time {
+	return s.ExpiresAt
+}
+
+// GetIncident returns the value of Incident.
+func (s *SecurityFlowState) GetIncident() OptSecurityIncident {
+	return s.Incident
+}
+
+// GetCase returns the value of Case.
+func (s *SecurityFlowState) GetCase() OptSecurityCase {
+	return s.Case
+}
+
+// GetContactMasked returns the value of ContactMasked.
+func (s *SecurityFlowState) GetContactMasked() OptString {
+	return s.ContactMasked
+}
+
+// GetAttemptsLeft returns the value of AttemptsLeft.
+func (s *SecurityFlowState) GetAttemptsLeft() int32 {
+	return s.AttemptsLeft
+}
+
+// GetResendAt returns the value of ResendAt.
+func (s *SecurityFlowState) GetResendAt() OptDateTime {
+	return s.ResendAt
+}
+
+// GetFactors returns the value of Factors.
+func (s *SecurityFlowState) GetFactors() []SecurityProofFactor {
+	return s.Factors
+}
+
+// GetAllSessions returns the value of AllSessions.
+func (s *SecurityFlowState) GetAllSessions() bool {
+	return s.AllSessions
+}
+
+// GetRevokedSessionIds returns the value of RevokedSessionIds.
+func (s *SecurityFlowState) GetRevokedSessionIds() []string {
+	return s.RevokedSessionIds
+}
+
+// GetOutcome returns the value of Outcome.
+func (s *SecurityFlowState) GetOutcome() OptString {
+	return s.Outcome
+}
+
+// GetErrorCode returns the value of ErrorCode.
+func (s *SecurityFlowState) GetErrorCode() OptString {
+	return s.ErrorCode
+}
+
+// SetDeletion sets the value of Deletion.
+func (s *SecurityFlowState) SetDeletion(val OptAccountDeletion) {
+	s.Deletion = val
+}
+
+// SetSessions sets the value of Sessions.
+func (s *SecurityFlowState) SetSessions(val []SecuritySession) {
+	s.Sessions = val
+}
+
+// SetChallenge sets the value of Challenge.
+func (s *SecurityFlowState) SetChallenge(val OptSecurityFlowStateChallenge) {
+	s.Challenge = val
+}
+
+// SetFlowToken sets the value of FlowToken.
+func (s *SecurityFlowState) SetFlowToken(val OptString) {
+	s.FlowToken = val
+}
+
+// SetKind sets the value of Kind.
+func (s *SecurityFlowState) SetKind(val string) {
+	s.Kind = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SecurityFlowState) SetStatus(val string) {
+	s.Status = val
+}
+
+// SetStep sets the value of Step.
+func (s *SecurityFlowState) SetStep(val string) {
+	s.Step = val
+}
+
+// SetVersion sets the value of Version.
+func (s *SecurityFlowState) SetVersion(val int32) {
+	s.Version = val
+}
+
+// SetNextActions sets the value of NextActions.
+func (s *SecurityFlowState) SetNextActions(val []string) {
+	s.NextActions = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *SecurityFlowState) SetExpiresAt(val time.Time) {
+	s.ExpiresAt = val
+}
+
+// SetIncident sets the value of Incident.
+func (s *SecurityFlowState) SetIncident(val OptSecurityIncident) {
+	s.Incident = val
+}
+
+// SetCase sets the value of Case.
+func (s *SecurityFlowState) SetCase(val OptSecurityCase) {
+	s.Case = val
+}
+
+// SetContactMasked sets the value of ContactMasked.
+func (s *SecurityFlowState) SetContactMasked(val OptString) {
+	s.ContactMasked = val
+}
+
+// SetAttemptsLeft sets the value of AttemptsLeft.
+func (s *SecurityFlowState) SetAttemptsLeft(val int32) {
+	s.AttemptsLeft = val
+}
+
+// SetResendAt sets the value of ResendAt.
+func (s *SecurityFlowState) SetResendAt(val OptDateTime) {
+	s.ResendAt = val
+}
+
+// SetFactors sets the value of Factors.
+func (s *SecurityFlowState) SetFactors(val []SecurityProofFactor) {
+	s.Factors = val
+}
+
+// SetAllSessions sets the value of AllSessions.
+func (s *SecurityFlowState) SetAllSessions(val bool) {
+	s.AllSessions = val
+}
+
+// SetRevokedSessionIds sets the value of RevokedSessionIds.
+func (s *SecurityFlowState) SetRevokedSessionIds(val []string) {
+	s.RevokedSessionIds = val
+}
+
+// SetOutcome sets the value of Outcome.
+func (s *SecurityFlowState) SetOutcome(val OptString) {
+	s.Outcome = val
+}
+
+// SetErrorCode sets the value of ErrorCode.
+func (s *SecurityFlowState) SetErrorCode(val OptString) {
+	s.ErrorCode = val
+}
+
+type SecurityFlowStateChallenge map[string]jx.Raw
+
+func (s *SecurityFlowStateChallenge) init() SecurityFlowStateChallenge {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// Ref: #/components/schemas/SecurityIncident
+type SecurityIncident struct {
+	ID                string          `json:"id"`
+	AccountID         string          `json:"account_id"`
+	Status            string          `json:"status"`
+	Severity          string          `json:"severity"`
+	Reasons           []string        `json:"reasons"`
+	Events            []SecurityEvent `json:"events"`
+	SessionID         OptString       `json:"session_id"`
+	DeviceID          OptString       `json:"device_id"`
+	CreatedAt         time.Time       `json:"created_at"`
+	UpdatedAt         time.Time       `json:"updated_at"`
+	PolicyVersion     int32           `json:"policy_version"`
+	RevokedSessionIds []string        `json:"revoked_session_ids"`
+	Resolution        OptString       `json:"resolution"`
+}
+
+// GetID returns the value of ID.
+func (s *SecurityIncident) GetID() string {
+	return s.ID
+}
+
+// GetAccountID returns the value of AccountID.
+func (s *SecurityIncident) GetAccountID() string {
+	return s.AccountID
+}
+
+// GetStatus returns the value of Status.
+func (s *SecurityIncident) GetStatus() string {
+	return s.Status
+}
+
+// GetSeverity returns the value of Severity.
+func (s *SecurityIncident) GetSeverity() string {
+	return s.Severity
+}
+
+// GetReasons returns the value of Reasons.
+func (s *SecurityIncident) GetReasons() []string {
+	return s.Reasons
+}
+
+// GetEvents returns the value of Events.
+func (s *SecurityIncident) GetEvents() []SecurityEvent {
+	return s.Events
+}
+
+// GetSessionID returns the value of SessionID.
+func (s *SecurityIncident) GetSessionID() OptString {
+	return s.SessionID
+}
+
+// GetDeviceID returns the value of DeviceID.
+func (s *SecurityIncident) GetDeviceID() OptString {
+	return s.DeviceID
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SecurityIncident) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SecurityIncident) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// GetPolicyVersion returns the value of PolicyVersion.
+func (s *SecurityIncident) GetPolicyVersion() int32 {
+	return s.PolicyVersion
+}
+
+// GetRevokedSessionIds returns the value of RevokedSessionIds.
+func (s *SecurityIncident) GetRevokedSessionIds() []string {
+	return s.RevokedSessionIds
+}
+
+// GetResolution returns the value of Resolution.
+func (s *SecurityIncident) GetResolution() OptString {
+	return s.Resolution
+}
+
+// SetID sets the value of ID.
+func (s *SecurityIncident) SetID(val string) {
+	s.ID = val
+}
+
+// SetAccountID sets the value of AccountID.
+func (s *SecurityIncident) SetAccountID(val string) {
+	s.AccountID = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SecurityIncident) SetStatus(val string) {
+	s.Status = val
+}
+
+// SetSeverity sets the value of Severity.
+func (s *SecurityIncident) SetSeverity(val string) {
+	s.Severity = val
+}
+
+// SetReasons sets the value of Reasons.
+func (s *SecurityIncident) SetReasons(val []string) {
+	s.Reasons = val
+}
+
+// SetEvents sets the value of Events.
+func (s *SecurityIncident) SetEvents(val []SecurityEvent) {
+	s.Events = val
+}
+
+// SetSessionID sets the value of SessionID.
+func (s *SecurityIncident) SetSessionID(val OptString) {
+	s.SessionID = val
+}
+
+// SetDeviceID sets the value of DeviceID.
+func (s *SecurityIncident) SetDeviceID(val OptString) {
+	s.DeviceID = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SecurityIncident) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SecurityIncident) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+// SetPolicyVersion sets the value of PolicyVersion.
+func (s *SecurityIncident) SetPolicyVersion(val int32) {
+	s.PolicyVersion = val
+}
+
+// SetRevokedSessionIds sets the value of RevokedSessionIds.
+func (s *SecurityIncident) SetRevokedSessionIds(val []string) {
+	s.RevokedSessionIds = val
+}
+
+// SetResolution sets the value of Resolution.
+func (s *SecurityIncident) SetResolution(val OptString) {
+	s.Resolution = val
+}
+
+// Ref: #/components/schemas/SecurityIncidentList
+type SecurityIncidentList struct {
+	Data       []SecurityIncident `json:"data"`
+	HasMore    bool               `json:"has_more"`
+	NextCursor OptString          `json:"next_cursor"`
+}
+
+// GetData returns the value of Data.
+func (s *SecurityIncidentList) GetData() []SecurityIncident {
+	return s.Data
+}
+
+// GetHasMore returns the value of HasMore.
+func (s *SecurityIncidentList) GetHasMore() bool {
+	return s.HasMore
+}
+
+// GetNextCursor returns the value of NextCursor.
+func (s *SecurityIncidentList) GetNextCursor() OptString {
+	return s.NextCursor
+}
+
+// SetData sets the value of Data.
+func (s *SecurityIncidentList) SetData(val []SecurityIncident) {
+	s.Data = val
+}
+
+// SetHasMore sets the value of HasMore.
+func (s *SecurityIncidentList) SetHasMore(val bool) {
+	s.HasMore = val
+}
+
+// SetNextCursor sets the value of NextCursor.
+func (s *SecurityIncidentList) SetNextCursor(val OptString) {
+	s.NextCursor = val
+}
+
+// Ref: #/components/schemas/SecurityPolicy
+type SecurityPolicy struct {
+	Version                     int32                    `json:"version"`
+	Mode                        string                   `json:"mode"`
+	ContinueURL                 string                   `json:"continue_url"`
+	ClientUrls                  SecurityPolicyClientUrls `json:"client_urls"`
+	Notify                      bool                     `json:"notify"`
+	RequireNewDeviceProof       bool                     `json:"require_new_device_proof"`
+	FlowTTLSeconds              int32                    `json:"flow_ttl_seconds"`
+	TrustTTLSeconds             int32                    `json:"trust_ttl_seconds"`
+	RetentionDays               int32                    `json:"retention_days"`
+	FailureThreshold            int32                    `json:"failure_threshold"`
+	FailureWindowSeconds        int32                    `json:"failure_window_seconds"`
+	NotificationCooldownSeconds int32                    `json:"notification_cooldown_seconds"`
+}
+
+// GetVersion returns the value of Version.
+func (s *SecurityPolicy) GetVersion() int32 {
+	return s.Version
+}
+
+// GetMode returns the value of Mode.
+func (s *SecurityPolicy) GetMode() string {
+	return s.Mode
+}
+
+// GetContinueURL returns the value of ContinueURL.
+func (s *SecurityPolicy) GetContinueURL() string {
+	return s.ContinueURL
+}
+
+// GetClientUrls returns the value of ClientUrls.
+func (s *SecurityPolicy) GetClientUrls() SecurityPolicyClientUrls {
+	return s.ClientUrls
+}
+
+// GetNotify returns the value of Notify.
+func (s *SecurityPolicy) GetNotify() bool {
+	return s.Notify
+}
+
+// GetRequireNewDeviceProof returns the value of RequireNewDeviceProof.
+func (s *SecurityPolicy) GetRequireNewDeviceProof() bool {
+	return s.RequireNewDeviceProof
+}
+
+// GetFlowTTLSeconds returns the value of FlowTTLSeconds.
+func (s *SecurityPolicy) GetFlowTTLSeconds() int32 {
+	return s.FlowTTLSeconds
+}
+
+// GetTrustTTLSeconds returns the value of TrustTTLSeconds.
+func (s *SecurityPolicy) GetTrustTTLSeconds() int32 {
+	return s.TrustTTLSeconds
+}
+
+// GetRetentionDays returns the value of RetentionDays.
+func (s *SecurityPolicy) GetRetentionDays() int32 {
+	return s.RetentionDays
+}
+
+// GetFailureThreshold returns the value of FailureThreshold.
+func (s *SecurityPolicy) GetFailureThreshold() int32 {
+	return s.FailureThreshold
+}
+
+// GetFailureWindowSeconds returns the value of FailureWindowSeconds.
+func (s *SecurityPolicy) GetFailureWindowSeconds() int32 {
+	return s.FailureWindowSeconds
+}
+
+// GetNotificationCooldownSeconds returns the value of NotificationCooldownSeconds.
+func (s *SecurityPolicy) GetNotificationCooldownSeconds() int32 {
+	return s.NotificationCooldownSeconds
+}
+
+// SetVersion sets the value of Version.
+func (s *SecurityPolicy) SetVersion(val int32) {
+	s.Version = val
+}
+
+// SetMode sets the value of Mode.
+func (s *SecurityPolicy) SetMode(val string) {
+	s.Mode = val
+}
+
+// SetContinueURL sets the value of ContinueURL.
+func (s *SecurityPolicy) SetContinueURL(val string) {
+	s.ContinueURL = val
+}
+
+// SetClientUrls sets the value of ClientUrls.
+func (s *SecurityPolicy) SetClientUrls(val SecurityPolicyClientUrls) {
+	s.ClientUrls = val
+}
+
+// SetNotify sets the value of Notify.
+func (s *SecurityPolicy) SetNotify(val bool) {
+	s.Notify = val
+}
+
+// SetRequireNewDeviceProof sets the value of RequireNewDeviceProof.
+func (s *SecurityPolicy) SetRequireNewDeviceProof(val bool) {
+	s.RequireNewDeviceProof = val
+}
+
+// SetFlowTTLSeconds sets the value of FlowTTLSeconds.
+func (s *SecurityPolicy) SetFlowTTLSeconds(val int32) {
+	s.FlowTTLSeconds = val
+}
+
+// SetTrustTTLSeconds sets the value of TrustTTLSeconds.
+func (s *SecurityPolicy) SetTrustTTLSeconds(val int32) {
+	s.TrustTTLSeconds = val
+}
+
+// SetRetentionDays sets the value of RetentionDays.
+func (s *SecurityPolicy) SetRetentionDays(val int32) {
+	s.RetentionDays = val
+}
+
+// SetFailureThreshold sets the value of FailureThreshold.
+func (s *SecurityPolicy) SetFailureThreshold(val int32) {
+	s.FailureThreshold = val
+}
+
+// SetFailureWindowSeconds sets the value of FailureWindowSeconds.
+func (s *SecurityPolicy) SetFailureWindowSeconds(val int32) {
+	s.FailureWindowSeconds = val
+}
+
+// SetNotificationCooldownSeconds sets the value of NotificationCooldownSeconds.
+func (s *SecurityPolicy) SetNotificationCooldownSeconds(val int32) {
+	s.NotificationCooldownSeconds = val
+}
+
+type SecurityPolicyClientUrls map[string]string
+
+func (s *SecurityPolicyClientUrls) init() SecurityPolicyClientUrls {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+// Ref: #/components/schemas/SecurityProofFactor
+type SecurityProofFactor struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
+	Hint string `json:"hint"`
+}
+
+// GetID returns the value of ID.
+func (s *SecurityProofFactor) GetID() string {
+	return s.ID
+}
+
+// GetType returns the value of Type.
+func (s *SecurityProofFactor) GetType() string {
+	return s.Type
+}
+
+// GetHint returns the value of Hint.
+func (s *SecurityProofFactor) GetHint() string {
+	return s.Hint
+}
+
+// SetID sets the value of ID.
+func (s *SecurityProofFactor) SetID(val string) {
+	s.ID = val
+}
+
+// SetType sets the value of Type.
+func (s *SecurityProofFactor) SetType(val string) {
+	s.Type = val
+}
+
+// SetHint sets the value of Hint.
+func (s *SecurityProofFactor) SetHint(val string) {
+	s.Hint = val
+}
+
+// Ref: #/components/schemas/SecuritySession
+type SecuritySession struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// GetID returns the value of ID.
+func (s *SecuritySession) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SecuritySession) GetName() string {
+	return s.Name
+}
+
+// SetID sets the value of ID.
+func (s *SecuritySession) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SecuritySession) SetName(val string) {
+	s.Name = val
+}
+
 // Ref: #/components/schemas/ServiceAccount
 type ServiceAccount struct {
 	ID       OptString `json:"id"`
@@ -22641,14 +24651,15 @@ func (s *TokenProfileClaimsTemplate) init() TokenProfileClaimsTemplate {
 
 // Ref: #/components/schemas/User
 type User struct {
-	ID            string         `json:"id"`
-	Kind          UserKind       `json:"kind"`
-	Status        UserStatus     `json:"status"`
-	PrimaryEmail  OptNilString   `json:"primary_email"`
-	EmailVerified OptBool        `json:"email_verified"`
-	PrimaryPhone  OptNilString   `json:"primary_phone"`
-	PhoneVerified OptBool        `json:"phone_verified"`
-	Profile       OptCoreProfile `json:"profile"`
+	Deletion      OptAccountDeletion `json:"deletion"`
+	ID            string             `json:"id"`
+	Kind          UserKind           `json:"kind"`
+	Status        UserStatus         `json:"status"`
+	PrimaryEmail  OptNilString       `json:"primary_email"`
+	EmailVerified OptBool            `json:"email_verified"`
+	PrimaryPhone  OptNilString       `json:"primary_phone"`
+	PhoneVerified OptBool            `json:"phone_verified"`
+	Profile       OptCoreProfile     `json:"profile"`
 	// Effective member-invite cap for this user: a per-user override stored on the account, or the
 	// project member_invites default when null. 0 means the right is revoked.
 	InviteCap OptNilInt `json:"invite_cap"`
@@ -22658,6 +24669,11 @@ type User struct {
 	Metadata  OptUserMetadata `json:"metadata"`
 	CreatedAt OptTimestamp    `json:"created_at"`
 	UpdatedAt OptTimestamp    `json:"updated_at"`
+}
+
+// GetDeletion returns the value of Deletion.
+func (s *User) GetDeletion() OptAccountDeletion {
+	return s.Deletion
 }
 
 // GetID returns the value of ID.
@@ -22723,6 +24739,11 @@ func (s *User) GetCreatedAt() OptTimestamp {
 // GetUpdatedAt returns the value of UpdatedAt.
 func (s *User) GetUpdatedAt() OptTimestamp {
 	return s.UpdatedAt
+}
+
+// SetDeletion sets the value of Deletion.
+func (s *User) SetDeletion(val OptAccountDeletion) {
+	s.Deletion = val
 }
 
 // SetID sets the value of ID.

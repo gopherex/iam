@@ -1,10 +1,11 @@
+import { flowStorageKey } from './flow-storage';
 /**
  * FlowController — stateful, framework-agnostic controller for the server-side
  * resumable auth flow API (§6/§8 of docs/design/resumable-auth-flows.md).
  *
  * Responsibilities:
  *  - Start, resume (cookie or token), submit, resend, and abandon flows.
- *  - Persist the current flow_token in localStorage (key `iam.flow`).
+ *  - Persist the current flow_token in localStorage under a deployment/project/environment-specific key.
  *  - Broadcast state changes across tabs via BroadcastChannel('iam:flow').
  *  - On completion, hand the session to the IamAuth client (optional) and clear storage.
  *  - Map API errors to IamAuthError.
@@ -38,6 +39,7 @@ export interface FlowSetPasswordParams {
 }
 
 export interface FlowControllerOptions {
+  multiTab?: boolean;
   /** API base URL (same as IamClientOptions.baseUrl). */
   baseUrl: string;
   /** Public client id sent as X-Client-Id on every call. */
@@ -57,7 +59,7 @@ export interface FlowControllerOptions {
    */
   auth?: IamAuth;
   /**
-   * localStorage key for persisting the flow_token (default: 'iam.flow').
+   * Override the scoped localStorage key for persisting the flow_token.
    */
   storageKey?: string;
 }
@@ -195,9 +197,9 @@ const FLOW_BROADCAST = 'iam:flow';
 
 function flowError(result: { error?: unknown; response?: Response }): IamAuthError {
   const status = result.response?.status;
-  const env = result.error as { error?: { code?: string; message?: string } } | undefined;
+  const env = result.error as { error?: { code?: string; message?: string; details?: Record<string, unknown> } } | undefined;
   if (env?.error?.code) {
-    return new IamAuthError(env.error.message ?? env.error.code, env.error.code, status);
+    return new IamAuthError(env.error.message ?? env.error.code, env.error.code, status, env.error.details);
   }
   return new IamAuthError('flow request failed', 'flow_request_failed', status);
 }
@@ -219,7 +221,7 @@ function normalizeError(error: unknown): IamAuthError {
  * await flow.resume();
  */
 export function createFlowController(opts: FlowControllerOptions): FlowController {
-  const storageKey = opts.storageKey ?? 'iam.flow';
+  const storageKey = opts.storageKey ?? flowStorageKey(opts.baseUrl, opts.clientId, opts.environment, 'auth.flow');
 
   const httpClient: Client = createClient(
     createConfig<GeneratedClientOptions>({ baseUrl: opts.baseUrl }),
@@ -230,14 +232,14 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
     if (opts.environment) h['X-Environment'] = opts.environment;
     if (opts.deviceName) h['X-Device-Name'] = opts.deviceName;
     if (opts.deviceFingerprint) h['X-Device-Fingerprint'] = opts.deviceFingerprint;
-    return h;
+    return { ...h, ...opts.auth?.headers() };
   };
 
   let currentState: FlowState | null = null;
   const listeners = new Set<FlowChangeCallback>();
   let channel: BroadcastChannel | null = null;
 
-  if (typeof BroadcastChannel !== 'undefined') {
+  if ((opts.multiTab ?? true) && typeof BroadcastChannel !== 'undefined') {
     channel = new BroadcastChannel(FLOW_BROADCAST);
     channel.onmessage = () => {
       // Re-read from storage when another tab signals a change.
@@ -315,7 +317,7 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
     }
 
     // On expired/aborted: clear storage, emit state so UI can show restart.
-    if (state.status === 'expired' || state.status === 'aborted') {
+    if (state.status === 'expired' || state.status === 'aborted' || state.status === 'completed') {
       clearToken();
     }
 
@@ -331,6 +333,7 @@ export function createFlowController(opts: FlowControllerOptions): FlowControlle
     },
 
     async start(params) {
+      await opts.auth?.ready();
       const r = await postV1AuthFlows({
         client: httpClient,
         headers: headers(),

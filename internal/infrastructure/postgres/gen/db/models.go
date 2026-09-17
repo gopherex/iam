@@ -7,17 +7,108 @@ import (
 	"time"
 )
 
-type IamUsers struct {
-	ID           string
+type IamSecurityPolicies struct {
+	ProjectID   string
+	Environment string
+	Data        json.RawMessage
+}
+
+type IamSecurityGuards struct {
+	FlowID      string
+	ProjectID   string
+	Environment string
+	UserID      string
+	CreatedAt   time.Time
+}
+
+type IamSecurityDevices struct {
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	TokenHash   string
+	Data        json.RawMessage
+}
+
+type IamSecurityIncidents struct {
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	Status      string
+	CreatedAt   time.Time
+	Data        json.RawMessage
+	PrivateData string
+}
+
+type IamSecurityContinuations struct {
+	ExchangeData string
+	TokenHash    string
 	ProjectID    string
 	Environment  string
-	Kind         string
-	Status       string
-	PrimaryEmail *string
-	PrimaryPhone *string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	Data         json.RawMessage
+	UserID       string
+	IncidentID   string
+	CaseID       string
+	Purpose      string
+	ExpiresAt    time.Time
+	Consumed     bool
+}
+
+type IamSecurityCases struct {
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	Status      string
+	CreatedAt   time.Time
+	Data        json.RawMessage
+	PrivateData string
+}
+
+type IamSecurityDeliveries struct {
+	ID          string
+	ProjectID   string
+	Environment string
+	UserID      string
+	DedupKey    string
+	Status      string
+	CreatedAt   time.Time
+	Data        json.RawMessage
+	PrivateData string
+}
+
+type IamSecurityAttempts struct {
+	ProjectID   string
+	Environment string
+	SubjectHash string
+	Kind        string
+	WindowStart time.Time
+	Attempts    int32
+}
+
+type IamSecurityCaseDecisions struct {
+	ID          string
+	ProjectID   string
+	Environment string
+	CaseID      string
+	ActorID     string
+	Action      string
+	Evidence    string
+	CreatedAt   time.Time
+}
+
+type IamUsers struct {
+	SecurityRecoveredAt *time.Time
+	ID                  string
+	ProjectID           string
+	Environment         string
+	Kind                string
+	Status              string
+	PrimaryEmail        *string
+	PrimaryPhone        *string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	Data                json.RawMessage
 }
 
 type IamUserRoles struct {
@@ -504,4 +595,14 @@ type IamWebhookDeliveries struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	Data           json.RawMessage
+}
+
+type IamAccountDeletions struct {
+	ProjectID   string
+	Environment string
+	UserID      string
+	RequestID   string
+	Status      string
+	DeleteAt    time.Time
+	Data        json.RawMessage
 }

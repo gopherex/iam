@@ -253,12 +253,16 @@ func startBackgroundWorkers(
 	outboxRelay *outbox.Outbox,
 	db *postgres.DB,
 	webhooks *postgres.PgWebhooks,
+	emitter postgres.Emitter,
 	log *xlog.Logger,
 ) {
 	shutdown.Go(func(ctx context.Context) {
 		if err := outboxRelay.Run(ctx); err != nil && ctx.Err() == nil {
 			log.Error("outbox relay stopped", xlog.Error("err", err))
 		}
+	})
+	shutdown.Go(func(ctx context.Context) {
+		postgres.NewPgAccountStore(db, emitter).RunDeletionWorker(ctx, log.AppendName("account-deletion"))
 	})
 	// Garbage collector: prune expired runtime rows (challenges, flows, auth /
 	// device / PAR codes, timed-out sessions and refresh tokens) that are only
@@ -439,7 +443,7 @@ func setupOutboxAndEmitter(
 		return nil, nil, err
 	}
 
-	emitter := postgres.NewAuditingEmitter(db, postgres.NewOutboxEmitter(outboxRelay))
+	emitter := postgres.NewSecurityEmitter(db, postgres.NewAuditingEmitter(db, postgres.NewOutboxEmitter(outboxRelay)))
 
 	if cfg.Service.Auth.SeedRoot {
 		if err := seedRoot(ctx, db, emitter, log); err != nil {
@@ -525,7 +529,7 @@ func run() error {
 		xshutdown.WithErrorHandler(func(err error) { log.Error("shutdown error", xlog.Error("err", err)) }),
 	)
 	registerShutdownHooks(shutdown, httpSrv, probeSrv, live, &telemetryShutdown)
-	startBackgroundWorkers(shutdown, outboxRelay, db, webhooks, log)
+	startBackgroundWorkers(shutdown, outboxRelay, db, webhooks, emitter, log)
 	startServing(shutdown, httpSrv, probeSrv, probeAddr, cfg.Service.HTTP.Addr, log)
 
 	// Block until SIGINT/SIGTERM, then run the registered cleanups.
@@ -631,8 +635,10 @@ func buildHandler(db *postgres.DB, emitter postgres.Emitter, webhooks *postgres.
 		api.WithMFA(api.NewMFAService(api.MFADeps{
 			Accounts: postgres.NewPgMFAAccounts(db, emitter, cfgReader),
 		})),
+		api.WithAccountSecurity(api.NewAccountSecurityService(postgres.NewPgSecurity(db, emitter))),
 		api.WithAccount(api.NewAccountService(api.AccountDeps{
 			Accounts: postgres.NewPgAccountStore(db, emitter),
+			Deletion: postgres.NewPgAccountStore(db, emitter),
 		})),
 		api.WithMachineIdentity(api.NewMachineIdentityService(api.MachineIdentityDeps{
 			Keys: postgres.NewPgMachineIdentities(db, emitter),

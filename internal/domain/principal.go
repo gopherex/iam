@@ -16,6 +16,7 @@ const (
 // credential and carries in the request context. Handlers read it instead of
 // re-parsing tokens.
 type Principal struct {
+	CredentialID string // stable administrative credential identifier for audit
 	Kind         PrincipalKind
 	AccountID    string // the user, for PrincipalUser
 	ProjectID    string

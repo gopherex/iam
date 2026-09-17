@@ -1133,6 +1133,9 @@ func (a *pgOIDCGrants) oidcSessionAuthTime(ctx context.Context, projectID, sessi
 		return time.Time{}, false
 	}
 
+	if err := accountDeletionAccess(ctx, a.db, row.ProjectID, row.Environment, row.UserID); err != nil {
+		return time.Time{}, false
+	}
 	return row.CreatedAt, true
 }
 
@@ -2158,6 +2161,10 @@ func (a *pgOIDCGrants) mintTokenResponse(ctx context.Context, sub oidcTokenSubje
 	env := sub.env
 	if env == "" {
 		env = oidcDefaultEnv
+	}
+
+	if err := accountDeletionAccess(ctx, a.db, sub.projectID, env, sub.subject); err != nil {
+		return nil, err
 	}
 
 	issuer := oidcIssuer(a.db.PublicURL, sub.projectID, env)

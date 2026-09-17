@@ -3,10 +3,12 @@ package domain
 import "time"
 
 const (
-	WebhookEventSessionRevoked = "session.revoked"
-	WebhookEventUserBanned     = "user.banned"
-	WebhookEventUserDeleted    = "user.deleted"
-	WebhookEventEmailChanged   = "email.changed"
+	WebhookEventSessionRevoked    = "session.revoked"
+	WebhookEventUserBanned        = "user.banned"
+	WebhookEventUserDeleted       = "user.deleted"
+	WebhookEventDeletionScheduled = "user.deletion_scheduled"
+	WebhookEventDeletionCancelled = "user.deletion_cancelled"
+	WebhookEventEmailChanged      = "email.changed"
 )
 
 // SupportedWebhookEvents is the deliberately small public event catalog.
@@ -16,6 +18,8 @@ var SupportedWebhookEvents = []string{
 	WebhookEventSessionRevoked,
 	WebhookEventUserBanned,
 	WebhookEventUserDeleted,
+	WebhookEventDeletionScheduled,
+	WebhookEventDeletionCancelled,
 	WebhookEventEmailChanged,
 }
 

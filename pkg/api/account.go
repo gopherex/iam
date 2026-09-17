@@ -54,7 +54,10 @@ type AccountStore interface {
 	) (*domain.Account, []domain.Identity, error)
 }
 
-type AccountDeps struct{ Accounts AccountStore }
+type AccountDeps struct {
+	Accounts AccountStore
+	Deletion AccountDeletionStore
+}
 
 // AccountService implements the AccountHandler slice of oas.Handler.
 type AccountService struct {
@@ -116,19 +119,6 @@ func (s *AccountService) DeleteV1SessionsBySessionId(
 	}
 
 	if err := s.deps.Accounts.RevokeSession(ctx, p.AccountID, params.SessionID); err != nil {
-		return nil, err
-	}
-
-	return &oas.Ok{Ok: oas.NewOptBool(true)}, nil
-}
-
-func (s *AccountService) DeleteV1UsersMe(ctx context.Context, _ oas.OptDeleteV1UsersMeReq) (*oas.Ok, error) {
-	p, err := requirePrincipal(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.deps.Accounts.Delete(ctx, p.ProjectID, p.AccountID); err != nil {
 		return nil, err
 	}
 

@@ -250,6 +250,10 @@ func (p *Publisher) publishOne(ctx context.Context, msg outbox.Message) error {
 	if err := json.Unmarshal(msg.Payload, &domainEvent); err != nil {
 		return fmt.Errorf("unmarshal domain event: %w", err)
 	}
+
+	if event.Type == "security.delivery.requested" {
+		return p.publishSecurityDelivery(ctx, event)
+	}
 	// SMS-channel delivery events route to the SMS sender. The dispatch is
 	// disjoint from email: emailJobFromEvent returns false for channel=="sms"
 	// (otp/mfa), and smsJobFromEvent returns false for non-sms, so neither

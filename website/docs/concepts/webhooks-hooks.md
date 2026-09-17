@@ -48,9 +48,11 @@ The public event set is an allowlist, and this is all of it:
 | `session.revoked` | a session was ended by an admin, the user, or a policy |
 | `user.banned` | an admin banned a user |
 | `user.deleted` | a user was deleted |
+| `user.deletion_scheduled` | a self-service deletion deadline was set |
+| `user.deletion_cancelled` | the user cancelled a pending deletion |
 | `email.changed` | a user's primary address changed |
 
-`*` subscribes to all four. Any other value is rejected at subscription time,
+`*` subscribes to all six. Any other value is rejected at subscription time,
 which is the point: IAM emits far more events internally, and some carry OTPs,
 magic links or one-time proofs. They must never become subscribable merely
 because they travel through the same outbox.

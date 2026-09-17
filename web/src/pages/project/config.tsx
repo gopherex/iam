@@ -1,3 +1,4 @@
+import { AccountDeletionPolicyCard } from './account-deletion';
 import type {
   AuthConfig,
   ConsentConfig,
@@ -1186,6 +1187,7 @@ export function ConfigPage() {
           <TabsTrigger value="auth">Auth &amp; methods</TabsTrigger>
           <TabsTrigger value="policies">Policies</TabsTrigger>
           <TabsTrigger value="terms">Terms</TabsTrigger>
+          <TabsTrigger value="deletion">Account deletion</TabsTrigger>
           <TabsTrigger value="rate-limits">Rate limits</TabsTrigger>
           <TabsTrigger value="public-metadata">Public metadata</TabsTrigger>
         </TabsList>
@@ -1202,6 +1204,7 @@ export function ConfigPage() {
           <TermsTab projectId={projectId!} env={env} />
         </TabsContent>
 
+        <TabsContent value="deletion"><AccountDeletionPolicyCard key={`${projectId}:${env}`} projectId={projectId!} env={env} /></TabsContent>
         <TabsContent value="rate-limits">
           <RateLimitsTab projectId={projectId!} env={env} />
         </TabsContent>
