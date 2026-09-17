@@ -46,6 +46,9 @@ URL before enabling notifications or support recovery. URLs must use HTTPS, exce
 HTTP on localhost; credentials, query strings and fragments are rejected. IAM
 chooses a configured client mapping when an authenticated client context exists,
 otherwise the default URL. Request bodies cannot supply arbitrary redirects.
+These continuation URLs are independent of **App Clients → Redirect URIs**, which
+controls OAuth callbacks. A policy validation error identifies `continue_url` or
+the invalid `client_urls` entry; enabling notifications requires a default URL.
 
 The additive database migration runs on server startup. Finish updating all
 replicas before enabling enforcement: an older server does not implement the new

@@ -774,13 +774,21 @@ func validateSecurityPolicy(policy domain.SecurityPolicy) error {
 		}
 	}
 
-	if (policy.ContinueURL != "" || policy.Notify) && !securityURLValid(policy.ContinueURL) {
-		return domain.ErrInvalidRedirectURI
+	if policy.Notify && policy.ContinueURL == "" {
+		return domain.ErrValidation.WithMessage("continue_url is required when security notifications are enabled")
+	}
+
+	if policy.ContinueURL != "" && !securityURLValid(policy.ContinueURL) {
+		return invalidSecurityContinuationURL("continue_url")
 	}
 
 	for client, uri := range policy.ClientURLs {
-		if client == "" || !securityURLValid(uri) {
-			return domain.ErrInvalidRedirectURI
+		if strings.TrimSpace(client) == "" {
+			return domain.ErrValidation.WithMessage("client_urls must use a non-empty client ID as each key")
+		}
+
+		if !securityURLValid(uri) {
+			return invalidSecurityContinuationURL(fmt.Sprintf("client_urls[%q]", client))
 		}
 	}
 
@@ -873,4 +881,10 @@ func (s *pgSecurity) deviceSessionIDs(ctx context.Context, scope domain.Security
 	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
 
 	return ids, securityStoreError(err)
+}
+
+func invalidSecurityContinuationURL(field string) error {
+	return domain.ErrValidation.WithMessage(field +
+		" must be an absolute HTTPS URL (HTTP is allowed only for localhost)," +
+		" without credentials, query parameters or a fragment; this is separate from OAuth Redirect URIs")
 }

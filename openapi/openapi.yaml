@@ -12108,10 +12108,10 @@ paths:
                     maxLength: 1024
                   html:
                     type: string
-                    maxLength: 1024
+                    maxLength: 65536
                   text:
                     type: string
-                    maxLength: 1024
+                    maxLength: 65536
         default:
           $ref: '#/components/responses/Default'
       security:

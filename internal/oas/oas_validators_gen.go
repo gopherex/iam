@@ -17634,7 +17634,7 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK) Validate() e
 				if err := (validate.String{
 					MinLength:     0,
 					MinLengthSet:  false,
-					MaxLength:     1024,
+					MaxLength:     65536,
 					MaxLengthSet:  true,
 					Email:         false,
 					Hostname:      false,
@@ -17664,7 +17664,7 @@ func (s *PostV1ProjectsByProjectIdAdminEmailTemplatesByIdPreviewOK) Validate() e
 				if err := (validate.String{
 					MinLength:     0,
 					MinLengthSet:  false,
-					MaxLength:     1024,
+					MaxLength:     65536,
 					MaxLengthSet:  true,
 					Email:         false,
 					Hostname:      false,
