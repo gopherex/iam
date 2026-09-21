@@ -167,6 +167,8 @@ export class IamAuth {
   private marginMs: number;
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
   private inflightRefresh: Promise<boolean> | null = null;
+  private refreshFailures = 0;
+  private refreshRetryAt = 0;
   private channel: BroadcastChannel | null = null;
   private initialized: Promise<void>;
 	private securityProof: string | null = null;
@@ -708,10 +710,10 @@ export class IamAuth {
     }
   }
 
-  /** Force a token refresh now. Returns the refreshed session or null. */
+  /** Refresh tokens, respecting retry backoff. Temporary failures retain and return the current session. */
   async refreshSession(): Promise<Session | null> {
-    const ok = await this.refreshSingleFlight();
-    return ok ? this.session : null;
+    await this.refreshSingleFlight();
+    return this.session;
   }
 
   /** Revoke the current session server-side and clear local state. */
@@ -809,6 +811,7 @@ export class IamAuth {
 
   private async setSession(session: Session | null, event: AuthChangeEvent): Promise<void> {
     this.session = session;
+    this.resetRefreshBackoff();
     if (session) this.securityProof = null;
     if (this.persist) {
       try {
@@ -842,7 +845,9 @@ export class IamAuth {
         await this.storage.removeItem(this.storageKey);
         next = null;
       }
-      const changed = (next?.access_token ?? null) !== (this.session?.access_token ?? null);
+      const changed = (next?.access_token ?? null) !== (this.session?.access_token ?? null) ||
+        (next?.refresh_token ?? null) !== (this.session?.refresh_token ?? null);
+      if (changed) this.resetRefreshBackoff();
       this.session = next;
       if (changed && emitChange) {
         this.scheduleRefresh();
@@ -863,13 +868,22 @@ export class IamAuth {
       this.refreshTimer = null;
     }
     if (!this.autoRefresh || !this.session?.refresh_token) return;
-    const delay = Math.max(0, this.session.expires_at - Date.now() - this.marginMs);
-    this.refreshTimer = setTimeout(() => void this.refreshSingleFlight(), delay);
+    const due = this.refreshRetryAt || this.session.expires_at - this.marginMs;
+    const delay = Math.max(0, due - Date.now());
+    this.refreshTimer = setTimeout(() => {
+      this.refreshTimer = null;
+      void this.refreshSingleFlight();
+    }, Math.min(delay, 2147483647));
   }
 
   /** Refresh, de-duplicating concurrent callers (proactive timer + 401 retry). */
-  private refreshSingleFlight(): Promise<boolean> {
+  private async refreshSingleFlight(): Promise<boolean> {
+    await this.ready();
     if (this.inflightRefresh) return this.inflightRefresh;
+    if (Date.now() < this.refreshRetryAt) {
+      this.scheduleRefresh();
+      return false;
+    }
     this.inflightRefresh = this.doRefresh().finally(() => {
       this.inflightRefresh = null;
     });
@@ -879,21 +893,60 @@ export class IamAuth {
   private async doRefresh(): Promise<boolean> {
     const rt = this.session?.refresh_token;
     if (!rt) return false;
-    const r = await postV1AuthTokenRefresh({ client: this.client, headers: this.headers(), body: { refresh_token: rt } });
-    if (r.error || !r.data) {
-      await this.setSession(null, 'SIGNED_OUT');
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+    let r: { data?: unknown; error?: unknown; response: Response };
+    try {
+      r = await postV1AuthTokenRefresh({ client: this.client, headers: this.headers(), body: { refresh_token: rt }, throwOnError: false });
+    } catch {
+      // Network and response-decoding failures do not prove that a token was revoked.
+      if (this.session?.refresh_token === rt) this.scheduleRefreshRetry();
+      return false;
+    }
+    // A logout, new login, or cross-tab rotation supersedes this request.
+    if (this.session?.refresh_token !== rt) return false;
+    if (r.error || !r.data || !r.response.ok) {
+      const status = r.response.status;
+      const error = isRecord(r.error) ? r.error.error : undefined;
+      const code = typeof error === 'string' ? error : isRecord(error) ? error.code : undefined;
+      const refused = status === 400 || status === 401 ||
+        (status >= 400 && status < 500 && status !== 429 &&
+          ['invalid_grant', 'invalid_token', 'token_revoked', 'session_expired'].includes(String(code)));
+      if (refused) await this.setSession(null, 'SIGNED_OUT');
+      else this.scheduleRefreshRetry(r.response);
       return false;
     }
     const body = r.data as { user?: User; session?: SessionTokens } | undefined;
     // The refresh response is an AuthResult; reuse the existing user when absent.
     const tokens = (body?.session ?? (r.data as unknown as SessionTokens));
     const user = body?.user ?? this.session?.user;
-    if (!tokens?.access_token || !user) {
-      await this.setSession(null, 'SIGNED_OUT');
+    if (!tokens?.access_token || !hasUserId(user) || !tokens.token_type ||
+        !Number.isFinite(tokens.expires_in) || tokens.expires_in <= 0) {
+      this.scheduleRefreshRetry(r.response);
       return false;
     }
     await this.setSession(toSession(tokens, user), 'TOKEN_REFRESHED');
     return true;
+  }
+
+  private resetRefreshBackoff(): void {
+    this.refreshFailures = 0;
+    this.refreshRetryAt = 0;
+  }
+
+  private scheduleRefreshRetry(response?: Response): void {
+    const ceiling = Math.min(30000, 1000 * 2 ** Math.min(this.refreshFailures++, 5));
+    let delay = Math.round(ceiling * (0.5 + Math.random() * 0.5));
+    const retryAfter = response?.headers.get('Retry-After');
+    if (retryAfter) {
+      const seconds = Number(retryAfter);
+      const remaining = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
+      if (Number.isFinite(remaining)) delay = Math.max(delay, remaining);
+    }
+    this.refreshRetryAt = Date.now() + delay;
+    this.scheduleRefresh();
   }
 
   private installInterceptors(): void {

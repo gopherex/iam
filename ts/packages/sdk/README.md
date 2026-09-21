@@ -44,6 +44,12 @@ What `iam.auth` does for you:
   SSR / React Native / Node).
 - **Auto-refreshes** the access token before it expires, and retries once on a
   `401` (single-flight, no storms).
+- **Keeps the session during refresh outages.** Network failures, `5xx`, `429`,
+  and malformed responses retain the stored tokens without emitting `SIGNED_OUT`.
+  Automatic retries use exponential backoff with jitter (initially 0.5–1 second,
+  capped at 30 seconds), respecting a longer `Retry-After`. Manual refresh and
+  refresh-on-401 share that cooldown. `autoRefresh: false` disables background retries.
+  A refresh-endpoint `400`/`401` or an explicit token-revocation error signs out.
 - **Attaches** the bearer token to every authenticated request automatically.
 - **Syncs across tabs** via `BroadcastChannel` (sign-in/out/refresh propagate).
 - Surfaces server **next steps** (`mfa_required`, `verify_email`, …) instead of
@@ -55,6 +61,12 @@ Sign-in flows: `signInWithPassword`, `signUp`, `signInWithOtp` / `verifyOtp`,
 email/phone verification, password reset/update, step-up, and MFA challenge /
 verify. Plus `getSession`, `getUser`, `refreshSession`, `onAuthStateChange`,
 `signOut`.
+
+`refreshSession()` returns the retained session during a temporary failure or
+retry cooldown; its access token may already be expired. A successful refresh
+emits `TOKEN_REFRESHED`. Use `SIGNED_OUT` to clear application auth state rather
+than treating every API `401` as a logout: when refresh fails temporarily, the
+interceptor returns the original `401` without replaying the API request.
 
 Pass `locale` (`'ru'`, `'en'`, `'ru-RU'`, etc.) on email-producing calls when
 the UI language is known. It is forwarded to email/OTP/magic-link/flow delivery;

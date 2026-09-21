@@ -376,6 +376,20 @@ See the [Errors reference](/rest-api/errors) for the full code table.
   with `storageKey`, or pass a custom `storage`).
 - Auto-refresh fires `refreshMarginSeconds` before expiry; a `401` on any call
   triggers one refresh + retry.
+- Refresh failures caused by network errors, `5xx`, `429`, or malformed responses
+  preserve the session in memory and storage and do not emit `SIGNED_OUT`.
+  Background retries use exponential backoff with jitter: initially 0.5–1 second,
+  up to 30 seconds, or longer when requested by `Retry-After` (seconds or HTTP date).
+  Manual refreshes and refresh-on-401 respect the same cooldown; concurrent
+  attempts share one request. `autoRefresh: false` disables background retries.
+- A `400`/`401` from the refresh endpoint or an explicit invalid/revoked-token
+  error in another client-error response clears the session. Temporary `5xx`
+  and `429` responses always retain it, regardless of the error code in the body.
+- `refreshSession()` returns the current session during an outage or cooldown;
+  its access token may be expired. Only `TOKEN_REFRESHED` confirms a successful
+  refresh. A temporary failure is not replayed as an authenticated API success:
+  the original request's `401` is returned when refresh could not complete.
+  Applications should clear auth state on `SIGNED_OUT`, not on every API `401`.
 - Cross-tab sync via `BroadcastChannel('iam:auth')`; disable with
   `multiTab: false`.
 - For SSR/Node, import `MemoryStorage` or set `persistSession: false`.
